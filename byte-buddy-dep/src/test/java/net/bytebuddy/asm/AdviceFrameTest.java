@@ -206,7 +206,7 @@ public class AdviceFrameTest {
     public static class FrameAdvice {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
@@ -276,7 +276,7 @@ public class AdviceFrameTest {
     public static class FrameAdviceWithSuppression {
 
         @Advice.OnMethodEnter(suppress = Exception.class)
-        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = true)
+        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
@@ -378,7 +378,7 @@ public class AdviceFrameTest {
     @SuppressWarnings("unused")
     public static class FrameAdviceExitOnly {
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
@@ -412,7 +412,7 @@ public class AdviceFrameTest {
     @SuppressWarnings("unused")
     public static class FrameAdviceExitOnlyWithSuppression {
 
-        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = true)
+        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
@@ -446,7 +446,7 @@ public class AdviceFrameTest {
     @SuppressWarnings("unused")
     public static class FrameAdviceExitOnlyWithSuppressionAndNonExceptionHandling {
 
-        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = false)
+        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {

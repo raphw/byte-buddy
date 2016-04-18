@@ -1503,7 +1503,7 @@ public class AdviceTest {
             Sample.enter++;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         private static void exit() {
             Sample.exit++;
         }
@@ -1589,7 +1589,7 @@ public class AdviceTest {
     public static class EmptyAdviceWithExceptionHandling {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         private static void advice() {
             /* empty */
         }
@@ -1599,7 +1599,7 @@ public class AdviceTest {
     public static class EmptyAdviceWithExceptionHandlingAndEntrySuppression {
 
         @Advice.OnMethodEnter(suppress = Throwable.class)
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         private static void advice() {
             /* empty */
         }
@@ -1609,7 +1609,7 @@ public class AdviceTest {
     public static class EmptyAdviceWithExceptionHandlingAndExitSuppression {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit(onThrowable = true, suppress = Throwable.class)
+        @Advice.OnMethodExit(suppress = Throwable.class, onThrowable = Exception.class)
         private static void advice() {
             /* empty */
         }
@@ -1619,7 +1619,7 @@ public class AdviceTest {
     public static class EmptyAdviceWithExceptionHandlingAndSuppression {
 
         @Advice.OnMethodEnter(suppress = Throwable.class)
-        @Advice.OnMethodExit(onThrowable = true, suppress = Throwable.class)
+        @Advice.OnMethodExit(suppress = Throwable.class, onThrowable = Exception.class)
         private static void advice() {
             /* empty */
         }
@@ -1664,7 +1664,7 @@ public class AdviceTest {
     @SuppressWarnings("unused")
     public static class EmptyAdviceExitWithExceptionHandling {
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         private static void advice() {
             /* empty */
         }
@@ -1673,7 +1673,7 @@ public class AdviceTest {
     @SuppressWarnings("unused")
     public static class EmptyAdviceExitWithExceptionHandlingAndSuppression {
 
-        @Advice.OnMethodExit(onThrowable = true, suppress = Throwable.class)
+        @Advice.OnMethodExit(suppress = Throwable.class, onThrowable = Exception.class)
         private static void advice() {
             /* empty */
         }
@@ -1932,7 +1932,7 @@ public class AdviceTest {
     @SuppressWarnings("unused")
     public static class ThrowableAdvice {
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         private static void exit(@Advice.Thrown Throwable throwable) {
             Sample.throwable = throwable;
         }
@@ -2292,7 +2292,7 @@ public class AdviceTest {
     @SuppressWarnings("all")
     public static class ExceptionSuppressionAdvice {
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         private static void exit(@Advice.Thrown(readOnly = false) Throwable throwable) {
             throwable = null;
         }

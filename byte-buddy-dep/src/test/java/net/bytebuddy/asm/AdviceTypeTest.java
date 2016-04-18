@@ -136,7 +136,7 @@ public class AdviceTypeTest {
             enter++;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static void exit(@Advice.Thrown Throwable throwable,
                                 @Advice.BoxedReturn Object boxedReturn,
                                 @Advice.BoxedArguments Object[] boxed,
@@ -184,7 +184,7 @@ public class AdviceTypeTest {
             enter++;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static void exit(@Advice.Thrown Throwable throwable,
                                 @Advice.BoxedReturn Object boxedReturn,
                                 @Advice.BoxedArguments Object[] boxed,
@@ -262,7 +262,7 @@ public class AdviceTypeTest {
             return BOOLEAN;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static boolean exit(@Advice.Return boolean result,
                                    @Advice.Enter boolean enter,
                                    @Advice.Thrown Throwable throwable,
@@ -348,7 +348,7 @@ public class AdviceTypeTest {
             return BOOLEAN;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static boolean exit(@Advice.Return boolean result,
                                    @Advice.Enter boolean enter,
                                    @Advice.Thrown Throwable throwable,
@@ -440,7 +440,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static byte exit(@Advice.Return byte result,
                                 @Advice.Enter byte enter,
                                 @Advice.Thrown Throwable throwable,
@@ -523,7 +523,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static byte exit(@Advice.Return byte result,
                                 @Advice.Enter byte enter,
                                 @Advice.Thrown Throwable throwable,
@@ -615,7 +615,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static short exit(@Advice.Return short result,
                                  @Advice.Enter short enter,
                                  @Advice.Thrown Throwable throwable,
@@ -698,7 +698,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static short exit(@Advice.Return short result,
                                  @Advice.Enter short enter,
                                  @Advice.Thrown Throwable throwable,
@@ -787,7 +787,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static char exit(@Advice.Return char result,
                                 @Advice.Enter char enter,
                                 @Advice.Thrown Throwable throwable,
@@ -870,7 +870,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static char exit(@Advice.Return char result,
                                 @Advice.Enter char enter,
                                 @Advice.Thrown Throwable throwable,
@@ -965,7 +965,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static int exit(@Advice.Return int result,
                                @Advice.Enter int enter,
                                @Advice.Thrown Throwable throwable,
@@ -1048,7 +1048,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static int exit(@Advice.Return int result,
                                @Advice.Enter int enter,
                                @Advice.Thrown Throwable throwable,
@@ -1140,7 +1140,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static long exit(@Advice.Return long result,
                                 @Advice.Enter long enter,
                                 @Advice.Thrown Throwable throwable,
@@ -1223,7 +1223,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static long exit(@Advice.Return long result,
                                 @Advice.Enter long enter,
                                 @Advice.Thrown Throwable throwable,
@@ -1315,7 +1315,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static float exit(@Advice.Return float result,
                                  @Advice.Enter float enter,
                                  @Advice.Thrown Throwable throwable,
@@ -1398,7 +1398,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static float exit(@Advice.Return float result,
                                  @Advice.Enter float enter,
                                  @Advice.Thrown Throwable throwable,
@@ -1490,7 +1490,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static double exit(@Advice.Return double result,
                                   @Advice.Enter double enter,
                                   @Advice.Thrown Throwable throwable,
@@ -1573,7 +1573,7 @@ public class AdviceTypeTest {
             return VALUE * 2;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static double exit(@Advice.Return double result,
                                   @Advice.Enter double enter,
                                   @Advice.Thrown Throwable throwable,
@@ -1659,7 +1659,7 @@ public class AdviceTypeTest {
             return FOO + BAR;
         }
 
-        @Advice.OnMethodExit(onThrowable = true)
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         public static Object exit(@Advice.Return Object result,
                                   @Advice.Enter Object enter,
                                   @Advice.Thrown Throwable throwable,
@@ -1742,7 +1742,7 @@ public class AdviceTypeTest {
             return FOO + BAR;
         }
 
-        @Advice.OnMethodExit(inline = false, onThrowable = true)
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static Object exit(@Advice.Return Object result,
                                   @Advice.Enter Object enter,
                                   @Advice.Thrown Throwable throwable,

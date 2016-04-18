@@ -297,7 +297,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     classFileVersion,
                     writerFlags,
                     readerFlags);
-        } else if (methodExit.isSkipThrowable()) {
+        } else if (methodExit.getTriggeringThrowable().represents(NoExceptionHandler.class)) {
             return new AdviceVisitor.WithExitAdvice.WithoutExceptionHandling(methodVisitor,
                     methodDescription,
                     methodEnter,
@@ -314,7 +314,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodExit,
                     classFileVersion,
                     writerFlags,
-                    readerFlags);
+                    readerFlags,
+                    methodExit.getTriggeringThrowable());
         }
     }
 
@@ -1498,9 +1499,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected static class WithExceptionHandling extends WithExitAdvice {
 
                 /**
-                 * Indicates that any throwable should be captured.
+                 * The type of the handled throwable type for which this advice is invoked.
                  */
-                private static final String ANY_THROWABLE = null;
+                private final TypeDescription triggeringThrowable;
 
                 /**
                  * Indicates the start of the user method.
@@ -1520,13 +1521,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new advice visitor that captures exception by weaving try-catch blocks around user code.
                  *
-                 * @param methodVisitor      The method visitor for the instrumented method.
-                 * @param instrumentedMethod A description of the instrumented method.
-                 * @param methodEnter        The dispatcher to be used for method entry.
-                 * @param methodExit         The dispatcher to be used for method exit.
-                 * @param classFileVersion   The instrumented type's class file version.
-                 * @param writerFlags        The ASM writer flags that were set.
-                 * @param readerFlags        The ASM reader flags that were set.
+                 * @param methodVisitor       The method visitor for the instrumented method.
+                 * @param instrumentedMethod  A description of the instrumented method.
+                 * @param methodEnter         The dispatcher to be used for method entry.
+                 * @param methodExit          The dispatcher to be used for method exit.
+                 * @param classFileVersion    The instrumented type's class file version.
+                 * @param writerFlags         The ASM writer flags that were set.
+                 * @param readerFlags         The ASM reader flags that were set.
+                 * @param triggeringThrowable The type of the handled throwable type for which this advice is invoked.
                  */
                 protected WithExceptionHandling(MethodVisitor methodVisitor,
                                                 MethodDescription.InDefinedShape instrumentedMethod,
@@ -1534,7 +1536,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 Dispatcher.Resolved.ForMethodExit methodExit,
                                                 ClassFileVersion classFileVersion,
                                                 int writerFlags,
-                                                int readerFlags) {
+                                                int readerFlags,
+                                                TypeDescription triggeringThrowable) {
                     super(methodVisitor,
                             instrumentedMethod,
                             methodEnter,
@@ -1545,6 +1548,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             classFileVersion,
                             writerFlags,
                             readerFlags);
+                    this.triggeringThrowable = triggeringThrowable;
                     userStart = new Label();
                     userEnd = new Label();
                     exceptionalReturn = new Label();
@@ -1552,7 +1556,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onUserPrepare() {
-                    mv.visitTryCatchBlock(userStart, userEnd, userEnd, ANY_THROWABLE);
+                    mv.visitTryCatchBlock(userStart, userEnd, userEnd, triggeringThrowable.getInternalName());
                 }
 
                 @Override
@@ -1619,6 +1623,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public String toString() {
                     return "Advice.AdviceVisitor.WithExitAdvice.WithExceptionHandling{" +
                             "instrumentedMethod=" + instrumentedMethod +
+                            ", triggeringThrowable=" + triggeringThrowable +
                             "}";
                 }
             }
@@ -4133,9 +4138,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                     protected OffsetMapping.Factory resolve(MethodDescription.InDefinedShape adviceMethod) {
-                        return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
-                                ? this
-                                : new OffsetMapping.Illegal(Thrown.class);
+                        return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, TypeDescription.class).represents(NoExceptionHandler.class)
+                                ? new OffsetMapping.Illegal(Thrown.class)
+                                : this; // TODO: Add allowed type!
                     }
 
                     @Override
@@ -4522,11 +4527,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Resolves an appropriate suppression handler.
                  *
-                 * @param suppressedType The suppressed type or {@link NoSuppression} if no type should be suppressed.
+                 * @param suppressedType The suppressed type or {@link NoExceptionHandler} if no type should be suppressed.
                  * @return An appropriate suppression handler.
                  */
                 protected static SuppressionHandler of(TypeDescription suppressedType) {
-                    return suppressedType.represents(NoSuppression.class)
+                    return suppressedType.represents(NoExceptionHandler.class)
                             ? NoOp.INSTANCE
                             : new Suppressing(suppressedType);
                 }
@@ -4665,11 +4670,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             interface ForMethodExit extends Resolved {
 
                 /**
-                 * Indicates if this advice requires to be called when the instrumented method terminates exceptionally.
+                 * Returns the type of throwable for which this exit advice is supposed to be invoked.
                  *
-                 * @return {@code true} if this advice requires to be called when the instrumented method terminates exceptionally.
+                 * @return The {@link Throwable} type for which to invoke this exit advice or a description of {@link NoExceptionHandler}
+                 * if this exit advice does not expect to be invoked upon any throwable.
                  */
-                boolean isSkipThrowable();
+                TypeDescription getTriggeringThrowable();
             }
         }
 
@@ -4710,8 +4716,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public boolean isSkipThrowable() {
-                return true;
+            public TypeDescription getTriggeringThrowable() {
+                return NoExceptionHandler.DESCRIPTION;
             }
 
             @Override
@@ -4851,7 +4857,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param adviceMethod         The represented advice method.
                  * @param factories            A list of factories to resolve for the parameters of the advice method.
                  * @param binaryRepresentation The binary representation of the advice method.
-                 * @param throwableType        The type to handle by a suppression handler or {@link NoSuppression} to not handle any exceptions.
+                 * @param throwableType        The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    List<OffsetMapping.Factory> factories,
@@ -5307,9 +5313,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                List<? extends OffsetMapping.Factory> userFactories,
                                                                byte[] binaryRepresentation,
                                                                TypeDescription enterType) {
-                        return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
-                                ? new WithExceptionHandler(adviceMethod, userFactories, binaryRepresentation, enterType)
-                                : new WithoutExceptionHandler(adviceMethod, userFactories, binaryRepresentation, enterType);
+                        TypeDescription triggeringThrowable = adviceMethod.getDeclaredAnnotations()
+                                .ofType(OnMethodExit.class)
+                                .getValue(ON_THROWABLE, TypeDescription.class);
+                        return triggeringThrowable.represents(NoExceptionHandler.class)
+                                ? new WithoutExceptionHandler(adviceMethod, userFactories, binaryRepresentation, enterType)
+                                : new WithExceptionHandler(adviceMethod, userFactories, binaryRepresentation, enterType, triggeringThrowable);
                     }
 
                     @Override
@@ -5323,7 +5332,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, OffsetMapping.Context.ForMethodExit.of(enterType)));
                         }
                         return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
-                                methodSizeHandler.bindExit(adviceMethod, isSkipThrowable()),
+                                methodSizeHandler.bindExit(adviceMethod, getTriggeringThrowable().represents(NoExceptionHandler.class)),
                                 stackMapFrameHandler.bindExit(adviceMethod),
                                 instrumentedMethod,
                                 adviceMethod,
@@ -5359,6 +5368,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected static class WithExceptionHandler extends Inlining.Resolved.ForMethodExit {
 
                         /**
+                         * The type of the handled throwable type for which this advice is invoked.
+                         */
+                        private final TypeDescription triggeringThrowable;
+
+                        /**
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
                          * @param adviceMethod         The represented advice method.
@@ -5366,22 +5380,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param binaryRepresentation The binary representation of the advice method.
                          * @param enterType            The type of the value supplied by the enter advice method or
                          *                             a description of {@code void} if no such value exists.
+                         * @param triggeringThrowable  The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                        List<? extends OffsetMapping.Factory> userFactories,
                                                        byte[] binaryRepresentation,
-                                                       TypeDescription enterType) {
+                                                       TypeDescription enterType,
+                                                       TypeDescription triggeringThrowable) {
                             super(adviceMethod, userFactories, binaryRepresentation, enterType);
+                            this.triggeringThrowable = triggeringThrowable;
                         }
 
                         @Override
                         protected StackSize getPadding() {
-                            return StackSize.SINGLE;
+                            return triggeringThrowable.getStackSize();
                         }
 
                         @Override
-                        public boolean isSkipThrowable() {
-                            return false;
+                        public TypeDescription getTriggeringThrowable() {
+                            return triggeringThrowable;
                         }
 
                         @Override
@@ -5389,6 +5406,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithExceptionHandler{" +
                                     "adviceMethod=" + adviceMethod +
                                     ", offsetMappings=" + offsetMappings +
+                                    ", triggeringThrowable=" + triggeringThrowable +
                                     '}';
                         }
                     }
@@ -5420,8 +5438,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public boolean isSkipThrowable() {
-                            return true;
+                        public TypeDescription getTriggeringThrowable() {
+                            return NoExceptionHandler.DESCRIPTION;
                         }
 
                         @Override
@@ -5850,7 +5868,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param adviceMethod  The represented advice method.
                  * @param factories     A list of factories to resolve for the parameters of the advice method.
-                 * @param throwableType The type to handle by a suppression handler or {@link NoSuppression} to not handle any exceptions.
+                 * @param throwableType The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories, TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
@@ -6257,7 +6275,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForReturnValue.Factory.READ_ONLY,
                                         OffsetMapping.ForBoxedReturnValue.INSTANCE,
                                         OffsetMapping.ForThrowable.Factory.READ_ONLY.resolve(adviceMethod)
-                                ),userFactories),
+                                ), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT, TypeDescription.class));
                         this.enterType = enterType;
                     }
@@ -6274,9 +6292,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
                                                                List<? extends OffsetMapping.Factory> userFactories,
                                                                TypeDescription enterType) {
-                        return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
-                                ? new WithExceptionHandler(adviceMethod, userFactories, enterType)
-                                : new WithoutExceptionHandler(adviceMethod, userFactories, enterType);
+                        TypeDescription triggeringThrowable = adviceMethod.getDeclaredAnnotations()
+                                .ofType(OnMethodExit.class)
+                                .getValue(ON_THROWABLE, TypeDescription.class);
+                        return triggeringThrowable.represents(NoExceptionHandler.class)
+                                ? new WithoutExceptionHandler(adviceMethod, userFactories, enterType)
+                                : new WithExceptionHandler(adviceMethod, userFactories, enterType, triggeringThrowable);
                     }
 
                     @Override
@@ -6292,7 +6313,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 instrumentedMethod,
                                 offsetMappings,
                                 methodVisitor,
-                                methodSizeHandler.bindExit(adviceMethod, isSkipThrowable()),
+                                methodSizeHandler.bindExit(adviceMethod, getTriggeringThrowable().represents(NoExceptionHandler.class)),
                                 stackMapFrameHandler.bindExit(adviceMethod),
                                 suppressionHandler.bind());
                     }
@@ -6317,22 +6338,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected static class WithExceptionHandler extends Delegating.Resolved.ForMethodExit {
 
                         /**
+                         * The type of the handled throwable type for which this advice is invoked.
+                         */
+                        private final TypeDescription triggeringThrowable;
+
+                        /**
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
-                         * @param adviceMethod  The represented advice method.
-                         * @param userFactories A list of user-defined factories for offset mappings.
-                         * @param enterType     The type of the value supplied by the enter advice method or
-                         *                      a description of {@code void} if no such value exists.
+                         * @param adviceMethod        The represented advice method.
+                         * @param userFactories       A list of user-defined factories for offset mappings.
+                         * @param enterType           The type of the value supplied by the enter advice method or
+                         *                            a description of {@code void} if no such value exists.
+                         * @param triggeringThrowable The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                        List<? extends OffsetMapping.Factory> userFactories,
-                                                       TypeDescription enterType) {
+                                                       TypeDescription enterType,
+                                                       TypeDescription triggeringThrowable) {
                             super(adviceMethod, userFactories, enterType);
+                            this.triggeringThrowable = triggeringThrowable;
                         }
 
                         @Override
-                        public boolean isSkipThrowable() {
-                            return false;
+                        public TypeDescription getTriggeringThrowable() {
+                            return triggeringThrowable;
                         }
 
                         @Override
@@ -6340,6 +6369,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return "Advice.Dispatcher.Delegating.Resolved.ForMethodExit.WithExceptionHandler{" +
                                     "adviceMethod=" + adviceMethod +
                                     ", offsetMappings=" + offsetMappings +
+                                    ", triggeringThrowable=" + triggeringThrowable +
                                     '}';
                         }
                     }
@@ -6364,8 +6394,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public boolean isSkipThrowable() {
-                            return true;
+                        public TypeDescription getTriggeringThrowable() {
+                            return NoExceptionHandler.DESCRIPTION;
                         }
 
                         @Override
@@ -6417,7 +6447,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @return The type of {@link Throwable} to suppress.
          */
-        Class<? extends Throwable> suppress() default NoSuppression.class;
+        Class<? extends Throwable> suppress() default NoExceptionHandler.class;
     }
 
     /**
@@ -6426,8 +6456,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * at most one method with this annotation. The annotated method must be static.
      * </p>
      * <p>
-     * The annotated method can imply to not be invoked when the instrumented method terminates exceptionally by
-     * setting the {@link OnMethodExit#onThrowable()} property.
+     * By default, the annotated method is not invoked if the instrumented method terminates exceptionally. This behavior
+     * can be changed by setting the {@link OnMethodExit#onThrowable()} property to an exception type for which this advice
+     * method should be invoked. By setting the value to {@link Throwable}, the advice method is always invoked.
      * </p>
      *
      * @see Advice
@@ -6459,15 +6490,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @return The type of {@link Throwable} to suppress.
          */
-        Class<? extends Throwable> suppress() default NoSuppression.class;
+        Class<? extends Throwable> suppress() default NoExceptionHandler.class;
 
         /**
-         * Indicates that the advice method should also be called when a method terminates exceptionally. This property must
-         * not be set to {@code true} when defining advice for a constructor.
+         * Indicates a {@link Throwable} super type for which this exit advice is invoked if it was thrown from the instrumented method.
+         * If an exception is thrown, it is available via the {@link Thrown} parameter annotation. If a method returns exceptionally,
+         * any parameter annotated with {@link Return} is assigned the parameter type's default value.
          *
-         * @return {@code true} if the advice method should be invoked when a method terminates exceptionally.
+         * @return The type of {@link Throwable} for which this exit advice handler is invoked.
          */
-        boolean onThrowable() default false;
+        Class<? extends Throwable> onThrowable() default NoExceptionHandler.class;
     }
 
     /**
@@ -6951,12 +6983,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A marker class that indicates that an advice method does not suppress any {@link Throwable}.
      */
-    private static class NoSuppression extends Throwable {
+    private static class NoExceptionHandler extends Throwable {
+
+        /**
+         * A description of the {@link NoExceptionHandler} type.
+         */
+        private static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(NoExceptionHandler.class);
 
         /**
          * A private constructor as this class is not supposed to be invoked.
          */
-        private NoSuppression() {
+        private NoExceptionHandler() {
             throw new UnsupportedOperationException("This marker class is not supposed to be instantiated");
         }
     }
