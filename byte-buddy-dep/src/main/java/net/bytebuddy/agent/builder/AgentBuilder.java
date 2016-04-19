@@ -2282,7 +2282,7 @@ public interface AgentBuilder {
                             type.getClassLoader(),
                             type,
                             type.getProtectionDomain(),
-                            ignoredTypeMatcher).isResolved() && entries.add(new Entry(type));
+                            ignoredTypeMatcher).getSort().isAlive() && entries.add(new Entry(type));
                 }
 
                 @Override
@@ -2405,7 +2405,7 @@ public interface AgentBuilder {
                             type.getClassLoader(),
                             type,
                             type.getProtectionDomain(),
-                            ignoredTypeMatcher).isResolved() && types.add(type);
+                            ignoredTypeMatcher).getSort().isAlive() && types.add(type);
                 }
 
                 @Override
@@ -4541,15 +4541,11 @@ public interface AgentBuilder {
              */
             interface Resolution {
 
-                /**
-                 * Returns {@code true} if this resolution represents an actual type transformation. If this value is {@code false},
-                 * this resolution will not attempt to transform a class.
-                 *
-                 * @return {@code true} if this resolution attempts to transform a type, {@code false} otherwise.
-                 */
-                boolean isResolved();
+                Sort getSort();
 
-                Resolution mergeWith(Resolution resolution);
+                Resolution asDecoratorOf(Resolution resolution);
+
+                Resolution prepend(Decoratable resolution);
 
                 /**
                  * Transforms a type or returns {@code null} if a type is not to be transformed.
@@ -4573,11 +4569,25 @@ public interface AgentBuilder {
                              AccessControlContext accessControlContext,
                              Listener listener);
 
-                Resolution decorateBy(Decoratable resolution);
+                enum Sort {
+                    TERMINAL(true),
+                    DECORATOR(true),
+                    UNDEFINED(false);
+
+                    private final boolean alive;
+
+                    Sort(boolean alive) {
+                        this.alive = alive;
+                    }
+
+                    protected boolean isAlive() {
+                        return alive;
+                    }
+                }
 
                 interface Decoratable extends Resolution {
 
-                    Transformation.Resolution decorateWith(Transformer transformer);
+                    Transformation.Resolution prepend(Transformer transformer);
                 }
 
                 /**
@@ -4607,17 +4617,17 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    public boolean isResolved() {
-                        return false;
+                    public Sort getSort() {
+                        return Sort.UNDEFINED;
                     }
 
                     @Override
-                    public Resolution mergeWith(Resolution resolution) {
+                    public Resolution asDecoratorOf(Resolution resolution) {
                         return resolution;
                     }
 
                     @Override
-                    public Resolution decorateBy(Decoratable resolution) {
+                    public Resolution prepend(Decoratable resolution) {
                         return resolution;
                     }
 
@@ -4704,7 +4714,8 @@ public interface AgentBuilder {
 
                 /**
                  * Creates a new transformation.
-                 *  @param rawMatcher  The raw matcher that is represented by this transformation.
+                 *
+                 * @param rawMatcher  The raw matcher that is represented by this transformation.
                  * @param transformer The transformer that is represented by this transformation.
                  * @param decorator
                  */
@@ -4777,7 +4788,8 @@ public interface AgentBuilder {
 
                     /**
                      * Creates a new active transformation.
-                     *  @param typeDescription  A description of the transformed type.
+                     *
+                     * @param typeDescription  A description of the transformed type.
                      * @param classLoader      The class loader of the transformed type.
                      * @param protectionDomain The protection domain of the transformed type.
                      * @param transformer      The transformer to be applied.
@@ -4796,27 +4808,29 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    public boolean isResolved() {
-                        return true;
+                    public Sort getSort() {
+                        return decorator
+                                ? Sort.DECORATOR
+                                : Sort.TERMINAL;
                     }
 
                     @Override
-                    public Transformation.Resolution mergeWith(Transformation.Resolution resolution) {
-                        return resolution.decorateBy(this);
+                    public Transformation.Resolution asDecoratorOf(Transformation.Resolution resolution) {
+                        return resolution.prepend(this);
                     }
 
                     @Override
-                    public Transformation.Resolution decorateWith(Transformer transformer) {
+                    public Transformation.Resolution prepend(Decoratable resolution) {
+                        return resolution.prepend(transformer);
+                    }
+
+                    @Override
+                    public Transformation.Resolution prepend(Transformer transformer) {
                         return new Resolution(typeDescription,
                                 classLoader,
                                 protectionDomain,
                                 new Transformer.Compound(transformer, this.transformer),
                                 decorator);
-                    }
-
-                    @Override
-                    public Transformation.Resolution decorateBy(Decoratable resolution) {
-                        return resolution.decorateWith(transformer);
                     }
 
                     @Override
@@ -4988,17 +5002,25 @@ public interface AgentBuilder {
                                           Class<?> classBeingRedefined,
                                           ProtectionDomain protectionDomain,
                                           RawMatcher ignoredTypeMatcher) {
+                    Resolution current = new Resolution.Unresolved(typeDescription, classLoader);
                     for (Transformation transformation : transformations) {
                         Resolution resolution = transformation.resolve(typeDescription,
                                 classLoader,
                                 classBeingRedefined,
                                 protectionDomain,
                                 ignoredTypeMatcher);
-                        if (resolution.isResolved()) {
-                            return resolution;
+                        switch (resolution.getSort()) {
+                            case TERMINAL:
+                                return current.asDecoratorOf(resolution);
+                            case DECORATOR:
+                                current = current.asDecoratorOf(resolution); // TODO: WAT?
+                            case UNDEFINED:
+                                break;
+                            default:
+                                throw new IllegalStateException("Unexpected resolution type: " + resolution.getSort());
                         }
                     }
-                    return new Resolution.Unresolved(typeDescription, classLoader);
+                    return current;
                 }
 
                 @Override
@@ -5421,7 +5443,8 @@ public interface AgentBuilder {
 
             /**
              * Creates a new matched default agent builder.
-             *  @param rawMatcher  The supplied raw matcher.
+             *
+             * @param rawMatcher  The supplied raw matcher.
              * @param transformer The supplied transformer.
              * @param decorator
              */
