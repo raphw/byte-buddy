@@ -49,6 +49,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -1129,11 +1130,22 @@ public interface AgentBuilder {
                     /**
                      * A static reference to the a singleton instance of the marker to preserve reference equality.
                      */
-                    protected static final ClassLoader INSTANCE = new BootstrapClassLoaderMarker();
+                    protected static final ClassLoader INSTANCE = AccessController.doPrivileged(new CreationAction());
 
                     @Override
                     protected Class<?> loadClass(String name, boolean resolve) {
                         throw new UnsupportedOperationException("This loader is only a non-null marker and is not supposed to be used");
+                    }
+
+                    /**
+                     * A simple action for creating a bootstrap class loader marker.
+                     */
+                    private static class CreationAction implements PrivilegedAction<ClassLoader> {
+
+                        @Override
+                        public ClassLoader run() {
+                            return new BootstrapClassLoaderMarker();
+                        }
                     }
                 }
             }
