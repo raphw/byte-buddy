@@ -147,6 +147,10 @@ public class AgentBuilderDefaultTest {
                         REDEFINED.getProtectionDomain(),
                         accessControlContext));
         verifyNoMoreInteractions(dispatcher);
+        verify(rawMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), null, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(rawMatcher);
+        verify(transformer).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verifyNoMoreInteractions(transformer);
     }
 
     @Test
@@ -921,6 +925,45 @@ public class AgentBuilderDefaultTest {
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
+    }
+
+    @Test
+    public void testDecoratedTransformation() throws Exception {
+        when(dynamicType.getBytes()).thenReturn(BAZ);
+        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), null, REDEFINED.getProtectionDomain()))
+                .thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(binaryLocator)
+                .with(typeStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .with(accessControlContext)
+                .type(rawMatcher).transform(transformer)
+                .type(rawMatcher).transform(transformer).asDecorator()
+                .installOn(instrumentation);
+        assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), dynamicType);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());;
+        verifyNoMoreInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verifyNoMoreInteractions(instrumentation);
+        verify(initializationStrategy).dispatcher();
+        verifyNoMoreInteractions(initializationStrategy);
+        verify(dispatcher).apply(builder);
+        verify(dispatcher).register(dynamicType,
+                REDEFINED.getClassLoader(),
+                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+                        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
+                        REDEFINED.getClassLoader(),
+                        REDEFINED.getProtectionDomain(),
+                        accessControlContext));
+        verifyNoMoreInteractions(dispatcher);
+        verify(rawMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), null, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(rawMatcher);
+        verify(transformer, times(2)).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verifyNoMoreInteractions(transformer);
     }
 
     @Test
