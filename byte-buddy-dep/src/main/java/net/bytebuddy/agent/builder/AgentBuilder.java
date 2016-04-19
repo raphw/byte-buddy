@@ -1067,6 +1067,16 @@ public interface AgentBuilder {
                 private final ConcurrentMap<? super ClassLoader, TypePool.CacheProvider> cacheProviders;
 
                 /**
+                 * Creates a new binary locator that caches a cache provider per class loader in a concurrent map. The binary
+                 * locator uses a fast {@link net.bytebuddy.pool.TypePool.Default.ReaderMode}.
+                 *
+                 * @param cacheProviders The concurrent map that is used for storing a cache provider per class loader.
+                 */
+                public Simple(ConcurrentMap<? super ClassLoader, TypePool.CacheProvider> cacheProviders) {
+                    this(TypePool.Default.ReaderMode.FAST, cacheProviders);
+                }
+
+                /**
                  * Creates a new binary locator that caches a cache provider per class loader in a concurrent map.
                  *
                  * @param readerMode     The reader mode to use for parsing a class file.
