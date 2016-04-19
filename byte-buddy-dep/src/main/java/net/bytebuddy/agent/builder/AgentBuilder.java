@@ -1126,6 +1126,9 @@ public interface AgentBuilder {
                  */
                 private static class BootstrapClassLoaderMarker extends ClassLoader {
 
+                    /**
+                     * A static reference to the a singleton instance of the marker to preserve reference equality.
+                     */
                     protected static final ClassLoader INSTANCE = new BootstrapClassLoaderMarker();
 
                     @Override
