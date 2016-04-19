@@ -496,6 +496,8 @@ public interface AgentBuilder {
          */
         Extendable transform(Transformer transformer);
 
+        AgentBuilder asDecorator();
+
         /**
          * Allows to specify a type matcher for a type to instrument.
          */
@@ -4119,7 +4121,7 @@ public interface AgentBuilder {
 
         @Override
         public Identified.Narrowable type(RawMatcher matcher) {
-            return new Transforming(matcher, Transformer.NoOp.INSTANCE);
+            return new Transforming(matcher, Transformer.NoOp.INSTANCE, false);
         }
 
         @Override
@@ -5370,15 +5372,18 @@ public interface AgentBuilder {
              */
             private final Transformer transformer;
 
+            private final boolean decorator;
+
             /**
              * Creates a new matched default agent builder.
-             *
-             * @param rawMatcher  The supplied raw matcher.
+             *  @param rawMatcher  The supplied raw matcher.
              * @param transformer The supplied transformer.
+             * @param decorator
              */
-            protected Transforming(RawMatcher rawMatcher, Transformer transformer) {
+            protected Transforming(RawMatcher rawMatcher, Transformer transformer, boolean decorator) {
                 this.rawMatcher = rawMatcher;
                 this.transformer = transformer;
+                this.decorator = decorator;
             }
 
             @Override
@@ -5399,17 +5404,22 @@ public interface AgentBuilder {
 
             @Override
             public Identified.Extendable transform(Transformer transformer) {
-                return new Transforming(rawMatcher, new Transformer.Compound(this.transformer, transformer));
+                return new Transforming(rawMatcher, new Transformer.Compound(this.transformer, transformer), decorator);
+            }
+
+            @Override
+            public AgentBuilder asDecorator() {
+                return new Transforming(rawMatcher, transformer, true);
             }
 
             @Override
             public Narrowable and(RawMatcher rawMatcher) {
-                return new Transforming(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher), transformer);
+                return new Transforming(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher), transformer, decorator);
             }
 
             @Override
             public Narrowable or(RawMatcher rawMatcher) {
-                return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformer);
+                return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformer, decorator);
             }
 
             /**
