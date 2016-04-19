@@ -491,12 +491,10 @@ public interface AgentBuilder {
          * Applies the given transformer for the already supplied matcher.
          *
          * @param transformer The transformer to apply.
-         * @return This agent builder with the transformer being applied when the previously supplied matcher
+         * @return A new instance of this agent builder with the transformer being applied when the previously supplied matcher
          * identified a type for instrumentation which also allows for the registration of subsequent transformers.
          */
         Extendable transform(Transformer transformer);
-
-        AgentBuilder asDecorator();
 
         /**
          * Allows to specify a type matcher for a type to instrument.
@@ -511,7 +509,17 @@ public interface AgentBuilder {
          * to be instrumented. Any subsequent transformers are applied in the order they are registered.
          */
         interface Extendable extends AgentBuilder, Identified {
-            /* this is merely a unionizing interface that does not declare methods */
+
+            /**
+             * Applies the specified transformation as a decorative transformation. For a decorative transformation, the supplied
+             * transformer is prepended to any previous transformation that also matches the instrumented type, i.e. both transformations
+             * are supplied. This procedure is repeated until a transformer is reached that matches the instrumented type but is not
+             * defined as decorating after which no further transformations are considered. If all matching transformations are declared
+             * as decorating, all matching transformers are applied.
+             *
+             * @return A new instance of this agent builder with the specified transformation being applied as a decorator.
+             */
+            AgentBuilder asDecorator();
         }
     }
 
@@ -4541,10 +4549,27 @@ public interface AgentBuilder {
              */
             interface Resolution {
 
+                /**
+                 * Returns the sort of this resolution.
+                 *
+                 * @return The sort of this resolution.
+                 */
                 Sort getSort();
 
+                /**
+                 * Resolves this resolution as a decorator of the supplied resolution.
+                 *
+                 * @param resolution The resolution for which this resolution should serve as a decorator.
+                 * @return A resolution where this resolution is applied as a decorator if this resolution is alive.
+                 */
                 Resolution asDecoratorOf(Resolution resolution);
 
+                /**
+                 * Resolves this resolution as a decorator of the supplied resolution.
+                 *
+                 * @param resolution The resolution for which this resolution should serve as a decorator.
+                 * @return A resolution where this resolution is applied as a decorator if this resolution is alive.
+                 */
                 Resolution prepend(Decoratable resolution);
 
                 /**
@@ -4569,25 +4594,68 @@ public interface AgentBuilder {
                              AccessControlContext accessControlContext,
                              Listener listener);
 
+                /**
+                 * Describes a specific sort of a {@link Resolution}.
+                 */
                 enum Sort {
+
+                    /**
+                     * A terminal resolution. After discovering such a resolution, no further transformers are considered.
+                     */
                     TERMINAL(true),
+
+                    /**
+                     * A resolution that can serve as a decorator for another resolution. After discovering such a resolution
+                     * further transformations are considered where the represented resolution is prepended if applicable.
+                     */
                     DECORATOR(true),
+
+                    /**
+                     * A non-resolved resolution.
+                     */
                     UNDEFINED(false);
 
+                    /**
+                     * Indicates if this sort represents an active resolution.
+                     */
                     private final boolean alive;
 
+                    /**
+                     * Creates a new resolution sort.
+                     *
+                     * @param alive Indicates if this sort represents an active resolution.
+                     */
                     Sort(boolean alive) {
                         this.alive = alive;
                     }
 
+                    /**
+                     * Returns {@code true} if this resolution is alive.
+                     *
+                     * @return {@code true} if this resolution is alive.
+                     */
                     protected boolean isAlive() {
                         return alive;
                     }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.Transformation.Resolution.Sort." + name();
+                    }
                 }
 
+                /**
+                 * A resolution that can be decorated by a transformer.
+                 */
                 interface Decoratable extends Resolution {
 
-                    Transformation.Resolution prepend(Transformer transformer);
+                    /**
+                     * Prepends the supplied transformer to this resolution.
+                     *
+                     * @param transformer The transformer to prepend.
+                     * @return A new resolution with the supplied transformer prepended.
+                     */
+                    Resolution prepend(Transformer transformer);
                 }
 
                 /**
@@ -4710,6 +4778,9 @@ public interface AgentBuilder {
                  */
                 private final Transformer transformer;
 
+                /**
+                 * {@code true} if this transformer serves as a decorator.
+                 */
                 private final boolean decorator;
 
                 /**
@@ -4717,7 +4788,7 @@ public interface AgentBuilder {
                  *
                  * @param rawMatcher  The raw matcher that is represented by this transformation.
                  * @param transformer The transformer that is represented by this transformation.
-                 * @param decorator
+                 * @param decorator   {@code true} if this transformer serves as a decorator.
                  */
                 protected Simple(RawMatcher rawMatcher, Transformer transformer, boolean decorator) {
                     this.rawMatcher = rawMatcher;
@@ -4740,6 +4811,7 @@ public interface AgentBuilder {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
+                            && decorator == ((Simple) other).decorator
                             && rawMatcher.equals(((Simple) other).rawMatcher)
                             && transformer.equals(((Simple) other).transformer);
                 }
@@ -4747,6 +4819,7 @@ public interface AgentBuilder {
                 @Override
                 public int hashCode() {
                     int result = rawMatcher.hashCode();
+                    result = 31 * result + (decorator ? 1 : 0);
                     result = 31 * result + transformer.hashCode();
                     return result;
                 }
@@ -4756,6 +4829,7 @@ public interface AgentBuilder {
                     return "AgentBuilder.Default.Transformation.Simple{" +
                             "rawMatcher=" + rawMatcher +
                             ", transformer=" + transformer +
+                            ", decorator=" + decorator +
                             '}';
                 }
 
@@ -4784,6 +4858,9 @@ public interface AgentBuilder {
                      */
                     private final Transformer transformer;
 
+                    /**
+                     * {@code true} if this transformer serves as a decorator.
+                     */
                     private final boolean decorator;
 
                     /**
@@ -4793,7 +4870,7 @@ public interface AgentBuilder {
                      * @param classLoader      The class loader of the transformed type.
                      * @param protectionDomain The protection domain of the transformed type.
                      * @param transformer      The transformer to be applied.
-                     * @param decorator
+                     * @param decorator        {@code true} if this transformer serves as a decorator.
                      */
                     protected Resolution(TypeDescription typeDescription,
                                          ClassLoader classLoader,
@@ -4861,6 +4938,7 @@ public interface AgentBuilder {
                         if (other == null || getClass() != other.getClass()) return false;
                         Resolution that = (Resolution) other;
                         return typeDescription.equals(that.typeDescription)
+                                && decorator == that.decorator
                                 && !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null)
                                 && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
                                 && transformer.equals(that.transformer);
@@ -4869,6 +4947,7 @@ public interface AgentBuilder {
                     @Override
                     public int hashCode() {
                         int result = typeDescription.hashCode();
+                        result = 31 * result + (decorator ? 1 : 0);
                         result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
                         result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
                         result = 31 * result + transformer.hashCode();
@@ -4882,6 +4961,7 @@ public interface AgentBuilder {
                                 ", classLoader=" + classLoader +
                                 ", protectionDomain=" + protectionDomain +
                                 ", transformer=" + transformer +
+                                ", decorator=" + decorator +
                                 '}';
                     }
 
@@ -5013,7 +5093,7 @@ public interface AgentBuilder {
                             case TERMINAL:
                                 return current.asDecoratorOf(resolution);
                             case DECORATOR:
-                                current = current.asDecoratorOf(resolution); // TODO: WAT?
+                                current = current.asDecoratorOf(resolution);
                             case UNDEFINED:
                                 break;
                             default:
@@ -5439,6 +5519,9 @@ public interface AgentBuilder {
              */
             private final Transformer transformer;
 
+            /**
+             * {@code true} if this transformer serves as a decorator.
+             */
             private final boolean decorator;
 
             /**
@@ -5446,7 +5529,7 @@ public interface AgentBuilder {
              *
              * @param rawMatcher  The supplied raw matcher.
              * @param transformer The supplied transformer.
-             * @param decorator
+             * @param decorator   {@code true} if this transformer serves as a decorator.
              */
             protected Transforming(RawMatcher rawMatcher, Transformer transformer, boolean decorator) {
                 this.rawMatcher = rawMatcher;
@@ -5502,6 +5585,7 @@ public interface AgentBuilder {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
+                        && decorator == ((Transforming) other).decorator
                         && rawMatcher.equals(((Transforming) other).rawMatcher)
                         && transformer.equals(((Transforming) other).transformer)
                         && Default.this.equals(((Transforming) other).getOuter());
@@ -5510,6 +5594,7 @@ public interface AgentBuilder {
             @Override
             public int hashCode() {
                 int result = rawMatcher.hashCode();
+                result = 31 * result + (decorator ? 1 : 0);
                 result = 31 * result + transformer.hashCode();
                 result = 31 * result + Default.this.hashCode();
                 return result;
@@ -5520,6 +5605,7 @@ public interface AgentBuilder {
                 return "AgentBuilder.Default.Transforming{" +
                         "rawMatcher=" + rawMatcher +
                         ", transformer=" + transformer +
+                        ", decorator=" + decorator +
                         ", agentBuilder=" + Default.this +
                         '}';
             }
