@@ -1,6 +1,7 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
@@ -262,6 +263,57 @@ public class AgentBuilderDefaultApplicationTest {
             Class<?> type = classLoader.loadClass(Foo.class.getName());
             assertThat(type.getDeclaredConstructors().length, is(2));
             assertThat(type.newInstance(), notNullValue(Object.class));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce
+    public void testDecoration() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer())
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer()).asDecorator()
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(Foo.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (FOO + BAR + QUX)));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce
+    public void testDecorationFallThrough() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer()).asDecorator()
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer()).asDecorator()
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(Foo.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (FOO + BAR + QUX)));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce
+    public void testDecorationBlocked() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer()).asDecorator()
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(Foo.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (FOO + BAR)));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
@@ -595,6 +647,38 @@ public class AgentBuilderDefaultApplicationTest {
         @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
             return builder.method(named(methodName)).intercept(FixedValue.value(BAR));
+        }
+    }
+
+    public static class BarAdviceTransformer implements AgentBuilder.Transformer {
+
+        @Override
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+            return builder.visit(Advice.to(BarAdvice.class).on(named(FOO)));
+        }
+    }
+
+    public static class QuxAdviceTransformer implements AgentBuilder.Transformer {
+
+        @Override
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+            return builder.visit(Advice.to(QuxAdvice.class).on(named(FOO)));
+        }
+    }
+
+    private static class BarAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return(readOnly = false) String value) {
+            value += BAR;
+        }
+    }
+
+    private static class QuxAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return(readOnly = false) String value) {
+            value += QUX;
         }
     }
 }
