@@ -511,11 +511,16 @@ public interface AgentBuilder {
         interface Extendable extends AgentBuilder, Identified {
 
             /**
+             * <p>
              * Applies the specified transformation as a decorative transformation. For a decorative transformation, the supplied
              * transformer is prepended to any previous transformation that also matches the instrumented type, i.e. both transformations
              * are supplied. This procedure is repeated until a transformer is reached that matches the instrumented type but is not
              * defined as decorating after which no further transformations are considered. If all matching transformations are declared
              * as decorating, all matching transformers are applied.
+             * </p>
+             * <p>
+             * <b>Note</b>: A decorating transformer is applied <b>after</b> previously registered transformers.
+             * </p>
              *
              * @return A new instance of this agent builder with the specified transformation being applied as a decorator.
              */
@@ -4650,12 +4655,12 @@ public interface AgentBuilder {
                 interface Decoratable extends Resolution {
 
                     /**
-                     * Prepends the supplied transformer to this resolution.
+                     * Appends the supplied transformer to this resolution.
                      *
-                     * @param transformer The transformer to prepend.
-                     * @return A new resolution with the supplied transformer prepended.
+                     * @param transformer The transformer to append to the transformer that is represented bz this instance.
+                     * @return A new resolution with the supplied transformer appended to this transformer.
                      */
-                    Resolution prepend(Transformer transformer);
+                    Resolution append(Transformer transformer);
                 }
 
                 /**
@@ -4898,15 +4903,15 @@ public interface AgentBuilder {
 
                     @Override
                     public Transformation.Resolution prepend(Decoratable resolution) {
-                        return resolution.prepend(transformer);
+                        return resolution.append(transformer);
                     }
 
                     @Override
-                    public Transformation.Resolution prepend(Transformer transformer) {
+                    public Transformation.Resolution append(Transformer transformer) {
                         return new Resolution(typeDescription,
                                 classLoader,
                                 protectionDomain,
-                                new Transformer.Compound(transformer, this.transformer),
+                                new Transformer.Compound(this.transformer, transformer),
                                 decorator);
                     }
 

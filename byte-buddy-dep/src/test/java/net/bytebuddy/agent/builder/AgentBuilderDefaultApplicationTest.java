@@ -274,8 +274,8 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(binaryLocator)
-                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer())
-                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer()).asDecorator()
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer())
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer()).asDecorator()
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Foo.class.getName());
@@ -291,8 +291,8 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(binaryLocator)
-                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer()).asDecorator()
                 .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer()).asDecorator()
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer()).asDecorator()
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Foo.class.getName());
@@ -308,12 +308,12 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(binaryLocator)
-                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer()).asDecorator()
-                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer())
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer()).asDecorator()
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Foo.class.getName());
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (FOO + BAR)));
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (FOO + QUX)));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
