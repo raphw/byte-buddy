@@ -5099,6 +5099,7 @@ public interface AgentBuilder {
                                 return current.asDecoratorOf(resolution);
                             case DECORATOR:
                                 current = current.asDecoratorOf(resolution);
+                                break;
                             case UNDEFINED:
                                 break;
                             default:
