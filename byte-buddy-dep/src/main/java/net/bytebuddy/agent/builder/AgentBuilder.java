@@ -1037,7 +1037,7 @@ public interface AgentBuilder {
             /**
              * Locates a cache provider for a given class loader.
              *
-             * @param classLoader The class loader for which to locate a cache.
+             * @param classLoader The class loader for which to locate a cache. This class loader might be {@code null} to represent the bootstrap loader.
              * @return The cache provider to use.
              */
             protected abstract TypePool.CacheProvider locate(ClassLoader classLoader);
@@ -1089,6 +1089,7 @@ public interface AgentBuilder {
 
                 @Override
                 protected TypePool.CacheProvider locate(ClassLoader classLoader) {
+                    classLoader = classLoader == null ? BootstrapClassLoaderMarker.INSTANCE : classLoader;
                     TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
                     while (cacheProvider == null) {
                         cacheProviders.putIfAbsent(classLoader, new TypePool.CacheProvider.Simple());
@@ -1118,6 +1119,19 @@ public interface AgentBuilder {
                     return "AgentBuilder.BinaryLocator.WithTypePoolCache.Simple{" +
                             "cacheProviders=" + cacheProviders +
                             '}';
+                }
+
+                /**
+                 * A marker for the bootstrap class loader which is represented by {@code null}.
+                 */
+                private static class BootstrapClassLoaderMarker extends ClassLoader {
+
+                    protected static final ClassLoader INSTANCE = new BootstrapClassLoaderMarker();
+
+                    @Override
+                    protected Class<?> loadClass(String name, boolean resolve) {
+                        throw new UnsupportedOperationException("This loader is only a non-null marker and is not supposed to be used");
+                    }
                 }
             }
         }

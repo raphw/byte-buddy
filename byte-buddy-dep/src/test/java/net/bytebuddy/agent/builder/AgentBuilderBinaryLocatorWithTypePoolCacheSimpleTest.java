@@ -1,6 +1,7 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -34,6 +35,14 @@ public class AgentBuilderBinaryLocatorWithTypePoolCacheSimpleTest {
         AgentBuilder.BinaryLocator binaryLocator = new AgentBuilder.BinaryLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
         assertThat(binaryLocator.typePool(classFileLocator, first), is(binaryLocator.typePool(classFileLocator, first)));
         assertThat(binaryLocator.typePool(classFileLocator, first), not(binaryLocator.typePool(classFileLocator, second)));
+    }
+
+    @Test
+    public void testSimpleImplementationBootstrap() throws Exception {
+        ConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new ConcurrentHashMap<ClassLoader, TypePool.CacheProvider>();
+        AgentBuilder.BinaryLocator binaryLocator = new AgentBuilder.BinaryLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
+        assertThat(binaryLocator.typePool(classFileLocator, null), is(binaryLocator.typePool(classFileLocator, null)));
+        assertThat(binaryLocator.typePool(classFileLocator, null), not(binaryLocator.typePool(classFileLocator, second)));
     }
 
     @Test
