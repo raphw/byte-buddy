@@ -1873,6 +1873,16 @@ public interface TypeWriter<T> {
                 void assertHandleInConstantPool();
 
                 /**
+                 * Asserts the capability to invoke a method dynamically.
+                 */
+                void assertInvokeDynamic();
+
+                /**
+                 * Asserts the capability of executing a subroutine.
+                 */
+                void assertSubRoutine();
+
+                /**
                  * Represents the constraint of a class type.
                  */
                 enum ForClass implements Constraint {
@@ -1955,6 +1965,16 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertInvokeDynamic() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertSubRoutine() {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public String toString() {
                         return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClass." + name();
                     }
@@ -2013,6 +2033,16 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void assertHandleInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertInvokeDynamic() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertSubRoutine() {
                         /* do nothing */
                     }
 
@@ -2122,6 +2152,16 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertInvokeDynamic() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertSubRoutine() {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public String toString() {
                         return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForInterface." + name();
                     }
@@ -2220,6 +2260,16 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertInvokeDynamic() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertSubRoutine() {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public String toString() {
                         return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForAnnotation." + name();
                     }
@@ -2312,6 +2362,20 @@ public interface TypeWriter<T> {
                     public void assertHandleInConstantPool() {
                         if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V7)) {
                             throw new IllegalStateException("Cannot write method handle to constant pool for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertInvokeDynamic() {
+                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V7)) {
+                            throw new IllegalStateException("Cannot write invoke dynamic instruction for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertSubRoutine() {
+                        if (!classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)) {
+                            throw new IllegalStateException("Cannot write subroutine for class file version " + classFileVersion);
                         }
                     }
 
@@ -2429,6 +2493,20 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertInvokeDynamic() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertInvokeDynamic();
+                        }
+                    }
+
+                    @Override
+                    public void assertSubRoutine() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertSubRoutine();
+                        }
+                    }
+
+                    @Override
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && constraints.equals(((Compound) other).constraints);
@@ -2527,6 +2605,20 @@ public interface TypeWriter<T> {
                         constraint.assertHandleInConstantPool();
                     }
                     super.visitLdcInsn(constant);
+                }
+
+                @Override
+                public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethod, Object... bootstrapArgument) {
+                    constraint.assertInvokeDynamic();
+                    super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethod, bootstrapArgument);
+                }
+
+                @Override
+                public void visitJumpInsn(int opcode, Label label) {
+                    if (opcode == Opcodes.JSR) {
+                        constraint.assertSubRoutine();
+                    }
+                    super.visitJumpInsn(opcode, label);
                 }
 
                 @Override
