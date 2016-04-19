@@ -4549,6 +4549,8 @@ public interface AgentBuilder {
                  */
                 boolean isResolved();
 
+                Resolution mergeWith(Resolution resolution);
+
                 /**
                  * Transforms a type or returns {@code null} if a type is not to be transformed.
                  *
@@ -4570,6 +4572,13 @@ public interface AgentBuilder {
                              BootstrapInjectionStrategy bootstrapInjectionStrategy,
                              AccessControlContext accessControlContext,
                              Listener listener);
+
+                Resolution decorateBy(Decoratable resolution);
+
+                interface Decoratable extends Resolution {
+
+                    Transformation.Resolution decorateWith(Transformer transformer);
+                }
 
                 /**
                  * A canonical implementation of a non-resolved resolution.
@@ -4600,6 +4609,16 @@ public interface AgentBuilder {
                     @Override
                     public boolean isResolved() {
                         return false;
+                    }
+
+                    @Override
+                    public Resolution mergeWith(Resolution resolution) {
+                        return resolution;
+                    }
+
+                    @Override
+                    public Resolution decorateBy(Decoratable resolution) {
+                        return resolution;
                     }
 
                     @Override
@@ -4681,15 +4700,18 @@ public interface AgentBuilder {
                  */
                 private final Transformer transformer;
 
+                private final boolean decorator;
+
                 /**
                  * Creates a new transformation.
-                 *
-                 * @param rawMatcher  The raw matcher that is represented by this transformation.
+                 *  @param rawMatcher  The raw matcher that is represented by this transformation.
                  * @param transformer The transformer that is represented by this transformation.
+                 * @param decorator
                  */
-                protected Simple(RawMatcher rawMatcher, Transformer transformer) {
+                protected Simple(RawMatcher rawMatcher, Transformer transformer, boolean decorator) {
                     this.rawMatcher = rawMatcher;
                     this.transformer = transformer;
+                    this.decorator = decorator;
                 }
 
                 @Override
@@ -4700,7 +4722,7 @@ public interface AgentBuilder {
                                                          RawMatcher ignoredTypeMatcher) {
                     return !ignoredTypeMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)
                             && rawMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)
-                            ? new Resolution(typeDescription, classLoader, protectionDomain, transformer)
+                            ? new Resolution(typeDescription, classLoader, protectionDomain, transformer, decorator)
                             : new Transformation.Resolution.Unresolved(typeDescription, classLoader);
                 }
 
@@ -4729,7 +4751,7 @@ public interface AgentBuilder {
                 /**
                  * A resolution that performs a type transformation.
                  */
-                protected static class Resolution implements Transformation.Resolution {
+                protected static class Resolution implements Transformation.Resolution.Decoratable {
 
                     /**
                      * A description of the transformed type.
@@ -4751,27 +4773,50 @@ public interface AgentBuilder {
                      */
                     private final Transformer transformer;
 
+                    private final boolean decorator;
+
                     /**
                      * Creates a new active transformation.
-                     *
-                     * @param typeDescription  A description of the transformed type.
+                     *  @param typeDescription  A description of the transformed type.
                      * @param classLoader      The class loader of the transformed type.
                      * @param protectionDomain The protection domain of the transformed type.
                      * @param transformer      The transformer to be applied.
+                     * @param decorator
                      */
                     protected Resolution(TypeDescription typeDescription,
                                          ClassLoader classLoader,
                                          ProtectionDomain protectionDomain,
-                                         Transformer transformer) {
+                                         Transformer transformer,
+                                         boolean decorator) {
                         this.typeDescription = typeDescription;
                         this.classLoader = classLoader;
                         this.protectionDomain = protectionDomain;
                         this.transformer = transformer;
+                        this.decorator = decorator;
                     }
 
                     @Override
                     public boolean isResolved() {
                         return true;
+                    }
+
+                    @Override
+                    public Transformation.Resolution mergeWith(Transformation.Resolution resolution) {
+                        return resolution.decorateBy(this);
+                    }
+
+                    @Override
+                    public Transformation.Resolution decorateWith(Transformer transformer) {
+                        return new Resolution(typeDescription,
+                                classLoader,
+                                protectionDomain,
+                                new Transformer.Compound(transformer, this.transformer),
+                                decorator);
+                    }
+
+                    @Override
+                    public Transformation.Resolution decorateBy(Decoratable resolution) {
+                        return resolution.decorateWith(transformer);
                     }
 
                     @Override
@@ -5399,7 +5444,7 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         ignoredTypeMatcher,
-                        new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer), transformation));
+                        new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
             }
 
             @Override
