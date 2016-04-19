@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. April 2016: version 1.3.15
+
+- Extended the `AgentBuilder` to allow for transformations that apply fall-through semantics, i.e. work as a decorator.
+- Added map-based `BinaryLocator`.
+
 ### 19. April 2016: version 1.3.14
 
 - Only add frames in `Advice` components if class file version is above 1.5.
