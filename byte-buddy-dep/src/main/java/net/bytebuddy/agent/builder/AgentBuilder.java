@@ -52,6 +52,7 @@ import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -1052,6 +1053,62 @@ public interface AgentBuilder {
             @Override
             public int hashCode() {
                 return readerMode.hashCode();
+            }
+
+            /**
+             * An implementation of a binary locator {@link WithTypePoolCache} (note documentation of the linked class) that is based on a
+             * {@link ConcurrentMap}. It is the responsibility of the binary locator's user to avoid the binary locator from leaking memory.
+             */
+            public static class Simple extends WithTypePoolCache {
+
+                /**
+                 * The concurrent map that is used for storing a cache provider per class loader.
+                 */
+                private final ConcurrentMap<? super ClassLoader, TypePool.CacheProvider> cacheProviders;
+
+                /**
+                 * Creates a new binary locator that caches a cache provider per class loader in a concurrent map.
+                 *
+                 * @param readerMode     The reader mode to use for parsing a class file.
+                 * @param cacheProviders The concurrent map that is used for storing a cache provider per class loader.
+                 */
+                public Simple(TypePool.Default.ReaderMode readerMode, ConcurrentMap<? super ClassLoader, TypePool.CacheProvider> cacheProviders) {
+                    super(readerMode);
+                    this.cacheProviders = cacheProviders;
+                }
+
+                @Override
+                protected TypePool.CacheProvider locate(ClassLoader classLoader) {
+                    TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
+                    while (cacheProvider == null) {
+                        cacheProviders.putIfAbsent(classLoader, new TypePool.CacheProvider.Simple());
+                        cacheProvider = cacheProviders.get(classLoader);
+                    }
+                    return cacheProvider;
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    if (!super.equals(object)) return false;
+                    Simple simple = (Simple) object;
+                    return cacheProviders.equals(simple.cacheProviders);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + cacheProviders.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.BinaryLocator.WithTypePoolCache.Simple{" +
+                            "cacheProviders=" + cacheProviders +
+                            '}';
+                }
             }
         }
     }
