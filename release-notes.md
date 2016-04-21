@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. April 2016: version 1.3.16
+
+- Better support for Java 1 to Java 4 by automatically resolving type references from a type pool to `forName` lookups.
+- Better support for dealing with package-private types by doing the same for invisible types.
+- Simplified `MethodHandle` and `MethodType` handling as `JavaInstance`.
+
 ### 19. April 2016: version 1.3.15
 
 - Extended the `AgentBuilder` to allow for transformations that apply fall-through semantics, i.e. work as a decorator.
