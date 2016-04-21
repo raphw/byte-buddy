@@ -213,7 +213,7 @@ public interface AgentBuilder {
      * <p>
      * Matches a type being loaded in order to apply the supplied {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
      * If several matchers positively match a type only the latest registered matcher is considered for transformation.
-     * <p>
+     * </p>
      * <p>
      * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
      * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.

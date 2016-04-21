@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
  * <p>
  * The origin annotation provides some meta information about the source method that is bound to this method where
  * the binding is dependant of the parameter's type:
+ * </p>
  * <ol>
  * <li>If the annotated parameter is of type {@link java.lang.reflect.Method}, {@link java.lang.reflect.Constructor} or
  * {@code java.lang.reflect.Executable}, the parameter is assigned a reference to the method or constructor it
@@ -37,6 +38,7 @@ import java.lang.reflect.Method;
  * <li>If the annotated type is {@code java.lang.invoke.MethodType}, a description of the intercepted method's type
  * is injected. Method type descriptions are only supported for byte code versions starting from Java 7.</li>
  * </ol>
+ * <p>
  * Any other parameter type will cause an {@link java.lang.IllegalStateException}.
  * </p>
  * <p>
