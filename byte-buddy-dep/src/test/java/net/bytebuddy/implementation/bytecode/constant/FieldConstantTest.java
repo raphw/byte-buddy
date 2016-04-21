@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -33,13 +34,16 @@ public class FieldConstantTest {
     private FieldDescription.InDefinedShape fieldDescription, cacheField;
 
     @Mock
-    private TypeDescription declaringType, cacheDeclaringType, cacheFieldType;
+    private TypeDescription declaringType, cacheDeclaringType, cacheFieldType, instrumentedType;
 
     @Mock
     private TypeDescription.Generic genericCacheFieldType;
 
     @Mock
     private MethodVisitor methodVisitor;
+
+    @Mock
+    private ClassFileVersion classFileVersion;
 
     @Mock
     private Implementation.Context implementationContext;
@@ -54,6 +58,7 @@ public class FieldConstantTest {
                 .thenReturn(cacheField);
         when(cacheField.getDeclaringType()).thenReturn(cacheDeclaringType);
         when(cacheField.isStatic()).thenReturn(true);
+        when(declaringType.getName()).thenReturn(BAZ);
         when(cacheDeclaringType.getInternalName()).thenReturn(BAZ);
         when(cacheField.getName()).thenReturn(FOO + BAR);
         when(cacheField.getType()).thenReturn(genericCacheFieldType);
@@ -61,10 +66,14 @@ public class FieldConstantTest {
         when(genericCacheFieldType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(cacheField.getInternalName()).thenReturn(FOO + BAR);
         when(cacheField.getDescriptor()).thenReturn(QUX + BAZ);
+        when(implementationContext.getClassFileVersion()).thenReturn(classFileVersion);
+        when(implementationContext.getInstrumentedType()).thenReturn(instrumentedType);
     }
 
     @Test
-    public void testConstantCreation() throws Exception {
+    public void testConstantCreationModernVisible() throws Exception {
+        when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)).thenReturn(true);
+        when(declaringType.isVisibleTo(instrumentedType)).thenReturn(true);
         StackManipulation stackManipulation = new FieldConstant(fieldDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
@@ -78,7 +87,54 @@ public class FieldConstantTest {
                 "(Ljava/lang/String;)Ljava/lang/reflect/Field;",
                 false);
         verifyNoMoreInteractions(methodVisitor);
-        verifyZeroInteractions(implementationContext);
+    }
+
+    @Test
+    public void testConstantCreationModernInvisible() throws Exception {
+        when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)).thenReturn(true);
+        when(declaringType.isVisibleTo(instrumentedType)).thenReturn(false);
+        StackManipulation stackManipulation = new FieldConstant(fieldDescription);
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(2));
+        verify(methodVisitor).visitLdcInsn(BAZ);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC,
+                Type.getInternalName(Class.class),
+                "forName",
+                Type.getMethodDescriptor(Type.getType(Class.class), Type.getType(String.class)),
+                false);
+        verify(methodVisitor).visitLdcInsn(BAR);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                "java/lang/Class",
+                "getDeclaredField",
+                "(Ljava/lang/String;)Ljava/lang/reflect/Field;",
+                false);
+        verifyNoMoreInteractions(methodVisitor);
+    }
+
+    @Test
+    public void testConstantCreationLegacy() throws Exception {
+        when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)).thenReturn(false);
+        when(declaringType.isVisibleTo(instrumentedType)).thenReturn(true);
+        StackManipulation stackManipulation = new FieldConstant(fieldDescription);
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
+        assertThat(size.getSizeImpact(), is(1));
+        assertThat(size.getMaximalSize(), is(2));
+        verify(methodVisitor).visitLdcInsn(BAZ);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC,
+                Type.getInternalName(Class.class),
+                "forName",
+                Type.getMethodDescriptor(Type.getType(Class.class), Type.getType(String.class)),
+                false);
+        verify(methodVisitor).visitLdcInsn(BAR);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                "java/lang/Class",
+                "getDeclaredField",
+                "(Ljava/lang/String;)Ljava/lang/reflect/Field;",
+                false);
+        verifyNoMoreInteractions(methodVisitor);
     }
 
     @Test

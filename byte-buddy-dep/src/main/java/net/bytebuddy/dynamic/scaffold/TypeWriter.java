@@ -3014,6 +3014,7 @@ public interface TypeWriter<T> {
                                     TypeDescription.OBJECT :
                                     instrumentedType.getSuperClass().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
+                    implementationContext.setClassFileVersion(ClassFileVersion.ofMinorMajor(classFileVersionNumber));
                     typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                     if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
@@ -3496,6 +3497,7 @@ public interface TypeWriter<T> {
                                 ? TypeDescription.OBJECT
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
+                implementationContext.setClassFileVersion(classFileVersion);
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);

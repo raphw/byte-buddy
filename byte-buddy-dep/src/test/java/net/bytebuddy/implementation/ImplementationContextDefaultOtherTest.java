@@ -63,6 +63,23 @@ public class ImplementationContextDefaultOtherTest {
                 mock(AnnotationValueFilter.Factory.class));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testPrematureUse() throws Exception {
+        new Implementation.Context.Default(mock(TypeDescription.class),
+                mock(AuxiliaryType.NamingStrategy.class),
+                mock(TypeInitializer.class),
+                mock(ClassFileVersion.class)).getClassFileVersion();
+    }
+
+    @Test
+    public void testInstrumentationGetter() throws Exception {
+        TypeDescription instrumentedType = mock(TypeDescription.class);
+        assertThat(new Implementation.Context.Default(instrumentedType,
+                mock(AuxiliaryType.NamingStrategy.class),
+                mock(TypeInitializer.class),
+                mock(ClassFileVersion.class)).getInstrumentedType(), is(instrumentedType));
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyBasic();

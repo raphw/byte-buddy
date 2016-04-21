@@ -3,25 +3,26 @@ package net.bytebuddy.implementation.bytecode.constant;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.utility.JavaInstance;
 import org.objectweb.asm.MethodVisitor;
 
 /**
- * Represents a {@link java.lang.String} value that is stored in a type's constant pool.
+ * A constant representing a {@link JavaInstance}.
  */
-public class TextConstant implements StackManipulation {
+public class JavaInstanceConstant implements StackManipulation {
 
     /**
-     * The text value to load onto the operand stack.
+     * The instance to load onto the operand stack.
      */
-    private final String text;
+    private final JavaInstance javaInstance;
 
     /**
-     * Creates a new stack manipulation to load a {@code String} constant onto the operand stack.
+     * Creates a constant pool value representing a {@link JavaInstance}.
      *
-     * @param text The value of the {@code String} to be loaded.
+     * @param javaInstance The instance to load onto the operand stack.
      */
-    public TextConstant(String text) {
-        this.text = text;
+    public JavaInstanceConstant(JavaInstance javaInstance) {
+        this.javaInstance = javaInstance;
     }
 
     @Override
@@ -31,23 +32,23 @@ public class TextConstant implements StackManipulation {
 
     @Override
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-        methodVisitor.visitLdcInsn(text);
+        methodVisitor.visitLdcInsn(javaInstance.asConstantPoolValue());
         return StackSize.SINGLE.toIncreasingSize();
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && text.equals(((TextConstant) other).text);
+                && javaInstance.equals(((JavaInstanceConstant) other).javaInstance);
     }
 
     @Override
     public int hashCode() {
-        return text.hashCode();
+        return javaInstance.hashCode();
     }
 
     @Override
     public String toString() {
-        return "TextConstant{text='" + text + '\'' + '}';
+        return "JavaInstanceConstant{javaInstance=" + javaInstance + '}';
     }
 }

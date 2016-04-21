@@ -108,6 +108,16 @@ public class ImplementationContextDisabledTest {
                 mock(AnnotationValueFilter.Factory.class));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testPrematureUse() throws Exception {
+        new Implementation.Context.Disabled(instrumentedType).getClassFileVersion();
+    }
+
+    @Test
+    public void testInstrumentationGetter() throws Exception {
+        assertThat(new Implementation.Context.Disabled(instrumentedType).getInstrumentedType(), is(instrumentedType));
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Implementation.Context.Disabled.class).apply();

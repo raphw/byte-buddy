@@ -9,6 +9,8 @@ import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static org.mockito.Mockito.mock;
+
 public class JavaInstanceMethodHandleDispatcherTest {
 
     @Test(expected = IllegalStateException.class)
@@ -19,6 +21,11 @@ public class JavaInstanceMethodHandleDispatcherTest {
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmPunlicLookup() throws Exception {
         JavaInstance.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.publicLookup();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testLegacyVmLookupType() throws Exception {
+        JavaInstance.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.lookupType(mock(Object.class));
     }
 
     @Test

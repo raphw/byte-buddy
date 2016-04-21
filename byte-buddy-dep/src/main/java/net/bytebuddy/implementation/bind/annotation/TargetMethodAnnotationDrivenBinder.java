@@ -197,6 +197,10 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * instances or method handles and method types for classes of a version at least of Java 7. The latter instances can also be
          * expressed as unloaded {@link JavaInstance} representations.
          * </p>
+         * <p>
+         * <b>Important</b>: When supplying a method handle or a method type, all types that are implied must be visible to the instrumented
+         * type or an {@link IllegalAccessException} will be thrown at runtime.
+         * </p>
          *
          * @param <S> The bound annotation's type.
          */
@@ -248,16 +252,16 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     stackManipulation = ClassConstant.of((TypeDescription) value);
                     suppliedType = TypeDescription.CLASS;
                 } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
-                    stackManipulation = MethodHandleConstant.of(JavaInstance.MethodHandle.ofLoaded(value));
+                    stackManipulation = JavaInstance.MethodHandle.ofLoaded(value).asStackManipulation();
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
                 } else if (value instanceof JavaInstance.MethodHandle) {
-                    stackManipulation = MethodHandleConstant.of((JavaInstance.MethodHandle) value);
+                    stackManipulation = new JavaInstanceConstant((JavaInstance.MethodHandle) value);
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
                 } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
-                    stackManipulation = MethodTypeConstant.of(JavaInstance.MethodType.ofLoaded(value));
+                    stackManipulation = new JavaInstanceConstant(JavaInstance.MethodType.ofLoaded(value));
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
                 } else if (value instanceof JavaInstance.MethodType) {
-                    stackManipulation = MethodTypeConstant.of((JavaInstance.MethodType) value);
+                    stackManipulation = new JavaInstanceConstant((JavaInstance.MethodType) value);
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
                 } else {
                     throw new IllegalStateException("Not able to save in class's constant pool: " + value);

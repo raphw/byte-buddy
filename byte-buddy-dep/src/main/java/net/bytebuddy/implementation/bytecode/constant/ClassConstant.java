@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -160,7 +161,12 @@ public enum ClassConstant implements StackManipulation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            methodVisitor.visitLdcInsn(Type.getType(typeDescription.getDescriptor()));
+            if (implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V5) && typeDescription.isVisibleTo(implementationContext.getInstrumentedType())) {
+                methodVisitor.visitLdcInsn(Type.getType(typeDescription.getDescriptor()));
+            } else {
+                methodVisitor.visitLdcInsn(typeDescription.getName());
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
+            }
             return SIZE;
         }
 

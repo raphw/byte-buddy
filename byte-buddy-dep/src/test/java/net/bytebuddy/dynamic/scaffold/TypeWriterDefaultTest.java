@@ -377,21 +377,11 @@ public class TypeWriterDefaultTest {
                 .make();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testTypeInLegacyConstantPool() throws Exception {
-        new ByteBuddy(ClassFileVersion.JAVA_V4)
-                .subclass(Object.class)
-                .defineMethod(FOO, Object.class)
-                .intercept(FixedValue.value(Object.class))
-                .make();
-    }
-
     @Test
     public void testTypeInLegacyConstantPoolRemapped() throws Exception {
         Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .with(TypeValidation.DISABLED)
                 .subclass(Object.class)
-                .visit(TypeConstantAdjustment.INSTANCE)
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(Object.class))
                 .make()
@@ -405,7 +395,6 @@ public class TypeWriterDefaultTest {
         Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .with(TypeValidation.DISABLED)
                 .subclass(Object.class)
-                .visit(TypeConstantAdjustment.INSTANCE)
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(Object[].class))
                 .make()
@@ -419,7 +408,6 @@ public class TypeWriterDefaultTest {
         Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .with(TypeValidation.DISABLED)
                 .subclass(Object.class)
-                .visit(TypeConstantAdjustment.INSTANCE)
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(int.class))
                 .make()
@@ -427,6 +415,8 @@ public class TypeWriterDefaultTest {
                 .getLoaded();
         assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) int.class));
     }
+
+    // TODO: Add tests for type adjustment with pre-compiling legacy type
 
     @Test(expected = IllegalStateException.class)
     public void testMethodTypeInLegacyConstantPool() throws Exception {

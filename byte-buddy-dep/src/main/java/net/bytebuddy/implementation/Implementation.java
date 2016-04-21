@@ -407,10 +407,32 @@ public interface Implementation extends InstrumentedType.Prepareable {
         FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType);
 
         /**
+         * Returns the instrumented type of the current implementation. The instrumented type is exposed with the intend of allowing optimal
+         * byte code generation and not for implementing checks or changing the behavior of a {@link StackManipulation}.
+         *
+         * @return The instrumented type of the current implementation.
+         */
+        TypeDescription getInstrumentedType();
+
+        /**
+         * Returns the class file version of the current implementation.
+         *
+         * @return The class file version of the current implementation.
+         */
+        ClassFileVersion getClassFileVersion();
+
+        /**
          * Represents an extractable view of an {@link Implementation.Context} which
          * allows the retrieval of any registered auxiliary type.
          */
         interface ExtractableView extends Context {
+
+            /**
+             * Sets the class file version this implementation context should represent.
+             *
+             * @param classFileVersion The class file version to represent.
+             */
+            void setClassFileVersion(ClassFileVersion classFileVersion);
 
             /**
              * Determines if this implementation context allows for the retention of a static type initializer.
@@ -496,6 +518,49 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     }
                 }
             }
+
+            /**
+             * An abstract base implementation of an extractable view of an implementation context.
+             */
+            abstract class AbstractBase implements ExtractableView {
+
+                /**
+                 * The instrumented type.
+                 */
+                protected final TypeDescription instrumentedType;
+
+                /**
+                 * The class file version of the instrumented type.
+                 */
+                private ClassFileVersion classFileVersion;
+
+                /**
+                 * Create a new extractable view.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 */
+                protected AbstractBase(TypeDescription instrumentedType) {
+                    this.instrumentedType = instrumentedType;
+                }
+
+                @Override
+                public void setClassFileVersion(ClassFileVersion classFileVersion) {
+                    this.classFileVersion = classFileVersion;
+                }
+
+                @Override
+                public TypeDescription getInstrumentedType() {
+                    return instrumentedType;
+                }
+
+                @Override
+                public ClassFileVersion getClassFileVersion() {
+                    if (classFileVersion == null) {
+                        throw new IllegalStateException("Cannot read class file version before it was set");
+                    }
+                    return classFileVersion;
+                }
+            }
         }
 
         /**
@@ -523,12 +588,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * redefining a class when it is not allowed to add methods to a class what is an implicit requirement when copying the static
          * initializer block into another method.
          */
-        class Disabled implements ExtractableView {
-
-            /**
-             * The instrumented type.
-             */
-            private final TypeDescription instrumentedType;
+        class Disabled extends ExtractableView.AbstractBase {
 
             /**
              * Creates a new disabled implementation context.
@@ -536,7 +596,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param instrumentedType The instrumented type.
              */
             protected Disabled(TypeDescription instrumentedType) {
-                this.instrumentedType = instrumentedType;
+                super(instrumentedType);
             }
 
             @Override
@@ -624,7 +684,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * A default implementation of an {@link Implementation.Context.ExtractableView}
          * which serves as its own {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType.MethodAccessorFactory}.
          */
-        class Default implements ExtractableView, AuxiliaryType.MethodAccessorFactory {
+        class Default extends ExtractableView.AbstractBase implements AuxiliaryType.MethodAccessorFactory {
 
             /**
              * The name suffix to be appended to an accessor method.
@@ -635,11 +695,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * The name prefix to be prepended to a field storing a cached value.
              */
             public static final String FIELD_CACHE_PREFIX = "cachedValue";
-
-            /**
-             * The instrumented type that this instance represents.
-             */
-            private final TypeDescription instrumentedType;
 
             /**
              * The type initializer of the created instrumented type.
@@ -714,7 +769,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                               AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                               TypeInitializer typeInitializer,
                               ClassFileVersion classFileVersion) {
-                this.instrumentedType = instrumentedType;
+                super(instrumentedType);
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
                 this.classFileVersion = classFileVersion;

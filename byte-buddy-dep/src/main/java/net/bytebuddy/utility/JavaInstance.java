@@ -5,8 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.constant.MethodHandleConstant;
-import net.bytebuddy.implementation.bytecode.constant.MethodTypeConstant;
+import net.bytebuddy.implementation.bytecode.constant.JavaInstanceConstant;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -273,7 +272,7 @@ public interface JavaInstance {
 
         @Override
         public StackManipulation asStackManipulation() {
-            return MethodTypeConstant.of(this);
+            return new JavaInstanceConstant(this);
         }
 
         @Override
@@ -611,7 +610,7 @@ public interface JavaInstance {
          * @param methodDescription The method ro represent.
          * @return A method handle representing the given method.
          */
-        public static MethodHandle of(MethodDescription methodDescription) {
+        public static MethodHandle of(MethodDescription.InDefinedShape methodDescription) {
             return new MethodHandle(HandleType.of(methodDescription),
                     methodDescription.getDeclaringType().asErasure(),
                     methodDescription.getInternalName(),
@@ -637,7 +636,7 @@ public interface JavaInstance {
          * @param typeDescription   The type on which the method is to be invoked on as a special method invocation.
          * @return A method handle representing the given method as special method invocation.
          */
-        public static MethodHandle ofSpecial(MethodDescription methodDescription, TypeDescription typeDescription) {
+        public static MethodHandle ofSpecial(MethodDescription.InDefinedShape methodDescription, TypeDescription typeDescription) {
             if (!methodDescription.isSpecializableFor(typeDescription)) {
                 throw new IllegalArgumentException("Cannot specialize " + methodDescription + " for " + typeDescription);
             }
@@ -664,7 +663,7 @@ public interface JavaInstance {
          * @param fieldDescription The field to represent.
          * @return A method handle for a setter of the given field.
          */
-        public static MethodHandle ofGetter(FieldDescription fieldDescription) {
+        public static MethodHandle ofGetter(FieldDescription.InDefinedShape fieldDescription) {
             return new MethodHandle(HandleType.ofGetter(fieldDescription),
                     fieldDescription.getDeclaringType().asErasure(),
                     fieldDescription.getInternalName(),
@@ -688,7 +687,7 @@ public interface JavaInstance {
          * @param fieldDescription The field to represent.
          * @return A method handle for a getter of the given field.
          */
-        public static MethodHandle ofSetter(FieldDescription fieldDescription) {
+        public static MethodHandle ofSetter(FieldDescription.InDefinedShape fieldDescription) {
             return new MethodHandle(HandleType.ofSetter(fieldDescription),
                     fieldDescription.getDeclaringType().asErasure(),
                     fieldDescription.getInternalName(),
@@ -708,7 +707,7 @@ public interface JavaInstance {
 
         @Override
         public StackManipulation asStackManipulation() {
-            return MethodHandleConstant.of(this);
+            return new JavaInstanceConstant(this);
         }
 
         @Override
@@ -1305,7 +1304,7 @@ public interface JavaInstance {
 
                 @Override
                 public Class<?> lookupType(Object lookup) {
-                    throw new IllegalStateException(); // TODO
+                    throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
                 }
 
                 @Override
@@ -1385,7 +1384,7 @@ public interface JavaInstance {
              * @param methodDescription The method for which a handle type should be found.
              * @return The handle type for the given method.
              */
-            protected static HandleType of(MethodDescription methodDescription) {
+            protected static HandleType of(MethodDescription.InDefinedShape methodDescription) {
                 if (methodDescription.isStatic()) {
                     return INVOKE_STATIC;
                 } else if (methodDescription.isPrivate()) {
@@ -1420,7 +1419,7 @@ public interface JavaInstance {
              * @param methodDescription The method for which a handle type should be found.
              * @return The handle type for the given method.
              */
-            protected static HandleType ofSpecial(MethodDescription methodDescription) {
+            protected static HandleType ofSpecial(MethodDescription.InDefinedShape methodDescription) {
                 if (methodDescription.isStatic() || methodDescription.isAbstract()) {
                     throw new IllegalArgumentException("Cannot invoke " + methodDescription + " via invokespecial");
                 }
@@ -1435,7 +1434,7 @@ public interface JavaInstance {
              * @param fieldDescription The field for which to create a getter handle.
              * @return The corresponding handle type.
              */
-            protected static HandleType ofGetter(FieldDescription fieldDescription) {
+            protected static HandleType ofGetter(FieldDescription.InDefinedShape fieldDescription) {
                 return fieldDescription.isStatic()
                         ? GET_STATIC_FIELD
                         : GET_FIELD;
@@ -1447,7 +1446,7 @@ public interface JavaInstance {
              * @param fieldDescription The field for which to create a setter handle.
              * @return The corresponding handle type.
              */
-            protected static HandleType ofSetter(FieldDescription fieldDescription) {
+            protected static HandleType ofSetter(FieldDescription.InDefinedShape fieldDescription) {
                 return fieldDescription.isStatic()
                         ? PUT_STATIC_FIELD
                         : PUT_FIELD;

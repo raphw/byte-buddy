@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -127,6 +129,8 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @JavaVersionRule.Enforce(7)
     public void testMethodHandleBinding() throws Exception {
         when(genericTargetType.asErasure()).thenReturn(new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load()));
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
@@ -139,7 +143,8 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeBinding() throws Exception {
         when(genericTargetType.asErasure()).thenReturn(new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load()));
-        when(methodDescription.getDescriptor()).thenReturn(FOO);
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));

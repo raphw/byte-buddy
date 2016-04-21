@@ -8,6 +8,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
+import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 
 import java.lang.annotation.*;
@@ -15,6 +16,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 /**
+ * <p>
  * The origin annotation provides some meta information about the source method that is bound to this method where
  * the binding is dependant of the parameter's type:
  * <ol>
@@ -36,6 +38,11 @@ import java.lang.reflect.Method;
  * is injected. Method type descriptions are only supported for byte code versions starting from Java 7.</li>
  * </ol>
  * Any other parameter type will cause an {@link java.lang.IllegalStateException}.
+ * </p>
+ * <p>
+ * <b>Important:</b> A method handle or method type reference can only be used if the referenced method's types are all visible
+ * to the instrumented type or an {@link IllegalAccessError} will be thrown at runtime.
+ * </p>
  *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
@@ -104,9 +111,9 @@ public @interface Origin {
             } else if (parameterType.represents(int.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(IntegerConstant.forValue(source.getModifiers()));
             } else if (parameterType.equals(JavaType.METHOD_HANDLE.getTypeStub())) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodHandleConstant.of(source.asDefined()));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(JavaInstance.MethodHandle.of(source.asDefined()).asStackManipulation());
             } else if (parameterType.equals(JavaType.METHOD_TYPE.getTypeStub())) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(MethodTypeConstant.of(source.asDefined()));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(JavaInstance.MethodType.of(source.asDefined()).asStackManipulation());
             } else {
                 throw new IllegalStateException("The " + target + " method's " + target.getIndex() +
                         " parameter is annotated with a Origin annotation with an argument not representing a Class," +

@@ -165,7 +165,7 @@ public class JavaInstanceMethodHandleTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testStaticMethodNotSpecial() throws Exception {
-        MethodDescription methodDescription = mock(MethodDescription.class);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(methodDescription.isStatic()).thenReturn(true);
         when(methodDescription.isSpecializableFor(typeDescription)).thenReturn(true);
@@ -174,7 +174,7 @@ public class JavaInstanceMethodHandleTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testAbstractMethodNotSpecial() throws Exception {
-        MethodDescription methodDescription = mock(MethodDescription.class);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(methodDescription.isAbstract()).thenReturn(true);
         when(methodDescription.isSpecializableFor(typeDescription)).thenReturn(true);
@@ -183,7 +183,7 @@ public class JavaInstanceMethodHandleTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testMethodNotSpecializable() throws Exception {
-        MethodDescription methodDescription = mock(MethodDescription.class);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(methodDescription.isSpecializableFor(typeDescription)).thenReturn(false);
         JavaInstance.MethodHandle.ofSpecial(methodDescription, typeDescription);

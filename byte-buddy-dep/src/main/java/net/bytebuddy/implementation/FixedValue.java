@@ -57,6 +57,10 @@ public abstract class FixedValue implements Implementation {
      * When a value is stored in the class's constant pool, its identity is lost. If an object's identity is important, the
      * {@link FixedValue#reference(Object)} method should be used instead.
      * </p>
+     * <p>
+     * <b>Important</b>: When supplying a method handle or a method type, all types that are implied must be visible to the instrumented
+     * type or an {@link IllegalAccessException} will be thrown at runtime.
+     * </p>
      *
      * @param fixedValue The fixed value to return from the method.
      * @return An implementation for the given {@code fixedValue}.
@@ -114,12 +118,12 @@ public abstract class FixedValue implements Implementation {
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
         } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-            return new ForPoolValue(MethodHandleConstant.of(JavaInstance.MethodHandle.ofLoaded(fixedValue)),
+            return new ForPoolValue(new JavaInstanceConstant(JavaInstance.MethodHandle.ofLoaded(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
         } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-            return new ForPoolValue(MethodTypeConstant.of(JavaInstance.MethodType.ofLoaded(fixedValue)),
+            return new ForPoolValue(new JavaInstanceConstant(JavaInstance.MethodType.ofLoaded(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);

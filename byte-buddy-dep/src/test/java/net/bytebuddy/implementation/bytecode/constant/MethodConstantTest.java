@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
@@ -38,7 +39,10 @@ public class MethodConstantTest {
     private MethodDescription.InDefinedShape methodDescription;
 
     @Mock
-    private TypeDescription declaringType, parameterType, fieldType;
+    private TypeDescription declaringType, parameterType, fieldType, instrumentedType;
+
+    @Mock
+    private ClassFileVersion classFileVersion;
 
     @Mock
     private TypeDescription.Generic genericFieldType;
@@ -82,6 +86,8 @@ public class MethodConstantTest {
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(fieldDescription.getDescriptor()).thenReturn(QUX);
         when(fieldDescription.asDefined()).thenReturn(fieldDescription);
+        when(implementationContext.getClassFileVersion()).thenReturn(classFileVersion);
+        when(implementationContext.getInstrumentedType()).thenReturn(instrumentedType);
     }
 
     @Test
@@ -94,7 +100,6 @@ public class MethodConstantTest {
                 "getDeclaredMethod",
                 "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;",
                 false);
-        verifyZeroInteractions(implementationContext);
     }
 
     @Test
@@ -120,7 +125,6 @@ public class MethodConstantTest {
                 "getDeclaredConstructor",
                 "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;",
                 false);
-        verifyZeroInteractions(implementationContext);
     }
 
     @Test

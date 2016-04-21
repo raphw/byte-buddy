@@ -76,6 +76,13 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * older class file format version.
  * </p>
  * <p>
+ * <b>Note</b>: For the purpose of inlining, Java 5 and Java 6 byte code can be seen as the best candidate for advice methods. These versions do
+ * no longer allow subroutines, neither do they already allow invokedynamic instructions or method handles. This way, Java 5 and Java 6 byte
+ * code is compatible to both older and newer versions. One exception for backwards-incompatible byte code is the possibility to load type references
+ * from the constant pool onto the operand stack. These instructions can however easily be transformerd for classes compiled to Java 4 and older
+ * by registering a {@link TypeConstantAdjustment} <b>before</b> the advice visitor.
+ * </p>
+ * <p>
  * <b>Note</b>: It is not possible to trigger break points in inlined advice methods as the debugging information of the inlined advice is not
  * preserved. It is not possible in Java to reference more than one source file per class what makes translating such debugging information
  * impossible. It is however possible to set break points in advice methods when invoking the original advice target. This allows debugging
