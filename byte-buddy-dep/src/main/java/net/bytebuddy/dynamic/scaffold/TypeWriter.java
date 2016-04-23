@@ -1714,9 +1714,6 @@ public interface TypeWriter<T> {
             @Override
             public FieldVisitor visitField(int modifiers, String name, String descriptor, String signature, Object defaultValue) {
                 if (defaultValue != null) {
-                    if ((modifiers & Opcodes.ACC_STATIC) == 0) {
-                        throw new IllegalStateException("Cannot define a default value for non-static field " + name);
-                    }
                     Class<?> type;
                     switch (descriptor.charAt(0)) {
                         case 'Z':

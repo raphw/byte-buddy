@@ -951,8 +951,9 @@ public interface DynamicType {
                  * fields, the field's value is set to {@code 0} for {@code false} or {@code 1} for {@code true}.
                  * </p>
                  * <p>
-                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
-                 * within a constructor.
+                 * <b>Important</b>: A default value in a Java class file defines a field's value prior to the class's initialization. This value
+                 * is only visible to code if the field is declared {@code static}. A default value can also be set for non-static fields where
+                 * the value is not visible to code. The Java compiler only defines such values for {@code final} fields.
                  * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
@@ -969,8 +970,9 @@ public interface DynamicType {
                  * values of {@code 0} and {@code 1} representing {@code false} and {@code true}.
                  * </p>
                  * <p>
-                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
-                 * within a constructor.
+                 * <b>Important</b>: A default value in a Java class file defines a field's value prior to the class's initialization. This value
+                 * is only visible to code if the field is declared {@code static}. A default value can also be set for non-static fields where
+                 * the value is not visible to code. The Java compiler only defines such values for {@code final} fields.
                  * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
@@ -984,8 +986,9 @@ public interface DynamicType {
                  * Defines the supplied {@code long} value as a default value of the previously defined or matched field.
                  * </p>
                  * <p>
-                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
-                 * within a constructor.
+                 * <b>Important</b>: A default value in a Java class file defines a field's value prior to the class's initialization. This value
+                 * is only visible to code if the field is declared {@code static}. A default value can also be set for non-static fields where
+                 * the value is not visible to code. The Java compiler only defines such values for {@code final} fields.
                  * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
@@ -999,8 +1002,9 @@ public interface DynamicType {
                  * Defines the supplied {@code float} value as a default value of the previously defined or matched field.
                  * </p>
                  * <p>
-                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
-                 * within a constructor.
+                 * <b>Important</b>: A default value in a Java class file defines a field's value prior to the class's initialization. This value
+                 * is only visible to code if the field is declared {@code static}. A default value can also be set for non-static fields where
+                 * the value is not visible to code. The Java compiler only defines such values for {@code final} fields.
                  * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
@@ -1014,8 +1018,10 @@ public interface DynamicType {
                  * Defines the supplied {@code double} value as a default value of the previously defined or matched field.
                  * </p>
                  * <p>
-                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
-                 * within a constructor.
+                 * <p>
+                 * <b>Important</b>: A default value in a Java class file defines a field's value prior to the class's initialization. This value
+                 * is only visible to code if the field is declared {@code static}. A default value can also be set for non-static fields where
+                 * the value is not visible to code. The Java compiler only defines such values for {@code final} fields.
                  * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
@@ -1029,8 +1035,9 @@ public interface DynamicType {
                  * Defines the supplied {@link String} value as a default value of the previously defined or matched field.
                  * </p>
                  * <p>
-                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
-                 * within a constructor.
+                 * <b>Important</b>: A default value in a Java class file defines a field's value prior to the class's initialization. This value
+                 * is only visible to code if the field is declared {@code static}. A default value can also be set for non-static fields where
+                 * the value is not visible to code. The Java compiler only defines such values for {@code final} fields.
                  * </p>
                  *
                  * @param value The value to define as a default value of the defined field.

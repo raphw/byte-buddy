@@ -137,15 +137,6 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testNonStaticFieldWithConstantValue() throws Exception {
-        new ByteBuddy()
-                .subclass(Object.class)
-                .defineField(FOO, String.class)
-                .value(FOO)
-                .make();
-    }
-
-    @Test(expected = IllegalStateException.class)
     public void testStaticFieldWithIncompatibleConstantValue() throws Exception {
         new ByteBuddy()
                 .subclass(Object.class)
