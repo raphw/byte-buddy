@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 23. April 2016: version 1.3.17
+
+- Removed overvalidation of default values for non-static fields.
+
 ### 21. April 2016: version 1.3.16
 
 - Better support for Java 1 to Java 4 by automatically resolving type references from a type pool to `forName` lookups.
