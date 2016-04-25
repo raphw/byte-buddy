@@ -210,8 +210,14 @@ public final class ElementMatchers {
     }
 
     /**
+     * <p>
      * Creates a matcher that matches any of the given objects by the {@link java.lang.Object#equals(Object)} method.
      * None of the values must be {@code null}.
+     * </p>
+     * <p>
+     * <b>Important</b>: This method cannot be used interchangably with any of its overloaded versions which also apply a type
+     * conversion.
+     * </p>
      *
      * @param value The input values to be compared against.
      * @param <T>   The type of the matched object.
@@ -222,8 +228,14 @@ public final class ElementMatchers {
     }
 
     /**
+     * <p>
      * Creates a matcher that matches any of the given objects by the {@link java.lang.Object#equals(Object)} method.
      * None of the values must be {@code null}.
+     * </p>
+     * <p>
+     * <b>Important</b>: This method cannot be used interchangably with any of the overloaded versions of {@link ElementMatchers#anyOf(Object...)}
+     * which also apply a type conversion.
+     * </p>
      *
      * @param values The input values to be compared against.
      * @param <T>    The type of the matched object.
