@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 25. April 2016: version 1.3.18
+
+- The Owner type of a parameterized type created by a `TypePool` is no longer parameterized for a static inner type.
+- The receiver type of a constructor is no longer considered parameterized for a static inner type.
+
 ### 23. April 2016: version 1.3.17
 
 - Removed overvalidation of default values for non-static fields.
