@@ -6943,12 +6943,15 @@ public interface TypePool {
                         return Generic.UNDEFINED;
                     } else if (isConstructor()) {
                         TypeDescription declaringType = getDeclaringType(), enclosingDeclaringType = declaringType.getEnclosingType();
-                        TypeDescription receiverType = enclosingDeclaringType == null
-                                ? declaringType
-                                : enclosingDeclaringType;
-                        return receiverType.isGenericDeclaration()
-                                ? new LazyParameterizedReceiverType(receiverType)
-                                : new LazyNonGenericReceiverType(receiverType);
+                        if (enclosingDeclaringType == null) {
+                            return declaringType.isGenericDeclaration()
+                                    ? new LazyParameterizedReceiverType(declaringType)
+                                    : new LazyNonGenericReceiverType(declaringType);
+                        } else {
+                            return !declaringType.isStatic() && declaringType.isGenericDeclaration()
+                                    ? new LazyParameterizedReceiverType(enclosingDeclaringType)
+                                    : new LazyNonGenericReceiverType(enclosingDeclaringType);
+                        }
                     } else {
                         return LazyTypeDescription.this.isGenericDeclaration()
                                 ? new LazyParameterizedReceiverType()

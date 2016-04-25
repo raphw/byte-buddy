@@ -242,7 +242,9 @@ public interface MethodDescription extends TypeVariableSource,
 
     /**
      * Returns this methods receiver type. A receiver type is undefined for {@code static} methods
-     * where {@code null} is returned.
+     * where {@code null} is returned. Other than a receiver type that is provided by the Java reflection
+     * API, Byte Buddy is capable of extracting annotations on type parameters of receiver types when
+     * directly accessing a class file. Therefore, a receiver type might be parameterized.
      *
      * @return This method's (annotated) receiver type.
      */
@@ -301,9 +303,13 @@ public interface MethodDescription extends TypeVariableSource,
                     return TypeDescription.Generic.UNDEFINED;
                 } else if (isConstructor()) {
                     TypeDescription declaringType = getDeclaringType(), enclosingDeclaringType = getDeclaringType().getEnclosingType();
-                    return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(enclosingDeclaringType == null
-                            ? declaringType
-                            : enclosingDeclaringType);
+                    if (enclosingDeclaringType == null) {
+                        return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(declaringType);
+                    } else {
+                        return declaringType.isStatic()
+                                ? enclosingDeclaringType.asGenericType()
+                                : TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(enclosingDeclaringType);
+                    }
                 } else {
                     return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(getDeclaringType());
                 }

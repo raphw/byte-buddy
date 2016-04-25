@@ -431,11 +431,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
                 .getOnly()
                 .getReceiverType();
         assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
-        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(receiverType.asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC)), is(true));
         assertThat(receiverType.getDeclaredAnnotations().size(), is(0));
-        assertThat(receiverType.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(receiverType.getTypeArguments().getOnly().getSymbol(), is(T));
-        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(0));
     }
 }
