@@ -37,6 +37,11 @@ public class LoadedTypeInitializerForStaticFieldTest {
         assertThat(Qux.foo, is(object));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testNonAssignableField() throws Exception {
+        new LoadedTypeInitializer.ForStaticField(FOO, new Object()).onLoad(FooBar.class);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(LoadedTypeInitializer.ForStaticField.class).apply();
@@ -64,5 +69,11 @@ public class LoadedTypeInitializerForStaticFieldTest {
     private static class Baz {
 
         String foo, bar;
+    }
+
+    @SuppressWarnings("unused")
+    public static class FooBar {
+
+        public static String foo;
     }
 }

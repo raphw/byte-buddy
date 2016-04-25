@@ -102,7 +102,13 @@ public interface LoadedTypeInitializer {
                 if (!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers())) {
                     AccessController.doPrivileged(AccessAction.of(field));
                 }
-                field.set(STATIC_FIELD, value);
+                try {
+                    field.set(STATIC_FIELD, value);
+                } catch (IllegalArgumentException exception) {
+                    throw new IllegalStateException("cannot assign runtime type "
+                            + value.getClass() + " (" + value.getClass().getClassLoader() + ")"
+                            + " to " + field.getType() + " (" + field.getType().getClassLoader() + ")", exception);
+                }
             } catch (IllegalAccessException exception) {
                 throw new IllegalArgumentException("Cannot access " + fieldName + " from " + type, exception);
             } catch (NoSuchFieldException exception) {
