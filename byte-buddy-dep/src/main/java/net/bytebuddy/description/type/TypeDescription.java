@@ -377,7 +377,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          * <p>
          * Returns the owner type of this type. A type's owner type describes a nested type's declaring type.
          * If it exists, the returned type can be a non-generic or parameterized type. If a class has no
-         * declaring class, {@code null} is returned.
+         * declaring type, {@code null} is returned.
          * </p>
          * <p>
          * An owner type is only well-defined for parameterized types ({@link Sort#PARAMETERIZED}),

@@ -7088,9 +7088,13 @@ public interface TypePool {
                     @Override
                     public Generic getOwnerType() {
                         TypeDescription declaringType = typeDescription.getDeclaringType();
-                        return declaringType == null ? UNDEFINED : declaringType.isGenericDeclaration()
-                                ? new LazyParameterizedReceiverType(declaringType)
-                                : new LazyNonGenericReceiverType(declaringType);
+                        if (declaringType == null) {
+                            return UNDEFINED;
+                        } else {
+                            return !typeDescription.isStatic() && declaringType.isGenericDeclaration()
+                                    ? new LazyParameterizedReceiverType(declaringType)
+                                    : new LazyNonGenericReceiverType(declaringType);
+                        }
                     }
 
                     @Override

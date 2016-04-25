@@ -10,6 +10,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends AbstractTypeDescriptionGenericTest {
@@ -212,6 +213,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
         assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(0));
+        assertThat(receiverType.getOwnerType(), nullValue(TypeDescription.Generic.class));
     }
 
     @Test
@@ -227,6 +229,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(receiverType.represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
         assertThat(receiverType.getDeclaredAnnotations().size(), is(0));
+        assertThat(receiverType.getOwnerType(), nullValue(TypeDescription.Generic.class));
     }
 
     @Test
@@ -246,6 +249,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
         assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(1));
+        assertThat(receiverType.getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.getOwnerType().represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
     }
 
     @Test
@@ -265,6 +270,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
         assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(2));
+        assertThat(receiverType.getOwnerType(), nullValue(TypeDescription.Generic.class));
     }
 
     @Test
@@ -284,6 +290,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
         assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(3));
+        assertThat(receiverType.getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.getOwnerType().represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
     }
 
     @Test
@@ -299,8 +307,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(receiverType.represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
         assertThat(receiverType.getDeclaredAnnotations().size(), is(0));
+        assertThat(receiverType.getOwnerType(), nullValue(TypeDescription.Generic.class));
     }
-
 
     @Test
     @SuppressWarnings("unchecked")
@@ -324,6 +332,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(5));
+        assertThat(receiverType.getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.getOwnerType().represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
     }
 
     @Test
@@ -338,7 +348,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
         assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(receiverType.asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
-        assertThat(receiverType.getDeclaredAnnotations().size(), is(0));;
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(0));
+        assertThat(receiverType.getOwnerType(), nullValue(TypeDescription.Generic.class));
     }
 
     @Test
@@ -373,6 +384,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(receiverType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(7));
+        assertThat(receiverType.getOwnerType().getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.getOwnerType().getOwnerType().represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
     }
 
     @Test
@@ -397,6 +410,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(11));
+        assertThat(receiverType.getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.getOwnerType().represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
     }
 
     @Test
@@ -419,6 +434,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(13));
+        assertThat(receiverType.getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.getOwnerType().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC)), is(true));
     }
 
     @Test
@@ -434,5 +451,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(receiverType.asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC)), is(true));
         assertThat(receiverType.getDeclaredAnnotations().size(), is(0));
+        assertThat(receiverType.getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.getOwnerType().represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
     }
 }
