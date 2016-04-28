@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.security.AccessController;
+import java.security.ProtectionDomain;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 
@@ -257,10 +258,10 @@ public class ClassReloadingStrategyTest {
 
     @Test
     public void testTransformerHandlesNullValue() throws Exception {
-        assertThat(new ClassReloadingStrategy.Strategy.ClassRedefinitionTransformer(Collections.<Class<?>, ClassDefinition>emptyMap()).transform(null,
-                null,
-                null,
-                null,
+        assertThat(new ClassReloadingStrategy.Strategy.ClassRedefinitionTransformer(Collections.<Class<?>, ClassDefinition>emptyMap()).transform(mock(ClassLoader.class),
+                FOO,
+                Object.class,
+                mock(ProtectionDomain.class),
                 new byte[0]), nullValue(byte[].class));
     }
 

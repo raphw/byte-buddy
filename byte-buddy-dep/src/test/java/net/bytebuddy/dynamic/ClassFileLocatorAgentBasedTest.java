@@ -89,10 +89,10 @@ public class ClassFileLocatorAgentBasedTest {
 
     @Test
     public void testExtractingTransformerHandlesNullValue() throws Exception {
-        assertThat(new ClassFileLocator.AgentBased.ExtractionClassFileTransformer(mock(ClassLoader.class), FOO).transform(null,
-                null,
-                null,
-                null,
+        assertThat(new ClassFileLocator.AgentBased.ExtractionClassFileTransformer(mock(ClassLoader.class), FOO).transform(mock(ClassLoader.class),
+                FOO,
+                Object.class,
+                mock(ProtectionDomain.class),
                 new byte[0]), nullValue(byte[].class));
     }
 

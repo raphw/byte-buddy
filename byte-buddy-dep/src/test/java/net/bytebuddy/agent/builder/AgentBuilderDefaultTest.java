@@ -38,6 +38,8 @@ import static org.mockito.Mockito.*;
 
 public class AgentBuilderDefaultTest {
 
+    private static final String FOO = "foo";
+
     private static final byte[] QUX = new byte[]{1, 2, 3}, BAZ = new byte[]{4, 5, 6};
 
     private static final Class<?> REDEFINED = Foo.class, AUXILIARY = Bar.class;
@@ -945,7 +947,7 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), dynamicType);
-        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());;
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
@@ -1016,10 +1018,10 @@ public class AgentBuilderDefaultTest {
                 mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
                 mock(AgentBuilder.RawMatcher.class),
                 mock(AgentBuilder.Default.Transformation.class))
-                .transform(null,
-                        null,
-                        null,
-                        null,
+                .transform(mock(ClassLoader.class),
+                        FOO,
+                        Object.class,
+                        mock(ProtectionDomain.class),
                         new byte[0]), nullValue(byte[].class));
     }
 
