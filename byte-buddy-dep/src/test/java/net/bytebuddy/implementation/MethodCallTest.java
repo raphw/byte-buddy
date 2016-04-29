@@ -614,7 +614,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(MethodCall.WithoutSpecifiedTarget.class).apply();
         ObjectPropertyAssertion.of(MethodCall.Appender.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForExplicitMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForInterceptedMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForInstrumentedMethod.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForContextualInvocation.class).apply();
         final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(String.class, Object.class).iterator();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
@@ -635,18 +635,24 @@ public class MethodCallTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForMethodParameter.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForNullConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForThisReference.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForOwnType.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForThisReference.Factory.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstrumentedType.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstrumentedType.Factory.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStaticField.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStaticField.Factory.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstanceField.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstanceField.Factory.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForExistingField.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForExistingField.Factory.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForBooleanConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForByteConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForCharacterConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForDoubleConstant.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStaticField.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstanceField.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForExistingField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForFloatConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForIntegerConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForLongConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.Factory.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForShortConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForTextConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForClassConstant.class).apply();

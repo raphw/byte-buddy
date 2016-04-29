@@ -178,6 +178,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 String packageName = name.substring(0, packageIndex);
                 PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(ByteArrayClassLoader.this, packageName, name);
                 if (definition.isDefined()) {
+                    @SuppressWarnings("deprecation")
                     Package definedPackage = getPackage(packageName);
                     if (definedPackage == null) {
                         definePackage(packageName,

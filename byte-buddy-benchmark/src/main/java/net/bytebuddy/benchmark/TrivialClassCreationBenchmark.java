@@ -129,6 +129,7 @@ public class TrivialClassCreationBenchmark {
      * @return The created instance, in order to avoid JIT removal.
      */
     @Benchmark
+    @SuppressWarnings("deprecation")
     public Class<?> benchmarkJdkProxy() {
         return Proxy.getProxyClass(newClassLoader(), new Class<?>[urlLength]);
     }
