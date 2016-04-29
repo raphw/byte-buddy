@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. April 2016: version 1.3.19
+
+- Added convenience method to `MethodCall` to add all arguments of the instrumented method.
+- Added `optional` attribute to `Advice.This`.
+
 ### 25. April 2016: version 1.3.18
 
 - The Owner type of a parameterized type created by a `TypePool` is no longer parameterized for a static inner type.
