@@ -254,9 +254,24 @@ public class MethodCallTest extends AbstractImplementationTest {
     }
 
     @Test
-    public void testWithParameter() throws Exception {
+    public void testWithArgument() throws Exception {
         DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = implement(MethodCallWithExplicitArgument.class,
                 MethodCall.invokeSuper().withArgument(0));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        MethodCallWithExplicitArgument instance = loaded.getLoaded().newInstance();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithExplicitArgument.class)));
+        assertThat(instance, instanceOf(MethodCallWithExplicitArgument.class));
+        assertThat(instance.foo(BAR), is(BAR));
+    }
+
+    @Test
+    public void testWithAllArguments() throws Exception {
+        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = implement(MethodCallWithExplicitArgument.class,
+                MethodCall.invokeSuper().withAllArguments());
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
@@ -653,6 +668,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForLongConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.Factory.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForShortConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForTextConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForClassConstant.class).apply();

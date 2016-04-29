@@ -366,6 +366,21 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
+     * Adds all arguments of the instrumented method as arguments to the invoked method to this method call.
+     *
+     * @return A method call that hands all arguments arguments of the instrumented method to the invoked method.
+     */
+    public MethodCall withAllArguments() {
+        return new MethodCall(methodLocator,
+                targetHandler,
+                CompoundList.of(this.argumentLoaders, ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.INSTANCE),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                typing);
+    }
+
+    /**
      * Assigns the {@code this} reference to the next parameter.
      *
      * @return This method call where the next parameter is a assigned a reference to the {@code this} reference
@@ -1182,6 +1197,36 @@ public class MethodCall implements Implementation.Composable {
                         "index=" + index +
                         ", instrumentedMethod=" + instrumentedMethod +
                         '}';
+            }
+
+            /**
+             * A factory for argument loaders that supplies all arguments of the instrumented method as arguments.
+             */
+            protected enum OfInstrumentedMethod implements ArgumentLoader.Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
+                    for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                        argumentLoaders.add(new ForMethodParameter(parameterDescription.getIndex(), instrumentedMethod));
+                    }
+                    return argumentLoaders;
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodCall.ArgumentLoader.ForMethodParameter.OfInstrumentedMethod." + name();
+                }
             }
 
             /**
