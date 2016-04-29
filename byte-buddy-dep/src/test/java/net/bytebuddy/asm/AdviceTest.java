@@ -434,6 +434,32 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAdviceWithOptionalThisReferenceNonOptional() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OptionalThisReferenceAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceWithOptionalThisReferenceOptional() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OptionalThisReferenceAdvice.class).on(named(BAZ)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAZ).invoke(null), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
     public void testAdviceWithEntranceValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -785,6 +811,17 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(Box.class)
                 .visit(Advice.to(ThisSubstitutionAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) BAR));
+    }
+
+    @Test
+    public void testThisValueSubstitutionOptional() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Box.class)
+                .visit(Advice.to(ThisOptionalSubstitutionAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -1973,6 +2010,20 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class OptionalThisReferenceAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.This(optional = true) Sample thiz) {
+            Sample.enter++;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.This(optional = true) Sample thiz) {
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class EntranceValueAdvice {
 
         @Advice.OnMethodEnter
@@ -2136,6 +2187,16 @@ public class AdviceTest {
         @Advice.OnMethodEnter
         @SuppressWarnings("all")
         private static void enter(@Advice.This(readOnly = false) Box box) {
+            box = new Box(BAR);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ThisOptionalSubstitutionAdvice {
+
+        @Advice.OnMethodEnter
+        @SuppressWarnings("all")
+        private static void enter(@Advice.This(readOnly = false, optional = true) Box box) {
             box = new Box(BAR);
         }
     }

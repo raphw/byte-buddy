@@ -3234,6 +3234,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final boolean readOnly;
 
                 /**
+                 * {@code true} if the parameter should be bound to {@code null} if the instrumented method is static.
+                 */
+                private final boolean optional;
+
+                /**
                  * The type that the advice method expects for the {@code this} reference.
                  */
                 private final TypeDescription targetType;
@@ -3242,21 +3247,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Creates a new offset mapping for a {@code this} reference.
                  *
                  * @param readOnly   Determines if the parameter is to be treated as read-only.
+                 * @param optional   {@code true} if the parameter should be bound to {@code null} if the instrumented method is static.
                  * @param targetType The type that the advice method expects for the {@code this} reference.
                  */
-                protected ForThisReference(boolean readOnly, TypeDescription targetType) {
+                protected ForThisReference(boolean readOnly, boolean optional, TypeDescription targetType) {
                     this.readOnly = readOnly;
+                    this.optional = optional;
                     this.targetType = targetType;
                 }
 
                 @Override
                 public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                    if (instrumentedMethod.isStatic()) {
-                        throw new IllegalStateException("Cannot map this reference for static method " + instrumentedMethod);
-                    } else if (!readOnly && !instrumentedMethod.getDeclaringType().equals(targetType)) {
+                    if (!readOnly && !instrumentedMethod.getDeclaringType().equals(targetType)) {
                         throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not equal to read-only " + targetType);
                     } else if (readOnly && !instrumentedMethod.getDeclaringType().isAssignableTo(targetType)) {
                         throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not assignable to " + targetType);
+                    } else if (instrumentedMethod.isStatic() && optional) {
+                        return readOnly
+                                ? Target.ForNullConstant.READ_ONLY
+                                : Target.ForNullConstant.READ_WRITE;
+                    } else if (instrumentedMethod.isStatic() && !optional) {
+                        throw new IllegalStateException("Cannot map this reference for static method " + instrumentedMethod);
                     } else if (!context.isInitialized()) {
                         throw new IllegalStateException("Cannot access this reference before calling constructor: " + instrumentedMethod);
                     }
@@ -3271,12 +3282,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (object == null || getClass() != object.getClass()) return false;
                     ForThisReference that = (ForThisReference) object;
                     return readOnly == that.readOnly
+                            && optional == that.optional
                             && targetType.equals(that.targetType);
                 }
 
                 @Override
                 public int hashCode() {
                     int result = (readOnly ? 1 : 0);
+                    result = 31 * result + (readOnly ? 1 : 0);
                     result = 31 * result + targetType.hashCode();
                     return result;
                 }
@@ -3285,6 +3298,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public String toString() {
                     return "Advice.Dispatcher.OffsetMapping.ForThisReference{" +
                             "readOnly=" + readOnly +
+                            ", optional=" + optional +
                             ", targetType=" + targetType +
                             '}';
                 }
@@ -3326,7 +3340,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot write to this reference for " + parameterDescription + " in read-only context");
                         } else {
-                            return new ForThisReference(annotation.loadSilent().readOnly(), parameterDescription.getType().asErasure());
+                            return new ForThisReference(annotation.loadSilent().readOnly(),
+                                    annotation.loadSilent().optional(),
+                                    parameterDescription.getType().asErasure());
                         }
                     }
 
@@ -6881,6 +6897,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
+
+        /**
+         * Determines if the parameter should be assigned {@code null} if the instrumented method is static.
+         *
+         * @return {@code true} if the value assignment is optional.
+         */
+        boolean optional() default false;
     }
 
     /**
