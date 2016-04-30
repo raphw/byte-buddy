@@ -355,11 +355,11 @@ public class InstrumentedTypeDefaultTest {
     public void testEquals() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         TypeDescription other = mock(TypeDescription.class);
-        when(other.getInternalName()).thenReturn(instrumentedType.getInternalName());
+        when(other.getName()).thenReturn(instrumentedType.getName());
         when(other.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(other.asErasure()).thenReturn(other);
         assertThat(instrumentedType, is(other));
-        verify(other, atLeast(1)).getInternalName();
+        verify(other, atLeast(1)).getName();
     }
 
     @Test

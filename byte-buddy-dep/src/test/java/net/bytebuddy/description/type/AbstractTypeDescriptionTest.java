@@ -222,7 +222,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         TypeDescription equalFirst = mock(TypeDescription.class);
         when(equalFirst.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(equalFirst.asErasure()).thenReturn(equalFirst);
-        when(equalFirst.getInternalName()).thenReturn(Type.getInternalName(SampleClass.class));
+        when(equalFirst.getName()).thenReturn(SampleClass.class.getName());
         assertThat(describe(SampleClass.class), is(equalFirst));
         assertThat(describe(SampleClass.class), not(describe(SampleInterface.class)));
         assertThat(describe(SampleClass.class), not((TypeDescription) new TypeDescription.ForLoadedType(SampleInterface.class)));
