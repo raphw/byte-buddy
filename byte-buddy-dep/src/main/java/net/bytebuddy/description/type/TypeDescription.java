@@ -7194,7 +7194,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         public boolean equals(Object other) {
             return other == this || other instanceof TypeDefinition
                     && ((TypeDefinition) other).getSort().isNonGeneric()
-                    && getInternalName().equals(((TypeDefinition) other).asErasure().getInternalName());
+                    && getName().equals(((TypeDefinition) other).asErasure().getName());
         }
 
         @Override
