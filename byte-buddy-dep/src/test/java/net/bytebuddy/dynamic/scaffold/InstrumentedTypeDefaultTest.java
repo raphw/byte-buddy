@@ -348,7 +348,7 @@ public class InstrumentedTypeDefaultTest {
     @Test
     public void testHashCode() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
-        assertThat(instrumentedType.hashCode(), is(instrumentedType.getInternalName().hashCode()));
+        assertThat(instrumentedType.hashCode(), is(instrumentedType.getName().hashCode()));
     }
 
     @Test

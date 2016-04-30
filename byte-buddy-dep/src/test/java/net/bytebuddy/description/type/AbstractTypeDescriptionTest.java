@@ -204,15 +204,15 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testHashCode() throws Exception {
-        assertThat(describe(SampleClass.class).hashCode(), is(Type.getInternalName(SampleClass.class).hashCode()));
-        assertThat(describe(SampleInterface.class).hashCode(), is(Type.getInternalName(SampleInterface.class).hashCode()));
-        assertThat(describe(SampleAnnotation.class).hashCode(), is(Type.getInternalName(SampleAnnotation.class).hashCode()));
+        assertThat(describe(SampleClass.class).hashCode(), is(SampleClass.class.getName().hashCode()));
+        assertThat(describe(SampleInterface.class).hashCode(), is(SampleInterface.class.getName().hashCode()));
+        assertThat(describe(SampleAnnotation.class).hashCode(), is(SampleAnnotation.class.getName().hashCode()));
         assertThat(describe(SampleClass.class).hashCode(), is(describe(SampleClass.class).hashCode()));
         assertThat(describe(SampleClass.class).hashCode(), not(describe(SampleInterface.class).hashCode()));
         assertThat(describe(SampleClass.class).hashCode(), not(describe(SampleAnnotation.class).hashCode()));
         assertThat(describe(Object[].class).hashCode(), is(describe(Object[].class).hashCode()));
         assertThat(describe(Object[].class).hashCode(), not(describe(Object.class).hashCode()));
-        assertThat(describe(void.class).hashCode(), is(Type.getInternalName(void.class).hashCode()));
+        assertThat(describe(void.class).hashCode(), is(void.class.getName().hashCode()));
     }
 
     @Test

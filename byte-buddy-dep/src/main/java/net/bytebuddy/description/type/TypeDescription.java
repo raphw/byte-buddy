@@ -7199,7 +7199,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public int hashCode() {
-            return getInternalName().hashCode();
+            return getName().hashCode();
         }
 
         @Override
