@@ -3893,7 +3893,7 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
-                    new RawMatcher.ForElementMatcherPair(isSynthetic(), none()),
+                    new RawMatcher.ForElementMatcherPair(isSynthetic(), any()),
                     Transformation.Ignored.INSTANCE);
         }
 
