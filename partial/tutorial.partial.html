@@ -1015,9 +1015,9 @@ String toString = new ByteBuddy()
 <p>
     The line we added to our code contains two instructions in Byte Buddy's domain specific language. The first
     instruction is <code>method</code> which allows us to select any number of methods that we want to override.
-    This selection is applied by handing over a <code>MethodMatcher</code> which serves as a predicate to decide
+    This selection is applied by handing over a <code>ElementMatcher</code> which serves as a predicate to decide
     for each overridable method if it should be overriden or not. Byte Buddy comes with a lot of predefined method
-    matchers which are collected in the <code>MethodMatchers</code> class. Normally, you would import this class
+    matchers which are collected in the <code>ElementMatchers</code> class. Normally, you would import this class
     statically such that the resulting code reads more naturally. Such a static import was also assumed for the
     above example where we used the <code>named</code> method matcher which selects methods by their exact names.
     Note that the predefined method matchers are composable. This way, we could have described the method selection
@@ -1656,8 +1656,8 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
         to any of the instance methods of the <code>Target</code> class. Note that this includes methods that
         are defined anywhere in the instance's class hierarchy, including the methods that are defined in the
         <code>Object</code> class. You might want to restrict the range of candidate methods what is possible by
-        applying a filter to a method delegation by calling <code>filter(MethodMatcher)</code> on any
-        <code>MethodDelegation</code>. The <code>MethodMatcher</code> type is the same that was used before for
+        applying a filter to a method delegation by calling <code>filter(ElementMatcher)</code> on any
+        <code>MethodDelegation</code>. The <code>ElementMatcher</code> type is the same that was used before for
         selecting source methods within Byte Buddy's domain specific language. The instance which is the target of the
         method delegation is stored in a static field. Similarly to the definition of fixed values, this requires the
         definition of a <code>TypeInitializer</code>. Instead of storing a delegation in a static field, you can
