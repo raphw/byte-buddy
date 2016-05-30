@@ -11,10 +11,14 @@ import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import static net.bytebuddy.matcher.ElementMatchers.failSafe;
 import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -38,13 +42,15 @@ public class MultipleParentClassLoaderTest {
 
     @Before
     public void setUp() throws Exception {
-        doReturn(Foo.class).when(first).loadClass(FOO);
-        doReturn(BarFirst.class).when(first).loadClass(BAR);
-        when(first.loadClass(QUX)).thenThrow(new ClassNotFoundException());
-        when(first.loadClass(BAZ)).thenThrow(new ClassNotFoundException());
-        doReturn(BarSecond.class).when(second).loadClass(BAR);
-        doReturn(Qux.class).when(second).loadClass(QUX);
-        when(second.loadClass(BAZ)).thenThrow(new ClassNotFoundException());
+        Method loadClass = ClassLoader.class.getDeclaredMethod("loadClass", String.class, boolean.class);
+        loadClass.setAccessible(true);
+        when(loadClass.invoke(first, FOO, false)).thenReturn(Foo.class);
+        when(loadClass.invoke(first, BAR, false)).thenReturn(BarFirst.class);
+        when(loadClass.invoke(first, QUX, false)).thenThrow(new ClassNotFoundException());
+        when(loadClass.invoke(first, BAZ, false)).thenThrow(new ClassNotFoundException());
+        when(loadClass.invoke(second, BAR, false)).thenReturn(BarSecond.class);
+        when(loadClass.invoke(second, QUX, false)).thenReturn(Qux.class);
+        when(loadClass.invoke(second, BAZ, false)).thenThrow(new ClassNotFoundException());
         fooUrl = new URL(SCHEME + FOO);
         barFirstUrl = new URL(SCHEME + BAR);
         barSecondUrl = new URL(SCHEME + BAZ);
@@ -80,11 +86,13 @@ public class MultipleParentClassLoaderTest {
         assertThat(classLoader.loadClass(FOO), CoreMatchers.<Class<?>>is(Foo.class));
         assertThat(classLoader.loadClass(BAR), CoreMatchers.<Class<?>>is(BarFirst.class));
         assertThat(classLoader.loadClass(QUX), CoreMatchers.<Class<?>>is(Qux.class));
-        verify(first).loadClass(FOO);
-        verify(first).loadClass(BAR);
-        verify(first).loadClass(QUX);
+        Method loadClass = ClassLoader.class.getDeclaredMethod("loadClass", String.class, boolean.class);
+        loadClass.setAccessible(true);
+        loadClass.invoke(verify(first), FOO, false);
+        loadClass.invoke(verify(first), BAR, false);
+        loadClass.invoke(verify(first), QUX, false);
         verifyNoMoreInteractions(first);
-        verify(second).loadClass(QUX);
+        loadClass.invoke(verify(second), QUX, false);
         verifyNoMoreInteractions(second);
     }
 
@@ -141,9 +149,23 @@ public class MultipleParentClassLoaderTest {
         enumeration.nextElement();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testInactiveDispatcher() throws Exception {
+        MultipleParentClassLoader.Dispatcher dispatcher = new MultipleParentClassLoader.Dispatcher.Erroneous(new Exception());
+        dispatcher.loadClass(mock(ClassLoader.class), FOO, true);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MultipleParentClassLoader.class).applyBasic();
+        final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
+        ObjectPropertyAssertion.of(MultipleParentClassLoader.Dispatcher.Active.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+            @Override
+            public Method create() {
+                return iterator.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(MultipleParentClassLoader.Dispatcher.Erroneous.class).apply();
         ObjectPropertyAssertion.of(MultipleParentClassLoader.CompoundEnumeration.class).applyBasic();
         ObjectPropertyAssertion.of(MultipleParentClassLoader.Builder.class).apply();
         ObjectPropertyAssertion.of(MultipleParentClassLoader.Builder.ClassLoaderCreationAction.class).apply();
