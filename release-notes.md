@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 30. May 2016: version 1.3.20
+
+- Fixed `MultipleParentClassLoader` to support usage as being a parent itself.
+- Fixed default ignore matcher for `AgentBuilder` to ignore synthetic types.
+
 ### 29. April 2016: version 1.3.19
 
 - Added convenience method to `MethodCall` to add all arguments of the instrumented method.
