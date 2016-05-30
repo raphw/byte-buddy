@@ -173,11 +173,19 @@ public interface ByteCodeAppender {
         /**
          * Creates a new simple byte code appender which represents the given stack manipulation.
          *
-         * @param stackManipulation The stack manipulations to apply for this byte code appender in their application
-         *                          order.
+         * @param stackManipulation The stack manipulations to apply for this byte code appender in their application order.
          */
         public Simple(StackManipulation... stackManipulation) {
-            this.stackManipulation = new StackManipulation.Compound(stackManipulation);
+            this(Arrays.asList(stackManipulation));
+        }
+
+        /**
+         * Creates a new simple byte code appender which represents the given stack manipulation.
+         *
+         * @param stackManipulations The stack manipulations to apply for this byte code appender in their application order.
+         */
+        public Simple(List<? extends StackManipulation> stackManipulations) {
+            this.stackManipulation = new StackManipulation.Compound(stackManipulations);
         }
 
         @Override

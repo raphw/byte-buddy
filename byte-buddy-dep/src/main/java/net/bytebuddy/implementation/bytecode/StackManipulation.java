@@ -177,7 +177,7 @@ public interface StackManipulation {
         /**
          * The stack manipulations this compound operation represents in their application order.
          */
-        private final List<StackManipulation> stackManipulations;
+        private final List<? extends StackManipulation> stackManipulations;
 
         /**
          * Creates a new compound stack manipulation.
@@ -193,7 +193,7 @@ public interface StackManipulation {
          *
          * @param stackManipulations The stack manipulations to be composed in the order of their composition.
          */
-        public Compound(List<StackManipulation> stackManipulations) {
+        public Compound(List<? extends StackManipulation> stackManipulations) {
             this.stackManipulations = stackManipulations;
         }
 
