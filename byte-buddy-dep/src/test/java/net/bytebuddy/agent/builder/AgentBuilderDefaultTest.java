@@ -690,10 +690,6 @@ public class AgentBuilderDefaultTest {
     public void testSuccessfulWithRedefinitionMatched() throws Exception {
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
-        ClassFileLocator.Resolution resolution = mock(ClassFileLocator.Resolution.class);
-        when(resolution.isResolved()).thenReturn(true);
-        when(resolution.resolve()).thenReturn(QUX);
-        when(classFileLocator.locate(REDEFINED.getName())).thenReturn(resolution);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -716,8 +712,6 @@ public class AgentBuilderDefaultTest {
         verify(rawMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(rawMatcher);
         verifyZeroInteractions(dispatcher);
-        verify(resolution).resolve();
-        verifyNoMoreInteractions(resolution);
     }
 
     @Test(expected = IllegalArgumentException.class)
