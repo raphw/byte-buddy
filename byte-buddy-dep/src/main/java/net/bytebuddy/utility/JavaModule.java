@@ -4,8 +4,11 @@ import net.bytebuddy.description.NamedElement;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
-public class JavaModule implements NamedElement.WithOptionalName {
+public class JavaModule implements NamedElement.WithOptionalName, PrivilegedAction<ClassLoader> {
 
     public static JavaModule UNDEFINED = null;
 
@@ -16,6 +19,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         try {
             Class<?> module = Class.forName("java.lang.reflect.Module");
             dispatcher = new Dispatcher.Enabled(Class.class.getDeclaredMethod("getModule"),
+                    module.getDeclaredMethod("getClassLoader"),
                     module.getDeclaredMethod("isNamed"),
                     module.getDeclaredMethod("getName"));
         } catch (RuntimeException exception) {
@@ -75,6 +79,15 @@ public class JavaModule implements NamedElement.WithOptionalName {
         return module.toString();
     }
 
+    public ClassLoader getClassLoader(AccessControlContext accessControlContext) {
+        return AccessController.doPrivileged(this, accessControlContext);
+    }
+
+    @Override
+    public ClassLoader run() {
+        return DISPATCHER.getClassLoader(module);
+    }
+
     protected interface Dispatcher {
 
         JavaModule moduleOf(Class<?> type);
@@ -83,16 +96,21 @@ public class JavaModule implements NamedElement.WithOptionalName {
 
         String getName(Object module);
 
+        ClassLoader getClassLoader(Object module);
+
         class Enabled implements Dispatcher {
 
             private final Method getModule;
+
+            private final Method getClassLoader;
 
             private final Method isNamed;
 
             private final Method getName;
 
-            protected Enabled(Method getModule, Method isNamed, Method getName) {
+            protected Enabled(Method getModule, Method getClassLoader, Method isNamed, Method getName) {
                 this.getModule = getModule;
+                this.getClassLoader = getClassLoader;
                 this.isNamed = isNamed;
                 this.getName = getName;
             }
@@ -109,13 +127,24 @@ public class JavaModule implements NamedElement.WithOptionalName {
             }
 
             @Override
+            public ClassLoader getClassLoader(Object module) {
+                try {
+                    return (ClassLoader) getClassLoader.invoke(module);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access " + getClassLoader, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot invoke " + getClassLoader, exception.getCause());
+                }
+            }
+
+            @Override
             public boolean isNamed(Object module) {
                 try {
                     return (Boolean) isNamed.invoke(module);
                 } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot access " + getModule, exception);
+                    throw new IllegalStateException("Cannot access " + isNamed, exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke " + getModule, exception.getCause());
+                    throw new IllegalStateException("Cannot invoke " + isNamed, exception.getCause());
                 }
             }
 
@@ -124,9 +153,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 try {
                     return (String) getName.invoke(module);
                 } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot access " + getModule, exception);
+                    throw new IllegalStateException("Cannot access " + getName, exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke " + getModule, exception.getCause());
+                    throw new IllegalStateException("Cannot invoke " + getName, exception.getCause());
                 }
             }
         }
@@ -138,6 +167,11 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public JavaModule moduleOf(Class<?> type) {
                 return UNDEFINED;
+            }
+
+            @Override
+            public ClassLoader getClassLoader(Object module) {
+                throw new IllegalStateException("Current VM does not support modules");
             }
 
             @Override
