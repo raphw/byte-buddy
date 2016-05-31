@@ -1342,23 +1342,23 @@ public interface AgentBuilder {
 
             @Override
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
-                printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName());
+                printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName() + "[" + classLoader + ":" + module + "]");
             }
 
             @Override
             public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-                printStream.println(PREFIX + " IGNORE " + typeDescription.getName());
+                printStream.println(PREFIX + " IGNORE " + typeDescription.getName() + "[" + classLoader + ":" + module + "]");
             }
 
             @Override
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
-                printStream.println(PREFIX + " ERROR " + typeName);
+                printStream.println(PREFIX + " ERROR " + typeName + "[" + classLoader + ":" + module + "]");
                 throwable.printStackTrace(printStream);
             }
 
             @Override
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-                printStream.println(PREFIX + " COMPLETE " + typeName);
+                printStream.println(PREFIX + " COMPLETE " + typeName + "[" + classLoader + ":" + module + "]");
             }
 
             @Override
