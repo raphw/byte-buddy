@@ -85,7 +85,7 @@ public class TypePoolDefaultLazyDeclarationContextTest {
     @SuppressWarnings("unchecked")
     public void testDeclaredInMethodGetMethodIsNull() throws Exception {
         MethodDescription methodDescription = mock(MethodDescription.class);
-        when(methodDescription.getSourceCodeName()).thenReturn(BAR);
+        when(methodDescription.getActualName()).thenReturn(BAR);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
         TypeDescription typeDescription = mock(TypeDescription.class);
         TypePool typePool = mock(TypePool.class);

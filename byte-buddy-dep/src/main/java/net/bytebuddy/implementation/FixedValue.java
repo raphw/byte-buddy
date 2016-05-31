@@ -181,7 +181,7 @@ public abstract class FixedValue implements Implementation {
      */
     public static AssignerConfigurable value(JavaConstant fixedValue) {
         return new ForPoolValue(fixedValue.asStackManipulation(),
-                fixedValue.getInstanceType(),
+                fixedValue.getType(),
                 Assigner.DEFAULT,
                 Assigner.Typing.STATIC);
     }

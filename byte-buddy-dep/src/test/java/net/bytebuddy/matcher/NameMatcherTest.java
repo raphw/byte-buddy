@@ -26,7 +26,7 @@ public class NameMatcherTest extends AbstractElementMatcherTest<NameMatcher<?>> 
 
     @Before
     public void setUp() throws Exception {
-        when(namedElement.getSourceCodeName()).thenReturn(FOO);
+        when(namedElement.getActualName()).thenReturn(FOO);
     }
 
     @Test

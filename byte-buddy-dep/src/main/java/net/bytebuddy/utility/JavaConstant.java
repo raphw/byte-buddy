@@ -46,7 +46,7 @@ public interface JavaConstant {
      *
      * @return A description of the type of the represented instance or at least a stub.
      */
-    TypeDescription getInstanceType();
+    TypeDescription getType();
 
     /**
      * Represents a {@code java.lang.invoke.MethodType} object.
@@ -276,7 +276,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public TypeDescription getInstanceType() {
+        public TypeDescription getType() {
             return JavaType.METHOD_TYPE.getTypeStub();
         }
 
@@ -711,7 +711,7 @@ public interface JavaConstant {
         }
 
         @Override
-        public TypeDescription getInstanceType() {
+        public TypeDescription getType() {
             return JavaType.METHOD_HANDLE.getTypeStub();
         }
 

@@ -372,7 +372,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public String getSourceCodeName() {
+        public String getActualName() {
             return isMethod()
                     ? getName()
                     : EMPTY_NAME;
@@ -666,8 +666,8 @@ public interface MethodDescription extends TypeVariableSource,
                 stringBuilder.append(Modifier.toString(modifiers)).append(" ");
             }
             if (isMethod()) {
-                stringBuilder.append(getReturnType().getSourceCodeName()).append(" ");
-                stringBuilder.append(getDeclaringType().asErasure().getSourceCodeName()).append(".");
+                stringBuilder.append(getReturnType().getActualName()).append(" ");
+                stringBuilder.append(getDeclaringType().asErasure().getActualName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
@@ -677,7 +677,7 @@ public interface MethodDescription extends TypeVariableSource,
                 } else {
                     first = false;
                 }
-                stringBuilder.append(typeDescription.getSourceCodeName());
+                stringBuilder.append(typeDescription.getActualName());
             }
             stringBuilder.append(")");
             TypeList.Generic exceptionTypes = getExceptionTypes();
@@ -690,7 +690,7 @@ public interface MethodDescription extends TypeVariableSource,
                     } else {
                         first = false;
                     }
-                    stringBuilder.append(typeDescription.getSourceCodeName());
+                    stringBuilder.append(typeDescription.getActualName());
                 }
             }
             return stringBuilder.toString();
@@ -704,8 +704,8 @@ public interface MethodDescription extends TypeVariableSource,
                 stringBuilder.append(Modifier.toString(modifiers)).append(" ");
             }
             if (isMethod()) {
-                stringBuilder.append(getReturnType().asErasure().getSourceCodeName()).append(" ");
-                stringBuilder.append(getDeclaringType().asErasure().getSourceCodeName()).append(".");
+                stringBuilder.append(getReturnType().asErasure().getActualName()).append(" ");
+                stringBuilder.append(getDeclaringType().asErasure().getActualName()).append(".");
             }
             stringBuilder.append(getName()).append("(");
             boolean first = true;
@@ -715,7 +715,7 @@ public interface MethodDescription extends TypeVariableSource,
                 } else {
                     first = false;
                 }
-                stringBuilder.append(typeDescription.getSourceCodeName());
+                stringBuilder.append(typeDescription.getActualName());
             }
             stringBuilder.append(")");
             TypeList exceptionTypes = getExceptionTypes().asErasures();
@@ -728,7 +728,7 @@ public interface MethodDescription extends TypeVariableSource,
                     } else {
                         first = false;
                     }
-                    stringBuilder.append(typeDescription.getSourceCodeName());
+                    stringBuilder.append(typeDescription.getActualName());
                 }
             }
             return stringBuilder.toString();

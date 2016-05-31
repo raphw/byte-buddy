@@ -21,7 +21,7 @@ public interface NamedElement {
      *
      * @return The name of this element as given in a Java program's source code.
      */
-    String getSourceCodeName();
+    String getActualName();
 
     /**
      * A named element with a name that has a particular meaning to the Java runtime.
@@ -41,6 +41,12 @@ public interface NamedElement {
          * @return The internal internalName of this byte code element as used within the Java class file format.
          */
         String getInternalName();
+    }
+
+
+    interface WithOptionalName extends NamedElement {
+
+        boolean isNamed();
     }
 
     /**

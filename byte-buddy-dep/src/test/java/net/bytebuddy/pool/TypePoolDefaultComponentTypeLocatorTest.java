@@ -28,7 +28,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
         when(typePool.describe(BAR)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
-        when(methodDescription.getSourceCodeName()).thenReturn(FOO);
+        when(methodDescription.getActualName()).thenReturn(FOO);
         TypeDescription.Generic returnType = mock(TypeDescription.Generic.class);
         TypeDescription rawReturnType = mock(TypeDescription.class);
         when(returnType.asErasure()).thenReturn(rawReturnType);

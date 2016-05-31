@@ -7,8 +7,6 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.Collections;
-
 import static org.mockito.Mockito.when;
 
 public class TypeProxyObjectPropertiesTest {
@@ -24,7 +22,7 @@ public class TypeProxyObjectPropertiesTest {
             @Override
             public void apply(TypeDescription mock) {
                 FieldDescription.InDefinedShape fieldDescription = Mockito.mock(FieldDescription.InDefinedShape.class);
-                when(fieldDescription.getSourceCodeName()).thenReturn(TypeProxy.INSTANCE_FIELD);
+                when(fieldDescription.getActualName()).thenReturn(TypeProxy.INSTANCE_FIELD);
                 when(mock.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
             }
         }).skipSynthetic().apply();

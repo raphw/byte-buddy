@@ -45,7 +45,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
         }
 
         @Override
-        public String getSourceCodeName() {
+        public String getActualName() {
             return getName();
         }
 

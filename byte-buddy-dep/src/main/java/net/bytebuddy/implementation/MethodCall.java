@@ -2344,7 +2344,7 @@ public class MethodCall implements Implementation.Composable {
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         javaConstant.asStackManipulation(),
-                        assigner.assign(javaConstant.getInstanceType().asGenericType(), target.getType(), typing));
+                        assigner.assign(javaConstant.getType().asGenericType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign Class value to " + target);
                 }

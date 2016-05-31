@@ -103,9 +103,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     public void testSourceName() throws Exception {
         for (Class<?> type : standardTypes) {
             if (type.isArray()) {
-                assertThat(describe(type).getSourceCodeName(), is(type.getComponentType().getName() + "[]"));
+                assertThat(describe(type).getActualName(), is(type.getComponentType().getName() + "[]"));
             } else {
-                assertThat(describe(type).getSourceCodeName(), is(type.getName()));
+                assertThat(describe(type).getActualName(), is(type.getName()));
             }
         }
     }
@@ -154,28 +154,28 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testJavaName() throws Exception {
-        assertThat(describe(Object.class).getSourceCodeName(), is(Object.class.getName()));
-        assertThat(describe(SampleClass.class).getSourceCodeName(), is(SampleClass.class.getName()));
-        assertThat(describe(void.class).getSourceCodeName(), is(void.class.getName()));
-        assertThat(describe(boolean.class).getSourceCodeName(), is(boolean.class.getName()));
-        assertThat(describe(byte.class).getSourceCodeName(), is(byte.class.getName()));
-        assertThat(describe(short.class).getSourceCodeName(), is(short.class.getName()));
-        assertThat(describe(char.class).getSourceCodeName(), is(char.class.getName()));
-        assertThat(describe(int.class).getSourceCodeName(), is(int.class.getName()));
-        assertThat(describe(long.class).getSourceCodeName(), is(long.class.getName()));
-        assertThat(describe(float.class).getSourceCodeName(), is(float.class.getName()));
-        assertThat(describe(double.class).getSourceCodeName(), is(double.class.getName()));
-        assertThat(describe(Object[].class).getSourceCodeName(), is(Object.class.getName() + "[]"));
-        assertThat(describe(SampleClass[].class).getSourceCodeName(), is(SampleClass.class.getName() + "[]"));
-        assertThat(describe(Object[][].class).getSourceCodeName(), is(Object.class.getName() + "[][]"));
-        assertThat(describe(boolean[].class).getSourceCodeName(), is(boolean.class.getName() + "[]"));
-        assertThat(describe(byte[].class).getSourceCodeName(), is(byte.class.getName() + "[]"));
-        assertThat(describe(short[].class).getSourceCodeName(), is(short.class.getName() + "[]"));
-        assertThat(describe(char[].class).getSourceCodeName(), is(char.class.getName() + "[]"));
-        assertThat(describe(int[].class).getSourceCodeName(), is(int.class.getName() + "[]"));
-        assertThat(describe(long[].class).getSourceCodeName(), is(long.class.getName() + "[]"));
-        assertThat(describe(float[].class).getSourceCodeName(), is(float.class.getName() + "[]"));
-        assertThat(describe(double[].class).getSourceCodeName(), is(double.class.getName() + "[]"));
+        assertThat(describe(Object.class).getActualName(), is(Object.class.getName()));
+        assertThat(describe(SampleClass.class).getActualName(), is(SampleClass.class.getName()));
+        assertThat(describe(void.class).getActualName(), is(void.class.getName()));
+        assertThat(describe(boolean.class).getActualName(), is(boolean.class.getName()));
+        assertThat(describe(byte.class).getActualName(), is(byte.class.getName()));
+        assertThat(describe(short.class).getActualName(), is(short.class.getName()));
+        assertThat(describe(char.class).getActualName(), is(char.class.getName()));
+        assertThat(describe(int.class).getActualName(), is(int.class.getName()));
+        assertThat(describe(long.class).getActualName(), is(long.class.getName()));
+        assertThat(describe(float.class).getActualName(), is(float.class.getName()));
+        assertThat(describe(double.class).getActualName(), is(double.class.getName()));
+        assertThat(describe(Object[].class).getActualName(), is(Object.class.getName() + "[]"));
+        assertThat(describe(SampleClass[].class).getActualName(), is(SampleClass.class.getName() + "[]"));
+        assertThat(describe(Object[][].class).getActualName(), is(Object.class.getName() + "[][]"));
+        assertThat(describe(boolean[].class).getActualName(), is(boolean.class.getName() + "[]"));
+        assertThat(describe(byte[].class).getActualName(), is(byte.class.getName() + "[]"));
+        assertThat(describe(short[].class).getActualName(), is(short.class.getName() + "[]"));
+        assertThat(describe(char[].class).getActualName(), is(char.class.getName() + "[]"));
+        assertThat(describe(int[].class).getActualName(), is(int.class.getName() + "[]"));
+        assertThat(describe(long[].class).getActualName(), is(long.class.getName() + "[]"));
+        assertThat(describe(float[].class).getActualName(), is(float.class.getName() + "[]"));
+        assertThat(describe(double[].class).getActualName(), is(double.class.getName() + "[]"));
     }
 
     @Test

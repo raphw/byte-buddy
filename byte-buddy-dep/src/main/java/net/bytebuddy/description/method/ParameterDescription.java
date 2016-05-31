@@ -24,6 +24,7 @@ import java.util.List;
  */
 public interface ParameterDescription extends AnnotatedCodeElement,
         NamedElement.WithRuntimeName,
+        NamedElement.WithOptionalName,
         ModifierReviewable,
         ByteCodeElement.TypeDependant<ParameterDescription.InDefinedShape, ParameterDescription.Token> {
 
@@ -52,14 +53,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
      * @return The index of this parameter.
      */
     int getIndex();
-
-    /**
-     * Checks if this parameter has an explicit name. A parameter without an explicit name is named implicitly by
-     * {@code argX} with {@code X} denoting the zero-based index.
-     *
-     * @return {@code true} if the parameter has an explicit name.
-     */
-    boolean isNamed();
 
     /**
      * Checks if this parameter has an explicit modifier. A parameter without a modifier is simply treated as
@@ -121,7 +114,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         @Override
-        public String getSourceCodeName() {
+        public String getActualName() {
             return isNamed()
                     ? getName()
                     : EMPTY_NAME;
