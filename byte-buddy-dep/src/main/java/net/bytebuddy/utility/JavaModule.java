@@ -45,12 +45,12 @@ public class JavaModule implements NamedElement.WithOptionalName {
 
     @Override
     public boolean isNamed() {
-        return false;
+        return DISPATCHER.isNamed(module);
     }
 
     @Override
     public String getActualName() {
-        return null;
+        return DISPATCHER.getName(module);
     }
 
     public Object unwrap() {
