@@ -15,7 +15,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class AgentBuilderRawMatcherForElementMatcherPairTest {
+public class AgentBuilderRawMatcherForElementMatchersTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -37,7 +37,7 @@ public class AgentBuilderRawMatcherForElementMatcherPairTest {
 
     @Test
     public void testNoneMatches() throws Exception {
-        assertThat(new AgentBuilder.RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher)
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher)
                 .matches(typeDescription, classLoader, Object.class, protectionDomain), is(false));
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
@@ -47,7 +47,7 @@ public class AgentBuilderRawMatcherForElementMatcherPairTest {
     @Test
     public void testClassLoaderMatches() throws Exception {
         when(classLoaderMatcher.matches(classLoader)).thenReturn(true);
-        assertThat(new AgentBuilder.RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher)
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher)
                 .matches(typeDescription, classLoader, Object.class, protectionDomain), is(false));
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
@@ -58,7 +58,7 @@ public class AgentBuilderRawMatcherForElementMatcherPairTest {
     @Test
     public void testTypeMatches() throws Exception {
         when(typeMatcher.matches(typeDescription)).thenReturn(true);
-        assertThat(new AgentBuilder.RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher)
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher)
                 .matches(typeDescription, classLoader, Object.class, protectionDomain), is(false));
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
@@ -69,7 +69,7 @@ public class AgentBuilderRawMatcherForElementMatcherPairTest {
     public void testBothMatches() throws Exception {
         when(classLoaderMatcher.matches(classLoader)).thenReturn(true);
         when(typeMatcher.matches(typeDescription)).thenReturn(true);
-        assertThat(new AgentBuilder.RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher)
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher)
                 .matches(typeDescription, classLoader, Object.class, protectionDomain), is(true));
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
@@ -79,6 +79,6 @@ public class AgentBuilderRawMatcherForElementMatcherPairTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.RawMatcher.ForElementMatcherPair.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RawMatcher.ForElementMatchers.class).apply();
     }
 }
