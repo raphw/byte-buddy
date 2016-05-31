@@ -32,7 +32,7 @@ public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction
 
     @Override
     public boolean matches(T target) {
-        return nameMatcher.matches(target.getSourceCodeName());
+        return nameMatcher.matches(target.getActualName());
     }
 
     @Override

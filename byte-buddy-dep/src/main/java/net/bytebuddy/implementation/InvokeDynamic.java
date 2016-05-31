@@ -2458,7 +2458,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(javaConstant.asStackManipulation(), javaConstant.getInstanceType());
+                    return new Resolved.Simple(javaConstant.asStackManipulation(), javaConstant.getType());
                 }
 
                 @Override

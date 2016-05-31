@@ -91,7 +91,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public String getSourceCodeName() {
+        public String getActualName() {
             return getName();
         }
 
@@ -159,8 +159,8 @@ public interface FieldDescription extends ByteCodeElement,
             if (getModifiers() != EMPTY_MASK) {
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
-            stringBuilder.append(getType().getSourceCodeName()).append(" ");
-            stringBuilder.append(getDeclaringType().asErasure().getSourceCodeName()).append(".");
+            stringBuilder.append(getType().getActualName()).append(" ");
+            stringBuilder.append(getDeclaringType().asErasure().getActualName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
 
@@ -170,8 +170,8 @@ public interface FieldDescription extends ByteCodeElement,
             if (getModifiers() != EMPTY_MASK) {
                 stringBuilder.append(Modifier.toString(getModifiers())).append(" ");
             }
-            stringBuilder.append(getType().asErasure().getSourceCodeName()).append(" ");
-            stringBuilder.append(getDeclaringType().asErasure().getSourceCodeName()).append(".");
+            stringBuilder.append(getType().asErasure().getActualName()).append(" ");
+            stringBuilder.append(getDeclaringType().asErasure().getActualName()).append(".");
             return stringBuilder.append(getName()).toString();
         }
     }

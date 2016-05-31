@@ -388,7 +388,7 @@ public class ElementMatchersTest {
     @Test
     public void testNamed() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
         assertThat(named(FOO).matches(byteCodeElement), is(true));
         assertThat(named(FOO.toUpperCase()).matches(byteCodeElement), is(false));
         assertThat(named(BAR).matches(byteCodeElement), is(false));
@@ -397,7 +397,7 @@ public class ElementMatchersTest {
     @Test
     public void testNamedIgnoreCase() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
         assertThat(ElementMatchers.namedIgnoreCase(FOO).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.namedIgnoreCase(FOO.toUpperCase()).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.namedIgnoreCase(BAR).matches(byteCodeElement), is(false));
@@ -406,7 +406,7 @@ public class ElementMatchersTest {
     @Test
     public void testNameStartsWith() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameStartsWith(FOO.substring(0, 2)).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameStartsWith(FOO.substring(0, 2).toUpperCase()).matches(byteCodeElement), is(false));
         assertThat(ElementMatchers.nameStartsWith(BAR).matches(byteCodeElement), is(false));
@@ -415,7 +415,7 @@ public class ElementMatchersTest {
     @Test
     public void testNameStartsWithIgnoreCase() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameStartsWithIgnoreCase(FOO.substring(0, 2)).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameStartsWithIgnoreCase(FOO.substring(0, 2).toUpperCase()).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameStartsWithIgnoreCase(BAR).matches(byteCodeElement), is(false));
@@ -424,7 +424,7 @@ public class ElementMatchersTest {
     @Test
     public void testNameEndsWith() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameEndsWith(FOO.substring(1)).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameEndsWith(FOO.substring(1).toUpperCase()).matches(byteCodeElement), is(false));
         assertThat(ElementMatchers.nameEndsWith(BAR).matches(byteCodeElement), is(false));
@@ -433,7 +433,7 @@ public class ElementMatchersTest {
     @Test
     public void testNameEndsWithIgnoreCase() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameEndsWithIgnoreCase(FOO.substring(1)).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameEndsWithIgnoreCase(FOO.substring(1).toUpperCase()).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameEndsWithIgnoreCase(BAR).matches(byteCodeElement), is(false));
@@ -442,7 +442,7 @@ public class ElementMatchersTest {
     @Test
     public void testNameContains() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameContains(FOO.substring(1, 2)).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameContains(FOO.substring(1, 2).toUpperCase()).matches(byteCodeElement), is(false));
         assertThat(ElementMatchers.nameContains(BAR).matches(byteCodeElement), is(false));
@@ -451,7 +451,7 @@ public class ElementMatchersTest {
     @Test
     public void testNameContainsIgnoreCase() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameContainsIgnoreCase(FOO.substring(1, 2)).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameContainsIgnoreCase(FOO.substring(1, 2).toUpperCase()).matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameContainsIgnoreCase(BAR).matches(byteCodeElement), is(false));
@@ -460,7 +460,7 @@ public class ElementMatchersTest {
     @Test
     public void testNameMatches() throws Exception {
         ByteCodeElement byteCodeElement = mock(ByteCodeElement.class);
-        when(byteCodeElement.getSourceCodeName()).thenReturn(FOO);
+        when(byteCodeElement.getActualName()).thenReturn(FOO);
         assertThat(ElementMatchers.nameMatches("^" + FOO + "$").matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameMatches(FOO.toUpperCase()).matches(byteCodeElement), is(false));
         assertThat(ElementMatchers.nameMatches(BAR).matches(byteCodeElement), is(false));

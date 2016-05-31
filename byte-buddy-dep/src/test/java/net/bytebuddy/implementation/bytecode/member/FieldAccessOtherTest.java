@@ -56,7 +56,7 @@ public class FieldAccessOtherTest {
         when(fieldDescription.isPublic()).thenReturn(true);
         when(fieldDescription.isStatic()).thenReturn(true);
         when(fieldDescription.isEnum()).thenReturn(true);
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
         assertThat(stackManipulation.isValid(), is(true));
     }
@@ -66,7 +66,7 @@ public class FieldAccessOtherTest {
         when(fieldDescription.isPublic()).thenReturn(true);
         when(fieldDescription.isStatic()).thenReturn(true);
         when(fieldDescription.isEnum()).thenReturn(true);
-        when(fieldDescription.getSourceCodeName()).thenReturn(BAR);
+        when(fieldDescription.getActualName()).thenReturn(BAR);
         StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
         assertThat(stackManipulation.isValid(), is(false));
     }
@@ -76,7 +76,7 @@ public class FieldAccessOtherTest {
         when(fieldDescription.isPublic()).thenReturn(true);
         when(fieldDescription.isStatic()).thenReturn(false);
         when(fieldDescription.isEnum()).thenReturn(true);
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
         assertThat(stackManipulation.isValid(), is(false));
     }
@@ -86,7 +86,7 @@ public class FieldAccessOtherTest {
         when(fieldDescription.isPublic()).thenReturn(false);
         when(fieldDescription.isStatic()).thenReturn(true);
         when(fieldDescription.isEnum()).thenReturn(true);
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
         assertThat(stackManipulation.isValid(), is(false));
     }
@@ -96,7 +96,7 @@ public class FieldAccessOtherTest {
         when(fieldDescription.isPublic()).thenReturn(true);
         when(fieldDescription.isStatic()).thenReturn(true);
         when(fieldDescription.isEnum()).thenReturn(false);
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         StackManipulation stackManipulation = FieldAccess.forEnumeration(enumerationDescription);
         assertThat(stackManipulation.isValid(), is(false));
     }

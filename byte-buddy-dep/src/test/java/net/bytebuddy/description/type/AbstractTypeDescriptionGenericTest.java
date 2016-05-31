@@ -92,7 +92,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testSimpleParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(SimpleParameterizedType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getSourceCodeName(), is(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getActualName(), is(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(), is(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.toString(), is(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.hashCode(),
@@ -146,7 +146,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testUpperBoundWildcardParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getSourceCodeName(), is(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getActualName(), is(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(), is(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.toString(), is(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.hashCode(),
@@ -225,7 +225,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testLowerBoundWildcardParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getSourceCodeName(), is(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getActualName(), is(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(), is(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.toString(), is(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.hashCode(),
@@ -305,7 +305,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testUnboundWildcardParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getSourceCodeName(), is(UnboundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getActualName(), is(UnboundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(), is(UnboundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.toString(), is(UnboundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.hashCode(),
@@ -384,7 +384,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testExplicitlyUnboundWildcardParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getSourceCodeName(),
+        assertThat(typeDescription.getActualName(),
                 is(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(),
                 is(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
@@ -482,7 +482,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getDeclaredMethods().size(), is(0));
         assertThat(typeDescription.getSuperClass(), is(TypeDescription.Generic.OBJECT));
         assertThat(typeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
-        assertThat(typeDescription.getSourceCodeName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getActualName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.toString(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.hashCode(),
@@ -544,7 +544,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getOwnerType(), nullValue(TypeDescription.Generic.class));
         assertThat(typeDescription.getSuperClass(), is(TypeDescription.Generic.OBJECT));
         assertThat(typeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
-        assertThat(typeDescription.getSourceCodeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getActualName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.toString(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.hashCode(),
@@ -595,7 +595,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testTypeVariableType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(SimpleTypeVariableType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(typeDescription.getSourceCodeName(), is(SimpleTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getActualName(), is(SimpleTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getTypeName(), is(SimpleTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.toString(), is(SimpleTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.hashCode(),

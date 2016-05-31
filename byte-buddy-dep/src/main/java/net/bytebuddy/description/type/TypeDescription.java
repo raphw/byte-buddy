@@ -4129,8 +4129,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public String getSourceCodeName() {
-                return asErasure().getSourceCodeName();
+            public String getActualName() {
+                return asErasure().getActualName();
             }
 
             @Override
@@ -4437,9 +4437,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public String getSourceCodeName() {
+            public String getActualName() {
                 return getSort().isNonGeneric()
-                        ? asErasure().getSourceCodeName()
+                        ? asErasure().getActualName()
                         : toString();
             }
 
@@ -4650,7 +4650,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public String getSourceCodeName() {
+            public String getActualName() {
                 return toString();
             }
 
@@ -4992,7 +4992,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public String getSourceCodeName() {
+            public String getActualName() {
                 return toString();
             }
 
@@ -5391,7 +5391,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public String getSourceCodeName() {
+            public String getActualName() {
                 return getSymbol();
             }
 
@@ -5546,7 +5546,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public String getSourceCodeName() {
+                public String getActualName() {
                     return getSymbol();
                 }
 
@@ -5785,8 +5785,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public String getSourceCodeName() {
-                return resolve().getSourceCodeName();
+            public String getActualName() {
+                return resolve().getActualName();
             }
 
             @Override
@@ -7071,7 +7071,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
-        public String getSourceCodeName() {
+        public String getActualName() {
             if (isArray()) {
                 TypeDescription typeDescription = this;
                 int dimensions = 0;
@@ -7080,7 +7080,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     typeDescription = typeDescription.getComponentType();
                 } while (typeDescription.isArray());
                 StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(typeDescription.getSourceCodeName());
+                stringBuilder.append(typeDescription.getActualName());
                 for (int i = 0; i < dimensions; i++) {
                     stringBuilder.append("[]");
                 }

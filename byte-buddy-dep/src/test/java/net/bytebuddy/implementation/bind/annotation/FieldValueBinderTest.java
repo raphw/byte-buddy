@@ -66,7 +66,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
@@ -83,7 +83,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(false);
@@ -100,7 +100,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
@@ -118,7 +118,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
@@ -151,7 +151,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn((FieldList) new FieldList.Explicit<FieldDescription>(fieldDescription));
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(false);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
@@ -260,12 +260,12 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FieldValue.Binder.Delegate.BEAN_PROPERTY);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
         when(source.getInternalName()).thenReturn("getFoo");
-        when(source.getSourceCodeName()).thenReturn("getFoo");
+        when(source.getActualName()).thenReturn("getFoo");
         when(source.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
         when(source.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
@@ -281,12 +281,12 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FieldValue.Binder.Delegate.BEAN_PROPERTY);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
         when(source.getInternalName()).thenReturn("isFoo");
-        when(source.getSourceCodeName()).thenReturn("isFoo");
+        when(source.getActualName()).thenReturn("isFoo");
         when(source.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(boolean.class));
         when(source.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
@@ -302,12 +302,12 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FieldValue.Binder.Delegate.BEAN_PROPERTY);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
-        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.getActualName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
         when(source.getInternalName()).thenReturn("setFoo");
-        when(source.getSourceCodeName()).thenReturn("setFoo");
+        when(source.getActualName()).thenReturn("setFoo");
         when(source.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, TypeDescription.Generic.OBJECT));
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
