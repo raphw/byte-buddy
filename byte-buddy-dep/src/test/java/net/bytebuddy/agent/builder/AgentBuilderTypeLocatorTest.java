@@ -9,7 +9,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -23,24 +22,6 @@ public class AgentBuilderTypeLocatorTest {
 
     @Mock
     private ClassFileLocator classFileLocator;
-
-    @Test
-    public void testFastClassFileLocator() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.Default.FAST.classFileLocator(classLoader),
-                is(ClassFileLocator.ForClassLoader.of(classLoader)));
-    }
-
-    @Test
-    public void testExtendedClassFileLocator() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.Default.EXTENDED.classFileLocator(classLoader),
-                is(ClassFileLocator.ForClassLoader.of(classLoader)));
-    }
-
-    @Test
-    public void testLoadingClassFileLocator() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.ClassLoading.INSTANCE.classFileLocator(classLoader),
-                is((ClassFileLocator) ClassFileLocator.NoOp.INSTANCE));
-    }
 
     @Test
     public void testFastTypePool() throws Exception {
