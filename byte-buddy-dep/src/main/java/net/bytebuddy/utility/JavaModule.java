@@ -53,6 +53,10 @@ public class JavaModule implements NamedElement.WithOptionalName {
         return null;
     }
 
+    public Object unwrap() {
+        return module;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
