@@ -36,6 +36,13 @@ public class JavaModule implements NamedElement.WithOptionalName {
         return DISPATCHER.moduleOf(type);
     }
 
+    public static JavaModule of(Object module) {
+        if (!JavaType.MODULE.getTypeStub().isInstance(module)) {
+            throw new IllegalArgumentException("Not a Java module: " + module);
+        }
+        return new JavaModule(module);
+    }
+
     @Override
     public boolean isNamed() {
         return false;

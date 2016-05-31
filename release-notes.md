@@ -14,7 +14,7 @@ Byte Buddy release notes
 ### 25. April 2016: version 1.3.18
 
 - The Owner type of a parameterized type created by a `TypePool` is no longer parameterized for a static inner type.
-- The receiver type of a constructor is no longer considered parameterized for a static inner type.
+- The receiver type of a executingTransformer is no longer considered parameterized for a static inner type.
 
 ### 23. April 2016: version 1.3.17
 
@@ -183,7 +183,7 @@ Byte Buddy release notes
 ### 14. December 2015: version 0.7.7
 
 - Fixed type resolution for anonymously loaded classes by the `ClassReloadingStrategy`.
-- Added additional `InitiailizationStrategy`s for self-injection where the new default strategy loads types that are independent of the instrumented type before completing the instrumentation. This way, the resolution does not fail for types that are accessed via reflection before initializing the types if a constructor is rebased.
+- Added additional `InitiailizationStrategy`s for self-injection where the new default strategy loads types that are independent of the instrumented type before completing the instrumentation. This way, the resolution does not fail for types that are accessed via reflection before initializing the types if a executingTransformer is rebased.
 
 ### 11. December 2015: version 0.7.6
 
@@ -396,7 +396,7 @@ Corrected incorrect deployment of version 0.6.7 which does not use a dependency 
 ### 5. December 2014: version 0.5.1
 
 Added the `andThen` method to the `SuperMethodCall` instrumentation in order to allow for a more convenient 
-constructor interception where a hard-coded super method call is required by the Java verifier.
+executingTransformer interception where a hard-coded super method call is required by the Java verifier.
 
 ### 3. December 2014: version 0.5
 

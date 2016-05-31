@@ -12,6 +12,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
@@ -19,6 +20,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.ExceptionMethod;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -36,6 +38,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaModule;
+import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -46,6 +49,7 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessControlContext;
@@ -581,6 +585,7 @@ public interface AgentBuilder {
          */
         boolean matches(TypeDescription typeDescription,
                         ClassLoader classLoader,
+                        JavaModule module,
                         Class<?> classBeingRedefined,
                         ProtectionDomain protectionDomain);
 
@@ -611,8 +616,13 @@ public interface AgentBuilder {
             }
 
             @Override
-            public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
-                return left.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain) && right.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain);
+            public boolean matches(TypeDescription typeDescription,
+                                   ClassLoader classLoader,
+                                   JavaModule module,
+                                   Class<?> classBeingRedefined,
+                                   ProtectionDomain protectionDomain) {
+                return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
+                        && right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
             }
 
             @Override
@@ -666,8 +676,13 @@ public interface AgentBuilder {
             }
 
             @Override
-            public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
-                return left.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain) || right.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain);
+            public boolean matches(TypeDescription typeDescription,
+                                   ClassLoader classLoader,
+                                   JavaModule module,
+                                   Class<?> classBeingRedefined,
+                                   ProtectionDomain protectionDomain) {
+                return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
+                        || right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
             }
 
             @Override
@@ -733,9 +748,10 @@ public interface AgentBuilder {
             @Override
             public boolean matches(TypeDescription typeDescription,
                                    ClassLoader classLoader,
+                                   JavaModule module,
                                    Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
-                return classLoaderMatcher.matches(classLoader) && typeMatcher.matches(typeDescription);
+                return moduleMatcher.matches(module) && classLoaderMatcher.matches(classLoader) && typeMatcher.matches(typeDescription);
             }
 
             @Override
@@ -1192,7 +1208,7 @@ public interface AgentBuilder {
          * @param classLoader     The class loader which is loading this type.
          * @param dynamicType     The dynamic type that was created.
          */
-        void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType);
+        void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType);
 
         /**
          * Invoked when a type is not transformed but ignored.
@@ -1200,7 +1216,7 @@ public interface AgentBuilder {
          * @param typeDescription The type being ignored for transformation.
          * @param classLoader     The class loader which is loading this type.
          */
-        void onIgnored(TypeDescription typeDescription, ClassLoader classLoader);
+        void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module);
 
         /**
          * Invoked when an error has occurred during transformation.
@@ -1209,7 +1225,7 @@ public interface AgentBuilder {
          * @param classLoader The class loader which is loading this type.
          * @param throwable   The occurred error.
          */
-        void onError(String typeName, ClassLoader classLoader, Throwable throwable);
+        void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable);
 
         /**
          * Invoked after a class was attempted to be loaded, independently of its treatment.
@@ -1217,7 +1233,7 @@ public interface AgentBuilder {
          * @param typeName    The binary name of the instrumented type.
          * @param classLoader The class loader which is loading this type.
          */
-        void onComplete(String typeName, ClassLoader classLoader);
+        void onComplete(String typeName, ClassLoader classLoader, JavaModule module);
 
         /**
          * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Listener}.
@@ -1230,22 +1246,22 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
-            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
                 /* do nothing */
             }
 
             @Override
-            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
                 /* do nothing */
             }
 
             @Override
-            public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
                 /* do nothing */
             }
 
             @Override
-            public void onComplete(String typeName, ClassLoader classLoader) {
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
                 /* do nothing */
             }
 
@@ -1261,22 +1277,22 @@ public interface AgentBuilder {
         abstract class Adapter implements Listener {
 
             @Override
-            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
                 /* do nothing */
             }
 
             @Override
-            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
                 /* do nothing */
             }
 
             @Override
-            public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
                 /* do nothing */
             }
 
             @Override
-            public void onComplete(String typeName, ClassLoader classLoader) {
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
                 /* do nothing */
             }
         }
@@ -1325,23 +1341,23 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
                 printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName());
             }
 
             @Override
-            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
                 printStream.println(PREFIX + " IGNORE " + typeDescription.getName());
             }
 
             @Override
-            public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
                 printStream.println(PREFIX + " ERROR " + typeName);
                 throwable.printStackTrace(printStream);
             }
 
             @Override
-            public void onComplete(String typeName, ClassLoader classLoader) {
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
                 printStream.println(PREFIX + " COMPLETE " + typeName);
             }
 
@@ -1393,30 +1409,30 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
                 for (Listener listener : listeners) {
-                    listener.onTransformation(typeDescription, classLoader, dynamicType);
+                    listener.onTransformation(typeDescription, classLoader, module, dynamicType);
                 }
             }
 
             @Override
-            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
                 for (Listener listener : listeners) {
-                    listener.onIgnored(typeDescription, classLoader);
+                    listener.onIgnored(typeDescription, classLoader, module);
                 }
             }
 
             @Override
-            public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
                 for (Listener listener : listeners) {
-                    listener.onError(typeName, classLoader, throwable);
+                    listener.onError(typeName, classLoader, module, throwable);
                 }
             }
 
             @Override
-            public void onComplete(String typeName, ClassLoader classLoader) {
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
                 for (Listener listener : listeners) {
-                    listener.onComplete(typeName, classLoader);
+                    listener.onComplete(typeName, classLoader, module);
                 }
             }
 
@@ -2306,6 +2322,7 @@ public interface AgentBuilder {
                 public boolean consider(Class<?> type, RawMatcher ignoredTypeMatcher) {
                     return transformation.resolve(new TypeDescription.ForLoadedType(type),
                             type.getClassLoader(),
+                            JavaModule.ofType(type),
                             type,
                             type.getProtectionDomain(),
                             ignoredTypeMatcher).getSort().isAlive() && entries.add(new Entry(type));
@@ -2316,13 +2333,14 @@ public interface AgentBuilder {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
                     for (Entry entry : entries) {
                         TypeDescription typeDescription = new TypeDescription.ForLoadedType(entry.getType());
+                        JavaModule module = JavaModule.ofType(entry.getType());
                         try {
                             classDefinitions.add(entry.resolve(ClassFileLocator.ForClassLoader.of(entry.getType().getClassLoader())));
                         } catch (Throwable throwable) {
                             try {
-                                listener.onError(typeDescription.getName(), entry.getType().getClassLoader(), throwable);
+                                listener.onError(typeDescription.getName(), entry.getType().getClassLoader(), module, throwable);
                             } finally {
-                                listener.onComplete(typeDescription.getName(), entry.getType().getClassLoader());
+                                listener.onComplete(typeDescription.getName(), entry.getType().getClassLoader(), module);
                             }
                         }
                     }
@@ -2429,6 +2447,7 @@ public interface AgentBuilder {
                 public boolean consider(Class<?> type, RawMatcher ignoredTypeMatcher) {
                     return transformation.resolve(new TypeDescription.ForLoadedType(type),
                             type.getClassLoader(),
+                            JavaModule.ofType(type),
                             type,
                             type.getProtectionDomain(),
                             ignoredTypeMatcher).getSort().isAlive() && types.add(type);
@@ -2462,7 +2481,7 @@ public interface AgentBuilder {
          * Classes representing lambda expressions that are created by Byte Buddy are fully compatible to those created by
          * the JVM and can be serialized or deserialized to one another. The classes do however show a few differences:
          * <ul>
-         * <li>Byte Buddy's classes are public with a public constructor. Doing so, it is not necessary to instantiate a
+         * <li>Byte Buddy's classes are public with a public executing transformer. Doing so, it is not necessary to instantiate a
          * non-capturing lambda expression by reflection. This is done because Byte Buddy is not necessarily capable
          * of using reflection due to an active security manager.</li>
          * <li>Byte Buddy's classes are not marked as synthetic as an agent builder does not instrument synthetic classes
@@ -2732,7 +2751,7 @@ public interface AgentBuilder {
             }
 
             /**
-             * Implements a lambda class's constructor.
+             * Implements a lambda class's executing transformer.
              */
             @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "An enumeration does not serialize fields")
             protected enum ConstructorImplementation implements Implementation {
@@ -2743,12 +2762,12 @@ public interface AgentBuilder {
                 INSTANCE;
 
                 /**
-                 * A reference to the {@link Object} class's default constructor.
+                 * A reference to the {@link Object} class's default executing transformer.
                  */
                 private final MethodDescription.InDefinedShape objectConstructor;
 
                 /**
-                 * Creates a new constructor implementation.
+                 * Creates a new executing transformer implementation.
                  */
                 ConstructorImplementation() {
                     objectConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
@@ -2770,7 +2789,7 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * An appender to implement the constructor.
+                 * An appender to implement the executing transformer.
                  */
                 protected static class Appender implements ByteCodeAppender {
 
@@ -4207,7 +4226,7 @@ public interface AgentBuilder {
 
         @Override
         public ClassFileTransformer makeRaw() {
-            return new ExecutingTransformer(byteBuddy,
+            return ExecutingTransformer.FACTORY.make(byteBuddy,
                     typeLocator,
                     typeStrategy,
                     listener,
@@ -4231,13 +4250,14 @@ public interface AgentBuilder {
                 RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
                     TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
+                    JavaModule module = JavaModule.ofType(type);
                     try {
                         if (!instrumentation.isModifiableClass(type) || !collector.consider(type, ignoredTypeMatcher)) {
                             try {
                                 try {
-                                    listener.onIgnored(typeDescription, type.getClassLoader());
+                                    listener.onIgnored(typeDescription, type.getClassLoader(), module);
                                 } finally {
-                                    listener.onComplete(typeDescription.getName(), type.getClassLoader());
+                                    listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
                                 }
                             } catch (Throwable ignored) {
                                 // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
@@ -4246,9 +4266,9 @@ public interface AgentBuilder {
                     } catch (Throwable throwable) {
                         try {
                             try {
-                                listener.onError(typeDescription.getName(), type.getClassLoader(), throwable);
+                                listener.onError(typeDescription.getName(), type.getClassLoader(), module, throwable);
                             } finally {
-                                listener.onComplete(typeDescription.getName(), type.getClassLoader());
+                                listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
                             }
                         } catch (Throwable ignored) {
                             // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
@@ -4572,6 +4592,7 @@ public interface AgentBuilder {
              */
             Resolution resolve(TypeDescription typeDescription,
                                ClassLoader classLoader,
+                               JavaModule module,
                                Class<?> classBeingRedefined,
                                ProtectionDomain protectionDomain,
                                RawMatcher ignoredTypeMatcher);
@@ -4705,15 +4726,18 @@ public interface AgentBuilder {
                      */
                     private final ClassLoader classLoader;
 
+                    private final JavaModule module;
+
                     /**
                      * Creates a new unresolved resolution.
-                     *
-                     * @param typeDescription The type that is not transformed.
+                     *  @param typeDescription The type that is not transformed.
                      * @param classLoader     The unresolved type's class loader.
+                     * @param module
                      */
-                    protected Unresolved(TypeDescription typeDescription, ClassLoader classLoader) {
+                    protected Unresolved(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
                         this.typeDescription = typeDescription;
                         this.classLoader = classLoader;
+                        this.module = module;
                     }
 
                     @Override
@@ -4740,7 +4764,7 @@ public interface AgentBuilder {
                                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                         AccessControlContext accessControlContext,
                                         Listener listener) {
-                        listener.onIgnored(typeDescription, classLoader);
+                        listener.onIgnored(typeDescription, classLoader, module);
                         return NO_TRANSFORMATION;
                     }
 
@@ -4750,13 +4774,15 @@ public interface AgentBuilder {
                         if (object == null || getClass() != object.getClass()) return false;
                         Unresolved that = (Unresolved) object;
                         return typeDescription.equals(that.typeDescription)
-                                && (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null);
+                                && (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null)
+                                && (module != null ? module.equals(that.module) : that.module == null);
                     }
 
                     @Override
                     public int hashCode() {
                         int result = typeDescription.hashCode();
                         result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
+                        result = 31 * result + (module != null ? module.hashCode() : 0);
                         return result;
                     }
 
@@ -4765,6 +4791,7 @@ public interface AgentBuilder {
                         return "AgentBuilder.Default.Transformation.Resolution.Unresolved{" +
                                 "typeDescription=" + typeDescription +
                                 ", classLoader=" + classLoader +
+                                ", module=" + module +
                                 '}';
                     }
                 }
@@ -4783,10 +4810,11 @@ public interface AgentBuilder {
                 @Override
                 public Resolution resolve(TypeDescription typeDescription,
                                           ClassLoader classLoader,
+                                          JavaModule module,
                                           Class<?> classBeingRedefined,
                                           ProtectionDomain protectionDomain,
                                           RawMatcher ignoredTypeMatcher) {
-                    return new Resolution.Unresolved(typeDescription, classLoader);
+                    return new Resolution.Unresolved(typeDescription, classLoader, module);
                 }
 
                 @Override
@@ -4831,13 +4859,14 @@ public interface AgentBuilder {
                 @Override
                 public Transformation.Resolution resolve(TypeDescription typeDescription,
                                                          ClassLoader classLoader,
+                                                         JavaModule module,
                                                          Class<?> classBeingRedefined,
                                                          ProtectionDomain protectionDomain,
                                                          RawMatcher ignoredTypeMatcher) {
-                    return !ignoredTypeMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)
-                            && rawMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)
-                            ? new Resolution(typeDescription, classLoader, protectionDomain, transformer, decorator)
-                            : new Transformation.Resolution.Unresolved(typeDescription, classLoader);
+                    return !ignoredTypeMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
+                            && rawMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
+                            ? new Resolution(typeDescription, classLoader, module, protectionDomain, transformer, decorator)
+                            : new Transformation.Resolution.Unresolved(typeDescription, classLoader, module);
                 }
 
                 @Override
@@ -4880,6 +4909,8 @@ public interface AgentBuilder {
                      */
                     private final ClassLoader classLoader;
 
+                    private final JavaModule module;
+
                     /**
                      * The protection domain of the transformed type.
                      */
@@ -4906,11 +4937,13 @@ public interface AgentBuilder {
                      */
                     protected Resolution(TypeDescription typeDescription,
                                          ClassLoader classLoader,
+                                         JavaModule module,
                                          ProtectionDomain protectionDomain,
                                          Transformer transformer,
                                          boolean decorator) {
                         this.typeDescription = typeDescription;
                         this.classLoader = classLoader;
+                        this.module = module;
                         this.protectionDomain = protectionDomain;
                         this.transformer = transformer;
                         this.decorator = decorator;
@@ -4937,6 +4970,7 @@ public interface AgentBuilder {
                     public Transformation.Resolution append(Transformer transformer) {
                         return new Resolution(typeDescription,
                                 classLoader,
+                                module,
                                 protectionDomain,
                                 new Transformer.Compound(this.transformer, transformer),
                                 decorator);
@@ -4960,7 +4994,7 @@ public interface AgentBuilder {
                                 classLoader,
                                 protectionDomain,
                                 accessControlContext));
-                        listener.onTransformation(typeDescription, classLoader, dynamicType);
+                        listener.onTransformation(typeDescription, classLoader, module, dynamicType);
                         return dynamicType.getBytes();
                     }
 
@@ -4972,6 +5006,7 @@ public interface AgentBuilder {
                         return typeDescription.equals(that.typeDescription)
                                 && decorator == that.decorator
                                 && !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null)
+                                && !(module != null ? !module.equals(that.module) : that.module != null)
                                 && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
                                 && transformer.equals(that.transformer);
                     }
@@ -4981,6 +5016,7 @@ public interface AgentBuilder {
                         int result = typeDescription.hashCode();
                         result = 31 * result + (decorator ? 1 : 0);
                         result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
+                        result = 31 * result + (module != null ? module.hashCode() : 0);
                         result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
                         result = 31 * result + transformer.hashCode();
                         return result;
@@ -4991,6 +5027,7 @@ public interface AgentBuilder {
                         return "AgentBuilder.Default.Transformation.Simple.Resolution{" +
                                 "typeDescription=" + typeDescription +
                                 ", classLoader=" + classLoader +
+                                ", module=" + module +
                                 ", protectionDomain=" + protectionDomain +
                                 ", transformer=" + transformer +
                                 ", decorator=" + decorator +
@@ -5111,13 +5148,15 @@ public interface AgentBuilder {
                 @Override
                 public Resolution resolve(TypeDescription typeDescription,
                                           ClassLoader classLoader,
+                                          JavaModule module,
                                           Class<?> classBeingRedefined,
                                           ProtectionDomain protectionDomain,
                                           RawMatcher ignoredTypeMatcher) {
-                    Resolution current = new Resolution.Unresolved(typeDescription, classLoader);
+                    Resolution current = new Resolution.Unresolved(typeDescription, classLoader, module);
                     for (Transformation transformation : transformations) {
                         Resolution resolution = transformation.resolve(typeDescription,
                                 classLoader,
+                                module,
                                 classBeingRedefined,
                                 protectionDomain,
                                 ignoredTypeMatcher);
@@ -5161,6 +5200,42 @@ public interface AgentBuilder {
          * configuration.
          */
         protected static class ExecutingTransformer implements ClassFileTransformer {
+
+            protected static final Factory FACTORY;
+
+            static {
+                Factory factory;
+                try {
+                    factory = new Factory.ForJava9CapableVm(new ByteBuddy()
+                            .subclass(ExecutingTransformer.class)
+                            .method(named("transform").and(takesArgument(0, JavaType.MODULE.getTypeStub())))
+                            .intercept(MethodCall.invoke(ExecutingTransformer.class.getDeclaredMethod("transform",
+                                    Object.class,
+                                    ClassLoader.class,
+                                    String.class,
+                                    Class.class,
+                                    ProtectionDomain.class,
+                                    byte[].class)).onSuper().withAllArguments())
+                            .make()
+                    .load(ExecutingTransformer.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                    .getLoaded()
+                    .getDeclaredConstructor(ByteBuddy.class,
+                            TypeLocator.class,
+                            TypeStrategy.class,
+                            Listener.class,
+                            NativeMethodStrategy.class,
+                            AccessControlContext.class,
+                            InitializationStrategy.class,
+                            BootstrapInjectionStrategy.class,
+                            RawMatcher.class,
+                            Transformation.class));
+                } catch (RuntimeException exception) {
+                    throw exception;
+                } catch (Exception ignored) {
+                    factory = Factory.ForLegacyVm.INSTANCE;
+                }
+                FACTORY = factory;
+            }
 
             /**
              * The Byte Buddy instance to be used.
@@ -5254,6 +5329,24 @@ public interface AgentBuilder {
                                     Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
+                return transform(JavaModule.UNDEFINED, classLoader, internalTypeName, classBeingRedefined, protectionDomain, binaryRepresentation);
+            }
+
+            protected byte[] transform(Object module,
+                                       ClassLoader classLoader,
+                                       String internalTypeName,
+                                       Class<?> classBeingRedefined,
+                                       ProtectionDomain protectionDomain,
+                                       byte[] binaryRepresentation) {
+                return transform(JavaModule.of(module), classLoader, internalTypeName, classBeingRedefined, protectionDomain, binaryRepresentation);
+            }
+
+            private byte[] transform(JavaModule module,
+                                     ClassLoader classLoader,
+                                     String internalTypeName,
+                                     Class<?> classBeingRedefined,
+                                     ProtectionDomain protectionDomain,
+                                     byte[] binaryRepresentation) {
                 if (internalTypeName == null) {
                     return NO_TRANSFORMATION;
                 }
@@ -5266,6 +5359,7 @@ public interface AgentBuilder {
                                     ? typeLocator.typePool(classFileLocator, classLoader).describe(binaryTypeName).resolve()
                                     : new TypeDescription.ForLoadedType(classBeingRedefined),
                             classLoader,
+                            module,
                             classBeingRedefined,
                             protectionDomain,
                             ignoredTypeMatcher).apply(initializationStrategy,
@@ -5277,10 +5371,10 @@ public interface AgentBuilder {
                             accessControlContext,
                             listener);
                 } catch (Throwable throwable) {
-                    listener.onError(binaryTypeName, classLoader, throwable);
+                    listener.onError(binaryTypeName, classLoader, module, throwable);
                     return NO_TRANSFORMATION;
                 } finally {
-                    listener.onComplete(binaryTypeName, classLoader);
+                    listener.onComplete(binaryTypeName, classLoader, module);
                 }
             }
 
@@ -5330,6 +5424,88 @@ public interface AgentBuilder {
                         ", ignoredTypeMatcher=" + ignoredTypeMatcher +
                         ", transformation=" + transformation +
                         '}';
+            }
+
+            protected interface Factory {
+
+                ClassFileTransformer make(ByteBuddy byteBuddy,
+                                          TypeLocator typeLocator,
+                                          TypeStrategy typeStrategy,
+                                          Listener listener,
+                                          NativeMethodStrategy nativeMethodStrategy,
+                                          AccessControlContext accessControlContext,
+                                          InitializationStrategy initializationStrategy,
+                                          BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                          RawMatcher ignoredTypeMatcher,
+                                          Transformation transformation);
+
+                class ForJava9CapableVm implements Factory {
+
+                    private final Constructor<? extends ClassFileTransformer> executingTransformer;
+
+                    protected ForJava9CapableVm(Constructor<? extends ClassFileTransformer> executingTransformer) {
+                        this.executingTransformer = executingTransformer;
+                    }
+
+                    @Override
+                    public ClassFileTransformer make(ByteBuddy byteBuddy,
+                                                     TypeLocator typeLocator,
+                                                     TypeStrategy typeStrategy,
+                                                     Listener listener,
+                                                     NativeMethodStrategy nativeMethodStrategy,
+                                                     AccessControlContext accessControlContext,
+                                                     InitializationStrategy initializationStrategy,
+                                                     BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                     RawMatcher ignoredTypeMatcher,
+                                                     Transformation transformation) {
+                        try {
+                            return executingTransformer.newInstance(byteBuddy,
+                                    typeLocator,
+                                    typeStrategy,
+                                    listener,
+                                    nativeMethodStrategy,
+                                    accessControlContext,
+                                    initializationStrategy,
+                                    bootstrapInjectionStrategy,
+                                    ignoredTypeMatcher,
+                                    transformation);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Cannot access " + executingTransformer, exception);
+                        } catch (InstantiationException exception) {
+                            throw new IllegalStateException("Cannot instantiate " + executingTransformer.getDeclaringClass(), exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Cannot invoke " + executingTransformer, exception.getCause());
+                        }
+                    }
+                }
+
+                enum ForLegacyVm implements Factory {
+
+                    INSTANCE;
+
+                    @Override
+                    public ClassFileTransformer make(ByteBuddy byteBuddy,
+                                                     TypeLocator typeLocator,
+                                                     TypeStrategy typeStrategy,
+                                                     Listener listener,
+                                                     NativeMethodStrategy nativeMethodStrategy,
+                                                     AccessControlContext accessControlContext,
+                                                     InitializationStrategy initializationStrategy,
+                                                     BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                     RawMatcher ignoredTypeMatcher,
+                                                     Transformation transformation) {
+                        return new ExecutingTransformer(byteBuddy,
+                                typeLocator,
+                                typeStrategy,
+                                listener,
+                                nativeMethodStrategy,
+                                accessControlContext,
+                                initializationStrategy,
+                                bootstrapInjectionStrategy,
+                                ignoredTypeMatcher,
+                                transformation);
+                    }
+                }
             }
         }
 
