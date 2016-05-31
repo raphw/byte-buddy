@@ -35,6 +35,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaConstant;
+import net.bytebuddy.utility.JavaModule;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -263,6 +264,10 @@ public interface AgentBuilder {
      */
     Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+    Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher,
+                               ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                               ElementMatcher<? super JavaModule> moduleMatcher);
+
     /**
      * <p>
      * Matches a type being loaded in order to apply the supplied {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
@@ -334,6 +339,10 @@ public interface AgentBuilder {
      * All previous matchers for ignored types are discarded.
      */
     Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
+
+    Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher,
+                   ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                   ElementMatcher<? super JavaModule> moduleMatcher);
 
     /**
      * <p>
@@ -410,6 +419,10 @@ public interface AgentBuilder {
          */
         T and(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+        T and(ElementMatcher<? super TypeDescription> typeMatcher,
+              ElementMatcher<? super ClassLoader> classLoaderMatcher,
+              ElementMatcher<? super JavaModule> moduleMatcher);
+
         /**
          * Defines a matching that is positive if both the previous matcher and the supplied matcher are matched.
          *
@@ -436,6 +449,10 @@ public interface AgentBuilder {
          */
         T or(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+        T or(ElementMatcher<? super TypeDescription> typeMatcher,
+             ElementMatcher<? super ClassLoader> classLoaderMatcher,
+             ElementMatcher<? super JavaModule> moduleMatcher);
+
         /**
          * Defines a matching that is positive if the previous matcher or the supplied matcher are matched.
          *
@@ -458,7 +475,14 @@ public interface AgentBuilder {
 
             @Override
             public S and(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                return and(new RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher));
+                return and(typeMatcher, classLoaderMatcher, any());
+            }
+
+            @Override
+            public S and(ElementMatcher<? super TypeDescription> typeMatcher,
+                         ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                         ElementMatcher<? super JavaModule> moduleMatcher) {
+                return and(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
             }
 
             @Override
@@ -468,7 +492,14 @@ public interface AgentBuilder {
 
             @Override
             public S or(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                return or(new RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher));
+                return or(typeMatcher, classLoaderMatcher, any());
+            }
+
+            @Override
+            public S or(ElementMatcher<? super TypeDescription> typeMatcher,
+                        ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                        ElementMatcher<? super JavaModule> moduleMatcher) {
+                return or(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
             }
         }
     }
@@ -668,7 +699,7 @@ public interface AgentBuilder {
          * and its {@link java.lang.ClassLoader} against two suitable matchers in order to determine if the matched
          * type should be instrumented.
          */
-        class ForElementMatcherPair implements RawMatcher {
+        class ForElementMatchers implements RawMatcher {
 
             /**
              * The type matcher to apply to a {@link TypeDescription}.
@@ -680,6 +711,8 @@ public interface AgentBuilder {
              */
             private final ElementMatcher<? super ClassLoader> classLoaderMatcher;
 
+            private final ElementMatcher<? super JavaModule> moduleMatcher;
+
             /**
              * Creates a new {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} that only matches the
              * supplied {@link TypeDescription} and its {@link java.lang.ClassLoader} against two matcher in order
@@ -689,10 +722,12 @@ public interface AgentBuilder {
              *                           {@link TypeDescription}.
              * @param classLoaderMatcher The class loader to apply to a {@link java.lang.ClassLoader}.
              */
-            public ForElementMatcherPair(ElementMatcher<? super TypeDescription> typeMatcher,
-                                         ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+            public ForElementMatchers(ElementMatcher<? super TypeDescription> typeMatcher,
+                                      ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                      ElementMatcher<? super JavaModule> moduleMatcher) {
                 this.typeMatcher = typeMatcher;
                 this.classLoaderMatcher = classLoaderMatcher;
+                this.moduleMatcher = moduleMatcher;
             }
 
             @Override
@@ -706,22 +741,25 @@ public interface AgentBuilder {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && classLoaderMatcher.equals(((ForElementMatcherPair) other).classLoaderMatcher)
-                        && typeMatcher.equals(((ForElementMatcherPair) other).typeMatcher);
+                        && classLoaderMatcher.equals(((ForElementMatchers) other).classLoaderMatcher)
+                        && moduleMatcher.equals(((ForElementMatchers) other).moduleMatcher)
+                        && typeMatcher.equals(((ForElementMatchers) other).typeMatcher);
             }
 
             @Override
             public int hashCode() {
                 int result = typeMatcher.hashCode();
                 result = 31 * result + classLoaderMatcher.hashCode();
+                result = 31 * result + moduleMatcher.hashCode();
                 return result;
             }
 
             @Override
             public String toString() {
-                return "AgentBuilder.RawMatcher.ForElementMatcherPair{" +
+                return "AgentBuilder.RawMatcher.ForElementMatchers{" +
                         "typeMatcher=" + typeMatcher +
                         ", classLoaderMatcher=" + classLoaderMatcher +
+                        ", moduleMatcher=" + moduleMatcher +
                         '}';
             }
         }
@@ -3868,7 +3906,7 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
-                    new RawMatcher.ForElementMatcherPair(isSynthetic(), any()),
+                    new RawMatcher.ForElementMatchers(isSynthetic(), any(), any()),
                     Transformation.Ignored.INSTANCE);
         }
 
@@ -4119,17 +4157,31 @@ public interface AgentBuilder {
 
         @Override
         public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-            return type(new RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher));
+            return type(typeMatcher, classLoaderMatcher, any());
         }
 
         @Override
-        public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes) {
-            return ignore(ignoredTypes, any());
+        public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher,
+                                          ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                          ElementMatcher<? super JavaModule> moduleMatcher) {
+            return type(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
         }
 
         @Override
-        public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes, ElementMatcher<? super ClassLoader> ignoredClassLoaders) {
-            return ignore(new RawMatcher.ForElementMatcherPair(ignoredTypes, ignoredClassLoaders));
+        public Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher) {
+            return ignore(typeMatcher, any());
+        }
+
+        @Override
+        public Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+            return ignore(typeMatcher, classLoaderMatcher, any());
+        }
+
+        @Override
+        public Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher,
+                              ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                              ElementMatcher<? super JavaModule> moduleMatcher) {
+            return ignore(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
         }
 
         @Override
@@ -5371,6 +5423,14 @@ public interface AgentBuilder {
             }
 
             @Override
+            public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher,
+                                              ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                              ElementMatcher<? super JavaModule> moduleMatcher) {
+                return materialize().type(typeMatcher, classLoaderMatcher, moduleMatcher);
+            }
+
+
+            @Override
             public Identified.Narrowable type(RawMatcher matcher) {
                 return materialize().type(matcher);
             }
@@ -5383,6 +5443,13 @@ public interface AgentBuilder {
             @Override
             public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes, ElementMatcher<? super ClassLoader> ignoredClassLoaders) {
                 return materialize().ignore(ignoredTypes, ignoredClassLoaders);
+            }
+
+            @Override
+            public Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher,
+                                  ElementMatcher<? super ClassLoader> classLoaderMatcher,
+                                  ElementMatcher<? super JavaModule> moduleMatcher) {
+                return materialize().ignore(typeMatcher, classLoaderMatcher, moduleMatcher);
             }
 
             @Override
