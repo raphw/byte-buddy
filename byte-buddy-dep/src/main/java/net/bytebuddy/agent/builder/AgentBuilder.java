@@ -5211,7 +5211,6 @@ public interface AgentBuilder {
                             .method(named("transform").and(takesArgument(0, JavaType.MODULE.getTypeStub())))
                             .intercept(MethodCall.invoke(ExecutingTransformer.class.getDeclaredMethod("transform",
                                     Object.class,
-                                    ClassLoader.class,
                                     String.class,
                                     Class.class,
                                     ProtectionDomain.class,
@@ -5332,13 +5331,18 @@ public interface AgentBuilder {
                 return transform(JavaModule.UNDEFINED, classLoader, internalTypeName, classBeingRedefined, protectionDomain, binaryRepresentation);
             }
 
-            protected byte[] transform(Object module,
-                                       ClassLoader classLoader,
+            protected byte[] transform(Object rawModule,
                                        String internalTypeName,
                                        Class<?> classBeingRedefined,
                                        ProtectionDomain protectionDomain,
                                        byte[] binaryRepresentation) {
-                return transform(JavaModule.of(module), classLoader, internalTypeName, classBeingRedefined, protectionDomain, binaryRepresentation);
+                JavaModule module = JavaModule.of(rawModule);
+                return transform(module,
+                        module.getClassLoader(accessControlContext),
+                        internalTypeName,
+                        classBeingRedefined,
+                        protectionDomain,
+                        binaryRepresentation);
             }
 
             private byte[] transform(JavaModule module,
