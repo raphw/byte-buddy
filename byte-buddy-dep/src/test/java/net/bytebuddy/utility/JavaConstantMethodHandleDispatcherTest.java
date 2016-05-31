@@ -11,27 +11,27 @@ import java.util.Iterator;
 
 import static org.mockito.Mockito.mock;
 
-public class JavaInstanceMethodHandleDispatcherTest {
+public class JavaConstantMethodHandleDispatcherTest {
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmInitialization() throws Exception {
-        JavaInstance.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.initialize(AccessController.getContext());
+        JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.initialize(AccessController.getContext());
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmPunlicLookup() throws Exception {
-        JavaInstance.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.publicLookup();
+        JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.publicLookup();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmLookupType() throws Exception {
-        JavaInstance.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.lookupType(mock(Object.class));
+        JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.lookupType(mock(Object.class));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         final Iterator<Method> methods1 = Arrays.asList(Foo.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(JavaInstance.MethodHandle.Dispatcher.ForJava8CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForJava8CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return methods1.next();
@@ -39,7 +39,7 @@ public class JavaInstanceMethodHandleDispatcherTest {
         }).apply();
         final Iterator<Method> methods2 = Arrays.asList(Foo.class.getDeclaredMethods()).iterator();
         final Iterator<Constructor<?>> constructors2 = Arrays.asList(Foo.class.getDeclaredConstructors()).iterator();
-        ObjectPropertyAssertion.of(JavaInstance.MethodHandle.Dispatcher.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return methods2.next();
@@ -50,7 +50,7 @@ public class JavaInstanceMethodHandleDispatcherTest {
                 return constructors2.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(JavaInstance.MethodHandle.Dispatcher.ForLegacyVm.class).apply();
+        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.class).apply();
     }
 
     @SuppressWarnings("unused")

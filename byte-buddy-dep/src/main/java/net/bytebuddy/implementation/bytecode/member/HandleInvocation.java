@@ -2,7 +2,7 @@ package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -24,14 +24,14 @@ public class HandleInvocation implements StackManipulation {
     /**
      * The method type of the invoked handle.
      */
-    private final JavaInstance.MethodType methodType;
+    private final JavaConstant.MethodType methodType;
 
     /**
      * Creates a public invocation of a method handle.
      *
      * @param methodType The method type of the invoked handle.
      */
-    public HandleInvocation(JavaInstance.MethodType methodType) {
+    public HandleInvocation(JavaConstant.MethodType methodType) {
         this.methodType = methodType;
     }
 

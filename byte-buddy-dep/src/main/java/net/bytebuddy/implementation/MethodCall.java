@@ -17,7 +17,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
@@ -299,13 +299,13 @@ public class MethodCall implements Implementation.Composable {
      * Defines the given Java instances to be provided as arguments to the invoked method where the given
      * instances are stored in the generated class's constant pool.
      *
-     * @param javaInstance The Java instances to provide as arguments.
+     * @param javaConstant The Java instances to provide as arguments.
      * @return A method call that hands the provided arguments to the invoked method.
      */
-    public MethodCall with(JavaInstance... javaInstance) {
-        List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(javaInstance.length);
-        for (JavaInstance aJavaInstance : javaInstance) {
-            argumentLoaders.add(new ArgumentLoader.ForJavaInstance(aJavaInstance));
+    public MethodCall with(JavaConstant... javaConstant) {
+        List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(javaConstant.length);
+        for (JavaConstant aJavaConstant : javaConstant) {
+            argumentLoaders.add(new ArgumentLoader.ForJavaConstant(aJavaConstant));
         }
         return new MethodCall(methodLocator,
                 targetHandler,
@@ -1393,9 +1393,9 @@ public class MethodCall implements Implementation.Composable {
                     } else if (value instanceof Class) {
                         return new ForClassConstant(new TypeDescription.ForLoadedType((Class<?>) value));
                     } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
-                        return new ForJavaInstance(JavaInstance.MethodHandle.ofLoaded(value));
+                        return new ForJavaConstant(JavaConstant.MethodHandle.ofLoaded(value));
                     } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
-                        return new ForJavaInstance(JavaInstance.MethodType.ofLoaded(value));
+                        return new ForJavaConstant(JavaConstant.MethodType.ofLoaded(value));
                     } else if (value instanceof Enum<?>) {
                         return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
                     } else {
@@ -2324,27 +2324,27 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Loads a Java instance onto the operand stack.
          */
-        class ForJavaInstance implements ArgumentLoader, Factory {
+        class ForJavaConstant implements ArgumentLoader, Factory {
 
             /**
              * The Java instance to load onto the operand stack.
              */
-            private final JavaInstance javaInstance;
+            private final JavaConstant javaConstant;
 
             /**
              * Creates a new argument loader for a Java instance.
              *
-             * @param javaInstance The Java instance to load as an argument.
+             * @param javaConstant The Java instance to load as an argument.
              */
-            public ForJavaInstance(JavaInstance javaInstance) {
-                this.javaInstance = javaInstance;
+            public ForJavaConstant(JavaConstant javaConstant) {
+                this.javaConstant = javaConstant;
             }
 
             @Override
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        javaInstance.asStackManipulation(),
-                        assigner.assign(javaInstance.getInstanceType().asGenericType(), target.getType(), typing));
+                        javaConstant.asStackManipulation(),
+                        assigner.assign(javaConstant.getInstanceType().asGenericType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign Class value to " + target);
                 }
@@ -2364,18 +2364,18 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && javaInstance.equals(((ForJavaInstance) other).javaInstance);
+                        && javaConstant.equals(((ForJavaConstant) other).javaConstant);
             }
 
             @Override
             public int hashCode() {
-                return javaInstance.hashCode();
+                return javaConstant.hashCode();
             }
 
             @Override
             public String toString() {
-                return "MethodCall.ArgumentLoader.ForJavaInstance{" +
-                        "javaInstance=" + javaInstance +
+                return "MethodCall.ArgumentLoader.ForJavaConstant{" +
+                        "javaConstant=" + javaConstant +
                         '}';
             }
         }

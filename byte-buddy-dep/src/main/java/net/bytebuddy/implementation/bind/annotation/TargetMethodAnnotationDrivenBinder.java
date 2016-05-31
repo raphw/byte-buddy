@@ -14,7 +14,7 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 
 import java.lang.annotation.Annotation;
@@ -195,7 +195,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * This binder is only capable to store values that can either be expressed as Java byte code or as a constant pool value. This
          * includes primitive types, {@link String} values, {@link Class} values which can also be expressed as {@link TypeDescription}
          * instances or method handles and method types for classes of a version at least of Java 7. The latter instances can also be
-         * expressed as unloaded {@link JavaInstance} representations.
+         * expressed as unloaded {@link JavaConstant} representations.
          * </p>
          * <p>
          * <b>Important</b>: When supplying a method handle or a method type, all types that are implied must be visible to the instrumented
@@ -252,16 +252,16 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     stackManipulation = ClassConstant.of((TypeDescription) value);
                     suppliedType = TypeDescription.CLASS;
                 } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
-                    stackManipulation = JavaInstance.MethodHandle.ofLoaded(value).asStackManipulation();
+                    stackManipulation = JavaConstant.MethodHandle.ofLoaded(value).asStackManipulation();
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
-                } else if (value instanceof JavaInstance.MethodHandle) {
-                    stackManipulation = new JavaInstanceConstant((JavaInstance.MethodHandle) value);
+                } else if (value instanceof JavaConstant.MethodHandle) {
+                    stackManipulation = new JavaConstantValue((JavaConstant.MethodHandle) value);
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
                 } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
-                    stackManipulation = new JavaInstanceConstant(JavaInstance.MethodType.ofLoaded(value));
+                    stackManipulation = new JavaConstantValue(JavaConstant.MethodType.ofLoaded(value));
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
-                } else if (value instanceof JavaInstance.MethodType) {
-                    stackManipulation = new JavaInstanceConstant((JavaInstance.MethodType) value);
+                } else if (value instanceof JavaConstant.MethodType) {
+                    stackManipulation = new JavaConstantValue((JavaConstant.MethodType) value);
                     suppliedType = JavaType.METHOD_HANDLE.getTypeStub();
                 } else {
                     throw new IllegalStateException("Not able to save in class's constant pool: " + value);
@@ -290,7 +290,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              * This binder is only capable to store
              * values that can either be expressed as Java byte code or as a constant pool value. This includes primitive types, {@link String} values,
              * {@link Class} values which can also be expressed as {@link TypeDescription} instances or method handles and method types for classes of
-             * a version at least of Java 7. The latter instances can also be expressed as unloaded {@link JavaInstance} representations.
+             * a version at least of Java 7. The latter instances can also be expressed as unloaded {@link JavaConstant} representations.
              * </p>
              *
              * @param <U> The bound annotation's type.

@@ -6,7 +6,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
 import org.junit.Test;
@@ -65,7 +65,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
         Object lookup = publicLookup.invoke(null);
         Method unreflected = Class.forName("java.lang.invoke.MethodHandles$Lookup").getDeclaredMethod("unreflect", Method.class);
         Object methodHandleLoaded = unreflected.invoke(lookup, Foo.class.getDeclaredMethod(FOO));
-        assertThat(JavaInstance.MethodHandle.ofLoaded(new ByteBuddy()
+        assertThat(JavaConstant.MethodHandle.ofLoaded(new ByteBuddy()
                 .subclass(Foo.class)
                 .method(named(FOO))
                 .intercept(MethodDelegation.to(Foo.class)
@@ -74,7 +74,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .newInstance()
-                .foo()), is(JavaInstance.MethodHandle.ofLoaded(methodHandleLoaded)));
+                .foo()), is(JavaConstant.MethodHandle.ofLoaded(methodHandleLoaded)));
     }
 
     @Test
@@ -84,16 +84,16 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
         Object lookup = publicLookup.invoke(null);
         Method unreflected = Class.forName("java.lang.invoke.MethodHandles$Lookup").getDeclaredMethod("unreflect", Method.class);
         Object methodHandleLoaded = unreflected.invoke(lookup, Foo.class.getDeclaredMethod(FOO));
-        assertThat(JavaInstance.MethodHandle.ofLoaded(new ByteBuddy()
+        assertThat(JavaConstant.MethodHandle.ofLoaded(new ByteBuddy()
                 .subclass(Foo.class)
                 .method(named(FOO))
                 .intercept(MethodDelegation.to(Foo.class)
-                        .appendParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue.OfConstant.of(Bar.class, JavaInstance.MethodHandle.ofLoaded(methodHandleLoaded))))
+                        .appendParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue.OfConstant.of(Bar.class, JavaConstant.MethodHandle.ofLoaded(methodHandleLoaded))))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .newInstance()
-                .foo()), is(JavaInstance.MethodHandle.ofLoaded(methodHandleLoaded)));
+                .foo()), is(JavaConstant.MethodHandle.ofLoaded(methodHandleLoaded)));
     }
 
     @Test
@@ -101,7 +101,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
     public void testMethodTypeLoaded() throws Exception {
         Object loadedMethodType = JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class)
                 .invoke(null, void.class, new Class<?>[]{Object.class});
-        assertThat(JavaInstance.MethodType.ofLoaded(new ByteBuddy()
+        assertThat(JavaConstant.MethodType.ofLoaded(new ByteBuddy()
                 .subclass(Foo.class)
                 .method(named(FOO))
                 .intercept(MethodDelegation.to(Foo.class)
@@ -110,7 +110,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .newInstance()
-                .foo()), is(JavaInstance.MethodType.ofLoaded(loadedMethodType)));
+                .foo()), is(JavaConstant.MethodType.ofLoaded(loadedMethodType)));
     }
 
     @Test
@@ -118,16 +118,16 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
     public void testMethodType() throws Exception {
         Object loadedMethodType = JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class)
                 .invoke(null, void.class, new Class<?>[]{Object.class});
-        assertThat(JavaInstance.MethodType.ofLoaded(new ByteBuddy()
+        assertThat(JavaConstant.MethodType.ofLoaded(new ByteBuddy()
                 .subclass(Foo.class)
                 .method(named(FOO))
                 .intercept(MethodDelegation.to(Foo.class)
-                        .appendParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue.OfConstant.of(Bar.class, JavaInstance.MethodType.ofLoaded(loadedMethodType))))
+                        .appendParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue.OfConstant.of(Bar.class, JavaConstant.MethodType.ofLoaded(loadedMethodType))))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .newInstance()
-                .foo()), is(JavaInstance.MethodType.ofLoaded(loadedMethodType)));
+                .foo()), is(JavaConstant.MethodType.ofLoaded(loadedMethodType)));
     }
 
     @Test(expected = IllegalStateException.class)

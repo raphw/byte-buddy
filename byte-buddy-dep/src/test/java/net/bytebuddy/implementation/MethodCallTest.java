@@ -13,7 +13,7 @@ import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
@@ -489,7 +489,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     public void testJava7TypesExplicit() throws Exception {
         DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
                 MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
-                        .with(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle()), JavaInstance.MethodType.ofLoaded(makeMethodType(void.class))),
+                        .with(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle()), JavaConstant.MethodType.ofLoaded(makeMethodType(void.class))),
                 SimpleMethod.class.getClassLoader(),
                 named(FOO));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -673,7 +673,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForTextConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForClassConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForEnumerationValue.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForJavaInstance.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForJavaConstant.class).apply();
     }
 
     public static class SimpleMethod {

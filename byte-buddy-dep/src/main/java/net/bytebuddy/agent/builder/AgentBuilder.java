@@ -34,7 +34,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -2628,11 +2628,11 @@ public interface AgentBuilder {
                                List<Class<?>> markerInterfaces,
                                List<?> additionalBridges,
                                Collection<? extends ClassFileTransformer> classFileTransformers) {
-                JavaInstance.MethodType factoryMethod = JavaInstance.MethodType.ofLoaded(factoryMethodType);
-                JavaInstance.MethodType lambdaMethod = JavaInstance.MethodType.ofLoaded(lambdaMethodType);
-                JavaInstance.MethodHandle targetMethod = JavaInstance.MethodHandle.ofLoaded(targetMethodHandle, targetTypeLookup);
-                JavaInstance.MethodType specializedLambdaMethod = JavaInstance.MethodType.ofLoaded(specializedLambdaMethodType);
-                Class<?> targetType = JavaInstance.MethodHandle.lookupType(targetTypeLookup);
+                JavaConstant.MethodType factoryMethod = JavaConstant.MethodType.ofLoaded(factoryMethodType);
+                JavaConstant.MethodType lambdaMethod = JavaConstant.MethodType.ofLoaded(lambdaMethodType);
+                JavaConstant.MethodHandle targetMethod = JavaConstant.MethodHandle.ofLoaded(targetMethodHandle, targetTypeLookup);
+                JavaConstant.MethodType specializedLambdaMethod = JavaConstant.MethodType.ofLoaded(specializedLambdaMethodType);
+                Class<?> targetType = JavaConstant.MethodHandle.lookupType(targetTypeLookup);
                 String lambdaClassName = targetType.getName() + LAMBDA_TYPE_INFIX + LAMBDA_NAME_COUNTER.incrementAndGet();
                 DynamicType.Builder<?> builder = byteBuddy
                         .subclass(factoryMethod.getReturnType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
@@ -2665,7 +2665,7 @@ public interface AgentBuilder {
                                     lambdaMethodName,
                                     lambdaMethod,
                                     targetMethod,
-                                    JavaInstance.MethodType.ofLoaded(specializedLambdaMethodType)));
+                                    JavaConstant.MethodType.ofLoaded(specializedLambdaMethodType)));
                 } else if (factoryMethod.getReturnType().isAssignableTo(Serializable.class)) {
                     builder = builder.defineMethod("readObject", void.class, Visibility.PRIVATE)
                             .withParameters(ObjectInputStream.class)
@@ -2677,7 +2677,7 @@ public interface AgentBuilder {
                             .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"));
                 }
                 for (Object additionalBridgeType : additionalBridges) {
-                    JavaInstance.MethodType additionalBridge = JavaInstance.MethodType.ofLoaded(additionalBridgeType);
+                    JavaConstant.MethodType additionalBridge = JavaConstant.MethodType.ofLoaded(additionalBridgeType);
                     builder = builder.defineMethod(lambdaMethodName, additionalBridge.getReturnType(), MethodManifestation.BRIDGE, Visibility.PUBLIC)
                             .withParameters(additionalBridge.getParameterTypes())
                             .intercept(new BridgeMethodImplementation(lambdaMethodName, lambdaMethod));
@@ -2894,12 +2894,12 @@ public interface AgentBuilder {
                 /**
                  * The handle of the target method of the lambda expression.
                  */
-                private final JavaInstance.MethodHandle targetMethod;
+                private final JavaConstant.MethodHandle targetMethod;
 
                 /**
                  * The specialized type of the lambda method.
                  */
-                private final JavaInstance.MethodType specializedLambdaMethod;
+                private final JavaConstant.MethodType specializedLambdaMethod;
 
                 /**
                  * Creates a implementation of a lambda expression's functional method.
@@ -2907,7 +2907,7 @@ public interface AgentBuilder {
                  * @param targetMethod            The target method of the lambda expression.
                  * @param specializedLambdaMethod The specialized type of the lambda method.
                  */
-                protected LambdaMethodImplementation(JavaInstance.MethodHandle targetMethod, JavaInstance.MethodType specializedLambdaMethod) {
+                protected LambdaMethodImplementation(JavaConstant.MethodHandle targetMethod, JavaConstant.MethodType specializedLambdaMethod) {
                     this.targetMethod = targetMethod;
                     this.specializedLambdaMethod = specializedLambdaMethod;
                 }
@@ -2966,7 +2966,7 @@ public interface AgentBuilder {
                     /**
                      * The specialized type of the lambda method.
                      */
-                    private final JavaInstance.MethodType specializedLambdaMethod;
+                    private final JavaConstant.MethodType specializedLambdaMethod;
 
                     /**
                      * The instrumented type's declared fields.
@@ -2981,7 +2981,7 @@ public interface AgentBuilder {
                      * @param declaredFields          The instrumented type's declared fields.
                      */
                     protected Appender(MethodDescription targetMethod,
-                                       JavaInstance.MethodType specializedLambdaMethod,
+                                       JavaConstant.MethodType specializedLambdaMethod,
                                        List<FieldDescription.InDefinedShape> declaredFields) {
                         this.targetMethod = targetMethod;
                         this.specializedLambdaMethod = specializedLambdaMethod;
@@ -3062,17 +3062,17 @@ public interface AgentBuilder {
                 /**
                  * The method type of the lambda expression's functional method.
                  */
-                private final JavaInstance.MethodType lambdaMethod;
+                private final JavaConstant.MethodType lambdaMethod;
 
                 /**
                  * A handle that references the lambda expressions invocation target.
                  */
-                private final JavaInstance.MethodHandle targetMethod;
+                private final JavaConstant.MethodHandle targetMethod;
 
                 /**
                  * The specialized method type of the lambda expression's functional method.
                  */
-                private final JavaInstance.MethodType specializedMethod;
+                private final JavaConstant.MethodType specializedMethod;
 
                 /**
                  * Creates a new implementation for a serializable's lambda expression's {@code writeReplace} method.
@@ -3087,9 +3087,9 @@ public interface AgentBuilder {
                 protected SerializationImplementation(TypeDescription targetType,
                                                       TypeDescription lambdaType,
                                                       String lambdaMethodName,
-                                                      JavaInstance.MethodType lambdaMethod,
-                                                      JavaInstance.MethodHandle targetMethod,
-                                                      JavaInstance.MethodType specializedMethod) {
+                                                      JavaConstant.MethodType lambdaMethod,
+                                                      JavaConstant.MethodHandle targetMethod,
+                                                      JavaConstant.MethodType specializedMethod) {
                     this.targetType = targetType;
                     this.lambdaType = lambdaType;
                     this.lambdaMethodName = lambdaMethodName;
@@ -3185,7 +3185,7 @@ public interface AgentBuilder {
                 /**
                  * The actual type of the lambda expression's functional method.
                  */
-                private final JavaInstance.MethodType lambdaMethod;
+                private final JavaConstant.MethodType lambdaMethod;
 
                 /**
                  * Creates a new bridge method implementation for a lambda expression.
@@ -3193,7 +3193,7 @@ public interface AgentBuilder {
                  * @param lambdaMethodName The name of the lambda expression's functional method.
                  * @param lambdaMethod     The actual type of the lambda expression's functional method.
                  */
-                protected BridgeMethodImplementation(String lambdaMethodName, JavaInstance.MethodType lambdaMethod) {
+                protected BridgeMethodImplementation(String lambdaMethodName, JavaConstant.MethodType lambdaMethod) {
                     this.lambdaMethodName = lambdaMethodName;
                     this.lambdaMethod = lambdaMethod;
                 }

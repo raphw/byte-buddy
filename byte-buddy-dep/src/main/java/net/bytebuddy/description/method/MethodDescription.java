@@ -11,7 +11,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -219,8 +219,8 @@ public interface MethodDescription extends TypeVariableSource,
      *
      * @param arguments The arguments that the bootstrap method is expected to accept where primitive values
      *                  are to be represented as their wrapper types, loaded types by {@link TypeDescription},
-     *                  method handles by {@link net.bytebuddy.utility.JavaInstance.MethodHandle} instances and
-     *                  method types by {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                  method handles by {@link JavaConstant.MethodHandle} instances and
+     *                  method types by {@link JavaConstant.MethodType} instances.
      * @return {@code true} if the method is a bootstrap method that accepts the given arguments.
      */
     boolean isBootstrap(List<?> arguments);
@@ -536,8 +536,8 @@ public interface MethodDescription extends TypeVariableSource,
                         || argumentType == Float.class
                         || argumentType == Double.class
                         || TypeDescription.class.isAssignableFrom(argumentType)
-                        || JavaInstance.MethodHandle.class.isAssignableFrom(argumentType)
-                        || JavaInstance.MethodType.class.isAssignableFrom(argumentType))) {
+                        || JavaConstant.MethodHandle.class.isAssignableFrom(argumentType)
+                        || JavaConstant.MethodType.class.isAssignableFrom(argumentType))) {
                     throw new IllegalArgumentException("Not a bootstrap argument: " + argument);
                 }
             }
@@ -558,8 +558,8 @@ public interface MethodDescription extends TypeVariableSource,
                                 && !(parameterType.represents(float.class) && argumentType == Float.class)
                                 && !(parameterType.represents(double.class) && argumentType == Double.class)
                                 && !(parameterType.represents(Class.class) && TypeDescription.class.isAssignableFrom(argumentType))
-                                && !(parameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub()) && JavaInstance.MethodHandle.class.isAssignableFrom(argumentType))
-                                && !(parameterType.equals(JavaType.METHOD_TYPE.getTypeStub()) && JavaInstance.MethodType.class.isAssignableFrom(argumentType));
+                                && !(parameterType.isAssignableFrom(JavaType.METHOD_HANDLE.getTypeStub()) && JavaConstant.MethodHandle.class.isAssignableFrom(argumentType))
+                                && !(parameterType.equals(JavaType.METHOD_TYPE.getTypeStub()) && JavaConstant.MethodType.class.isAssignableFrom(argumentType));
                     }
                     if (finalParameterCheck) {
                         return index == parameterTypes.size() && parameterType.represents(Object[].class);

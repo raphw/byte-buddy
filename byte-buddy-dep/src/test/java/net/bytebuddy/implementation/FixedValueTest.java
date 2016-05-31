@@ -5,7 +5,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
@@ -57,7 +57,7 @@ public class FixedValueTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeConstantPool() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(JavaInstance.MethodType.of(void.class, Object.class))).getLoaded();
+        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(JavaConstant.MethodType.of(void.class, Object.class))).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(qux.newInstance().bar(), is(makeMethodType(void.class, Object.class)));
     }
@@ -73,9 +73,9 @@ public class FixedValueTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleConstantPool() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(JavaInstance.MethodHandle.of(Qux.class.getDeclaredMethod("bar")))).getLoaded();
+        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(JavaConstant.MethodHandle.of(Qux.class.getDeclaredMethod("bar")))).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
-        assertThat(JavaInstance.MethodHandle.ofLoaded(qux.newInstance().bar()), is(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle())));
+        assertThat(JavaConstant.MethodHandle.ofLoaded(qux.newInstance().bar()), is(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle())));
     }
 
     @Test
@@ -83,7 +83,7 @@ public class FixedValueTest extends AbstractImplementationTest {
     public void testMethodHandleConstantPoolValue() throws Exception {
         Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(makeMethodHandle())).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
-        assertThat(JavaInstance.MethodHandle.ofLoaded(qux.newInstance().bar()), is(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle())));
+        assertThat(JavaConstant.MethodHandle.ofLoaded(qux.newInstance().bar()), is(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle())));
     }
 
     @Test

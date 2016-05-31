@@ -9,27 +9,27 @@ import java.util.Iterator;
 
 import static org.mockito.Mockito.mock;
 
-public class JavaInstanceMethodTypeDispatcherTest {
+public class JavaConstantMethodTypeDispatcherTest {
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmReturnType() throws Exception {
-        JavaInstance.MethodType.Dispatcher.ForLegacyVm.INSTANCE.returnType(mock(Object.class));
+        JavaConstant.MethodType.Dispatcher.ForLegacyVm.INSTANCE.returnType(mock(Object.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmParameterArray() throws Exception {
-        JavaInstance.MethodType.Dispatcher.ForLegacyVm.INSTANCE.parameterArray(mock(Object.class));
+        JavaConstant.MethodType.Dispatcher.ForLegacyVm.INSTANCE.parameterArray(mock(Object.class));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(JavaInstance.MethodType.Dispatcher.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(JavaConstant.MethodType.Dispatcher.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return methods.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(JavaInstance.MethodType.Dispatcher.ForLegacyVm.class).apply();
+        ObjectPropertyAssertion.of(JavaConstant.MethodType.Dispatcher.ForLegacyVm.class).apply();
     }
 }

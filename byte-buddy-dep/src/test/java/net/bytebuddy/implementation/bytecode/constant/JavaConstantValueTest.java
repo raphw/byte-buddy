@@ -4,7 +4,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -15,7 +15,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class JavaInstanceConstantTest {
+public class JavaConstantValueTest {
 
     private static final String FOO = "foo";
 
@@ -23,7 +23,7 @@ public class JavaInstanceConstantTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private JavaInstance javaInstance;
+    private JavaConstant javaConstant;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -33,13 +33,13 @@ public class JavaInstanceConstantTest {
 
     @Test
     public void testMethodHandle() throws Exception {
-        when(javaInstance.asConstantPoolValue()).thenReturn(FOO);
-        StackManipulation stackManipulation = new JavaInstanceConstant(javaInstance);
+        when(javaConstant.asConstantPoolValue()).thenReturn(FOO);
+        StackManipulation stackManipulation = new JavaConstantValue(javaConstant);
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
-        verify(javaInstance).asConstantPoolValue();
-        verifyNoMoreInteractions(javaInstance);
+        verify(javaConstant).asConstantPoolValue();
+        verifyNoMoreInteractions(javaConstant);
         verify(methodVisitor).visitLdcInsn(FOO);
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
@@ -47,6 +47,6 @@ public class JavaInstanceConstantTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(JavaInstanceConstant.class).apply();
+        ObjectPropertyAssertion.of(JavaConstantValue.class).apply();
     }
 }

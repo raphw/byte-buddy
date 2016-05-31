@@ -3,26 +3,26 @@ package net.bytebuddy.implementation.bytecode.constant;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import org.objectweb.asm.MethodVisitor;
 
 /**
- * A constant representing a {@link JavaInstance}.
+ * A constant representing a {@link JavaConstant}.
  */
-public class JavaInstanceConstant implements StackManipulation {
+public class JavaConstantValue implements StackManipulation {
 
     /**
      * The instance to load onto the operand stack.
      */
-    private final JavaInstance javaInstance;
+    private final JavaConstant javaConstant;
 
     /**
-     * Creates a constant pool value representing a {@link JavaInstance}.
+     * Creates a constant pool value representing a {@link JavaConstant}.
      *
-     * @param javaInstance The instance to load onto the operand stack.
+     * @param javaConstant The instance to load onto the operand stack.
      */
-    public JavaInstanceConstant(JavaInstance javaInstance) {
-        this.javaInstance = javaInstance;
+    public JavaConstantValue(JavaConstant javaConstant) {
+        this.javaConstant = javaConstant;
     }
 
     @Override
@@ -32,23 +32,23 @@ public class JavaInstanceConstant implements StackManipulation {
 
     @Override
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-        methodVisitor.visitLdcInsn(javaInstance.asConstantPoolValue());
+        methodVisitor.visitLdcInsn(javaConstant.asConstantPoolValue());
         return StackSize.SINGLE.toIncreasingSize();
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && javaInstance.equals(((JavaInstanceConstant) other).javaInstance);
+                && javaConstant.equals(((JavaConstantValue) other).javaConstant);
     }
 
     @Override
     public int hashCode() {
-        return javaInstance.hashCode();
+        return javaConstant.hashCode();
     }
 
     @Override
     public String toString() {
-        return "JavaInstanceConstant{javaInstance=" + javaInstance + '}';
+        return "JavaConstantValue{javaConstant=" + javaConstant + '}';
     }
 }

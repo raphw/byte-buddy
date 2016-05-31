@@ -10,7 +10,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -118,12 +118,12 @@ public abstract class FixedValue implements Implementation {
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
         } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-            return new ForPoolValue(new JavaInstanceConstant(JavaInstance.MethodHandle.ofLoaded(fixedValue)),
+            return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodHandle.ofLoaded(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
         } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-            return new ForPoolValue(new JavaInstanceConstant(JavaInstance.MethodType.ofLoaded(fixedValue)),
+            return new ForPoolValue(new JavaConstantValue(JavaConstant.MethodType.ofLoaded(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
@@ -174,12 +174,12 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * Returns the loaded version of the given {@link JavaInstance}. The value is loaded from the written class's constant pool.
+     * Returns the loaded version of the given {@link JavaConstant}. The value is loaded from the written class's constant pool.
      *
      * @param fixedValue The type to return from the method.
      * @return An implementation for the given {@code fixedValue}.
      */
-    public static AssignerConfigurable value(JavaInstance fixedValue) {
+    public static AssignerConfigurable value(JavaConstant fixedValue) {
         return new ForPoolValue(fixedValue.asStackManipulation(),
                 fixedValue.getInstanceType(),
                 Assigner.DEFAULT,

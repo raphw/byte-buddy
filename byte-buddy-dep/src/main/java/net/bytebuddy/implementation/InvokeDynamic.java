@@ -20,7 +20,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
@@ -107,8 +107,8 @@ public class InvokeDynamic implements Implementation.Composable {
      *                    at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                    as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
      *                    it is also possible to supply unloaded types as {@link TypeDescription},
-     *                    {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
-     *                    {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                    {@link JavaConstant.MethodHandle} or
+     *                    {@link JavaConstant.MethodType} instances.
      *                    instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
@@ -127,8 +127,8 @@ public class InvokeDynamic implements Implementation.Composable {
      *                     at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                     as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
      *                     it is also possible to supply unloaded types as {@link TypeDescription},
-     *                     {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
-     *                     {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                     {@link JavaConstant.MethodHandle} or
+     *                     {@link JavaConstant.MethodType} instances.
      *                     instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
@@ -147,8 +147,8 @@ public class InvokeDynamic implements Implementation.Composable {
      *                    at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                    as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
      *                    it is also possible to supply unloaded types as {@link TypeDescription},
-     *                    {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
-     *                    {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                    {@link JavaConstant.MethodHandle} or
+     *                    {@link JavaConstant.MethodType} instances.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -166,8 +166,8 @@ public class InvokeDynamic implements Implementation.Composable {
      *                     at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                     as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
      *                     it is also possible to supply unloaded types as {@link TypeDescription},
-     *                     {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
-     *                     {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                     {@link JavaConstant.MethodHandle} or
+     *                     {@link JavaConstant.MethodType} instances.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -185,8 +185,8 @@ public class InvokeDynamic implements Implementation.Composable {
      *                        at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                        as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
      *                        it is also possible to supply unloaded types as {@link TypeDescription},
-     *                        {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
-     *                        {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                        {@link JavaConstant.MethodHandle} or
+     *                        {@link JavaConstant.MethodType} instances.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -204,8 +204,8 @@ public class InvokeDynamic implements Implementation.Composable {
      *                        at least 32 bit, {@link java.lang.String} types, {@link java.lang.Class} types as well
      *                        as {@code MethodType} and {@code MethodHandle} instances. In order to avoid class loading,
      *                        it is also possible to supply unloaded types as {@link TypeDescription},
-     *                        {@link net.bytebuddy.utility.JavaInstance.MethodHandle} or
-     *                        {@link net.bytebuddy.utility.JavaInstance.MethodType} instances.
+     *                        {@link JavaConstant.MethodHandle} or
+     *                        {@link JavaConstant.MethodType} instances.
      * @return An implementation where a {@code this} reference, if available, and all arguments of the
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
@@ -215,9 +215,9 @@ public class InvokeDynamic implements Implementation.Composable {
             if (argument instanceof Class) {
                 argument = new TypeDescription.ForLoadedType((Class<?>) argument);
             } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
-                argument = JavaInstance.MethodHandle.ofLoaded(argument);
+                argument = JavaConstant.MethodHandle.ofLoaded(argument);
             } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
-                argument = JavaInstance.MethodType.ofLoaded(argument);
+                argument = JavaConstant.MethodType.ofLoaded(argument);
             }
             arguments.add(argument);
         }
@@ -228,8 +228,8 @@ public class InvokeDynamic implements Implementation.Composable {
         for (Object anArgument : arguments) {
             if (anArgument instanceof TypeDescription) {
                 anArgument = Type.getType(((TypeDescription) anArgument).getDescriptor());
-            } else if (anArgument instanceof JavaInstance) {
-                anArgument = ((JavaInstance) anArgument).asConstantPoolValue();
+            } else if (anArgument instanceof JavaConstant) {
+                anArgument = ((JavaConstant) anArgument).asConstantPoolValue();
             }
             serializedArguments.add(anArgument);
         }
@@ -512,13 +512,13 @@ public class InvokeDynamic implements Implementation.Composable {
      * constant pool and is loaded at invocation time. For this to be possible, the created class's class loader must
      * be able to create the provided Java instance.
      *
-     * @param javaInstance The Java instance to provide to the bound method as an argument.
+     * @param javaConstant The Java instance to provide to the bound method as an argument.
      * @return This invoke dynamic implementation where the bootstrapped method is passed the specified Java instance.
      */
-    public InvokeDynamic withInstance(JavaInstance... javaInstance) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(javaInstance.length);
-        for (JavaInstance aJavaInstance : javaInstance) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForJavaInstance(aJavaInstance));
+    public InvokeDynamic withInstance(JavaConstant... javaConstant) {
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(javaConstant.length);
+        for (JavaConstant aJavaConstant : javaConstant) {
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForJavaConstant(aJavaConstant));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -1289,9 +1289,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     } else if (value instanceof Enum<?>) {
                         return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
                     } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
-                        return new ForJavaInstance(JavaInstance.MethodHandle.ofLoaded(value));
+                        return new ForJavaConstant(JavaConstant.MethodHandle.ofLoaded(value));
                     } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
-                        return new ForJavaInstance(JavaInstance.MethodType.ofLoaded(value));
+                        return new ForJavaConstant(JavaConstant.MethodType.ofLoaded(value));
                     } else {
                         return ForStaticField.of(value);
                     }
@@ -2440,25 +2440,25 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a Java instance.
              */
-            class ForJavaInstance implements ArgumentProvider {
+            class ForJavaConstant implements ArgumentProvider {
 
                 /**
                  * The Java instance to provide to the bootstrapped method.
                  */
-                private final JavaInstance javaInstance;
+                private final JavaConstant javaConstant;
 
                 /**
                  * Creates a new argument provider for the given Java instance.
                  *
-                 * @param javaInstance The Java instance to provide to the bootstrapped method.
+                 * @param javaConstant The Java instance to provide to the bootstrapped method.
                  */
-                public ForJavaInstance(JavaInstance javaInstance) {
-                    this.javaInstance = javaInstance;
+                public ForJavaConstant(JavaConstant javaConstant) {
+                    this.javaConstant = javaConstant;
                 }
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    return new Resolved.Simple(javaInstance.asStackManipulation(), javaInstance.getInstanceType());
+                    return new Resolved.Simple(javaConstant.asStackManipulation(), javaConstant.getInstanceType());
                 }
 
                 @Override
@@ -2469,18 +2469,18 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && javaInstance.equals(((ForJavaInstance) other).javaInstance);
+                            && javaConstant.equals(((ForJavaConstant) other).javaConstant);
                 }
 
                 @Override
                 public int hashCode() {
-                    return javaInstance.hashCode();
+                    return javaConstant.hashCode();
                 }
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaInstance{" +
-                            "javaInstance=" + javaInstance +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaConstant{" +
+                            "javaConstant=" + javaConstant +
                             '}';
                 }
             }
@@ -3020,8 +3020,8 @@ public class InvokeDynamic implements Implementation.Composable {
         }
 
         @Override
-        public InvokeDynamic withInstance(JavaInstance... javaInstance) {
-            return materialize().withInstance(javaInstance);
+        public InvokeDynamic withInstance(JavaConstant... javaConstant) {
+            return materialize().withInstance(javaConstant);
         }
 
         @Override

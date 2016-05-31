@@ -5,7 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.constant.JavaInstanceConstant;
+import net.bytebuddy.implementation.bytecode.constant.JavaConstantValue;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -25,7 +25,7 @@ import java.util.List;
  * Returns a Java instance of an object that has a special meaning to the Java virtual machine and that is not
  * available to Java in versions 6.
  */
-public interface JavaInstance {
+public interface JavaConstant {
 
     /**
      * Returns the represented instance as a constant pool value.
@@ -51,7 +51,7 @@ public interface JavaInstance {
     /**
      * Represents a {@code java.lang.invoke.MethodType} object.
      */
-    class MethodType implements JavaInstance {
+    class MethodType implements JavaConstant {
 
         /**
          * A dispatcher for extracting information from a {@code java.lang.invoke.MethodType} instance.
@@ -98,8 +98,8 @@ public interface JavaInstance {
         /**
          * Returns a method type representation of a loaded {@code MethodType} object.
          *
-         * @param methodType A method type object to represent as a {@link JavaInstance}.
-         * @return The method type represented as a {@code JavaInstance}.
+         * @param methodType A method type object to represent as a {@link JavaConstant}.
+         * @return The method type represented as a {@link MethodType}.
          */
         public static MethodType ofLoaded(Object methodType) {
             if (!JavaType.METHOD_TYPE.getTypeStub().isInstance(methodType)) {
@@ -272,7 +272,7 @@ public interface JavaInstance {
 
         @Override
         public StackManipulation asStackManipulation() {
-            return new JavaInstanceConstant(this);
+            return new JavaConstantValue(this);
         }
 
         @Override
@@ -298,7 +298,7 @@ public interface JavaInstance {
 
         @Override
         public String toString() {
-            return "JavaInstance.MethodType{" +
+            return "JavaConstant.MethodType{" +
                     "returnType=" + returnType +
                     ", parameterTypes=" + parameterTypes +
                     '}';
@@ -390,7 +390,7 @@ public interface JavaInstance {
 
                 @Override
                 public String toString() {
-                    return "JavaInstance.MethodType.Dispatcher.ForJava7CapableVm{" +
+                    return "JavaConstant.MethodType.Dispatcher.ForJava7CapableVm{" +
                             "returnType=" + returnType +
                             ", parameterArray=" + parameterArray +
                             '}';
@@ -419,7 +419,7 @@ public interface JavaInstance {
 
                 @Override
                 public String toString() {
-                    return "JavaInstance.MethodType.Dispatcher.ForLegacyVm." + name();
+                    return "JavaConstant.MethodType.Dispatcher.ForLegacyVm." + name();
                 }
             }
         }
@@ -430,7 +430,7 @@ public interface JavaInstance {
      * be represented within the constant pool of a Java class and can therefore not be represented as an instance of
      * this representation order.
      */
-    class MethodHandle implements JavaInstance {
+    class MethodHandle implements JavaConstant {
 
         /**
          * A dispatcher for receiving the type information that is represented by a {@code java.lang.invoke.MethodHandle} instance.
@@ -707,7 +707,7 @@ public interface JavaInstance {
 
         @Override
         public StackManipulation asStackManipulation() {
-            return new JavaInstanceConstant(this);
+            return new JavaConstantValue(this);
         }
 
         @Override
@@ -797,7 +797,7 @@ public interface JavaInstance {
 
         @Override
         public String toString() {
-            return "JavaInstance.MethodHandle{" +
+            return "JavaConstant.MethodHandle{" +
                     "handleType=" + handleType +
                     ", ownerType=" + ownerType +
                     ", name='" + name + '\'' +
@@ -1170,7 +1170,7 @@ public interface JavaInstance {
 
                 @Override
                 public String toString() {
-                    return "JavaInstance.MethodHandle.Dispatcher.ForJava8CapableVm{" +
+                    return "JavaConstant.MethodHandle.Dispatcher.ForJava8CapableVm{" +
                             "publicLookup=" + publicLookup +
                             ", getName=" + getName +
                             ", getDeclaringClass=" + getDeclaringClass +
@@ -1268,7 +1268,7 @@ public interface JavaInstance {
 
                 @Override
                 public String toString() {
-                    return "JavaInstance.MethodHandle.Dispatcher.ForJava7CapableVm{" +
+                    return "JavaConstant.MethodHandle.Dispatcher.ForJava7CapableVm{" +
                             "publicLookup=" + publicLookup +
                             ", getName=" + getName +
                             ", getDeclaringClass=" + getDeclaringClass +
@@ -1309,7 +1309,7 @@ public interface JavaInstance {
 
                 @Override
                 public String toString() {
-                    return "JavaInstance.MethodHandle.Dispatcher.ForLegacyVm." + name();
+                    return "JavaConstant.MethodHandle.Dispatcher.ForLegacyVm." + name();
                 }
             }
         }
@@ -1463,7 +1463,7 @@ public interface JavaInstance {
 
             @Override
             public String toString() {
-                return "JavaInstance.MethodHandle.HandleType." + name();
+                return "JavaConstant.MethodHandle.HandleType." + name();
             }
         }
     }

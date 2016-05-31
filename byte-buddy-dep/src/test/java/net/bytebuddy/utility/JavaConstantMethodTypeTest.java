@@ -15,7 +15,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class JavaInstanceMethodTypeTest {
+public class JavaConstantMethodTypeTest {
 
     private static final String BAR = "bar", QUX = "qux";
 
@@ -25,7 +25,7 @@ public class JavaInstanceMethodTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodTypeOfLoadedType() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.of(void.class, Foo.class);
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.of(void.class, Foo.class);
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Foo.class)));
     }
@@ -33,7 +33,7 @@ public class JavaInstanceMethodTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodTypeOfMethod() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.of(Foo.class.getDeclaredMethod(BAR, Void.class));
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(BAR, Void.class));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
         assertThat(methodType.getDescriptor(), is(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(BAR, Void.class)).getDescriptor()));
@@ -42,7 +42,7 @@ public class JavaInstanceMethodTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodTypeOfStaticMethod() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.of(Foo.class.getDeclaredMethod(QUX, Void.class));
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.of(Foo.class.getDeclaredMethod(QUX, Void.class));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
@@ -50,7 +50,7 @@ public class JavaInstanceMethodTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodTypeOfConstructor() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.of(Foo.class.getDeclaredConstructor(Void.class));
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.of(Foo.class.getDeclaredConstructor(Void.class));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
@@ -58,14 +58,14 @@ public class JavaInstanceMethodTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodTypeOfGetter() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.ofGetter(Foo.class.getDeclaredField(BAR));
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.ofGetter(Foo.class.getDeclaredField(BAR));
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(Void.class)));
         assertThat(methodType.getParameterTypes(), is(Collections.<TypeDescription>emptyList()));
     }
 
     @Test
     public void testMethodTypeOfStaticGetter() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.ofGetter(Foo.class.getDeclaredField(QUX));
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.ofGetter(Foo.class.getDeclaredField(QUX));
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(Void.class)));
         assertThat(methodType.getParameterTypes(), is(Collections.<TypeDescription>emptyList()));
     }
@@ -73,7 +73,7 @@ public class JavaInstanceMethodTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodTypeOfSetter() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.ofSetter(Foo.class.getDeclaredField(BAR));
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.ofSetter(Foo.class.getDeclaredField(BAR));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
@@ -81,14 +81,14 @@ public class JavaInstanceMethodTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodTypeOfStaticSetter() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.ofSetter(Foo.class.getDeclaredField(QUX));
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.ofSetter(Foo.class.getDeclaredField(QUX));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
     public void testMethodTypeOfConstant() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.ofConstant(new Foo(null));
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.ofConstant(new Foo(null));
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodType.getParameterTypes(), is(Collections.<TypeDescription>emptyList()));
     }
@@ -99,14 +99,14 @@ public class JavaInstanceMethodTypeTest {
     public void testMethodTypeOfLoadedMethodType() throws Exception {
         Object loadedMethodType = JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class)
                 .invoke(null, void.class, new Class<?>[]{Object.class});
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.ofLoaded(loadedMethodType);
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.ofLoaded(loadedMethodType);
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Object.class)));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(JavaInstance.MethodType.class).apply();
+        ObjectPropertyAssertion.of(JavaConstant.MethodType.class).apply();
     }
 
     @SuppressWarnings("unused")

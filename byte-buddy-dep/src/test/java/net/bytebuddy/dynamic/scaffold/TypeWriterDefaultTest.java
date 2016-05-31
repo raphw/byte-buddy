@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.asm.TypeConstantAdjustment;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -20,7 +19,7 @@ import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -414,7 +413,7 @@ public class TypeWriterDefaultTest {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
                 .defineMethod(FOO, Object.class)
-                .intercept(FixedValue.value(JavaInstance.MethodType.of(Object.class, Object.class)))
+                .intercept(FixedValue.value(JavaConstant.MethodType.of(Object.class, Object.class)))
                 .make();
     }
 
@@ -423,7 +422,7 @@ public class TypeWriterDefaultTest {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
                 .defineMethod(FOO, Object.class)
-                .intercept(FixedValue.value(JavaInstance.MethodHandle.of(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString")))))
+                .intercept(FixedValue.value(JavaConstant.MethodHandle.of(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString")))))
                 .make();
     }
 

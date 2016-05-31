@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class JavaInstanceMethodHandleTest {
+public class JavaConstantMethodHandleTest {
 
     private static final String BAR = "bar", QUX = "qux";
 
@@ -29,8 +29,8 @@ public class JavaInstanceMethodHandleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodHandleOfMethod() throws Exception {
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.of(Foo.class.getDeclaredMethod(BAR, Void.class));
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.INVOKE_VIRTUAL));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.of(Foo.class.getDeclaredMethod(BAR, Void.class));
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_VIRTUAL));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
@@ -41,8 +41,8 @@ public class JavaInstanceMethodHandleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodHandleOfMethodSpecialInvocation() throws Exception {
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.ofSpecial(Foo.class.getDeclaredMethod(BAR, Void.class), Foo.class);
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.INVOKE_SPECIAL));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.ofSpecial(Foo.class.getDeclaredMethod(BAR, Void.class), Foo.class);
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_SPECIAL));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
@@ -52,8 +52,8 @@ public class JavaInstanceMethodHandleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodHandleOfStaticMethod() throws Exception {
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.of(Foo.class.getDeclaredMethod(QUX, Void.class));
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.INVOKE_STATIC));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.of(Foo.class.getDeclaredMethod(QUX, Void.class));
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_STATIC));
         assertThat(methodHandle.getName(), is(QUX));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
@@ -63,8 +63,8 @@ public class JavaInstanceMethodHandleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodHandleOfConstructor() throws Exception {
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.of(Foo.class.getDeclaredConstructor(Void.class));
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.INVOKE_SPECIAL_CONSTRUCTOR));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.of(Foo.class.getDeclaredConstructor(Void.class));
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_SPECIAL_CONSTRUCTOR));
         assertThat(methodHandle.getName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
@@ -74,9 +74,9 @@ public class JavaInstanceMethodHandleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodHandleOfConstructorSpecialInvocation() throws Exception {
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle
                 .of(new MethodDescription.ForLoadedConstructor(Foo.class.getDeclaredConstructor(Void.class)));
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.INVOKE_SPECIAL_CONSTRUCTOR));
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_SPECIAL_CONSTRUCTOR));
         assertThat(methodHandle.getName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
@@ -86,8 +86,8 @@ public class JavaInstanceMethodHandleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodHandleOfGetter() throws Exception {
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.ofGetter(Foo.class.getDeclaredField(BAR));
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.GET_FIELD));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.ofGetter(Foo.class.getDeclaredField(BAR));
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.GET_FIELD));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDefinition) new TypeDescription.ForLoadedType(Void.class)));
@@ -96,8 +96,8 @@ public class JavaInstanceMethodHandleTest {
 
     @Test
     public void testMethodHandleOfStaticGetter() throws Exception {
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.ofGetter(Foo.class.getDeclaredField(QUX));
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.GET_STATIC_FIELD));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.ofGetter(Foo.class.getDeclaredField(QUX));
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.GET_STATIC_FIELD));
         assertThat(methodHandle.getName(), is(QUX));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDefinition) new TypeDescription.ForLoadedType(Void.class)));
@@ -107,8 +107,8 @@ public class JavaInstanceMethodHandleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodHandleOfSetter() throws Exception {
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.ofSetter(Foo.class.getDeclaredField(BAR));
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.PUT_FIELD));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.ofSetter(Foo.class.getDeclaredField(BAR));
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.PUT_FIELD));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
@@ -118,8 +118,8 @@ public class JavaInstanceMethodHandleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodHandleOfStaticSetter() throws Exception {
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.ofSetter(Foo.class.getDeclaredField(QUX));
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.PUT_STATIC_FIELD));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.ofSetter(Foo.class.getDeclaredField(QUX));
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.PUT_STATIC_FIELD));
         assertThat(methodHandle.getName(), is(QUX));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
@@ -134,8 +134,8 @@ public class JavaInstanceMethodHandleTest {
         Object lookup = publicLookup.invoke(null);
         Method unreflected = Class.forName("java.lang.invoke.MethodHandles$Lookup").getDeclaredMethod("unreflect", Method.class);
         Object methodHandleLoaded = unreflected.invoke(lookup, Foo.class.getDeclaredMethod(BAR, Void.class));
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.ofLoaded(methodHandleLoaded);
-        assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.INVOKE_VIRTUAL));
+        JavaConstant.MethodHandle methodHandle = JavaConstant.MethodHandle.ofLoaded(methodHandleLoaded);
+        assertThat(methodHandle.getHandleType(), is(JavaConstant.MethodHandle.HandleType.INVOKE_VIRTUAL));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
@@ -145,7 +145,7 @@ public class JavaInstanceMethodHandleTest {
     @Test(expected = IllegalArgumentException.class)
     @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleLoadedIllegal() throws Exception {
-        JavaInstance.MethodHandle.ofLoaded(new Object());
+        JavaConstant.MethodHandle.ofLoaded(new Object());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -155,12 +155,12 @@ public class JavaInstanceMethodHandleTest {
         Object lookup = publicLookup.invoke(null);
         Method unreflect = Class.forName("java.lang.invoke.MethodHandles$Lookup").getDeclaredMethod("unreflect", Method.class);
         Object methodHandleLoaded = unreflect.invoke(lookup, Foo.class.getDeclaredMethod(BAR, Void.class));
-        JavaInstance.MethodHandle.ofLoaded(methodHandleLoaded, new Object());
+        JavaConstant.MethodHandle.ofLoaded(methodHandleLoaded, new Object());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalParameterThrowsException() throws Exception {
-        JavaInstance.MethodHandle.HandleType.of(-1);
+        JavaConstant.MethodHandle.HandleType.of(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -169,7 +169,7 @@ public class JavaInstanceMethodHandleTest {
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(methodDescription.isStatic()).thenReturn(true);
         when(methodDescription.isSpecializableFor(typeDescription)).thenReturn(true);
-        JavaInstance.MethodHandle.ofSpecial(methodDescription, typeDescription);
+        JavaConstant.MethodHandle.ofSpecial(methodDescription, typeDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -178,7 +178,7 @@ public class JavaInstanceMethodHandleTest {
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(methodDescription.isAbstract()).thenReturn(true);
         when(methodDescription.isSpecializableFor(typeDescription)).thenReturn(true);
-        JavaInstance.MethodHandle.ofSpecial(methodDescription, typeDescription);
+        JavaConstant.MethodHandle.ofSpecial(methodDescription, typeDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -186,13 +186,13 @@ public class JavaInstanceMethodHandleTest {
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(methodDescription.isSpecializableFor(typeDescription)).thenReturn(false);
-        JavaInstance.MethodHandle.ofSpecial(methodDescription, typeDescription);
+        JavaConstant.MethodHandle.ofSpecial(methodDescription, typeDescription);
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(JavaInstance.MethodHandle.class).apply();
-        ObjectPropertyAssertion.of(JavaInstance.MethodHandle.HandleType.class).apply();
+        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.class).apply();
+        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.HandleType.class).apply();
     }
 
     @SuppressWarnings("unused")

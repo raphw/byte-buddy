@@ -4,7 +4,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -29,7 +29,7 @@ public class HandleInvocationTest {
 
     @Test
     public void testInvocationDecreasingStack() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.of(void.class, Object.class);
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.of(void.class, Object.class);
         StackManipulation stackManipulation = new HandleInvocation(methodType);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
@@ -42,7 +42,7 @@ public class HandleInvocationTest {
 
     @Test
     public void testInvocationIncreasingStack() throws Exception {
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.of(Object.class);
+        JavaConstant.MethodType methodType = JavaConstant.MethodType.of(Object.class);
         StackManipulation stackManipulation = new HandleInvocation(methodType);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);

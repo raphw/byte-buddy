@@ -5,7 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.junit.Rule;
 import org.junit.Test;
@@ -141,7 +141,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         assertThat(arguments[4], is((Object) FOO));
         assertThat(arguments[5], is((Object) CLASS));
         assertThat(arguments[6], is(makeMethodType(CLASS)));
-        assertThat(JavaInstance.MethodHandle.ofLoaded(arguments[7]), is(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle())));
+        assertThat(JavaConstant.MethodHandle.ofLoaded(arguments[7]), is(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle())));
     }
 
     @Test
@@ -167,7 +167,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         assertThat(arguments[4], is((Object) FOO));
         assertThat(arguments[5], is((Object) CLASS));
         assertThat(arguments[6], is(makeMethodType(CLASS)));
-        assertThat(JavaInstance.MethodHandle.ofLoaded(arguments[7]), is(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle())));
+        assertThat(JavaConstant.MethodHandle.ofLoaded(arguments[7]), is(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle())));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -195,7 +195,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                         .withDoubleValue(DOUBLE)
                         .withType(new TypeDescription.ForLoadedType(CLASS))
                         .withEnumeration(new EnumerationDescription.ForLoadedEnumeration(makeEnum()))
-                        .withInstance(JavaInstance.MethodType.ofLoaded(makeMethodType(CLASS)), JavaInstance.MethodHandle.ofLoaded(makeMethodHandle()))
+                        .withInstance(JavaConstant.MethodType.ofLoaded(makeMethodType(CLASS)), JavaConstant.MethodHandle.ofLoaded(makeMethodHandle()))
                         .withValue(FOO, CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value),
                 getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));
@@ -429,7 +429,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstanceField.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForThisInstance.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaInstance.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaConstant.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForExplicitTypedMethodParameter.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.class).apply();
