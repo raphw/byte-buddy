@@ -1,7 +1,6 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -18,7 +17,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 
-public class AgentBuilderBinaryLocatorWithTypePoolCacheSimpleTest {
+public class AgentBuilderTypeLocatorWithTypePoolCacheSimpleTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -32,21 +31,21 @@ public class AgentBuilderBinaryLocatorWithTypePoolCacheSimpleTest {
     @Test
     public void testSimpleImplementation() throws Exception {
         ConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new ConcurrentHashMap<ClassLoader, TypePool.CacheProvider>();
-        AgentBuilder.BinaryLocator binaryLocator = new AgentBuilder.BinaryLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
-        assertThat(binaryLocator.typePool(classFileLocator, first), is(binaryLocator.typePool(classFileLocator, first)));
-        assertThat(binaryLocator.typePool(classFileLocator, first), not(binaryLocator.typePool(classFileLocator, second)));
+        AgentBuilder.TypeLocator typeLocator = new AgentBuilder.TypeLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
+        assertThat(typeLocator.typePool(classFileLocator, first), is(typeLocator.typePool(classFileLocator, first)));
+        assertThat(typeLocator.typePool(classFileLocator, first), not(typeLocator.typePool(classFileLocator, second)));
     }
 
     @Test
     public void testSimpleImplementationBootstrap() throws Exception {
         ConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new ConcurrentHashMap<ClassLoader, TypePool.CacheProvider>();
-        AgentBuilder.BinaryLocator binaryLocator = new AgentBuilder.BinaryLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
-        assertThat(binaryLocator.typePool(classFileLocator, null), is(binaryLocator.typePool(classFileLocator, null)));
-        assertThat(binaryLocator.typePool(classFileLocator, null), not(binaryLocator.typePool(classFileLocator, second)));
+        AgentBuilder.TypeLocator typeLocator = new AgentBuilder.TypeLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
+        assertThat(typeLocator.typePool(classFileLocator, null), is(typeLocator.typePool(classFileLocator, null)));
+        assertThat(typeLocator.typePool(classFileLocator, null), not(typeLocator.typePool(classFileLocator, second)));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.BinaryLocator.WithTypePoolCache.Simple.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.TypeLocator.WithTypePoolCache.Simple.class).apply();
     }
 }

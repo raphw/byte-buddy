@@ -93,12 +93,12 @@ public interface AgentBuilder {
     AgentBuilder with(Listener listener);
 
     /**
-     * Defines the use of the given binary locator for locating binary data to given class names.
+     * Defines the use of the given type locator for locating binary data to given class names.
      *
-     * @param binaryLocator The binary locator to use.
-     * @return A new instance of this agent builder which uses the given binary locator for looking up class files.
+     * @param typeLocator The type locator to use.
+     * @return A new instance of this agent builder which uses the given type locator for looking up class files.
      */
-    AgentBuilder with(BinaryLocator binaryLocator);
+    AgentBuilder with(TypeLocator typeLocator);
 
     /**
      * Defines the use of the given definition handler that determines if a type should be rebased or redefined.
@@ -905,19 +905,9 @@ public interface AgentBuilder {
     }
 
     /**
-     * A binary locator allows to specify how binary data is located by an
-     * {@link net.bytebuddy.agent.builder.AgentBuilder}.
+     * A type locator allows to specify how {@link TypeDescription}s are resolved by an {@link net.bytebuddy.agent.builder.AgentBuilder}.
      */
-    interface BinaryLocator {
-
-        /**
-         * Creates a class file locator for the given class loader.
-         *
-         * @param classLoader The class loader for which a class file locator should be created.
-         *                    Can be {@code null} to represent the bootstrap class loader.
-         * @return An appropriate class file locator.
-         */
-        ClassFileLocator classFileLocator(ClassLoader classLoader);
+    interface TypeLocator {
 
         /**
          * Creates a type pool for a given class file locator.
@@ -929,15 +919,15 @@ public interface AgentBuilder {
         TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader);
 
         /**
-         * A default implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.BinaryLocator} that
+         * A default implementation of a {@link TypeLocator} that
          * is using a {@link net.bytebuddy.pool.TypePool.Default} with a
          * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and a
          * {@link net.bytebuddy.dynamic.ClassFileLocator.ForClassLoader}.
          */
-        enum Default implements BinaryLocator {
+        enum Default implements TypeLocator {
 
             /**
-             * A binary locator that parses the code segment of each method for extracting information about parameter
+             * A type locator that parses the code segment of each method for extracting information about parameter
              * names even if they are not explicitly included in a class file.
              *
              * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#EXTENDED
@@ -945,7 +935,7 @@ public interface AgentBuilder {
             EXTENDED(TypePool.Default.ReaderMode.EXTENDED),
 
             /**
-             * A binary locator that skips the code segment of each method and does therefore not extract information
+             * A type locator that skips the code segment of each method and does therefore not extract information
              * about parameter names. Parameter names are still included if they are explicitly included in a class file.
              *
              * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#FAST
@@ -953,22 +943,17 @@ public interface AgentBuilder {
             FAST(TypePool.Default.ReaderMode.FAST);
 
             /**
-             * The reader mode to apply by this binary locator.
+             * The reader mode to apply by this type locator.
              */
             private final TypePool.Default.ReaderMode readerMode;
 
             /**
-             * Creates a new binary locator.
+             * Creates a new type locator.
              *
-             * @param readerMode The reader mode to apply by this binary locator.
+             * @param readerMode The reader mode to apply by this type locator.
              */
             Default(TypePool.Default.ReaderMode readerMode) {
                 this.readerMode = readerMode;
-            }
-
-            @Override
-            public ClassFileLocator classFileLocator(ClassLoader classLoader) {
-                return ClassFileLocator.ForClassLoader.of(classLoader);
             }
 
             @Override
@@ -978,34 +963,29 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.BinaryLocator.Default." + name();
+                return "AgentBuilder.TypeLocator.Default." + name();
             }
         }
 
         /**
          * <p>
-         * A binary locator that loads referenced classes instead of describing unloaded versions.
+         * A type locator that loads referenced classes instead of describing unloaded versions.
          * </p>
          * <p>
-         * <b>Important</b>: It is important to never query this binary locator for the currently instrumented type as this will yield a class
+         * <b>Important</b>: It is important to never query this type locator for the currently instrumented type as this will yield a class
          * loading circularity which aborts any instrumentation with an error.
          * </p>
          * <p>
-         * <b>Warning</b>: Warning, this binary locator <i>cannot be used for applying a redefinition</i> as it works on loaded classes only and
+         * <b>Warning</b>: Warning, this type locator <i>cannot be used for applying a redefinition</i> as it works on loaded classes only and
          * is agnostic of any way to locate a class file.
          * </p>
          */
-        enum ClassLoading implements BinaryLocator {
+        enum ClassLoading implements TypeLocator {
 
             /**
              * The singleton instance.
              */
             INSTANCE;
-
-            @Override
-            public ClassFileLocator classFileLocator(ClassLoader classLoader) {
-                return ClassFileLocator.NoOp.INSTANCE;
-            }
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
@@ -1014,17 +994,17 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.BinaryLocator.ClassLoading." + name();
+                return "AgentBuilder.TypeLocator.ClassLoading." + name();
             }
         }
 
         /**
-         * A binary locator that uses type pools but allows for the configuration of a custom cache provider by class loader. Note that a
+         * A type locator that uses type pools but allows for the configuration of a custom cache provider by class loader. Note that a
          * {@link TypePool} can grow in size and that a static reference is kept to this pool by Byte Buddy's registration of a
          * {@link ClassFileTransformer} what can cause a memory leak if the supplied caches are not cleared on a regular basis. Also note
          * that a cache provider can be accessed concurrently by multiple {@link ClassLoader}s.
          */
-        abstract class WithTypePoolCache implements BinaryLocator {
+        abstract class WithTypePoolCache implements TypeLocator {
 
             /**
              * The reader mode to use for parsing a class file.
@@ -1032,17 +1012,12 @@ public interface AgentBuilder {
             protected final TypePool.Default.ReaderMode readerMode;
 
             /**
-             * Creates a new binary locator that creates {@link TypePool}s but provides a custom {@link net.bytebuddy.pool.TypePool.CacheProvider}.
+             * Creates a new type locator that creates {@link TypePool}s but provides a custom {@link net.bytebuddy.pool.TypePool.CacheProvider}.
              *
              * @param readerMode The reader mode to use for parsing a class file.
              */
             protected WithTypePoolCache(TypePool.Default.ReaderMode readerMode) {
                 this.readerMode = readerMode;
-            }
-
-            @Override
-            public ClassFileLocator classFileLocator(ClassLoader classLoader) {
-                return ClassFileLocator.ForClassLoader.of(classLoader);
             }
 
             @Override
@@ -1072,8 +1047,8 @@ public interface AgentBuilder {
             }
 
             /**
-             * An implementation of a binary locator {@link WithTypePoolCache} (note documentation of the linked class) that is based on a
-             * {@link ConcurrentMap}. It is the responsibility of the binary locator's user to avoid the binary locator from leaking memory.
+             * An implementation of a type locator {@link WithTypePoolCache} (note documentation of the linked class) that is based on a
+             * {@link ConcurrentMap}. It is the responsibility of the type locator's user to avoid the type locator from leaking memory.
              */
             public static class Simple extends WithTypePoolCache {
 
@@ -1083,7 +1058,7 @@ public interface AgentBuilder {
                 private final ConcurrentMap<? super ClassLoader, TypePool.CacheProvider> cacheProviders;
 
                 /**
-                 * Creates a new binary locator that caches a cache provider per class loader in a concurrent map. The binary
+                 * Creates a new type locator that caches a cache provider per class loader in a concurrent map. The type
                  * locator uses a fast {@link net.bytebuddy.pool.TypePool.Default.ReaderMode}.
                  *
                  * @param cacheProviders The concurrent map that is used for storing a cache provider per class loader.
@@ -1093,7 +1068,7 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * Creates a new binary locator that caches a cache provider per class loader in a concurrent map.
+                 * Creates a new type locator that caches a cache provider per class loader in a concurrent map.
                  *
                  * @param readerMode     The reader mode to use for parsing a class file.
                  * @param cacheProviders The concurrent map that is used for storing a cache provider per class loader.
@@ -1132,7 +1107,7 @@ public interface AgentBuilder {
 
                 @Override
                 public String toString() {
-                    return "AgentBuilder.BinaryLocator.WithTypePoolCache.Simple{" +
+                    return "AgentBuilder.TypeLocator.WithTypePoolCache.Simple{" +
                             "cacheProviders=" + cacheProviders +
                             '}';
                 }
@@ -1192,7 +1167,7 @@ public interface AgentBuilder {
         /**
          * Invoked when an error has occurred during transformation.
          *
-         * @param typeName    The binary name of the instrumented type.
+         * @param typeName    The type name of the instrumented type.
          * @param classLoader The class loader which is loading this type.
          * @param throwable   The occurred error.
          */
@@ -2255,13 +2230,13 @@ public interface AgentBuilder {
              * Applies this collector.
              *
              * @param instrumentation The instrumentation instance to apply the transformation for.
-             * @param binaryLocator   The binary locator to use.
+             * @param typeLocator     The type locator to use.
              * @param listener        the listener to notify.
              * @throws UnmodifiableClassException If a class is not modifiable.
              * @throws ClassNotFoundException     If a class could not be found.
              */
             void apply(Instrumentation instrumentation,
-                       BinaryLocator binaryLocator,
+                       TypeLocator typeLocator,
                        Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
 
             /**
@@ -2299,12 +2274,12 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void apply(Instrumentation instrumentation, BinaryLocator binaryLocator, Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
+                public void apply(Instrumentation instrumentation, TypeLocator typeLocator, Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
                     for (Entry entry : entries) {
                         TypeDescription typeDescription = new TypeDescription.ForLoadedType(entry.getType());
                         try {
-                            classDefinitions.add(entry.resolve(binaryLocator.classFileLocator(entry.getType().getClassLoader())));
+                            classDefinitions.add(entry.resolve(ClassFileLocator.ForClassLoader.of(entry.getType().getClassLoader())));
                         } catch (Throwable throwable) {
                             try {
                                 listener.onError(typeDescription.getName(), entry.getType().getClassLoader(), throwable);
@@ -2422,7 +2397,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void apply(Instrumentation instrumentation, BinaryLocator binaryLocator, Listener listener) throws UnmodifiableClassException {
+                public void apply(Instrumentation instrumentation, TypeLocator typeLocator, Listener listener) throws UnmodifiableClassException {
                     if (!types.isEmpty()) {
                         instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
                     }
@@ -3814,9 +3789,9 @@ public interface AgentBuilder {
         private final ByteBuddy byteBuddy;
 
         /**
-         * The binary locator to use.
+         * The type locator to use.
          */
-        private final BinaryLocator binaryLocator;
+        private final TypeLocator typeLocator;
 
         /**
          * The definition handler to use.
@@ -3884,7 +3859,7 @@ public interface AgentBuilder {
          */
         public Default(ByteBuddy byteBuddy) {
             this(byteBuddy,
-                    BinaryLocator.Default.FAST,
+                    TypeLocator.Default.FAST,
                     TypeStrategy.Default.REBASE,
                     Listener.NoOp.INSTANCE,
                     NativeMethodStrategy.Disabled.INSTANCE,
@@ -3901,7 +3876,7 @@ public interface AgentBuilder {
          * Creates a new default agent builder.
          *
          * @param byteBuddy                     The Byte Buddy instance to be used.
-         * @param binaryLocator                 The binary locator to use.
+         * @param typeLocator                   The type locator to use.
          * @param typeStrategy                  The definition handler to use.
          * @param listener                      The listener to notify on transformations.
          * @param nativeMethodStrategy          The native method strategy to apply.
@@ -3915,7 +3890,7 @@ public interface AgentBuilder {
          * @param transformation                The transformation object for handling type transformations.
          */
         protected Default(ByteBuddy byteBuddy,
-                          BinaryLocator binaryLocator,
+                          TypeLocator typeLocator,
                           TypeStrategy typeStrategy,
                           Listener listener,
                           NativeMethodStrategy nativeMethodStrategy,
@@ -3927,7 +3902,7 @@ public interface AgentBuilder {
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
-            this.binaryLocator = binaryLocator;
+            this.typeLocator = typeLocator;
             this.typeStrategy = typeStrategy;
             this.listener = listener;
             this.nativeMethodStrategy = nativeMethodStrategy;
@@ -3943,7 +3918,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(ByteBuddy byteBuddy) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -3959,7 +3934,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(Listener listener) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     new Listener.Compound(this.listener, listener),
                     nativeMethodStrategy,
@@ -3975,7 +3950,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(TypeStrategy typeStrategy) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -3989,9 +3964,9 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder with(BinaryLocator binaryLocator) {
+        public AgentBuilder with(TypeLocator typeLocator) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -4007,7 +3982,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder enableNativeMethodPrefix(String prefix) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     NativeMethodStrategy.ForPrefix.of(prefix),
@@ -4023,7 +3998,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder disableNativeMethodPrefix() {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     NativeMethodStrategy.Disabled.INSTANCE,
@@ -4039,7 +4014,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(AccessControlContext accessControlContext) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -4055,7 +4030,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(RedefinitionStrategy redefinitionStrategy) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -4071,7 +4046,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(InitializationStrategy initializationStrategy) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -4087,7 +4062,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -4103,7 +4078,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -4119,7 +4094,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder disableBootstrapInjection() {
             return new Default(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -4165,7 +4140,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder disableClassFormatChanges() {
             return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
-                    binaryLocator,
+                    typeLocator,
                     TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
                     listener,
                     nativeMethodStrategy,
@@ -4181,7 +4156,7 @@ public interface AgentBuilder {
         @Override
         public ClassFileTransformer makeRaw() {
             return new ExecutingTransformer(byteBuddy,
-                    binaryLocator,
+                    typeLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -4229,7 +4204,7 @@ public interface AgentBuilder {
                     }
                 }
                 try {
-                    collector.apply(instrumentation, binaryLocator, listener);
+                    collector.apply(instrumentation, typeLocator, listener);
                 } catch (UnmodifiableClassException exception) {
                     throw new IllegalStateException("Cannot modify at least one class: " + collector, exception);
                 } catch (ClassNotFoundException exception) {
@@ -4262,7 +4237,7 @@ public interface AgentBuilder {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             Default aDefault = (Default) other;
-            return binaryLocator.equals(aDefault.binaryLocator)
+            return typeLocator.equals(aDefault.typeLocator)
                     && byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
                     && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
@@ -4279,7 +4254,7 @@ public interface AgentBuilder {
         @Override
         public int hashCode() {
             int result = byteBuddy.hashCode();
-            result = 31 * result + binaryLocator.hashCode();
+            result = 31 * result + typeLocator.hashCode();
             result = 31 * result + listener.hashCode();
             result = 31 * result + typeStrategy.hashCode();
             result = 31 * result + nativeMethodStrategy.hashCode();
@@ -4297,7 +4272,7 @@ public interface AgentBuilder {
         public String toString() {
             return "AgentBuilder.Default{" +
                     "byteBuddy=" + byteBuddy +
-                    ", binaryLocator=" + binaryLocator +
+                    ", typeLocator=" + typeLocator +
                     ", typeStrategy=" + typeStrategy +
                     ", listener=" + listener +
                     ", nativeMethodStrategy=" + nativeMethodStrategy +
@@ -5141,9 +5116,9 @@ public interface AgentBuilder {
             private final ByteBuddy byteBuddy;
 
             /**
-             * The binary locator to use.
+             * The type locator to use.
              */
-            private final BinaryLocator binaryLocator;
+            private final TypeLocator typeLocator;
 
             /**
              * The definition handler to use.
@@ -5189,7 +5164,7 @@ public interface AgentBuilder {
              * Creates a new class file transformer.
              *
              * @param byteBuddy                  The Byte Buddy instance to be used.
-             * @param binaryLocator              The binary locator to use.
+             * @param typeLocator                The type locator to use.
              * @param typeStrategy               The definition handler to use.
              * @param listener                   The listener to notify on transformations.
              * @param nativeMethodStrategy       The native method strategy to apply.
@@ -5200,7 +5175,7 @@ public interface AgentBuilder {
              * @param transformation             The transformation object for handling type transformations.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
-                                        BinaryLocator binaryLocator,
+                                        TypeLocator typeLocator,
                                         TypeStrategy typeStrategy,
                                         Listener listener,
                                         NativeMethodStrategy nativeMethodStrategy,
@@ -5210,7 +5185,7 @@ public interface AgentBuilder {
                                         RawMatcher ignoredTypeMatcher,
                                         Transformation transformation) {
                 this.byteBuddy = byteBuddy;
-                this.binaryLocator = binaryLocator;
+                this.typeLocator = typeLocator;
                 this.typeStrategy = typeStrategy;
                 this.listener = listener;
                 this.nativeMethodStrategy = nativeMethodStrategy;
@@ -5234,9 +5209,9 @@ public interface AgentBuilder {
                 try {
                     ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(binaryTypeName,
                             binaryRepresentation,
-                            binaryLocator.classFileLocator(classLoader));
+                            ClassFileLocator.ForClassLoader.of(classLoader));
                     return transformation.resolve(classBeingRedefined == null
-                                    ? binaryLocator.typePool(classFileLocator, classLoader).describe(binaryTypeName).resolve()
+                                    ? typeLocator.typePool(classFileLocator, classLoader).describe(binaryTypeName).resolve()
                                     : new TypeDescription.ForLoadedType(classBeingRedefined),
                             classLoader,
                             classBeingRedefined,
@@ -5263,7 +5238,7 @@ public interface AgentBuilder {
                 if (other == null || getClass() != other.getClass()) return false;
                 ExecutingTransformer that = (ExecutingTransformer) other;
                 return byteBuddy.equals(that.byteBuddy)
-                        && binaryLocator.equals(that.binaryLocator)
+                        && typeLocator.equals(that.typeLocator)
                         && typeStrategy.equals(that.typeStrategy)
                         && initializationStrategy.equals(that.initializationStrategy)
                         && listener.equals(that.listener)
@@ -5277,7 +5252,7 @@ public interface AgentBuilder {
             @Override
             public int hashCode() {
                 int result = byteBuddy.hashCode();
-                result = 31 * result + binaryLocator.hashCode();
+                result = 31 * result + typeLocator.hashCode();
                 result = 31 * result + typeStrategy.hashCode();
                 result = 31 * result + initializationStrategy.hashCode();
                 result = 31 * result + listener.hashCode();
@@ -5293,7 +5268,7 @@ public interface AgentBuilder {
             public String toString() {
                 return "AgentBuilder.Default.ExecutingTransformer{" +
                         "byteBuddy=" + byteBuddy +
-                        ", binaryLocator=" + binaryLocator +
+                        ", typeLocator=" + typeLocator +
                         ", typeStrategy=" + typeStrategy +
                         ", initializationStrategy=" + initializationStrategy +
                         ", listener=" + listener +
@@ -5336,8 +5311,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder with(BinaryLocator binaryLocator) {
-                return materialize().with(binaryLocator);
+            public AgentBuilder with(TypeLocator typeLocator) {
+                return materialize().with(typeLocator);
             }
 
             @Override
@@ -5453,7 +5428,7 @@ public interface AgentBuilder {
             @Override
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
-                        binaryLocator,
+                        typeLocator,
                         typeStrategy,
                         listener,
                         nativeMethodStrategy,
@@ -5546,7 +5521,7 @@ public interface AgentBuilder {
             @Override
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
-                        binaryLocator,
+                        typeLocator,
                         typeStrategy,
                         listener,
                         nativeMethodStrategy,
