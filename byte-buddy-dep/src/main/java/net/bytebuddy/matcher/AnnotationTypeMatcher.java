@@ -18,7 +18,7 @@ public class AnnotationTypeMatcher<T extends AnnotationDescription> extends Elem
     /**
      * Creates a new matcher for an annotation description's type.
      *
-     * @param typeMatcher The type matcher to apply to an annotation's type.
+     * @param matcher The type matcher to apply to an annotation's type.
      */
     public AnnotationTypeMatcher(ElementMatcher<? super TypeDescription> matcher) {
         this.matcher = matcher;
