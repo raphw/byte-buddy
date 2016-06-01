@@ -754,6 +754,10 @@ public interface AgentBuilder {
                 return moduleMatcher.matches(module) && classLoaderMatcher.matches(classLoader) && typeMatcher.matches(typeDescription);
             }
 
+            protected RawMatcher or(RawMatcher other) {
+                return new Conjunction(this, other);
+            }
+
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
@@ -3936,7 +3940,7 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
-                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()), new RawMatcher.ForElementMatchers(isSynthetic(), any(), any())),
+                    new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()).or(new RawMatcher.ForElementMatchers(isSynthetic(), any(), any())),
                     Transformation.Ignored.INSTANCE);
         }
 
