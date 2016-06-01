@@ -112,7 +112,7 @@ public class AgentBuilderListenerTest {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
         listener.onTransformation(typeDescription, classLoader, module, dynamicType);
-        verify(printStream).println("[Byte Buddy] TRANSFORM " + FOO + "[" + classLoader + "," + module + "]");
+        verify(printStream).println("[Byte Buddy] TRANSFORM " + FOO + "[" + classLoader + ", " + module + "]");
         verifyNoMoreInteractions(printStream);
     }
 
@@ -121,7 +121,7 @@ public class AgentBuilderListenerTest {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
         listener.onError(FOO, classLoader, module, throwable);
-        verify(printStream).println("[Byte Buddy] ERROR " + FOO + "[" + classLoader + "," + module + "]");
+        verify(printStream).println("[Byte Buddy] ERROR " + FOO + "[" + classLoader + ", " + module + "]");
         verifyNoMoreInteractions(printStream);
         verify(throwable).printStackTrace(printStream);
         verifyNoMoreInteractions(throwable);
@@ -132,7 +132,7 @@ public class AgentBuilderListenerTest {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
         listener.onComplete(FOO, classLoader, module);
-        verify(printStream).println("[Byte Buddy] COMPLETE " + FOO + "[" + classLoader + "," + module + "]");
+        verify(printStream).println("[Byte Buddy] COMPLETE " + FOO + "[" + classLoader + ", " + module + "]");
         verifyNoMoreInteractions(printStream);
     }
 
@@ -141,7 +141,7 @@ public class AgentBuilderListenerTest {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
         listener.onIgnored(typeDescription, classLoader, module);
-        verify(printStream).println("[Byte Buddy] IGNORE " + FOO + "[" + classLoader + "," + module + "]");
+        verify(printStream).println("[Byte Buddy] IGNORE " + FOO + "[" + classLoader + ", " + module + "]");
         verifyNoMoreInteractions(printStream);
     }
 
