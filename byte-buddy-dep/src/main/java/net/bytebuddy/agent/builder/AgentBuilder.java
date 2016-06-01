@@ -289,7 +289,7 @@ public interface AgentBuilder {
     /**
      * <p>
      * Excludes any type that is matched by the provided matcher from instrumentation and considers types by all {@link ClassLoader}s.
-     * By default, Byte Buddy does not instrument synthetic types and accepts all class loaders.
+     * By default, Byte Buddy does not instrument synthetic types or types that are loaded by the bootstrap class loader.
      * </p>
      * <p>
      * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
@@ -313,7 +313,7 @@ public interface AgentBuilder {
     /**
      * <p>
      * Excludes any type that is matched by the provided matcher and is loaded by a class loader matching the second matcher.
-     * By default, Byte Buddy does not instrument synthetic types and accepts all class loaders.
+     * By default, Byte Buddy does not instrument synthetic types or types that are loaded by the bootstrap class loader.
      * </p>
      * <p>
      * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
@@ -338,7 +338,7 @@ public interface AgentBuilder {
     /**
      * <p>
      * Excludes any type that is matched by the raw matcher provided to this method. By default, Byte Buddy does not
-     * instrument synthetic types and accepts all class loaders.
+     * instrument synthetic types  or types that are loaded by the bootstrap class loader
      * </p>
      * <p>
      * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
@@ -3758,7 +3758,14 @@ public interface AgentBuilder {
     }
 
     /**
+     * <p>
      * The default implementation of an {@link net.bytebuddy.agent.builder.AgentBuilder}.
+     * </p>
+     * <p>
+     * By default, Byte Buddy ignores any types loaded by the bootstrap class loader and
+     * any synthetic type. Self-injection and rebasing is enabled. In order to avoid class format changes, set
+     * {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information ({@link TypeLocator.Default#FAST}).
+     * </p>
      */
     class Default implements AgentBuilder {
 
@@ -3847,13 +3854,17 @@ public interface AgentBuilder {
         /**
          * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for
          * creating classes.
+         *
+         * @see Default#Default(ByteBuddy)
          */
         public Default() {
             this(new ByteBuddy());
         }
 
         /**
-         * Creates a new agent builder with default settings.
+         * Creates a new agent builder with default settings. By default, Byte Buddy ignores any types loaded by the bootstrap class loader and
+         * any synthetic type. Self-injection and rebasing is enabled. In order to avoid class format changes, set
+         * {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information ({@link TypeLocator.Default#FAST}).
          *
          * @param byteBuddy The Byte Buddy instance to be used.
          */
@@ -3868,7 +3879,7 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
-                    new RawMatcher.ForElementMatcherPair(isSynthetic(), any()),
+                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatcherPair(any(), isBootstrapClassLoader()), new RawMatcher.ForElementMatcherPair(isSynthetic(), any())),
                     Transformation.Ignored.INSTANCE);
         }
 
