@@ -13,35 +13,35 @@ public class MethodReturnTypeMatcher<T extends MethodDescription> extends Elemen
     /**
      * The type matcher to apply to the matched element's return type.
      */
-    private final ElementMatcher<? super TypeDescription.Generic> typeMatcher;
+    private final ElementMatcher<? super TypeDescription.Generic> matcher;
 
     /**
      * Creates a new matcher for a matched element's return type.
      *
-     * @param typeMatcher The type matcher to apply to the matched element's return type.
+     * @param matcher The type matcher to apply to the matched element's return type.
      */
-    public MethodReturnTypeMatcher(ElementMatcher<? super TypeDescription.Generic> typeMatcher) {
-        this.typeMatcher = typeMatcher;
+    public MethodReturnTypeMatcher(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        this.matcher = matcher;
     }
 
     @Override
     public boolean matches(T target) {
-        return typeMatcher.matches(target.getReturnType());
+        return matcher.matches(target.getReturnType());
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && typeMatcher.equals(((MethodReturnTypeMatcher<?>) other).typeMatcher);
+                && matcher.equals(((MethodReturnTypeMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return typeMatcher.hashCode();
+        return matcher.hashCode();
     }
 
     @Override
     public String toString() {
-        return "returns(" + typeMatcher + ")";
+        return "returns(" + matcher + ")";
     }
 }

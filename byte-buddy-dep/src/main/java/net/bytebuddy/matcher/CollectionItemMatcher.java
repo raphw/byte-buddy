@@ -11,21 +11,21 @@ public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBa
     /**
      * The element matcher to apply to each element of a collection.
      */
-    private final ElementMatcher<? super T> elementMatcher;
+    private final ElementMatcher<? super T> matcher;
 
     /**
      * Creates a new matcher that applies another matcher to each element of a matched iterable collection.
      *
-     * @param elementMatcher The element matcher to apply to each element of a iterable collection.
+     * @param matcher The element matcher to apply to each element of a iterable collection.
      */
-    public CollectionItemMatcher(ElementMatcher<? super T> elementMatcher) {
-        this.elementMatcher = elementMatcher;
+    public CollectionItemMatcher(ElementMatcher<? super T> matcher) {
+        this.matcher = matcher;
     }
 
     @Override
     public boolean matches(Iterable<? extends T> target) {
         for (T value : target) {
-            if (elementMatcher.matches(value)) {
+            if (matcher.matches(value)) {
                 return true;
             }
         }
@@ -35,16 +35,16 @@ public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBa
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && elementMatcher.equals(((CollectionItemMatcher<?>) other).elementMatcher);
+                && matcher.equals(((CollectionItemMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return elementMatcher.hashCode();
+        return matcher.hashCode();
     }
 
     @Override
     public String toString() {
-        return "whereOne(" + elementMatcher + ")";
+        return "whereOne(" + matcher + ")";
     }
 }

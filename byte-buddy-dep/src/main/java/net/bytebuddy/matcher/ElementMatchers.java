@@ -1484,7 +1484,7 @@ public final class ElementMatchers {
     /**
      * Matches any type description that is a subtype of the given type.
      *
-     * @param type The type to be checked being a super type of the matched type.
+     * @param type The type to be checked for being a subtype of the matched type.
      * @param <T>  The type of the matched object.
      * @return A matcher that matches any type description that represents a sub type of the given type.
      */
@@ -1495,7 +1495,7 @@ public final class ElementMatchers {
     /**
      * Matches any type description that is a subtype of the given type.
      *
-     * @param type The type to be checked being a super type of the matched type.
+     * @param type The type to be checked for being a subtype of the matched type.
      * @param <T>  The type of the matched object.
      * @return A matcher that matches any type description that represents a sub type of the given type.
      */
@@ -1506,7 +1506,7 @@ public final class ElementMatchers {
     /**
      * Matches any type description that is a super type of the given type.
      *
-     * @param type The type to be checked being a subtype of the matched type.
+     * @param type The type to be checked for being a subtype of the matched type.
      * @param <T>  The type of the matched object.
      * @return A matcher that matches any type description that represents a super type of the given type.
      */
@@ -1517,12 +1517,34 @@ public final class ElementMatchers {
     /**
      * Matches any type description that is a super type of the given type.
      *
-     * @param type The type to be checked being a subtype of the matched type.
+     * @param type The type to be checked for being a subtype of the matched type.
      * @param <T>  The type of the matched object.
      * @return A matcher that matches any type description that represents a super type of the given type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(TypeDescription type) {
         return new SuperTypeMatcher<T>(type);
+    }
+
+    /**
+     * Matches any type description that declares a super type that matches the provided matcher.
+     *
+     * @param matcher The type to be checked for being a super type of the matched type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches any type description that declares a super type that matches the provided matcher.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasSuperType(ElementMatcher<? super TypeDescription> matcher) {
+        return hasGenericSuperType(rawType(matcher));
+    }
+
+    /**
+     * Matches any type description that declares a super type that matches the provided matcher.
+     *
+     * @param matcher The type to be checked for being a super type of the matched type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches any type description that declares a super type that matches the provided matcher.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> hasGenericSuperType(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        return new HasSuperTypeMatcher<T>(matcher);
     }
 
     /**

@@ -19,35 +19,35 @@ public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction
     /**
      * The matcher that is applied to a byte code element's source code name.
      */
-    private final ElementMatcher<String> nameMatcher;
+    private final ElementMatcher<String> matcher;
 
     /**
      * Creates a new matcher for a byte code element's source name.
      *
-     * @param nameMatcher The matcher that is applied to a byte code element's source code name.
+     * @param matcher The matcher that is applied to a byte code element's source code name.
      */
-    public NameMatcher(ElementMatcher<String> nameMatcher) {
-        this.nameMatcher = nameMatcher;
+    public NameMatcher(ElementMatcher<String> matcher) {
+        this.matcher = matcher;
     }
 
     @Override
     public boolean matches(T target) {
-        return nameMatcher.matches(target.getSourceCodeName());
+        return matcher.matches(target.getSourceCodeName());
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && nameMatcher.equals(((NameMatcher<?>) other).nameMatcher);
+                && matcher.equals(((NameMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return nameMatcher.hashCode();
+        return matcher.hashCode();
     }
 
     @Override
     public String toString() {
-        return "name(" + nameMatcher + ")";
+        return "name(" + matcher + ")";
     }
 }

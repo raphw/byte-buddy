@@ -10,7 +10,7 @@ public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
     /**
      * The delegate matcher that might throw an exception.
      */
-    private final ElementMatcher<? super T> delegate;
+    private final ElementMatcher<? super T> matcher;
 
     /**
      * The fallback value in case of an exception.
@@ -20,18 +20,18 @@ public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
     /**
      * Creates a new fail-safe element matcher.
      *
-     * @param delegate The delegate matcher that might throw an exception.
+     * @param matcher  The delegate matcher that might throw an exception.
      * @param fallback The fallback value in case of an exception.
      */
-    public FailSafeMatcher(ElementMatcher<? super T> delegate, boolean fallback) {
-        this.delegate = delegate;
+    public FailSafeMatcher(ElementMatcher<? super T> matcher, boolean fallback) {
+        this.matcher = matcher;
         this.fallback = fallback;
     }
 
     @Override
     public boolean matches(T target) {
         try {
-            return delegate.matches(target);
+            return matcher.matches(target);
         } catch (Exception ignored) {
             return fallback;
         }
@@ -42,18 +42,18 @@ public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
         FailSafeMatcher<?> that = (FailSafeMatcher<?>) other;
-        return fallback == that.fallback && delegate.equals(that.delegate);
+        return fallback == that.fallback && matcher.equals(that.matcher);
     }
 
     @Override
     public int hashCode() {
-        int result = delegate.hashCode();
+        int result = matcher.hashCode();
         result = 31 * result + (fallback ? 1 : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "failSafe(try(" + delegate + ") or " + fallback + ")";
+        return "failSafe(try(" + matcher + ") or " + fallback + ")";
     }
 }

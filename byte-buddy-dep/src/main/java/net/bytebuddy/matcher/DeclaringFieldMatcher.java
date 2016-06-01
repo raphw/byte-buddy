@@ -14,35 +14,35 @@ public class DeclaringFieldMatcher<T extends TypeDefinition> extends ElementMatc
     /**
      * The field matcher to apply to the declared fields of the matched type description.
      */
-    private final ElementMatcher<? super FieldList<?>> fieldMatcher;
+    private final ElementMatcher<? super FieldList<?>> matcher;
 
     /**
      * Creates a new matcher for a type's declared fields.
      *
-     * @param fieldMatcher The field matcher to apply to the declared fields of the matched type description.
+     * @param matcher The field matcher to apply to the declared fields of the matched type description.
      */
-    public DeclaringFieldMatcher(ElementMatcher<? super FieldList<? extends FieldDescription>> fieldMatcher) {
-        this.fieldMatcher = fieldMatcher;
+    public DeclaringFieldMatcher(ElementMatcher<? super FieldList<? extends FieldDescription>> matcher) {
+        this.matcher = matcher;
     }
 
     @Override
     public boolean matches(T target) {
-        return fieldMatcher.matches(target.getDeclaredFields());
+        return matcher.matches(target.getDeclaredFields());
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && fieldMatcher.equals(((DeclaringFieldMatcher<?>) other).fieldMatcher);
+                && matcher.equals(((DeclaringFieldMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return fieldMatcher.hashCode();
+        return matcher.hashCode();
     }
 
     @Override
     public String toString() {
-        return "declaresFields(" + fieldMatcher + ")";
+        return "declaresFields(" + matcher + ")";
     }
 }

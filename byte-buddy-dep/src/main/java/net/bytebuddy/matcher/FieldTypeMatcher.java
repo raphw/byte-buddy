@@ -13,35 +13,35 @@ public class FieldTypeMatcher<T extends FieldDescription> extends ElementMatcher
     /**
      * The type matcher to apply to the field's type.
      */
-    private final ElementMatcher<? super TypeDescription.Generic> typeMatcher;
+    private final ElementMatcher<? super TypeDescription.Generic> matcher;
 
     /**
      * Creates a new matcher for a matched field's type.
      *
-     * @param typeMatcher The type matcher to apply to the matched field's type.
+     * @param matcher The type matcher to apply to the matched field's type.
      */
-    public FieldTypeMatcher(ElementMatcher<? super TypeDescription.Generic> typeMatcher) {
-        this.typeMatcher = typeMatcher;
+    public FieldTypeMatcher(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        this.matcher = matcher;
     }
 
     @Override
     public boolean matches(T target) {
-        return typeMatcher.matches(target.getType());
+        return matcher.matches(target.getType());
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && typeMatcher.equals(((FieldTypeMatcher<?>) other).typeMatcher);
+                && matcher.equals(((FieldTypeMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return typeMatcher.hashCode();
+        return matcher.hashCode();
     }
 
     @Override
     public String toString() {
-        return "ofType(" + typeMatcher + ")";
+        return "ofType(" + matcher + ")";
     }
 }
