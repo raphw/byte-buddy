@@ -14,35 +14,35 @@ public class DeclaringMethodMatcher<T extends TypeDefinition> extends ElementMat
     /**
      * The field matcher to apply to the declared fields of the matched type description.
      */
-    private final ElementMatcher<? super MethodList<?>> methodMatcher;
+    private final ElementMatcher<? super MethodList<?>> matcher;
 
     /**
      * Creates a new matcher for a type's declared methods.
      *
-     * @param methodMatcher The method matcher to apply to the declared methods of the matched type description.
+     * @param matcher The method matcher to apply to the declared methods of the matched type description.
      */
-    public DeclaringMethodMatcher(ElementMatcher<? super MethodList<? extends MethodDescription>> methodMatcher) {
-        this.methodMatcher = methodMatcher;
+    public DeclaringMethodMatcher(ElementMatcher<? super MethodList<? extends MethodDescription>> matcher) {
+        this.matcher = matcher;
     }
 
     @Override
     public boolean matches(T target) {
-        return methodMatcher.matches(target.getDeclaredMethods());
+        return matcher.matches(target.getDeclaredMethods());
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && methodMatcher.equals(((DeclaringMethodMatcher<?>) other).methodMatcher);
+                && matcher.equals(((DeclaringMethodMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return methodMatcher.hashCode();
+        return matcher.hashCode();
     }
 
     @Override
     public String toString() {
-        return "declaresMethods(" + methodMatcher + ")";
+        return "declaresMethods(" + matcher + ")";
     }
 }

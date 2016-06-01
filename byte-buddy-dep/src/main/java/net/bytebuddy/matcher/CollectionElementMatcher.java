@@ -18,17 +18,17 @@ public class CollectionElementMatcher<T> extends ElementMatcher.Junction.Abstrac
     /**
      * The matcher for the given element, if it exists.
      */
-    private final ElementMatcher<? super T> elementMatcher;
+    private final ElementMatcher<? super T> matcher;
 
     /**
      * Creates a new matcher for an element in a collection.
      *
      * @param index          The index of the matched element.
-     * @param elementMatcher The matcher for the given element, if it exists.
+     * @param matcher The matcher for the given element, if it exists.
      */
-    public CollectionElementMatcher(int index, ElementMatcher<? super T> elementMatcher) {
+    public CollectionElementMatcher(int index, ElementMatcher<? super T> matcher) {
         this.index = index;
-        this.elementMatcher = elementMatcher;
+        this.matcher = matcher;
     }
 
     @Override
@@ -41,23 +41,23 @@ public class CollectionElementMatcher<T> extends ElementMatcher.Junction.Abstrac
                 return false;
             }
         }
-        return iterator.hasNext() && elementMatcher.matches(iterator.next());
+        return iterator.hasNext() && matcher.matches(iterator.next());
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && index == ((CollectionElementMatcher<?>) other).index
-                && elementMatcher.equals(((CollectionElementMatcher<?>) other).elementMatcher);
+                && matcher.equals(((CollectionElementMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return elementMatcher.hashCode() + 31 * index;
+        return matcher.hashCode() + 31 * index;
     }
 
     @Override
     public String toString() {
-        return "with(" + index + " matches " + elementMatcher + ")";
+        return "with(" + index + " matches " + matcher + ")";
     }
 }

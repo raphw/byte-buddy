@@ -947,6 +947,14 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testHasSuperType() throws Exception {
+        assertThat(ElementMatchers.hasSuperType(ElementMatchers.is(Object.class)).matches(TypeDescription.STRING), is(true));
+        assertThat(ElementMatchers.hasSuperType(ElementMatchers.is(String.class)).matches(TypeDescription.OBJECT), is(false));
+        assertThat(ElementMatchers.hasSuperType(ElementMatchers.is(Serializable.class)).matches(TypeDescription.STRING), is(true));
+        assertThat(ElementMatchers.hasSuperType(ElementMatchers.is(Serializable.class)).matches(TypeDescription.OBJECT), is(false));
+    }
+
+    @Test
     public void testIsAnnotatedInheritedWith() throws Exception {
         assertThat(ElementMatchers.inheritsAnnotation(OtherAnnotation.class)
                 .matches(new TypeDescription.ForLoadedType(OtherInherited.class)), is(true));

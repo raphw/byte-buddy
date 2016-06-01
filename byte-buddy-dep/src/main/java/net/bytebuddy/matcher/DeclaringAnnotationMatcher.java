@@ -13,35 +13,35 @@ public class DeclaringAnnotationMatcher<T extends AnnotatedCodeElement> extends 
     /**
      * The matcher to be applied to the provided annotation list.
      */
-    private final ElementMatcher<? super AnnotationList> annotationMatcher;
+    private final ElementMatcher<? super AnnotationList> matcher;
 
     /**
      * Creates a new matcher for the annotations of an annotated element.
      *
-     * @param annotationMatcher The matcher to be applied to the provided annotation list.
+     * @param matcher The matcher to be applied to the provided annotation list.
      */
-    public DeclaringAnnotationMatcher(ElementMatcher<? super AnnotationList> annotationMatcher) {
-        this.annotationMatcher = annotationMatcher;
+    public DeclaringAnnotationMatcher(ElementMatcher<? super AnnotationList> matcher) {
+        this.matcher = matcher;
     }
 
     @Override
     public boolean matches(T target) {
-        return annotationMatcher.matches(target.getDeclaredAnnotations());
+        return matcher.matches(target.getDeclaredAnnotations());
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && annotationMatcher.equals(((DeclaringAnnotationMatcher<?>) other).annotationMatcher);
+                && matcher.equals(((DeclaringAnnotationMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return annotationMatcher.hashCode();
+        return matcher.hashCode();
     }
 
     @Override
     public String toString() {
-        return "declaresAnnotations(" + annotationMatcher + ")";
+        return "declaresAnnotations(" + matcher + ")";
     }
 }

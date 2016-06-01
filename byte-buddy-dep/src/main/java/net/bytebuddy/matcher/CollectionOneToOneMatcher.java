@@ -17,24 +17,24 @@ public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.Abstra
     /**
      * The list of element matchers to match any elements of the matched iterable collection against.
      */
-    private final List<? extends ElementMatcher<? super T>> elementMatchers;
+    private final List<? extends ElementMatcher<? super T>> matchers;
 
     /**
      * Creates a new matcher that compares a matched iterable collection against a list of element matchers.
      *
-     * @param elementMatchers The list of element matchers to match any elements of the matched iterable collection
+     * @param matchers The list of element matchers to match any elements of the matched iterable collection
      *                        against.
      */
-    public CollectionOneToOneMatcher(List<? extends ElementMatcher<? super T>> elementMatchers) {
-        this.elementMatchers = elementMatchers;
+    public CollectionOneToOneMatcher(List<? extends ElementMatcher<? super T>> matchers) {
+        this.matchers = matchers;
     }
 
     @Override
     public boolean matches(Iterable<? extends T> target) {
-        if ((target instanceof Collection) && ((Collection<?>) target).size() != elementMatchers.size()) {
+        if ((target instanceof Collection) && ((Collection<?>) target).size() != matchers.size()) {
             return false;
         }
-        Iterator<? extends ElementMatcher<? super T>> iterator = elementMatchers.iterator();
+        Iterator<? extends ElementMatcher<? super T>> iterator = matchers.iterator();
         for (T value : target) {
             if (!iterator.hasNext() || !iterator.next().matches(value)) {
                 return false;
@@ -46,19 +46,19 @@ public class CollectionOneToOneMatcher<T> extends ElementMatcher.Junction.Abstra
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && elementMatchers.equals(((CollectionOneToOneMatcher<?>) other).elementMatchers);
+                && matchers.equals(((CollectionOneToOneMatcher<?>) other).matchers);
     }
 
     @Override
     public int hashCode() {
-        return elementMatchers.hashCode();
+        return matchers.hashCode();
     }
 
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder("containing(");
         boolean first = true;
-        for (Object value : elementMatchers) {
+        for (Object value : matchers) {
             if (first) {
                 first = false;
             } else {

@@ -14,35 +14,35 @@ public class RawTypeMatcher<T extends TypeDefinition> extends ElementMatcher.Jun
     /**
      * The matcher to apply to the raw type of the matched element.
      */
-    private final ElementMatcher<? super TypeDescription> rawTypeMatcher;
+    private final ElementMatcher<? super TypeDescription> matcher;
 
     /**
      * Creates a new raw type matcher.
      *
-     * @param rawTypeMatcher The matcher to apply to the raw type.
+     * @param matcher The matcher to apply to the raw type.
      */
-    public RawTypeMatcher(ElementMatcher<? super TypeDescription> rawTypeMatcher) {
-        this.rawTypeMatcher = rawTypeMatcher;
+    public RawTypeMatcher(ElementMatcher<? super TypeDescription> matcher) {
+        this.matcher = matcher;
     }
 
     @Override
     public boolean matches(T target) {
-        return !target.getSort().isWildcard() && rawTypeMatcher.matches(target.asErasure());
+        return !target.getSort().isWildcard() && matcher.matches(target.asErasure());
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && rawTypeMatcher.equals(((RawTypeMatcher<?>) other).rawTypeMatcher);
+                && matcher.equals(((RawTypeMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return rawTypeMatcher.hashCode();
+        return matcher.hashCode();
     }
 
     @Override
     public String toString() {
-        return "rawType(" + rawTypeMatcher + ")";
+        return "rawType(" + matcher + ")";
     }
 }
