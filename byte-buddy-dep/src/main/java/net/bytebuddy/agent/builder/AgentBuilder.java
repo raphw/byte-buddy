@@ -268,6 +268,37 @@ public interface AgentBuilder {
      */
     Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+    /**
+     * <p>
+     * Matches a type being loaded in order to apply the supplied {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * If several matchers positively match a type only the latest registered matcher is considered for transformation.
+     * </p>
+     * <p>
+     * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
+     * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
+     * </p>
+     * <p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
+     * matcher is applied first such that it makes sense to ignore name spaces that are irrelevant to instrumentation. If possible, it
+     * is also recommended, to exclude class loaders such as for example the bootstrap class loader.
+     * </p>
+     *
+     * @param typeMatcher        An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being
+     *                           loaded that decides if the entailed
+     *                           {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for
+     *                           that type.
+     * @param classLoaderMatcher An {@link net.bytebuddy.matcher.ElementMatcher} that is applied to the
+     *                           {@link java.lang.ClassLoader} that is loading the type being loaded. This matcher
+     *                           is always applied second where the type matcher is not applied in case that this
+     *                           matcher does not indicate a match.
+     * @param moduleMatcher      An {@link net.bytebuddy.matcher.ElementMatcher} that is applied to the {@link JavaModule}
+     *                           of the type being loaded. This matcher is always applied first where the class loader and
+     *                           type matchers are not applied in case that this matcher does not indicate a match. On a JVM
+     *                           that does not support modules, the Java module is represented by {@code null}.
+     * @return A definable that represents this agent builder which allows for the definition of one or several
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when both the given
+     * {@code typeMatcher} and {@code classLoaderMatcher} indicate a match.
+     */
     Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher,
                                ElementMatcher<? super ClassLoader> classLoaderMatcher,
                                ElementMatcher<? super JavaModule> moduleMatcher);
@@ -344,6 +375,31 @@ public interface AgentBuilder {
      */
     Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+    /**
+     * <p>
+     * Excludes any type that is matched by the provided matcher and is loaded by a class loader matching the second matcher.
+     * By default, Byte Buddy does not instrument synthetic types or types that are loaded by the bootstrap class loader.
+     * </p>
+     * <p>
+     * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
+     * any matcher indicates that a type is to be ignored, none of the following chained matchers is executed.
+     * </p>
+     * <p>
+     * <b>Note</b>: For performance reasons, it is recommended to always include a matcher that excludes as many namespaces
+     * as possible. Byte Buddy can determine a type's name without parsing its class file and can therefore discard such
+     * types with minimal overhead. When a different property of a type - such as for example its modifiers or its annotations
+     * is accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
+     * of a name should always be done as a first step and even if it does not influence the selection of what types are
+     * matched. Without changing this property, the class file of every type is being parsed!
+     * </p>
+     *
+     * @param typeMatcher        A matcher that identifies types that should not be instrumented.
+     * @param classLoaderMatcher A matcher that identifies a class loader that identifies classes that should not be instrumented.
+     * @param moduleMatcher      A matcher that identifies a module that identifies classes that should not be instrumented. On a JVM
+     *                           that does not support modules, the Java module is represented by {@code null}.
+     * @return A new instance of this agent builder that ignores all types that are matched by the provided matcher.
+     * All previous matchers for ignored types are discarded.
+     */
     Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher,
                    ElementMatcher<? super ClassLoader> classLoaderMatcher,
                    ElementMatcher<? super JavaModule> moduleMatcher);
@@ -423,6 +479,14 @@ public interface AgentBuilder {
          */
         T and(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+        /**
+         * Defines a matching that is positive if both the previous matcher and the supplied matcher are matched.
+         *
+         * @param typeMatcher        A matcher for the type being matched.
+         * @param classLoaderMatcher A matcher for the type's class loader.
+         * @param moduleMatcher      A matcher for the type's module. On a JVM that does not support modules, the Java module is represented by {@code null}.
+         * @return A chained matcher.
+         */
         T and(ElementMatcher<? super TypeDescription> typeMatcher,
               ElementMatcher<? super ClassLoader> classLoaderMatcher,
               ElementMatcher<? super JavaModule> moduleMatcher);
@@ -453,6 +517,14 @@ public interface AgentBuilder {
          */
         T or(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+        /**
+         * Defines a matching that is positive if the previous matcher or the supplied matcher are matched.
+         *
+         * @param typeMatcher        A matcher for the type being matched.
+         * @param classLoaderMatcher A matcher for the type's class loader.
+         * @param moduleMatcher      A matcher for the type's module. On a JVM that does not support modules, the Java module is represented by {@code null}.
+         * @return A chained matcher.
+         */
         T or(ElementMatcher<? super TypeDescription> typeMatcher,
              ElementMatcher<? super ClassLoader> classLoaderMatcher,
              ElementMatcher<? super JavaModule> moduleMatcher);
@@ -577,6 +649,7 @@ public interface AgentBuilder {
          * @param typeDescription     A description of the type to be instrumented.
          * @param classLoader         The class loader of the instrumented type. Might be {@code null} if this class
          *                            loader represents the bootstrap class loader.
+         * @param module              The transformed type's module or {@code null} if the current VM does not support modules.
          * @param classBeingRedefined The class being redefined which is only not {@code null} if a retransformation
          *                            is applied.
          * @param protectionDomain    The protection domain of the type being transformed.
@@ -722,10 +795,13 @@ public interface AgentBuilder {
             private final ElementMatcher<? super TypeDescription> typeMatcher;
 
             /**
-             * The class loader to apply to a {@link java.lang.ClassLoader}.
+             * The class loader matcher to apply to a {@link java.lang.ClassLoader}.
              */
             private final ElementMatcher<? super ClassLoader> classLoaderMatcher;
 
+            /**
+             * A module matcher to apply to a {@code java.lang.reflect.Module}.
+             */
             private final ElementMatcher<? super JavaModule> moduleMatcher;
 
             /**
@@ -733,9 +809,9 @@ public interface AgentBuilder {
              * supplied {@link TypeDescription} and its {@link java.lang.ClassLoader} against two matcher in order
              * to decided if an instrumentation should be conducted.
              *
-             * @param typeMatcher        The type matcher to apply to a
-             *                           {@link TypeDescription}.
-             * @param classLoaderMatcher The class loader to apply to a {@link java.lang.ClassLoader}.
+             * @param typeMatcher        The type matcher to apply to a {@link TypeDescription}.
+             * @param classLoaderMatcher The class loader matcher to apply to a {@link java.lang.ClassLoader}.
+             * @param moduleMatcher      A module matcher to apply to a {@code java.lang.reflect.Module}.
              */
             public ForElementMatchers(ElementMatcher<? super TypeDescription> typeMatcher,
                                       ElementMatcher<? super ClassLoader> classLoaderMatcher,
@@ -754,6 +830,12 @@ public interface AgentBuilder {
                 return moduleMatcher.matches(module) && classLoaderMatcher.matches(classLoader) && typeMatcher.matches(typeDescription);
             }
 
+            /**
+             * Represents this matcher in a disjunction together with the supplied matcher.
+             *
+             * @param other The other matcher to combine with this matcher in a disjunction.
+             * @return A disjunction matching this matcher or the other matcher.
+             */
             protected RawMatcher or(RawMatcher other) {
                 return new Conjunction(this, other);
             }
@@ -1210,6 +1292,7 @@ public interface AgentBuilder {
          *
          * @param typeDescription The type that is being transformed.
          * @param classLoader     The class loader which is loading this type.
+         * @param module          The transformed type's module or {@code null} if the current VM does not support modules.
          * @param dynamicType     The dynamic type that was created.
          */
         void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType);
@@ -1219,6 +1302,7 @@ public interface AgentBuilder {
          *
          * @param typeDescription The type being ignored for transformation.
          * @param classLoader     The class loader which is loading this type.
+         * @param module          The ignored type's module or {@code null} if the current VM does not support modules.
          */
         void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module);
 
@@ -1227,6 +1311,7 @@ public interface AgentBuilder {
          *
          * @param typeName    The type name of the instrumented type.
          * @param classLoader The class loader which is loading this type.
+         * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
          * @param throwable   The occurred error.
          */
         void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable);
@@ -1236,6 +1321,7 @@ public interface AgentBuilder {
          *
          * @param typeName    The binary name of the instrumented type.
          * @param classLoader The class loader which is loading this type.
+         * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
          */
         void onComplete(String typeName, ClassLoader classLoader, JavaModule module);
 
@@ -4600,6 +4686,7 @@ public interface AgentBuilder {
              *
              * @param typeDescription     A description of the type that is to be transformed.
              * @param classLoader         The class loader of the type being transformed.
+             * @param module              The transformed type's module or {@code null} if the current VM does not support modules.
              * @param classBeingRedefined In case of a type redefinition, the loaded type being transformed or {@code null} if that is not the case.
              * @param protectionDomain    The protection domain of the type being transformed.
              * @param ignoredTypeMatcher  Identifies types that should not be instrumented.
@@ -4741,13 +4828,17 @@ public interface AgentBuilder {
                      */
                     private final ClassLoader classLoader;
 
+                    /**
+                     * The non-transformed type's module or {@code null} if the current VM does not support modules.
+                     */
                     private final JavaModule module;
 
                     /**
                      * Creates a new unresolved resolution.
-                     *  @param typeDescription The type that is not transformed.
+                     *
+                     * @param typeDescription The type that is not transformed.
                      * @param classLoader     The unresolved type's class loader.
-                     * @param module
+                     * @param module          The non-transformed type's module or {@code null} if the current VM does not support modules.
                      */
                     protected Unresolved(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
                         this.typeDescription = typeDescription;
@@ -4924,6 +5015,9 @@ public interface AgentBuilder {
                      */
                     private final ClassLoader classLoader;
 
+                    /**
+                     * The transformed type's module or {@code null} if the current VM does not support modules.
+                     */
                     private final JavaModule module;
 
                     /**
@@ -4946,6 +5040,7 @@ public interface AgentBuilder {
                      *
                      * @param typeDescription  A description of the transformed type.
                      * @param classLoader      The class loader of the transformed type.
+                     * @param module           The transformed type's module or {@code null} if the current VM does not support modules.
                      * @param protectionDomain The protection domain of the transformed type.
                      * @param transformer      The transformer to be applied.
                      * @param decorator        {@code true} if this transformer serves as a decorator.
@@ -5216,8 +5311,14 @@ public interface AgentBuilder {
          */
         protected static class ExecutingTransformer implements ClassFileTransformer {
 
+            /**
+             * A factory for creating a {@link ClassFileTransformer} that supports the features of the current VM.
+             */
             protected static final Factory FACTORY;
 
+            /*
+             * Creates a factory for a class file transformer that supports the features of the current VM.
+             */
             static {
                 Factory factory;
                 try {
@@ -5231,18 +5332,18 @@ public interface AgentBuilder {
                                     ProtectionDomain.class,
                                     byte[].class)).onSuper().withAllArguments())
                             .make()
-                    .load(ExecutingTransformer.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                    .getLoaded()
-                    .getDeclaredConstructor(ByteBuddy.class,
-                            TypeLocator.class,
-                            TypeStrategy.class,
-                            Listener.class,
-                            NativeMethodStrategy.class,
-                            AccessControlContext.class,
-                            InitializationStrategy.class,
-                            BootstrapInjectionStrategy.class,
-                            RawMatcher.class,
-                            Transformation.class));
+                            .load(ExecutingTransformer.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                            .getLoaded()
+                            .getDeclaredConstructor(ByteBuddy.class,
+                                    TypeLocator.class,
+                                    TypeStrategy.class,
+                                    Listener.class,
+                                    NativeMethodStrategy.class,
+                                    AccessControlContext.class,
+                                    InitializationStrategy.class,
+                                    BootstrapInjectionStrategy.class,
+                                    RawMatcher.class,
+                                    Transformation.class));
                 } catch (RuntimeException exception) {
                     throw exception;
                 } catch (Exception ignored) {
@@ -5343,9 +5444,19 @@ public interface AgentBuilder {
                                     Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
-                return transform(JavaModule.UNDEFINED, classLoader, internalTypeName, classBeingRedefined, protectionDomain, binaryRepresentation);
+                return transform(JavaModule.UNSUPPORTED, classLoader, internalTypeName, classBeingRedefined, protectionDomain, binaryRepresentation);
             }
 
+            /**
+             * Applies a transformation for a class that was captured by this {@link ClassFileTransformer}.
+             *
+             * @param rawModule            The instrumented class's Java {@code java.lang.reflect.Module}.
+             * @param internalTypeName     The internal name of the instrumented class.
+             * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
+             * @param protectionDomain     The instrumented type's protection domain.
+             * @param binaryRepresentation The class file of the instrumented class in its current state.
+             * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
+             */
             protected byte[] transform(Object rawModule,
                                        String internalTypeName,
                                        Class<?> classBeingRedefined,
@@ -5360,6 +5471,17 @@ public interface AgentBuilder {
                         binaryRepresentation);
             }
 
+            /**
+             * Applies a transformation for a class that was captured by this {@link ClassFileTransformer}.
+             *
+             * @param module               The instrumented class's Java module in its wrapped form or {@code null} if the current VM does not support modules.
+             * @param classLoader          The instrumented class's class loader.
+             * @param internalTypeName     The internal name of the instrumented class.
+             * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
+             * @param protectionDomain     The instrumented type's protection domain.
+             * @param binaryRepresentation The class file of the instrumented class in its current state.
+             * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
+             */
             private byte[] transform(JavaModule module,
                                      ClassLoader classLoader,
                                      String internalTypeName,
@@ -5445,8 +5567,26 @@ public interface AgentBuilder {
                         '}';
             }
 
+            /**
+             * A factory for creating a {@link ClassFileTransformer} for the current VM.
+             */
             protected interface Factory {
 
+                /**
+                 * Creates a new class file transformer for the current VM.
+                 *
+                 * @param byteBuddy                  The Byte Buddy instance to be used.
+                 * @param typeLocator                The type locator to use.
+                 * @param typeStrategy               The definition handler to use.
+                 * @param listener                   The listener to notify on transformations.
+                 * @param nativeMethodStrategy       The native method strategy to apply.
+                 * @param accessControlContext       The access control context to use for loading classes.
+                 * @param initializationStrategy     The initialization strategy to use for transformed types.
+                 * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
+                 * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
+                 * @param transformation             The transformation object for handling type transformations.
+                 * @return A class file transformer for the current VM that supports the API of the current VM.
+                 */
                 ClassFileTransformer make(ByteBuddy byteBuddy,
                                           TypeLocator typeLocator,
                                           TypeStrategy typeStrategy,
@@ -5458,10 +5598,24 @@ public interface AgentBuilder {
                                           RawMatcher ignoredTypeMatcher,
                                           Transformation transformation);
 
+                /**
+                 * A factory for a class file transformer on a JVM that supports the {@code java.lang.reflect.Module} API to override
+                 * the newly added method of the {@link ClassFileTransformer} to capture an instrumented class's module.
+                 */
                 class ForJava9CapableVm implements Factory {
 
+                    /**
+                     * A constructor for creating a {@link ClassFileTransformer} that overrides the newly added method for extracting
+                     * the {@code java.lang.reflect.Module} of an instrumented class.
+                     */
                     private final Constructor<? extends ClassFileTransformer> executingTransformer;
 
+                    /**
+                     * Creates a class file transformer factory for a Java 9 capable VM.
+                     *
+                     * @param executingTransformer A constructor for creating a {@link ClassFileTransformer} that overrides the newly added
+                     *                             method for extracting the {@code java.lang.reflect.Module} of an instrumented class.
+                     */
                     protected ForJava9CapableVm(Constructor<? extends ClassFileTransformer> executingTransformer) {
                         this.executingTransformer = executingTransformer;
                     }
@@ -5496,10 +5650,36 @@ public interface AgentBuilder {
                             throw new IllegalStateException("Cannot invoke " + executingTransformer, exception.getCause());
                         }
                     }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForJava9CapableVm that = (ForJava9CapableVm) object;
+                        return executingTransformer.equals(that.executingTransformer);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return executingTransformer.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.ExecutingTransformer.Factory.ForJava9CapableVm{" +
+                                "executingTransformer=" + executingTransformer +
+                                '}';
+                    }
                 }
 
+                /**
+                 * A factory for a {@link ClassFileTransformer} on a VM that does not support the {@code java.lang.reflect.Module} API.
+                 */
                 enum ForLegacyVm implements Factory {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
                     @Override
@@ -5523,6 +5703,11 @@ public interface AgentBuilder {
                                 bootstrapInjectionStrategy,
                                 ignoredTypeMatcher,
                                 transformation);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.ExecutingTransformer.Factory.ForLegacyVm." + name();
                     }
                 }
             }

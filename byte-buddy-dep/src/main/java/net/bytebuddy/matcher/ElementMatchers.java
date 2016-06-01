@@ -629,6 +629,12 @@ public final class ElementMatchers {
         return new NameMatcher<T>(new StringMatcher(regex, StringMatcher.Mode.MATCHES));
     }
 
+    /**
+     * Matches a {@link NamedElement.WithOptionalName} for having an explicit name.
+     *
+     * @param <T> The type of the matched object.
+     * @return An element matcher that checks if the matched optionally named element has an explicit name.
+     */
     public static <T extends NamedElement.WithOptionalName> ElementMatcher.Junction<T> isNamed() {
         return new IsNamedMatcher<T>();
     }
@@ -1533,7 +1539,7 @@ public final class ElementMatchers {
      * Matches any type description that declares a super type that matches the provided matcher.
      *
      * @param matcher The type to be checked for being a super type of the matched type.
-     * @param <T>  The type of the matched object.
+     * @param <T>     The type of the matched object.
      * @return A matcher that matches any type description that declares a super type that matches the provided matcher.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> hasSuperType(ElementMatcher<? super TypeDescription> matcher) {
@@ -1544,7 +1550,7 @@ public final class ElementMatchers {
      * Matches any type description that declares a super type that matches the provided matcher.
      *
      * @param matcher The type to be checked for being a super type of the matched type.
-     * @param <T>  The type of the matched object.
+     * @param <T>     The type of the matched object.
      * @return A matcher that matches any type description that declares a super type that matches the provided matcher.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> hasGenericSuperType(ElementMatcher<? super TypeDescription.Generic> matcher) {

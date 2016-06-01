@@ -67,6 +67,14 @@ public class JavaTypeTest {
     }
 
     @Test
+    public void testModule() throws Exception {
+        assertThat(JavaType.MODULE.getTypeStub().getName(), is("java.lang.reflect.Module"));
+        assertThat(JavaType.MODULE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
+        assertThat(JavaType.MODULE.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
+        assertThat(JavaType.MODULE.getTypeStub().getInterfaces().size(), is(0));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(7)
     public void testJava7Types() throws Exception {
         assertThat(JavaType.METHOD_HANDLE.load(), notNullValue(Class.class));

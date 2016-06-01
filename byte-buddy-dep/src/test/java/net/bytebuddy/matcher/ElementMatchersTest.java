@@ -2,6 +2,7 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -464,6 +465,14 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.nameMatches("^" + FOO + "$").matches(byteCodeElement), is(true));
         assertThat(ElementMatchers.nameMatches(FOO.toUpperCase()).matches(byteCodeElement), is(false));
         assertThat(ElementMatchers.nameMatches(BAR).matches(byteCodeElement), is(false));
+    }
+
+    @Test
+    public void testIsNamed() throws Exception {
+        NamedElement.WithOptionalName namedElement = mock(NamedElement.WithOptionalName.class);
+        assertThat(ElementMatchers.isNamed().matches(namedElement), is(false));
+        when(namedElement.isNamed()).thenReturn(true);
+        assertThat(ElementMatchers.isNamed().matches(namedElement), is(true));
     }
 
     @Test

@@ -1058,6 +1058,8 @@ public class AgentBuilderDefaultTest {
                         return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
                     }
                 }).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForJava9CapableVm.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForLegacyVm.class).apply();
     }
 
     public static class Foo {
