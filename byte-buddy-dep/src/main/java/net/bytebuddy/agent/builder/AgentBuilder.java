@@ -294,7 +294,7 @@ public interface AgentBuilder {
      * @param moduleMatcher      An {@link net.bytebuddy.matcher.ElementMatcher} that is applied to the {@link JavaModule}
      *                           of the type being loaded. This matcher is always applied first where the class loader and
      *                           type matchers are not applied in case that this matcher does not indicate a match. On a JVM
-     *                           that does not support modules, the Java module is represented by {@code null}.
+     *                           that does not support the Java modules system, this matcher is not applied.
      * @return A definable that represents this agent builder which allows for the definition of one or several
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when both the given
      * {@code typeMatcher} and {@code classLoaderMatcher} indicate a match.
@@ -396,7 +396,7 @@ public interface AgentBuilder {
      * @param typeMatcher        A matcher that identifies types that should not be instrumented.
      * @param classLoaderMatcher A matcher that identifies a class loader that identifies classes that should not be instrumented.
      * @param moduleMatcher      A matcher that identifies a module that identifies classes that should not be instrumented. On a JVM
-     *                           that does not support modules, the Java module is represented by {@code null}.
+     *                           that does not support the Java modules system, this matcher is not applied.
      * @return A new instance of this agent builder that ignores all types that are matched by the provided matcher.
      * All previous matchers for ignored types are discarded.
      */
@@ -4284,7 +4284,7 @@ public interface AgentBuilder {
         public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher,
                                           ElementMatcher<? super ClassLoader> classLoaderMatcher,
                                           ElementMatcher<? super JavaModule> moduleMatcher) {
-            return type(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
+            return type(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, not(supportsModules()).or(moduleMatcher)));
         }
 
         @Override
@@ -4301,7 +4301,7 @@ public interface AgentBuilder {
         public Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher,
                               ElementMatcher<? super ClassLoader> classLoaderMatcher,
                               ElementMatcher<? super JavaModule> moduleMatcher) {
-            return ignore(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher));
+            return ignore(new RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, not(supportsModules()).or(moduleMatcher)));
         }
 
         @Override

@@ -10,6 +10,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -1044,6 +1045,12 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isParentOf(null).matches(new URLClassLoader(new URL[0], null)), is(false));
         assertThat(ElementMatchers.isParentOf(null).matches(null), is(true));
         assertThat(ElementMatchers.isParentOf(mock(ClassLoader.class)).matches(null), is(true));
+    }
+
+    @Test
+    public void testSupportsModules() throws Exception {
+        assertThat(ElementMatchers.supportsModules().matches(mock(JavaModule.class)), is(true));
+        assertThat(ElementMatchers.supportsModules().matches(null), is(false));
     }
 
     @Test(expected = UnsupportedOperationException.class)

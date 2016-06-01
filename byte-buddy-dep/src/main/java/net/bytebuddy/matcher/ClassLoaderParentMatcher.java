@@ -5,7 +5,7 @@ package net.bytebuddy.matcher;
  *
  * @param <T> The exact type of the class loader that is matched.
  */
-public class ClassLoaderParentMatcher<T extends ClassLoader> implements ElementMatcher<T> {
+public class ClassLoaderParentMatcher<T extends ClassLoader> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The class loader that is matched for being a child of the matched class loader.
