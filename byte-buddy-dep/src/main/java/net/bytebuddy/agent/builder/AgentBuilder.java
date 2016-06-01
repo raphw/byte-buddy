@@ -3936,7 +3936,7 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
-                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatcherPair(any(), isBootstrapClassLoader()), new RawMatcher.ForElementMatcherPair(isSynthetic(), any())),
+                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()), new RawMatcher.ForElementMatchers(isSynthetic(), any(), any())),
                     Transformation.Ignored.INSTANCE);
         }
 
