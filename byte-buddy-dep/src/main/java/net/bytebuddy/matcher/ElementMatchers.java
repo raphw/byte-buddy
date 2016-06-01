@@ -629,6 +629,10 @@ public final class ElementMatchers {
         return new NameMatcher<T>(new StringMatcher(regex, StringMatcher.Mode.MATCHES));
     }
 
+    public static <T extends NamedElement.WithOptionalName> ElementMatcher.Junction<T> isNamed() {
+        return new IsNamedMatcher<T>();
+    }
+
     /**
      * Matches a {@link ByteCodeElement}'s descriptor against a given value.
      *

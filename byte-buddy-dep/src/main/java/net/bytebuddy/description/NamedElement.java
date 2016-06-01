@@ -43,9 +43,16 @@ public interface NamedElement {
         String getInternalName();
     }
 
-
+    /**
+     * Describes a named element where naming the element is optional and an alternative default name is provided if no explicit name is given.
+     */
     interface WithOptionalName extends NamedElement {
 
+        /**
+         * Returns {@code true} if this element has an explicit name.
+         *
+         * @return {@code true} if this element has an explicit name.
+         */
         boolean isNamed();
     }
 

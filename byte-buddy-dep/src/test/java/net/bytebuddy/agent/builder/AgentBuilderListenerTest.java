@@ -4,6 +4,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,13 +31,16 @@ public class AgentBuilderListenerTest {
     private AgentBuilder.Listener first, second;
 
     @Mock
-    private DynamicType dynamicType;
+    private TypeDescription typeDescription;
 
     @Mock
     private ClassLoader classLoader;
 
     @Mock
-    private TypeDescription typeDescription;
+    private JavaModule module;
+
+    @Mock
+    private DynamicType dynamicType;
 
     @Mock
     private Throwable throwable;
@@ -48,58 +52,58 @@ public class AgentBuilderListenerTest {
 
     @Test
     public void testNoOp() throws Exception {
-        AgentBuilder.Listener.NoOp.INSTANCE.onTransformation(typeDescription, classLoader, dynamicType);
+        AgentBuilder.Listener.NoOp.INSTANCE.onTransformation(typeDescription, classLoader, module, dynamicType);
         verifyZeroInteractions(dynamicType);
-        AgentBuilder.Listener.NoOp.INSTANCE.onError(FOO, classLoader, throwable);
+        AgentBuilder.Listener.NoOp.INSTANCE.onError(FOO, classLoader, module, throwable);
         verifyZeroInteractions(throwable);
-        AgentBuilder.Listener.NoOp.INSTANCE.onIgnored(typeDescription, classLoader);
-        AgentBuilder.Listener.NoOp.INSTANCE.onComplete(FOO, classLoader);
+        AgentBuilder.Listener.NoOp.INSTANCE.onIgnored(typeDescription, classLoader, module);
+        AgentBuilder.Listener.NoOp.INSTANCE.onComplete(FOO, classLoader, module);
     }
 
     @Test
     public void testPseudoAdapter() throws Exception {
         AgentBuilder.Listener listener = new PseudoAdapter();
-        listener.onTransformation(typeDescription, classLoader, dynamicType);
+        listener.onTransformation(typeDescription, classLoader, module, dynamicType);
         verifyZeroInteractions(dynamicType);
-        listener.onError(FOO, classLoader, throwable);
+        listener.onError(FOO, classLoader, module, throwable);
         verifyZeroInteractions(throwable);
-        listener.onIgnored(typeDescription, classLoader);
-        listener.onComplete(FOO, classLoader);
+        listener.onIgnored(typeDescription, classLoader, module);
+        listener.onComplete(FOO, classLoader, module);
     }
 
     @Test
     public void testCompoundOnTransformation() throws Exception {
-        new AgentBuilder.Listener.Compound(first, second).onTransformation(typeDescription, classLoader, dynamicType);
-        verify(first).onTransformation(typeDescription, classLoader, dynamicType);
+        new AgentBuilder.Listener.Compound(first, second).onTransformation(typeDescription, classLoader, module, dynamicType);
+        verify(first).onTransformation(typeDescription, classLoader, module, dynamicType);
         verifyNoMoreInteractions(first);
-        verify(second).onTransformation(typeDescription, classLoader, dynamicType);
+        verify(second).onTransformation(typeDescription, classLoader, module, dynamicType);
         verifyNoMoreInteractions(second);
     }
 
     @Test
     public void testCompoundOnError() throws Exception {
-        new AgentBuilder.Listener.Compound(first, second).onError(FOO, classLoader, throwable);
-        verify(first).onError(FOO, classLoader, throwable);
+        new AgentBuilder.Listener.Compound(first, second).onError(FOO, classLoader, module, throwable);
+        verify(first).onError(FOO, classLoader, module, throwable);
         verifyNoMoreInteractions(first);
-        verify(second).onError(FOO, classLoader, throwable);
+        verify(second).onError(FOO, classLoader, module, throwable);
         verifyNoMoreInteractions(second);
     }
 
     @Test
     public void testCompoundOnIgnored() throws Exception {
-        new AgentBuilder.Listener.Compound(first, second).onIgnored(typeDescription, classLoader);
-        verify(first).onIgnored(typeDescription, classLoader);
+        new AgentBuilder.Listener.Compound(first, second).onIgnored(typeDescription, classLoader, module);
+        verify(first).onIgnored(typeDescription, classLoader, module);
         verifyNoMoreInteractions(first);
-        verify(second).onIgnored(typeDescription, classLoader);
+        verify(second).onIgnored(typeDescription, classLoader, module);
         verifyNoMoreInteractions(second);
     }
 
     @Test
     public void testCompoundOnComplete() throws Exception {
-        new AgentBuilder.Listener.Compound(first, second).onComplete(FOO, classLoader);
-        verify(first).onComplete(FOO, classLoader);
+        new AgentBuilder.Listener.Compound(first, second).onComplete(FOO, classLoader, module);
+        verify(first).onComplete(FOO, classLoader, module);
         verifyNoMoreInteractions(first);
-        verify(second).onComplete(FOO, classLoader);
+        verify(second).onComplete(FOO, classLoader, module);
         verifyNoMoreInteractions(second);
     }
 
@@ -107,8 +111,8 @@ public class AgentBuilderListenerTest {
     public void testStreamWritingOnTransformation() throws Exception {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
-        listener.onTransformation(typeDescription, classLoader, dynamicType);
-        verify(printStream).println("[Byte Buddy] TRANSFORM " + FOO);
+        listener.onTransformation(typeDescription, classLoader, module, dynamicType);
+        verify(printStream).println("[Byte Buddy] TRANSFORM " + FOO + "[" + classLoader + "," + module + "]");
         verifyNoMoreInteractions(printStream);
     }
 
@@ -116,8 +120,8 @@ public class AgentBuilderListenerTest {
     public void testStreamWritingOnError() throws Exception {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
-        listener.onError(FOO, classLoader, throwable);
-        verify(printStream).println("[Byte Buddy] ERROR " + FOO);
+        listener.onError(FOO, classLoader, module, throwable);
+        verify(printStream).println("[Byte Buddy] ERROR " + FOO + "[" + classLoader + "," + module + "]");
         verifyNoMoreInteractions(printStream);
         verify(throwable).printStackTrace(printStream);
         verifyNoMoreInteractions(throwable);
@@ -127,8 +131,8 @@ public class AgentBuilderListenerTest {
     public void testStreamWritingOnComplete() throws Exception {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
-        listener.onComplete(FOO, classLoader);
-        verify(printStream).println("[Byte Buddy] COMPLETE " + FOO);
+        listener.onComplete(FOO, classLoader, module);
+        verify(printStream).println("[Byte Buddy] COMPLETE " + FOO + "[" + classLoader + "," + module + "]");
         verifyNoMoreInteractions(printStream);
     }
 
@@ -136,8 +140,8 @@ public class AgentBuilderListenerTest {
     public void testStreamWritingOnIgnore() throws Exception {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
-        listener.onIgnored(typeDescription, classLoader);
-        verify(printStream).println("[Byte Buddy] IGNORE " + FOO);
+        listener.onIgnored(typeDescription, classLoader, module);
+        verify(printStream).println("[Byte Buddy] IGNORE " + FOO + "[" + classLoader + "," + module + "]");
         verifyNoMoreInteractions(printStream);
     }
 

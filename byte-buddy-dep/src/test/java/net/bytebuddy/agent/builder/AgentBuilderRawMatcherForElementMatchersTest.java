@@ -4,6 +4,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -27,18 +28,37 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
     private ElementMatcher<ClassLoader> classLoaderMatcher;
 
     @Mock
+    private ElementMatcher<JavaModule> moduleMatcher;
+
+    @Mock
     private TypeDescription typeDescription;
 
     @Mock
     private ClassLoader classLoader;
 
     @Mock
+    private JavaModule module;
+
+    @Mock
     private ProtectionDomain protectionDomain;
 
     @Test
     public void testNoneMatches() throws Exception {
-        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher)
-                .matches(typeDescription, classLoader, Object.class, protectionDomain), is(false));
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher)
+                .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
+        verify(moduleMatcher).matches(module);
+        verifyNoMoreInteractions(moduleMatcher);
+        verifyNoMoreInteractions(classLoaderMatcher);
+        verifyZeroInteractions(typeMatcher);
+    }
+
+    @Test
+    public void testModuleMatches() throws Exception {
+        when(moduleMatcher.matches(module)).thenReturn(true);
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher)
+                .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
+        verify(moduleMatcher).matches(module);
+        verifyNoMoreInteractions(moduleMatcher);
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
         verifyZeroInteractions(typeMatcher);
@@ -47,8 +67,22 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
     @Test
     public void testClassLoaderMatches() throws Exception {
         when(classLoaderMatcher.matches(classLoader)).thenReturn(true);
-        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher)
-                .matches(typeDescription, classLoader, Object.class, protectionDomain), is(false));
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher)
+                .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
+        verify(moduleMatcher).matches(module);
+        verifyNoMoreInteractions(moduleMatcher);
+        verifyZeroInteractions(classLoaderMatcher);
+        verifyNoMoreInteractions(typeMatcher);
+    }
+
+    @Test
+    public void testModuleAndClassLoaderMatches() throws Exception {
+        when(moduleMatcher.matches(module)).thenReturn(true);
+        when(classLoaderMatcher.matches(classLoader)).thenReturn(true);
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher)
+                .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
+        verify(moduleMatcher).matches(module);
+        verifyNoMoreInteractions(moduleMatcher);
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
         verify(typeMatcher).matches(typeDescription);
@@ -56,21 +90,48 @@ public class AgentBuilderRawMatcherForElementMatchersTest {
     }
 
     @Test
-    public void testTypeMatches() throws Exception {
+    public void testModuleAndTypeMatches() throws Exception {
+        when(moduleMatcher.matches(module)).thenReturn(true);
         when(typeMatcher.matches(typeDescription)).thenReturn(true);
-        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher)
-                .matches(typeDescription, classLoader, Object.class, protectionDomain), is(false));
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher)
+                .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
+        verify(moduleMatcher).matches(module);
+        verifyNoMoreInteractions(moduleMatcher);
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
         verifyZeroInteractions(typeMatcher);
     }
 
     @Test
-    public void testBothMatches() throws Exception {
+    public void testClassLoaderAndTypeMatches() throws Exception {
         when(classLoaderMatcher.matches(classLoader)).thenReturn(true);
         when(typeMatcher.matches(typeDescription)).thenReturn(true);
-        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher)
-                .matches(typeDescription, classLoader, Object.class, protectionDomain), is(true));
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher)
+                .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
+        verify(moduleMatcher).matches(module);
+        verifyNoMoreInteractions(moduleMatcher);
+        verifyZeroInteractions(classLoaderMatcher);
+        verifyZeroInteractions(typeMatcher);
+    }
+
+    @Test
+    public void testTypeMatches() throws Exception {
+        when(typeMatcher.matches(typeDescription)).thenReturn(true);
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher)
+                .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(false));
+        verify(moduleMatcher).matches(module);
+        verifyNoMoreInteractions(moduleMatcher);
+        verifyZeroInteractions(classLoaderMatcher);
+        verifyZeroInteractions(typeMatcher);
+    }
+
+    @Test
+    public void testAllMatches() throws Exception {
+        when(moduleMatcher.matches(module)).thenReturn(true);
+        when(classLoaderMatcher.matches(classLoader)).thenReturn(true);
+        when(typeMatcher.matches(typeDescription)).thenReturn(true);
+        assertThat(new AgentBuilder.RawMatcher.ForElementMatchers(typeMatcher, classLoaderMatcher, moduleMatcher)
+                .matches(typeDescription, classLoader, module, Object.class, protectionDomain), is(true));
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
         verify(typeMatcher).matches(typeDescription);
