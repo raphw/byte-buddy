@@ -24,12 +24,11 @@ import java.io.File;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Constructor;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.*;
@@ -1058,7 +1057,13 @@ public class AgentBuilderDefaultTest {
                         return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
                     }
                 }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForJava9CapableVm.class).apply();
+        final Iterator<Constructor<?>> iterator = Arrays.asList(String.class.getDeclaredConstructors()).iterator();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForJava9CapableVm.class).create(new ObjectPropertyAssertion.Creator<Constructor<?>>() {
+            @Override
+            public Constructor<?> create() {
+                return iterator.next();
+            }
+        }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForLegacyVm.class).apply();
     }
 
