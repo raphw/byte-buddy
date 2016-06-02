@@ -168,12 +168,12 @@ public interface AgentBuilder {
     /**
      * Enables class injection of auxiliary classes into the bootstrap class loader.
      *
-     * @param folder          The folder in which jar files of the injected classes are to be stored.
      * @param instrumentation The instrumentation instance that is used for appending jar files to the
      *                        bootstrap class path.
+     * @param folder          The folder in which jar files of the injected classes are to be stored.
      * @return An agent builder with bootstrap class loader class injection enabled.
      */
-    AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation);
+    AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder);
 
     /**
      * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
@@ -213,6 +213,16 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder that does not apply any implicit changes to the received class file.
      */
     AgentBuilder disableClassFormatChanges();
+
+    /**
+     * Assures that all modules of the supplied types are read by the module of any instrumented type.
+     *
+     * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
+     * @param type            The types for which to assure their visibility to the any instrumented class.
+     * @return A new instance of this agent builder that assures the supplied types module visibility.
+     * @see Listener.ModuleReadEdgeCompleting
+     */
+    AgentBuilder assureVisibility(Instrumentation instrumentation, Class<?>... type);
 
     /**
      * <p>
@@ -1466,6 +1476,67 @@ public interface AgentBuilder {
             public String toString() {
                 return "AgentBuilder.Listener.StreamWriting{" +
                         "printStream=" + printStream +
+                        '}';
+            }
+        }
+
+        /**
+         * A listener that adds read-edges to any module of an instrumented class upon its transformation.
+         */
+        class ModuleReadEdgeCompleting extends Listener.Adapter {
+
+            /**
+             * The instrumentation instance used for adding read edges.
+             */
+            private final Instrumentation instrumentation;
+
+            /**
+             * The modules to add as a read edge to any transformed class's module.
+             */
+            private final Set<? extends JavaModule> modules;
+
+            /**
+             * Creates a new module read-edge completing listener.
+             *
+             * @param instrumentation The instrumentation instance used for adding read edges.
+             * @param modules         The modules to add as a read edge to any transformed class's module.
+             */
+            public ModuleReadEdgeCompleting(Instrumentation instrumentation, Set<? extends JavaModule> modules) {
+                this.instrumentation = instrumentation;
+                this.modules = modules;
+            }
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
+                if (module != null && module.isNamed()) {
+                    for (JavaModule target : modules) {
+                        if (!module.canRead(target)) {
+                            module.addReads(instrumentation, target);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ModuleReadEdgeCompleting that = (ModuleReadEdgeCompleting) object;
+                return instrumentation.equals(that.instrumentation) && modules.equals(that.modules);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentation.hashCode();
+                result = 31 * result + modules.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Listener.ModuleReadEdgeCompleting{" +
+                        "instrumentation=" + instrumentation +
+                        ", modules=" + modules +
                         '}';
             }
         }
@@ -4234,7 +4305,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
+        public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
@@ -4263,6 +4334,40 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     ignoredTypeMatcher,
                     transformation);
+        }
+
+        @Override
+        public AgentBuilder disableClassFormatChanges() {
+            return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
+                    typeLocator,
+                    TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    InitializationStrategy.NoOp.INSTANCE,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder assureVisibility(Instrumentation instrumentation, Class<?>... type) {
+            if (JavaModule.isSupported()) {
+                Set<JavaModule> modules = new HashSet<JavaModule>();
+                for (Class<?> aType : type) {
+                    JavaModule module = JavaModule.ofType(aType);
+                    if (module.isNamed()) {
+                        modules.add(module);
+                    }
+                }
+                return modules.isEmpty()
+                        ? this
+                        : with(new Listener.ModuleReadEdgeCompleting(instrumentation, modules));
+            } else {
+                return this;
+            }
         }
 
         @Override
@@ -4307,22 +4412,6 @@ public interface AgentBuilder {
         @Override
         public Ignored ignore(RawMatcher rawMatcher) {
             return new Ignoring(rawMatcher);
-        }
-
-        @Override
-        public AgentBuilder disableClassFormatChanges() {
-            return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
-                    typeLocator,
-                    TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
-                    listener,
-                    nativeMethodStrategy,
-                    accessControlContext,
-                    InitializationStrategy.NoOp.INSTANCE,
-                    redefinitionStrategy,
-                    bootstrapInjectionStrategy,
-                    lambdaInstrumentationStrategy,
-                    ignoredTypeMatcher,
-                    transformation);
         }
 
         @Override
@@ -5768,8 +5857,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
-                return materialize().enableBootstrapInjection(folder, instrumentation);
+            public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
+                return materialize().enableBootstrapInjection(instrumentation, folder);
             }
 
             @Override
@@ -5790,6 +5879,11 @@ public interface AgentBuilder {
             @Override
             public AgentBuilder disableClassFormatChanges() {
                 return materialize().disableClassFormatChanges();
+            }
+
+            @Override
+            public AgentBuilder assureVisibility(Instrumentation instrumentation, Class<?>... type) {
+                return materialize().assureVisibility(instrumentation, type);
             }
 
             @Override

@@ -3,6 +3,7 @@ package net.bytebuddy.utility;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -45,6 +46,16 @@ public class JavaModuleTest {
     @Test(expected = IllegalStateException.class)
     public void testGetClassLoaderDisabledThrowException() throws Exception {
         JavaModule.Dispatcher.Disabled.INSTANCE.getClassLoader(mock(Object.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCanReadThrowsException() throws Exception {
+        JavaModule.Dispatcher.Disabled.INSTANCE.canRead(mock(Object.class), mock(Object.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAddReadsThrowsException() throws Exception {
+        JavaModule.Dispatcher.Disabled.INSTANCE.addReads(mock(Instrumentation.class), mock(Object.class), mock(Object.class));
     }
 
     @Test

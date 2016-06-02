@@ -12,6 +12,8 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.io.PrintStream;
+import java.lang.instrument.Instrumentation;
+import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -156,10 +158,55 @@ public class AgentBuilderListenerTest {
     }
 
     @Test
+    public void testReadEdgeAddingListenerNotSupported() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, Collections.<JavaModule>emptySet());
+        listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), JavaModule.UNSUPPORTED, mock(DynamicType.class));
+    }
+
+    @Test
+    public void testReadEdgeAddingListenerUnnamed() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, Collections.singleton(target));
+        listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
+        verify(source).isNamed();
+        verifyNoMoreInteractions(source);
+    }
+
+    @Test
+    public void testReadEdgeAddingListenerCanRead() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
+        when(source.isNamed()).thenReturn(true);
+        when(source.canRead(target)).thenReturn(true);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, Collections.singleton(target));
+        listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
+        verify(source).isNamed();
+        verify(source).canRead(target);
+        verifyNoMoreInteractions(source);
+    }
+
+    @Test
+    public void testReadEdgeAddingListenerNamedCannotRead() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
+        when(source.isNamed()).thenReturn(true);
+        when(source.canRead(target)).thenReturn(false);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, Collections.singleton(target));
+        listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
+        verify(source).isNamed();
+        verify(source).canRead(target);
+        verify(source).addReads(instrumentation, target);
+        verifyNoMoreInteractions(source);
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Listener.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.StreamWriting.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.Compound.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Listener.ModuleReadEdgeCompleting.class).apply();
     }
 
     private static class PseudoAdapter extends AgentBuilder.Listener.Adapter {

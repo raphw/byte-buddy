@@ -2,6 +2,7 @@ package net.bytebuddy.utility;
 
 import net.bytebuddy.description.NamedElement;
 
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessControlContext;
@@ -33,7 +34,9 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
             dispatcher = new Dispatcher.Enabled(Class.class.getDeclaredMethod("getModule"),
                     module.getDeclaredMethod("getClassLoader"),
                     module.getDeclaredMethod("isNamed"),
-                    module.getDeclaredMethod("getName"));
+                    module.getDeclaredMethod("getName"),
+                    module.getDeclaredMethod("canRead", module),
+                    Instrumentation.class.getDeclaredMethod("addModuleReads", module, module));
         } catch (RuntimeException exception) {
             throw exception;
         } catch (Exception ignored) {
@@ -118,6 +121,31 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
         return module;
     }
 
+    /**
+     * Checks if this module can read the exported packages of the supplied module.
+     *
+     * @param module The module to check for its readability by this module.
+     * @return {@code true} if this module can read the supplied module.
+     */
+    public boolean canRead(JavaModule module) {
+        return DISPATCHER.canRead(this.module, module.unwrap());
+    }
+
+    /**
+     * Adds a read-edge to this module to the supplied module using the instrumentation API.
+     *
+     * @param instrumentation The instrumentation instance to use for adding the edge.
+     * @param module          The module to add as a read dependency to this module.
+     */
+    public void addReads(Instrumentation instrumentation, JavaModule module) {
+        DISPATCHER.addReads(instrumentation, this.module, module.unwrap());
+    }
+
+    @Override
+    public ClassLoader run() {
+        return DISPATCHER.getClassLoader(module);
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
@@ -134,11 +162,6 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
     @Override
     public String toString() {
         return module.toString();
-    }
-
-    @Override
-    public ClassLoader run() {
-        return DISPATCHER.getClassLoader(module);
     }
 
     /**
@@ -186,6 +209,24 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
         ClassLoader getClassLoader(Object module);
 
         /**
+         * Checks if the source module can read the target module.
+         *
+         * @param source The source module.
+         * @param target The target module.
+         * @return {@code true} if the source module can read the target module.
+         */
+        boolean canRead(Object source, Object target);
+
+        /**
+         * Adds a read-edge from the source to the target module.
+         *
+         * @param instrumentation The instrumentation instance to use for adding the edge.
+         * @param source          The source module.
+         * @param target          The target module.
+         */
+        void addReads(Instrumentation instrumentation, Object source, Object target);
+
+        /**
          * A dispatcher for a VM that does support the {@code java.lang.reflect.Module} API.
          */
         class Enabled implements Dispatcher {
@@ -211,18 +252,32 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
             private final Method getName;
 
             /**
-             * Creates a new enabled dispatcher.
+             * The {@code java.lang.reflect.Module#canRead(Module)} method.
+             */
+            private final Method canRead;
+
+            /**
+             * The {@code java.lang.instrument.Instrumentation#addModuleReads(Module, Module)} method.
+             */
+            private final Method addModuleReads;
+
+            /**
+             * Creates an enabled dispatcher.
              *
              * @param getModule      The {@code java.lang.Class#getModule()} method.
              * @param getClassLoader The {@code java.lang.reflect.Module#getClassLoader()} method.
              * @param isNamed        The {@code java.lang.reflect.Module#isNamed()} method.
              * @param getName        The {@code java.lang.reflect.Module#getName()} method.
+             * @param canRead        The {@code java.lang.reflect.Module#canRead(Module)} method.
+             * @param addModuleReads The {@code java.lang.instrument.Instrumentation#addModuleReads(Module, Module)} method.
              */
-            protected Enabled(Method getModule, Method getClassLoader, Method isNamed, Method getName) {
+            protected Enabled(Method getModule, Method getClassLoader, Method isNamed, Method getName, Method canRead, Method addModuleReads) {
                 this.getModule = getModule;
                 this.getClassLoader = getClassLoader;
                 this.isNamed = isNamed;
                 this.getName = getName;
+                this.canRead = canRead;
+                this.addModuleReads = addModuleReads;
             }
 
             @Override
@@ -275,14 +330,38 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
             }
 
             @Override
+            public boolean canRead(Object source, Object target) {
+                try {
+                    return (Boolean) canRead.invoke(source, target);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access " + canRead, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot invoke " + canRead, exception.getCause());
+                }
+            }
+
+            @Override
+            public void addReads(Instrumentation instrumentation, Object source, Object target) {
+                try {
+                    addModuleReads.invoke(instrumentation, source, target);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access " + addModuleReads, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot invoke " + addModuleReads, exception.getCause());
+                }
+            }
+
+            @Override
             public boolean equals(Object object) {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 Enabled enabled = (Enabled) object;
-                if (!getModule.equals(enabled.getModule)) return false;
-                if (!getClassLoader.equals(enabled.getClassLoader)) return false;
-                if (!isNamed.equals(enabled.isNamed)) return false;
-                return getName.equals(enabled.getName);
+                return getModule.equals(enabled.getModule)
+                        && getClassLoader.equals(enabled.getClassLoader)
+                        && isNamed.equals(enabled.isNamed)
+                        && getName.equals(enabled.getName)
+                        && canRead.equals(enabled.canRead)
+                        && addModuleReads.equals(enabled.addModuleReads);
             }
 
             @Override
@@ -291,6 +370,8 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
                 result = 31 * result + getClassLoader.hashCode();
                 result = 31 * result + isNamed.hashCode();
                 result = 31 * result + getName.hashCode();
+                result = 31 * result + canRead.hashCode();
+                result = 31 * result + addModuleReads.hashCode();
                 return result;
             }
 
@@ -301,6 +382,8 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
                         ", getClassLoader=" + getClassLoader +
                         ", isNamed=" + isNamed +
                         ", getName=" + getName +
+                        ", canRead=" + canRead +
+                        ", addModuleReads=" + addModuleReads +
                         '}';
             }
         }
@@ -337,6 +420,16 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
 
             @Override
             public String getName(Object module) {
+                throw new IllegalStateException("Current VM does not support modules");
+            }
+
+            @Override
+            public boolean canRead(Object source, Object target) {
+                throw new IllegalStateException("Current VM does not support modules");
+            }
+
+            @Override
+            public void addReads(Instrumentation instrumentation, Object source, Object target) {
                 throw new IllegalStateException("Current VM does not support modules");
             }
 
