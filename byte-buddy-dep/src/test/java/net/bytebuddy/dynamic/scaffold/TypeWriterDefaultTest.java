@@ -31,6 +31,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -406,7 +407,18 @@ public class TypeWriterDefaultTest {
         assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) int.class));
     }
 
-    // TODO: Add tests for type adjustment with pre-compiling legacy type
+    @Test
+    public void testLegacyTypeRedefinitionIsDiscovered() throws Exception {
+        Class<?> dynamicType = new ByteBuddy()
+                .with(TypeValidation.DISABLED)
+                .redefine(Class.forName("net.bytebuddy.test.precompiled.TypeConstantSample"))
+                .method(named(BAR))
+                .intercept(FixedValue.value(int.class))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(dynamicType.getDeclaredMethod(BAR).invoke(null), is((Object) int.class));
+    }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodTypeInLegacyConstantPool() throws Exception {
