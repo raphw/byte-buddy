@@ -80,6 +80,11 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
         return new JavaModule(module);
     }
 
+    /**
+     * Checks if the current VM supports the {@code java.lang.reflect.Module} API.
+     *
+     * @return {@code true} if the current VM supports modules.
+     */
     public static boolean isSupported() {
         return DISPATCHER.isAlive();
     }
