@@ -215,7 +215,8 @@ public interface AgentBuilder {
     AgentBuilder disableClassFormatChanges();
 
     /**
-     * Assures that all modules of the supplied types are read by the module of any instrumented type.
+     * Assures that all modules of the supplied types are read by the module of any instrumented type. If the current VM does not support
+     * the Java module system, calling this method has no effect and this instance is returned.
      *
      * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
      * @param type            The types for which to assure their visibility to the any instrumented class.
