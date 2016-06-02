@@ -80,6 +80,10 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
         return new JavaModule(module);
     }
 
+    public static boolean isSupported() {
+        return DISPATCHER.isAlive();
+    }
+
     @Override
     public boolean isNamed() {
         return DISPATCHER.isNamed(module);
@@ -136,6 +140,13 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
      * A dispatcher for accessing the {@code java.lang.reflect.Module} API if it is available on the current VM.
      */
     protected interface Dispatcher {
+
+        /**
+         * Checks if this dispatcher is alive, i.e. supports modules.
+         *
+         * @return {@code true} if modules are supported on the current VM.
+         */
+        boolean isAlive();
 
         /**
          * Extracts the Java {@code Module} for the provided class or returns {@code null} if the current VM does not support modules.
@@ -207,6 +218,11 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
                 this.getClassLoader = getClassLoader;
                 this.isNamed = isNamed;
                 this.getName = getName;
+            }
+
+            @Override
+            public boolean isAlive() {
+                return true;
             }
 
             @Override
@@ -293,6 +309,11 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
              * The singleton instance.
              */
             INSTANCE;
+
+            @Override
+            public boolean isAlive() {
+                return false;
+            }
 
             @Override
             public JavaModule moduleOf(Class<?> type) {

@@ -15,6 +15,11 @@ import static org.mockito.Mockito.mock;
 
 public class JavaModuleTest {
 
+    @Test
+    public void testSupportsDisabledThrowException() throws Exception {
+        assertThat(JavaModule.Dispatcher.Disabled.INSTANCE.isAlive(), is(false));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testExtractModule() throws Exception {
         JavaModule.of(mock(Object.class));
