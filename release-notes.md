@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 2. June 2016: version 1.4.0
+
+- Added initial support for Jigsaw modules.
+- Adjusted agent builder API to expose modules of instrumented classes.
+- Added additional matchers.
+- Simplified `BinaryLocator` and changed its name to `TypeLocator`.
+
 ### 30. May 2016: version 1.3.20
 
 - Fixed `MultipleParentClassLoader` to support usage as being a parent itself.
