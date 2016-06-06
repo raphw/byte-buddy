@@ -65,6 +65,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * do so results in a {@link IllegalAccessError} at the instrumented class's runtime.
  * </p>
  * <p>
+ * Advice cannot be applied to native or abstract methods which are silently skipped when advice matches such a method.
+ * </p>
+ * <p>
  * <b>Important</b>: Since Java 6, class files contain <i>stack map frames</i> embedded into a method's byte code. When advice methods are compiled
  * with a class file version less then Java 6 but are used for a class file that was compiled to Java 6 or newer, these stack map frames must be
  * computed by ASM by using the {@link ClassWriter#COMPUTE_FRAMES} option. If the advice methods do not contain any branching instructions, this is
@@ -296,7 +299,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               int writerFlags,
                               int readerFlags) {
         if (methodDescription.isAbstract() || methodDescription.isNative()) {
-            throw new IllegalStateException("Cannot advice abstract or native method " + methodDescription);
+            return methodVisitor;
         } else if (!methodExit.isAlive()) {
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
                     methodDescription,

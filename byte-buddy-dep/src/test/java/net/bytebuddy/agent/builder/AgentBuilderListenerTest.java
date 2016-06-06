@@ -160,7 +160,7 @@ public class AgentBuilderListenerTest {
     @Test
     public void testReadEdgeAddingListenerNotSupported() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
-        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, Collections.<JavaModule>emptySet());
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, false, Collections.<JavaModule>emptySet());
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), JavaModule.UNSUPPORTED, mock(DynamicType.class));
     }
 
@@ -168,7 +168,7 @@ public class AgentBuilderListenerTest {
     public void testReadEdgeAddingListenerUnnamed() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
-        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, Collections.singleton(target));
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, false, Collections.singleton(target));
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
         verify(source).isNamed();
         verifyNoMoreInteractions(source);
@@ -180,7 +180,7 @@ public class AgentBuilderListenerTest {
         JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
         when(source.isNamed()).thenReturn(true);
         when(source.canRead(target)).thenReturn(true);
-        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, Collections.singleton(target));
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, false, Collections.singleton(target));
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
         verify(source).isNamed();
         verify(source).canRead(target);
@@ -193,7 +193,7 @@ public class AgentBuilderListenerTest {
         JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
         when(source.isNamed()).thenReturn(true);
         when(source.canRead(target)).thenReturn(false);
-        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, Collections.singleton(target));
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, false, Collections.singleton(target));
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
         verify(source).isNamed();
         verify(source).canRead(target);

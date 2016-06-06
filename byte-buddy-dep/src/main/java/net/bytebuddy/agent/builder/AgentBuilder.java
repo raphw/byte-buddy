@@ -219,11 +219,62 @@ public interface AgentBuilder {
      * the Java module system, calling this method has no effect and this instance is returned.
      *
      * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
-     * @param type            The types for which to assure their visibility to the any instrumented class.
+     * @param type            The types for which to assure their module-visibility from any instrumented class.
      * @return A new instance of this agent builder that assures the supplied types module visibility.
      * @see Listener.ModuleReadEdgeCompleting
      */
-    AgentBuilder assureVisibility(Instrumentation instrumentation, Class<?>... type);
+    AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Class<?>... type);
+
+    /**
+     * Assures that all supplied modules are read by the module of any instrumented type.
+     *
+     * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
+     * @param module          The modules for which to assure their module-visibility from any instrumented class.
+     * @return A new instance of this agent builder that assures the supplied types module visibility.
+     * @see Listener.ModuleReadEdgeCompleting
+     */
+    AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, JavaModule... module);
+
+    /**
+     * Assures that all supplied modules are read by the module of any instrumented type.
+     *
+     * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
+     * @param modules         The modules for which to assure their module-visibility from any instrumented class.
+     * @return A new instance of this agent builder that assures the supplied types module visibility.
+     * @see Listener.ModuleReadEdgeCompleting
+     */
+    AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules);
+
+    /**
+     * Assures that all modules of the supplied types are read by the module of any instrumented type and vice versa.
+     * If the current VM does not support the Java module system, calling this method has no effect and this instance is returned.
+     *
+     * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
+     * @param type            The types for which to assure their module-visibility from and to any instrumented class.
+     * @return A new instance of this agent builder that assures the supplied types module visibility.
+     * @see Listener.ModuleReadEdgeCompleting
+     */
+    AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Class<?>... type);
+
+    /**
+     * Assures that all supplied modules are read by the module of any instrumented type and vice versa.
+     *
+     * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
+     * @param module          The modules for which to assure their module-visibility from and to any instrumented class.
+     * @return A new instance of this agent builder that assures the supplied types module visibility.
+     * @see Listener.ModuleReadEdgeCompleting
+     */
+    AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, JavaModule... module);
+
+    /**
+     * Assures that all supplied modules are read by the module of any instrumented type and vice versa.
+     *
+     * @param instrumentation The instrumentation instance that is used for adding a module read-dependency.
+     * @param modules         The modules for which to assure their module-visibility from and to any instrumented class.
+     * @return A new instance of this agent builder that assures the supplied types module visibility.
+     * @see Listener.ModuleReadEdgeCompleting
+     */
+    AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules);
 
     /**
      * <p>
@@ -1491,6 +1542,8 @@ public interface AgentBuilder {
              */
             private final Instrumentation instrumentation;
 
+            private final boolean addTargetEdge;
+
             /**
              * The modules to add as a read edge to any transformed class's module.
              */
@@ -1502,9 +1555,23 @@ public interface AgentBuilder {
              * @param instrumentation The instrumentation instance used for adding read edges.
              * @param modules         The modules to add as a read edge to any transformed class's module.
              */
-            public ModuleReadEdgeCompleting(Instrumentation instrumentation, Set<? extends JavaModule> modules) {
+            public ModuleReadEdgeCompleting(Instrumentation instrumentation, boolean addTargetEdge, Set<? extends JavaModule> modules) {
                 this.instrumentation = instrumentation;
+                this.addTargetEdge = addTargetEdge;
                 this.modules = modules;
+            }
+
+            protected static Listener of(Instrumentation instrumentation, boolean addTargetEdge, Class<?>... type) {
+                Set<JavaModule> modules = new HashSet<JavaModule>();
+                for (Class<?> aType : type) {
+                    JavaModule module = JavaModule.ofType(aType);
+                    if (module.isNamed()) {
+                        modules.add(module);
+                    }
+                }
+                return modules.isEmpty()
+                        ? Listener.NoOp.INSTANCE
+                        : new Listener.ModuleReadEdgeCompleting(instrumentation, addTargetEdge, modules);
             }
 
             @Override
@@ -1513,6 +1580,9 @@ public interface AgentBuilder {
                     for (JavaModule target : modules) {
                         if (!module.canRead(target)) {
                             module.addReads(instrumentation, target);
+                        }
+                        if (addTargetEdge && !target.canRead(module)) {
+                            target.addReads(instrumentation, module);
                         }
                     }
                 }
@@ -1523,13 +1593,16 @@ public interface AgentBuilder {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 ModuleReadEdgeCompleting that = (ModuleReadEdgeCompleting) object;
-                return instrumentation.equals(that.instrumentation) && modules.equals(that.modules);
+                return instrumentation.equals(that.instrumentation)
+                        && addTargetEdge == that.addTargetEdge
+                        && modules.equals(that.modules);
             }
 
             @Override
             public int hashCode() {
                 int result = instrumentation.hashCode();
                 result = 31 * result + modules.hashCode();
+                result = 31 * result + (addTargetEdge ? 1 : 0);
                 return result;
             }
 
@@ -1537,6 +1610,7 @@ public interface AgentBuilder {
             public String toString() {
                 return "AgentBuilder.Listener.ModuleReadEdgeCompleting{" +
                         "instrumentation=" + instrumentation +
+                        ", addTargetEdge=" + addTargetEdge +
                         ", modules=" + modules +
                         '}';
             }
@@ -4342,21 +4416,37 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder assureVisibility(Instrumentation instrumentation, Class<?>... type) {
-            if (JavaModule.isSupported()) {
-                Set<JavaModule> modules = new HashSet<JavaModule>();
-                for (Class<?> aType : type) {
-                    JavaModule module = JavaModule.ofType(aType);
-                    if (module.isNamed()) {
-                        modules.add(module);
-                    }
-                }
-                return modules.isEmpty()
-                        ? this
-                        : with(new Listener.ModuleReadEdgeCompleting(instrumentation, modules));
-            } else {
-                return this;
-            }
+        public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Class<?>... type) {
+            return JavaModule.isSupported()
+                    ? with(Listener.ModuleReadEdgeCompleting.of(instrumentation, false, type))
+                    : this;
+        }
+
+        @Override
+        public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, JavaModule... module) {
+            return assureReadEdgeTo(instrumentation, Arrays.asList(module));
+        }
+
+        @Override
+        public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules) {
+            return with(new Listener.ModuleReadEdgeCompleting(instrumentation, false, new HashSet<JavaModule>(modules)));
+        }
+
+        @Override
+        public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Class<?>... type) {
+            return JavaModule.isSupported()
+                    ? with(Listener.ModuleReadEdgeCompleting.of(instrumentation, true, type))
+                    : this;
+        }
+
+        @Override
+        public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, JavaModule... module) {
+            return assureReadEdgeFromAndTo(instrumentation, Arrays.asList(module));
+        }
+
+        @Override
+        public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules) {
+            return with(new Listener.ModuleReadEdgeCompleting(instrumentation, true, new HashSet<JavaModule>(modules)));
         }
 
         @Override
@@ -5871,8 +5961,33 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder assureVisibility(Instrumentation instrumentation, Class<?>... type) {
-                return materialize().assureVisibility(instrumentation, type);
+            public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Class<?>... type) {
+                return materialize().assureReadEdgeTo(instrumentation, type);
+            }
+
+            @Override
+            public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, JavaModule... module) {
+                return materialize().assureReadEdgeTo(instrumentation, module);
+            }
+
+            @Override
+            public AgentBuilder assureReadEdgeTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules) {
+                return materialize().assureReadEdgeTo(instrumentation, modules);
+            }
+
+            @Override
+            public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Class<?>... type) {
+                return materialize().assureReadEdgeFromAndTo(instrumentation, type);
+            }
+
+            @Override
+            public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, JavaModule... module) {
+                return materialize().assureReadEdgeFromAndTo(instrumentation, module);
+            }
+
+            @Override
+            public AgentBuilder assureReadEdgeFromAndTo(Instrumentation instrumentation, Collection<? extends JavaModule> modules) {
+                return materialize().assureReadEdgeFromAndTo(instrumentation, modules);
             }
 
             @Override

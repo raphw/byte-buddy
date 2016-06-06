@@ -1,15 +1,18 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.MethodVisitor;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -1314,20 +1317,34 @@ public class AdviceTest {
                 .make();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testAdviceAbstractMethod() throws Exception {
-        new ByteBuddy()
-                .redefine(AbstractMethod.class)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
-                .make();
+    @Test
+    public void testAdviceAbstractMethodIsSkipped() throws Exception {
+        Advice.Dispatcher.Resolved.ForMethodEnter methodEnter = mock(Advice.Dispatcher.Resolved.ForMethodEnter.class);
+        Advice.Dispatcher.Resolved.ForMethodExit methodExit = mock(Advice.Dispatcher.Resolved.ForMethodExit.class);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
+        when(methodDescription.isAbstract()).thenReturn(true);
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        assertThat(new Advice(methodEnter, methodExit).wrap(mock(TypeDescription.class),
+                methodDescription,
+                methodVisitor,
+                mock(ClassFileVersion.class),
+                0,
+                0), sameInstance(methodVisitor));
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testAdviceNativeMethod() throws Exception {
-        new ByteBuddy()
-                .redefine(Object.class)
-                .visit(Advice.to(TrivialAdvice.class).on(named("getClass")))
-                .make();
+    @Test
+    public void testAdviceNativeMethodIsSkipped() throws Exception {
+        Advice.Dispatcher.Resolved.ForMethodEnter methodEnter = mock(Advice.Dispatcher.Resolved.ForMethodEnter.class);
+        Advice.Dispatcher.Resolved.ForMethodExit methodExit = mock(Advice.Dispatcher.Resolved.ForMethodExit.class);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
+        when(methodDescription.isNative()).thenReturn(true);
+        MethodVisitor methodVisitor = mock(MethodVisitor.class);
+        assertThat(new Advice(methodEnter, methodExit).wrap(mock(TypeDescription.class),
+                methodDescription,
+                methodVisitor,
+                mock(ClassFileVersion.class),
+                0,
+                0), sameInstance(methodVisitor));
     }
 
     @Test(expected = IllegalStateException.class)
