@@ -1567,7 +1567,7 @@ public interface AgentBuilder {
             }
 
             /**
-             * Resolves a listener that adds module edges from and to the instrumented type's module
+             * Resolves a listener that adds module edges from and to the instrumented type's module.
              *
              * @param instrumentation The instrumentation instance used for adding read edges.
              * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied
