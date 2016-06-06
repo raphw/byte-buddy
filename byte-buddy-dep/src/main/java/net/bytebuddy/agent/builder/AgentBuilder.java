@@ -1712,7 +1712,7 @@ public interface AgentBuilder {
             SPLIT {
                 @Override
                 public InitializationStrategy.Dispatcher dispatcher() {
-                    return new SelfInjection.Dispatcher.Split(random.nextInt());
+                    return new SelfInjection.Dispatcher.Split(new Random().nextInt());
                 }
             },
 
@@ -1722,7 +1722,7 @@ public interface AgentBuilder {
             LAZY {
                 @Override
                 public InitializationStrategy.Dispatcher dispatcher() {
-                    return new SelfInjection.Dispatcher.Lazy(random.nextInt());
+                    return new SelfInjection.Dispatcher.Lazy(new Random().nextInt());
                 }
             },
 
@@ -1732,21 +1732,9 @@ public interface AgentBuilder {
             EAGER {
                 @Override
                 public InitializationStrategy.Dispatcher dispatcher() {
-                    return new SelfInjection.Dispatcher.Eager(random.nextInt());
+                    return new SelfInjection.Dispatcher.Eager(new Random().nextInt());
                 }
             };
-
-            /**
-             * A generator for random identification values.
-             */
-            protected final Random random;
-
-            /**
-             * Creates the self-injection strategy.
-             */
-            SelfInjection() {
-                random = new Random();
-            }
 
             @Override
             public String toString() {
