@@ -172,6 +172,7 @@ public class AgentBuilderListenerTest {
         listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
         verify(source).isNamed();
         verifyNoMoreInteractions(source);
+        verifyZeroInteractions(target);
     }
 
     @Test
@@ -185,6 +186,7 @@ public class AgentBuilderListenerTest {
         verify(source).isNamed();
         verify(source).canRead(target);
         verifyNoMoreInteractions(source);
+        verifyZeroInteractions(target);
     }
 
     @Test
@@ -199,6 +201,59 @@ public class AgentBuilderListenerTest {
         verify(source).canRead(target);
         verify(source).addReads(instrumentation, target);
         verifyNoMoreInteractions(source);
+        verifyZeroInteractions(target);
+    }
+
+    @Test
+    public void testReadEdgeAddingListenerDuplexNotSupported() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, true, Collections.<JavaModule>emptySet());
+        listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), JavaModule.UNSUPPORTED, mock(DynamicType.class));
+    }
+
+    @Test
+    public void testReadEdgeAddingListenerDuplexUnnamed() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, true, Collections.singleton(target));
+        listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
+        verify(source).isNamed();
+        verifyNoMoreInteractions(source);
+        verifyZeroInteractions(target);
+    }
+
+    @Test
+    public void testReadEdgeAddingListenerDuplexCanRead() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
+        when(source.isNamed()).thenReturn(true);
+        when(source.canRead(target)).thenReturn(true);
+        when(target.canRead(source)).thenReturn(true);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, true, Collections.singleton(target));
+        listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
+        verify(source).isNamed();
+        verify(source).canRead(target);
+        verifyNoMoreInteractions(source);
+        verify(target).canRead(source);
+        verifyNoMoreInteractions(target);
+    }
+
+    @Test
+    public void testReadEdgeAddingListenerNamedDuplexCannotRead() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        JavaModule source = mock(JavaModule.class), target = mock(JavaModule.class);
+        when(source.isNamed()).thenReturn(true);
+        when(source.canRead(target)).thenReturn(false);
+        when(target.canRead(source)).thenReturn(false);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, true, Collections.singleton(target));
+        listener.onTransformation(mock(TypeDescription.class), mock(ClassLoader.class), source, mock(DynamicType.class));
+        verify(source).isNamed();
+        verify(source).canRead(target);
+        verify(source).addReads(instrumentation, target);
+        verifyNoMoreInteractions(source);
+        verify(target).canRead(source);
+        verify(target).addReads(instrumentation, source);
+        verifyNoMoreInteractions(target);
     }
 
     @Test
