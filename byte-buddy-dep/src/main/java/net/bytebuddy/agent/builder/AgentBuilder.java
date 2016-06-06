@@ -1542,6 +1542,9 @@ public interface AgentBuilder {
              */
             private final Instrumentation instrumentation;
 
+            /**
+             * {@code true} if the listener should also add a read-edge from the supplied modules to the instrumented type's module.
+             */
             private final boolean addTargetEdge;
 
             /**
@@ -1553,6 +1556,8 @@ public interface AgentBuilder {
              * Creates a new module read-edge completing listener.
              *
              * @param instrumentation The instrumentation instance used for adding read edges.
+             * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied modules
+             *                        to the instrumented type's module.
              * @param modules         The modules to add as a read edge to any transformed class's module.
              */
             public ModuleReadEdgeCompleting(Instrumentation instrumentation, boolean addTargetEdge, Set<? extends JavaModule> modules) {
@@ -1561,6 +1566,15 @@ public interface AgentBuilder {
                 this.modules = modules;
             }
 
+            /**
+             * Resolves a listener that adds module edges from and to the instrumented type's module
+             *
+             * @param instrumentation The instrumentation instance used for adding read edges.
+             * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied
+             *                        modules to the instrumented type's module.
+             * @param type            The types for which to extract the modules.
+             * @return An appropriate listener.
+             */
             protected static Listener of(Instrumentation instrumentation, boolean addTargetEdge, Class<?>... type) {
                 Set<JavaModule> modules = new HashSet<JavaModule>();
                 for (Class<?> aType : type) {
