@@ -67,7 +67,7 @@ public final class ElementMatchers {
      * It is therefore important to dereference this matcher at some point or to regularly evict entries from the supplied map.
      * </p>
      *
-     * @param matcher The cached matcher.
+     * @param matcher The actual matcher for which the results are cached.
      * @param map     The map for storing results of previously matched elements.
      * @param <T>     The type of the matched object.
      * @return A matcher that stores the results of a previous matching in the supplied map.
@@ -88,7 +88,7 @@ public final class ElementMatchers {
      * allows for explicit control over cache eviction.
      * </p>
      *
-     * @param matcher      The cached matcher.
+     * @param matcher      The actual matcher for which the results are cached.
      * @param evictionSize The maximum amount of elements that are stored in the cache. Must be a positive number.
      * @param <T>          The type of the matched object.
      * @return A matcher that stores the results of a previous matching in the supplied map.
