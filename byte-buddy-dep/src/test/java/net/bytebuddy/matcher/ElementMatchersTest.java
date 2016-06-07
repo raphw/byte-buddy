@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -54,6 +56,37 @@ public class ElementMatchersTest {
         when(nonExceptional.matches(any())).thenReturn(true);
         assertThat(ElementMatchers.failSafe(exceptional).matches(new Object()), is(false));
         assertThat(ElementMatchers.failSafe(nonExceptional).matches(new Object()), is(true));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCachedNegativeSize() throws Exception {
+        ElementMatchers.cached(new BooleanMatcher<Object>(true), -1);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCachingMatcherEvictionSize() throws Exception {
+        ElementMatcher<Object> delegate = mock(ElementMatcher.class);
+        ElementMatcher<Object> matcher = ElementMatchers.cached(delegate, 1);
+        Object target = new Object();
+        when(delegate.matches(target)).thenReturn(true);
+        assertThat(matcher.matches(target), is(true));
+        assertThat(matcher.matches(target), is(true));
+        verify(delegate).matches(target);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCachingMatcherMap() throws Exception {
+        ElementMatcher<Object> delegate = mock(ElementMatcher.class);
+        ConcurrentMap<Object, Boolean> map = new ConcurrentHashMap<Object, Boolean>();
+        ElementMatcher<Object> matcher = ElementMatchers.cached(delegate, map);
+        Object target = new Object();
+        when(delegate.matches(target)).thenReturn(true);
+        assertThat(matcher.matches(target), is(true));
+        assertThat(matcher.matches(target), is(true));
+        verify(delegate).matches(target);
+        assertThat(map.get(target), is(true));
     }
 
     @Test

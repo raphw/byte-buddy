@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A utility class that contains a human-readable language for creating {@link net.bytebuddy.matcher.ElementMatcher}s.
@@ -53,6 +55,49 @@ public final class ElementMatchers {
      */
     public static <T> ElementMatcher.Junction<T> failSafe(ElementMatcher<? super T> matcher) {
         return new FailSafeMatcher<T>(matcher, false);
+    }
+
+    /**
+     * <p>
+     * Wraps another matcher but caches the result of previously matched elements. Caching can be important if a
+     * matcher requires expensive calculations.
+     * </p>
+     * <p>
+     * <b>Warning</b>: The supplied map can however introduce a memory leak as the matched elements are stored within the map.
+     * It is therefore important to dereference this matcher at some point or to regularly evict entries from the supplied map.
+     * </p>
+     *
+     * @param matcher The cached matcher.
+     * @param map     The map for storing results of previously matched elements.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that stores the results of a previous matching in the supplied map.
+     */
+    public static <T> ElementMatcher.Junction<T> cached(ElementMatcher<? super T> matcher, ConcurrentMap<? super T, Boolean> map) {
+        return new CachingMatcher<T>(matcher, map);
+    }
+
+    /**
+     * <p>
+     * Wraps another matcher but caches the result of previously matched elements. Caching can be important if a
+     * matcher requires expensive calculations.
+     * </p>
+     * <p>
+     * <b>Warning</b>: The cache will hold {@code evictionSize} elements and evict a random element once the cache
+     * contains more than the specified amount of elements. Cached elements are referenced strongly and might cause
+     * a memory leak if instance are of a significant size. Using {@link ElementMatchers#cached(ElementMatcher, ConcurrentMap)}
+     * allows for explicit control over cache eviction.
+     * </p>
+     *
+     * @param matcher      The cached matcher.
+     * @param evictionSize The maximum amount of elements that are stored in the cache. Must be a positive number.
+     * @param <T>          The type of the matched object.
+     * @return A matcher that stores the results of a previous matching in the supplied map.
+     */
+    public static <T> ElementMatcher.Junction<T> cached(ElementMatcher<? super T> matcher, int evictionSize) {
+        if (evictionSize < 1) {
+            throw new IllegalArgumentException("Eviction size must be a positive number: " + evictionSize);
+        }
+        return new CachingMatcher.WithInlineEviction<T>(matcher, new ConcurrentHashMap<T, Boolean>(), evictionSize);
     }
 
     /**
@@ -1824,7 +1869,7 @@ public final class ElementMatchers {
     /**
      * Matches a module if it exists, i.e. not {@code null}.
      *
-     * @param <T>     The type of the matched object.
+     * @param <T> The type of the matched object.
      * @return A matcher that validates a module's existence.
      */
     public static <T extends JavaModule> ElementMatcher.Junction<T> supportsModules() {
