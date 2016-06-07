@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 7. June 2016: version 1.4.1
+
+- Fixed validation by `MethodCall` instrumentation for number of arguments provided to a method.
+- Added further support for module system.
+- Allow automatic adding of read-edges to specified classes/modules when instrumenting module classes.
+- Implicitly skip methods without byte code from advice component.
+
 ### 2. June 2016: version 1.4.0
 
 - Added initial support for Jigsaw modules.
