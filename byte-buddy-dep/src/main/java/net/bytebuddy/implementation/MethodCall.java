@@ -2800,14 +2800,14 @@ public class MethodCall implements Implementation.Composable {
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
-            ParameterList<?> parameters = invokedMethod.getParameters();
-            if (parameters.size() != argumentLoaders.size()) {
-                throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
-            }
-            Iterator<? extends ParameterDescription> parameterIterator = parameters.iterator();
             List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(MethodCall.this.argumentLoaders.size());
             for (ArgumentLoader.Factory argumentLoader : MethodCall.this.argumentLoaders) {
                 argumentLoaders.addAll(argumentLoader.make(implementationTarget.getInstrumentedType(), instrumentedMethod));
+            }
+            ParameterList<?> parameters = invokedMethod.getParameters();
+            Iterator<? extends ParameterDescription> parameterIterator = parameters.iterator();
+            if (parameters.size() != argumentLoaders.size()) {
+                throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
             }
             List<StackManipulation> argumentInstructions = new ArrayList<StackManipulation>(argumentLoaders.size());
             for (ArgumentLoader argumentLoader : argumentLoaders) {

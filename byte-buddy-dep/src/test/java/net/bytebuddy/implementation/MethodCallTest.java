@@ -284,6 +284,21 @@ public class MethodCallTest extends AbstractImplementationTest {
     }
 
     @Test
+    public void testWithAllArgumentsTwoArguments() throws Exception {
+        DynamicType.Loaded<MethodCallWithTwoExplicitArguments> loaded = implement(MethodCallWithTwoExplicitArguments.class,
+                MethodCall.invokeSuper().withAllArguments());
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class, String.class), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        MethodCallWithTwoExplicitArguments instance = loaded.getLoaded().newInstance();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithTwoExplicitArguments.class)));
+        assertThat(instance, instanceOf(MethodCallWithTwoExplicitArguments.class));
+        assertThat(instance.foo(FOO, BAR), is(FOO + BAR));
+    }
+
+    @Test
     public void testWithInstanceField() throws Exception {
         DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = implement(MethodCallWithExplicitArgument.class,
                 MethodCall.invokeSuper().withInstanceField(String.class, FOO));
@@ -759,6 +774,13 @@ public class MethodCallTest extends AbstractImplementationTest {
 
         public String foo(String value) {
             return value;
+        }
+    }
+
+    public static class MethodCallWithTwoExplicitArguments {
+
+        public String foo(String first, String second) {
+            return first + second;
         }
     }
 
