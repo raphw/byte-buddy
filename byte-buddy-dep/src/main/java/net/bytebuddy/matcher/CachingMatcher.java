@@ -1,5 +1,7 @@
 package net.bytebuddy.matcher;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
 
@@ -76,6 +78,7 @@ public class CachingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
      *
      * @param <S> The actual matched type of this matcher.
      */
+    @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Caching mechanism is not supposed to decide on equality")
     public static class WithInlineEviction<S> extends CachingMatcher<S> {
 
         /**
