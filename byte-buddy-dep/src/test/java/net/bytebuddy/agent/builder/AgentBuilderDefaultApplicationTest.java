@@ -107,6 +107,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
@@ -124,6 +125,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new BarTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -140,6 +142,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -156,6 +159,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxBazTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -172,6 +176,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .enableNativeMethodPrefix(QUX)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
@@ -198,6 +203,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
@@ -220,6 +226,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
@@ -239,6 +246,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         AgentBuilder agentBuilder = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer());
         ClassFileTransformer firstTransformer = agentBuilder.installOnByteBuddyAgent();
         ClassFileTransformer secondTransformer = agentBuilder.installOnByteBuddyAgent();
@@ -257,6 +265,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new ConstructorTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -274,6 +283,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer())
                 .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer()).asDecorator()
                 .installOnByteBuddyAgent();
@@ -291,6 +301,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer()).asDecorator()
                 .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer()).asDecorator()
                 .installOnByteBuddyAgent();
@@ -308,6 +319,7 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new BarAdviceTransformer()).asDecorator()
                 .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new QuxAdviceTransformer())
                 .installOnByteBuddyAgent();
@@ -327,6 +339,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
                 .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
                 .installOn(ByteBuddyAgent.getInstrumentation());
@@ -349,6 +362,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
                 .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
                 .installOn(ByteBuddyAgent.getInstrumentation());
@@ -370,6 +384,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
                 .installOn(ByteBuddyAgent.getInstrumentation());
         ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
@@ -388,6 +403,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
                 .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
                 .installOn(ByteBuddyAgent.getInstrumentation());
@@ -410,6 +426,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
                 .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
                 .installOn(ByteBuddyAgent.getInstrumentation());
@@ -431,6 +448,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
                 .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
                 .installOn(ByteBuddyAgent.getInstrumentation());
@@ -453,6 +471,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
                 .type(isSubTypeOf(Class.forName("java.util.function.Function"))).transform(new SingleMethodReplacer("apply"))
                 .installOn(ByteBuddyAgent.getInstrumentation());
@@ -474,6 +493,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
                 .type(isSubTypeOf(Class.forName("java.util.function.Function"))).transform(new SingleMethodReplacer("apply"))
                 .installOn(ByteBuddyAgent.getInstrumentation());
@@ -495,6 +515,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(typeLocator)
+                .ignore(none())
                 .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
                 .installOn(ByteBuddyAgent.getInstrumentation());
         try {

@@ -284,6 +284,7 @@ public interface AgentBuilder {
      * <p>
      * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
      * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
+     * This behavior can be changed by {@link Identified.Extendable#asDecorator()} where subsequent type matchers are also applied.
      * </p>
      * <p>
      * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
@@ -309,6 +310,7 @@ public interface AgentBuilder {
      * <p>
      * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
      * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
+     * This behavior can be changed by {@link Identified.Extendable#asDecorator()} where subsequent type matchers are also applied.
      * </p>
      * <p>
      * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
@@ -338,6 +340,7 @@ public interface AgentBuilder {
      * <p>
      * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
      * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
+     * This behavior can be changed by {@link Identified.Extendable#asDecorator()} where subsequent type matchers are also applied.
      * </p>
      * <p>
      * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
@@ -405,6 +408,13 @@ public interface AgentBuilder {
      * of a name should always be done as a first step and even if it does not influence the selection of what types are
      * matched. Without changing this property, the class file of every type is being parsed!
      * </p>
+     * <p>
+     * <b>Warning</b>: If a type is loaded during the instrumentation of the same type, this causes the original call site that loads the type
+     * to remain unbound, causing a {@link LinkageError}. It is therefore important to not instrument types that may be loaded during the application
+     * of a {@link Transformer}. For this reason, it is not recommended to instrument classes of the bootstrap class loader that Byte Buddy might
+     * require for instrumenting a class or to instrument any of Byte Buddy's classes. If such instrumentation is desired, it is important to
+     * assert for each class that they are not loaded during instrumentation.
+     * </p>
      *
      * @param typeMatcher A matcher that identifies types that should not be instrumented.
      * @return A new instance of this agent builder that ignores all types that are matched by the provided matcher.
@@ -415,7 +425,8 @@ public interface AgentBuilder {
     /**
      * <p>
      * Excludes any type that is matched by the provided matcher and is loaded by a class loader matching the second matcher.
-     * By default, Byte Buddy does not instrument synthetic types or types that are loaded by the bootstrap class loader.
+     * By default, Byte Buddy does not instrument synthetic types, types within a {@code net.bytebuddy.*} package or types that
+     * are loaded by the bootstrap class loader.
      * </p>
      * <p>
      * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
@@ -428,6 +439,13 @@ public interface AgentBuilder {
      * is accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
      * of a name should always be done as a first step and even if it does not influence the selection of what types are
      * matched. Without changing this property, the class file of every type is being parsed!
+     * </p>
+     * <p>
+     * <b>Warning</b>: If a type is loaded during the instrumentation of the same type, this causes the original call site that loads the type
+     * to remain unbound, causing a {@link LinkageError}. It is therefore important to not instrument types that may be loaded during the application
+     * of a {@link Transformer}. For this reason, it is not recommended to instrument classes of the bootstrap class loader that Byte Buddy might
+     * require for instrumenting a class or to instrument any of Byte Buddy's classes. If such instrumentation is desired, it is important to
+     * assert for each class that they are not loaded during instrumentation.
      * </p>
      *
      * @param typeMatcher        A matcher that identifies types that should not be instrumented.
@@ -440,7 +458,8 @@ public interface AgentBuilder {
     /**
      * <p>
      * Excludes any type that is matched by the provided matcher and is loaded by a class loader matching the second matcher.
-     * By default, Byte Buddy does not instrument synthetic types or types that are loaded by the bootstrap class loader.
+     * By default, Byte Buddy does not instrument synthetic types, types within a {@code net.bytebuddy.*} package or types that
+     * are loaded by the bootstrap class loader.
      * </p>
      * <p>
      * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
@@ -453,6 +472,13 @@ public interface AgentBuilder {
      * is accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
      * of a name should always be done as a first step and even if it does not influence the selection of what types are
      * matched. Without changing this property, the class file of every type is being parsed!
+     * </p>
+     * <p>
+     * <b>Warning</b>: If a type is loaded during the instrumentation of the same type, this causes the original call site that loads the type
+     * to remain unbound, causing a {@link LinkageError}. It is therefore important to not instrument types that may be loaded during the application
+     * of a {@link Transformer}. For this reason, it is not recommended to instrument classes of the bootstrap class loader that Byte Buddy might
+     * require for instrumenting a class or to instrument any of Byte Buddy's classes. If such instrumentation is desired, it is important to
+     * assert for each class that they are not loaded during instrumentation.
      * </p>
      *
      * @param typeMatcher        A matcher that identifies types that should not be instrumented.
@@ -469,7 +495,7 @@ public interface AgentBuilder {
     /**
      * <p>
      * Excludes any type that is matched by the raw matcher provided to this method. By default, Byte Buddy does not
-     * instrument synthetic types  or types that are loaded by the bootstrap class loader
+     * instrument synthetic types, types within a {@code net.bytebuddy.*} package or types that are loaded by the bootstrap class loader.
      * </p>
      * <p>
      * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
@@ -482,6 +508,13 @@ public interface AgentBuilder {
      * is accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
      * of a name should always be done as a first step and even if it does not influence the selection of what types are
      * matched. Without changing this property, the class file of every type is being parsed!
+     * </p>
+     * <p>
+     * <b>Warning</b>: If a type is loaded during the instrumentation of the same type, this causes the original call site that loads the type
+     * to remain unbound, causing a {@link LinkageError}. It is therefore important to not instrument types that may be loaded during the application
+     * of a {@link Transformer}. For this reason, it is not recommended to instrument classes of the bootstrap class loader that Byte Buddy might
+     * require for instrumenting a class or to instrument any of Byte Buddy's classes. If such instrumentation is desired, it is important to
+     * assert for each class that they are not loaded during instrumentation.
      * </p>
      *
      * @param rawMatcher A raw matcher that identifies types that should not be instrumented.
@@ -890,16 +923,6 @@ public interface AgentBuilder {
                                    Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 return moduleMatcher.matches(module) && classLoaderMatcher.matches(classLoader) && typeMatcher.matches(typeDescription);
-            }
-
-            /**
-             * Represents this matcher in a disjunction together with the supplied matcher.
-             *
-             * @param other The other matcher to combine with this matcher in a disjunction.
-             * @return A disjunction matching this matcher or the other matcher.
-             */
-            protected RawMatcher or(RawMatcher other) {
-                return new Conjunction(this, other);
             }
 
             @Override
@@ -4158,9 +4181,10 @@ public interface AgentBuilder {
         }
 
         /**
-         * Creates a new agent builder with default settings. By default, Byte Buddy ignores any types loaded by the bootstrap class loader and
-         * any synthetic type. Self-injection and rebasing is enabled. In order to avoid class format changes, set
-         * {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information ({@link TypeLocator.Default#FAST}).
+         * Creates a new agent builder with default settings. By default, Byte Buddy ignores any types loaded by the bootstrap class loader, any
+         * type within a {@code net.bytebuddy} package and any synthetic type. Self-injection and rebasing is enabled. In order to avoid class format
+         * changes, set {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information
+         * ({@link TypeLocator.Default#FAST}).
          *
          * @param byteBuddy The Byte Buddy instance to be used.
          */
@@ -4175,7 +4199,8 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
-                    new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()).or(new RawMatcher.ForElementMatchers(isSynthetic(), any(), any())),
+                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()),
+                            new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").<TypeDescription>or(isSynthetic()), any(), any())),
                     Transformation.Ignored.INSTANCE);
         }
 
