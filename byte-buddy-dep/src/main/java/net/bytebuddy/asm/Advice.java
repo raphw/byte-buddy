@@ -6794,7 +6794,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     /**
      * <p>
-     * Indicates that this method should be executed before calling the instrumented method. Any class must declare
+     * Indicates that this method should be executed before exiting the instrumented method. Any class must declare
      * at most one method with this annotation. The annotated method must be static.
      * </p>
      * <p>
