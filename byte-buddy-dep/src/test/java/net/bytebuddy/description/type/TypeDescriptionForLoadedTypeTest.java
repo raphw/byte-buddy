@@ -8,6 +8,9 @@ import org.junit.Test;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+
 public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTest {
 
     @Override
@@ -120,5 +123,10 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
     @Ignore("The Java reflection API does not currently support nested non-generic types")
     public void testTypeAnnotationNonGenericInnerType() throws Exception {
         super.testTypeAnnotationNonGenericInnerType();
+    }
+
+    @Test
+    public void testNameEqualityNonAnonymous() throws Exception {
+        assertThat(TypeDescription.ForLoadedType.getName(Object.class), is(Object.class.getName()));
     }
 }

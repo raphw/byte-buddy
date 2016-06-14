@@ -7283,6 +7283,22 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             this.type = type;
         }
 
+        /**
+         * Returns the type's actual name where it is taken into consideration that this type might be loaded anonymously.
+         * In this case, the remainder of the types name is suffixed by {@code /<id>} which is removed when using this method
+         * but is retained when calling {@link Class#getName()}.
+         *
+         * @param type The type for which to resolve its name.
+         * @return The type's actual name.
+         */
+        public static String getName(Class<?> type) {
+            String name = type.getName();
+            int anonymousLoaderIndex = name.indexOf('/');
+            return anonymousLoaderIndex == -1
+                    ? name
+                    : name.substring(0, anonymousLoaderIndex);
+        }
+
         @Override
         public boolean isAssignableFrom(Class<?> type) {
             // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
@@ -7429,11 +7445,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public String getName() {
-            String name = type.getName();
-            int anonymousLoaderIndex = name.indexOf('/');
-            return anonymousLoaderIndex == -1
-                    ? name
-                    : name.substring(0, anonymousLoaderIndex);
+            return getName(type);
         }
 
         @Override

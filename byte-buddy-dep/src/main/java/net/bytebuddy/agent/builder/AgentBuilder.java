@@ -106,18 +106,18 @@ public interface AgentBuilder {
     AgentBuilder with(TypeLocator typeLocator);
 
     /**
-     * Defines the use of the given definition handler that determines if a type should be rebased or redefined.
+     * Defines how types should be transformed, e.g. if they should be rebased or redefined by the created agent.
      *
-     * @param typeStrategy The definition handler to use.
-     * @return A new instance of this agent builder which uses the given definition handler.
+     * @param typeStrategy The type strategy to use.
+     * @return A new instance of this agent builder which uses the given type strategy.
      */
     AgentBuilder with(TypeStrategy typeStrategy);
 
     /**
-     * Defines classes to be loaded using the given access control context.
+     * Assures that critical actions are performed using the supplied access control context.
      *
-     * @param accessControlContext The access control context to be used for loading classes.
-     * @return A new instance of this agent builder which uses the given access control context for class loading.
+     * @param accessControlContext The access control context to be used for performing security critical action.
+     * @return A new instance of this agent builder which uses the given access control context for performing critical actions.
      */
     AgentBuilder with(AccessControlContext accessControlContext);
 
@@ -133,7 +133,7 @@ public interface AgentBuilder {
     AgentBuilder with(InitializationStrategy initializationStrategy);
 
     /**
-     * Specifies a strategy for modifying existing types.
+     * Specifies a strategy for modifying types that were already loaded prior to the installation of this transformer.
      *
      * @param redefinitionStrategy The redefinition strategy to apply.
      * @return A new instance of this agent builder that applies the given redefinition strategy.
@@ -164,6 +164,14 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder where this feature is explicitly enabled or disabled.
      */
     AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy);
+
+    /**
+     * Specifies a strategy to be used for resolving {@link TypeDescription} for any type handled by the created transformer.
+     *
+     * @param descriptionStrategy The description strategy to use.
+     * @return A new instance of this agent builder that applies the given description strategy.
+     */
+    AgentBuilder with(DescriptionStrategy descriptionStrategy);
 
     /**
      * Enables class injection of auxiliary classes into the bootstrap class loader.
@@ -2536,11 +2544,12 @@ public interface AgentBuilder {
             /**
              * Considers a loaded class for modification.
              *
-             * @param type               The type that is to be considered.
+             * @param typeDescription    The type description of the type that is to be considered.
+             * @param type               The loaded representation of the type that is to be considered.
              * @param ignoredTypeMatcher Identifies types that should not be instrumented.
              * @return {@code true} if the class is considered to be redefined.
              */
-            boolean consider(Class<?> type, RawMatcher ignoredTypeMatcher);
+            boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher);
 
             /**
              * Applies this collector.
@@ -2581,8 +2590,8 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean consider(Class<?> type, RawMatcher ignoredTypeMatcher) {
-                    return transformation.resolve(new TypeDescription.ForLoadedType(type),
+                public boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher) {
+                    return transformation.resolve(typeDescription,
                             type.getClassLoader(),
                             JavaModule.ofType(type),
                             type,
@@ -2594,15 +2603,14 @@ public interface AgentBuilder {
                 public void apply(Instrumentation instrumentation, TypeLocator typeLocator, Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
                     for (Entry entry : entries) {
-                        TypeDescription typeDescription = new TypeDescription.ForLoadedType(entry.getType());
                         JavaModule module = JavaModule.ofType(entry.getType());
                         try {
                             classDefinitions.add(entry.resolve(ClassFileLocator.ForClassLoader.of(entry.getType().getClassLoader())));
                         } catch (Throwable throwable) {
                             try {
-                                listener.onError(typeDescription.getName(), entry.getType().getClassLoader(), module, throwable);
+                                listener.onError(TypeDescription.ForLoadedType.getName(entry.getType()), entry.getType().getClassLoader(), module, throwable);
                             } finally {
-                                listener.onComplete(typeDescription.getName(), entry.getType().getClassLoader(), module);
+                                listener.onComplete(TypeDescription.ForLoadedType.getName(entry.getType()), entry.getType().getClassLoader(), module);
                             }
                         }
                     }
@@ -2655,7 +2663,7 @@ public interface AgentBuilder {
                      * @throws IOException If an IO exception occurs.
                      */
                     protected ClassDefinition resolve(ClassFileLocator classFileLocator) throws IOException {
-                        return new ClassDefinition(type, classFileLocator.locate(type.getName()).resolve());
+                        return new ClassDefinition(type, classFileLocator.locate(TypeDescription.ForLoadedType.getName(type)).resolve());
                     }
 
                     @Override
@@ -2706,8 +2714,8 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean consider(Class<?> type, RawMatcher ignoredTypeMatcher) {
-                    return transformation.resolve(new TypeDescription.ForLoadedType(type),
+                public boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher) {
+                    return transformation.resolve(typeDescription,
                             type.getClassLoader(),
                             JavaModule.ofType(type),
                             type,
@@ -4077,6 +4085,103 @@ public interface AgentBuilder {
     }
 
     /**
+     * A description strategy is responsible for resolving a {@link TypeDescription} when transforming or retransforming/-defining a type.
+     */
+    enum DescriptionStrategy {
+
+        /**
+         * A description type strategy represents a type as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType} if a
+         * retransformation or redefinition is applied on a type. Using a loaded type typically results in better performance as no
+         * I/O is required for resolving type descriptions. However, any interaction with the type is carried out via the Java reflection
+         * API. Using the reflection API triggers eager loading of any type that is part of a method or field signature. If any of these
+         * types are missing from the class path, this eager loading will cause a {@link NoClassDefFoundError}. Some Java code declares
+         * optional dependencies to other classes which are only realized if the optional dependency is present. Such code relies on the
+         * Java reflection API not being used for types using optional dependencies.
+         */
+        HYBRID {
+            @Override
+            protected TypeDescription apply(String typeName,
+                                            Class<?> typeBeingRedefined,
+                                            TypeLocator typeLocator,
+                                            ClassLoader classLoader,
+                                            ClassFileLocator classFileLocator) {
+                return typeBeingRedefined == null
+                        ? POOL_ONLY.apply(typeName, UNAVAILABLE, typeLocator, classLoader, classFileLocator)
+                        : new TypeDescription.ForLoadedType(typeBeingRedefined);
+            }
+
+            @Override
+            protected TypeDescription apply(Class<?> type, TypeLocator typeLocator) {
+                return new TypeDescription.ForLoadedType(type);
+            }
+        },
+
+        /**
+         * <p>
+         * A description strategy that always describes Java types using a {@link TypePool}. This requires that any type - even if it is already
+         * loaded and a {@link Class} instance is available - is processed as a non-loaded type description. Doing so can cause overhead as processing
+         * loaded types is supported very efficiently by a JVM.
+         * </p>
+         * <p>
+         * Avoiding the usage of loaded types can improve robustness as this approach does not rely on the Java reflection API which triggers eager
+         * validation of this loaded type which can fail an application if optional types are used by any types field or method signatures. Also, it
+         * is possible to guarantee debugging meta data to be available also for retransformed or redefined types if a {@link TypeStrategy} specifies
+         * the extraction of such meta data.
+         * </p>
+         */
+        POOL_ONLY {
+            @Override
+            protected TypeDescription apply(String typeName,
+                                            Class<?> typeBeingRedefined,
+                                            TypeLocator typeLocator,
+                                            ClassLoader classLoader,
+                                            ClassFileLocator classFileLocator) {
+                return typeLocator.typePool(classFileLocator, classLoader).describe(typeName).resolve();
+            }
+
+            @Override
+            protected TypeDescription apply(Class<?> type, TypeLocator typeLocator) {
+                return typeLocator.typePool(ClassFileLocator.ForClassLoader.of(type.getClassLoader()), type.getClassLoader()).describe(TypeDescription.ForLoadedType.getName(type)).resolve();
+            }
+        };
+
+        /**
+         * Indicates that no loaded type is available.
+         */
+        private static final Class<?> UNAVAILABLE = null;
+
+        /**
+         * Describes the given type.
+         *
+         * @param typeName           The binary name of the type to describe.
+         * @param typeBeingRedefined The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
+         * @param typeLocator        The type locator to use.
+         * @param classLoader        The class loader of the type to be described.
+         * @param classFileLocator   The class file locator of the type to be described.
+         * @return An appropriate type description.
+         */
+        protected abstract TypeDescription apply(String typeName,
+                                                 Class<?> typeBeingRedefined,
+                                                 TypeLocator typeLocator,
+                                                 ClassLoader classLoader,
+                                                 ClassFileLocator classFileLocator);
+
+        /**
+         * Describes the given type.
+         *
+         * @param type        The loaded type to be described.
+         * @param typeLocator The type locator to use.
+         * @return An appropriate type description.
+         */
+        protected abstract TypeDescription apply(Class<?> type, TypeLocator typeLocator);
+
+        @Override
+        public String toString() {
+            return "AgentBuilder.DescriptionStrategy." + name();
+        }
+    }
+
+    /**
      * <p>
      * The default implementation of an {@link net.bytebuddy.agent.builder.AgentBuilder}.
      * </p>
@@ -4161,6 +4266,11 @@ public interface AgentBuilder {
         private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
 
         /**
+         * The description strategy for resolving type descriptions for types.
+         */
+        private final DescriptionStrategy descriptionStrategy;
+
+        /**
          * Identifies types that should not be instrumented.
          */
         private final RawMatcher ignoredTypeMatcher;
@@ -4199,8 +4309,8 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
-                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()),
-                            new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").<TypeDescription>or(isSynthetic()), any(), any())),
+                    DescriptionStrategy.HYBRID,
+                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()), new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").<TypeDescription>or(isSynthetic()), any(), any())),
                     Transformation.Ignored.INSTANCE);
         }
 
@@ -4218,6 +4328,7 @@ public interface AgentBuilder {
          * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
          * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the
          *                                      instrumentation of classes that represent lambda expressions.
+         * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
          * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
          * @param transformation                The transformation object for handling type transformations.
          */
@@ -4231,6 +4342,7 @@ public interface AgentBuilder {
                           RedefinitionStrategy redefinitionStrategy,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                          DescriptionStrategy descriptionStrategy,
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
@@ -4243,6 +4355,7 @@ public interface AgentBuilder {
             this.redefinitionStrategy = redefinitionStrategy;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
+            this.descriptionStrategy = descriptionStrategy;
             this.ignoredTypeMatcher = ignoredTypeMatcher;
             this.transformation = transformation;
         }
@@ -4259,6 +4372,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4275,6 +4389,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4291,6 +4406,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4307,6 +4423,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4323,6 +4440,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4339,6 +4457,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4355,6 +4474,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4371,6 +4491,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4387,6 +4508,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4403,6 +4525,24 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder with(DescriptionStrategy descriptionStrategy) {
+            return new Default(byteBuddy,
+                    typeLocator,
+                    typeStrategy,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4419,6 +4559,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4435,6 +4576,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4451,6 +4593,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4543,6 +4686,7 @@ public interface AgentBuilder {
                     accessControlContext,
                     initializationStrategy,
                     bootstrapInjectionStrategy,
+                    descriptionStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4558,10 +4702,10 @@ public interface AgentBuilder {
             if (redefinitionStrategy.isEnabled()) {
                 RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                    TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
+                    TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator);
                     JavaModule module = JavaModule.ofType(type);
                     try {
-                        if (!instrumentation.isModifiableClass(type) || !collector.consider(type, ignoredTypeMatcher)) {
+                        if (!instrumentation.isModifiableClass(type) || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
                             try {
                                 try {
                                     listener.onIgnored(typeDescription, type.getClassLoader(), module);
@@ -4628,6 +4772,7 @@ public interface AgentBuilder {
                     && redefinitionStrategy == aDefault.redefinitionStrategy
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
                     && lambdaInstrumentationStrategy.equals(aDefault.lambdaInstrumentationStrategy)
+                    && descriptionStrategy == aDefault.descriptionStrategy
                     && ignoredTypeMatcher.equals(aDefault.ignoredTypeMatcher)
                     && transformation.equals(aDefault.transformation);
         }
@@ -4644,6 +4789,7 @@ public interface AgentBuilder {
             result = 31 * result + redefinitionStrategy.hashCode();
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
             result = 31 * result + lambdaInstrumentationStrategy.hashCode();
+            result = 31 * result + descriptionStrategy.hashCode();
             result = 31 * result + ignoredTypeMatcher.hashCode();
             result = 31 * result + transformation.hashCode();
             return result;
@@ -4662,6 +4808,7 @@ public interface AgentBuilder {
                     ", redefinitionStrategy=" + redefinitionStrategy +
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
                     ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
+                    ", descriptionStrategy=" + descriptionStrategy +
                     ", ignoredTypeMatcher=" + ignoredTypeMatcher +
                     ", transformation=" + transformation +
                     '}';
@@ -5550,6 +5697,7 @@ public interface AgentBuilder {
                                     AccessControlContext.class,
                                     InitializationStrategy.class,
                                     BootstrapInjectionStrategy.class,
+                                    DescriptionStrategy.class,
                                     RawMatcher.class,
                                     Transformation.class));
                 } catch (RuntimeException exception) {
@@ -5601,6 +5749,11 @@ public interface AgentBuilder {
             private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
             /**
+             * The description strategy for resolving type descriptions for types.
+             */
+            private final DescriptionStrategy descriptionStrategy;
+
+            /**
              * Identifies types that should not be instrumented.
              */
             private final RawMatcher ignoredTypeMatcher;
@@ -5621,6 +5774,7 @@ public interface AgentBuilder {
              * @param accessControlContext       The access control context to use for loading classes.
              * @param initializationStrategy     The initialization strategy to use for transformed types.
              * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
+             * @param descriptionStrategy        The description strategy for resolving type descriptions for types.
              * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
              * @param transformation             The transformation object for handling type transformations.
              */
@@ -5632,6 +5786,7 @@ public interface AgentBuilder {
                                         AccessControlContext accessControlContext,
                                         InitializationStrategy initializationStrategy,
                                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        DescriptionStrategy descriptionStrategy,
                                         RawMatcher ignoredTypeMatcher,
                                         Transformation transformation) {
                 this.byteBuddy = byteBuddy;
@@ -5642,6 +5797,7 @@ public interface AgentBuilder {
                 this.accessControlContext = accessControlContext;
                 this.initializationStrategy = initializationStrategy;
                 this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
+                this.descriptionStrategy = descriptionStrategy;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
                 this.transformation = transformation;
             }
@@ -5704,9 +5860,7 @@ public interface AgentBuilder {
                     ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(binaryTypeName,
                             binaryRepresentation,
                             ClassFileLocator.ForClassLoader.of(classLoader));
-                    return transformation.resolve(classBeingRedefined == null
-                                    ? typeLocator.typePool(classFileLocator, classLoader).describe(binaryTypeName).resolve()
-                                    : new TypeDescription.ForLoadedType(classBeingRedefined),
+                    return transformation.resolve(descriptionStrategy.apply(binaryTypeName, classBeingRedefined, typeLocator, classLoader, classFileLocator),
                             classLoader,
                             module,
                             classBeingRedefined,
@@ -5739,6 +5893,7 @@ public interface AgentBuilder {
                         && listener.equals(that.listener)
                         && nativeMethodStrategy.equals(that.nativeMethodStrategy)
                         && bootstrapInjectionStrategy.equals(that.bootstrapInjectionStrategy)
+                        && descriptionStrategy == that.descriptionStrategy
                         && accessControlContext.equals(that.accessControlContext)
                         && ignoredTypeMatcher.equals(that.ignoredTypeMatcher)
                         && transformation.equals(that.transformation);
@@ -5753,6 +5908,7 @@ public interface AgentBuilder {
                 result = 31 * result + listener.hashCode();
                 result = 31 * result + nativeMethodStrategy.hashCode();
                 result = 31 * result + bootstrapInjectionStrategy.hashCode();
+                result = 31 * result + descriptionStrategy.hashCode();
                 result = 31 * result + accessControlContext.hashCode();
                 result = 31 * result + ignoredTypeMatcher.hashCode();
                 result = 31 * result + transformation.hashCode();
@@ -5769,6 +5925,7 @@ public interface AgentBuilder {
                         ", listener=" + listener +
                         ", nativeMethodStrategy=" + nativeMethodStrategy +
                         ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
+                        ", descriptionStrategy=" + descriptionStrategy +
                         ", accessControlContext=" + accessControlContext +
                         ", ignoredTypeMatcher=" + ignoredTypeMatcher +
                         ", transformation=" + transformation +
@@ -5791,6 +5948,7 @@ public interface AgentBuilder {
                  * @param accessControlContext       The access control context to use for loading classes.
                  * @param initializationStrategy     The initialization strategy to use for transformed types.
                  * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
+                 * @param descriptionStrategy        The description strategy for resolving type descriptions for types.
                  * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
                  * @param transformation             The transformation object for handling type transformations.
                  * @return A class file transformer for the current VM that supports the API of the current VM.
@@ -5803,6 +5961,7 @@ public interface AgentBuilder {
                                           AccessControlContext accessControlContext,
                                           InitializationStrategy initializationStrategy,
                                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                          DescriptionStrategy descriptionStrategy,
                                           RawMatcher ignoredTypeMatcher,
                                           Transformation transformation);
 
@@ -5837,6 +5996,7 @@ public interface AgentBuilder {
                                                      AccessControlContext accessControlContext,
                                                      InitializationStrategy initializationStrategy,
                                                      BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                     DescriptionStrategy descriptionStrategy,
                                                      RawMatcher ignoredTypeMatcher,
                                                      Transformation transformation) {
                         try {
@@ -5848,6 +6008,7 @@ public interface AgentBuilder {
                                     accessControlContext,
                                     initializationStrategy,
                                     bootstrapInjectionStrategy,
+                                    descriptionStrategy,
                                     ignoredTypeMatcher,
                                     transformation);
                         } catch (IllegalAccessException exception) {
@@ -5899,6 +6060,7 @@ public interface AgentBuilder {
                                                      AccessControlContext accessControlContext,
                                                      InitializationStrategy initializationStrategy,
                                                      BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                     DescriptionStrategy descriptionStrategy,
                                                      RawMatcher ignoredTypeMatcher,
                                                      Transformation transformation) {
                         return new ExecutingTransformer(byteBuddy,
@@ -5909,6 +6071,7 @@ public interface AgentBuilder {
                                 accessControlContext,
                                 initializationStrategy,
                                 bootstrapInjectionStrategy,
+                                descriptionStrategy,
                                 ignoredTypeMatcher,
                                 transformation);
                     }
@@ -5973,6 +6136,11 @@ public interface AgentBuilder {
             @Override
             public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
                 return materialize().with(lambdaInstrumentationStrategy);
+            }
+
+            @Override
+            public AgentBuilder with(DescriptionStrategy descriptionStrategy) {
+                return materialize().with(descriptionStrategy);
             }
 
             @Override
@@ -6122,6 +6290,7 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
+                        descriptionStrategy,
                         rawMatcher,
                         transformation);
             }
@@ -6215,6 +6384,7 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
+                        descriptionStrategy,
                         ignoredTypeMatcher,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
             }

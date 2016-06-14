@@ -1028,6 +1028,7 @@ public class AgentBuilderDefaultTest {
                 accessControlContext,
                 initializationStrategy,
                 mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
+                AgentBuilder.DescriptionStrategy.HYBRID,
                 mock(AgentBuilder.RawMatcher.class),
                 mock(AgentBuilder.Default.Transformation.class))
                 .transform(mock(ClassLoader.class),
