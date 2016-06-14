@@ -53,8 +53,8 @@ public class DebuggingWrapper implements AsmVisitorWrapper {
 
     @Override
     public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
-        return check ?
-                new CheckClassAdapter(new TraceClassVisitor(classVisitor, printer, printWriter))
+        return check
+                ? new CheckClassAdapter(new TraceClassVisitor(classVisitor, printer, printWriter))
                 : new TraceClassVisitor(classVisitor, printer, printWriter);
     }
 }
