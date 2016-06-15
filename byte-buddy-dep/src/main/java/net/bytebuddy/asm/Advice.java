@@ -982,7 +982,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 } else {
                     injectFullFrame(methodVisitor, requiredTypes, instrumentedMethod.getReturnType().represents(void.class)
-                            ? Collections.emptyList()
+                            ? Collections.<TypeDescription>emptyList()
                             : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()));
                 }
             }
@@ -1010,7 +1010,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
                     }
                 } else {
-                    injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.emptyList());
+                    injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.<TypeDescription>emptyList());
                 }
             }
 
@@ -1212,7 +1212,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     } else {
                         injectFullFrame(methodVisitor, requiredTypes, yieldedTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)
-                                ? Collections.emptyList()
+                                ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(adviceMethod.getReturnType().asErasure()));
                     }
                 }
@@ -1240,7 +1240,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
                         }
                     } else {
-                        injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.emptyList());
+                        injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.<TypeDescription>emptyList());
                     }
                 }
 
