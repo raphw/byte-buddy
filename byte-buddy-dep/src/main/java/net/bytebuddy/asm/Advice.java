@@ -969,9 +969,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public void injectReturnFrame(MethodVisitor methodVisitor, TypeDescription returnType) {
-                injectFullFrame(methodVisitor, requiredTypes, returnType.represents(void.class)
-                        ? Collections.emptyList()
-                        : Collections.singletonList(returnType));
+                if (!expandFrames && currentFrameDivergence == 0 && !instrumentedMethod.isConstructor()) {
+                    if (returnType.represents(void.class)) {
+                        methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
+                    } else {
+                        methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{toFrame(returnType)});
+                    }
+                } else {
+                    injectFullFrame(methodVisitor, requiredTypes, returnType.represents(void.class)
+                            ? Collections.emptyList()
+                            : Collections.singletonList(returnType));
+                }
             }
 
             @Override
