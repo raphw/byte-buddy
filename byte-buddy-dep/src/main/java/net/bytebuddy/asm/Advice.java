@@ -288,7 +288,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
      */
     public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
-        return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this);
+        return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this).writerFlags(ClassWriter.COMPUTE_FRAMES);
     }
 
     @Override
@@ -5866,6 +5866,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitEnd() {
                     suppressionHandler.onEnd(mv, stackMapFrameHandler, this);
                     mv.visitLabel(endOfMethod);
+                    onMethodReturn();
                     stackMapFrameHandler.injectCompletionFrame(mv, false);
                 }
 
@@ -5906,6 +5907,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public abstract void visitInsn(int opcode);
 
+                protected abstract void onMethodReturn();
+
                 /**
                  * A code translation visitor that retains the return value of the represented advice method.
                  */
@@ -5936,27 +5939,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public void visitInsn(int opcode) {
                         switch (opcode) {
                             case Opcodes.RETURN:
-                                break;
                             case Opcodes.IRETURN:
-                                mv.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
-                                break;
                             case Opcodes.LRETURN:
-                                mv.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
-                                break;
                             case Opcodes.ARETURN:
-                                mv.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
-                                break;
                             case Opcodes.FRETURN:
-                                mv.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
-                                break;
                             case Opcodes.DRETURN:
-                                mv.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
+                                mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                                 break;
                             default:
                                 mv.visitInsn(opcode);
-                                return;
                         }
-                        mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                     }
 
                     @Override
@@ -5972,19 +5964,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 || adviceMethod.getReturnType().represents(char.class)
                                 || adviceMethod.getReturnType().represents(int.class)) {
                             methodVisitor.visitInsn(Opcodes.ICONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
                         } else if (adviceMethod.getReturnType().represents(long.class)) {
                             methodVisitor.visitInsn(Opcodes.LCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
                         } else if (adviceMethod.getReturnType().represents(float.class)) {
                             methodVisitor.visitInsn(Opcodes.FCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
                         } else if (adviceMethod.getReturnType().represents(double.class)) {
                             methodVisitor.visitInsn(Opcodes.DCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
                         } else if (!adviceMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                            methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
+                        }
+                    }
+
+                    @Override
+                    protected void onMethodReturn() {
+                        Type returnType = Type.getType(adviceMethod.getReturnType().asErasure().getDescriptor());
+                        if (!returnType.equals(Type.VOID_TYPE)) {
+                            mv.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize());
                         }
                     }
 
@@ -6065,6 +6060,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void storeDefaultValue(MethodVisitor methodVisitor) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    protected void onMethodReturn() {
                         /* do nothing */
                     }
 
