@@ -1470,9 +1470,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Type returnType = Type.getType(instrumentedMethod.getReturnType().asErasure().getDescriptor());
                 if (!returnType.equals(Type.VOID_TYPE)) {
                     variable(returnType.getOpcode(Opcodes.ISTORE));
-                    stackMapFrameHandler.injectCompletionFrame(mv, false);
                 }
+                onUserReturn(); // TODO: Need to reset completion frame if returned
                 methodExit.apply();
+                onExitAdviceReturn();
                 if (returnType.equals(Type.VOID_TYPE)) {
                     mv.visitInsn(Opcodes.RETURN);
                 } else {
@@ -1484,7 +1485,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 //                mv.visitLabel(endOfMethod);
 //                stackMapFrameHandler.injectCompletionFrame(mv, false);
 //                methodExit.apply();
-//                onAdviceExit();
 //                if (instrumentedMethod.getReturnType().represents(void.class)) {
 //                    mv.visitInsn(Opcodes.RETURN);
 //                } else {
@@ -1494,25 +1494,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 //                onMethodExit();
             }
 
-            /**
-             * Invoked when the user method issues a return statement before applying the exit handler.
-             */
             protected abstract void onUserReturn();
 
-            /**
-             * Invoked on completing to write the translated user code.
-             */
-            protected abstract void onUserExit();
-
-            /**
-             * Invoked on completing the inlining of the exit advice.
-             */
-            protected abstract void onAdviceExit();
-
-            /**
-             * Invoked on completing the method's code.
-             */
-            protected abstract void onMethodExit();
+            protected abstract void onExitAdviceReturn();
 
             /**
              * An advice visitor that does not capture exceptions.
@@ -1561,21 +1545,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onUserReturn() {
-                    /* empty */
+                    if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                        stackMapFrameHandler.injectCompletionFrame(mv, false);
+                    }
                 }
 
                 @Override
-                protected void onUserExit() {
-                    /* empty */
-                }
-
-                @Override
-                protected void onAdviceExit() {
-                    /* empty */
-                }
-
-                @Override
-                protected void onMethodExit() {
+                protected void onExitAdviceReturn() {
                     /* empty */
                 }
 
@@ -1602,15 +1578,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final Label userStart;
 
-                /**
-                 * Indicates the end of the user method.
-                 */
-                private final Label userEnd;
-
-                /**
-                 * Indicates the position of a handler for rethrowing an exception that was thrown by the user method.
-                 */
-                private final Label exceptionalReturn;
+                private final Label exceptionHandler;
 
                 /**
                  * Creates a new advice visitor that captures exception by weaving try-catch blocks around user code.
@@ -1644,14 +1612,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             readerFlags);
                     this.triggeringThrowable = triggeringThrowable;
                     userStart = new Label();
-                    userEnd = new Label();
-                    exceptionalReturn = new Label();
-                    throw new AssertionError("TODO!");
+                    exceptionHandler = new Label();
                 }
 
                 @Override
                 protected void onUserPrepare() {
-                    mv.visitTryCatchBlock(userStart, userEnd, userEnd, triggeringThrowable.getInternalName());
+                    mv.visitTryCatchBlock(userStart, returnHandler, exceptionHandler, triggeringThrowable.getInternalName());
                 }
 
                 @Override
@@ -1663,29 +1629,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected void onUserReturn() {
                     mv.visitInsn(Opcodes.ACONST_NULL);
                     variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-                }
-
-                @Override
-                protected void onUserExit() {
-                    mv.visitLabel(userEnd);
+                    Label endOfHandler = new Label();
+                    mv.visitJumpInsn(Opcodes.GOTO, endOfHandler);
+                    mv.visitLabel(exceptionHandler);
                     stackMapFrameHandler.injectHandlerFrame(mv);
                     variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
                     storeDefaultReturn();
-//                    mv.visitJumpInsn(Opcodes.GOTO, endOfMethod); TODO
+                    mv.visitLabel(endOfHandler);
+                    stackMapFrameHandler.injectCompletionFrame(mv, false); // TODO: Adapt!
                 }
 
                 @Override
-                protected void onAdviceExit() {
+                protected void onExitAdviceReturn() {
                     variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
-                    mv.visitJumpInsn(Opcodes.IFNONNULL, exceptionalReturn);
-                }
-
-                @Override
-                protected void onMethodExit() {
-                    mv.visitLabel(exceptionalReturn);
-                    stackMapFrameHandler.injectCompletionFrame(mv, true);
+                    Label endOfHandler = new Label();
+                    mv.visitJumpInsn(Opcodes.IFNULL, endOfHandler);
                     variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
                     mv.visitInsn(Opcodes.ATHROW);
+                    mv.visitLabel(endOfHandler);
+                    stackMapFrameHandler.injectCompletionFrame(mv, true); // TODO: Adapt!
                 }
 
                 /**
