@@ -6330,16 +6330,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getInternalName(),
                                 adviceMethod.getDescriptor(),
                                 false);
-                        onAfterCall();
+                        onMethodReturn();
                         suppressionHandler.onEndSkipped(methodVisitor, stackMapFrameHandler, this);
+                        onMethodExit();
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
 
-                    /**
-                     * Invoked after the advise method was invoked.
-                     */
-                    protected abstract void onAfterCall();
+                    protected abstract void onMethodReturn();
+
+                    protected abstract void onMethodExit();
 
                     @Override
                     public String toString() {
@@ -6379,7 +6379,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected void onAfterCall() {
+                        protected void onMethodReturn() {
+                            /* do nothing */
+                        }
+
+                        @Override
+                        protected void onMethodExit() {
                             if (adviceMethod.getReturnType().represents(boolean.class)
                                     || adviceMethod.getReturnType().represents(byte.class)
                                     || adviceMethod.getReturnType().represents(short.class)
@@ -6405,19 +6410,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     || adviceMethod.getReturnType().represents(char.class)
                                     || adviceMethod.getReturnType().represents(int.class)) {
                                 methodVisitor.visitInsn(Opcodes.ICONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
                             } else if (adviceMethod.getReturnType().represents(long.class)) {
                                 methodVisitor.visitInsn(Opcodes.LCONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
                             } else if (adviceMethod.getReturnType().represents(float.class)) {
                                 methodVisitor.visitInsn(Opcodes.FCONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
                             } else if (adviceMethod.getReturnType().represents(double.class)) {
                                 methodVisitor.visitInsn(Opcodes.DCONST_0);
-                                methodVisitor.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
                             } else if (!adviceMethod.getReturnType().represents(void.class)) {
                                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                                methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
                             }
                         }
 
@@ -6457,7 +6457,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected void onAfterCall() {
+                        protected void onMethodReturn() {
                             switch (adviceMethod.getReturnType().getStackSize()) {
                                 case ZERO:
                                     return;
@@ -6470,6 +6470,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 default:
                                     throw new IllegalStateException("Unexpected size: " + adviceMethod.getReturnType().getStackSize());
                             }
+                        }
+
+                        @Override
+                        protected void onMethodExit() {
+                            /* do nothing */
                         }
 
                         @Override
