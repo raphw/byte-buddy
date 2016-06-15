@@ -1182,13 +1182,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void injectReturnFrame(MethodVisitor methodVisitor) {
                     if (!expandFrames && currentFrameDivergence == 0) {
-                        if (adviceMethod.getReturnType().represents(void.class)) {
+                        if (yieldedTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
                         } else {
                             methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{toFrame(adviceMethod.getReturnType().asErasure())});
                         }
                     } else {
-                        injectFullFrame(methodVisitor, requiredTypes, adviceMethod.getReturnType().represents(void.class)
+                        injectFullFrame(methodVisitor, requiredTypes, yieldedTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)
                                 ? Collections.emptyList()
                                 : Collections.singletonList(adviceMethod.getReturnType().asErasure()));
                     }
@@ -4733,12 +4733,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             interface ReturnValueProducer {
 
-                /**
-                 * Stores a default return value for the advised method.
-                 *
-                 * @param methodVisitor The instrumented method's method visitor.
-                 */
-                void storeDefaultValue(MethodVisitor methodVisitor);
+                void pushDefaultValue(MethodVisitor methodVisitor);
             }
 
             /**
@@ -4924,7 +4919,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitLabel(endOfMethod);
                         stackMapFrameHandler.injectExceptionFrame(methodVisitor);
                         methodVisitor.visitInsn(Opcodes.POP);
-                        returnValueProducer.storeDefaultValue(methodVisitor);
+                        returnValueProducer.pushDefaultValue(methodVisitor);
                     }
 
                     @Override
@@ -4933,6 +4928,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
                         onEnd(methodVisitor, stackMapFrameHandler, returnValueProducer);
                         methodVisitor.visitLabel(endOfHandler);
+                        stackMapFrameHandler.injectReturnFrame(methodVisitor);
                     }
 
                     @Override
@@ -5972,7 +5968,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void storeDefaultValue(MethodVisitor methodVisitor) {
+                    public void pushDefaultValue(MethodVisitor methodVisitor) {
                         if (adviceMethod.getReturnType().represents(boolean.class)
                                 || adviceMethod.getReturnType().represents(byte.class)
                                 || adviceMethod.getReturnType().represents(short.class)
@@ -6075,7 +6071,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void storeDefaultValue(MethodVisitor methodVisitor) {
+                    public void pushDefaultValue(MethodVisitor methodVisitor) {
                         /* do nothing */
                     }
 
@@ -6293,7 +6289,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A handler for translating and injecting stack map frmes.
                      */
-                    private final StackMapFrameHandler.ForAdvice stackMapFrameHandler;
+                    protected final StackMapFrameHandler.ForAdvice stackMapFrameHandler;
 
                     /**
                      * A bound suppression handler that is used for suppressing exceptions of this advice method.
@@ -6349,7 +6345,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         onMethodReturn();
                         suppressionHandler.onEndSkipped(methodVisitor, stackMapFrameHandler, this);
                         onMethodExit();
-                        stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
 
@@ -6416,10 +6411,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             } else if (!adviceMethod.getReturnType().represents(void.class)) {
                                 methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
                             }
+                            if (!adviceMethod.getReturnType().represents(void.class)) {
+                                stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
+                            }
                         }
 
                         @Override
-                        public void storeDefaultValue(MethodVisitor methodVisitor) {
+                        public void pushDefaultValue(MethodVisitor methodVisitor) {
                             if (adviceMethod.getReturnType().represents(boolean.class)
                                     || adviceMethod.getReturnType().represents(byte.class)
                                     || adviceMethod.getReturnType().represents(short.class)
@@ -6494,7 +6492,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void storeDefaultValue(MethodVisitor methodVisitor) {
+                        public void pushDefaultValue(MethodVisitor methodVisitor) {
                             /* do nothing */
                         }
 
