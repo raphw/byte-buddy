@@ -288,7 +288,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
      */
     public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
-        return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this).writerFlags(ClassWriter.COMPUTE_FRAMES);
+        return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this);
     }
 
     @Override
@@ -664,6 +664,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         void translateFrame(MethodVisitor methodVisitor, int frameType, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack);
 
+        void injectReturnFrame(MethodVisitor methodVisitor);
+
         void injectExceptionFrame(MethodVisitor methodVisitor);
 
         void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary);
@@ -672,8 +674,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * A stack map frame handler for an instrumented method.
          */
         interface ForInstrumentedMethod extends StackMapFrameHandler {
-
-            void injectReturnFrame(MethodVisitor methodVisitor);
 
             /**
              * Binds this meta data handler for the entry advice.
@@ -1125,7 +1125,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The method description for which frames are translated.
                  */
-                protected final MethodDescription.InDefinedShape methodDescription;
+                protected final MethodDescription.InDefinedShape adviceMethod;
 
                 /**
                  * A list of intermediate types to be considered as part of the instrumented method's steady signature.
@@ -1151,11 +1151,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param translationMode   The translation mode to apply for this advice method. Should be
                  *                          either {@link TranslationMode#ENTRY} or {@link TranslationMode#EXIT}.
                  */
-                protected ForAdvice(MethodDescription.InDefinedShape methodDescription,
+                protected ForAdvice(MethodDescription.InDefinedShape adviceMethod,
                                     TypeList requiredTypes,
                                     TypeList yieldedTypes,
                                     TranslationMode translationMode) {
-                    this.methodDescription = methodDescription;
+                    this.adviceMethod = adviceMethod;
                     this.requiredTypes = requiredTypes;
                     this.yieldedTypes = yieldedTypes;
                     this.translationMode = translationMode;
@@ -1170,13 +1170,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            Object[] stack) {
                     Default.this.translateFrame(methodVisitor,
                             translationMode,
-                            methodDescription,
+                            adviceMethod,
                             requiredTypes,
                             type,
                             localVariableLength,
                             localVariable,
                             stackSize,
                             stack);
+                }
+
+                @Override
+                public void injectReturnFrame(MethodVisitor methodVisitor) {
+                    if (!expandFrames && currentFrameDivergence == 0) {
+                        if (adviceMethod.getReturnType().represents(void.class)) {
+                            methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
+                        } else {
+                            methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{toFrame(adviceMethod.getReturnType().asErasure())});
+                        }
+                    } else {
+                        injectFullFrame(methodVisitor, requiredTypes, adviceMethod.getReturnType().represents(void.class)
+                                ? Collections.emptyList()
+                                : Collections.singletonList(adviceMethod.getReturnType().asErasure()));
+                    }
                 }
 
                 @Override
@@ -1209,7 +1224,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public String toString() {
                     return "Advice.StackMapFrameHandler.Default.ForAdvice{" +
-                            "methodDescription=" + methodDescription +
+                            "adviceMethod=" + adviceMethod +
                             ", requiredTypes=" + requiredTypes +
                             ", yieldedTypes=" + yieldedTypes +
                             ", translationMode=" + translationMode +
@@ -5767,7 +5782,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A handler for translating and injecting stack map frames.
                  */
-                private final StackMapFrameHandler.ForAdvice stackMapFrameHandler;
+                protected final StackMapFrameHandler.ForAdvice stackMapFrameHandler;
 
                 /**
                  * The instrumented method.
@@ -5979,6 +5994,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected void onMethodReturn() {
                         Type returnType = Type.getType(adviceMethod.getReturnType().asErasure().getDescriptor());
                         if (!returnType.equals(Type.VOID_TYPE)) {
+                            stackMapFrameHandler.injectReturnFrame(mv);
                             mv.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize());
                         }
                     }
