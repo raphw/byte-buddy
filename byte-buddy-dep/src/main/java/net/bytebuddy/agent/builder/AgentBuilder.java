@@ -2432,6 +2432,105 @@ public interface AgentBuilder {
     }
 
     /**
+     * A description strategy is responsible for resolving a {@link TypeDescription} when transforming or retransforming/-defining a type.
+     */
+    interface DescriptionStrategy {
+
+        /**
+         * Describes the given type.
+         *
+         * @param typeName           The binary name of the type to describe.
+         * @param typeBeingRedefined The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
+         * @param typeLocator        The type locator to use.
+         * @param classLoader        The class loader of the type to be described.
+         * @param classFileLocator   The class file locator of the type to be described.
+         * @return An appropriate type description.
+         */
+        TypeDescription apply(String typeName, Class<?> typeBeingRedefined, TypeLocator typeLocator, ClassLoader classLoader, ClassFileLocator classFileLocator);
+
+        /**
+         * Describes the given type.
+         *
+         * @param type        The loaded type to be described.
+         * @param typeLocator The type locator to use.
+         * @return An appropriate type description.
+         */
+        TypeDescription apply(Class<?> type, TypeLocator typeLocator);
+
+        /**
+         * Default implementations of a {@link DescriptionStrategy}.
+         */
+        enum Default implements DescriptionStrategy {
+
+            /**
+             * A description type strategy represents a type as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType} if a
+             * retransformation or redefinition is applied on a type. Using a loaded type typically results in better performance as no
+             * I/O is required for resolving type descriptions. However, any interaction with the type is carried out via the Java reflection
+             * API. Using the reflection API triggers eager loading of any type that is part of a method or field signature. If any of these
+             * types are missing from the class path, this eager loading will cause a {@link NoClassDefFoundError}. Some Java code declares
+             * optional dependencies to other classes which are only realized if the optional dependency is present. Such code relies on the
+             * Java reflection API not being used for types using optional dependencies.
+             */
+            HYBRID {
+                @Override
+                public TypeDescription apply(String typeName,
+                                             Class<?> typeBeingRedefined,
+                                             TypeLocator typeLocator,
+                                             ClassLoader classLoader,
+                                             ClassFileLocator classFileLocator) {
+                    return typeBeingRedefined == null
+                            ? POOL_ONLY.apply(typeName, UNAVAILABLE, typeLocator, classLoader, classFileLocator)
+                            : new TypeDescription.ForLoadedType(typeBeingRedefined);
+                }
+
+                @Override
+                public TypeDescription apply(Class<?> type, TypeLocator typeLocator) {
+                    return new TypeDescription.ForLoadedType(type);
+                }
+            },
+
+            /**
+             * <p>
+             * A description strategy that always describes Java types using a {@link TypePool}. This requires that any type - even if it is already
+             * loaded and a {@link Class} instance is available - is processed as a non-loaded type description. Doing so can cause overhead as processing
+             * loaded types is supported very efficiently by a JVM.
+             * </p>
+             * <p>
+             * Avoiding the usage of loaded types can improve robustness as this approach does not rely on the Java reflection API which triggers eager
+             * validation of this loaded type which can fail an application if optional types are used by any types field or method signatures. Also, it
+             * is possible to guarantee debugging meta data to be available also for retransformed or redefined types if a {@link TypeStrategy} specifies
+             * the extraction of such meta data.
+             * </p>
+             */
+            POOL_ONLY {
+                @Override
+                public TypeDescription apply(String typeName,
+                                             Class<?> typeBeingRedefined,
+                                             TypeLocator typeLocator,
+                                             ClassLoader classLoader,
+                                             ClassFileLocator classFileLocator) {
+                    return typeLocator.typePool(classFileLocator, classLoader).describe(typeName).resolve();
+                }
+
+                @Override
+                public TypeDescription apply(Class<?> type, TypeLocator typeLocator) {
+                    return typeLocator.typePool(ClassFileLocator.ForClassLoader.of(type.getClassLoader()), type.getClassLoader()).describe(TypeDescription.ForLoadedType.getName(type)).resolve();
+                }
+            };
+
+            /**
+             * Indicates that no loaded type is available.
+             */
+            private static final Class<?> UNAVAILABLE = null;
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.DescriptionStrategy.Default." + name();
+            }
+        }
+    }
+
+    /**
      * A redefinition strategy regulates how already loaded classes are modified by a built agent.
      */
     enum RedefinitionStrategy {
@@ -4085,103 +4184,6 @@ public interface AgentBuilder {
     }
 
     /**
-     * A description strategy is responsible for resolving a {@link TypeDescription} when transforming or retransforming/-defining a type.
-     */
-    enum DescriptionStrategy {
-
-        /**
-         * A description type strategy represents a type as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType} if a
-         * retransformation or redefinition is applied on a type. Using a loaded type typically results in better performance as no
-         * I/O is required for resolving type descriptions. However, any interaction with the type is carried out via the Java reflection
-         * API. Using the reflection API triggers eager loading of any type that is part of a method or field signature. If any of these
-         * types are missing from the class path, this eager loading will cause a {@link NoClassDefFoundError}. Some Java code declares
-         * optional dependencies to other classes which are only realized if the optional dependency is present. Such code relies on the
-         * Java reflection API not being used for types using optional dependencies.
-         */
-        HYBRID {
-            @Override
-            protected TypeDescription apply(String typeName,
-                                            Class<?> typeBeingRedefined,
-                                            TypeLocator typeLocator,
-                                            ClassLoader classLoader,
-                                            ClassFileLocator classFileLocator) {
-                return typeBeingRedefined == null
-                        ? POOL_ONLY.apply(typeName, UNAVAILABLE, typeLocator, classLoader, classFileLocator)
-                        : new TypeDescription.ForLoadedType(typeBeingRedefined);
-            }
-
-            @Override
-            protected TypeDescription apply(Class<?> type, TypeLocator typeLocator) {
-                return new TypeDescription.ForLoadedType(type);
-            }
-        },
-
-        /**
-         * <p>
-         * A description strategy that always describes Java types using a {@link TypePool}. This requires that any type - even if it is already
-         * loaded and a {@link Class} instance is available - is processed as a non-loaded type description. Doing so can cause overhead as processing
-         * loaded types is supported very efficiently by a JVM.
-         * </p>
-         * <p>
-         * Avoiding the usage of loaded types can improve robustness as this approach does not rely on the Java reflection API which triggers eager
-         * validation of this loaded type which can fail an application if optional types are used by any types field or method signatures. Also, it
-         * is possible to guarantee debugging meta data to be available also for retransformed or redefined types if a {@link TypeStrategy} specifies
-         * the extraction of such meta data.
-         * </p>
-         */
-        POOL_ONLY {
-            @Override
-            protected TypeDescription apply(String typeName,
-                                            Class<?> typeBeingRedefined,
-                                            TypeLocator typeLocator,
-                                            ClassLoader classLoader,
-                                            ClassFileLocator classFileLocator) {
-                return typeLocator.typePool(classFileLocator, classLoader).describe(typeName).resolve();
-            }
-
-            @Override
-            protected TypeDescription apply(Class<?> type, TypeLocator typeLocator) {
-                return typeLocator.typePool(ClassFileLocator.ForClassLoader.of(type.getClassLoader()), type.getClassLoader()).describe(TypeDescription.ForLoadedType.getName(type)).resolve();
-            }
-        };
-
-        /**
-         * Indicates that no loaded type is available.
-         */
-        private static final Class<?> UNAVAILABLE = null;
-
-        /**
-         * Describes the given type.
-         *
-         * @param typeName           The binary name of the type to describe.
-         * @param typeBeingRedefined The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
-         * @param typeLocator        The type locator to use.
-         * @param classLoader        The class loader of the type to be described.
-         * @param classFileLocator   The class file locator of the type to be described.
-         * @return An appropriate type description.
-         */
-        protected abstract TypeDescription apply(String typeName,
-                                                 Class<?> typeBeingRedefined,
-                                                 TypeLocator typeLocator,
-                                                 ClassLoader classLoader,
-                                                 ClassFileLocator classFileLocator);
-
-        /**
-         * Describes the given type.
-         *
-         * @param type        The loaded type to be described.
-         * @param typeLocator The type locator to use.
-         * @return An appropriate type description.
-         */
-        protected abstract TypeDescription apply(Class<?> type, TypeLocator typeLocator);
-
-        @Override
-        public String toString() {
-            return "AgentBuilder.DescriptionStrategy." + name();
-        }
-    }
-
-    /**
      * <p>
      * The default implementation of an {@link net.bytebuddy.agent.builder.AgentBuilder}.
      * </p>
@@ -4309,7 +4311,7 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
-                    DescriptionStrategy.HYBRID,
+                    DescriptionStrategy.Default.HYBRID,
                     new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()), new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").<TypeDescription>or(isSynthetic()), any(), any())),
                     Transformation.Ignored.INSTANCE);
         }

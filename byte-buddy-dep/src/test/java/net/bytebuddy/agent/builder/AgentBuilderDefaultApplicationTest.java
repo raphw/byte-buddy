@@ -234,7 +234,7 @@ public class AgentBuilderDefaultApplicationTest {
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(AgentBuilder.DescriptionStrategy.POOL_ONLY)
+                .with(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -281,7 +281,7 @@ public class AgentBuilderDefaultApplicationTest {
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(AgentBuilder.DescriptionStrategy.POOL_ONLY)
+                .with(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
