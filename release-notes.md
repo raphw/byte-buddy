@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. June 2016: version 1.4.2
+
+- Changed storage order of return values in `Advice` methods to avoid polluting the local variable array when dealing with nested exception handlers.
+- Added caching `ElementMatcher` as a wrapping matcher.
+- Exclude Byte Buddy types by default from an `AgentBuilder`.
+- Added `DescriptionStrategy` that allows not using reflection in case that a class references non-available classes.
+
 ### 7. June 2016: version 1.4.1
 
 - Fixed validation by `MethodCall` instrumentation for number of arguments provided to a method.
