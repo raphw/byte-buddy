@@ -47,10 +47,11 @@ public class MultipleParentClassLoader extends ClassLoader {
     /**
      * Creates a new class loader with multiple parents.
      *
-     * @param parents The parents of this class loader in their application order.
+     * @param parents The parents of this class loader in their application order. This list must not contain {@code null},
+     *                i.e. the bootstrap class loader which is an implicit parent of any class loader.
      */
     public MultipleParentClassLoader(List<? extends ClassLoader> parents) {
-        super(null);
+        super(ClassLoadingStrategy.BOOTSTRAP_LOADER);
         this.parents = parents;
     }
 
@@ -333,7 +334,8 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
 
         /**
-         * Appends the class loaders of the given types.
+         * Appends the class loaders of the given types. The bootstrap class loader is implicitly skipped as
+         * it is an implicit parent of any class loader.
          *
          * @param type The types of which to collect the class loaders.
          * @return A new builder instance with the additional class loaders of the provided types if they were not
@@ -344,12 +346,13 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
 
         /**
-         * Appends the class loaders of the given types if those class loaders were not yet collected.
+         * Appends the class loaders of the given types if those class loaders were not yet collected. The bootstrap class
+         * loader is implicitly skipped as it is an implicit parent of any class loader.
          *
          * @param types The types of which to collect the class loaders.
          * @return A new builder instance with the additional class loaders.
          */
-        public Builder append(Collection<Class<?>> types) {
+        public Builder append(Collection<? extends Class<?>> types) {
             List<ClassLoader> classLoaders = new ArrayList<ClassLoader>(types.size());
             for (Class<?> type : types) {
                 classLoaders.add(type.getClassLoader());
@@ -358,7 +361,8 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
 
         /**
-         * Appends the given class loaders if they were not yet collected.
+         * Appends the given class loaders if they were not yet collected. The bootstrap class loader is implicitly
+         * skipped as it is an implicit parent of any class loader.
          *
          * @param classLoader The class loaders to be collected.
          * @return A new builder instance with the additional class loaders.
@@ -368,14 +372,15 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
 
         /**
-         * Appends the given class loaders if they were not yet collected.
+         * Appends the given class loaders if they were not yet appended. The bootstrap class loader is never appended as
+         * it is an implicit parent of any class loader.
          *
          * @param classLoaders The class loaders to collected.
          * @return A new builder instance with the additional class loaders.
          */
         public Builder append(List<? extends ClassLoader> classLoaders) {
             List<ClassLoader> filtered = new ArrayList<ClassLoader>(this.classLoaders.size() + classLoaders.size());
-            Set<ClassLoader> registered = new HashSet<ClassLoader>();
+            Set<ClassLoader> registered = new HashSet<ClassLoader>(this.classLoaders);
             filtered.addAll(this.classLoaders);
             for (ClassLoader classLoader : classLoaders) {
                 if (classLoader != null && registered.add(classLoader)) {
@@ -386,7 +391,7 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
 
         /**
-         * Removes all class loaders that match the given filter.
+         * Only retains all class loaders that match the given matcher.
          *
          * @param matcher The matcher to be used for filtering.
          * @return A builder that does not longer consider any appended class loaders that matched the provided matcher.
@@ -394,7 +399,7 @@ public class MultipleParentClassLoader extends ClassLoader {
         public Builder filter(ElementMatcher<? super ClassLoader> matcher) {
             List<ClassLoader> classLoaders = new ArrayList<ClassLoader>(this.classLoaders.size());
             for (ClassLoader classLoader : this.classLoaders) {
-                if (!matcher.matches(classLoader)) {
+                if (matcher.matches(classLoader)) {
                     classLoaders.add(classLoader);
                 }
             }
@@ -411,7 +416,8 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
 
         /**
-         * Returns an appropriate class loader that represents all the collected class loaders.
+         * Returns the only class loader that was appended if exactly one class loader was appended or a multiple parent class loader as
+         * a parent of all supplied class loader and with the bootstrap class loader as an implicit parent. If no class loader
          *
          * @param accessControlContext The access control context to be used for creating the class loader.
          * @return A suitable class loader.

@@ -18,8 +18,8 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import static net.bytebuddy.matcher.ElementMatchers.failSafe;
 import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -69,14 +69,22 @@ public class MultipleParentClassLoaderTest {
     public void testSingleParentReturnsOriginal() throws Exception {
         assertThat(new MultipleParentClassLoader.Builder()
                 .append(getClass().getClassLoader(), getClass().getClassLoader())
-                .build(), is(getClass().getClassLoader()));
+                .build(), is(ClassLoader.getSystemClassLoader()));
+    }
+
+    @Test
+    public void testSingleParentReturnsOriginalChained() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder()
+                .append(ClassLoader.getSystemClassLoader())
+                .append(ClassLoader.getSystemClassLoader())
+                .build(), is(ClassLoader.getSystemClassLoader()));
     }
 
     @Test
     public void testClassLoaderFilter() throws Exception {
         assertThat(new MultipleParentClassLoader.Builder()
                 .append(getClass().getClassLoader(), null)
-                .filter(isBootstrapClassLoader())
+                .filter(not(isBootstrapClassLoader()))
                 .build(), is(getClass().getClassLoader()));
     }
 
