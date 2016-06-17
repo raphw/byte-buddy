@@ -5,7 +5,6 @@ import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -235,7 +234,6 @@ public class PackageTypeStrategyManifestReadingTest {
     @Test
     @IntegrationRule.Enforce
     @JavaVersionRule.Enforce(9)
-    @Ignore("Cannot yet determine tests specific to Java 9")
     public void testSealBaseLocatorForTypeResourceUrlJavaRuntimeImageUrl() throws Exception {
         URL url = new URL("jrt:/foo/bar");
         when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
@@ -247,7 +245,6 @@ public class PackageTypeStrategyManifestReadingTest {
     @Test
     @IntegrationRule.Enforce
     @JavaVersionRule.Enforce(9)
-    @Ignore("Cannot yet determine tests specific to Java 9")
     public void testSealBaseLocatorForTypeResourceUrlJavaRuntimeImageUrlRawModule() throws Exception {
         URL url = new URL("jrt:/foo");
         when(classLoader.getResource(FOO + "/" + BAR + ".class")).thenReturn(url);
