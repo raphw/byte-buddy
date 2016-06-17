@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. June 2016: version 1.4.3
+
+- Fixed bug in `MultipleParentClassLoader` where class loaders were no longer filtered properly.
+- Added support for major.minor version 53 (Java 9).
+- Made `DescriptionStrategy` customizable.
+
 ### 16. June 2016: version 1.4.2
 
 - Changed storage order of return values in `Advice` methods to avoid polluting the local variable array when dealing with nested exception handlers.
