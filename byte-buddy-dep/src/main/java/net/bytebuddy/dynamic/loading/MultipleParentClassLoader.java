@@ -70,9 +70,7 @@ public class MultipleParentClassLoader extends ClassLoader {
     @Override
     public URL getResource(String name) {
         for (ClassLoader parent : parents) {
-            URL url = parent != null
-                    ? parent.getResource(name)
-                    : super.getResource(name);
+            URL url = parent.getResource(name);
             if (url != null) {
                 return url;
             }
@@ -84,9 +82,7 @@ public class MultipleParentClassLoader extends ClassLoader {
     public Enumeration<URL> getResources(String name) throws IOException {
         List<Enumeration<URL>> enumerations = new ArrayList<Enumeration<URL>>(parents.size() + 1);
         for (ClassLoader parent : parents) {
-            enumerations.add(parent != null
-                    ? parent.getResources(name)
-                    : super.getResources(name));
+            enumerations.add(parent.getResources(name));
         }
         enumerations.add(super.getResources(name));
         return new CompoundEnumeration(enumerations);
