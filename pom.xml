@@ -66,7 +66,7 @@
         <version.plugin.release>2.5.3</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
         <version.plugin.surefire>2.19.1</version.plugin.surefire>
-        <version.plugin.pitest>1.1.9</version.plugin.pitest>
+        <version.plugin.pitest>1.1.10</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.14</version.plugin.animal-sniffer>
         <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
         <version.plugin.cobertura>2.7</version.plugin.cobertura>
