@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 23. June 2016: version 1.4.4
+
+- Added `net.bytebuddy` qualifier when logging.
+- Added `net.bytebuddy.dump` system property for specifing a location for writing all created class files.
+
 ### 17. June 2016: version 1.4.3
 
 - Fixed bug in `MultipleParentClassLoader` where class loaders were no longer filtered properly.
