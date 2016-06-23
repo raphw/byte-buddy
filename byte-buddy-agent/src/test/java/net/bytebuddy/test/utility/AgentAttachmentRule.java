@@ -64,7 +64,7 @@ public class AgentAttachmentRule implements MethodRule {
 
         @Override
         public void evaluate() throws Throwable {
-            Logger.getAnonymousLogger().warning("Ignoring test case: " + reason);
+            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: " + reason);
         }
     }
 }

@@ -145,7 +145,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
             throw new IllegalStateException("Cannot write to zip file " + zipFile, exception);
         } finally {
             if (!zipFile.delete()) {
-                Logger.getAnonymousLogger().warning("Could not delete " + zipFile);
+                Logger.getLogger("net.bytebuddy").warning("Could not delete " + zipFile);
             }
         }
     }

@@ -117,7 +117,7 @@ public class Nexus {
      */
     public static void register(String name, ClassLoader classLoader, int identification, Object typeInitializer) {
         if (TYPE_INITIALIZERS.put(new Nexus(name, classLoader, identification), typeInitializer) != null) {
-            Logger.getAnonymousLogger().warning("Initializer with id " + identification + " is already registered for " + name);
+            Logger.getLogger("net.bytebuddy").warning("Initializer with id " + identification + " is already registered for " + name);
         }
     }
 

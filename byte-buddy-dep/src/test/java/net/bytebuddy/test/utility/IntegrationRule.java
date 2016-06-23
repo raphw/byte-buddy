@@ -34,7 +34,7 @@ public class IntegrationRule implements MethodRule {
 
         @Override
         public void evaluate() throws Throwable {
-            Logger.getAnonymousLogger().warning("Ignored test case that is only to be run on the CI server due to long runtime");
+            Logger.getLogger("net.bytebuddy").warning("Ignored test case that is only to be run on the CI server due to long runtime");
         }
     }
 }

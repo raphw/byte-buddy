@@ -59,7 +59,7 @@ public class JavaVersionRule implements MethodRule {
 
         @Override
         public void evaluate() throws Throwable {
-            Logger.getAnonymousLogger().warning("Ignoring test case: Requires a Java version of at least " + requiredVersion);
+            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Requires a Java version of at least " + requiredVersion);
         }
     }
 
@@ -73,7 +73,7 @@ public class JavaVersionRule implements MethodRule {
 
         @Override
         public void evaluate() throws Throwable {
-            Logger.getAnonymousLogger().warning("Ignoring test case: Only works on HotSpot for Java version " + restrictedVersion);
+            Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Only works on HotSpot for Java version " + restrictedVersion);
         }
     }
 }

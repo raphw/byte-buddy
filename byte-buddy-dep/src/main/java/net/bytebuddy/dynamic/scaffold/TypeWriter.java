@@ -32,8 +32,11 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 
@@ -43,6 +46,11 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
  * @param <T> The best known loaded type for the dynamically created type.
  */
 public interface TypeWriter<T> {
+
+    /**
+     * A system property that indicates that Byte Buddy should dump all types that it creates.
+     */
+    String DUMP_PROPERTY = "net.bytebuddy.dump";
 
     /**
      * Creates the dynamic type that is described by this type writer.
@@ -1292,6 +1300,25 @@ public interface TypeWriter<T> {
     abstract class Default<S> implements TypeWriter<S> {
 
         /**
+         * A folder for dumping class files or {@code null} if no dump should be generated.
+         */
+        private static final String DUMP_FOLDER;
+
+        /*
+         * Reads the dumping property that is set at program start up. This might cause an error because of security constraints.
+         */
+        static {
+            String dumpFolder;
+            try {
+                dumpFolder = System.getProperty(DUMP_PROPERTY);
+            } catch (RuntimeException exception) {
+                dumpFolder = null;
+                Logger.getLogger("net.bytebuddy").warning("Could not enable dumping of class files: " + exception.getMessage());
+            }
+            DUMP_FOLDER = dumpFolder;
+        }
+
+        /**
          * The instrumented type to be created.
          */
         protected final TypeDescription instrumentedType;
@@ -1568,8 +1595,21 @@ public interface TypeWriter<T> {
                     auxiliaryTypeNamingStrategy,
                     typeInitializer,
                     classFileVersion);
+            byte[] binaryRepresentation = create(implementationContext);
+            if (DUMP_FOLDER != null) {
+                try {
+                    FileOutputStream fileOutputStream = new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis()));
+                    try {
+                        fileOutputStream.write(binaryRepresentation);
+                    } finally {
+                        fileOutputStream.close();
+                    }
+                } catch (Exception exception) {
+                    Logger.getLogger("net.bytebuddy").warning("Could not dump class file for " + instrumentedType + ": " + exception.getMessage());
+                }
+            }
             return new DynamicType.Default.Unloaded<S>(instrumentedType,
-                    create(implementationContext),
+                    binaryRepresentation,
                     loadedTypeInitializer,
                     CompoundList.of(explicitAuxiliaryTypes, implementationContext.getRegisteredAuxiliaryTypes()));
         }

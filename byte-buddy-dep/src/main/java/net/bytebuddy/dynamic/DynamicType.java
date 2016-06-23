@@ -4169,7 +4169,7 @@ public interface DynamicType {
             File target = new File(folder, typeDescription.getName().replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             if (target.getParentFile() != null) {
                 if (!target.getParentFile().mkdirs()) {
-                    Logger.getAnonymousLogger().info("Writing file to existing folder structure: " + target.getParent());
+                    Logger.getLogger("net.bytebuddy").info("Writing file to existing folder structure: " + target.getParent());
                 }
             }
             OutputStream outputStream = new FileOutputStream(target);
@@ -4190,7 +4190,7 @@ public interface DynamicType {
             JarInputStream jarInputStream = new JarInputStream(new BufferedInputStream(new FileInputStream(sourceJar)));
             try {
                 if (!targetJar.createNewFile()) {
-                    Logger.getAnonymousLogger().info("Overwriting file " + targetJar);
+                    Logger.getLogger("net.bytebuddy").info("Overwriting file " + targetJar);
                 }
                 JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(targetJar)), jarInputStream.getManifest());
                 try {
@@ -4251,7 +4251,7 @@ public interface DynamicType {
                 }
             } finally {
                 if (!temporary.delete()) {
-                    Logger.getAnonymousLogger().warning("Cannot delete " + temporary);
+                    Logger.getLogger("net.bytebuddy").warning("Cannot delete " + temporary);
                 }
             }
             return jar;
@@ -4267,7 +4267,7 @@ public interface DynamicType {
         @Override
         public File toJar(File file, Manifest manifest) throws IOException {
             if (!file.createNewFile()) {
-                Logger.getAnonymousLogger().info("Overwriting existing file: " + file);
+                Logger.getLogger("net.bytebuddy").info("Overwriting existing file: " + file);
             }
             JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)), manifest);
             try {
