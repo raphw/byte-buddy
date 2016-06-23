@@ -219,6 +219,33 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    public void testChunkedRedefinition() throws Exception {
+        // As documented, the class loading type locator is not applicable for redefinitions.
+        if (typeLocator.equals(AgentBuilder.TypeLocator.ClassLoading.INSTANCE)) {
+            return;
+        }
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(typeLocator)
+                .ignore(none())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION_CHUNKED)
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinitionWithPoolOnly() throws Exception {
         // As documented, the class loading type locator is not applicable for redefinitions.
         if (typeLocator.equals(AgentBuilder.TypeLocator.ClassLoading.INSTANCE)) {
@@ -258,6 +285,29 @@ public class AgentBuilderDefaultApplicationTest {
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    public void testChunkedRetransformation() throws Exception {
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(typeLocator)
+                .ignore(none())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION_CHUNKED)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
