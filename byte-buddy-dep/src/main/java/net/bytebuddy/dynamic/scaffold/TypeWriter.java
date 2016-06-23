@@ -1593,6 +1593,7 @@ public interface TypeWriter<T> {
         }
 
         @Override
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should not change program outcome")
         public DynamicType.Unloaded<S> make() {
             Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                     auxiliaryTypeNamingStrategy,
