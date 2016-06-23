@@ -48,7 +48,9 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
 public interface TypeWriter<T> {
 
     /**
-     * A system property that indicates that Byte Buddy should dump all types that it creates.
+     * A system property that indicates a folder for Byte Buddy to dump class files of all types that it creates.
+     * If this property is not set, Byte Buddy does not dump any class files. This property is only read a single
+     * time which is why it must be set on application start-up.
      */
     String DUMP_PROPERTY = "net.bytebuddy.dump";
 
