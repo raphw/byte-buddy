@@ -35,6 +35,7 @@ import org.objectweb.asm.commons.SimpleRemapper;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -1600,11 +1601,11 @@ public interface TypeWriter<T> {
             byte[] binaryRepresentation = create(implementationContext);
             if (DUMP_FOLDER != null) {
                 try {
-                    FileOutputStream fileOutputStream = new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis()));
+                    OutputStream outputStream = new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis()));
                     try {
-                        fileOutputStream.write(binaryRepresentation);
+                        outputStream.write(binaryRepresentation);
                     } finally {
-                        fileOutputStream.close();
+                        outputStream.close();
                     }
                 } catch (Exception exception) {
                     Logger.getLogger("net.bytebuddy").warning("Could not dump class file for " + instrumentedType + ": " + exception.getMessage());
