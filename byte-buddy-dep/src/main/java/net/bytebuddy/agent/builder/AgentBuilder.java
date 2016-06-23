@@ -2557,6 +2557,10 @@ public interface AgentBuilder {
          * registered for applying retransformations.
          * </p>
          * <p>
+         * Using this strategy, a redefinition is applied as a single transformation request. This means that a single illegal
+         * redefinition of a class causes the entire redefinition attempt to fail.
+         * </p>
+         * <p>
          * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
          * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
          * the constrains given by this type strategy.
@@ -2573,7 +2577,37 @@ public interface AgentBuilder {
 
             @Override
             protected Collector makeCollector(Default.Transformation transformation) {
-                return new Collector.ForRedefinition(transformation);
+                return new Collector.ForRedefinition.Cumulative(transformation);
+            }
+        },
+
+        /**
+         * <p>
+         * Applies a <b>redefinition</b> to all classes that are already loaded and that would have been transformed if
+         * the built agent was registered before they were loaded. The created {@link ClassFileTransformer} is <b>not</b>
+         * registered for applying retransformations.
+         * </p>
+         * <p>
+         * Using this strategy, a redefinition is applied in single class chunks. This means that a single illegal
+         * redefinition of a class does not cause the failure of any other redefinition. Chunking the redefinition does
+         * however imply a performance penalty. If at least one redefinition has failed, applying this strategy still causes an
+         * exception to be thrown as a result of the application.
+         * </p>
+         * <p>
+         * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
+         * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
+         * the constrains given by this type strategy.
+         * </p>
+         */
+        REDEFINITION_CHUNKED {
+            @Override
+            protected boolean isRetransforming(Instrumentation instrumentation) {
+                return REDEFINITION.isRetransforming(instrumentation);
+            }
+
+            @Override
+            protected Collector makeCollector(Default.Transformation transformation) {
+                return new Collector.ForRedefinition.Chunked(transformation);
             }
         },
 
@@ -2582,6 +2616,10 @@ public interface AgentBuilder {
          * Applies a <b>retransformation</b> to all classes that are already loaded and that would have been transformed if
          * the built agent was registered before they were loaded. The created {@link ClassFileTransformer} is registered
          * for applying retransformations.
+         * </p>
+         * <p>
+         * Using this strategy, a retransformation is applied as a single transformation request. This means that a single illegal
+         * retransformation of a class causes the entire retransformation attempt to fail.
          * </p>
          * <p>
          * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
@@ -2600,7 +2638,37 @@ public interface AgentBuilder {
 
             @Override
             protected Collector makeCollector(Default.Transformation transformation) {
-                return new Collector.ForRetransformation(transformation);
+                return new Collector.ForRetransformation.Cumulative(transformation);
+            }
+        },
+
+        /**
+         * <p>
+         * Applies a <b>retransformation</b> to all classes that are already loaded and that would have been transformed if
+         * the built agent was registered before they were loaded. The created {@link ClassFileTransformer} is registered
+         * for applying retransformations.
+         * </p>
+         * <p>
+         * Using this strategy, a retransformation is applied in single class chunks. This means that a single illegal
+         * retransformation of a class does not cause the failure of any other redefinition. Chunking the retransformation does
+         * however imply a performance penalty. If at least one retransformation has failed, applying this strategy still causes an
+         * exception to be thrown as a result of the application.
+         * </p>
+         * <p>
+         * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
+         * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
+         * the constrains given by this type strategy.
+         * </p>
+         */
+        RETRANSFORMATION_CHUNKED {
+            @Override
+            protected boolean isRetransforming(Instrumentation instrumentation) {
+                return RETRANSFORMATION.isRetransforming(instrumentation);
+            }
+
+            @Override
+            protected Collector makeCollector(Default.Transformation transformation) {
+                return new Collector.ForRetransformation.Chunked(transformation);
             }
         };
 
@@ -2666,17 +2734,17 @@ public interface AgentBuilder {
             /**
              * A collector that applies a <b>redefinition</b> of already loaded classes.
              */
-            class ForRedefinition implements Collector {
+            abstract class ForRedefinition implements Collector {
 
                 /**
                  * The transformation of the built agent.
                  */
-                private final Default.Transformation transformation;
+                protected final Default.Transformation transformation;
 
                 /**
                  * A list of already collected redefinitions.
                  */
-                private final List<Entry> entries;
+                protected final List<Entry> entries;
 
                 /**
                  * Creates a new collector for a redefinition.
@@ -2713,17 +2781,85 @@ public interface AgentBuilder {
                             }
                         }
                     }
-                    if (!classDefinitions.isEmpty()) {
-                        instrumentation.redefineClasses(classDefinitions.toArray(new ClassDefinition[classDefinitions.size()]));
+                    doApply(instrumentation, classDefinitions);
+                }
+
+                /**
+                 * Applies a redefinition.
+                 *
+                 * @param instrumentation  The instrumentation instance to use.
+                 * @param classDefinitions The class definitions to apply.
+                 * @throws UnmodifiableClassException If a class is not modifiable.
+                 * @throws ClassNotFoundException     If a class could not be found.
+                 */
+                protected abstract void doApply(Instrumentation instrumentation, List<ClassDefinition> classDefinitions) throws UnmodifiableClassException, ClassNotFoundException;
+
+                /**
+                 * A collector that applies a redefinition and applies all redefinitions as a single transformation request.
+                 */
+                protected static class Cumulative extends ForRedefinition {
+
+                    /**
+                     * Creates a new cumulative redefinition collector.
+                     *
+                     * @param transformation The transformation of the built agent.
+                     */
+                    protected Cumulative(Default.Transformation transformation) {
+                        super(transformation);
+                    }
+
+                    @Override
+                    protected void doApply(Instrumentation instrumentation, List<ClassDefinition> classDefinitions) throws UnmodifiableClassException, ClassNotFoundException {
+                        if (!classDefinitions.isEmpty()) {
+                            instrumentation.redefineClasses(classDefinitions.toArray(new ClassDefinition[classDefinitions.size()]));
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition.Cumulative{" +
+                                "transformation=" + transformation +
+                                ", entries=" + entries +
+                                '}';
                     }
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition{" +
-                            "transformation=" + transformation +
-                            ", entries=" + entries +
-                            '}';
+                /**
+                 * A collector that applies a redefinition and applies all redefinitions as a separate transformation request per class.
+                 */
+                protected static class Chunked extends ForRedefinition {
+
+                    /**
+                     * Creates a new chunked redefinition collector.
+                     *
+                     * @param transformation The transformation of the built agent.
+                     */
+                    protected Chunked(Default.Transformation transformation) {
+                        super(transformation);
+                    }
+
+                    @Override
+                    protected void doApply(Instrumentation instrumentation, List<ClassDefinition> classDefinitions) throws UnmodifiableClassException, ClassNotFoundException {
+                        Map<Class<?>, Exception> exceptions = new HashMap<Class<?>, Exception>();
+                        for (ClassDefinition classDefinition : classDefinitions) {
+                            try {
+                                instrumentation.redefineClasses(classDefinition);
+                            } catch (Exception exception) {
+                                exceptions.put(classDefinition.getDefinitionClass(), exception);
+                            }
+                        }
+                        if (!exceptions.isEmpty()) {
+                            throw new IllegalStateException("Could not retransform at least one class: " + exceptions);
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition.Chunked{" +
+                                "transformation=" + transformation +
+                                ", entries=" + entries +
+                                '}';
+                    }
                 }
 
                 /**
@@ -2790,17 +2926,17 @@ public interface AgentBuilder {
             /**
              * A collector that applies a <b>retransformation</b> of already loaded classes.
              */
-            class ForRetransformation implements Collector {
+            abstract class ForRetransformation implements Collector {
 
                 /**
                  * The transformation defined by the built agent.
                  */
-                private final Default.Transformation transformation;
+                protected final Default.Transformation transformation;
 
                 /**
                  * The types that were collected for retransformation.
                  */
-                private final List<Class<?>> types;
+                protected final List<Class<?>> types;
 
                 /**
                  * Creates a new collector for a retransformation.
@@ -2822,19 +2958,72 @@ public interface AgentBuilder {
                             ignoredTypeMatcher).getSort().isAlive() && types.add(type);
                 }
 
-                @Override
-                public void apply(Instrumentation instrumentation, TypeLocator typeLocator, Listener listener) throws UnmodifiableClassException {
-                    if (!types.isEmpty()) {
-                        instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
+                /**
+                 * A collector that applies a retransformation and applies all redefinitions as a single transformation request.
+                 */
+                protected static class Cumulative extends ForRetransformation {
+
+                    /**
+                     * Creates a new cumulative retransformation collector.
+                     *
+                     * @param transformation The transformation of the built agent.
+                     */
+                    protected Cumulative(Default.Transformation transformation) {
+                        super(transformation);
+                    }
+
+                    @Override
+                    public void apply(Instrumentation instrumentation, TypeLocator typeLocator, Listener listener) throws UnmodifiableClassException {
+                        if (!types.isEmpty()) {
+                            instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.RedefinitionStrategy.Collector.ForRetransformation.Cumulative{" +
+                                "transformation=" + transformation +
+                                ", types=" + types +
+                                '}';
                     }
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Collector.ForRetransformation{" +
-                            "transformation=" + transformation +
-                            ", types=" + types +
-                            '}';
+                /**
+                 * A collector that applies a retransformation and applies all redefinitions as a chunked transformation request.
+                 */
+                protected static class Chunked extends ForRetransformation {
+
+                    /**
+                     * Creates a new chunked retransformation collector.
+                     *
+                     * @param transformation The transformation of the built agent.
+                     */
+                    protected Chunked(Default.Transformation transformation) {
+                        super(transformation);
+                    }
+
+                    @Override
+                    public void apply(Instrumentation instrumentation, TypeLocator typeLocator, Listener listener) throws UnmodifiableClassException {
+                        Map<Class<?>, Exception> exceptions = new HashMap<Class<?>, Exception>();
+                        for (Class<?> type : types) {
+                            try {
+                                instrumentation.retransformClasses(type);
+                            } catch (Exception exception) {
+                                exceptions.put(type, exception);
+                            }
+                        }
+                        if (!exceptions.isEmpty()) {
+                            throw new IllegalStateException("Could not retransform at least one class: " + exceptions);
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.RedefinitionStrategy.Collector.ForRetransformation.Chunked{" +
+                                "transformation=" + transformation +
+                                ", types=" + types +
+                                '}';
+                    }
                 }
             }
         }
