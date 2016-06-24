@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 24. June 2016: version 1.4.5
+
+- Added `InstallationStrategy` to `AgentBuilder` that allows customization of error handling.
+- Added *chunked* redefinition and retransformation strategies.
+
 ### 23. June 2016: version 1.4.4
 
 - Added `net.bytebuddy` qualifier when logging.
