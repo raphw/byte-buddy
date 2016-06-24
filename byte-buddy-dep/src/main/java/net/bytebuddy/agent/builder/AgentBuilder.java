@@ -174,6 +174,14 @@ public interface AgentBuilder {
     AgentBuilder with(DescriptionStrategy descriptionStrategy);
 
     /**
+     * Specifies an installation strategy that this agent builder applies upon installing an agent.
+     *
+     * @param installationStrategy The installation strategy to be used.
+     * @return A new agent builder that applies the supplied installation strategy.
+     */
+    AgentBuilder with(InstallationStrategy installationStrategy);
+
+    /**
      * Enables class injection of auxiliary classes into the bootstrap class loader.
      *
      * @param instrumentation The instrumentation instance that is used for appending jar files to the
@@ -540,9 +548,15 @@ public interface AgentBuilder {
     ClassFileTransformer makeRaw();
 
     /**
+     * <p>
      * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
      * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
      * the installation also causes all loaded types to be retransformed.
+     * </p>
+     * <p>
+     * If installing the created class file transformer causes an exception to be thrown, the consequences of this
+     * exception are determined by the {@link InstallationStrategy} of this builder.
+     * </p>
      *
      * @param instrumentation The instrumentation on which this agent builder's configuration is to be installed.
      * @return The installed class file transformer.
@@ -554,6 +568,7 @@ public interface AgentBuilder {
      * this agent builder with the Byte Buddy-agent which must be installed prior to calling this method.
      *
      * @return The installed class file transformer.
+     * @see AgentBuilder#installOn(Instrumentation)
      */
     ClassFileTransformer installOnByteBuddyAgent();
 
@@ -2531,6 +2546,56 @@ public interface AgentBuilder {
     }
 
     /**
+     * An installation strategy determines the reaction to a raised exception after the registration of a {@link ClassFileTransformer}.
+     */
+    interface InstallationStrategy {
+
+        /**
+         * Handles an error that occured after registering a class file transformer during installation.
+         *
+         * @param instrumentation      The instrumentation onto which the class file transformer was registered.
+         * @param classFileTransformer The class file transformer that was registered.
+         * @param throwable            The error that occurred.
+         * @return The class file transformer to return when an error occurred.
+         */
+        ClassFileTransformer onError(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, Throwable throwable);
+
+        /**
+         * Default implementations of installation strategies.
+         */
+        enum Default implements InstallationStrategy {
+
+            /**
+             * An installation strategy that unregisters the transformer and propagates the exception. Using this strategy does not guarantee
+             * that the registered transformer was not applied to any class, nor does it attempt to revert previous transformations. It only
+             * guarantees that the class file transformer is unregistered and does no longer apply after this method returns.
+             */
+            ESCALATING {
+                @Override
+                public ClassFileTransformer onError(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, Throwable throwable) {
+                    instrumentation.removeTransformer(classFileTransformer);
+                    throw new IllegalStateException("Could not install class file transformer", throwable);
+                }
+            },
+
+            /**
+             * An installation strategy that retains the class file transformer and suppresses the error.
+             */
+            SUPPRESSING {
+                @Override
+                public ClassFileTransformer onError(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, Throwable throwable) {
+                    return classFileTransformer;
+                }
+            };
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.InstallationStrategy.Default." + name();
+            }
+        }
+    }
+
+    /**
      * A redefinition strategy regulates how already loaded classes are modified by a built agent.
      */
     enum RedefinitionStrategy {
@@ -4462,6 +4527,11 @@ public interface AgentBuilder {
         private final DescriptionStrategy descriptionStrategy;
 
         /**
+         * The installation strategy to use.
+         */
+        private final InstallationStrategy installationStrategy;
+
+        /**
          * Identifies types that should not be instrumented.
          */
         private final RawMatcher ignoredTypeMatcher;
@@ -4472,8 +4542,7 @@ public interface AgentBuilder {
         private final Transformation transformation;
 
         /**
-         * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for
-         * creating classes.
+         * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for creating classes.
          *
          * @see Default#Default(ByteBuddy)
          */
@@ -4501,6 +4570,7 @@ public interface AgentBuilder {
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
                     DescriptionStrategy.Default.HYBRID,
+                    InstallationStrategy.Default.ESCALATING,
                     new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()), new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").<TypeDescription>or(isSynthetic()), any(), any())),
                     Transformation.Ignored.INSTANCE);
         }
@@ -4520,6 +4590,7 @@ public interface AgentBuilder {
          * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the
          *                                      instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
+         * @param installationStrategy          The installation strategy to use.
          * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
          * @param transformation                The transformation object for handling type transformations.
          */
@@ -4534,6 +4605,7 @@ public interface AgentBuilder {
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           DescriptionStrategy descriptionStrategy,
+                          InstallationStrategy installationStrategy,
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
@@ -4547,6 +4619,7 @@ public interface AgentBuilder {
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.descriptionStrategy = descriptionStrategy;
+            this.installationStrategy = installationStrategy;
             this.ignoredTypeMatcher = ignoredTypeMatcher;
             this.transformation = transformation;
         }
@@ -4564,6 +4637,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4581,6 +4655,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4598,6 +4673,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4615,6 +4691,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4632,6 +4709,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4649,6 +4727,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4666,6 +4745,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4683,6 +4763,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4700,6 +4781,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4717,6 +4799,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4734,6 +4817,25 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder with(InstallationStrategy installationStrategy) {
+            return new Default(byteBuddy,
+                    typeLocator,
+                    typeStrategy,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4751,6 +4853,7 @@ public interface AgentBuilder {
                     new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4768,6 +4871,7 @@ public interface AgentBuilder {
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4785,6 +4889,7 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
+                    installationStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4886,20 +4991,32 @@ public interface AgentBuilder {
         public ClassFileTransformer installOn(Instrumentation instrumentation) {
             ClassFileTransformer classFileTransformer = makeRaw();
             instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming(instrumentation));
-            if (nativeMethodStrategy.isEnabled(instrumentation)) {
-                instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
-            }
-            lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
-            if (redefinitionStrategy.isEnabled()) {
-                RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
-                for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                    TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator);
-                    JavaModule module = JavaModule.ofType(type);
-                    try {
-                        if (!instrumentation.isModifiableClass(type) || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
+            try {
+                if (nativeMethodStrategy.isEnabled(instrumentation)) {
+                    instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
+                }
+                lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
+                if (redefinitionStrategy.isEnabled()) {
+                    RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
+                    for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                        TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator);
+                        JavaModule module = JavaModule.ofType(type);
+                        try {
+                            if (!instrumentation.isModifiableClass(type) || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
+                                try {
+                                    try {
+                                        listener.onIgnored(typeDescription, type.getClassLoader(), module);
+                                    } finally {
+                                        listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
+                                    }
+                                } catch (Throwable ignored) {
+                                    // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                                }
+                            }
+                        } catch (Throwable throwable) {
                             try {
                                 try {
-                                    listener.onIgnored(typeDescription, type.getClassLoader(), module);
+                                    listener.onError(typeDescription.getName(), type.getClassLoader(), module, throwable);
                                 } finally {
                                     listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
                                 }
@@ -4907,27 +5024,13 @@ public interface AgentBuilder {
                                 // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                             }
                         }
-                    } catch (Throwable throwable) {
-                        try {
-                            try {
-                                listener.onError(typeDescription.getName(), type.getClassLoader(), module, throwable);
-                            } finally {
-                                listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
-                            }
-                        } catch (Throwable ignored) {
-                            // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
-                        }
                     }
-                }
-                try {
                     collector.apply(instrumentation, typeLocator, listener);
-                } catch (UnmodifiableClassException exception) {
-                    throw new IllegalStateException("Cannot modify at least one class: " + collector, exception);
-                } catch (ClassNotFoundException exception) {
-                    throw new IllegalStateException("Cannot find at least one class: " + collector, exception);
                 }
+                return classFileTransformer;
+            } catch (Throwable throwable) {
+                return installationStrategy.onError(instrumentation, classFileTransformer, throwable);
             }
-            return classFileTransformer;
         }
 
         @Override
@@ -4963,7 +5066,8 @@ public interface AgentBuilder {
                     && redefinitionStrategy == aDefault.redefinitionStrategy
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
                     && lambdaInstrumentationStrategy.equals(aDefault.lambdaInstrumentationStrategy)
-                    && descriptionStrategy == aDefault.descriptionStrategy
+                    && descriptionStrategy.equals(aDefault.descriptionStrategy)
+                    && installationStrategy.equals(aDefault.installationStrategy)
                     && ignoredTypeMatcher.equals(aDefault.ignoredTypeMatcher)
                     && transformation.equals(aDefault.transformation);
         }
@@ -4981,6 +5085,7 @@ public interface AgentBuilder {
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
             result = 31 * result + lambdaInstrumentationStrategy.hashCode();
             result = 31 * result + descriptionStrategy.hashCode();
+            result = 31 * result + installationStrategy.hashCode();
             result = 31 * result + ignoredTypeMatcher.hashCode();
             result = 31 * result + transformation.hashCode();
             return result;
@@ -5000,6 +5105,7 @@ public interface AgentBuilder {
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
                     ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
                     ", descriptionStrategy=" + descriptionStrategy +
+                    ", installationStrategy=" + installationStrategy +
                     ", ignoredTypeMatcher=" + ignoredTypeMatcher +
                     ", transformation=" + transformation +
                     '}';
@@ -6084,7 +6190,7 @@ public interface AgentBuilder {
                         && listener.equals(that.listener)
                         && nativeMethodStrategy.equals(that.nativeMethodStrategy)
                         && bootstrapInjectionStrategy.equals(that.bootstrapInjectionStrategy)
-                        && descriptionStrategy == that.descriptionStrategy
+                        && descriptionStrategy.equals(that.descriptionStrategy)
                         && accessControlContext.equals(that.accessControlContext)
                         && ignoredTypeMatcher.equals(that.ignoredTypeMatcher)
                         && transformation.equals(that.transformation);
@@ -6335,6 +6441,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder with(InstallationStrategy installationStrategy) {
+                return materialize().with(installationStrategy);
+            }
+
+            @Override
             public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
                 return materialize().enableBootstrapInjection(instrumentation, folder);
             }
@@ -6482,6 +6593,7 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
+                        installationStrategy,
                         rawMatcher,
                         transformation);
             }
@@ -6576,6 +6688,7 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
+                        installationStrategy,
                         ignoredTypeMatcher,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
             }

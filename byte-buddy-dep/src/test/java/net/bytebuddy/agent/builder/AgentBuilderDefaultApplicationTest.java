@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
 
+import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -219,6 +220,18 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    public void testEmptyRedefinition() throws Exception {
+        ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
+                .with(typeLocator)
+                .ignore(any())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .installOnByteBuddyAgent());
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testChunkedRedefinition() throws Exception {
         // As documented, the class loading type locator is not applicable for redefinitions.
         if (typeLocator.equals(AgentBuilder.TypeLocator.ClassLoading.INSTANCE)) {
@@ -242,6 +255,18 @@ public class AgentBuilderDefaultApplicationTest {
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    public void testEmptyChunkedRedefinition() throws Exception {
+        ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
+                .with(typeLocator)
+                .ignore(any())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION_CHUNKED)
+                .installOnByteBuddyAgent());
     }
 
     @Test
@@ -297,6 +322,18 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    public void testEmptyRetransformation() throws Exception {
+        ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
+                .with(typeLocator)
+                .ignore(any())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .installOnByteBuddyAgent());
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testChunkedRetransformation() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is whz an external class is used.
@@ -316,6 +353,18 @@ public class AgentBuilderDefaultApplicationTest {
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    public void testChunkedEmptyRetransformation() throws Exception {
+        ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
+                .with(typeLocator)
+                .ignore(any())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION_CHUNKED)
+                .installOnByteBuddyAgent());
     }
 
     @Test
