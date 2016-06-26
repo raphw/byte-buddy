@@ -6,6 +6,7 @@ import net.bytebuddy.utility.StreamDrainer;
 import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.security.AccessControlContext;
 import java.security.AccessController;
@@ -304,6 +305,18 @@ public interface ClassFileLocator {
 
         @Override
         public Resolution locate(String typeName) throws IOException {
+            return locate(classLoader, typeName);
+        }
+
+        /**
+         * Locates the class file for the supplied type by requesting a resource from the class loader.
+         *
+         * @param classLoader The class loader to query for the resource.
+         * @param typeName    The name of the type for which to locate a class file.
+         * @return A resolution for the class file.
+         * @throws IOException If reading the class file causes an exception.
+         */
+        protected static Resolution locate(ClassLoader classLoader, String typeName) throws IOException {
             InputStream inputStream = classLoader.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (inputStream != null) {
                 try {
@@ -332,6 +345,73 @@ public interface ClassFileLocator {
             return "ClassFileLocator.ForClassLoader{" +
                     "classLoader=" + classLoader +
                     '}';
+        }
+
+        /**
+         * A class file locator that queries a class loader for binary representations of class files.
+         * The class loader is only weakly referenced.
+         */
+        public static class WeaklyReferenced extends WeakReference<ClassLoader> implements ClassFileLocator {
+
+            /**
+             * The represented class loader's hash code.
+             */
+            private final int hashCode;
+
+            /**
+             * Creates a class file locator for a class loader that is weakly referenced.
+             *
+             * @param classLoader The class loader to represent.
+             */
+            protected WeaklyReferenced(ClassLoader classLoader) {
+                super(classLoader);
+                hashCode = System.identityHashCode(classLoader);
+            }
+
+            /**
+             * Creates a class file locator for a given class loader. If the class loader is not the bootstrap
+             * class loader or the system class loader which cannot be collected, the class loader is only weakly
+             * referenced.
+             *
+             * @param classLoader The class loader to be used. If this class loader represents the bootstrap class
+             *                    loader which is represented by the {@code null} value, this system class loader
+             *                    is used instead.
+             * @return A corresponding source locator.
+             */
+            public static ClassFileLocator of(ClassLoader classLoader) {
+                return classLoader == null || classLoader == ClassLoader.getSystemClassLoader()
+                        ? ForClassLoader.of(classLoader)
+                        : new WeaklyReferenced(classLoader);
+            }
+
+            @Override
+            public Resolution locate(String typeName) throws IOException {
+                ClassLoader classLoader = get();
+                return classLoader == null
+                        ? new Resolution.Illegal(typeName)
+                        : ForClassLoader.locate(classLoader, typeName);
+            }
+
+            @Override
+            public int hashCode() {
+                return hashCode;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                WeaklyReferenced that = (WeaklyReferenced) object;
+                ClassLoader classLoader = that.get();
+                return classLoader != null && get() == classLoader;
+            }
+
+            @Override
+            public String toString() {
+                return "ClassFileLocator.ForClassLoader.WeaklyReferenced{" +
+                        "classLoader=" + get() +
+                        '}';
+            }
         }
     }
 
