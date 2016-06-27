@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -24,6 +25,9 @@ public class AgentBuilderDescriptionStrategyTest {
     private AgentBuilder.TypeLocator typeLocator;
 
     @Mock
+    private AgentBuilder.LocationStrategy locationStrategy;
+
+    @Mock
     private TypePool typePool;
 
     @Mock
@@ -34,6 +38,7 @@ public class AgentBuilderDescriptionStrategyTest {
         ClassFileLocator classFileLocator = ClassFileLocator.ForClassLoader.of(Object.class.getClassLoader());
         when(typeLocator.typePool(classFileLocator, Object.class.getClassLoader())).thenReturn(typePool);
         when(typePool.describe(Object.class.getName())).thenReturn(new TypePool.Resolution.Simple(typeDescription));
+        when(locationStrategy.classFileLocator(Object.class.getClassLoader(), JavaModule.ofType(Object.class))).thenReturn(classFileLocator);
         TypeDescription typeDescription = AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class.getName(),
                 Object.class,
                 typeLocator,
@@ -70,15 +75,16 @@ public class AgentBuilderDescriptionStrategyTest {
 
     @Test
     public void testLoadedDescriptionHybrid() throws Exception {
-        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, typeLocator), is(TypeDescription.OBJECT));
-        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, typeLocator), instanceOf(TypeDescription.ForLoadedType.class));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, typeLocator, locationStrategy), is(TypeDescription.OBJECT));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, typeLocator, locationStrategy), instanceOf(TypeDescription.ForLoadedType.class));
     }
 
     @Test
     public void testLoadedDescriptionPoolOnly() throws Exception {
         when(typeLocator.typePool(ClassFileLocator.ForClassLoader.of(Object.class.getClassLoader()), Object.class.getClassLoader())).thenReturn(typePool);
         when(typePool.describe(Object.class.getName())).thenReturn(new TypePool.Resolution.Simple(typeDescription));
-        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.apply(Object.class, typeLocator), is(typeDescription));
+        when(locationStrategy.classFileLocator(Object.class.getClassLoader(), JavaModule.ofType(Object.class))).thenReturn(ClassFileLocator.ForClassLoader.of(Object.class.getClassLoader()));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.apply(Object.class, typeLocator, locationStrategy), is(typeDescription));
     }
 
     @Test

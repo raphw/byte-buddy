@@ -77,6 +77,9 @@ public class AgentBuilderDefaultTest {
     private AgentBuilder.TypeStrategy typeStrategy;
 
     @Mock
+    private AgentBuilder.LocationStrategy locationStrategy;
+
+    @Mock
     private AgentBuilder.InitializationStrategy initializationStrategy;
 
     @Mock
@@ -1234,6 +1237,7 @@ public class AgentBuilderDefaultTest {
         assertThat(new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
                 typeLocator,
                 typeStrategy,
+                locationStrategy,
                 listener,
                 mock(AgentBuilder.Default.NativeMethodStrategy.class),
                 accessControlContext,

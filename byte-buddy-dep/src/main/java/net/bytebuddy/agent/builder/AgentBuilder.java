@@ -98,12 +98,20 @@ public interface AgentBuilder {
     AgentBuilder with(Listener listener);
 
     /**
-     * Defines the use of the given type locator for locating binary data to given class names.
+     * Defines the use of the given type locator for locating a {@link TypeDescription} for an instrumented type.
      *
      * @param typeLocator The type locator to use.
      * @return A new instance of this agent builder which uses the given type locator for looking up class files.
      */
     AgentBuilder with(TypeLocator typeLocator);
+
+    /**
+     * Defines the use of the given location strategy for locating binary data to given class names.
+     *
+     * @param locationStrategy The location strategy to use.
+     * @return A new instance of this agent builder which uses the given location strategy for looking up class files.
+     */
+    AgentBuilder with(LocationStrategy locationStrategy);
 
     /**
      * Defines how types should be transformed, e.g. if they should be rebased or redefined by the created agent.
@@ -1168,7 +1176,7 @@ public interface AgentBuilder {
 
         /**
          * A default implementation of a {@link TypeLocator} that is using a {@link net.bytebuddy.pool.TypePool.Default} with a
-         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and a {@link net.bytebuddy.dynamic.ClassFileLocator.ForClassLoader}.
+         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple}.
          */
         enum Default implements TypeLocator {
 
@@ -1215,8 +1223,8 @@ public interface AgentBuilder {
 
         /**
          * An implementation of a {@link TypeLocator} that is using a {@link net.bytebuddy.pool.TypePool.Default} with a
-         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and a {@link net.bytebuddy.dynamic.ClassFileLocator.ForClassLoader}.
-         * Additionally, this type locator falls back to class loadings for non-locatable class files.
+         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple}. Additionally, this type locator falls back to class
+         * loadings for non-locatable class files.
          */
         enum ClassLoading implements TypeLocator {
 
@@ -2481,11 +2489,12 @@ public interface AgentBuilder {
         /**
          * Describes the given type.
          *
-         * @param type        The loaded type to be described.
-         * @param typeLocator The type locator to use.
+         * @param type             The loaded type to be described.
+         * @param typeLocator      The type locator to use.
+         * @param locationStrategy The location strategy to use.
          * @return An appropriate type description.
          */
-        TypeDescription apply(Class<?> type, TypeLocator typeLocator);
+        TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy);
 
         /**
          * Default implementations of a {@link DescriptionStrategy}.
@@ -2514,7 +2523,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public TypeDescription apply(Class<?> type, TypeLocator typeLocator) {
+                public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy) {
                     return new TypeDescription.ForLoadedType(type);
                 }
             },
@@ -2543,8 +2552,8 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public TypeDescription apply(Class<?> type, TypeLocator typeLocator) {
-                    return typeLocator.typePool(ClassFileLocator.ForClassLoader.of(type.getClassLoader()), type.getClassLoader()).describe(TypeDescription.ForLoadedType.getName(type)).resolve();
+                public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy) {
+                    return typeLocator.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader()).describe(TypeDescription.ForLoadedType.getName(type)).resolve();
                 }
             };
 
@@ -2606,6 +2615,53 @@ public interface AgentBuilder {
             @Override
             public String toString() {
                 return "AgentBuilder.InstallationStrategy.Default." + name();
+            }
+        }
+    }
+
+    /**
+     * A strategy for creating a {@link ClassFileLocator} when instrumenting a type.
+     */
+    interface LocationStrategy {
+
+        /**
+         * Creates a class file locator for a given class loader and module combination.
+         *
+         * @param classLoader The class loader that is loading an instrumented type. Might be {@code null} to represent the bootstrap class loader.
+         * @param module      The type's module or {@code null} if Java modules are not supported on the current VM.
+         * @return The class file locator to use.
+         */
+        ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module);
+
+        /**
+         * A location strategy that locates class files by querying an instrumented type's {@link ClassLoader}.
+         */
+        enum ForClassLoader implements LocationStrategy {
+
+            /**
+             * A location strategy that keeps a strong reference to the class loader the created class file locator represents.
+             */
+            STRONG {
+                @Override
+                public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
+                    return ClassFileLocator.ForClassLoader.of(classLoader);
+                }
+            },
+
+            /**
+             * A location strategy that keeps a weak reference to the class loader the created class file locator represents.
+             * As a consequence, any returned class file locator stops working once the represented class loader is garbage collected.
+             */
+            WEAK {
+                @Override
+                public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
+                    return ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader);
+                }
+            };
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.LocationStrategy.ForClassLoader." + name();
             }
         }
     }
@@ -2801,14 +2857,16 @@ public interface AgentBuilder {
             /**
              * Applies this collector.
              *
-             * @param instrumentation The instrumentation instance to apply the transformation for.
-             * @param typeLocator     The type locator to use.
-             * @param listener        the listener to notify.
+             * @param instrumentation  The instrumentation instance to apply the transformation for.
+             * @param typeLocator      The type locator to use.
+             * @param locationStrategy The location strategy to use.
+             * @param listener         the listener to notify.
              * @throws UnmodifiableClassException If a class is not modifiable.
              * @throws ClassNotFoundException     If a class could not be found.
              */
             void apply(Instrumentation instrumentation,
                        TypeLocator typeLocator,
+                       LocationStrategy locationStrategy,
                        Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
 
             /**
@@ -2847,13 +2905,16 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void apply(Instrumentation instrumentation, TypeLocator typeLocator, Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
+                public void apply(Instrumentation instrumentation,
+                                  TypeLocator typeLocator,
+                                  LocationStrategy locationStrategy,
+                                  Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
                     for (Entry entry : entries) {
-                        JavaModule module = JavaModule.ofType(entry.getType());
                         try {
-                            classDefinitions.add(entry.resolve(ClassFileLocator.ForClassLoader.of(entry.getType().getClassLoader())));
+                            classDefinitions.add(entry.resolve(locationStrategy));
                         } catch (Throwable throwable) {
+                            JavaModule module = JavaModule.ofType(entry.getType());
                             try {
                                 listener.onError(TypeDescription.ForLoadedType.getName(entry.getType()), entry.getType().getClassLoader(), module, throwable);
                             } finally {
@@ -2973,12 +3034,12 @@ public interface AgentBuilder {
                     /**
                      * Resolves the entry to a class definition.
                      *
-                     * @param classFileLocator The class file locator for locating the redefine type's class file.
+                     * @param locationStrategy A strategy for creating a class file locator.
                      * @return A class definition representing the redefined class.
                      * @throws IOException If an IO exception occurs.
                      */
-                    protected ClassDefinition resolve(ClassFileLocator classFileLocator) throws IOException {
-                        return new ClassDefinition(type, classFileLocator.locate(TypeDescription.ForLoadedType.getName(type)).resolve());
+                    protected ClassDefinition resolve(LocationStrategy locationStrategy) throws IOException {
+                        return new ClassDefinition(type, locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)).locate(TypeDescription.ForLoadedType.getName(type)).resolve());
                     }
 
                     @Override
@@ -3053,7 +3114,10 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    public void apply(Instrumentation instrumentation, TypeLocator typeLocator, Listener listener) throws UnmodifiableClassException {
+                    public void apply(Instrumentation instrumentation,
+                                      TypeLocator typeLocator,
+                                      LocationStrategy locationStrategy,
+                                      Listener listener) throws UnmodifiableClassException {
                         if (!types.isEmpty()) {
                             instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
                         }
@@ -3083,7 +3147,10 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    public void apply(Instrumentation instrumentation, TypeLocator typeLocator, Listener listener) throws UnmodifiableClassException {
+                    public void apply(Instrumentation instrumentation,
+                                      TypeLocator typeLocator,
+                                      LocationStrategy locationStrategy,
+                                      Listener listener) throws UnmodifiableClassException {
                         Map<Class<?>, Exception> exceptions = new HashMap<Class<?>, Exception>();
                         for (Class<?> type : types) {
                             try {
@@ -4501,6 +4568,11 @@ public interface AgentBuilder {
         private final TypeStrategy typeStrategy;
 
         /**
+         * The location strategy to use.
+         */
+        private final LocationStrategy locationStrategy;
+
+        /**
          * The listener to notify on transformations.
          */
         private final Listener listener;
@@ -4531,7 +4603,7 @@ public interface AgentBuilder {
         private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
         /**
-         * A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the instrumentation
+         * A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the instrumentation
          * of classes that represent lambda expressions.
          */
         private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
@@ -4577,6 +4649,7 @@ public interface AgentBuilder {
             this(byteBuddy,
                     TypeLocator.Default.FAST,
                     TypeStrategy.Default.REBASE,
+                    LocationStrategy.ForClassLoader.STRONG,
                     Listener.NoOp.INSTANCE,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     AccessController.getContext(),
@@ -4596,13 +4669,14 @@ public interface AgentBuilder {
          * @param byteBuddy                     The Byte Buddy instance to be used.
          * @param typeLocator                   The type locator to use.
          * @param typeStrategy                  The definition handler to use.
+         * @param locationStrategy              The location strategy to use.
          * @param listener                      The listener to notify on transformations.
          * @param nativeMethodStrategy          The native method strategy to apply.
          * @param accessControlContext          The access control context to use for loading classes.
          * @param initializationStrategy        The initialization strategy to use for transformed types.
          * @param redefinitionStrategy          The redefinition strategy to apply.
          * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
-         * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the
+         * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
          *                                      instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
          * @param installationStrategy          The installation strategy to use.
@@ -4612,6 +4686,7 @@ public interface AgentBuilder {
         protected Default(ByteBuddy byteBuddy,
                           TypeLocator typeLocator,
                           TypeStrategy typeStrategy,
+                          LocationStrategy locationStrategy,
                           Listener listener,
                           NativeMethodStrategy nativeMethodStrategy,
                           AccessControlContext accessControlContext,
@@ -4626,6 +4701,7 @@ public interface AgentBuilder {
             this.byteBuddy = byteBuddy;
             this.typeLocator = typeLocator;
             this.typeStrategy = typeStrategy;
+            this.locationStrategy = locationStrategy;
             this.listener = listener;
             this.nativeMethodStrategy = nativeMethodStrategy;
             this.accessControlContext = accessControlContext;
@@ -4644,6 +4720,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4662,6 +4739,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     new Listener.Compound(this.listener, listener),
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4680,6 +4758,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4698,6 +4777,26 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    installationStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder with(LocationStrategy locationStrategy) {
+            return new Default(byteBuddy,
+                    typeLocator,
+                    typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4716,6 +4815,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     NativeMethodStrategy.ForPrefix.of(prefix),
                     accessControlContext,
@@ -4734,6 +4834,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     accessControlContext,
@@ -4752,6 +4853,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4770,6 +4872,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4788,6 +4891,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4806,6 +4910,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4824,6 +4929,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4842,6 +4948,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4860,6 +4967,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4878,6 +4986,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4896,6 +5005,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
                     typeLocator,
                     TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -4992,14 +5102,14 @@ public interface AgentBuilder {
             return ExecutingTransformer.FACTORY.make(byteBuddy,
                     typeLocator,
                     typeStrategy,
+                    locationStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
                     bootstrapInjectionStrategy,
                     descriptionStrategy,
-                    ignoredTypeMatcher,
-                    transformation);
+                    ignoredTypeMatcher, transformation);
         }
 
         @Override
@@ -5014,7 +5124,7 @@ public interface AgentBuilder {
                 if (redefinitionStrategy.isEnabled()) {
                     RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                     for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                        TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator);
+                        TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator, locationStrategy);
                         JavaModule module = JavaModule.ofType(type);
                         try {
                             if (!instrumentation.isModifiableClass(type) || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
@@ -5040,7 +5150,7 @@ public interface AgentBuilder {
                             }
                         }
                     }
-                    collector.apply(instrumentation, typeLocator, listener);
+                    collector.apply(instrumentation, typeLocator, locationStrategy, listener);
                 }
                 return classFileTransformer;
             } catch (Throwable throwable) {
@@ -5076,6 +5186,7 @@ public interface AgentBuilder {
                     && listener.equals(aDefault.listener)
                     && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
                     && typeStrategy.equals(aDefault.typeStrategy)
+                    && locationStrategy.equals(aDefault.locationStrategy)
                     && accessControlContext.equals(aDefault.accessControlContext)
                     && initializationStrategy == aDefault.initializationStrategy
                     && redefinitionStrategy == aDefault.redefinitionStrategy
@@ -5093,6 +5204,7 @@ public interface AgentBuilder {
             result = 31 * result + typeLocator.hashCode();
             result = 31 * result + listener.hashCode();
             result = 31 * result + typeStrategy.hashCode();
+            result = 31 * result + locationStrategy.hashCode();
             result = 31 * result + nativeMethodStrategy.hashCode();
             result = 31 * result + accessControlContext.hashCode();
             result = 31 * result + initializationStrategy.hashCode();
@@ -5112,6 +5224,7 @@ public interface AgentBuilder {
                     "byteBuddy=" + byteBuddy +
                     ", typeLocator=" + typeLocator +
                     ", typeStrategy=" + typeStrategy +
+                    ", locationStrategy=" + locationStrategy +
                     ", listener=" + listener +
                     ", nativeMethodStrategy=" + nativeMethodStrategy +
                     ", accessControlContext=" + accessControlContext +
@@ -5991,6 +6104,7 @@ public interface AgentBuilder {
                 try {
                     factory = new Factory.ForJava9CapableVm(new ByteBuddy()
                             .subclass(ExecutingTransformer.class)
+                            .name(ExecutingTransformer.class.getName() + "$ByteBuddy$Java9Support")
                             .method(named("transform").and(takesArgument(0, JavaType.MODULE.getTypeStub())))
                             .intercept(MethodCall.invoke(ExecutingTransformer.class.getDeclaredMethod("transform",
                                     Object.class,
@@ -6004,6 +6118,7 @@ public interface AgentBuilder {
                             .getDeclaredConstructor(ByteBuddy.class,
                                     TypeLocator.class,
                                     TypeStrategy.class,
+                                    LocationStrategy.class,
                                     Listener.class,
                                     NativeMethodStrategy.class,
                                     AccessControlContext.class,
@@ -6066,6 +6181,11 @@ public interface AgentBuilder {
             private final DescriptionStrategy descriptionStrategy;
 
             /**
+             * The location strategy to use.
+             */
+            private final LocationStrategy locationStrategy;
+
+            /**
              * Identifies types that should not be instrumented.
              */
             private final RawMatcher ignoredTypeMatcher;
@@ -6081,6 +6201,7 @@ public interface AgentBuilder {
              * @param byteBuddy                  The Byte Buddy instance to be used.
              * @param typeLocator                The type locator to use.
              * @param typeStrategy               The definition handler to use.
+             * @param locationStrategy           The location strategy to use.
              * @param listener                   The listener to notify on transformations.
              * @param nativeMethodStrategy       The native method strategy to apply.
              * @param accessControlContext       The access control context to use for loading classes.
@@ -6093,6 +6214,7 @@ public interface AgentBuilder {
             public ExecutingTransformer(ByteBuddy byteBuddy,
                                         TypeLocator typeLocator,
                                         TypeStrategy typeStrategy,
+                                        LocationStrategy locationStrategy,
                                         Listener listener,
                                         NativeMethodStrategy nativeMethodStrategy,
                                         AccessControlContext accessControlContext,
@@ -6103,6 +6225,7 @@ public interface AgentBuilder {
                                         Transformation transformation) {
                 this.byteBuddy = byteBuddy;
                 this.typeLocator = typeLocator;
+                this.locationStrategy = locationStrategy;
                 this.typeStrategy = typeStrategy;
                 this.listener = listener;
                 this.nativeMethodStrategy = nativeMethodStrategy;
@@ -6171,7 +6294,7 @@ public interface AgentBuilder {
                 try {
                     ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(binaryTypeName,
                             binaryRepresentation,
-                            ClassFileLocator.ForClassLoader.of(classLoader));
+                            locationStrategy.classFileLocator(classLoader, module));
                     return transformation.resolve(descriptionStrategy.apply(binaryTypeName, classBeingRedefined, typeLocator, classLoader, classFileLocator),
                             classLoader,
                             module,
@@ -6201,6 +6324,7 @@ public interface AgentBuilder {
                 return byteBuddy.equals(that.byteBuddy)
                         && typeLocator.equals(that.typeLocator)
                         && typeStrategy.equals(that.typeStrategy)
+                        && locationStrategy.equals(that.locationStrategy)
                         && initializationStrategy.equals(that.initializationStrategy)
                         && listener.equals(that.listener)
                         && nativeMethodStrategy.equals(that.nativeMethodStrategy)
@@ -6216,6 +6340,7 @@ public interface AgentBuilder {
                 int result = byteBuddy.hashCode();
                 result = 31 * result + typeLocator.hashCode();
                 result = 31 * result + typeStrategy.hashCode();
+                result = 31 * result + locationStrategy.hashCode();
                 result = 31 * result + initializationStrategy.hashCode();
                 result = 31 * result + listener.hashCode();
                 result = 31 * result + nativeMethodStrategy.hashCode();
@@ -6233,6 +6358,7 @@ public interface AgentBuilder {
                         "byteBuddy=" + byteBuddy +
                         ", typeLocator=" + typeLocator +
                         ", typeStrategy=" + typeStrategy +
+                        ", locationStrategy=" + locationStrategy +
                         ", initializationStrategy=" + initializationStrategy +
                         ", listener=" + listener +
                         ", nativeMethodStrategy=" + nativeMethodStrategy +
@@ -6255,6 +6381,7 @@ public interface AgentBuilder {
                  * @param byteBuddy                  The Byte Buddy instance to be used.
                  * @param typeLocator                The type locator to use.
                  * @param typeStrategy               The definition handler to use.
+                 * @param locationStrategy           The location strategy to use.
                  * @param listener                   The listener to notify on transformations.
                  * @param nativeMethodStrategy       The native method strategy to apply.
                  * @param accessControlContext       The access control context to use for loading classes.
@@ -6268,6 +6395,7 @@ public interface AgentBuilder {
                 ClassFileTransformer make(ByteBuddy byteBuddy,
                                           TypeLocator typeLocator,
                                           TypeStrategy typeStrategy,
+                                          LocationStrategy locationStrategy,
                                           Listener listener,
                                           NativeMethodStrategy nativeMethodStrategy,
                                           AccessControlContext accessControlContext,
@@ -6303,6 +6431,7 @@ public interface AgentBuilder {
                     public ClassFileTransformer make(ByteBuddy byteBuddy,
                                                      TypeLocator typeLocator,
                                                      TypeStrategy typeStrategy,
+                                                     LocationStrategy locationStrategy,
                                                      Listener listener,
                                                      NativeMethodStrategy nativeMethodStrategy,
                                                      AccessControlContext accessControlContext,
@@ -6315,6 +6444,7 @@ public interface AgentBuilder {
                             return executingTransformer.newInstance(byteBuddy,
                                     typeLocator,
                                     typeStrategy,
+                                    locationStrategy,
                                     listener,
                                     nativeMethodStrategy,
                                     accessControlContext,
@@ -6367,6 +6497,7 @@ public interface AgentBuilder {
                     public ClassFileTransformer make(ByteBuddy byteBuddy,
                                                      TypeLocator typeLocator,
                                                      TypeStrategy typeStrategy,
+                                                     LocationStrategy locationStrategy,
                                                      Listener listener,
                                                      NativeMethodStrategy nativeMethodStrategy,
                                                      AccessControlContext accessControlContext,
@@ -6378,6 +6509,7 @@ public interface AgentBuilder {
                         return new ExecutingTransformer(byteBuddy,
                                 typeLocator,
                                 typeStrategy,
+                                locationStrategy,
                                 listener,
                                 nativeMethodStrategy,
                                 accessControlContext,
@@ -6428,6 +6560,11 @@ public interface AgentBuilder {
             @Override
             public AgentBuilder with(TypeLocator typeLocator) {
                 return materialize().with(typeLocator);
+            }
+
+            @Override
+            public AgentBuilder with(LocationStrategy locationStrategy) {
+                return materialize().with(locationStrategy);
             }
 
             @Override
@@ -6600,6 +6737,7 @@ public interface AgentBuilder {
                 return new Default(byteBuddy,
                         typeLocator,
                         typeStrategy,
+                        locationStrategy,
                         listener,
                         nativeMethodStrategy,
                         accessControlContext,
@@ -6695,6 +6833,7 @@ public interface AgentBuilder {
                 return new Default(byteBuddy,
                         typeLocator,
                         typeStrategy,
+                        locationStrategy,
                         listener,
                         nativeMethodStrategy,
                         accessControlContext,
