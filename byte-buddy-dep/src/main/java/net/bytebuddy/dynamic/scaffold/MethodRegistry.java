@@ -996,7 +996,7 @@ public interface MethodRegistry {
             }
 
             @Override
-            public Record target(MethodDescription methodDescription) {
+            public Record target(MethodDescription methodDescription, boolean supportsBridges) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
                         ? Record.ForNonDefinedMethod.INSTANCE
