@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.StreamDrainer;
 
 import java.io.*;
@@ -297,7 +298,7 @@ public interface ClassFileLocator {
          */
         public static Resolution read(Class<?> type) {
             try {
-                return locate(type.getClassLoader(), type.getName());
+                return locate(type.getClassLoader(), TypeDescription.ForLoadedType.getName(type));
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot read class file for " + type, exception);
             }
