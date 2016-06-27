@@ -2479,12 +2479,10 @@ public interface AgentBuilder {
          *
          * @param typeName           The binary name of the type to describe.
          * @param typeBeingRedefined The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
-         * @param typeLocator        The type locator to use.
-         * @param classLoader        The class loader of the type to be described.
-         * @param classFileLocator   The class file locator of the type to be described.
+         * @param typePool           The type pool to use for locating a type if required.
          * @return An appropriate type description.
          */
-        TypeDescription apply(String typeName, Class<?> typeBeingRedefined, TypeLocator typeLocator, ClassLoader classLoader, ClassFileLocator classFileLocator);
+        TypeDescription apply(String typeName, Class<?> typeBeingRedefined, TypePool typePool);
 
         /**
          * Describes the given type.
@@ -2512,13 +2510,9 @@ public interface AgentBuilder {
              */
             HYBRID {
                 @Override
-                public TypeDescription apply(String typeName,
-                                             Class<?> typeBeingRedefined,
-                                             TypeLocator typeLocator,
-                                             ClassLoader classLoader,
-                                             ClassFileLocator classFileLocator) {
+                public TypeDescription apply(String typeName, Class<?> typeBeingRedefined, TypePool typePool) {
                     return typeBeingRedefined == null
-                            ? POOL_ONLY.apply(typeName, UNAVAILABLE, typeLocator, classLoader, classFileLocator)
+                            ? typePool.describe(typeName).resolve()
                             : new TypeDescription.ForLoadedType(typeBeingRedefined);
                 }
 
@@ -2543,24 +2537,15 @@ public interface AgentBuilder {
              */
             POOL_ONLY {
                 @Override
-                public TypeDescription apply(String typeName,
-                                             Class<?> typeBeingRedefined,
-                                             TypeLocator typeLocator,
-                                             ClassLoader classLoader,
-                                             ClassFileLocator classFileLocator) {
-                    return typeLocator.typePool(classFileLocator, classLoader).describe(typeName).resolve();
+                public TypeDescription apply(String typeName, Class<?> typeBeingRedefined, TypePool typePool) {
+                    return typePool.describe(typeName).resolve();
                 }
 
                 @Override
                 public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy) {
-                    return typeLocator.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader()).describe(TypeDescription.ForLoadedType.getName(type)).resolve();
+                    return apply(TypeDescription.ForLoadedType.getName(type), type, typeLocator.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader()));
                 }
             };
-
-            /**
-             * Indicates that no loaded type is available.
-             */
-            private static final Class<?> UNAVAILABLE = null;
 
             @Override
             public String toString() {
@@ -6295,7 +6280,8 @@ public interface AgentBuilder {
                     ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(binaryTypeName,
                             binaryRepresentation,
                             locationStrategy.classFileLocator(classLoader, module));
-                    return transformation.resolve(descriptionStrategy.apply(binaryTypeName, classBeingRedefined, typeLocator, classLoader, classFileLocator),
+                    TypePool typePool = typeLocator.typePool(classFileLocator, classLoader);
+                    return transformation.resolve(descriptionStrategy.apply(binaryTypeName, classBeingRedefined, typePool),
                             classLoader,
                             module,
                             classBeingRedefined,
