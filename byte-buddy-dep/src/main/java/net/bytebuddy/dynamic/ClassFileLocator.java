@@ -298,7 +298,10 @@ public interface ClassFileLocator {
          */
         public static Resolution read(Class<?> type) {
             try {
-                return locate(type.getClassLoader(), TypeDescription.ForLoadedType.getName(type));
+                ClassLoader classLoader = type.getClassLoader();
+                return locate(classLoader == null
+                        ? ClassLoader.getSystemClassLoader()
+                        : classLoader, TypeDescription.ForLoadedType.getName(type));
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot read class file for " + type, exception);
             }
@@ -815,19 +818,6 @@ public interface ClassFileLocator {
                     return classLoader != null && classLoader.getClass().getName().equals(DELEGATING_CLASS_LOADER_NAME);
                 }
 
-                /**
-                 * Normalizes a type name if it is loaded by an anonymous class loader.
-                 *
-                 * @param typeName The name as returned by {@link Class#getName()}.
-                 * @return The non-anonymous name of the given class.
-                 */
-                private static String nonAnonymous(String typeName) {
-                    int anonymousLoaderIndex = typeName.indexOf('/');
-                    return anonymousLoaderIndex == -1
-                            ? typeName
-                            : typeName.substring(0, anonymousLoaderIndex);
-                }
-
                 @Override
                 @SuppressWarnings("unchecked")
                 public Class<?> locate(String name) throws ClassNotFoundException {
@@ -841,7 +831,7 @@ public interface ClassFileLocator {
                         return super.locate(name);
                     }
                     Class<?> type = classes.get(ONLY);
-                    return nonAnonymous(type.getName()).equals(name)
+                    return TypeDescription.ForLoadedType.getName(type).equals(name)
                             ? type
                             : super.locate(name);
                 }
@@ -1041,11 +1031,7 @@ public interface ClassFileLocator {
                     this.fallbackDelegate = fallbackDelegate;
                     this.types = new HashMap<String, Class<?>>();
                     for (Class<?> type : types) {
-                        String typeName = type.getName();
-                        int anonymousLoaderIndex = typeName.indexOf('/');
-                        this.types.put(anonymousLoaderIndex == -1
-                                ? typeName
-                                : typeName.substring(0, anonymousLoaderIndex), type);
+                        this.types.put(TypeDescription.ForLoadedType.getName(type), type);
                     }
                 }
 

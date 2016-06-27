@@ -152,10 +152,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         Map<String, Class<?>> availableTypes = new HashMap<String, Class<?>>(preregisteredTypes);
         for (Class<?> type : instrumentation.getInitiatedClasses(classLoader)) {
-            int anonymousLoaderIndex = type.getName().indexOf('/');
-            availableTypes.put(anonymousLoaderIndex == -1
-                    ? type.getName()
-                    : type.getName().substring(0, anonymousLoaderIndex), type);
+            availableTypes.put(TypeDescription.ForLoadedType.getName(type), type);
         }
         Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>();
         Map<TypeDescription, Class<?>> loadedClasses = new HashMap<TypeDescription, Class<?>>();
@@ -237,11 +234,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     public ClassReloadingStrategy preregistered(Class<?>... type) {
         Map<String, Class<?>> preregisteredTypes = new HashMap<String, Class<?>>(this.preregisteredTypes);
         for (Class<?> aType : type) {
-            String typeName = aType.getName();
-            int anonymousLoaderIndex = typeName.indexOf('/');
-            preregisteredTypes.put(anonymousLoaderIndex == -1
-                    ? typeName
-                    : typeName.substring(0, anonymousLoaderIndex), aType);
+            preregisteredTypes.put(TypeDescription.ForLoadedType.getName(aType), aType);
         }
         return new ClassReloadingStrategy(instrumentation, strategy, bootstrapInjection, preregisteredTypes);
     }
@@ -310,10 +303,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                     throws IOException, UnmodifiableClassException, ClassNotFoundException {
                 Map<Class<?>, ClassDefinition> classDefinitions = new HashMap<Class<?>, ClassDefinition>(types.size());
                 for (Class<?> type : types) {
-                    int anonymousLoaderIndex = type.getName().indexOf('/');
-                    classDefinitions.put(type, new ClassDefinition(type, classFileLocator.locate(anonymousLoaderIndex == -1
-                            ? type.getName()
-                            : type.getName().substring(0, anonymousLoaderIndex)).resolve()));
+                    classDefinitions.put(type, new ClassDefinition(type, classFileLocator.locate(TypeDescription.ForLoadedType.getName(type)).resolve()));
                 }
                 apply(instrumentation, classDefinitions);
             }
