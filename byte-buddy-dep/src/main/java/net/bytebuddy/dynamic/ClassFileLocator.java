@@ -297,7 +297,7 @@ public interface ClassFileLocator {
          */
         public static Resolution read(Class<?> type) {
             try {
-                return ClassFileLocator.ForClassLoader.of(type.getClassLoader()).locate(type.getName());
+                return locate(type.getClassLoader(), type.getName());
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot read class file for " + type, exception);
             }
