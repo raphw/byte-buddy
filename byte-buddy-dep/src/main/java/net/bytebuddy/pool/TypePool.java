@@ -251,6 +251,17 @@ public interface TypePool {
                 cache = new ConcurrentHashMap<String, Resolution>();
             }
 
+            /**
+             * Returns a simple cache provider that is prepopulated with the {@link Object} type.
+             *
+             * @return A simple cache provider that is prepopulated with the {@link Object} type.
+             */
+            public static CacheProvider withObjectType() {
+                CacheProvider cacheProvider = new Simple();
+                cacheProvider.register(Object.class.getName(), new Resolution.Simple(TypeDescription.OBJECT));
+                return cacheProvider;
+            }
+
             @Override
             public Resolution find(String name) {
                 return cache.get(name);
@@ -8098,158 +8109,6 @@ public interface TypePool {
                 return "TypePool.Default.ReaderMode." + name();
             }
         }
-
-        /**
-         * A class file locator that loads classes and describes the loaded classes as a {@link TypeDescription.ForLoadedType}
-         * if a type cannot be located as its class file.
-         */
-        public static class ClassLoading extends Default {
-
-            /**
-             * The class loader to query.
-             */
-            private final ClassLoader classLoader;
-
-            /**
-             * Creates a class loading type pool.
-             *
-             * @param cacheProvider    The cache provider to be used.
-             * @param classFileLocator The class file locator to be used.
-             * @param classLoader      The class loader to query.
-             */
-            public ClassLoading(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                super(cacheProvider, classFileLocator, ReaderMode.FAST);
-                this.classLoader = classLoader;
-            }
-
-            /**
-             * Returns a class loading type pool that does not attempt to parse a class file but immediately falls back to loading one.
-             *
-             * @param classLoader The class loader to query.
-             * @return An appropriate type pool.
-             */
-            public static TypePool of(ClassLoader classLoader) {
-                return of(ClassFileLocator.NoOp.INSTANCE, classLoader);
-            }
-
-            /**
-             * Returns a class loading type pool that uses a simple cache.
-             *
-             * @param classFileLocator The class file locator to be used.
-             * @param classLoader      The class loader to query.
-             * @return An appropriate type pool.
-             */
-            public static TypePool of(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new ClassLoading(new CacheProvider.Simple(), classFileLocator, classLoader);
-            }
-
-            @Override
-            public Resolution doDescribe(String name) {
-                Resolution resolution = super.doDescribe(name);
-                if (resolution.isResolved()) {
-                    return resolution;
-                }
-                try {
-                    return new Resolution.Simple(new TypeDescription.ForLoadedType(Class.forName(name, false, classLoader)));
-                } catch (ClassNotFoundException ignored) {
-                    return new Resolution.Illegal(name);
-                }
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                if (!super.equals(other)) return false;
-                ClassLoading that = (ClassLoading) other;
-                return !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.Default.ClassLoading{" +
-                        "classFileLocator=" + classFileLocator +
-                        ", cacheProvider=" + cacheProvider +
-                        ", readerMode=" + readerMode +
-                        ", classLoader=" + classLoader +
-                        '}';
-            }
-        }
-
-        /**
-         * A class file locator that maintains a map of precomputed classes which are returned as a resolution in case that a type name is known.
-         */
-        public static class Precomputed extends Default {
-
-            /**
-             * The precomputed type descriptions.
-             */
-            private final Map<String, TypeDescription> precomputed;
-
-            /**
-             * Creates a new precomputed type pool.
-             *
-             * @param cacheProvider    The cache provider to be used.
-             * @param classFileLocator The class file locator to be used.
-             * @param readerMode       The reader mode to apply by this default type pool.
-             * @param precomputed      The precomputed type descriptions.
-             */
-            public Precomputed(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, Map<String, TypeDescription> precomputed) {
-                super(cacheProvider, classFileLocator, readerMode);
-                this.precomputed = precomputed;
-            }
-
-            /**
-             * Creates a new precomputed type pool with the {@link Object} type being precomputed.
-             *
-             * @param cacheProvider    The cache provider to be used.
-             * @param classFileLocator The class file locator to be used.
-             * @param readerMode       The reader mode to apply by this default type pool.
-             * @return A type pool with the {@link Object} type being precomputed.
-             */
-            public static TypePool withObjectType(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
-                return new Precomputed(cacheProvider, classFileLocator, readerMode, Collections.singletonMap(Object.class.getName(), TypeDescription.OBJECT));
-            }
-
-            @Override
-            protected Resolution doDescribe(String name) {
-                TypeDescription typeDescription = precomputed.get(name);
-                return typeDescription == null
-                        ? super.doDescribe(name)
-                        : new Resolution.Simple(typeDescription);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && super.equals(other)
-                        && precomputed.equals(((Precomputed) other).precomputed);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + precomputed.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.Default.Precomputed{" +
-                        "classFileLocator=" + classFileLocator +
-                        ", cacheProvider=" + cacheProvider +
-                        ", readerMode=" + readerMode +
-                        ", precomputed=" + precomputed +
-                        '}';
-            }
-        }
     }
 
     /**
@@ -8474,6 +8333,144 @@ public interface TypePool {
                     return name;
                 }
             }
+        }
+    }
+
+    /**
+     * A type pool that attempts to load a class.
+     */
+    class ClassLoading extends AbstractBase.Hierarchical {
+
+        /**
+         * The class loader to query.
+         */
+        private final ClassLoader classLoader;
+
+        /**
+         * Creates a class loadings type pool.
+         *
+         * @param cacheProvider The cache provider to use.
+         * @param parent        The parent type pool.
+         * @param classLoader   The class loader to use for locating files.
+         */
+        public ClassLoading(CacheProvider cacheProvider, TypePool parent, ClassLoader classLoader) {
+            super(cacheProvider, parent);
+            this.classLoader = classLoader;
+        }
+
+        /**
+         * Returns a type pool that attempts type descriptions by loadings types from the given class loader.
+         *
+         * @param classLoader The class loader to use.
+         * @return An class loading type pool.
+         */
+        public static TypePool of(ClassLoader classLoader) {
+            return of(classLoader, Empty.INSTANCE);
+        }
+
+        /**
+         * Returns a type pool that attempts type descriptions by loadings types from the given class loader.
+         *
+         * @param classLoader The class loader to use.
+         * @param parent      The parent type pool to use.
+         * @return An class loading type pool.
+         */
+        public static TypePool of(ClassLoader classLoader, TypePool parent) {
+            return new ClassLoading(CacheProvider.NoOp.INSTANCE, parent, classLoader);
+        }
+
+        /**
+         * Returns a type pool that attempts type descriptions by loadings types from the system class loader.
+         *
+         * @return An class loading type pool.
+         */
+        public static TypePool ofClassPath() {
+            return of(ClassLoader.getSystemClassLoader());
+        }
+
+        @Override
+        public Resolution doDescribe(String name) {
+            try {
+                return new Resolution.Simple(new TypeDescription.ForLoadedType(Class.forName(name, false, classLoader)));
+            } catch (ClassNotFoundException ignored) {
+                return new Resolution.Illegal(name);
+            }
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (!super.equals(other)) return false;
+            ClassLoading that = (ClassLoading) other;
+            return !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypePool.ClassLoading{" +
+                    ", cacheProvider=" + cacheProvider +
+                    ", classLoader=" + classLoader +
+                    '}';
+        }
+    }
+
+    /**
+     * A type pool that supplies explicitly known type descriptions.
+     */
+    class Explicit extends AbstractBase.Hierarchical {
+
+        /**
+         * A mapping from type names to type descriptions of that name.
+         */
+        private final Map<String, TypeDescription> precomputed;
+
+        /**
+         * Creates a new explicit type pool.
+         *
+         * @param parent      The parent type pool.
+         * @param precomputed A mapping from type names to type descriptions of that name.
+         */
+        public Explicit(TypePool parent, Map<String, TypeDescription> precomputed) {
+            super(CacheProvider.NoOp.INSTANCE, parent);
+            this.precomputed = precomputed;
+        }
+
+        @Override
+        protected Resolution doDescribe(String name) {
+            TypeDescription typeDescription = precomputed.get(name);
+            return typeDescription == null
+                    ? new Resolution.Illegal(name)
+                    : new Resolution.Simple(typeDescription);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && super.equals(other)
+                    && precomputed.equals(((Explicit) other).precomputed);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + precomputed.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TypePool.Explicit{" +
+                    "cacheProvider=" + cacheProvider +
+                    ", precomputed=" + precomputed +
+                    '}';
         }
     }
 }

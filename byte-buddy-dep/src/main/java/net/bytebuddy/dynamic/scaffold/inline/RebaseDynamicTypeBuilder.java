@@ -15,6 +15,7 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
+import net.bytebuddy.pool.TypePool;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,17 +27,7 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
  *
  * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */
-public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
-
-    /**
-     * The original type that is being redefined or rebased.
-     */
-    private final TypeDescription originalType;
-
-    /**
-     * The class file locator for locating the original type's class file.
-     */
-    private final ClassFileLocator classFileLocator;
+public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuilder<T> {
 
     /**
      * The method rebase resolver to use for determining the name of a rebased method.
@@ -139,9 +130,9 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
-                ignoredMethods);
-        this.originalType = originalType;
-        this.classFileLocator = classFileLocator;
+                ignoredMethods,
+                originalType,
+                classFileLocator);
         this.methodNameTransformer = methodNameTransformer;
     }
 
@@ -178,7 +169,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
     }
 
     @Override
-    public DynamicType.Unloaded<T> make() {
+    public DynamicType.Unloaded<T> make(TypePool typePool) {
         MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
                 typeValidation,
@@ -201,6 +192,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeValidation,
+                typePool,
                 originalType,
                 classFileLocator,
                 methodRebaseResolver).make();
@@ -212,16 +204,12 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         if (other == null || getClass() != other.getClass()) return false;
         if (!super.equals(other)) return false;
         RebaseDynamicTypeBuilder<?> that = (RebaseDynamicTypeBuilder<?>) other;
-        return originalType.equals(that.originalType)
-                && classFileLocator.equals(that.classFileLocator)
-                && methodNameTransformer.equals(that.methodNameTransformer);
+        return methodNameTransformer.equals(that.methodNameTransformer);
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + originalType.hashCode();
-        result = 31 * result + classFileLocator.hashCode();
         result = 31 * result + methodNameTransformer.hashCode();
         return result;
     }

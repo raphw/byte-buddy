@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -11,9 +10,8 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -46,14 +44,6 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
         when(leftType.getSuperClass()).thenReturn(genericSuperClass);
         when(genericSuperClass.asErasure()).thenReturn(superClass);
         when(superClass.getInternalName()).thenReturn(FOOBAR);
-    }
-
-    @Test
-    public void testFactory() throws Exception {
-        assertThat(TypeWriter.Default.FrameComputingClassWriter.of(mock(ClassReader.class), 0, mock(ClassFileLocator.class)),
-                not(instanceOf(TypeWriter.Default.FrameComputingClassWriter.class)));
-        assertThat(TypeWriter.Default.FrameComputingClassWriter.of(mock(ClassReader.class), ClassWriter.COMPUTE_FRAMES, mock(ClassFileLocator.class)),
-                instanceOf(TypeWriter.Default.FrameComputingClassWriter.class));
     }
 
     @Test

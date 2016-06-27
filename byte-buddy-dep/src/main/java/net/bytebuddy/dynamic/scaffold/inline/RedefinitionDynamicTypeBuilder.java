@@ -14,23 +14,14 @@ import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.LatentMatcher;
+import net.bytebuddy.pool.TypePool;
 
 /**
  * A type builder that redefines an instrumented type.
  *
  * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */
-public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
-
-    /**
-     * The original type that is being redefined or rebased.
-     */
-    private final TypeDescription originalType;
-
-    /**
-     * The class file locator for locating the original type's class file.
-     */
-    private final ClassFileLocator classFileLocator;
+public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuilder<T> {
 
     /**
      * Creates a redefinition dynamic type builder.
@@ -123,9 +114,9 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 implementationContextFactory,
                 methodGraphCompiler,
                 typeValidation,
-                ignoredMethods);
-        this.originalType = originalType;
-        this.classFileLocator = classFileLocator;
+                ignoredMethods,
+                originalType,
+                classFileLocator);
     }
 
     @Override
@@ -160,7 +151,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
     }
 
     @Override
-    public DynamicType.Unloaded<T> make() {
+    public DynamicType.Unloaded<T> make(TypePool typePool) {
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
                 typeValidation,
@@ -175,26 +166,9 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeValidation,
+                typePool,
                 originalType,
                 classFileLocator).make();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        if (!super.equals(other)) return false;
-        RedefinitionDynamicTypeBuilder<?> that = (RedefinitionDynamicTypeBuilder<?>) other;
-        return originalType.equals(that.originalType)
-                && classFileLocator.equals(that.classFileLocator);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + originalType.hashCode();
-        result = 31 * result + classFileLocator.hashCode();
-        return result;
     }
 
     @Override

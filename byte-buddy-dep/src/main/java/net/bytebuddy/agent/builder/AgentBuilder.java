@@ -1167,10 +1167,8 @@ public interface AgentBuilder {
         TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader);
 
         /**
-         * A default implementation of a {@link TypeLocator} that
-         * is using a {@link net.bytebuddy.pool.TypePool.Default} with a
-         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and a
-         * {@link net.bytebuddy.dynamic.ClassFileLocator.ForClassLoader}.
+         * A default implementation of a {@link TypeLocator} that is using a {@link net.bytebuddy.pool.TypePool.Default} with a
+         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and a {@link net.bytebuddy.dynamic.ClassFileLocator.ForClassLoader}.
          */
         enum Default implements TypeLocator {
 
@@ -1206,7 +1204,7 @@ public interface AgentBuilder {
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new TypePool.LazyFacade(TypePool.Default.Precomputed.withObjectType(new TypePool.CacheProvider.Simple(), classFileLocator, readerMode));
+                return new TypePool.LazyFacade(new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode));
             }
 
             @Override
@@ -1216,28 +1214,45 @@ public interface AgentBuilder {
         }
 
         /**
-         * <p>
-         * A type locator that loads referenced classes instead of describing unloaded versions.
-         * </p>
-         * <p>
-         * <b>Important</b>: It is important to never query this type locator for the currently instrumented type as this will yield a class
-         * loading circularity which aborts any instrumentation with an error.
-         * </p>
-         * <p>
-         * <b>Warning</b>: Warning, this type locator <i>cannot be used for applying a redefinition</i> as it works on loaded classes only and
-         * is agnostic of any way to locate a class file.
-         * </p>
+         * An implementation of a {@link TypeLocator} that is using a {@link net.bytebuddy.pool.TypePool.Default} with a
+         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and a {@link net.bytebuddy.dynamic.ClassFileLocator.ForClassLoader}.
+         * Additionally, this type locator falls back to class loadings for non-locatable class files.
          */
         enum ClassLoading implements TypeLocator {
 
             /**
-             * The singleton instance.
+             * A type locator that parses the code segment of each method for extracting information about parameter
+             * names even if they are not explicitly included in a class file.
+             *
+             * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#EXTENDED
              */
-            INSTANCE;
+            EXTENDED(TypePool.Default.ReaderMode.EXTENDED),
+
+            /**
+             * A type locator that skips the code segment of each method and does therefore not extract information
+             * about parameter names. Parameter names are still included if they are explicitly included in a class file.
+             *
+             * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#FAST
+             */
+            FAST(TypePool.Default.ReaderMode.FAST);
+
+            /**
+             * The reader mode to apply by this type locator.
+             */
+            private final TypePool.Default.ReaderMode readerMode;
+
+            /**
+             * Creates a new type locator.
+             *
+             * @param readerMode The reader mode to apply by this type locator.
+             */
+            ClassLoading(TypePool.Default.ReaderMode readerMode) {
+                this.readerMode = readerMode;
+            }
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new TypePool.LazyFacade(TypePool.Default.ClassLoading.of(classFileLocator, classLoader));
+                return new TypePool.LazyFacade(TypePool.ClassLoading.of(classLoader, new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode)));
             }
 
             @Override
@@ -1270,7 +1285,7 @@ public interface AgentBuilder {
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new TypePool.LazyFacade(TypePool.Default.Precomputed.withObjectType(locate(classLoader), classFileLocator, readerMode));
+                return new TypePool.LazyFacade(new TypePool.Default(locate(classLoader), classFileLocator, readerMode));
             }
 
             /**
@@ -1331,7 +1346,7 @@ public interface AgentBuilder {
                     classLoader = classLoader == null ? BootstrapClassLoaderMarker.INSTANCE : classLoader;
                     TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
                     while (cacheProvider == null) {
-                        cacheProviders.putIfAbsent(classLoader, new TypePool.CacheProvider.Simple());
+                        cacheProviders.putIfAbsent(classLoader, TypePool.CacheProvider.Simple.withObjectType());
                         cacheProvider = cacheProviders.get(classLoader);
                     }
                     return cacheProvider;

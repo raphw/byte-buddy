@@ -34,8 +34,13 @@ public class AgentBuilderTypeLocatorTest {
     }
 
     @Test
-    public void testLoadingTypePool() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.ClassLoading.INSTANCE.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+    public void testFastLoadingTypePool() throws Exception {
+        assertThat(AgentBuilder.TypeLocator.ClassLoading.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+    }
+
+    @Test
+    public void testExtendedLoadingTypePool() throws Exception {
+        assertThat(AgentBuilder.TypeLocator.ClassLoading.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
 
     @Test

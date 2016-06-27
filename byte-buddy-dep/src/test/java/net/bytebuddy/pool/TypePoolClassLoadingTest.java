@@ -1,38 +1,39 @@
 package net.bytebuddy.pool;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class TypePoolDefaultPrecomputedTest {
+@RunWith(Parameterized.class)
+public class TypePoolClassLoadingTest {
 
-    private TypePool typePool;
+    private final TypePool typePool;
 
-    @Before
-    public void setUp() throws Exception {
-        typePool = TypePool.Default.Precomputed.withObjectType(new TypePool.CacheProvider.Simple(),
-                ClassFileLocator.ForClassLoader.ofClassPath(),
-                TypePool.Default.ReaderMode.FAST);
+    public TypePoolClassLoadingTest(TypePool typePool) {
+        this.typePool = typePool;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][] {
+                {TypePool.ClassLoading.of(null)},
+                {TypePool.ClassLoading.of(ClassLoader.getSystemClassLoader())},
+        });
     }
 
     @Test
-    public void testLoadableBootstrapLoaderClassPrecomputed() throws Exception {
+    public void testLoadableBootstrapLoaderClass() throws Exception {
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), sameInstance(TypeDescription.OBJECT));
-    }
-
-    @Test
-    public void testLoadableBootstrapLoaderClassNonPrecomputed() throws Exception {
-        TypePool.Resolution resolution = typePool.describe(String.class.getName());
-        assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is(TypeDescription.STRING));
+        assertThat(resolution.resolve(), is(TypeDescription.OBJECT));
     }
 
     @Test
@@ -62,6 +63,6 @@ public class TypePoolDefaultPrecomputedTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.Default.Precomputed.class).apply();
+        ObjectPropertyAssertion.of(TypePool.ClassLoading.class).apply();
     }
 }

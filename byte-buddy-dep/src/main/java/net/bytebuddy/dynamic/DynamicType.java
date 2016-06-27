@@ -23,6 +23,7 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 
 import java.io.*;
@@ -801,11 +802,26 @@ public interface DynamicType {
         MethodDefinition.ImplementationDefinition<T> invokable(LatentMatcher<? super MethodDescription> matcher);
 
         /**
-         * Creates the specificied dynamic type. If the specified dynamic type is not legal, an {@link IllegalStateException} is thrown.
+         * <p>
+         * Creates the dynamic type this builder represents. If the specified dynamic type is not legal, an {@link IllegalStateException} is thrown.
+         * </p>
+         * <p>
+         * Other than {@link DynamicType.Builder#make(TypePool)}, this method supplies a context-dependant type pool to the underlying class writer.
+         * Supplying a type pool only makes sense if custom byte code is created by adding a custom {@link AsmVisitorWrapper} where ASM might be
+         * required to compute stack map frames by processing information over any mentioned type's class hierarchy.
+         * </p>
          *
-         * @return An unloaded dynamic type represesenting the type specified by this builder.
+         * @return An unloaded dynamic type representing the type specified by this builder.
          */
         DynamicType.Unloaded<T> make();
+
+        /**
+         * Creates the dynamic type this builder represents. If the specified dynamic type is not legal, an {@link IllegalStateException} is thrown.
+         *
+         * @param typePool A type pool that is used for computing stack map frames by the underlying class writer, if required.
+         * @return An unloaded dynamic type representing the type specified by this builder.
+         */
+        DynamicType.Unloaded<T> make(TypePool typePool);
 
         /**
          * A builder for a type variable definition.
@@ -2568,6 +2584,11 @@ public interface DynamicType {
                 @Override
                 public DynamicType.Unloaded<U> make() {
                     return materialize().make();
+                }
+
+                @Override
+                public Unloaded<U> make(TypePool typePool) {
+                    return materialize().make(typePool);
                 }
 
                 /**

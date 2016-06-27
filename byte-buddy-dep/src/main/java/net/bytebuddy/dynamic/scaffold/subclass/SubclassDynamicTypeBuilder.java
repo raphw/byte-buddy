@@ -13,6 +13,7 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
+import net.bytebuddy.pool.TypePool;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -148,6 +149,11 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public DynamicType.Unloaded<T> make() {
+        return make(TypePool.ClassLoading.ofClassPath()); // Mimics the default behavior of ASM for least surprise.
+    }
+
+    @Override
+    public DynamicType.Unloaded<T> make(TypePool typePool) {
         MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
                 .inject(methodRegistry)
                 .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, typeValidation, new InstrumentableMatcher(ignoredMethods))
@@ -161,7 +167,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 annotationRetention,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                typeValidation).make();
+                typeValidation,
+                typePool).make();
     }
 
     /**

@@ -60,7 +60,8 @@ public class AgentBuilderDefaultApplicationTest {
         return Arrays.asList(new Object[][]{
                 {AgentBuilder.TypeLocator.Default.EXTENDED},
                 {AgentBuilder.TypeLocator.Default.FAST},
-                {AgentBuilder.TypeLocator.ClassLoading.INSTANCE}
+                {AgentBuilder.TypeLocator.ClassLoading.EXTENDED},
+                {AgentBuilder.TypeLocator.ClassLoading.FAST}
         });
     }
 
@@ -194,10 +195,6 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinition() throws Exception {
-        // As documented, the class loading type locator is not applicable for redefinitions.
-        if (typeLocator.equals(AgentBuilder.TypeLocator.ClassLoading.INSTANCE)) {
-            return;
-        }
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is whz an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -233,10 +230,6 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testChunkedRedefinition() throws Exception {
-        // As documented, the class loading type locator is not applicable for redefinitions.
-        if (typeLocator.equals(AgentBuilder.TypeLocator.ClassLoading.INSTANCE)) {
-            return;
-        }
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is whz an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
@@ -272,10 +265,6 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinitionWithPoolOnly() throws Exception {
-        // As documented, the class loading type locator is not applicable for redefinitions.
-        if (typeLocator.equals(AgentBuilder.TypeLocator.ClassLoading.INSTANCE)) {
-            return;
-        }
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is whz an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
