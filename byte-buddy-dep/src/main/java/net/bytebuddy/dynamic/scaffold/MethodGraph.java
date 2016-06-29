@@ -368,7 +368,6 @@ public interface MethodGraph {
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && methodDescription.equals(((Simple) other).methodDescription);
-
             }
 
             @Override
