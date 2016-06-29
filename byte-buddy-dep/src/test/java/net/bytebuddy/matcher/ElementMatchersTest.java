@@ -1081,6 +1081,14 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testOfType() throws Exception {
+        ClassLoader classLoader = new URLClassLoader(new URL[0], null);
+        assertThat(ElementMatchers.ofType(ElementMatchers.is(URLClassLoader.class)).matches(classLoader), is(true));
+        assertThat(ElementMatchers.ofType(ElementMatchers.is(ClassLoader.class)).matches(classLoader), is(false));
+        assertThat(ElementMatchers.ofType(ElementMatchers.is(URLClassLoader.class)).matches(null), is(false));
+    }
+
+    @Test
     public void testSupportsModules() throws Exception {
         assertThat(ElementMatchers.supportsModules().matches(mock(JavaModule.class)), is(true));
         assertThat(ElementMatchers.supportsModules().matches(null), is(false));
