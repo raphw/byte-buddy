@@ -105,7 +105,7 @@ public class AgentBuilderDefaultTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(builder.make()).thenReturn((DynamicType.Unloaded) dynamicType);
+        when(builder.make(typePool)).thenReturn((DynamicType.Unloaded) dynamicType);
         when(dynamicType.getTypeDescription()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(typeStrategy.builder(any(TypeDescription.class),
                 eq(byteBuddy),
