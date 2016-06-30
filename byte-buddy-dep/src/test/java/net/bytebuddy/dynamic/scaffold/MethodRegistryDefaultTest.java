@@ -239,7 +239,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verify(firstFactory).make(typeDescription);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), is(firstRecord));
+        assertThat(methodRegistry.target(instrumentedMethod, true), is(firstRecord));
     }
 
     @Test
@@ -262,7 +262,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verify(firstFactory).make(typeDescription);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), is(firstRecord));
+        assertThat(methodRegistry.target(instrumentedMethod, true), is(firstRecord));
     }
 
     @Test
@@ -285,7 +285,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verify(secondFactory).make(typeDescription);
-        assertThat(methodRegistry.target(instrumentedMethod), is(secondRecord));
+        assertThat(methodRegistry.target(instrumentedMethod, true), is(secondRecord));
     }
 
     @Test
@@ -310,7 +310,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForNonDefinedMethod.class));
+        assertThat(methodRegistry.target(instrumentedMethod, true), instanceOf(TypeWriter.MethodPool.Record.ForNonDefinedMethod.class));
     }
 
     @Test
@@ -348,7 +348,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class));
+        assertThat(methodRegistry.target(instrumentedMethod, true), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class));
     }
 
     @Test
