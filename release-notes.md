@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 30. June 2016: version 1.4.6
+
+- Added a `ClassFileLocator` for a class loader that only references it weakly.
+- Allow to supply `TypePool` and `ClassFileLocator` seperatly from an `AgentBuilder`.
+- Made `MethodPool` sensitive to bridge methods which should only be added to classes of a version older than Java 4.
+- Fixed creation of Java 9 aware `ClassFileTransformer` to only apply on Java 9 VMs.
+- Added matcher for the type of a class loader.
+- Fixed name resolution of anonymously-loaded types.
+
 ### 24. June 2016: version 1.4.5
 
 - Added `InstallationStrategy` to `AgentBuilder` that allows customization of error handling.
