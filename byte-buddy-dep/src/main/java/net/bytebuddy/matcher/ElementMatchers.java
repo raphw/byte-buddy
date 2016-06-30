@@ -1867,6 +1867,17 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches a class loader's type unless it is the bootstrap class loader which is never matched.
+     *
+     * @param matcher The matcher to apply to the class loader's type.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches the class loader's type.
+     */
+    public static <T extends ClassLoader> ElementMatcher.Junction<T> ofType(ElementMatcher<? super TypeDescription> matcher) {
+        return new InstanceTypeMatcher<T>(matcher);
+    }
+
+    /**
      * Matches a module if it exists, i.e. not {@code null}.
      *
      * @param <T> The type of the matched object.
