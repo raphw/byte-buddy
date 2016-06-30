@@ -1354,8 +1354,11 @@ public interface AgentBuilder {
                     classLoader = classLoader == null ? BootstrapClassLoaderMarker.INSTANCE : classLoader;
                     TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
                     while (cacheProvider == null) {
-                        cacheProviders.putIfAbsent(classLoader, TypePool.CacheProvider.Simple.withObjectType());
-                        cacheProvider = cacheProviders.get(classLoader);
+                        cacheProvider = TypePool.CacheProvider.Simple.withObjectType();
+                        TypePool.CacheProvider previous = cacheProviders.putIfAbsent(classLoader, cacheProvider);
+                        if (previous != null) {
+                            cacheProvider = previous;
+                        }
                     }
                     return cacheProvider;
                 }
