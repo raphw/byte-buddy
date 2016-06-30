@@ -459,6 +459,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param methodPool                   A method pool which is queried for any user code to add to the type initializer.
              * @param injectedCode                 Potential code that is to be injected into the type initializer.
              * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotation.
+             * @param supportsBridges              {@code true} if the created class file supports bridge methods.
              */
             void drain(ClassVisitor classVisitor,
                        TypeWriter.MethodPool methodPool,

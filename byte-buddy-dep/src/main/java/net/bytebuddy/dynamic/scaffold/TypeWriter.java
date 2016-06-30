@@ -315,6 +315,7 @@ public interface TypeWriter<T> {
          * Looks up a handler entry for a given method.
          *
          * @param methodDescription The method being processed.
+         * @param supportsBridges   {@code true} if the created class supports bridge methods.
          * @return A handler entry for the given method.
          */
         Record target(MethodDescription methodDescription, boolean supportsBridges);
@@ -1419,7 +1420,7 @@ public interface TypeWriter<T> {
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
          * @param typeValidation               Determines if a type should be explicitly validated.
-         *                                     @param typePool The type pool to use for computing stack map frames, if required.
+         * @param typePool                     The type pool to use for computing stack map frames, if required.
          */
         protected Default(TypeDescription instrumentedType,
                           FieldPool fieldPool,
@@ -3016,6 +3017,7 @@ public interface TypeWriter<T> {
             /**
              * A class visitor which is capable of applying a redefinition of an existing class file.
              */
+            @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
             protected class RedefinitionClassVisitor extends ClassVisitor {
 
                 /**
@@ -3040,6 +3042,9 @@ public interface TypeWriter<T> {
                  */
                 private Implementation.Context.ExtractableView.InjectedCode injectedCode;
 
+                /**
+                 * {@code true} if the redefined class file supports bridge methods or {@code null} if this state is yet unknown.
+                 */
                 private Boolean supportsBridges;
 
                 /**
