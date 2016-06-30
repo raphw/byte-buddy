@@ -3040,7 +3040,7 @@ public interface TypeWriter<T> {
                  */
                 private Implementation.Context.ExtractableView.InjectedCode injectedCode;
 
-                private boolean supportsBridges;
+                private Boolean supportsBridges;
 
                 /**
                  * Creates a class visitor which is capable of redefining an existent class on the fly.
@@ -3214,6 +3214,7 @@ public interface TypeWriter<T> {
                             ", declaredFields=" + declaredFields +
                             ", declarableMethods=" + declarableMethods +
                             ", injectedCode=" + injectedCode +
+                            ", supportsBridges=" + supportsBridges +
                             '}';
                 }
 
