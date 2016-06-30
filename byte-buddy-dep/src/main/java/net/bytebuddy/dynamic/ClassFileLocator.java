@@ -414,6 +414,7 @@ public interface ClassFileLocator {
             public String toString() {
                 return "ClassFileLocator.ForClassLoader.WeaklyReferenced{" +
                         "classLoader=" + get() +
+                        ", hashCode=" + hashCode +
                         '}';
             }
         }
