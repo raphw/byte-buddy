@@ -626,7 +626,6 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     public void testIsDefault() throws Exception {
-        MethodList<?> methods = new TypeDescription.ForLoadedType(AnnotationValues.class).getDeclaredMethods();
         Map<String, Object> properties = new LinkedHashMap<String, Object>();
         properties.put("boolean_property", true);
         properties.put("boolean_property_array", new boolean[]{true});
@@ -652,6 +651,7 @@ public abstract class AbstractMethodDescriptionTest {
         when(enumerationDescription.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(SampleEnumeration.class));
         properties.put("enum_property", enumerationDescription);
         properties.put("enum_property_array", new EnumerationDescription[]{enumerationDescription});
+        MethodList<?> methods = new TypeDescription.ForLoadedType(AnnotationValues.class).getDeclaredMethods();
         for (Map.Entry<String, Object> entry : properties.entrySet()) {
             assertThat(methods.filter(named(entry.getKey())).getOnly().isDefaultValue(entry.getValue()), is(true));
             assertThat(methods.filter(named(entry.getKey())).getOnly().isDefaultValue(new Object()), is(false));
@@ -816,6 +816,7 @@ public abstract class AbstractMethodDescriptionTest {
         }
     }
 
+    @SuppressWarnings("unused")
     private @interface AnnotationValues {
 
         boolean boolean_property();
