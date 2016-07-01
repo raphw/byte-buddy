@@ -591,11 +591,55 @@ public interface MethodDescription extends TypeVariableSource,
                     || (returnType.represents(int.class) && value instanceof Integer)
                     || (returnType.represents(long.class) && value instanceof Long)
                     || (returnType.represents(float.class) && value instanceof Float)
-                    || (returnType.represents(long.class) && value instanceof Long)
+                    || (returnType.represents(double.class) && value instanceof Double)
                     || (returnType.represents(String.class) && value instanceof String)
-                    || (returnType.isAssignableTo(Enum.class) && value instanceof EnumerationDescription)
-                    || (returnType.isAssignableTo(Annotation.class) && value instanceof AnnotationDescription)
-                    || (returnType.represents(Class.class) && value instanceof TypeDescription);
+                    || (returnType.isAssignableTo(Enum.class) && value instanceof EnumerationDescription && isEnumerationType(returnType, (EnumerationDescription) value))
+                    || (returnType.isAssignableTo(Annotation.class) && value instanceof AnnotationDescription && isAnnotationType(returnType, (AnnotationDescription) value))
+                    || (returnType.represents(Class.class) && value instanceof TypeDescription)
+                    || (returnType.represents(boolean[].class) && value instanceof boolean[])
+                    || (returnType.represents(byte[].class) && value instanceof byte[])
+                    || (returnType.represents(char[].class) && value instanceof char[])
+                    || (returnType.represents(short[].class) && value instanceof short[])
+                    || (returnType.represents(int[].class) && value instanceof int[])
+                    || (returnType.represents(long[].class) && value instanceof long[])
+                    || (returnType.represents(float[].class) && value instanceof float[])
+                    || (returnType.represents(double[].class) && value instanceof double[])
+                    || (returnType.represents(String[].class) && value instanceof String[])
+                    || (returnType.isAssignableTo(Enum[].class) && value instanceof EnumerationDescription[] && isEnumerationType(returnType.getComponentType(), (EnumerationDescription[]) value))
+                    || (returnType.isAssignableTo(Annotation[].class) && value instanceof AnnotationDescription[] && isAnnotationType(returnType.getComponentType(), (AnnotationDescription[]) value))
+                    || (returnType.represents(Class[].class) && value instanceof TypeDescription[]);
+        }
+
+        /**
+         * Checks if the supplied enumeration descriptions describe the correct enumeration type.
+         *
+         * @param enumerationType        The enumeration type to check for.
+         * @param enumerationDescription The enumeration descriptions to check.
+         * @return {@code true} if all enumeration descriptions represent the enumeration type in question.
+         */
+        private static boolean isEnumerationType(TypeDescription enumerationType, EnumerationDescription... enumerationDescription) {
+            for (EnumerationDescription anEnumerationDescription : enumerationDescription) {
+                if (!anEnumerationDescription.getEnumerationType().equals(enumerationType)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Checks if the supplied enumeration descriptions describe the correct annotation type.
+         *
+         * @param annotationType        The annotation type to check for.
+         * @param annotationDescription The annotation descriptions to check.
+         * @return {@code true} if all annotation descriptions represent the annotation type in question.
+         */
+        private static boolean isAnnotationType(TypeDescription annotationType, AnnotationDescription... annotationDescription) {
+            for (AnnotationDescription anAnnotationDescription : annotationDescription) {
+                if (!anAnnotationDescription.getAnnotationType().equals(annotationType)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         @Override

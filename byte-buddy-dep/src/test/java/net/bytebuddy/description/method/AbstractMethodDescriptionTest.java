@@ -1,7 +1,9 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.TypeVariableSource;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -19,7 +21,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -619,9 +624,53 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(DeprecationSample.class.getDeclaredMethod("foo")).getActualModifiers(), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_DEPRECATED));
     }
 
+    @Test
+    public void testIsDefault() throws Exception {
+        MethodList<?> methods = new TypeDescription.ForLoadedType(AnnotationValues.class).getDeclaredMethods();
+        Map<String, Object> properties = new LinkedHashMap<String, Object>();
+        properties.put("boolean_property", true);
+        properties.put("boolean_property_array", new boolean[]{true});
+        properties.put("byte_property", (byte) 0);
+        properties.put("byte_property_array", new byte[]{0});
+        properties.put("short_property", (short) 0);
+        properties.put("short_property_array", new short[]{0});
+        properties.put("int_property", 0);
+        properties.put("int_property_array", new int[]{0});
+        properties.put("long_property", 0L);
+        properties.put("long_property_array", new long[]{0});
+        properties.put("float_property", 0f);
+        properties.put("float_property_array", new float[]{0});
+        properties.put("double_property", 0d);
+        properties.put("double_property_array", new double[]{0d});
+        properties.put("string_property", "foo");
+        properties.put("string_property_array", new String[]{"foo"});
+        AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
+        when(annotationDescription.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(SampleAnnotation.class));
+        properties.put("annotation_property", annotationDescription);
+        properties.put("annotation_property_array", new AnnotationDescription[]{annotationDescription});
+        EnumerationDescription enumerationDescription = mock(EnumerationDescription.class);
+        when(enumerationDescription.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(SampleEnumeration.class));
+        properties.put("enum_property", enumerationDescription);
+        properties.put("enum_property_array", new EnumerationDescription[]{enumerationDescription});
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            assertThat(methods.filter(named(entry.getKey())).getOnly().isDefaultValue(entry.getValue()), is(true));
+            assertThat(methods.filter(named(entry.getKey())).getOnly().isDefaultValue(new Object()), is(false));
+        }
+        when(annotationDescription.getAnnotationType()).thenReturn(TypeDescription.OBJECT);
+        assertThat(methods.filter(named("annotation_property")).getOnly().isDefaultValue(annotationDescription), is(false));
+        assertThat(methods.filter(named("annotation_property_array")).getOnly().isDefaultValue(new AnnotationDescription[]{annotationDescription}), is(false));
+        when(enumerationDescription.getEnumerationType()).thenReturn(TypeDescription.OBJECT);
+        assertThat(methods.filter(named("enum_property")).getOnly().isDefaultValue(enumerationDescription), is(false));
+        assertThat(methods.filter(named("enum_property_array")).getOnly().isDefaultValue(new EnumerationDescription[]{enumerationDescription}), is(false));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
         /* empty */
+    }
+
+    private enum SampleEnumeration {
+        INSTANCE
     }
 
     @SuppressWarnings("unused")
@@ -765,5 +814,48 @@ public abstract class AbstractMethodDescriptionTest {
         private void foo() {
             /* empty */
         }
+    }
+
+    private @interface AnnotationValues {
+
+        boolean boolean_property();
+
+        boolean[] boolean_property_array();
+
+        byte byte_property();
+
+        byte[] byte_property_array();
+
+        short short_property();
+
+        short[] short_property_array();
+
+        int int_property();
+
+        int[] int_property_array();
+
+        long long_property();
+
+        long[] long_property_array();
+
+        float float_property();
+
+        float[] float_property_array();
+
+        double double_property();
+
+        double[] double_property_array();
+
+        String string_property();
+
+        String[] string_property_array();
+
+        SampleAnnotation annotation_property();
+
+        SampleAnnotation[] annotation_property_array();
+
+        SampleEnumeration enum_property();
+
+        SampleEnumeration[] enum_property_array();
     }
 }
