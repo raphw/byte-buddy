@@ -56,11 +56,12 @@ public class ImplementationContextDefaultOtherTest {
         TypeWriter.MethodPool methodPool = mock(TypeWriter.MethodPool.class);
         TypeWriter.MethodPool.Record record = mock(TypeWriter.MethodPool.Record.class);
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.DEFINED);
-        when(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType))).thenReturn(record);
+        when(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType), true)).thenReturn(record);
         implementationContext.drain(mock(ClassVisitor.class),
                 methodPool,
                 mock(Implementation.Context.ExtractableView.InjectedCode.class),
-                mock(AnnotationValueFilter.Factory.class));
+                mock(AnnotationValueFilter.Factory.class),
+                true);
     }
 
     @Test(expected = IllegalStateException.class)

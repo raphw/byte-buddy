@@ -8430,22 +8430,31 @@ public interface TypePool {
         /**
          * A mapping from type names to type descriptions of that name.
          */
-        private final Map<String, TypeDescription> precomputed;
+        private final Map<String, TypeDescription> types;
+
+        /**
+         * Creates a new explicit type pool without a parent.
+         *
+         * @param types A mapping from type names to type descriptions of that name.
+         */
+        public Explicit(Map<String, TypeDescription> types) {
+            this(Empty.INSTANCE, types);
+        }
 
         /**
          * Creates a new explicit type pool.
          *
-         * @param parent      The parent type pool.
-         * @param precomputed A mapping from type names to type descriptions of that name.
+         * @param parent The parent type pool.
+         * @param types  A mapping from type names to type descriptions of that name.
          */
-        public Explicit(TypePool parent, Map<String, TypeDescription> precomputed) {
+        public Explicit(TypePool parent, Map<String, TypeDescription> types) {
             super(CacheProvider.NoOp.INSTANCE, parent);
-            this.precomputed = precomputed;
+            this.types = types;
         }
 
         @Override
         protected Resolution doDescribe(String name) {
-            TypeDescription typeDescription = precomputed.get(name);
+            TypeDescription typeDescription = types.get(name);
             return typeDescription == null
                     ? new Resolution.Illegal(name)
                     : new Resolution.Simple(typeDescription);
@@ -8455,13 +8464,13 @@ public interface TypePool {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && super.equals(other)
-                    && precomputed.equals(((Explicit) other).precomputed);
+                    && types.equals(((Explicit) other).types);
         }
 
         @Override
         public int hashCode() {
             int result = super.hashCode();
-            result = 31 * result + precomputed.hashCode();
+            result = 31 * result + types.hashCode();
             return result;
         }
 
@@ -8469,7 +8478,7 @@ public interface TypePool {
         public String toString() {
             return "TypePool.Explicit{" +
                     "cacheProvider=" + cacheProvider +
-                    ", precomputed=" + precomputed +
+                    ", types=" + types +
                     '}';
         }
     }

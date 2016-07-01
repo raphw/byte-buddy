@@ -315,9 +315,10 @@ public interface TypeWriter<T> {
          * Looks up a handler entry for a given method.
          *
          * @param methodDescription The method being processed.
+         * @param supportsBridges   {@code true} if the created class supports bridge methods.
          * @return A handler entry for the given method.
          */
-        Record target(MethodDescription methodDescription);
+        Record target(MethodDescription methodDescription, boolean supportsBridges);
 
         /**
          * An entry of a method pool that describes how a method is implemented.
@@ -1419,7 +1420,7 @@ public interface TypeWriter<T> {
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
          * @param typeValidation               Determines if a type should be explicitly validated.
-         *                                     @param typePool The type pool to use for computing stack map frames, if required.
+         * @param typePool                     The type pool to use for computing stack map frames, if required.
          */
         protected Default(TypeDescription instrumentedType,
                           FieldPool fieldPool,
@@ -3016,6 +3017,7 @@ public interface TypeWriter<T> {
             /**
              * A class visitor which is capable of applying a redefinition of an existing class file.
              */
+            @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
             protected class RedefinitionClassVisitor extends ClassVisitor {
 
                 /**
@@ -3039,6 +3041,11 @@ public interface TypeWriter<T> {
                  * file which is relocated into a static method.
                  */
                 private Implementation.Context.ExtractableView.InjectedCode injectedCode;
+
+                /**
+                 * {@code true} if the redefined class file supports bridge methods or {@code null} if this state is yet unknown.
+                 */
+                private Boolean supportsBridges;
 
                 /**
                  * Creates a class visitor which is capable of redefining an existent class on the fly.
@@ -3068,6 +3075,7 @@ public interface TypeWriter<T> {
                                   String genericSignature,
                                   String superClassInternalName,
                                   String[] interfaceTypeInternalName) {
+                    supportsBridges = ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V5);
                     super.visit(classFileVersionNumber,
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),
                             instrumentedType.getInternalName(),
@@ -3172,7 +3180,7 @@ public interface TypeWriter<T> {
                  * @return A method visitor which is capable of consuming the original method.
                  */
                 protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin) {
-                    MethodPool.Record record = methodPool.target(methodDescription);
+                    MethodPool.Record record = methodPool.target(methodDescription, supportsBridges);
                     if (!record.getSort().isDefined()) {
                         return super.visitMethod(methodDescription.getActualModifiers(),
                                 methodDescription.getInternalName(),
@@ -3197,9 +3205,9 @@ public interface TypeWriter<T> {
                         fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
                     }
                     for (MethodDescription methodDescription : declarableMethods.values()) {
-                        methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
+                        methodPool.target(methodDescription, supportsBridges).apply(cv, implementationContext, annotationValueFilterFactory);
                     }
-                    implementationContext.drain(cv, methodPool, injectedCode, annotationValueFilterFactory);
+                    implementationContext.drain(cv, methodPool, injectedCode, annotationValueFilterFactory, supportsBridges);
                     super.visitEnd();
                 }
 
@@ -3211,6 +3219,7 @@ public interface TypeWriter<T> {
                             ", declaredFields=" + declaredFields +
                             ", declarableMethods=" + declarableMethods +
                             ", injectedCode=" + injectedCode +
+                            ", supportsBridges=" + supportsBridges +
                             '}';
                 }
 
@@ -3567,10 +3576,15 @@ public interface TypeWriter<T> {
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);
                 }
+                boolean supportsBridges = classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5);
                 for (MethodDescription methodDescription : instrumentedMethods) {
-                    methodPool.target(methodDescription).apply(classVisitor, implementationContext, annotationValueFilterFactory);
+                    methodPool.target(methodDescription, supportsBridges).apply(classVisitor, implementationContext, annotationValueFilterFactory);
                 }
-                implementationContext.drain(classVisitor, methodPool, Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE, annotationValueFilterFactory);
+                implementationContext.drain(classVisitor,
+                        methodPool,
+                        Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE,
+                        annotationValueFilterFactory,
+                        supportsBridges);
                 classVisitor.visitEnd();
                 return classWriter.toByteArray();
             }
