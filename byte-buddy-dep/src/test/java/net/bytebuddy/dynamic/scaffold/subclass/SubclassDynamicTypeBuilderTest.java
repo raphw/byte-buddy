@@ -213,11 +213,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(packageType.getAnnotation(Foo.class), notNullValue(Foo.class));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testEnumWithoutValuesIsIllegal() throws Exception {
-        new ByteBuddy().makeEnumeration();
-    }
-
     @Test
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethodNonOverridden() throws Exception {

@@ -394,7 +394,7 @@ public class ByteBuddy {
      * @return A type builder that creates a new interface type.
      */
     public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDefinition> interfaceTypes) {
-        return subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS).implement(interfaceTypes).modifiers(TypeManifestation.INTERFACE);
+        return subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS).implement(interfaceTypes).modifiers(TypeManifestation.INTERFACE, Visibility.PUBLIC);
     }
 
     /**
