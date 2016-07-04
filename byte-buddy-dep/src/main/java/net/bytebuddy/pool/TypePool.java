@@ -58,15 +58,16 @@ public interface TypePool {
     interface Resolution {
 
         /**
-         * Determines if this resolution represents a {@link TypeDescription}.
+         * Determines if this resolution represents a fully-resolved {@link TypeDescription}.
          *
          * @return {@code true} if the queried type could be resolved.
          */
         boolean isResolved();
 
         /**
-         * Resolves this resolution to the represented type description. This method must only be invoked if this
-         * instance could be resolved. Otherwise, an exception is thrown on calling this method.
+         * Resolves this resolution to a {@link TypeDescription}. If this resolution is unresolved, this
+         * method throws an exception either upon invoking this method or upon invoking at least one method
+         * of the returned type description.
          *
          * @return The type description that is represented by this resolution.
          */
@@ -391,9 +392,21 @@ public interface TypePool {
                     ? cacheProvider.find(name)
                     : new Resolution.Simple(typeDescription);
             if (resolution == null) {
-                resolution = cacheProvider.register(name, doDescribe(name));
+                resolution = doCache(name, doDescribe(name));
             }
             return ArrayTypeResolution.of(resolution, arity);
+        }
+
+        /**
+         * Writes the resolution to the cache. This method should be overridden if the directly
+         * resolved instance should not be added to the cache.
+         *
+         * @param name       The name of the type.
+         * @param resolution The resolution for this type.
+         * @return The actual resolution for the type of this name that is stored in the cache.
+         */
+        protected Resolution doCache(String name, Resolution resolution) {
+            return cacheProvider.register(name, resolution);
         }
 
         @Override
@@ -1009,9 +1022,13 @@ public interface TypePool {
     }
 
     /**
-     * A default implementation of a {@link net.bytebuddy.pool.TypePool} that models binary data in the
-     * Java byte code format into a {@link TypeDescription}. The data lookup
-     * is delegated to a {@link net.bytebuddy.dynamic.ClassFileLocator}.
+     * <p>
+     * A default implementation of a {@link net.bytebuddy.pool.TypePool} that models binary data in the Java byte code format
+     * into a {@link TypeDescription}. The data lookup is delegated to a {@link net.bytebuddy.dynamic.ClassFileLocator}.
+     * </p>
+     * <p>
+     * {@link Resolution}s that are produced by this type pool are either fully resolved or not resolved at all.
+     * </p>
      */
     class Default extends AbstractBase.Hierarchical {
 
@@ -1062,7 +1079,7 @@ public interface TypePool {
          * @return A type pool that reads its data from the system class path.
          */
         public static TypePool ofClassPath() {
-            return of(ClassFileLocator.ForClassLoader.ofClassPath());
+            return of(ClassLoader.getSystemClassLoader());
         }
 
         /**
@@ -1131,6 +1148,193 @@ public interface TypePool {
                     ", cacheProvider=" + cacheProvider +
                     ", readerMode=" + readerMode +
                     '}';
+        }
+
+        /**
+         * Determines the granularity of the class file parsing that is conducted by a {@link net.bytebuddy.pool.TypePool.Default}.
+         */
+        public enum ReaderMode {
+
+            /**
+             * The extended reader mode parses the code segment of each method in order to detect parameter names
+             * that are only stored in a method's debugging information but are not explicitly included.
+             */
+            EXTENDED(ClassReader.SKIP_FRAMES),
+
+            /**
+             * The fast reader mode skips the code segment of each method and cannot detect parameter names that are
+             * only contained within the debugging information. This mode still detects explicitly included method
+             * parameter names.
+             */
+            FAST(ClassReader.SKIP_CODE);
+
+            /**
+             * The flags to provide to a {@link ClassReader} for parsing a file.
+             */
+            private final int flags;
+
+            /**
+             * Creates a new reader mode constant.
+             *
+             * @param flags The flags to provide to a {@link ClassReader} for parsing a file.
+             */
+            ReaderMode(int flags) {
+                this.flags = flags;
+            }
+
+            /**
+             * Returns the flags to provide to a {@link ClassReader} for parsing a file.
+             *
+             * @return The flags to provide to a {@link ClassReader} for parsing a file.
+             */
+            protected int getFlags() {
+                return flags;
+            }
+
+            /**
+             * Determines if this reader mode represents extended reading.
+             *
+             * @return {@code true} if this reader mode represents extended reading.
+             */
+            public boolean isExtended() {
+                return this == EXTENDED;
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.Default.ReaderMode." + name();
+            }
+        }
+
+        /**
+         * <p>
+         * A variant of {@link TypePool.Default} that resolves type descriptions lazily. A lazy resolution respects this type
+         * pool's {@link CacheProvider} but requeries this cache pool for every access of a property of a {@link TypeDescription}.
+         * </p>
+         * <p>
+         * {@link Resolution}s of this type pool are only fully resolved if a property that is not the type's name is required.
+         * </p>
+         */
+        public static class WithLazyResolution extends Default {
+
+            /**
+             * Creates a new default type pool with lazy resolution and without a parent pool.
+             *
+             * @param cacheProvider    The cache provider to be used.
+             * @param classFileLocator The class file locator to be used.
+             * @param readerMode       The reader mode to apply by this default type pool.
+             */
+            public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
+                super(cacheProvider, classFileLocator, readerMode);
+            }
+
+            /**
+             * Creates a new default type pool with lazy resolution.
+             *
+             * @param cacheProvider    The cache provider to be used.
+             * @param classFileLocator The class file locator to be used.
+             * @param readerMode       The reader mode to apply by this default type pool.
+             * @param parentPool       The parent type pool.
+             */
+            public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool) {
+                super(cacheProvider, classFileLocator, readerMode, parentPool);
+            }
+
+            /**
+             * Creates a default {@link net.bytebuddy.pool.TypePool} with lazy resolution that looks up data by querying the system class
+             * loader. The returned instance is configured to use a fast reading mode and a simple cache.
+             *
+             * @return A type pool that reads its data from the system class path.
+             */
+            public static TypePool ofClassPath() {
+                return of(ClassLoader.getSystemClassLoader());
+            }
+
+            /**
+             * Returns a default {@link TypePool} with lazy resolution for the provided class loader.
+             *
+             * @param classLoader The class loader for which this class pool is representing types.
+             * @return An appropriate type pool.
+             */
+            public static TypePool of(ClassLoader classLoader) {
+                return of(ClassFileLocator.ForClassLoader.of(classLoader));
+            }
+
+            /**
+             * Creates a default {@link net.bytebuddy.pool.TypePool} with lazy resolution that looks up data by querying the supplied class
+             * file locator. The returned instance is configured to use a fast reading mode and a simple cache.
+             *
+             * @param classFileLocator The class file locator to use.
+             * @return A type pool that reads its data from the system class path.
+             */
+            public static TypePool of(ClassFileLocator classFileLocator) {
+                return new WithLazyResolution(new CacheProvider.Simple(), classFileLocator, ReaderMode.FAST);
+            }
+
+            @Override
+            protected Resolution doDescribe(String name) {
+                return new LazyResolution(name);
+            }
+
+            @Override
+            protected Resolution doCache(String name, Resolution resolution) {
+                return resolution;
+            }
+
+            // TODO: Untangle due to equals/hashCode
+
+            /**
+             * A lazy resolution of a type that the enclosing type pool attempts to resolve.
+             */
+            protected class LazyResolution extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation implements Resolution {
+
+                /**
+                 * The type's name.
+                 */
+                private final String name;
+
+                /**
+                 * Creates a new lazy resolution.
+                 *
+                 * @param name The type's name.
+                 */
+                protected LazyResolution(String name) {
+                    this.name = name;
+                }
+
+                /**
+                 * Resolves the actual resultion for the represented type.
+                 *
+                 * @return The actual resolution of the represented type.
+                 */
+                private Resolution doResolve() {
+                    Resolution resolution = cacheProvider.find(name);
+                    if (resolution == null) {
+                        resolution = cacheProvider.register(name, WithLazyResolution.super.doDescribe(name));
+                    }
+                    return resolution;
+                }
+
+                @Override
+                public boolean isResolved() {
+                    return doResolve().isResolved();
+                }
+
+                @Override
+                protected TypeDescription delegate() {
+                    return doResolve().resolve();
+                }
+
+                @Override
+                public TypeDescription resolve() {
+                    return this;
+                }
+
+                @Override
+                public String getName() {
+                    return name;
+                }
+            }
         }
 
         /**
@@ -2727,7 +2931,7 @@ public interface TypePool {
          * A type description that looks up any referenced {@link net.bytebuddy.description.ByteCodeElement} or
          * {@link AnnotationDescription} by querying a type pool at lookup time.
          */
-        public static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
+        protected static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
 
             /**
              * The index of a super class's type annotations.
@@ -8053,62 +8257,6 @@ public interface TypePool {
                 }
             }
         }
-
-        /**
-         * Determines the granularity of the class file parsing that is conducted by a {@link net.bytebuddy.pool.TypePool.Default}.
-         */
-        public enum ReaderMode {
-
-            /**
-             * The extended reader mode parses the code segment of each method in order to detect parameter names
-             * that are only stored in a method's debugging information but are not explicitly included.
-             */
-            EXTENDED(ClassReader.SKIP_FRAMES),
-
-            /**
-             * The fast reader mode skips the code segment of each method and cannot detect parameter names that are
-             * only contained within the debugging information. This mode still detects explicitly included method
-             * parameter names.
-             */
-            FAST(ClassReader.SKIP_CODE);
-
-            /**
-             * The flags to provide to a {@link ClassReader} for parsing a file.
-             */
-            private final int flags;
-
-            /**
-             * Creates a new reader mode constant.
-             *
-             * @param flags The flags to provide to a {@link ClassReader} for parsing a file.
-             */
-            ReaderMode(int flags) {
-                this.flags = flags;
-            }
-
-            /**
-             * Returns the flags to provide to a {@link ClassReader} for parsing a file.
-             *
-             * @return The flags to provide to a {@link ClassReader} for parsing a file.
-             */
-            protected int getFlags() {
-                return flags;
-            }
-
-            /**
-             * Determines if this reader mode represents extended reading.
-             *
-             * @return {@code true} if this reader mode represents extended reading.
-             */
-            public boolean isExtended() {
-                return this == EXTENDED;
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.Default.ReaderMode." + name();
-            }
-        }
     }
 
     /**
@@ -8159,10 +8307,12 @@ public interface TypePool {
                     '}';
         }
 
+        // TODO: Untangle due to equals/hashCode
+
         /**
          * The lazy resolution for a lazy facade for a type pool.
          */
-        protected static class LazyResolution implements Resolution {
+        protected static class LazyResolution extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation implements Resolution {
 
             /**
              * The type pool to delegate to.
@@ -8186,13 +8336,23 @@ public interface TypePool {
             }
 
             @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            protected TypeDescription delegate() {
+                return typePool.describe(name).resolve();
+            }
+
+            @Override
             public boolean isResolved() {
                 return typePool.describe(name).isResolved();
             }
 
             @Override
             public TypeDescription resolve() {
-                return new LazyTypeDescription(typePool, name);
+                return this;
             }
 
             @Override
@@ -8216,122 +8376,6 @@ public interface TypePool {
                         "typePool=" + typePool +
                         ", name=" + name +
                         '}';
-            }
-
-            /**
-             * A lazy type description for a lazy facade of a type pool.
-             */
-            protected static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
-
-                /**
-                 * The type pool to delegate to.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * The name of the type that is represented by this resolution.
-                 */
-                private final String name;
-
-                /**
-                 * Creates a lazy type description for a lazy facade of a type pool.
-                 *
-                 * @param typePool The type pool to delegate to.
-                 * @param name     The name of the type that is represented by this resolution.
-                 */
-                protected LazyTypeDescription(TypePool typePool, String name) {
-                    this.typePool = typePool;
-                    this.name = name;
-                }
-
-                /**
-                 * Resolves the actual type by querying the actual type pool.
-                 *
-                 * @return A representation of the actual type description.
-                 */
-                private TypeDescription resolve() {
-                    return typePool.describe(name).resolve();
-                }
-
-                @Override
-                public Generic getSuperClass() {
-                    return resolve().getSuperClass();
-                }
-
-                @Override
-                public TypeList.Generic getInterfaces() {
-                    return resolve().getInterfaces();
-                }
-
-                @Override
-                public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-                    return resolve().getDeclaredFields();
-                }
-
-                @Override
-                public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
-                    return resolve().getDeclaredMethods();
-                }
-
-                @Override
-                public TypeDescription getDeclaringType() {
-                    return resolve().getDeclaringType();
-                }
-
-                @Override
-                public MethodDescription getEnclosingMethod() {
-                    return resolve().getEnclosingMethod();
-                }
-
-                @Override
-                public TypeDescription getEnclosingType() {
-                    return resolve().getEnclosingType();
-                }
-
-                @Override
-                public TypeList getDeclaredTypes() {
-                    return resolve().getDeclaredTypes();
-                }
-
-                @Override
-                public boolean isAnonymousClass() {
-                    return resolve().isAnonymousClass();
-                }
-
-                @Override
-                public boolean isLocalClass() {
-                    return resolve().isLocalClass();
-                }
-
-                @Override
-                public boolean isMemberClass() {
-                    return resolve().isMemberClass();
-                }
-
-                @Override
-                public PackageDescription getPackage() {
-                    return resolve().getPackage();
-                }
-
-                @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return resolve().getDeclaredAnnotations();
-                }
-
-                @Override
-                public TypeList.Generic getTypeVariables() {
-                    return resolve().getTypeVariables();
-                }
-
-                @Override
-                public int getModifiers() {
-                    return resolve().getModifiers();
-                }
-
-                @Override
-                public String getName() {
-                    return name;
-                }
             }
         }
     }

@@ -7261,6 +7261,94 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             public StackSize getStackSize() {
                 return StackSize.SINGLE;
             }
+
+            /**
+             * An implementation of a type description that delegates all properties but the type's name to a delegate.
+             */
+            public abstract static class WithDelegation extends OfSimpleType {
+
+                /**
+                 * Returns the delegate type description to this type instance.
+                 *
+                 * @return The delegate type description.
+                 */
+                protected abstract TypeDescription delegate();
+
+                @Override
+                public Generic getSuperClass() {
+                    return delegate().getSuperClass();
+                }
+
+                @Override
+                public TypeList.Generic getInterfaces() {
+                    return delegate().getInterfaces();
+                }
+
+                @Override
+                public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
+                    return delegate().getDeclaredFields();
+                }
+
+                @Override
+                public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
+                    return delegate().getDeclaredMethods();
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return delegate().getDeclaringType();
+                }
+
+                @Override
+                public MethodDescription getEnclosingMethod() {
+                    return delegate().getEnclosingMethod();
+                }
+
+                @Override
+                public TypeDescription getEnclosingType() {
+                    return delegate().getEnclosingType();
+                }
+
+                @Override
+                public TypeList getDeclaredTypes() {
+                    return delegate().getDeclaredTypes();
+                }
+
+                @Override
+                public boolean isAnonymousClass() {
+                    return delegate().isAnonymousClass();
+                }
+
+                @Override
+                public boolean isLocalClass() {
+                    return delegate().isLocalClass();
+                }
+
+                @Override
+                public boolean isMemberClass() {
+                    return delegate().isMemberClass();
+                }
+
+                @Override
+                public PackageDescription getPackage() {
+                    return delegate().getPackage();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return delegate().getDeclaredAnnotations();
+                }
+
+                @Override
+                public TypeList.Generic getTypeVariables() {
+                    return delegate().getTypeVariables();
+                }
+
+                @Override
+                public int getModifiers() {
+                    return delegate().getModifiers();
+                }
+            }
         }
     }
 
