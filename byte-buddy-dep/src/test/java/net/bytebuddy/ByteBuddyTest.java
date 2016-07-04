@@ -11,7 +11,6 @@ import static org.hamcrest.core.Is.is;
 
 public class ByteBuddyTest {
 
-
     @Test(expected = IllegalArgumentException.class)
     public void testEnumWithoutValuesIsIllegal() throws Exception {
         new ByteBuddy().makeEnumeration();
