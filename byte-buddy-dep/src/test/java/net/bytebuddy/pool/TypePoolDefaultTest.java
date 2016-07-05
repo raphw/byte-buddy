@@ -1,6 +1,9 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +13,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.*;
 
 public class TypePoolDefaultTest {
 
@@ -82,6 +86,28 @@ public class TypePoolDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.Default.class).apply();
+    }
+
+    @Test
+    public void testTypeIsCached() throws Exception {
+        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
+        TypePool typePool = TypePool.Default.of(classFileLocator);
+        TypePool.Resolution resolution = typePool.describe(Object.class.getName());
+        assertThat(typePool.describe(Object.class.getName()).resolve(), CoreMatchers.is(resolution.resolve()));
+        verify(classFileLocator).locate(Object.class.getName());
+        verifyNoMoreInteractions(classFileLocator);
+    }
+
+    @Test
+    public void testReferencedTypeIsCached() throws Exception {
+        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
+        TypePool typePool = TypePool.Default.of(classFileLocator);
+        TypePool.Resolution resolution = typePool.describe(String.class.getName());
+        assertThat(typePool.describe(String.class.getName()).resolve(), CoreMatchers.is(resolution.resolve()));
+        assertThat(typePool.describe(String.class.getName()).resolve().getSuperClass().asErasure(), CoreMatchers.is(TypeDescription.OBJECT));
+        verify(classFileLocator).locate(String.class.getName());
+        verify(classFileLocator).locate(Object.class.getName());
+        verifyNoMoreInteractions(classFileLocator);
     }
 
     @Deprecated
