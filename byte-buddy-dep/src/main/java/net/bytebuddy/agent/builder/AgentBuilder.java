@@ -11,6 +11,7 @@ import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.TypeResolver;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
@@ -22,13 +23,15 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.implementation.bytecode.*;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.Duplication;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
-import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -51,7 +54,6 @@ import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -1990,7 +1992,7 @@ public interface AgentBuilder {
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
-                    return builder.initializer(NexusAccessor.INSTANCE.identifiedBy(identification));
+                    return builder.initializer(new TypeResolver.Active.InitializationAppender(identification));
                 }
 
                 @Override
@@ -2028,7 +2030,7 @@ public interface AgentBuilder {
                             Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
-                                (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)
+                                (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class) // TODO: Source?!
                                         ? dependentTypes
                                         : independentTypes).remove(auxiliaryType);
                             }
@@ -2046,9 +2048,7 @@ public interface AgentBuilder {
                         } else {
                             loadedTypeInitializer = dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription());
                         }
-                        if (loadedTypeInitializer.isAlive()) {
-                            NexusAccessor.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                        }
+                        TypeResolver.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
 
                     @Override
@@ -2077,9 +2077,7 @@ public interface AgentBuilder {
                         LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
                                 : new InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectorFactory.resolve());
-                        if (loadedTypeInitializer.isAlive()) {
-                            NexusAccessor.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                        }
+                        TypeResolver.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
 
                     @Override
@@ -2112,9 +2110,7 @@ public interface AgentBuilder {
                             }
                         }
                         LoadedTypeInitializer loadedTypeInitializer = loadedTypeInitializers.get(dynamicType.getTypeDescription());
-                        if (loadedTypeInitializer.isAlive()) {
-                            NexusAccessor.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                        }
+                        TypeResolver.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
 
                     @Override
@@ -2207,285 +2203,6 @@ public interface AgentBuilder {
                                 ", rawAuxiliaryTypes=" + rawAuxiliaryTypes +
                                 ", loadedTypeInitializers=" + loadedTypeInitializers +
                                 ", classInjector=" + classInjector +
-                                '}';
-                    }
-                }
-            }
-
-            /**
-             * An accessor for making sure that the accessed {@link net.bytebuddy.agent.builder.Nexus} is the class that is loaded by the system class loader.
-             */
-            protected enum NexusAccessor {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * The dispatcher for registering type initializers in the {@link Nexus}.
-                 */
-                private final Dispatcher dispatcher;
-
-                /**
-                 * The {@link ClassLoader#getSystemClassLoader()} method.
-                 */
-                private final MethodDescription.InDefinedShape getSystemClassLoader;
-
-                /**
-                 * The {@link java.lang.ClassLoader#loadClass(String)} method.
-                 */
-                private final MethodDescription.InDefinedShape loadClass;
-
-                /**
-                 * The {@link Integer#valueOf(int)} method.
-                 */
-                private final MethodDescription.InDefinedShape valueOf;
-
-                /**
-                 * The {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
-                 */
-                private final MethodDescription getDeclaredMethod;
-
-                /**
-                 * The {@link java.lang.reflect.Method#invoke(Object, Object...)} method.
-                 */
-                private final MethodDescription invokeMethod;
-
-                /**
-                 * Creates the singleton accessor.
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Explicit delegation of the exception")
-                NexusAccessor() {
-                    Dispatcher dispatcher;
-                    try {
-                        TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-                        dispatcher = new Dispatcher.Available(ClassInjector.UsingReflection.ofSystemClassLoader()
-                                .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
-                                .get(nexusType)
-                                .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
-                    } catch (Exception exception) {
-                        try {
-                            dispatcher = new Dispatcher.Available(ClassLoader.getSystemClassLoader()
-                                    .loadClass(Nexus.class.getName())
-                                    .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
-                        } catch (Exception ignored) {
-                            dispatcher = new Dispatcher.Unavailable(exception);
-                        }
-                    }
-                    this.dispatcher = dispatcher;
-                    getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
-                            .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
-                    loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
-                            .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
-                    getDeclaredMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
-                            .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
-                    invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
-                            .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
-                    valueOf = new TypeDescription.ForLoadedType(Integer.class).getDeclaredMethods()
-                            .filter(named("valueOf").and(takesArguments(int.class))).getOnly();
-                }
-
-                /**
-                 * Registers a type initializer with the class loader's nexus.
-                 *
-                 * @param name            The name of a type for which a loaded type initializer is registered.
-                 * @param classLoader     The class loader for which a loaded type initializer is registered.
-                 * @param identification  An identification for the initializer to run.
-                 * @param typeInitializer The loaded type initializer to be registered.
-                 */
-                public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer typeInitializer) {
-                    dispatcher.register(name, classLoader, identification, typeInitializer);
-                }
-
-                /**
-                 * Creates a byte code appender for injecting a self-initializing type initializer block into the generated class.
-                 *
-                 * @param identification The identification of the initialization.
-                 * @return An appropriate byte code appender.
-                 */
-                public ByteCodeAppender identifiedBy(int identification) {
-                    return new InitializationAppender(identification);
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor." + name();
-                }
-
-                /**
-                 * A dispatcher for registering type initializers in the {@link Nexus}.
-                 */
-                protected interface Dispatcher {
-
-                    /**
-                     * Registers a type initializer with the class loader's nexus.
-                     *
-                     * @param name            The name of a type for which a loaded type initializer is registered.
-                     * @param classLoader     The class loader for which a loaded type initializer is registered.
-                     * @param identification  An identification for the initializer to run.
-                     * @param typeInitializer The loaded type initializer to be registered.
-                     */
-                    void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer typeInitializer);
-
-                    /**
-                     * An enabled dispatcher for registering a type initializer in a {@link Nexus}.
-                     */
-                    class Available implements Dispatcher {
-
-                        /**
-                         * Indicates that a static method is invoked by reflection.
-                         */
-                        private static final Object STATIC_METHOD = null;
-
-                        /**
-                         * The method for registering a type initializer in the system class loader's {@link Nexus}.
-                         */
-                        private final Method registration;
-
-                        /**
-                         * Creates a new dispatcher.
-                         *
-                         * @param registration The method for registering a type initializer in the system class loader's {@link Nexus}.
-                         */
-                        protected Available(Method registration) {
-                            this.registration = registration;
-                        }
-
-                        @Override
-                        public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer typeInitializer) {
-                            try {
-                                registration.invoke(STATIC_METHOD, name, classLoader, identification, typeInitializer);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot register type initializer for " + name, exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Cannot register type initializer for " + name, exception.getCause());
-                            }
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && registration.equals(((Available) other).registration);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return registration.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Available{" +
-                                    "registration=" + registration +
-                                    '}';
-                        }
-                    }
-
-                    /**
-                     * A disabled dispatcher where a {@link Nexus} is not available.
-                     */
-                    class Unavailable implements Dispatcher {
-
-                        /**
-                         * The exception that was raised during the dispatcher initialization.
-                         */
-                        private final Exception exception;
-
-                        /**
-                         * Creates a new disabled dispatcher.
-                         *
-                         * @param exception The exception that was raised during the dispatcher initialization.
-                         */
-                        protected Unavailable(Exception exception) {
-                            this.exception = exception;
-                        }
-
-                        @Override
-                        public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer typeInitializer) {
-                            throw new IllegalStateException("Could not locate registration method", exception);
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && exception.equals(((Unavailable) other).exception);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return exception.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Unavailable{" +
-                                    "exception=" + exception +
-                                    '}';
-                        }
-                    }
-                }
-
-                /**
-                 * A byte code appender for invoking a Nexus for initializing the instrumented type.
-                 */
-                protected static class InitializationAppender implements ByteCodeAppender {
-
-                    /**
-                     * The identification for the self-initialization to execute.
-                     */
-                    private final int identification;
-
-                    /**
-                     * Creates a new initialization appender.
-                     *
-                     * @param identification The identification for the self-initialization to execute.
-                     */
-                    protected InitializationAppender(int identification) {
-                        this.identification = identification;
-                    }
-
-                    @Override
-                    public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-                        return new ByteCodeAppender.Simple(new StackManipulation.Compound(
-                                MethodInvocation.invoke(NexusAccessor.INSTANCE.getSystemClassLoader),
-                                new TextConstant(Nexus.class.getName()),
-                                MethodInvocation.invoke(NexusAccessor.INSTANCE.loadClass),
-                                new TextConstant("initialize"),
-                                ArrayFactory.forType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class))
-                                        .withValues(Arrays.asList(
-                                                ClassConstant.of(TypeDescription.CLASS),
-                                                ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
-                                MethodInvocation.invoke(NexusAccessor.INSTANCE.getDeclaredMethod),
-                                NullConstant.INSTANCE,
-                                ArrayFactory.forType(TypeDescription.Generic.OBJECT)
-                                        .withValues(Arrays.asList(
-                                                ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
-                                                new StackManipulation.Compound(
-                                                        IntegerConstant.forValue(identification),
-                                                        MethodInvocation.invoke(INSTANCE.valueOf)))),
-                                MethodInvocation.invoke(NexusAccessor.INSTANCE.invokeMethod),
-                                Removal.SINGLE
-                        )).apply(methodVisitor, implementationContext, instrumentedMethod);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        InitializationAppender that = (InitializationAppender) other;
-                        return identification == that.identification;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return identification;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.InitializationAppender{" +
-                                "identification=" + identification +
                                 '}';
                     }
                 }
@@ -5164,7 +4881,8 @@ public interface AgentBuilder {
                     initializationStrategy,
                     bootstrapInjectionStrategy,
                     descriptionStrategy,
-                    ignoredTypeMatcher, transformation);
+                    ignoredTypeMatcher,
+                    transformation);
         }
 
         @Override
@@ -5985,7 +5703,7 @@ public interface AgentBuilder {
                         DynamicType.Unloaded<?> dynamicType = dispatcher.apply(transformer.transform(typeStrategy.builder(typeDescription,
                                 byteBuddy,
                                 classFileLocator,
-                                methodNameTransformer.resolve()), typeDescription, classLoader)).make(typePool);
+                                methodNameTransformer.resolve()), typeDescription, classLoader)).make(TypeResolver.Disabled.INSTANCE, typePool);
                         dispatcher.register(dynamicType, classLoader, new BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
                                 classLoader,
                                 protectionDomain,

@@ -1,4 +1,4 @@
-package net.bytebuddy.agent.builder;
+package net.bytebuddy.dynamic;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
