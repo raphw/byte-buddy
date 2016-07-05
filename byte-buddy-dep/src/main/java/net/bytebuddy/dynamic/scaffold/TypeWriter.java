@@ -14,6 +14,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.TypeResolver;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -60,7 +61,7 @@ public interface TypeWriter<T> {
      *
      * @return An unloaded dynamic type that describes the created type.
      */
-    DynamicType.Unloaded<T> make();
+    DynamicType.Unloaded<T> make(TypeResolver typeResolver);
 
     /**
      * An field pool that allows a lookup for how to implement a field.
@@ -1612,10 +1613,10 @@ public interface TypeWriter<T> {
 
         @Override
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should not change program outcome")
-        public DynamicType.Unloaded<S> make() {
+        public DynamicType.Unloaded<S> make(TypeResolver typeResolver) {
             Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                     auxiliaryTypeNamingStrategy,
-                    typeInitializer,
+                    typeResolver.injectedInto(typeInitializer),
                     classFileVersion);
             byte[] binaryRepresentation = create(implementationContext);
             if (DUMP_FOLDER != null) {
@@ -1633,7 +1634,8 @@ public interface TypeWriter<T> {
             return new DynamicType.Default.Unloaded<S>(instrumentedType,
                     binaryRepresentation,
                     loadedTypeInitializer,
-                    CompoundList.of(explicitAuxiliaryTypes, implementationContext.getRegisteredAuxiliaryTypes()));
+                    CompoundList.of(explicitAuxiliaryTypes, implementationContext.getRegisteredAuxiliaryTypes()),
+                    typeResolver);
         }
 
         /**

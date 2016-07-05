@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.TypeResolver;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
@@ -85,8 +86,8 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
     }
 
     @Override
-    public DynamicType.Unloaded<T> make() {
-        return make(TypePool.Default.of(classFileLocator));
+    public DynamicType.Unloaded<T> make(TypeResolver typeResolver) {
+        return make(typeResolver, TypePool.Default.of(classFileLocator));
     }
 
 

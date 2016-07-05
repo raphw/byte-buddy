@@ -42,12 +42,14 @@ public class DynamicTypeDefaultUnloadedTest {
     private ClassLoadingStrategy classLoadingStrategy;
 
     @Mock
+    private TypeResolver typeResolver; // TODO
+
+    @Mock
     private TypeDescription typeDescription, auxiliaryTypeDescription;
 
     private byte[] binaryRepresentation, auxiliaryTypeByte;
 
     private DynamicType.Unloaded<?> unloaded;
-
 
     @Before
     @SuppressWarnings("unchecked")
@@ -57,7 +59,8 @@ public class DynamicTypeDefaultUnloadedTest {
         unloaded = new DynamicType.Default.Unloaded<Object>(typeDescription,
                 binaryRepresentation,
                 mainLoadedTypeInitializer,
-                Collections.singletonList(auxiliaryType));
+                Collections.singletonList(auxiliaryType),
+                typeResolver);
         Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
         loadedTypes.put(typeDescription, MAIN_TYPE);
         loadedTypes.put(auxiliaryTypeDescription, AUXILIARY_TYPE);

@@ -815,6 +815,8 @@ public interface DynamicType {
          */
         DynamicType.Unloaded<T> make();
 
+        DynamicType.Unloaded<T> make(TypeResolver typeResolver);
+
         /**
          * Creates the dynamic type this builder represents. If the specified dynamic type is not legal, an {@link IllegalStateException} is thrown.
          *
@@ -822,6 +824,8 @@ public interface DynamicType {
          * @return An unloaded dynamic type representing the type specified by this builder.
          */
         DynamicType.Unloaded<T> make(TypePool typePool);
+
+        DynamicType.Unloaded<T> make(TypeResolver typeResolver, TypePool typePool);
 
         /**
          * A builder for a type variable definition.
@@ -2489,6 +2493,16 @@ public interface DynamicType {
                 return invokable(new LatentMatcher.Resolved<MethodDescription>(matcher));
             }
 
+            @Override
+            public Unloaded<S> make(TypePool typePool) {
+                return make(TypeResolver.Passive.INSTANCE, typePool);
+            }
+
+            @Override
+            public Unloaded<S> make() {
+                return make(TypeResolver.Passive.INSTANCE);
+            }
+
             /**
              * A delegator for a dynamic type builder delegating all invocations to another dynamic type builder.
              *
@@ -2587,8 +2601,18 @@ public interface DynamicType {
                 }
 
                 @Override
+                public Unloaded<U> make(TypeResolver typeResolver) {
+                    return materialize().make(typeResolver);
+                }
+
+                @Override
                 public Unloaded<U> make(TypePool typePool) {
                     return materialize().make(typePool);
+                }
+
+                @Override
+                public Unloaded<U> make(TypeResolver typeResolver, TypePool typePool) {
+                    return materialize().make(typeResolver, typePool);
                 }
 
                 /**
@@ -3996,35 +4020,6 @@ public interface DynamicType {
     }
 
     /**
-     * A dynamic type that has been loaded into the running instance of the Java virtual machine.
-     *
-     * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
-     *            type itself, an interface or the direct super class.
-     */
-    interface Loaded<T> extends DynamicType {
-
-        /**
-         * Returns the loaded main class.
-         *
-         * @return A loaded class representation of this dynamic type.
-         */
-        Class<? extends T> getLoaded();
-
-        /**
-         * <p>
-         * Returns a map of all loaded auxiliary types to this dynamic type.
-         * </p>
-         * <p>
-         * <b>Note</b>: The type descriptions will most likely differ from the binary representation of this type.
-         * Normally, annotations and intercepted methods are not added to the type descriptions of auxiliary types.
-         * </p>
-         *
-         * @return A mapping from the fully qualified names of all auxiliary types to their loaded class representations.
-         */
-        Map<TypeDescription, Class<?>> getLoadedAuxiliaryTypes();
-    }
-
-    /**
      * A dynamic type that has not yet been loaded by a given {@link java.lang.ClassLoader}.
      *
      * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
@@ -4057,6 +4052,35 @@ public interface DynamicType {
          * @return A copy of this unloaded dynamic type which includes the provided dynamic types.
          */
         Unloaded<T> include(List<? extends DynamicType> dynamicTypes);
+    }
+
+    /**
+     * A dynamic type that has been loaded into the running instance of the Java virtual machine.
+     *
+     * @param <T> The most specific known loaded type that is implemented by this dynamic type, usually the
+     *            type itself, an interface or the direct super class.
+     */
+    interface Loaded<T> extends DynamicType {
+
+        /**
+         * Returns the loaded main class.
+         *
+         * @return A loaded class representation of this dynamic type.
+         */
+        Class<? extends T> getLoaded();
+
+        /**
+         * <p>
+         * Returns a map of all loaded auxiliary types to this dynamic type.
+         * </p>
+         * <p>
+         * <b>Note</b>: The type descriptions will most likely differ from the binary representation of this type.
+         * Normally, annotations and intercepted methods are not added to the type descriptions of auxiliary types.
+         * </p>
+         *
+         * @return A mapping from the fully qualified names of all auxiliary types to their loaded class representations.
+         */
+        Map<TypeDescription, Class<?>> getLoadedAuxiliaryTypes();
     }
 
     /**
@@ -4347,6 +4371,8 @@ public interface DynamicType {
          */
         public static class Unloaded<T> extends Default implements DynamicType.Unloaded<T> {
 
+            private final TypeResolver typeResolver;
+
             /**
              * Creates a new unloaded representation of a dynamic type.
              *
@@ -4358,8 +4384,10 @@ public interface DynamicType {
             public Unloaded(TypeDescription typeDescription,
                             byte[] binaryRepresentation,
                             LoadedTypeInitializer loadedTypeInitializer,
-                            List<? extends DynamicType> auxiliaryTypes) {
+                            List<? extends DynamicType> auxiliaryTypes,
+                            TypeResolver typeResolver) {
                 super(typeDescription, binaryRepresentation, loadedTypeInitializer, auxiliaryTypes);
+                this.typeResolver = typeResolver;
             }
 
             @Override
@@ -4368,21 +4396,7 @@ public interface DynamicType {
                         binaryRepresentation,
                         loadedTypeInitializer,
                         auxiliaryTypes,
-                        initialize(classLoadingStrategy.load(classLoader, getAllTypes())));
-            }
-
-            /**
-             * Runs all loaded type initializers for all loaded classes.
-             *
-             * @param uninitialized The uninitialized loaded classes mapped by their type description.
-             * @return A new hash map that contains the same classes as those given.
-             */
-            private Map<TypeDescription, Class<?>> initialize(Map<TypeDescription, Class<?>> uninitialized) {
-                Map<TypeDescription, LoadedTypeInitializer> typeInitializers = getLoadedTypeInitializers();
-                for (Map.Entry<TypeDescription, Class<?>> entry : uninitialized.entrySet()) {
-                    typeInitializers.get(entry.getKey()).onLoad(entry.getValue());
-                }
-                return new HashMap<TypeDescription, Class<?>>(uninitialized);
+                        typeResolver.initialize(this, classLoader, classLoadingStrategy));
             }
 
             @Override
@@ -4392,7 +4406,11 @@ public interface DynamicType {
 
             @Override
             public DynamicType.Unloaded<T> include(List<? extends DynamicType> dynamicType) {
-                return new Default.Unloaded<T>(typeDescription, binaryRepresentation, loadedTypeInitializer, CompoundList.of(auxiliaryTypes, dynamicType));
+                return new Default.Unloaded<T>(typeDescription,
+                        binaryRepresentation,
+                        loadedTypeInitializer,
+                        CompoundList.of(auxiliaryTypes, dynamicType),
+                        typeResolver);
             }
 
             @Override
