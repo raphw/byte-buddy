@@ -685,8 +685,10 @@ new ByteBuddy().rebase(Foo.class)
 
 <p>
     After creating a <code>DynamicType.Unloaded</code>, this type can be loaded using a
-    <code>ClassLoadingStrategy</code>. Byte Buddy provides several such strategies out of the box where each follows
-    one of the concepts that were described above. These strategies are defined in
+    <code>ClassLoadingStrategy</code>. If no such strategy is provided, Byte Buddy infers such a strategy based on
+    the provided class loader and creates a new class loader only for the bootstrap class loader where no type can
+    be injected using reflection which is otherwise the default. Byte Buddy provides several class loadings strategies
+    out of the box where each follows one of the concepts that were described above. These strategies are defined in
     <code>ClassLoadingStrategy.Default</code> where the <code>WRAPPER</code> strategy creates a new, wrapping
     <code>ClassLoader</code>, where the <code>CHILD_FIRST</code> strategy creates a similar class loader with
     child-first semantics and where the <code>INJECTION</code> strategy injects a dynamic type using reflection.
@@ -845,7 +847,7 @@ class MyApplication {
                 ClassFileLocator.ForClassLoader.ofClassPath())
       .defineField("qux", String.class) // we learn more about defining fields later
       .make()
-      .load(ClassLoader.getSystemClassLoader(), ClassLoadingStrategy.Default.INJECTION);
+      .load(ClassLoader.getSystemClassLoader());
     assertThat(Bar.class.getDeclaredField("qux"), notNullValue());
   }
 }
@@ -982,7 +984,7 @@ String toString = new ByteBuddy()
   .subclass(Object.class)
   .name("example.Type")
   .make()
-  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(getClass().getClassLoader())
   .getLoaded()
   .newInstance() // Java reflection API
   .toString();
@@ -1006,7 +1008,7 @@ String toString = new ByteBuddy()
   .name("example.Type")
   .method(named("toString")).intercept(FixedValue.value("Hello World!"))
   .make()
-  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(getClass().getClassLoader())
   .getLoaded()
   .newInstance()
   .toString();
@@ -1063,7 +1065,7 @@ Foo dynamicFoo = new ByteBuddy()
   .method(named("foo")).intercept(FixedValue.value("Two!"))
   .method(named("foo").and(takesArguments(1))).intercept(FixedValue.value("Three!"))
   .make()
-  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(getClass().getClassLoader())
   .getLoaded()
   .newInstance();
 </pre>
@@ -1236,7 +1238,7 @@ String helloWorld = new ByteBuddy()
   .subclass(Source.class)
   .method(named("hello")).intercept(MethodDelegation.to(Target.class))
   .make()
-  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(getClass().getClassLoader())
   .getLoaded()
   .newInstance()
   .hello("World");
@@ -1388,7 +1390,7 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
   .subclass(MemoryDatabase.class)
   .method(named("load")).intercept(MethodDelegation.to(LoggerInterceptor.class))
   .make()
-  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(getClass().getClassLoader())
   .getLoaded()
   .newInstance();
 </pre>
@@ -1594,7 +1596,7 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
     .to(new ForwardingLoggerInterceptor(new MemoryDatabase()))
     .appendParameterBinder(Pipe.Binder.install(Forwarder.class)))
   .make()
-  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(getClass().getClassLoader())
   .getLoaded()
   .newInstance();
 </pre>
@@ -1967,7 +1969,7 @@ Class&lt;? extends UserType&gt; dynamicUserType = new ByteBuddy()
     .intercept(MethodDelegation.instanceField(Interceptor.class, "interceptor"))
   .implement(InterceptionAccessor.class).intercept(FieldAccessor.ofBeanProperty())
   .make()
-  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(getClass().getClassLoader())
   .getLoaded();
 </pre>
 
@@ -1983,7 +1985,7 @@ InstanceCreator factory = new ByteBuddy()
     .method(not(isDeclaredBy(Object.class)))
     .intercept(MethodDelegation.construct(dynamicUserType))
   .make()
-  .load(dynamicUserType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(dynamicUserType.getClassLoader())
   .getLoaded().newInstance();
 </pre>
 
