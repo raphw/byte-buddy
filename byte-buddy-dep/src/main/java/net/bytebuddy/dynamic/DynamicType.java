@@ -769,6 +769,12 @@ public interface DynamicType {
          * <p>
          * Note that the specified definition does never apply for methods that are explicitly ignored.
          * </p>
+         * <p>
+         * <b>Important</b>: It is possible to instrument the dynamic type's initializer. Depending on the used {@link TypeResolver},
+         * the type initializer might be run <b>before</b> Byte Buddy could apply any {@link LoadedTypeInitializer}s which are
+         * responsible for preparing the instrumented type prior to the initializer's execution. For preparing the type prior to
+         * executing the initializer, an {@link net.bytebuddy.dynamic.TypeResolver.Active} resolver must be chosen.
+         * </p>
          *
          * @param matcher The matcher that determines what methods or constructors are affected by the subsequent specification.
          * @return A builder that allows for changing a method's or constructor's definition.
@@ -795,6 +801,12 @@ public interface DynamicType {
          * <p>
          * Note that the specified definition does never apply for methods that are explicitly ignored.
          * </p>
+         * <p>
+         * <b>Important</b>: It is possible to instrument the dynamic type's initializer. Depending on the used {@link TypeResolver},
+         * the type initializer might be run <b>before</b> Byte Buddy could apply any {@link LoadedTypeInitializer}s which are
+         * responsible for preparing the instrumented type prior to the initializer's execution. For preparing the type prior to
+         * executing the initializer, an {@link net.bytebuddy.dynamic.TypeResolver.Active} resolver must be chosen.
+         * </p>
          *
          * @param matcher The matcher that determines what declared methods or constructors are affected by the subsequent specification.
          * @return A builder that allows for changing a method's or constructor's definition.
@@ -810,21 +822,53 @@ public interface DynamicType {
          * Supplying a type pool only makes sense if custom byte code is created by adding a custom {@link AsmVisitorWrapper} where ASM might be
          * required to compute stack map frames by processing information over any mentioned type's class hierarchy.
          * </p>
+         * <p>
+         * The dynamic type is initialized using a {@link net.bytebuddy.dynamic.TypeResolver.Passive} strategy. Using this strategy, no
+         * {@link LoadedTypeInitializer} is run during the execution of the type's initializer such that no {@link Implementation} used for
+         * executing the initializer must rely on such an initializer.
+         * </p>
          *
          * @return An unloaded dynamic type representing the type specified by this builder.
          */
         DynamicType.Unloaded<T> make();
 
+        /**
+         * <p>
+         * Creates the dynamic type this builder represents. If the specified dynamic type is not legal, an {@link IllegalStateException} is thrown.
+         * </p>
+         * <p>
+         * The dynamic type is initialized using a {@link net.bytebuddy.dynamic.TypeResolver.Passive} strategy. Using this strategy, no
+         * {@link LoadedTypeInitializer} is run during the execution of the type's initializer such that no {@link Implementation} used for
+         * executing the initializer must rely on such an initializer.
+         * </p>
+         *
+         * @param typeResolver The type resolver to use for the created type's initialization.
+         * @return An unloaded dynamic type representing the type specified by this builder.
+         */
         DynamicType.Unloaded<T> make(TypeResolver typeResolver);
 
         /**
+         * <p>
          * Creates the dynamic type this builder represents. If the specified dynamic type is not legal, an {@link IllegalStateException} is thrown.
+         * </p>
+         * <p>
+         * The dynamic type is initialized using a {@link net.bytebuddy.dynamic.TypeResolver.Passive} strategy. Using this strategy, no
+         * {@link LoadedTypeInitializer} is run during the execution of the type's initializer such that no {@link Implementation} used for
+         * executing the initializer must rely on such an initializer.
+         * </p>
          *
          * @param typePool A type pool that is used for computing stack map frames by the underlying class writer, if required.
          * @return An unloaded dynamic type representing the type specified by this builder.
          */
         DynamicType.Unloaded<T> make(TypePool typePool);
 
+        /**
+         * Creates the dynamic type this builder represents. If the specified dynamic type is not legal, an {@link IllegalStateException} is thrown.
+         *
+         * @param typeResolver The type resolver to use for the created type's initialization.
+         * @param typePool     A type pool that is used for computing stack map frames by the underlying class writer, if required.
+         * @return An unloaded dynamic type representing the type specified by this builder.
+         */
         DynamicType.Unloaded<T> make(TypeResolver typeResolver, TypePool typePool);
 
         /**
@@ -4371,6 +4415,9 @@ public interface DynamicType {
          */
         public static class Unloaded<T> extends Default implements DynamicType.Unloaded<T> {
 
+            /**
+             * The type resolver to use for initializing the dynamic type.
+             */
             private final TypeResolver.Resolved typeResolver;
 
             /**
@@ -4380,6 +4427,7 @@ public interface DynamicType {
              * @param binaryRepresentation  An array of byte of the binary representation of this dynamic type.
              * @param loadedTypeInitializer The type initializer of this dynamic type.
              * @param auxiliaryTypes        The auxiliary types that are required for this dynamic type.
+             * @param typeResolver          The type resolver to use for initializing the dynamic type.
              */
             public Unloaded(TypeDescription typeDescription,
                             byte[] binaryRepresentation,

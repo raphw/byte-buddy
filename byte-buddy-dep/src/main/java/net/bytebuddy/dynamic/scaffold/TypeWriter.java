@@ -59,6 +59,7 @@ public interface TypeWriter<T> {
     /**
      * Creates the dynamic type that is described by this type writer.
      *
+     * @param typeResolver The type resolver to use.
      * @return An unloaded dynamic type that describes the created type.
      */
     DynamicType.Unloaded<T> make(TypeResolver.Resolved typeResolver);

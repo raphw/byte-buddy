@@ -26,19 +26,52 @@ import java.util.*;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
+/**
+ * A type resolver is responsible for loading a class and for initializing its {@link LoadedTypeInitializer}s.
+ */
 public interface TypeResolver {
 
+    /**
+     * Resolves a type resolver for actual application.
+     *
+     * @return A resolved version of this type resolver.
+     */
     Resolved resolve();
 
+    /**
+     * A resolved {@link TypeResolver}.
+     */
     interface Resolved {
 
+        /**
+         * Injects a type initializer into the supplied type initializer, if applicable. This way, a type resolver
+         * is capable of injecting code into the generated class's initializer to inline the initialization.
+         *
+         * @param typeInitializer The type initializer to potentially expend.
+         * @return A type initializer to apply for performing the represented type resolution.
+         */
         TypeInitializer injectedInto(TypeInitializer typeInitializer);
 
+        /**
+         * Loads and initializes a dynamic type.
+         *
+         * @param dynamicType          The dynamic type to initialize.
+         * @param classLoader          The class loader to use.
+         * @param classLoadingStrategy The class loading strategy to use.
+         * @return A map of all type descriptions mapped to their representation as a loaded class.
+         */
         Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy);
     }
 
+    /**
+     * A type resolver that applies all {@link LoadedTypeInitializer} after class loading using reflection. This implies that the initializers
+     * are executed <b>after</b> a type initializer is executed.
+     */
     enum Passive implements TypeResolver, Resolved {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -59,12 +92,27 @@ public interface TypeResolver {
             }
             return new HashMap<TypeDescription, Class<?>>(types);
         }
+
+        @Override
+        public String toString() {
+            return "TypeResolver.Passive." + name();
+        }
     }
 
+    /**
+     * A type resolver that applies all {@link LoadedTypeInitializer} as a part of class loading using reflection. This implies that the initializers
+     * are executed <b>before</b> (as a first action of) a type initializer is executed.
+     */
     enum Active implements TypeResolver {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
+        /**
+         * The dispatcher to use.
+         */
         private final Dispatcher dispatcher;
 
         /**
@@ -131,10 +179,23 @@ public interface TypeResolver {
             return new Resolved(new Random().nextInt());
         }
 
+        /**
+         * Registers a loaded type initializer in Byte Buddy's {@link Nexus} which is injected into the system class loader.
+         *
+         * @param name                  The binary name of the class.
+         * @param classLoader           The class's class loader.
+         * @param identification        The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
+         * @param loadedTypeInitializer The loaded type initializer to make available via the {@link Nexus}.
+         */
         public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer loadedTypeInitializer) {
             if (loadedTypeInitializer.isAlive()) {
                 dispatcher.register(name, classLoader, identification, loadedTypeInitializer);
             }
+        }
+
+        @Override
+        public String toString() {
+            return "TypeResolver.Active." + name();
         }
 
         /**
@@ -197,6 +258,13 @@ public interface TypeResolver {
                 public int hashCode() {
                     return registration.hashCode();
                 }
+
+                @Override
+                public String toString() {
+                    return "TypeResolver.Active.Dispatcher.Available{" +
+                            "registration=" + registration +
+                            '}';
+                }
             }
 
             /**
@@ -233,13 +301,31 @@ public interface TypeResolver {
                 public int hashCode() {
                     return exception.hashCode();
                 }
+
+                @Override
+                public String toString() {
+                    return "TypeResolver.Active.Dispatcher.Unavailable{" +
+                            "exception=" + exception +
+                            '}';
+                }
             }
         }
 
+        /**
+         * A resolved version of an active type resolver.
+         */
         protected static class Resolved implements TypeResolver.Resolved {
 
+            /**
+             * The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
+             */
             private final int identification;
 
+            /**
+             * Creates a new resolved active type resolver.
+             *
+             * @param identification The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
+             */
             protected Resolved(int identification) {
                 this.identification = identification;
             }
@@ -260,12 +346,43 @@ public interface TypeResolver {
                 }
                 return types;
             }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Resolved resolved = (Resolved) object;
+                return identification == resolved.identification;
+            }
+
+            @Override
+            public int hashCode() {
+                return identification;
+            }
+
+            @Override
+            public String toString() {
+                return "TypeResolver.Active.Resolved{" +
+                        "identification=" + identification +
+                        '}';
+            }
         }
 
+        /**
+         * An initialization appender that looks up a loaded type initializer from Byte Buddy's {@link Nexus}.
+         */
         public static class InitializationAppender implements ByteCodeAppender {
 
+            /**
+             * The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
+             */
             private final int identification;
 
+            /**
+             * Creates a new initialization appender.
+             *
+             * @param identification The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
+             */
             public InitializationAppender(int identification) {
                 this.identification = identification;
             }
@@ -293,11 +410,37 @@ public interface TypeResolver {
                         Removal.SINGLE
                 )).apply(methodVisitor, implementationContext, instrumentedMethod);
             }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                InitializationAppender that = (InitializationAppender) object;
+                return identification == that.identification;
+            }
+
+            @Override
+            public int hashCode() {
+                return identification;
+            }
+
+            @Override
+            public String toString() {
+                return "TypeResolver.Active.InitializationAppender{" +
+                        "identification=" + identification +
+                        '}';
+            }
         }
     }
 
-    enum Disabled implements TypeResolver, Resolved {
+    /**
+     * A type resolver that does not apply any {@link LoadedTypeInitializer}s but only loads all types.
+     */
+    enum Lazy implements TypeResolver, Resolved {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -313,6 +456,42 @@ public interface TypeResolver {
         @Override
         public Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
             return classLoadingStrategy.load(classLoader, dynamicType.getAllTypes());
+        }
+
+        @Override
+        public String toString() {
+            return "TypeResolver.Lazy." + name();
+        }
+    }
+
+    /**
+     * A type resolver that does not allow for explicit loading of a class and that does not inject any code into the type initializer.
+     */
+    enum Disabled implements TypeResolver, Resolved {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public Resolved resolve() {
+            return this;
+        }
+
+        @Override
+        public TypeInitializer injectedInto(TypeInitializer typeInitializer) {
+            return typeInitializer;
+        }
+
+        @Override
+        public Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
+            throw new IllegalStateException("Cannot initialize a dynamic type for a disabled type resolver");
+        }
+
+        @Override
+        public String toString() {
+            return "TypeResolver.Disabled." + name();
         }
     }
 }
