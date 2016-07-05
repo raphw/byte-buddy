@@ -64,6 +64,8 @@ public class ByteBuddyTutorialExamplesTest {
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
+    // Other than in the tutorial, the tests use a wrapper strategy for class loading to retain the test's repeatability.
+
     @SuppressWarnings("unused")
     private static void println(String s) {
         /* do nothing */

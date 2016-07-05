@@ -48,7 +48,6 @@ public class DynamicTypeDefaultUnloadedTest {
 
     private DynamicType.Unloaded<?> unloaded;
 
-
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -66,6 +65,8 @@ public class DynamicTypeDefaultUnloadedTest {
         when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeByte);
         when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
+        when(typeDescription.getName()).thenReturn(MAIN_TYPE.getName());
+        when(auxiliaryTypeDescription.getName()).thenReturn(AUXILIARY_TYPE.getName());
     }
 
     @Test
