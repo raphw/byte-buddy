@@ -34,6 +34,16 @@ public class AgentBuilderTypeLocatorTest {
     }
 
     @Test
+    public void testFastEagerTypePool() throws Exception {
+        assertThat(AgentBuilder.TypeLocator.Eager.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+    }
+
+    @Test
+    public void testExtendedEagerTypePool() throws Exception {
+        assertThat(AgentBuilder.TypeLocator.Eager.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+    }
+
+    @Test
     public void testFastLoadingTypePool() throws Exception {
         assertThat(AgentBuilder.TypeLocator.ClassLoading.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
@@ -46,6 +56,7 @@ public class AgentBuilderTypeLocatorTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.TypeLocator.Default.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.TypeLocator.Eager.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.TypeLocator.ClassLoading.class).apply();
     }
 }

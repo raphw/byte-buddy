@@ -1175,8 +1175,13 @@ public interface AgentBuilder {
         TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader);
 
         /**
-         * A default implementation of a {@link TypeLocator} that is using a {@link net.bytebuddy.pool.TypePool.Default} with a
-         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple}.
+         * <p>
+         * A default type locator that resolves types only if any property that is not the type's name is requested.
+         * </p>
+         * <p>
+         * The returned type pool uses a {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and the
+         * {@link ClassFileLocator} that is provided by the builder's {@link LocationStrategy}.
+         * </p>
          */
         enum Default implements TypeLocator {
 
@@ -1212,7 +1217,7 @@ public interface AgentBuilder {
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new TypePool.LazyFacade(new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode));
+                return new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
             }
 
             @Override
@@ -1222,9 +1227,66 @@ public interface AgentBuilder {
         }
 
         /**
-         * An implementation of a {@link TypeLocator} that is using a {@link net.bytebuddy.pool.TypePool.Default} with a
-         * {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple}. Additionally, this type locator falls back to class
-         * loadings for non-locatable class files.
+         * <p>
+         * A type locator that resolves all type descriptions eagerly.
+         * </p>
+         * <p>
+         * The returned type pool uses a {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and the
+         * {@link ClassFileLocator} that is provided by the builder's {@link LocationStrategy}.
+         * </p>
+         */
+        enum Eager implements TypeLocator {
+
+            /**
+             * A type locator that parses the code segment of each method for extracting information about parameter
+             * names even if they are not explicitly included in a class file.
+             *
+             * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#EXTENDED
+             */
+            EXTENDED(TypePool.Default.ReaderMode.EXTENDED),
+
+            /**
+             * A type locator that skips the code segment of each method and does therefore not extract information
+             * about parameter names. Parameter names are still included if they are explicitly included in a class file.
+             *
+             * @see net.bytebuddy.pool.TypePool.Default.ReaderMode#FAST
+             */
+            FAST(TypePool.Default.ReaderMode.FAST);
+
+            /**
+             * The reader mode to apply by this type locator.
+             */
+            private final TypePool.Default.ReaderMode readerMode;
+
+            /**
+             * Creates a new type locator.
+             *
+             * @param readerMode The reader mode to apply by this type locator.
+             */
+            Eager(TypePool.Default.ReaderMode readerMode) {
+                this.readerMode = readerMode;
+            }
+
+            @Override
+            public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
+                return new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.TypeLocator.Eager." + name();
+            }
+        }
+
+        /**
+         * <p>
+         * A type locator that attempts loading a type if it cannot be located by the underlying lazy type pool.
+         * </p>
+         * <p>
+         * The returned type pool uses a {@link net.bytebuddy.pool.TypePool.CacheProvider.Simple} and the
+         * {@link ClassFileLocator} that is provided by the builder's {@link LocationStrategy}. Any types
+         * are loaded via the instrumented type's {@link ClassLoader}.
+         * </p>
          */
         enum ClassLoading implements TypeLocator {
 
@@ -1260,7 +1322,7 @@ public interface AgentBuilder {
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new TypePool.LazyFacade(TypePool.ClassLoading.of(classLoader, new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode)));
+                return TypePool.ClassLoading.of(classLoader, new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode));
             }
 
             @Override
@@ -1270,10 +1332,15 @@ public interface AgentBuilder {
         }
 
         /**
+         * <p>
          * A type locator that uses type pools but allows for the configuration of a custom cache provider by class loader. Note that a
          * {@link TypePool} can grow in size and that a static reference is kept to this pool by Byte Buddy's registration of a
          * {@link ClassFileTransformer} what can cause a memory leak if the supplied caches are not cleared on a regular basis. Also note
          * that a cache provider can be accessed concurrently by multiple {@link ClassLoader}s.
+         * </p>
+         * <p>
+         * All types that are returned by the locator's type pool are resolved lazily.
+         * </p>
          */
         abstract class WithTypePoolCache implements TypeLocator {
 
@@ -1293,7 +1360,7 @@ public interface AgentBuilder {
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new TypePool.LazyFacade(new TypePool.Default(locate(classLoader), classFileLocator, readerMode));
+                return new TypePool.Default.WithLazyResolution(locate(classLoader), classFileLocator, readerMode);
             }
 
             /**
@@ -5112,9 +5179,9 @@ public interface AgentBuilder {
                 if (redefinitionStrategy.isEnabled()) {
                     RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                     for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                        TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator, locationStrategy);
                         JavaModule module = JavaModule.ofType(type);
                         try {
+                            TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator, locationStrategy);
                             if (!instrumentation.isModifiableClass(type) || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
                                 try {
                                     try {
@@ -5129,9 +5196,9 @@ public interface AgentBuilder {
                         } catch (Throwable throwable) {
                             try {
                                 try {
-                                    listener.onError(typeDescription.getName(), type.getClassLoader(), module, throwable);
+                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, throwable);
                                 } finally {
-                                    listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
+                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module);
                                 }
                             } catch (Throwable ignored) {
                                 // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.

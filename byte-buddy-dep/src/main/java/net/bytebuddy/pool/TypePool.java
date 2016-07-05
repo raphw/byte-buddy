@@ -1281,12 +1281,24 @@ public interface TypePool {
                 return resolution;
             }
 
-            // TODO: Untangle due to equals/hashCode
+            /**
+             * Non-lazily resolves a type name.
+             *
+             * @param name The name of the type to resolve.
+             * @return The resolution for the type of this name.
+             */
+            protected Resolution doResolve(String name) {
+                Resolution resolution = cacheProvider.find(name);
+                if (resolution == null) {
+                    resolution = cacheProvider.register(name, WithLazyResolution.super.doDescribe(name));
+                }
+                return resolution;
+            }
 
             /**
              * A lazy resolution of a type that the enclosing type pool attempts to resolve.
              */
-            protected class LazyResolution extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation implements Resolution {
+            protected class LazyResolution implements Resolution {
 
                 /**
                  * The type's name.
@@ -1302,37 +1314,75 @@ public interface TypePool {
                     this.name = name;
                 }
 
-                /**
-                 * Resolves the actual resultion for the represented type.
-                 *
-                 * @return The actual resolution of the represented type.
-                 */
-                private Resolution doResolve() {
-                    Resolution resolution = cacheProvider.find(name);
-                    if (resolution == null) {
-                        resolution = cacheProvider.register(name, WithLazyResolution.super.doDescribe(name));
-                    }
-                    return resolution;
-                }
-
                 @Override
                 public boolean isResolved() {
-                    return doResolve().isResolved();
-                }
-
-                @Override
-                protected TypeDescription delegate() {
-                    return doResolve().resolve();
+                    return doResolve(name).isResolved();
                 }
 
                 @Override
                 public TypeDescription resolve() {
-                    return this;
+                    return new LazyTypeDescription(name);
+                }
+
+                /**
+                 * Returns the outer instance.
+                 *
+                 * @return The outer instance.
+                 */
+                private WithLazyResolution getOuter() {
+                    return WithLazyResolution.this;
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    LazyResolution that = (LazyResolution) object;
+                    return name.equals(that.name)
+                            && getOuter().equals(that.getOuter());
+                }
+
+                @Override
+                public int hashCode() {
+                    return name.hashCode() + 31 * getOuter().hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.Default.WithLazyResolution.LazyResolution{" +
+                            "name='" + name + '\'' +
+                            ", outer=" + getOuter() +
+                            '}';
+                }
+            }
+
+            /**
+             * A lazy type description that resolves any property that is not the name only when requested.
+             */
+            protected class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation {
+
+                /**
+                 * The type's name.
+                 */
+                private final String name;
+
+                /**
+                 * Creates a new lazy type description.
+                 *
+                 * @param name The type's name.
+                 */
+                protected LazyTypeDescription(String name) {
+                    this.name = name;
                 }
 
                 @Override
                 public String getName() {
                     return name;
+                }
+
+                @Override
+                protected TypeDescription delegate() {
+                    return doResolve(name).resolve();
                 }
             }
         }
@@ -8307,12 +8357,10 @@ public interface TypePool {
                     '}';
         }
 
-        // TODO: Untangle due to equals/hashCode
-
         /**
          * The lazy resolution for a lazy facade for a type pool.
          */
-        protected static class LazyResolution extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation implements Resolution {
+        protected static class LazyResolution implements Resolution {
 
             /**
              * The type pool to delegate to.
@@ -8336,23 +8384,13 @@ public interface TypePool {
             }
 
             @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            protected TypeDescription delegate() {
-                return typePool.describe(name).resolve();
-            }
-
-            @Override
             public boolean isResolved() {
                 return typePool.describe(name).isResolved();
             }
 
             @Override
             public TypeDescription resolve() {
-                return this;
+                return new LazyTypeDescription(typePool, name);
             }
 
             @Override
@@ -8376,6 +8414,43 @@ public interface TypePool {
                         "typePool=" + typePool +
                         ", name=" + name +
                         '}';
+            }
+        }
+
+        /**
+         * A description of a type that delegates to another type pool once a property that is not the name is resolved.
+         */
+        protected static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation {
+
+            /**
+             * The type pool to delegate to.
+             */
+            private final TypePool typePool;
+
+            /**
+             * The name of the type that is represented by this resolution.
+             */
+            private final String name;
+
+            /**
+             * Creates a new lazy type resolution.
+             *
+             * @param typePool The type pool to delegate to.
+             * @param name     The name of the type.
+             */
+            protected LazyTypeDescription(TypePool typePool, String name) {
+                this.typePool = typePool;
+                this.name = name;
+            }
+
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            protected TypeDescription delegate() {
+                return typePool.describe(name).resolve();
             }
         }
     }

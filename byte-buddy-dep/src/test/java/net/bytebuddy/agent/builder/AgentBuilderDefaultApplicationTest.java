@@ -60,6 +60,8 @@ public class AgentBuilderDefaultApplicationTest {
         return Arrays.asList(new Object[][]{
                 {AgentBuilder.TypeLocator.Default.EXTENDED},
                 {AgentBuilder.TypeLocator.Default.FAST},
+                {AgentBuilder.TypeLocator.Eager.EXTENDED},
+                {AgentBuilder.TypeLocator.Eager.FAST},
                 {AgentBuilder.TypeLocator.ClassLoading.EXTENDED},
                 {AgentBuilder.TypeLocator.ClassLoading.FAST}
         });
