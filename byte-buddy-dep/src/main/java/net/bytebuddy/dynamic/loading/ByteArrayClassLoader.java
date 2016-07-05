@@ -157,7 +157,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 childFirst);
         for (TypeDescription typeDescription : types.keySet()) {
             try {
-                Class<?> type = classLoader.loadClass(typeDescription.getName());
+                Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
                 if (forbidExisting && type.getClassLoader() != classLoader) {
                     throw new IllegalStateException("Class already loaded: " + type);
                 }

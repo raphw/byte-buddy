@@ -135,7 +135,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
             Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : types.keySet()) {
                 try {
-                    loadedTypes.put(typeDescription, dexClassLoader.loadClass(typeDescription.getName()));
+                    loadedTypes.put(typeDescription, Class.forName(typeDescription.getName(), false, dexClassLoader));
                 } catch (ClassNotFoundException exception) {
                     throw new IllegalStateException("Cannot load " + typeDescription, exception);
                 }

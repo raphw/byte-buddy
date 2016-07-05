@@ -611,9 +611,8 @@ public interface ClassInjector {
                 }
                 target.inject(instrumentation, new JarFile(jarFile));
                 Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
-                ClassLoader classLoader = ClassLoader.getSystemClassLoader();
                 for (TypeDescription typeDescription : types.keySet()) {
-                    loaded.put(typeDescription, classLoader.loadClass(typeDescription.getName()));
+                    loaded.put(typeDescription, Class.forName(typeDescription.getName(), false, ClassLoader.getSystemClassLoader()));
                 }
                 return loaded;
             } catch (IOException exception) {

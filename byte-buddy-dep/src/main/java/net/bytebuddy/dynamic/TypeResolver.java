@@ -339,8 +339,11 @@ public interface TypeResolver {
             public Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
                 Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(dynamicType.getLoadedTypeInitializers());
                 TypeDescription instrumentedType = dynamicType.getTypeDescription();
-                INSTANCE.register(instrumentedType.getName(), classLoader, identification, loadedTypeInitializers.remove(instrumentedType));
                 Map<TypeDescription, Class<?>> types = classLoadingStrategy.load(classLoader, dynamicType.getAllTypes());
+                INSTANCE.register(instrumentedType.getName(),
+                        types.get(instrumentedType).getClassLoader(),
+                        identification,
+                        loadedTypeInitializers.remove(instrumentedType));
                 for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : loadedTypeInitializers.entrySet()) {
                     entry.getValue().onLoad(types.get(entry.getKey()));
                 }

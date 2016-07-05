@@ -1,11 +1,15 @@
 package net.bytebuddy;
 
+import net.bytebuddy.dynamic.TypeResolver;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Modifier;
 
+import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -56,8 +60,31 @@ public class ByteBuddyTest {
     }
 
     @Test
+    public void testTypeInitializerInstrumentation() throws Exception {
+        Recorder recorder = new Recorder();
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .invokable(isTypeInitializer())
+                .intercept(MethodDelegation.to(recorder))
+                .make(TypeResolver.Active.INSTANCE)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.newInstance(), instanceOf(type));
+        assertThat(recorder.counter, is(1));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ByteBuddy.class).apply();
         ObjectPropertyAssertion.of(ByteBuddy.EnumerationImplementation.class).apply();
+    }
+
+    public static class Recorder {
+
+        public int counter;
+
+        public void instrument() {
+            counter++;
+        }
     }
 }

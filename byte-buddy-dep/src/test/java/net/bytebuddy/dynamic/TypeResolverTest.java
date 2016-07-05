@@ -90,7 +90,7 @@ public class TypeResolverTest {
             initializers.setAccessible(true);
             Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, int.class);
             constructor.setAccessible(true);
-            Object value = ((Map<?, ?>) initializers.get(null)).remove(constructor.newInstance(Foo.class.getName(), classLoader, identification));
+            Object value = ((Map<?, ?>) initializers.get(null)).remove(constructor.newInstance(Foo.class.getName(), Foo.class.getClassLoader(), identification));
             assertThat(value, CoreMatchers.is((Object) loadedTypeInitializer));
         }
     }
