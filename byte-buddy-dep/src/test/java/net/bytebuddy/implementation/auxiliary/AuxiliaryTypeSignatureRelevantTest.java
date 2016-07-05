@@ -14,8 +14,8 @@ import static org.junit.Assert.assertThat;
 public class AuxiliaryTypeSignatureRelevantTest {
 
     @Test
-    public void testSourceRentention() throws Exception {
-        assertThat(AuxiliaryType.SignatureRelevant.class.getAnnotation(Retention.class).value(), is(RetentionPolicy.SOURCE));
+    public void testClassRetention() throws Exception {
+        assertThat(AuxiliaryType.SignatureRelevant.class.getAnnotation(Retention.class).value(), is(RetentionPolicy.CLASS));
     }
 
     @Test
