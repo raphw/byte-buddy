@@ -196,7 +196,7 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 typePool,
                 originalType,
                 classFileLocator,
-                methodRebaseResolver).make(typeResolver);
+                methodRebaseResolver).make(typeResolver.resolve());
     }
 
     @Override

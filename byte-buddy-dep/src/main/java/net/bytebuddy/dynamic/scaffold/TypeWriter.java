@@ -61,7 +61,7 @@ public interface TypeWriter<T> {
      *
      * @return An unloaded dynamic type that describes the created type.
      */
-    DynamicType.Unloaded<T> make(TypeResolver typeResolver);
+    DynamicType.Unloaded<T> make(TypeResolver.Resolved typeResolver);
 
     /**
      * An field pool that allows a lookup for how to implement a field.
@@ -1613,7 +1613,7 @@ public interface TypeWriter<T> {
 
         @Override
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should not change program outcome")
-        public DynamicType.Unloaded<S> make(TypeResolver typeResolver) {
+        public DynamicType.Unloaded<S> make(TypeResolver.Resolved typeResolver) {
             Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                     auxiliaryTypeNamingStrategy,
                     typeResolver.injectedInto(typeInitializer),

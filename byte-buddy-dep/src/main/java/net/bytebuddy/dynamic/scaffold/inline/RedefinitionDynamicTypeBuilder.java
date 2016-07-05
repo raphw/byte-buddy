@@ -169,7 +169,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 typeValidation,
                 typePool,
                 originalType,
-                classFileLocator).make(typeResolver);
+                classFileLocator).make(typeResolver.resolve());
     }
 
     @Override

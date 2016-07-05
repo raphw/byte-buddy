@@ -42,7 +42,7 @@ public class DynamicTypeDefaultUnloadedTest {
     private ClassLoadingStrategy classLoadingStrategy;
 
     @Mock
-    private TypeResolver typeResolver; // TODO
+    private TypeResolver.Resolved typeResolver; // TODO
 
     @Mock
     private TypeDescription typeDescription, auxiliaryTypeDescription;

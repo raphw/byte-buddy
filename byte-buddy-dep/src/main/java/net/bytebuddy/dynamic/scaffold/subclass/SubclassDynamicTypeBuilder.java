@@ -169,7 +169,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeValidation,
-                typePool).make(typeResolver);
+                typePool).make(typeResolver.resolve());
     }
 
     /**

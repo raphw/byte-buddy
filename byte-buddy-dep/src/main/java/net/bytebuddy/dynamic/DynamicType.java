@@ -4371,7 +4371,7 @@ public interface DynamicType {
          */
         public static class Unloaded<T> extends Default implements DynamicType.Unloaded<T> {
 
-            private final TypeResolver typeResolver;
+            private final TypeResolver.Resolved typeResolver;
 
             /**
              * Creates a new unloaded representation of a dynamic type.
@@ -4385,7 +4385,7 @@ public interface DynamicType {
                             byte[] binaryRepresentation,
                             LoadedTypeInitializer loadedTypeInitializer,
                             List<? extends DynamicType> auxiliaryTypes,
-                            TypeResolver typeResolver) {
+                            TypeResolver.Resolved typeResolver) {
                 super(typeDescription, binaryRepresentation, loadedTypeInitializer, auxiliaryTypes);
                 this.typeResolver = typeResolver;
             }
