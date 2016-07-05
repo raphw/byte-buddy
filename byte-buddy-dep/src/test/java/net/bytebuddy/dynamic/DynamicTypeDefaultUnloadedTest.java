@@ -14,12 +14,10 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class DynamicTypeDefaultUnloadedTest {
@@ -64,11 +62,11 @@ public class DynamicTypeDefaultUnloadedTest {
         Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
         loadedTypes.put(typeDescription, MAIN_TYPE);
         loadedTypes.put(auxiliaryTypeDescription, AUXILIARY_TYPE);
-        when(classLoadingStrategy.load(any(ClassLoader.class), any(LinkedHashMap.class))).thenReturn(loadedTypes);
         when(auxiliaryType.getTypeDescription()).thenReturn(auxiliaryTypeDescription);
         when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeByte);
         when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
+        when(typeResolver.initialize(unloaded, classLoader, classLoadingStrategy)).thenReturn(loadedTypes);
     }
 
     @Test
@@ -85,8 +83,8 @@ public class DynamicTypeDefaultUnloadedTest {
         assertThat(loaded.getLoaded(), CoreMatchers.<Class<?>>is(MAIN_TYPE));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(1));
         assertThat(loaded.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription), CoreMatchers.<Class<?>>is(AUXILIARY_TYPE));
-        verify(mainLoadedTypeInitializer).onLoad(MAIN_TYPE);
-        verify(auxiliaryLoadedTypeInitializer).onLoad(AUXILIARY_TYPE);
+        verify(typeResolver).initialize(unloaded, classLoader, classLoadingStrategy);
+        verifyNoMoreInteractions(typeResolver);
     }
 
     @Test

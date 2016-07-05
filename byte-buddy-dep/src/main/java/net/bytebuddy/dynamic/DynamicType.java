@@ -4462,12 +4462,29 @@ public interface DynamicType {
             }
 
             @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                if (!super.equals(object)) return false;
+                Default.Unloaded<?> unloaded = (Default.Unloaded<?>) object;
+                return typeResolver.equals(unloaded.typeResolver);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = super.hashCode();
+                result = 31 * result + typeResolver.hashCode();
+                return result;
+            }
+
+            @Override
             public String toString() {
                 return "DynamicType.Default.Unloaded{" +
                         "typeDescription='" + typeDescription + '\'' +
                         ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                         ", typeInitializer=" + loadedTypeInitializer +
                         ", auxiliaryTypes=" + auxiliaryTypes +
+                        ", typeResolver=" + typeResolver +
                         '}';
             }
         }
