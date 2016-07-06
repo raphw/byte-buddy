@@ -582,8 +582,7 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testTypeTypeVariableDuplicateBound() throws Exception {
         makePlainInstrumentedType()
-                .withTypeVariable(new TypeVariableToken(FOO, Arrays.asList(TypeDescription.Sort.describe(Serializable.class),
-                        TypeDefinition.Sort.describe(Serializable.class))))
+                .withTypeVariable(new TypeVariableToken(FOO, Arrays.asList(TypeDescription.Sort.describe(Serializable.class), TypeDefinition.Sort.describe(Serializable.class))))
                 .validated();
     }
 

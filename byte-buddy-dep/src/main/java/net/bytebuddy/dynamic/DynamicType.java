@@ -401,6 +401,15 @@ public interface DynamicType {
         TypeVariableDefinition<T> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
 
         /**
+         * Transforms any type variable that is defined by this type if it is matched by the supplied matcher.
+         *
+         * @param matcher     The matcher to decide what type variables to transform.
+         * @param transformer The transformer to apply to the matched type variables.
+         * @return A new builder that is equal to this builder but with the supplied transformer applied to all type varaibles.
+         */
+        Builder<T> transform(ElementMatcher<? super TypeDescription.Generic> matcher, Transformer<TypeVariableToken> transformer);
+
+        /**
          * Defines the specified field as a field of the built dynamic type.
          *
          * @param name                The name of the field.
@@ -2312,7 +2321,7 @@ public interface DynamicType {
                      *
                      * @param handler                        The handler that determines how a method is implemented.
                      * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
-                     * @param transformer              The method transformer to apply onto the method that is currently being implemented.
+                     * @param transformer                    The method transformer to apply onto the method that is currently being implemented.
                      * @return Returns a method definition for the supplied properties.
                      */
                     protected abstract MethodDefinition<V> materialize(MethodRegistry.Handler handler,
@@ -2620,6 +2629,11 @@ public interface DynamicType {
                 @Override
                 public TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                     return materialize().typeVariable(symbol, bounds);
+                }
+
+                @Override
+                public Builder<U> transform(ElementMatcher<? super TypeDescription.Generic> matcher, Transformer<TypeVariableToken> transformer) {
+                    return materialize().transform(matcher, transformer);
                 }
 
                 @Override
@@ -2931,6 +2945,23 @@ public interface DynamicType {
                 }
 
                 @Override
+                public Builder<U> transform(ElementMatcher<? super TypeDescription.Generic> matcher, Transformer<TypeVariableToken> transformer) {
+                    return materialize(instrumentedType.withTypeVariables(matcher, transformer),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            typeValidation,
+                            ignoredMethods);
+                }
+
+                @Override
                 public Builder<U> attribute(TypeAttributeAppender typeAttributeAppender) {
                     return materialize(instrumentedType,
                             fieldRegistry,
@@ -3153,7 +3184,7 @@ public interface DynamicType {
                      * Creates a new field definition adapter.
                      *
                      * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
-                     * @param transformer              The field transformer to apply.
+                     * @param transformer                   The field transformer to apply.
                      * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
                      * @param token                         The token representing the current field definition.
                      */
@@ -3261,7 +3292,7 @@ public interface DynamicType {
                      * Creates a new field match adapter.
                      *
                      * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
-                     * @param transformer              The field transformer to apply.
+                     * @param transformer                   The field transformer to apply.
                      * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
                      * @param matcher                       The matcher for any fields to apply this matcher to.
                      */
@@ -3691,7 +3722,7 @@ public interface DynamicType {
                          *
                          * @param handler                        The handler that determines how a method is implemented.
                          * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
-                         * @param transformer              The method transformer to apply onto the method that is currently being implemented.
+                         * @param transformer                    The method transformer to apply onto the method that is currently being implemented.
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler,
                                                     MethodAttributeAppender.Factory methodAttributeAppenderFactory,
@@ -3897,7 +3928,7 @@ public interface DynamicType {
                          *
                          * @param handler                        The handler that determines how a method is implemented.
                          * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
-                         * @param transformer              The method transformer to apply onto the method that is currently being implemnted.
+                         * @param transformer                    The method transformer to apply onto the method that is currently being implemnted.
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler,
                                                     MethodAttributeAppender.Factory methodAttributeAppenderFactory,

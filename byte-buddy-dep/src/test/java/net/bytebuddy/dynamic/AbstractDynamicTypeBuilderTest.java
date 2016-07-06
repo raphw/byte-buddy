@@ -431,6 +431,29 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
+    public void testTypeVariableTransformation() throws Exception {
+        Class<?> type = createPlain()
+                .typeVariable(FOO)
+                .typeVariable(BAR, String.class)
+                .transform(named(BAR), new Transformer<TypeVariableToken>() {
+                    @Override
+                    public TypeVariableToken transform(TypeDescription instrumentedType, TypeVariableToken target) {
+                        return new TypeVariableToken(target.getSymbol(), Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Integer.class)));
+                    }
+                })
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getTypeParameters().length, is(2));
+        assertThat(type.getTypeParameters()[0].getName(), is(FOO));
+        assertThat(type.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[0].getBounds()[0], is((Object) Object.class));
+        assertThat(type.getTypeParameters()[1].getName(), is(BAR));
+        assertThat(type.getTypeParameters()[1].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[1].getBounds()[0], is((Object) Integer.class));
+    }
+
+    @Test
     public void testGenericFieldDefinition() throws Exception {
         Class<?> type = createPlain()
                 .defineField(QUX, list)

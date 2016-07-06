@@ -12,8 +12,10 @@ import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
+import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.annotation.ElementType;
@@ -151,6 +153,15 @@ public interface InstrumentedType extends TypeDescription {
          * @return A new instrumented type that has the given name.
          */
         WithFlexibleName withName(String name);
+
+        /**
+         * Applies a transformation onto all existing type variables of this instrumented type.
+         *
+         * @param matcher     The matcher to decide what type variables to transform.
+         * @param transformer The transformer to apply on all matched type variables.
+         * @return A new instrumented type with all matched type variables transformed.
+         */
+        WithFlexibleName withTypeVariables(ElementMatcher<? super Generic> matcher, Transformer<TypeVariableToken> transformer);
     }
 
     /**
@@ -507,6 +518,34 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public WithFlexibleName withName(String name) {
+            return new Default(name,
+                    modifiers,
+                    superClass,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
+        }
+
+        @Override
+        public WithFlexibleName withTypeVariables(ElementMatcher<? super Generic> matcher, Transformer<TypeVariableToken> transformer) {
+            List<TypeVariableToken> typeVariables = new ArrayList<TypeVariableToken>(this.typeVariables.size());
+            int index = 0;
+            for (TypeVariableToken typeVariableToken : this.typeVariables) {
+                typeVariables.add(matcher.matches(getTypeVariables().get(index++))
+                        ? transformer.transform(this, typeVariableToken)
+                        : typeVariableToken);
+            }
             return new Default(name,
                     modifiers,
                     superClass,
