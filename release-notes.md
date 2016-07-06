@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. July 2016: version 1.4.8
+
+- Allow to skip execution of instrumented method from `Advice` via entry advice indicated by return value.
+- Added API to transform predefined type variables on a dynamic type.
+- Refactored `Transformer` API to be shared for methods, fields and type variables.
+- Allow to spread `Advice` methods over multiple classes.
+- Added convenience methods to `AsmVisitorWrapper`s for declared fields and methods.
+- Performance improvements in `Advice` class for byte code parsing.
+
 ### 6. July 2016: version 1.4.7
 
 - Added default `TypePool` that allows for lazy resolution of referenced types. This can both be a performance improvement and allows working with optional types as long as they are not directly required within a transformation. This type pool is now used by default.
