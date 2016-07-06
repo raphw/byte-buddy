@@ -138,8 +138,20 @@ public interface AsmVisitorWrapper {
          * @param fieldVisitorWrapper The field visitor wrapper to be applied if the given matcher is matched.
          * @return A new ASM visitor wrapper that applied the given field visitor wrapper if the supplied matcher is matched.
          */
-        public ForDeclaredFields field(ElementMatcher<? super FieldDescription.InDefinedShape> matcher, FieldVisitorWrapper fieldVisitorWrapper) {
-            return new ForDeclaredFields(CompoundList.of(entries, new Entry(matcher, fieldVisitorWrapper)));
+        public ForDeclaredFields field(ElementMatcher<? super FieldDescription.InDefinedShape> matcher, FieldVisitorWrapper... fieldVisitorWrapper) {
+            return field(matcher, Arrays.asList(fieldVisitorWrapper));
+        }
+
+        /**
+         * Defines a new field visitor wrapper to be applied if the given field matcher is matched. Previously defined
+         * entries are applied before the given matcher is applied.
+         *
+         * @param matcher              The matcher to identify fields to be wrapped.
+         * @param fieldVisitorWrappers The field visitor wrapper to be applied if the given matcher is matched.
+         * @return A new ASM visitor wrapper that applied the given field visitor wrapper if the supplied matcher is matched.
+         */
+        public ForDeclaredFields field(ElementMatcher<? super FieldDescription.InDefinedShape> matcher, List<? extends FieldVisitorWrapper> fieldVisitorWrappers) {
+            return new ForDeclaredFields(CompoundList.of(entries, new Entry(matcher, fieldVisitorWrappers)));
         }
 
         @Override
@@ -194,17 +206,17 @@ public interface AsmVisitorWrapper {
             /**
              * The field visitor wrapper to be applied if the given matcher is matched.
              */
-            private final FieldVisitorWrapper fieldVisitorWrapper;
+            private final List<? extends FieldVisitorWrapper> fieldVisitorWrappers;
 
             /**
              * Creates a new entry.
              *
-             * @param matcher             The matcher to identify fields to be wrapped.
-             * @param fieldVisitorWrapper The field visitor wrapper to be applied if the given matcher is matched.
+             * @param matcher              The matcher to identify fields to be wrapped.
+             * @param fieldVisitorWrappers The field visitor wrapper to be applied if the given matcher is matched.
              */
-            protected Entry(ElementMatcher<? super FieldDescription.InDefinedShape> matcher, FieldVisitorWrapper fieldVisitorWrapper) {
+            protected Entry(ElementMatcher<? super FieldDescription.InDefinedShape> matcher, List<? extends FieldVisitorWrapper> fieldVisitorWrappers) {
                 this.matcher = matcher;
-                this.fieldVisitorWrapper = fieldVisitorWrapper;
+                this.fieldVisitorWrappers = fieldVisitorWrappers;
             }
 
             @Override
@@ -214,7 +226,10 @@ public interface AsmVisitorWrapper {
 
             @Override
             public FieldVisitor wrap(TypeDescription instrumentedType, FieldDescription.InDefinedShape fieldDescription, FieldVisitor fieldVisitor) {
-                return fieldVisitorWrapper.wrap(instrumentedType, fieldDescription, fieldVisitor);
+                for (FieldVisitorWrapper fieldVisitorWrapper : fieldVisitorWrappers) {
+                    fieldVisitor = fieldVisitorWrapper.wrap(instrumentedType, fieldDescription, fieldVisitor);
+                }
+                return fieldVisitor;
             }
 
             @Override
@@ -223,13 +238,13 @@ public interface AsmVisitorWrapper {
                 if (other == null || getClass() != other.getClass()) return false;
                 Entry entry = (Entry) other;
                 return matcher.equals(entry.matcher)
-                        && fieldVisitorWrapper.equals(entry.fieldVisitorWrapper);
+                        && fieldVisitorWrappers.equals(entry.fieldVisitorWrappers);
             }
 
             @Override
             public int hashCode() {
                 int result = matcher.hashCode();
-                result = 31 * result + fieldVisitorWrapper.hashCode();
+                result = 31 * result + fieldVisitorWrappers.hashCode();
                 return result;
             }
 
@@ -237,7 +252,7 @@ public interface AsmVisitorWrapper {
             public String toString() {
                 return "AsmVisitorWrapper.ForDeclaredFields.Entry{" +
                         "matcher=" + matcher +
-                        ", fieldVisitorWrapper=" + fieldVisitorWrapper +
+                        ", fieldVisitorWrappers=" + fieldVisitorWrappers +
                         '}';
             }
         }
@@ -375,8 +390,20 @@ public interface AsmVisitorWrapper {
          * @param methodVisitorWrapper The method visitor wrapper to be applied if the given matcher is matched.
          * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
          */
-        public ForDeclaredMethods method(ElementMatcher<? super MethodDescription.InDefinedShape> matcher, MethodVisitorWrapper methodVisitorWrapper) {
-            return new ForDeclaredMethods(CompoundList.of(entries, new Entry(matcher, methodVisitorWrapper)), writerFlags, readerFlags);
+        public ForDeclaredMethods method(ElementMatcher<? super MethodDescription.InDefinedShape> matcher, MethodVisitorWrapper... methodVisitorWrapper) {
+            return method(matcher, Arrays.asList(methodVisitorWrapper));
+        }
+
+        /**
+         * Defines a new method visitor wrapper to be applied if the given method matcher is matched. Previously defined
+         * entries are applied before the given matcher is applied.
+         *
+         * @param matcher               The matcher to identify methods to be wrapped.
+         * @param methodVisitorWrappers The method visitor wrapper to be applied if the given matcher is matched.
+         * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
+         */
+        public ForDeclaredMethods method(ElementMatcher<? super MethodDescription.InDefinedShape> matcher, List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
+            return new ForDeclaredMethods(CompoundList.of(entries, new Entry(matcher, methodVisitorWrappers)), writerFlags, readerFlags);
         }
 
         /**
@@ -476,17 +503,17 @@ public interface AsmVisitorWrapper {
             /**
              * The method visitor wrapper to be applied if the given matcher is matched.
              */
-            private final MethodVisitorWrapper methodVisitorWrapper;
+            private final List<? extends MethodVisitorWrapper> methodVisitorWrappers;
 
             /**
              * Creates a new entry.
              *
-             * @param matcher              The matcher to identify methods to be wrapped.
-             * @param methodVisitorWrapper The method visitor wrapper to be applied if the given matcher is matched.
+             * @param matcher               The matcher to identify methods to be wrapped.
+             * @param methodVisitorWrappers The method visitor wrapper to be applied if the given matcher is matched.
              */
-            protected Entry(ElementMatcher<? super MethodDescription.InDefinedShape> matcher, MethodVisitorWrapper methodVisitorWrapper) {
+            protected Entry(ElementMatcher<? super MethodDescription.InDefinedShape> matcher, List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
                 this.matcher = matcher;
-                this.methodVisitorWrapper = methodVisitorWrapper;
+                this.methodVisitorWrappers = methodVisitorWrappers;
             }
 
             @Override
@@ -501,7 +528,10 @@ public interface AsmVisitorWrapper {
                                       ClassFileVersion classFileVersion,
                                       int writerFlags,
                                       int readerFlags) {
-                return methodVisitorWrapper.wrap(instrumentedType, methodDescription, methodVisitor, classFileVersion, writerFlags, readerFlags);
+                for (MethodVisitorWrapper methodVisitorWrapper : methodVisitorWrappers) {
+                    methodVisitor = methodVisitorWrapper.wrap(instrumentedType, methodDescription, methodVisitor, classFileVersion, writerFlags, readerFlags);
+                }
+                return methodVisitor;
             }
 
             @Override
@@ -510,13 +540,13 @@ public interface AsmVisitorWrapper {
                 if (other == null || getClass() != other.getClass()) return false;
                 Entry entry = (Entry) other;
                 return matcher.equals(entry.matcher)
-                        && methodVisitorWrapper.equals(entry.methodVisitorWrapper);
+                        && methodVisitorWrappers.equals(entry.methodVisitorWrappers);
             }
 
             @Override
             public int hashCode() {
                 int result = matcher.hashCode();
-                result = 31 * result + methodVisitorWrapper.hashCode();
+                result = 31 * result + methodVisitorWrappers.hashCode();
                 return result;
             }
 
@@ -524,7 +554,7 @@ public interface AsmVisitorWrapper {
             public String toString() {
                 return "AsmVisitorWrapper.ForDeclaredMethods.Entry{" +
                         "matcher=" + matcher +
-                        ", methodVisitorWrapper=" + methodVisitorWrapper +
+                        ", methodVisitorWrappers=" + methodVisitorWrappers +
                         '}';
             }
         }
