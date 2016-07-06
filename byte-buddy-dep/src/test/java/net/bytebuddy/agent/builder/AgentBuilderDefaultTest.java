@@ -4,7 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.TypeResolver;
+import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
@@ -106,7 +106,7 @@ public class AgentBuilderDefaultTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(builder.make(TypeResolver.Disabled.INSTANCE, typePool)).thenReturn((DynamicType.Unloaded) dynamicType);
+        when(builder.make(TypeResolutionStrategy.Disabled.INSTANCE, typePool)).thenReturn((DynamicType.Unloaded) dynamicType);
         when(dynamicType.getTypeDescription()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(typeStrategy.builder(any(TypeDescription.class),
                 eq(byteBuddy),

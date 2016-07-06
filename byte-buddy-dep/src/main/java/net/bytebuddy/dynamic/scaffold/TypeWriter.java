@@ -14,7 +14,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.TypeResolver;
+import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -59,10 +59,10 @@ public interface TypeWriter<T> {
     /**
      * Creates the dynamic type that is described by this type writer.
      *
-     * @param typeResolver The type resolver to use.
+     * @param typeResolver The type resolution strategy to use.
      * @return An unloaded dynamic type that describes the created type.
      */
-    DynamicType.Unloaded<T> make(TypeResolver.Resolved typeResolver);
+    DynamicType.Unloaded<T> make(TypeResolutionStrategy.Resolved typeResolver);
 
     /**
      * An field pool that allows a lookup for how to implement a field.
@@ -1614,10 +1614,10 @@ public interface TypeWriter<T> {
 
         @Override
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should not change program outcome")
-        public DynamicType.Unloaded<S> make(TypeResolver.Resolved typeResolver) {
+        public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
             Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
                     auxiliaryTypeNamingStrategy,
-                    typeResolver.injectedInto(typeInitializer),
+                    typeResolutionStrategy.injectedInto(typeInitializer),
                     classFileVersion);
             byte[] binaryRepresentation = create(implementationContext);
             if (DUMP_FOLDER != null) {
@@ -1636,7 +1636,7 @@ public interface TypeWriter<T> {
                     binaryRepresentation,
                     loadedTypeInitializer,
                     CompoundList.of(explicitAuxiliaryTypes, implementationContext.getRegisteredAuxiliaryTypes()),
-                    typeResolver);
+                    typeResolutionStrategy);
         }
 
         /**

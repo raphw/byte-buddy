@@ -27,25 +27,25 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 /**
- * A type resolver is responsible for loading a class and for initializing its {@link LoadedTypeInitializer}s.
+ * A type resolution strategy is responsible for loading a class and for initializing its {@link LoadedTypeInitializer}s.
  */
-public interface TypeResolver {
+public interface TypeResolutionStrategy {
 
     /**
-     * Resolves a type resolver for actual application.
+     * Resolves a type resolution strategy for actual application.
      *
-     * @return A resolved version of this type resolver.
+     * @return A resolved version of this type resolution strategy.
      */
     Resolved resolve();
 
     /**
-     * A resolved {@link TypeResolver}.
+     * A resolved {@link TypeResolutionStrategy}.
      */
     interface Resolved {
 
         /**
-         * Injects a type initializer into the supplied type initializer, if applicable. This way, a type resolver
-         * is capable of injecting code into the generated class's initializer to inline the initialization.
+         * Injects a type initializer into the supplied type initializer, if applicable. This way, a type resolution
+         * strategy is capable of injecting code into the generated class's initializer to inline the initialization.
          *
          * @param typeInitializer The type initializer to potentially expend.
          * @return A type initializer to apply for performing the represented type resolution.
@@ -64,10 +64,10 @@ public interface TypeResolver {
     }
 
     /**
-     * A type resolver that applies all {@link LoadedTypeInitializer} after class loading using reflection. This implies that the initializers
+     * A type resolution strategy that applies all {@link LoadedTypeInitializer} after class loading using reflection. This implies that the initializers
      * are executed <b>after</b> a type initializer is executed.
      */
-    enum Passive implements TypeResolver, Resolved {
+    enum Passive implements TypeResolutionStrategy, Resolved {
 
         /**
          * The singleton instance.
@@ -95,15 +95,15 @@ public interface TypeResolver {
 
         @Override
         public String toString() {
-            return "TypeResolver.Passive." + name();
+            return "TypeResolutionStrategy.Passive." + name();
         }
     }
 
     /**
-     * A type resolver that applies all {@link LoadedTypeInitializer} as a part of class loading using reflection. This implies that the initializers
+     * A type resolution strategy that applies all {@link LoadedTypeInitializer} as a part of class loading using reflection. This implies that the initializers
      * are executed <b>before</b> (as a first action of) a type initializer is executed.
      */
-    enum Active implements TypeResolver {
+    enum Active implements TypeResolutionStrategy {
 
         /**
          * The singleton instance.
@@ -176,7 +176,7 @@ public interface TypeResolver {
 
         @Override
         @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoid thread-contention")
-        public TypeResolver.Resolved resolve() {
+        public TypeResolutionStrategy.Resolved resolve() {
             return new Resolved(new Random().nextInt());
         }
 
@@ -196,7 +196,7 @@ public interface TypeResolver {
 
         @Override
         public String toString() {
-            return "TypeResolver.Active." + name();
+            return "TypeResolutionStrategy.Active." + name();
         }
 
         /**
@@ -262,7 +262,7 @@ public interface TypeResolver {
 
                 @Override
                 public String toString() {
-                    return "TypeResolver.Active.Dispatcher.Available{" +
+                    return "TypeResolutionStrategy.Active.Dispatcher.Available{" +
                             "registration=" + registration +
                             '}';
                 }
@@ -305,7 +305,7 @@ public interface TypeResolver {
 
                 @Override
                 public String toString() {
-                    return "TypeResolver.Active.Dispatcher.Unavailable{" +
+                    return "TypeResolutionStrategy.Active.Dispatcher.Unavailable{" +
                             "exception=" + exception +
                             '}';
                 }
@@ -313,9 +313,9 @@ public interface TypeResolver {
         }
 
         /**
-         * A resolved version of an active type resolver.
+         * A resolved version of an active type resolution strategy.
          */
-        protected static class Resolved implements TypeResolver.Resolved {
+        protected static class Resolved implements TypeResolutionStrategy.Resolved {
 
             /**
              * The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
@@ -323,7 +323,7 @@ public interface TypeResolver {
             private final int identification;
 
             /**
-             * Creates a new resolved active type resolver.
+             * Creates a new resolved active type resolution strategy.
              *
              * @param identification The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
              */
@@ -366,7 +366,7 @@ public interface TypeResolver {
 
             @Override
             public String toString() {
-                return "TypeResolver.Active.Resolved{" +
+                return "TypeResolutionStrategy.Active.Resolved{" +
                         "identification=" + identification +
                         '}';
             }
@@ -430,7 +430,7 @@ public interface TypeResolver {
 
             @Override
             public String toString() {
-                return "TypeResolver.Active.InitializationAppender{" +
+                return "TypeResolutionStrategy.Active.InitializationAppender{" +
                         "identification=" + identification +
                         '}';
             }
@@ -438,9 +438,9 @@ public interface TypeResolver {
     }
 
     /**
-     * A type resolver that does not apply any {@link LoadedTypeInitializer}s but only loads all types.
+     * A type resolution strategy that does not apply any {@link LoadedTypeInitializer}s but only loads all types.
      */
-    enum Lazy implements TypeResolver, Resolved {
+    enum Lazy implements TypeResolutionStrategy, Resolved {
 
         /**
          * The singleton instance.
@@ -464,14 +464,14 @@ public interface TypeResolver {
 
         @Override
         public String toString() {
-            return "TypeResolver.Lazy." + name();
+            return "TypeResolutionStrategy.Lazy." + name();
         }
     }
 
     /**
-     * A type resolver that does not allow for explicit loading of a class and that does not inject any code into the type initializer.
+     * A type resolution strategy that does not allow for explicit loading of a class and that does not inject any code into the type initializer.
      */
-    enum Disabled implements TypeResolver, Resolved {
+    enum Disabled implements TypeResolutionStrategy, Resolved {
 
         /**
          * The singleton instance.
@@ -490,12 +490,12 @@ public interface TypeResolver {
 
         @Override
         public Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
-            throw new IllegalStateException("Cannot initialize a dynamic type for a disabled type resolver");
+            throw new IllegalStateException("Cannot initialize a dynamic type for a disabled type resolution strategy");
         }
 
         @Override
         public String toString() {
-            return "TypeResolver.Disabled." + name();
+            return "TypeResolutionStrategy.Disabled." + name();
         }
     }
 }

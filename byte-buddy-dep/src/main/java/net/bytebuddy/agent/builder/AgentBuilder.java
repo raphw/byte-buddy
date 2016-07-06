@@ -11,7 +11,7 @@ import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.TypeResolver;
+import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
@@ -1849,7 +1849,8 @@ public interface AgentBuilder {
 
     /**
      * An initialization strategy which determines the handling of {@link net.bytebuddy.implementation.LoadedTypeInitializer}s
-     * and the loading of auxiliary types.
+     * and the loading of auxiliary types. The agent builder does not reuse the {@link TypeResolutionStrategy} as Javaagents cannot access
+     * a loaded class after a transformation such that different initialization strategies become meaningful.
      */
     interface InitializationStrategy {
 
@@ -1992,7 +1993,7 @@ public interface AgentBuilder {
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
-                    return builder.initializer(new TypeResolver.Active.InitializationAppender(identification));
+                    return builder.initializer(new TypeResolutionStrategy.Active.InitializationAppender(identification));
                 }
 
                 @Override
@@ -2048,7 +2049,7 @@ public interface AgentBuilder {
                         } else {
                             loadedTypeInitializer = dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription());
                         }
-                        TypeResolver.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
+                        TypeResolutionStrategy.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
 
                     @Override
@@ -2077,7 +2078,7 @@ public interface AgentBuilder {
                         LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
                                 : new InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectorFactory.resolve());
-                        TypeResolver.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
+                        TypeResolutionStrategy.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
 
                     @Override
@@ -2110,7 +2111,7 @@ public interface AgentBuilder {
                             }
                         }
                         LoadedTypeInitializer loadedTypeInitializer = loadedTypeInitializers.get(dynamicType.getTypeDescription());
-                        TypeResolver.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
+                        TypeResolutionStrategy.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
 
                     @Override
@@ -5703,7 +5704,7 @@ public interface AgentBuilder {
                         DynamicType.Unloaded<?> dynamicType = dispatcher.apply(transformer.transform(typeStrategy.builder(typeDescription,
                                 byteBuddy,
                                 classFileLocator,
-                                methodNameTransformer.resolve()), typeDescription, classLoader)).make(TypeResolver.Disabled.INSTANCE, typePool);
+                                methodNameTransformer.resolve()), typeDescription, classLoader)).make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
                         dispatcher.register(dynamicType, classLoader, new BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
                                 classLoader,
                                 protectionDomain,

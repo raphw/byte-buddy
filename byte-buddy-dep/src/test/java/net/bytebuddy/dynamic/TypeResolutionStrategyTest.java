@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
-public class TypeResolverTest {
+public class TypeResolutionStrategyTest {
 
     private static final byte[] FOO = new byte[]{1, 2, 3};
 
@@ -60,7 +60,7 @@ public class TypeResolverTest {
 
     @Test
     public void testPassive() throws Exception {
-        TypeResolver.Resolved resolved = TypeResolver.Passive.INSTANCE.resolve();
+        TypeResolutionStrategy.Resolved resolved = TypeResolutionStrategy.Passive.INSTANCE.resolve();
         assertThat(resolved.injectedInto(typeInitializer), is(typeInitializer));
         assertThat(resolved.initialize(dynamicType, classLoader, classLoadingStrategy),
                 is(Collections.<TypeDescription, Class<?>>singletonMap(typeDescription, Foo.class)));
@@ -72,11 +72,11 @@ public class TypeResolverTest {
 
     @Test
     public void testActive() throws Exception {
-        TypeResolver.Resolved resolved = TypeResolver.Active.INSTANCE.resolve();
-        Field field = TypeResolver.Active.Resolved.class.getDeclaredField("identification");
+        TypeResolutionStrategy.Resolved resolved = TypeResolutionStrategy.Active.INSTANCE.resolve();
+        Field field = TypeResolutionStrategy.Active.Resolved.class.getDeclaredField("identification");
         field.setAccessible(true);
         int identification = (Integer) field.get(resolved);
-        when(typeInitializer.expandWith(new TypeResolver.Active.InitializationAppender(identification))).thenReturn(otherTypeInitializer);
+        when(typeInitializer.expandWith(new TypeResolutionStrategy.Active.InitializationAppender(identification))).thenReturn(otherTypeInitializer);
         assertThat(resolved.injectedInto(typeInitializer), is(otherTypeInitializer));
         assertThat(resolved.initialize(dynamicType, classLoader, classLoadingStrategy),
                 is(Collections.<TypeDescription, Class<?>>singletonMap(typeDescription, Foo.class)));
@@ -97,7 +97,7 @@ public class TypeResolverTest {
 
     @Test
     public void testLazy() throws Exception {
-        TypeResolver.Resolved resolved = TypeResolver.Lazy.INSTANCE.resolve();
+        TypeResolutionStrategy.Resolved resolved = TypeResolutionStrategy.Lazy.INSTANCE.resolve();
         assertThat(resolved.injectedInto(typeInitializer), is(typeInitializer));
         assertThat(resolved.initialize(dynamicType, classLoader, classLoadingStrategy),
                 is(Collections.<TypeDescription, Class<?>>singletonMap(typeDescription, Foo.class)));
@@ -108,22 +108,22 @@ public class TypeResolverTest {
 
     @Test
     public void testDisabled() throws Exception {
-        TypeResolver.Resolved resolved = TypeResolver.Disabled.INSTANCE.resolve();
+        TypeResolutionStrategy.Resolved resolved = TypeResolutionStrategy.Disabled.INSTANCE.resolve();
         assertThat(resolved.injectedInto(typeInitializer), is(typeInitializer));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testDisabledCannotBeApplied() throws Exception {
-        TypeResolver.Disabled.INSTANCE.resolve().initialize(dynamicType, classLoader, classLoadingStrategy);
+        TypeResolutionStrategy.Disabled.INSTANCE.resolve().initialize(dynamicType, classLoader, classLoadingStrategy);
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeResolver.Active.class).apply();
-        ObjectPropertyAssertion.of(TypeResolver.Active.Resolved.class).apply();
-        ObjectPropertyAssertion.of(TypeResolver.Passive.class).apply();
-        ObjectPropertyAssertion.of(TypeResolver.Lazy.class).apply();
-        ObjectPropertyAssertion.of(TypeResolver.Disabled.class).apply();
+        ObjectPropertyAssertion.of(TypeResolutionStrategy.Active.class).apply();
+        ObjectPropertyAssertion.of(TypeResolutionStrategy.Active.Resolved.class).apply();
+        ObjectPropertyAssertion.of(TypeResolutionStrategy.Passive.class).apply();
+        ObjectPropertyAssertion.of(TypeResolutionStrategy.Lazy.class).apply();
+        ObjectPropertyAssertion.of(TypeResolutionStrategy.Disabled.class).apply();
     }
 
     private static class Foo {

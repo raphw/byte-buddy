@@ -1,6 +1,6 @@
 package net.bytebuddy;
 
-import net.bytebuddy.dynamic.TypeResolver;
+import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -10,9 +10,9 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -69,7 +69,7 @@ public class ByteBuddyTest {
                 .subclass(Object.class)
                 .invokable(isTypeInitializer())
                 .intercept(MethodDelegation.to(recorder))
-                .make(TypeResolver.Active.INSTANCE)
+                .make(TypeResolutionStrategy.Active.INSTANCE)
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.newInstance(), instanceOf(type));

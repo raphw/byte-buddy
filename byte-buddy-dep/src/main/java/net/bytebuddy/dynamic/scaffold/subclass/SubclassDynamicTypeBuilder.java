@@ -5,7 +5,7 @@ import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.TypeResolver;
+import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
@@ -149,12 +149,12 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     }
 
     @Override
-    public DynamicType.Unloaded<T> make(TypeResolver typeResolver) {
-        return make(typeResolver, TypePool.ClassLoading.ofClassPath()); // Mimics the default behavior of ASM for least surprise.
+    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy) {
+        return make(typeResolutionStrategy, TypePool.ClassLoading.ofClassPath()); // Mimics the default behavior of ASM for least surprise.
     }
 
     @Override
-    public DynamicType.Unloaded<T> make(TypeResolver typeResolver, TypePool typePool) {
+    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
         MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
                 .inject(methodRegistry)
                 .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, typeValidation, new InstrumentableMatcher(ignoredMethods))
@@ -169,7 +169,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeValidation,
-                typePool).make(typeResolver.resolve());
+                typePool).make(typeResolutionStrategy.resolve());
     }
 
     /**

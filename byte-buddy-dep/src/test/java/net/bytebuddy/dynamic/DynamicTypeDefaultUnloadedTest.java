@@ -40,7 +40,7 @@ public class DynamicTypeDefaultUnloadedTest {
     private ClassLoadingStrategy classLoadingStrategy;
 
     @Mock
-    private TypeResolver.Resolved typeResolver;
+    private TypeResolutionStrategy.Resolved typeResolutionStrategy;
 
     @Mock
     private TypeDescription typeDescription, auxiliaryTypeDescription;
@@ -58,7 +58,7 @@ public class DynamicTypeDefaultUnloadedTest {
                 binaryRepresentation,
                 mainLoadedTypeInitializer,
                 Collections.singletonList(auxiliaryType),
-                typeResolver);
+                typeResolutionStrategy);
         Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
         loadedTypes.put(typeDescription, MAIN_TYPE);
         loadedTypes.put(auxiliaryTypeDescription, AUXILIARY_TYPE);
@@ -66,7 +66,7 @@ public class DynamicTypeDefaultUnloadedTest {
         when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeByte);
         when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
-        when(typeResolver.initialize(unloaded, classLoader, classLoadingStrategy)).thenReturn(loadedTypes);
+        when(typeResolutionStrategy.initialize(unloaded, classLoader, classLoadingStrategy)).thenReturn(loadedTypes);
         when(typeDescription.getName()).thenReturn(MAIN_TYPE.getName());
         when(auxiliaryTypeDescription.getName()).thenReturn(AUXILIARY_TYPE.getName());
     }
@@ -85,8 +85,8 @@ public class DynamicTypeDefaultUnloadedTest {
         assertThat(loaded.getLoaded(), CoreMatchers.<Class<?>>is(MAIN_TYPE));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(1));
         assertThat(loaded.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription), CoreMatchers.<Class<?>>is(AUXILIARY_TYPE));
-        verify(typeResolver).initialize(unloaded, classLoader, classLoadingStrategy);
-        verifyNoMoreInteractions(typeResolver);
+        verify(typeResolutionStrategy).initialize(unloaded, classLoader, classLoadingStrategy);
+        verifyNoMoreInteractions(typeResolutionStrategy);
     }
 
     @Test

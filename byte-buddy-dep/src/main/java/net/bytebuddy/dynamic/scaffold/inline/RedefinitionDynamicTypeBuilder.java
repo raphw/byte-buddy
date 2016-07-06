@@ -6,7 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.TypeResolver;
+import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget;
 import net.bytebuddy.implementation.Implementation;
@@ -152,7 +152,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
     }
 
     @Override
-    public DynamicType.Unloaded<T> make(TypeResolver typeResolver, TypePool typePool) {
+    public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
                 typeValidation,
@@ -169,7 +169,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 typeValidation,
                 typePool,
                 originalType,
-                classFileLocator).make(typeResolver.resolve());
+                classFileLocator).make(typeResolutionStrategy.resolve());
     }
 
     @Override
