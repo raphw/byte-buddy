@@ -262,7 +262,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(Class<?> enterAdvice, Class<?> exitAdvice) {
-        return to(enterAdvice, exitAdvice, enterAdvice.getClassLoader().equals(exitAdvice.getClassLoader())
+        return to(enterAdvice, exitAdvice, enterAdvice.getClassLoader() == exitAdvice.getClassLoader()
                 ? ClassFileLocator.ForClassLoader.of(enterAdvice.getClassLoader())
                 : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterAdvice.getClassLoader()), ClassFileLocator.ForClassLoader.of(exitAdvice.getClassLoader())));
     }

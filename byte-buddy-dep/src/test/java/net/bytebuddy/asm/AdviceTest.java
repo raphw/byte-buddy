@@ -220,6 +220,19 @@ public class AdviceTest {
     }
 
     @Test
+    public void testTrivialAdviceWithDelegation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(TrivialAdviceDelegation.class)
+                .visit(Advice.to(TrivialAdviceDelegation.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
     public void testTrivialAdviceWithSuppression() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -229,6 +242,58 @@ public class AdviceTest {
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testTrivialAdviceDistributedEnterOnly() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class, EmptyAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
+    }
+
+    @Test
+    public void testTrivialAdviceDistributedExitOnly() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(EmptyAdvice.class, TrivialAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 0));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testTrivialAdviceWithDelegationEnterOnly() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(TrivialAdviceDelegation.class)
+                .visit(Advice.to(TrivialAdviceDelegation.class, EmptyAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
+    }
+
+    @Test
+    public void testTrivialAdviceWithDelegationExitOnly() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(TrivialAdviceDelegation.class)
+                .visit(Advice.to(EmptyAdvice.class, TrivialAdviceDelegation.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 0));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
@@ -1548,6 +1613,16 @@ public class AdviceTest {
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDistributedAdviceNoEnterAdvice() throws Exception {
+        Advice.to(Object.class, EmptyAdvice.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDistributedAdviceNoExitAdvice() throws Exception {
+        Advice.to(EmptyAdvice.class, Object.class);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
@@ -1701,11 +1776,6 @@ public class AdviceTest {
         }
     }
 
-    public abstract static class AbstractMethod {
-
-        public abstract void foo();
-    }
-
     public static class TracableSample {
 
         public static int enter, exit, inside;
@@ -1758,6 +1828,26 @@ public class AdviceTest {
         @Advice.OnMethodExit(suppress = Exception.class)
         private static void exit() {
             Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class TrivialAdviceDelegation {
+
+        public static int enter, exit;
+
+        public String foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(inline = false)
+        private static void enter() {
+            enter++;
+        }
+
+        @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
+        private static void exit() {
+            exit++;
         }
     }
 
