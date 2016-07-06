@@ -7,6 +7,7 @@ Byte Buddy release notes
 - Make interfaces public by default when creating them via `ByteBuddy::makeInterface`.
 - Added `TypeResolutionStrategy` to allow for active resolution via the `Nexus` also from outside the `AgentBuilder`.
 - Make best effort from `ClassLoadingStrategy`s to not resolve types.
+- Added convenience method for loading a dynamic type with an implicit `ClassLoadingStrategy`.
 
 ### 30. June 2016: version 1.4.6
 
