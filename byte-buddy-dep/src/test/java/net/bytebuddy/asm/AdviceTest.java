@@ -1159,6 +1159,34 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(FOO).get(null), is((Object) 0));
     }
 
+    @Test
+    public void testSkipInstrumentedMethodWithSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SkipIfTrueWithSuppressionAdvice.class)
+                .visit(Advice.to(SkipIfTrueWithSuppressionAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(FOO).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testSkipInstrumentedMethodNonInlinedWithSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(SkipIfTrueNonInlinedWithSuppressionAdvice.class)
+                .visit(Advice.to(SkipIfTrueNonInlinedWithSuppressionAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(FOO).get(null), is((Object) 1));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
         new ByteBuddy()
@@ -2985,6 +3013,56 @@ public class AdviceTest {
         @Advice.OnMethodExit(inline = false)
         private static void exit(@Advice.Enter boolean enter) {
             if (!enter) {
+                throw new AssertionError();
+            }
+            exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class SkipIfTrueWithSuppressionAdvice {
+
+        public static int enter, exit, foo;
+
+        public String foo() {
+            foo++;
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(skipIfTrue = true, suppress = RuntimeException.class)
+        private static boolean enter() {
+            enter++;
+            throw new RuntimeException();
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Enter boolean enter) {
+            if (enter) {
+                throw new AssertionError();
+            }
+            exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class SkipIfTrueNonInlinedWithSuppressionAdvice {
+
+        public static int enter, exit, foo;
+
+        public String foo() {
+            foo++;
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(skipIfTrue = true, suppress = RuntimeException.class, inline = false)
+        private static boolean enter() {
+            enter++;
+            throw new RuntimeException();
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Enter boolean enter) {
+            if (enter) {
                 throw new AssertionError();
             }
             exit++;
