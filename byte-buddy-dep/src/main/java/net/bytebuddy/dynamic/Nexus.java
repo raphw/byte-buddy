@@ -13,8 +13,7 @@ import java.util.logging.Logger;
  * loaded type initializer registered before hand.
  * </p>
  * <p>
- * <b>Important</b>: The nexus must never be accessed directly but only by its
- * {@link net.bytebuddy.agent.builder.AgentBuilder.Default.InitializationStrategy.SelfInjection.NexusAccessor}
+ * <b>Important</b>: The nexus must never be accessed directly but only by the {@link NexusAccessor}
  * which makes sure that the nexus is loaded by the system class loader. Otherwise, a class might not
  * be able to initialize itself if it is loaded by different class loader that does not have the
  * system class loader in its hierarchy.
@@ -82,7 +81,7 @@ public class Nexus {
     }
 
     /**
-     * Initializes a loaded type.
+     * Initializes a loaded type. This method must only be invoked via the system class loader.
      *
      * @param type           The loaded type to initialize.
      * @param identification An identification for the initializer to run.
@@ -102,10 +101,10 @@ public class Nexus {
      * </p>
      * <p>
      * Important: This method must never be called directly but only by using a
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor} which enforces to access this class for the
-     * system class loader where a Java agent always registers its instances. This avoids a duplication of the class if this nexus is loaded by different
-     * class loaders. For this reason, the last parameter must not use a Byte Buddy specific type as those types can be loaded by different class loaders,
-     * too. Any access of the instance is done using Java reflection instead.
+     * {@link NexusAccessor#register(String, ClassLoader, int, net.bytebuddy.implementation.LoadedTypeInitializer)} which enforces to access this class
+     * for the system class loader where a Java agent always registers its instances. This avoids a duplication of the class if this nexus is loaded by
+     * different class loaders. For this reason, the last parameter must not use a Byte Buddy specific type as those types can be loaded by different class
+     * loaders, too. Any access of the instance is done using Java reflection instead.
      * </p>
      *
      * @param name            The name of the type for the loaded type initializer.

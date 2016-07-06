@@ -66,10 +66,10 @@ public class NexusTest {
     public void testNexusAccessorNonActive() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
                 ClassFileExtraction.of(Nexus.class,
-                        TypeResolutionStrategy.Active.class,
-                        TypeResolutionStrategy.Active.Dispatcher.class,
-                        TypeResolutionStrategy.Active.Dispatcher.Available.class,
-                        TypeResolutionStrategy.Active.Dispatcher.Unavailable.class),
+                        NexusAccessor.class,
+                        NexusAccessor.Dispatcher.class,
+                        NexusAccessor.Dispatcher.Available.class,
+                        NexusAccessor.Dispatcher.Unavailable.class),
                 null,
                 AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
@@ -80,7 +80,7 @@ public class NexusTest {
         Field actualInitializers = Nexus.class.getDeclaredField("TYPE_INITIALIZERS");
         actualInitializers.setAccessible(true);
         assertThat(((Map<?, ?>) actualInitializers.get(null)).size(), is(0));
-        Class<?> accessor = classLoader.loadClass(TypeResolutionStrategy.Active.class.getName());
+        Class<?> accessor = classLoader.loadClass(NexusAccessor.class.getName());
         ClassLoader qux = mock(ClassLoader.class);
         when(loadedTypeInitializer.isAlive()).thenReturn(false);
         assertThat(accessor
@@ -101,10 +101,10 @@ public class NexusTest {
     public void testNexusAccessorClassLoaderBoundary() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
                 ClassFileExtraction.of(Nexus.class,
-                        TypeResolutionStrategy.Active.class,
-                        TypeResolutionStrategy.Active.Dispatcher.class,
-                        TypeResolutionStrategy.Active.Dispatcher.Available.class,
-                        TypeResolutionStrategy.Active.Dispatcher.Unavailable.class),
+                        NexusAccessor.class,
+                        NexusAccessor.Dispatcher.class,
+                        NexusAccessor.Dispatcher.Available.class,
+                        NexusAccessor.Dispatcher.Unavailable.class),
                 null,
                 AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
@@ -115,7 +115,7 @@ public class NexusTest {
         Field actualInitializers = Nexus.class.getDeclaredField("TYPE_INITIALIZERS");
         actualInitializers.setAccessible(true);
         assertThat(((Map<?, ?>) actualInitializers.get(null)).size(), is(0));
-        Class<?> accessor = classLoader.loadClass(TypeResolutionStrategy.Active.class.getName());
+        Class<?> accessor = classLoader.loadClass(NexusAccessor.class.getName());
         ClassLoader qux = mock(ClassLoader.class);
         when(loadedTypeInitializer.isAlive()).thenReturn(true);
         assertThat(accessor
@@ -136,10 +136,10 @@ public class NexusTest {
     public void testNexusAccessorClassLoaderNoResource() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
                 ClassFileExtraction.of(Nexus.class,
-                        TypeResolutionStrategy.Active.class,
-                        TypeResolutionStrategy.Active.Dispatcher.class,
-                        TypeResolutionStrategy.Active.Dispatcher.Available.class,
-                        TypeResolutionStrategy.Active.Dispatcher.Unavailable.class),
+                        NexusAccessor.class,
+                        NexusAccessor.Dispatcher.class,
+                        NexusAccessor.Dispatcher.Available.class,
+                        NexusAccessor.Dispatcher.Unavailable.class),
                 null,
                 AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
@@ -150,7 +150,7 @@ public class NexusTest {
         Field actualInitializers = Nexus.class.getDeclaredField("TYPE_INITIALIZERS");
         actualInitializers.setAccessible(true);
         assertThat(((Map<?, ?>) actualInitializers.get(null)).size(), is(0));
-        Class<?> accessor = classLoader.loadClass(TypeResolutionStrategy.Active.class.getName());
+        Class<?> accessor = classLoader.loadClass(NexusAccessor.class.getName());
         ClassLoader qux = mock(ClassLoader.class);
         when(loadedTypeInitializer.isAlive()).thenReturn(true);
         assertThat(accessor
@@ -169,7 +169,7 @@ public class NexusTest {
 
     @Test(expected = IllegalStateException.class)
     public void testUnavailableDispatcherThrowsException() throws Exception {
-        new TypeResolutionStrategy.Active.Dispatcher.Unavailable(new Exception()).register(FOO, classLoader, BAR, loadedTypeInitializer);
+        new NexusAccessor.Dispatcher.Unavailable(new Exception()).register(FOO, classLoader, BAR, loadedTypeInitializer);
     }
 
     @Test
@@ -181,15 +181,16 @@ public class NexusTest {
                 return types.next();
             }
         }).apply();
+        ObjectPropertyAssertion.of(NexusAccessor.class).apply();
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(TypeResolutionStrategy.Active.Dispatcher.Available.class)
+        ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.Available.class)
                 .create(new ObjectPropertyAssertion.Creator<Method>() {
                     @Override
                     public Method create() {
                         return methods.next();
                     }
                 }).apply();
-        ObjectPropertyAssertion.of(TypeResolutionStrategy.Active.Dispatcher.Unavailable.class).apply();
-        ObjectPropertyAssertion.of(TypeResolutionStrategy.Active.InitializationAppender.class).apply();
+        ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.Unavailable.class).apply();
+        ObjectPropertyAssertion.of(NexusAccessor.InitializationAppender.class).apply();
     }
 }

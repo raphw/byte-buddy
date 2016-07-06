@@ -11,6 +11,7 @@ import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.NexusAccessor;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -1993,7 +1994,7 @@ public interface AgentBuilder {
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
-                    return builder.initializer(new TypeResolutionStrategy.Active.InitializationAppender(identification));
+                    return builder.initializer(new NexusAccessor.InitializationAppender(identification));
                 }
 
                 @Override
@@ -2049,7 +2050,7 @@ public interface AgentBuilder {
                         } else {
                             loadedTypeInitializer = dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription());
                         }
-                        TypeResolutionStrategy.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
+                        NexusAccessor.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
 
                     @Override
@@ -2078,7 +2079,7 @@ public interface AgentBuilder {
                         LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
                                 : new InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectorFactory.resolve());
-                        TypeResolutionStrategy.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
+                        NexusAccessor.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
 
                     @Override
@@ -2111,7 +2112,7 @@ public interface AgentBuilder {
                             }
                         }
                         LoadedTypeInitializer loadedTypeInitializer = loadedTypeInitializers.get(dynamicType.getTypeDescription());
-                        TypeResolutionStrategy.Active.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
+                        NexusAccessor.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
 
                     @Override

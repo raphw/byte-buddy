@@ -76,7 +76,7 @@ public class TypeResolutionStrategyTest {
         Field field = TypeResolutionStrategy.Active.Resolved.class.getDeclaredField("identification");
         field.setAccessible(true);
         int identification = (Integer) field.get(resolved);
-        when(typeInitializer.expandWith(new TypeResolutionStrategy.Active.InitializationAppender(identification))).thenReturn(otherTypeInitializer);
+        when(typeInitializer.expandWith(new NexusAccessor.InitializationAppender(identification))).thenReturn(otherTypeInitializer);
         assertThat(resolved.injectedInto(typeInitializer), is(otherTypeInitializer));
         assertThat(resolved.initialize(dynamicType, classLoader, classLoadingStrategy),
                 is(Collections.<TypeDescription, Class<?>>singletonMap(typeDescription, Foo.class)));

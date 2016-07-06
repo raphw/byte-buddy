@@ -4,7 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.Nexus;
-import net.bytebuddy.dynamic.TypeResolutionStrategy;
+import net.bytebuddy.dynamic.NexusAccessor;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -101,7 +101,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testSplitInitialization() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Split(IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
-        verify(builder).initializer(new TypeResolutionStrategy.Active.InitializationAppender(IDENTIFIER));
+        verify(builder).initializer(new NexusAccessor.InitializationAppender(IDENTIFIER));
         verifyNoMoreInteractions(builder);
         verifyZeroInteractions(appendedBuilder);
     }
@@ -111,7 +111,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testLazyInitialization() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Lazy(IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
-        verify(builder).initializer(new TypeResolutionStrategy.Active.InitializationAppender(IDENTIFIER));
+        verify(builder).initializer(new NexusAccessor.InitializationAppender(IDENTIFIER));
         verifyNoMoreInteractions(builder);
         verifyZeroInteractions(appendedBuilder);
     }
@@ -121,7 +121,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testEagerInitialization() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Eager(IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
-        verify(builder).initializer(new TypeResolutionStrategy.Active.InitializationAppender(IDENTIFIER));
+        verify(builder).initializer(new NexusAccessor.InitializationAppender(IDENTIFIER));
         verifyNoMoreInteractions(builder);
         verifyZeroInteractions(appendedBuilder);
     }
