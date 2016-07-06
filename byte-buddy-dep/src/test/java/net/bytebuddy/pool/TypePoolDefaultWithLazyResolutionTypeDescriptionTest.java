@@ -59,6 +59,26 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    public void testTypeIsLazy() throws Exception {
+        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
+        TypePool typePool = TypePool.Default.WithLazyResolution.of(classFileLocator);
+        TypePool.Resolution resolution = typePool.describe(Object.class.getName());
+        assertThat(resolution.resolve().getName(), CoreMatchers.is(TypeDescription.OBJECT.getName()));
+        verifyZeroInteractions(classFileLocator);
+    }
+
+    @Test
+    public void testReferencedTypeIsLazy() throws Exception {
+        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
+        TypePool typePool = TypePool.Default.WithLazyResolution.of(classFileLocator);
+        TypePool.Resolution resolution = typePool.describe(String.class.getName());
+        assertThat(resolution.resolve().getName(), CoreMatchers.is(TypeDescription.STRING.getName()));
+        assertThat(resolution.resolve().getSuperClass().asErasure().getName(), CoreMatchers.is(TypeDescription.OBJECT.getName()));
+        verify(classFileLocator).locate(String.class.getName());
+        verifyNoMoreInteractions(classFileLocator);
+    }
+
+    @Test
     public void testTypeIsCached() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
         TypePool typePool = TypePool.Default.WithLazyResolution.of(classFileLocator);

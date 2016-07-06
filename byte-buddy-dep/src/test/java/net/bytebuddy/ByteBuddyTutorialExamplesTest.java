@@ -64,6 +64,8 @@ public class ByteBuddyTutorialExamplesTest {
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
+    // Other than in the tutorial, the tests use a wrapper strategy for class loading to retain the test's repeatability.
+
     @SuppressWarnings("unused")
     private static void println(String s) {
         /* do nothing */
@@ -84,12 +86,12 @@ public class ByteBuddyTutorialExamplesTest {
     @SuppressWarnings("unchecked")
     public void testExtensiveExample() throws Exception {
         Class<? extends Function> dynamicType = new ByteBuddy()
-            .subclass(Function.class)
-            .method(named("apply"))
-            .intercept(MethodDelegation.to(new GreetingInterceptor()))
-            .make()
-            .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-            .getLoaded();
+                .subclass(Function.class)
+                .method(named("apply"))
+                .intercept(MethodDelegation.to(new GreetingInterceptor()))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(dynamicType.newInstance().apply("Byte Buddy"), is((Object) "Hello from Byte Buddy"));
     }
 
@@ -136,20 +138,23 @@ public class ByteBuddyTutorialExamplesTest {
     public void testTutorialGettingStartedClassReloading() throws Exception {
         ByteBuddyAgent.install();
         FooReloading foo = new FooReloading();
-        new ByteBuddy()
-                .redefine(BarReloading.class)
-                .name(FooReloading.class.getName())
-                .make()
-                .load(FooReloading.class.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
-        assertThat(foo.m(), is("bar"));
-        ClassReloadingStrategy.fromInstalledAgent().reset(FooReloading.class);
+        try {
+            new ByteBuddy()
+                    .redefine(BarReloading.class)
+                    .name(FooReloading.class.getName())
+                    .make()
+                    .load(FooReloading.class.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent());
+            assertThat(foo.m(), is("bar"));
+        } finally {
+            ClassReloadingStrategy.fromInstalledAgent().reset(FooReloading.class); // Assure repeatability.
+        }
         assertThat(foo.m(), is("foo"));
     }
 
     @Test
     public void testTutorialGettingStartedTypePool() throws Exception {
         TypePool typePool = TypePool.Default.ofClassPath();
-        ClassLoader classLoader = new URLClassLoader(new URL[0], null); // Assure repeatability
+        ClassLoader classLoader = new URLClassLoader(new URL[0], null); // Assure repeatability.
         new ByteBuddy().redefine(typePool.describe(UnloadedBar.class.getName()).resolve(),
                 ClassFileLocator.ForClassLoader.ofClassPath())
                 .defineField("qux", String.class)

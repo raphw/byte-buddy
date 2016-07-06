@@ -67,6 +67,8 @@ public class DynamicTypeDefaultUnloadedTest {
         when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
         when(auxiliaryType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
         when(typeResolver.initialize(unloaded, classLoader, classLoadingStrategy)).thenReturn(loadedTypes);
+        when(typeDescription.getName()).thenReturn(MAIN_TYPE.getName());
+        when(auxiliaryTypeDescription.getName()).thenReturn(AUXILIARY_TYPE.getName());
     }
 
     @Test

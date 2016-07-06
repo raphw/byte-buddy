@@ -4072,6 +4072,16 @@ public interface DynamicType {
     interface Unloaded<T> extends DynamicType {
 
         /**
+         * Attempts to load this dynamic type including all of its auxiliary types, if any. If the class loader
+         * is the bootstrap class loader, a new class loader is created for loading those types. Otherwise, the
+         * types are injected into the provided class loader.
+         *
+         * @param classLoader The class loader to use for this class loading.
+         * @return This dynamic type in its loaded state.
+         */
+        Loaded<T> load(ClassLoader classLoader);
+
+        /**
          * Attempts to load this dynamic type including all of its auxiliary types, if any.
          *
          * @param classLoader          The class loader to use for this class loading.
@@ -4436,6 +4446,13 @@ public interface DynamicType {
                             TypeResolver.Resolved typeResolver) {
                 super(typeDescription, binaryRepresentation, loadedTypeInitializer, auxiliaryTypes);
                 this.typeResolver = typeResolver;
+            }
+
+            @Override
+            public DynamicType.Loaded<T> load(ClassLoader classLoader) {
+                return load(classLoader, classLoader == null
+                        ? ClassLoadingStrategy.Default.WRAPPER
+                        : ClassLoadingStrategy.Default.INJECTION);
             }
 
             @Override

@@ -69,7 +69,7 @@ Class<?> dynamicType = new ByteBuddy()
   .method(ElementMatchers.named("toString"))
   .intercept(FixedValue.value("Hello World!"))
   .make()
-  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(getClass().getClassLoader())
   .getLoaded();
 assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
 ```
@@ -88,10 +88,8 @@ method. Defining a constant value is only one example of many method interceptor
 implementing the `Implementation` interface, a method could however even be defined by custom byte code.
 
 Finally, the described Java class is created and then loaded into the Java virtual machine. For this purpose, a target
-class loader is required as well as a class loading strategy where we choose a wrapper strategy. The latter creates a
-new child class loader which wraps the given class loader and only knows about the newly created dynamic type.
-Eventually, we can convince ourselves of the result by calling the `toString` method on an instance of the created
-class and finding the return value to represent the constant value we expected.
+class loader is required. Eventually, we can convince ourselves of the result by calling the `toString` method on an 
+instance of the created class and finding the return value to represent the constant value we expected.
 
 A more complex example
 ----------------------
@@ -126,7 +124,7 @@ Class<? extends java.util.function.Function> dynamicType = new ByteBuddy()
   .method(ElementMatchers.named("apply"))
   .intercept(MethodDelegation.to(new GreetingInterceptor()))
   .make()
-  .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+  .load(getClass().getClassLoader())
   .getLoaded();
 assertThat((String) dynamicType.newInstance().apply("Byte Buddy"), is("Hello from Byte Buddy"));
 ```

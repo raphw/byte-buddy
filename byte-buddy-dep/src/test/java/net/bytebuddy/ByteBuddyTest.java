@@ -7,7 +7,10 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLClassLoader;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -71,6 +74,27 @@ public class ByteBuddyTest {
                 .getLoaded();
         assertThat(type.newInstance(), instanceOf(type));
         assertThat(recorder.counter, is(1));
+    }
+
+    @Test
+    public void testImplicitStrategyBootstrap() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER)
+                .getLoaded();
+        assertThat(type.getClassLoader(), notNullValue(ClassLoader.class));
+    }
+
+    @Test
+    public void testImplicitStrategyNonBootstrap() throws Exception {
+        ClassLoader classLoader = new URLClassLoader(new URL[0], null);
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .make()
+                .load(classLoader)
+                .getLoaded();
+        assertThat(type.getClassLoader(), is(classLoader));
     }
 
     @Test
