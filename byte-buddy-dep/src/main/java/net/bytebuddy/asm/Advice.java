@@ -184,22 +184,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
      * accessed by querying the class loader of the supplied class for a class file.
      *
-     * @param type The type declaring the advice.
+     * @param advice The type declaring the advice.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    public static Advice to(Class<?> type) {
-        return to(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
+    public static Advice to(Class<?> advice) {
+        return to(advice, ClassFileLocator.ForClassLoader.of(advice.getClassLoader()));
     }
 
     /**
      * Implements advice where every matched method is advised by the given type's advisory methods.
      *
-     * @param type             The type declaring the advice.
+     * @param advice             The type declaring the advice.
      * @param classFileLocator The class file locator for locating the advisory class's class file.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    public static Advice to(Class<?> type, ClassFileLocator classFileLocator) {
-        return to(new TypeDescription.ForLoadedType(type), classFileLocator);
+    public static Advice to(Class<?> advice, ClassFileLocator classFileLocator) {
+        return to(new TypeDescription.ForLoadedType(advice), classFileLocator);
     }
 
     /**
@@ -207,51 +207,138 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * class file locator is specified for the advice target. This implies that only advice targets with the <i>inline</i> target set
      * to {@code false} are resolvable by the returned instance.
      *
-     * @param typeDescription The type declaring the advice.
+     * @param advice The type declaring the advice.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    public static Advice to(TypeDescription typeDescription) {
-        return to(typeDescription, ClassFileLocator.NoOp.INSTANCE);
+    public static Advice to(TypeDescription advice) {
+        return to(advice, ClassFileLocator.NoOp.INSTANCE);
     }
 
     /**
      * Implements advice where every matched method is advised by the given type's advisory methods.
      *
-     * @param typeDescription  A description of the type declaring the advice.
+     * @param advice           A description of the type declaring the advice.
      * @param classFileLocator The class file locator for locating the advisory class's class file.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    public static Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-        return to(typeDescription, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory>emptyList());
+    public static Advice to(TypeDescription advice, ClassFileLocator classFileLocator) {
+        return to(advice, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory>emptyList());
     }
 
     /**
      * Creates a new advice.
      *
-     * @param typeDescription  A description of the type declaring the advice.
+     * @param advice           A description of the type declaring the advice.
      * @param classFileLocator The class file locator for locating the advisory class's class file.
      * @param userFactories    A list of custom factories for user generated offset mappings.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    protected static Advice to(TypeDescription typeDescription,
-                               ClassFileLocator classFileLocator,
-                               List<? extends Dispatcher.OffsetMapping.Factory> userFactories) {
+    protected static Advice to(TypeDescription advice, ClassFileLocator classFileLocator, List<? extends Dispatcher.OffsetMapping.Factory> userFactories) {
+        Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
+        for (MethodDescription.InDefinedShape methodDescription : advice.getDeclaredMethods()) {
+            methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription);
+            methodExit = locate(OnMethodExit.class, INLINE_EXIT, methodExit, methodDescription);
+        }
+        if (!methodEnter.isAlive() && !methodExit.isAlive()) {
+            throw new IllegalArgumentException("No advice defined by " + advice);
+        }
         try {
-            Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
-            for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()) {
-                methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription);
-                methodExit = locate(OnMethodExit.class, INLINE_EXIT, methodExit, methodDescription);
-            }
-            if (!methodEnter.isAlive() && !methodExit.isAlive()) {
-                throw new IllegalArgumentException("No advice defined by " + typeDescription);
-            }
             ClassReader classReader = methodEnter.isBinary() || methodExit.isBinary()
-                    ? new ClassReader(classFileLocator.locate(typeDescription.getName()).resolve())
+                    ? new ClassReader(classFileLocator.locate(advice.getName()).resolve())
                     : UNDEFINED;
             Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(userFactories, classReader);
             return new Advice(resolved, methodExit.asMethodExitTo(userFactories, classReader, resolved));
         } catch (IOException exception) {
-            throw new IllegalStateException("Error reading class file of " + typeDescription, exception);
+            throw new IllegalStateException("Error reading class file of " + advice, exception);
+        }
+    }
+
+    /**
+     * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
+     * accessed by querying the class loader of the supplied class for a class file.
+     *
+     * @param enterAdvice The type declaring the enter advice.
+     * @param exitAdvice  The type declaring the exit advice.
+     * @return A method visitor wrapper representing the supplied advice.
+     */
+    public static Advice to(Class<?> enterAdvice, Class<?> exitAdvice) {
+        return to(enterAdvice, exitAdvice, enterAdvice.getClassLoader().equals(exitAdvice.getClassLoader())
+                ? ClassFileLocator.ForClassLoader.of(enterAdvice.getClassLoader())
+                : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterAdvice.getClassLoader()), ClassFileLocator.ForClassLoader.of(exitAdvice.getClassLoader())));
+    }
+
+    /**
+     * Implements advice where every matched method is advised by the given type's advisory methods.
+     *
+     * @param enterAdvice      The type declaring the enter advice.
+     * @param exitAdvice       The type declaring the exit advice.
+     * @param classFileLocator The class file locator for locating the advisory class's class file.
+     * @return A method visitor wrapper representing the supplied advice.
+     */
+    public static Advice to(Class<?> enterAdvice, Class<?> exitAdvice, ClassFileLocator classFileLocator) {
+        return to(new TypeDescription.ForLoadedType(enterAdvice), new TypeDescription.ForLoadedType(exitAdvice), classFileLocator);
+    }
+
+    /**
+     * Implements advice where every matched method is advised by the given type's advisory methods. Using this method, a non-operational
+     * class file locator is specified for the advice target. This implies that only advice targets with the <i>inline</i> target set
+     * to {@code false} are resolvable by the returned instance.
+     *
+     * @param enterAdvice The type declaring the enter advice.
+     * @param exitAdvice  The type declaring the exit advice.
+     * @return A method visitor wrapper representing the supplied advice.
+     */
+    public static Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice) {
+        return to(enterAdvice, exitAdvice, ClassFileLocator.NoOp.INSTANCE);
+    }
+
+    /**
+     * Implements advice where every matched method is advised by the given type's advisory methods.
+     *
+     * @param enterAdvice      The type declaring the enter advice.
+     * @param exitAdvice       The type declaring the exit advice.
+     * @param classFileLocator The class file locator for locating the advisory class's class file.
+     * @return A method visitor wrapper representing the supplied advice.
+     */
+    public static Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice, ClassFileLocator classFileLocator) {
+        return to(enterAdvice, exitAdvice, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory>emptyList());
+    }
+
+    /**
+     * Creates a new advice.
+     *
+     * @param enterAdvice      The type declaring the enter advice.
+     * @param exitAdvice       The type declaring the exit advice.
+     * @param classFileLocator The class file locator for locating the advisory class's class file.
+     * @param userFactories    A list of custom factories for user generated offset mappings.
+     * @return A method visitor wrapper representing the supplied advice.
+     */
+    protected static Advice to(TypeDescription enterAdvice,
+                               TypeDescription exitAdvice,
+                               ClassFileLocator classFileLocator,
+                               List<? extends Dispatcher.OffsetMapping.Factory> userFactories) {
+        Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
+        for (MethodDescription.InDefinedShape methodDescription : enterAdvice.getDeclaredMethods()) {
+            methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription);
+        }
+        if (!methodEnter.isAlive()) {
+            throw new IllegalArgumentException("No enter advice defined by " + enterAdvice);
+        }
+        for (MethodDescription.InDefinedShape methodDescription : exitAdvice.getDeclaredMethods()) {
+            methodExit = locate(OnMethodExit.class, INLINE_EXIT, methodExit, methodDescription);
+        }
+        if (!methodExit.isAlive()) {
+            throw new IllegalArgumentException("No enter advice defined by " + exitAdvice);
+        }
+        try {
+            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(userFactories, methodEnter.isBinary()
+                    ? new ClassReader(classFileLocator.locate(enterAdvice.getName()).resolve())
+                    : UNDEFINED);
+            return new Advice(resolved, methodExit.asMethodExitTo(userFactories, methodExit.isBinary()
+                    ? new ClassReader(classFileLocator.locate(exitAdvice.getName()).resolve())
+                    : UNDEFINED, resolved));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Error reading class file of " + enterAdvice + " or " + exitAdvice, exception);
         }
     }
 
@@ -7653,37 +7740,92 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
          * accessed by querying the class loader of the supplied class for a class file.
          *
-         * @param type The type declaring the advice.
+         * @param advice The type declaring the advice.
          * @return A method visitor wrapper representing the supplied advice.
          */
-        public Advice to(Class<?> type) {
-            return to(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
+        public Advice to(Class<?> advice) {
+            return to(advice, ClassFileLocator.ForClassLoader.of(advice.getClassLoader()));
         }
 
         /**
          * Implements advice where every matched method is advised by the given type's advisory methods.
          *
-         * @param type             The type declaring the advice.
+         * @param advice           The type declaring the advice.
          * @param classFileLocator The class file locator for locating the advisory class's class file.
          * @return A method visitor wrapper representing the supplied advice.
          */
-        public Advice to(Class<?> type, ClassFileLocator classFileLocator) {
-            return to(new TypeDescription.ForLoadedType(type), classFileLocator);
+        public Advice to(Class<?> advice, ClassFileLocator classFileLocator) {
+            return to(new TypeDescription.ForLoadedType(advice), classFileLocator);
         }
 
         /**
          * Implements advice where every matched method is advised by the given type's advisory methods.
          *
-         * @param typeDescription  A description of the type declaring the advice.
+         * @param advice           A description of the type declaring the advice.
          * @param classFileLocator The class file locator for locating the advisory class's class file.
          * @return A method visitor wrapper representing the supplied advice.
          */
-        public Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+        public Advice to(TypeDescription advice, ClassFileLocator classFileLocator) {
             List<Dispatcher.OffsetMapping.Factory> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory>(dynamicValues.size());
             for (Map.Entry<Class<? extends Annotation>, DynamicValue<?>> entry : dynamicValues.entrySet()) {
                 userFactories.add(Dispatcher.OffsetMapping.ForUserValue.Factory.of(entry.getKey(), entry.getValue()));
             }
-            return Advice.to(typeDescription, classFileLocator, userFactories);
+            return Advice.to(advice, classFileLocator, userFactories);
+        }
+
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
+         * accessed by querying the class loader of the supplied class for a class file.
+         *
+         * @param enterAdvice The type declaring the enter advice.
+         * @param exitAdvice  The type declaring the exit advice.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
+        public Advice to(Class<?> enterAdvice, Class<?> exitAdvice) {
+            return to(enterAdvice, exitAdvice, enterAdvice.getClassLoader().equals(exitAdvice.getClassLoader())
+                    ? ClassFileLocator.ForClassLoader.of(enterAdvice.getClassLoader())
+                    : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterAdvice.getClassLoader()), ClassFileLocator.ForClassLoader.of(exitAdvice.getClassLoader())));
+        }
+
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods.
+         *
+         * @param enterAdvice      The type declaring the enter advice.
+         * @param exitAdvice       The type declaring the exit advice.
+         * @param classFileLocator The class file locator for locating the advisory class's class file.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
+        public Advice to(Class<?> enterAdvice, Class<?> exitAdvice, ClassFileLocator classFileLocator) {
+            return to(new TypeDescription.ForLoadedType(enterAdvice), new TypeDescription.ForLoadedType(exitAdvice), classFileLocator);
+        }
+
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods. Using this method, a non-operational
+         * class file locator is specified for the advice target. This implies that only advice targets with the <i>inline</i> target set
+         * to {@code false} are resolvable by the returned instance.
+         *
+         * @param enterAdvice The type declaring the enter advice.
+         * @param exitAdvice  The type declaring the exit advice.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
+        public Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice) {
+            return to(enterAdvice, exitAdvice, ClassFileLocator.NoOp.INSTANCE);
+        }
+
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods.
+         *
+         * @param enterAdvice      The type declaring the enter advice.
+         * @param exitAdvice       The type declaring the exit advice.
+         * @param classFileLocator The class file locator for locating the advisory class's class file.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
+        public Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice, ClassFileLocator classFileLocator) {
+            List<Dispatcher.OffsetMapping.Factory> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory>(dynamicValues.size());
+            for (Map.Entry<Class<? extends Annotation>, DynamicValue<?>> entry : dynamicValues.entrySet()) {
+                userFactories.add(Dispatcher.OffsetMapping.ForUserValue.Factory.of(entry.getKey(), entry.getValue()));
+            }
+            return Advice.to(enterAdvice, exitAdvice, classFileLocator, userFactories);
         }
 
         @Override
