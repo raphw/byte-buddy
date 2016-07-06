@@ -155,7 +155,8 @@ public interface InstrumentedType extends TypeDescription {
         WithFlexibleName withName(String name);
 
         /**
-         * Applies a transformation onto all existing type variables of this instrumented type.
+         * Applies a transformation onto all existing type variables of this instrumented type. A transformation is potentially unsafe
+         * and it is the responsibility of the supplier to return a valid type variable token from the transformer.
          *
          * @param matcher     The matcher to decide what type variables to transform.
          * @param transformer The transformer to apply on all matched type variables.
