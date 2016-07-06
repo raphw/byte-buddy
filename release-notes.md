@@ -6,7 +6,7 @@ Byte Buddy release notes
 - Added default `TypePool` that allows for lazy resolution of referenced types. This can both be a performance improvement and allows working with optional types as long as they are not directly required within a transformation. This type pool is now used by default.
 - Make interfaces public by default when creating them via `ByteBuddy::makeInterface`.
 - Added `TypeResolutionStrategy` to allow for active resolution via the `Nexus` also from outside the `AgentBuilder`.
-- Make best effort from `ClassLoadingStrategy`s to not resolve types.
+- Make best effort from a `ClassLoadingStrategy` to not resolve types during loading.
 - Added convenience method for loading a dynamic type with an implicit `ClassLoadingStrategy`.
 
 ### 30. June 2016: version 1.4.6
