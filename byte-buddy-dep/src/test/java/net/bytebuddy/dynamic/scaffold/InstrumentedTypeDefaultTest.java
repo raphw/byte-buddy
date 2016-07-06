@@ -10,6 +10,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.TargetType;
+import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -29,6 +30,7 @@ import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -100,6 +102,34 @@ public class InstrumentedTypeDefaultTest {
         assertThat(typeVariable.getTypeName(), is(BAR));
         assertThat(typeVariable.getVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
         assertThat(typeVariable.getUpperBounds(), is(Collections.singletonList(instrumentedType.asGenericType())));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testWithTypeVariableTransformed() throws Exception {
+        TypeDescription.Generic boundType = mock(TypeDescription.Generic.class);
+        when(boundType.asGenericType()).thenReturn(boundType);
+        when(boundType.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(boundType);
+        TypeDescription rawBoundType = mock(TypeDescription.class);
+        when(boundType.asErasure()).thenReturn(rawBoundType);
+        when(rawBoundType.getName()).thenReturn(FOO);
+        InstrumentedType.WithFlexibleName instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getTypeVariables().size(), is(0));
+        instrumentedType = instrumentedType.withTypeVariable(new TypeVariableToken(BAR, Collections.singletonList(boundType)));
+        Transformer<TypeVariableToken> transformer = mock(Transformer.class);
+        TypeDescription.Generic otherBoundType = mock(TypeDescription.Generic.class);
+        when(otherBoundType.asGenericType()).thenReturn(otherBoundType);
+        when(otherBoundType.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(otherBoundType);
+        TypeDescription rawOtherBoundType = mock(TypeDescription.class);
+        when(otherBoundType.asErasure()).thenReturn(rawOtherBoundType);
+        when(transformer.transform(instrumentedType, new TypeVariableToken(BAR, Collections.singletonList(boundType))))
+                .thenReturn(new TypeVariableToken(QUX, Collections.singletonList(otherBoundType)));
+        instrumentedType = instrumentedType.withTypeVariables(named(BAR), transformer);
+        assertThat(instrumentedType.getTypeVariables().size(), is(1));
+        TypeDescription.Generic typeVariable = instrumentedType.getTypeVariables().get(0);
+        assertThat(typeVariable.getTypeName(), is(QUX));
+        assertThat(typeVariable.getVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
+        assertThat(typeVariable.getUpperBounds(), is(Collections.singletonList(otherBoundType)));
     }
 
     @Test
