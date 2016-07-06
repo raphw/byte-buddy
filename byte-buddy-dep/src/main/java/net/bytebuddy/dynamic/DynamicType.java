@@ -992,14 +992,14 @@ public interface DynamicType {
             FieldDefinition.Optional<S> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory);
 
             /**
-             * Applies the supplied field transformer onto the previously defined or matched field. The transformed
+             * Applies the supplied transformer onto the previously defined or matched field. The transformed
              * field is written <i>as it is</i> and it not subject to any validations.
              *
-             * @param fieldTransformer The field transformer to apply to the previously defined or matched field.
+             * @param transformer The transformer to apply to the previously defined or matched field.
              * @return A new builder that is equal to this builder but with the supplied field transformer
              * applied to the previously defined or matched field.
              */
-            FieldDefinition.Optional<S> transform(FieldTransformer fieldTransformer);
+            FieldDefinition.Optional<S> transform(Transformer<FieldDescription> transformer);
 
             /**
              * A builder for a field definition that allows for defining a value.
@@ -1188,7 +1188,7 @@ public interface DynamicType {
                             /**
                              * The field transformer to apply.
                              */
-                            protected final FieldTransformer fieldTransformer;
+                            protected final Transformer<FieldDescription> transformer;
 
                             /**
                              * The field's default value or {@code null} if no value is to be defined.
@@ -1199,39 +1199,43 @@ public interface DynamicType {
                              * Creates a new field adapter.
                              *
                              * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
-                             * @param fieldTransformer              The field transformer to apply.
+                             * @param transformer                   The field transformer to apply.
                              * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
                              */
-                            protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue) {
+                            protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                              Transformer<FieldDescription> transformer,
+                                              Object defaultValue) {
                                 this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
-                                this.fieldTransformer = fieldTransformer;
+                                this.transformer = transformer;
                                 this.defaultValue = defaultValue;
                             }
 
                             @Override
                             public FieldDefinition.Optional<V> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory) {
-                                return materialize(new FieldAttributeAppender.Factory.Compound(this.fieldAttributeAppenderFactory, fieldAttributeAppenderFactory), fieldTransformer, defaultValue);
+                                return materialize(new FieldAttributeAppender.Factory.Compound(this.fieldAttributeAppenderFactory, fieldAttributeAppenderFactory), transformer, defaultValue);
                             }
 
                             @Override
-                            public FieldDefinition.Optional<V> transform(FieldTransformer fieldTransformer) {
-                                return materialize(fieldAttributeAppenderFactory, new FieldTransformer.Compound(this.fieldTransformer, fieldTransformer), defaultValue);
+                            public FieldDefinition.Optional<V> transform(Transformer<FieldDescription> transformer) {
+                                return materialize(fieldAttributeAppenderFactory, new Transformer.Compound<FieldDescription>(this.transformer, transformer), defaultValue);
                             }
 
                             @Override
                             protected FieldDefinition.Optional<V> defaultValue(Object defaultValue) {
-                                return materialize(fieldAttributeAppenderFactory, fieldTransformer, defaultValue);
+                                return materialize(fieldAttributeAppenderFactory, transformer, defaultValue);
                             }
 
                             /**
                              * Creates a new optional field definition for which all of the supplied values are represented.
                              *
                              * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
-                             * @param fieldTransformer              The field transformer to apply.
+                             * @param transformer                   The field transformer to apply.
                              * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
                              * @return A new field definition that represents the supplied values.
                              */
-                            protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue);
+                            protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                                                                       Transformer<FieldDescription> transformer,
+                                                                                       Object defaultValue);
 
                             @Override
                             public boolean equals(Object other) {
@@ -1239,14 +1243,14 @@ public interface DynamicType {
                                 if (other == null || getClass() != other.getClass()) return false;
                                 Adapter<?> adapter = (Adapter<?>) other;
                                 return fieldAttributeAppenderFactory.equals(adapter.fieldAttributeAppenderFactory)
-                                        && fieldTransformer.equals(adapter.fieldTransformer)
+                                        && transformer.equals(adapter.transformer)
                                         && (defaultValue != null ? defaultValue.equals(adapter.defaultValue) : adapter.defaultValue == null);
                             }
 
                             @Override
                             public int hashCode() {
                                 int result = fieldAttributeAppenderFactory.hashCode();
-                                result = 31 * result + fieldTransformer.hashCode();
+                                result = 31 * result + transformer.hashCode();
                                 result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
                                 return result;
                             }
@@ -1373,14 +1377,14 @@ public interface DynamicType {
             MethodDefinition<S> attribute(MethodAttributeAppender.Factory methodAttributeAppenderFactory);
 
             /**
-             * Applies the supplied method transformer onto the previously defined or matched method. The transformed
+             * Applies the supplied transformer onto the previously defined or matched method. The transformed
              * method is written <i>as it is</i> and it not subject to any validations.
              *
-             * @param methodTransformer The method transformer to apply to the previously defined or matched method.
-             * @return A new builder that is equal to this builder but with the supplied method transformer
+             * @param transformer The transformer to apply to the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the supplied transformer
              * applied to the previously defined or matched method.
              */
-            MethodDefinition<S> transform(MethodTransformer methodTransformer);
+            MethodDefinition<S> transform(Transformer<MethodDescription> transformer);
 
             /**
              * A builder for a method definition with a receiver type.
@@ -2274,31 +2278,33 @@ public interface DynamicType {
                     protected final MethodAttributeAppender.Factory methodAttributeAppenderFactory;
 
                     /**
-                     * The method transformer to apply onto the method that is currently being implemented.
+                     * The transformer to apply onto the method that is currently being implemented.
                      */
-                    protected final MethodTransformer methodTransformer;
+                    protected final Transformer<MethodDescription> transformer;
 
                     /**
                      * Creates a new adapter for a method definition.
                      *
                      * @param handler                        The handler that determines how a method is implemented.
                      * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
-                     * @param methodTransformer              The method transformer to apply onto the method that is currently being implemented.
+                     * @param transformer                    The transformer to apply onto the method that is currently being implemented.
                      */
-                    protected Adapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
+                    protected Adapter(MethodRegistry.Handler handler,
+                                      MethodAttributeAppender.Factory methodAttributeAppenderFactory,
+                                      Transformer<MethodDescription> transformer) {
                         this.handler = handler;
                         this.methodAttributeAppenderFactory = methodAttributeAppenderFactory;
-                        this.methodTransformer = methodTransformer;
+                        this.transformer = transformer;
                     }
 
                     @Override
                     public MethodDefinition<V> attribute(MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
-                        return materialize(handler, new MethodAttributeAppender.Factory.Compound(this.methodAttributeAppenderFactory, methodAttributeAppenderFactory), methodTransformer);
+                        return materialize(handler, new MethodAttributeAppender.Factory.Compound(this.methodAttributeAppenderFactory, methodAttributeAppenderFactory), transformer);
                     }
 
                     @Override
-                    public MethodDefinition<V> transform(MethodTransformer methodTransformer) {
-                        return materialize(handler, methodAttributeAppenderFactory, new MethodTransformer.Compound(this.methodTransformer, methodTransformer));
+                    public MethodDefinition<V> transform(Transformer<MethodDescription> transformer) {
+                        return materialize(handler, methodAttributeAppenderFactory, new Transformer.Compound<MethodDescription>(this.transformer, transformer));
                     }
 
                     /**
@@ -2306,10 +2312,12 @@ public interface DynamicType {
                      *
                      * @param handler                        The handler that determines how a method is implemented.
                      * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
-                     * @param methodTransformer              The method transformer to apply onto the method that is currently being implemented.
+                     * @param transformer              The method transformer to apply onto the method that is currently being implemented.
                      * @return Returns a method definition for the supplied properties.
                      */
-                    protected abstract MethodDefinition<V> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer);
+                    protected abstract MethodDefinition<V> materialize(MethodRegistry.Handler handler,
+                                                                       MethodAttributeAppender.Factory methodAttributeAppenderFactory,
+                                                                       Transformer<MethodDescription> transformer);
 
                     @Override
                     public boolean equals(Object other) {
@@ -2318,14 +2326,14 @@ public interface DynamicType {
                         Adapter<?> adapter = (Adapter<?>) other;
                         return handler.equals(adapter.handler)
                                 && methodAttributeAppenderFactory.equals(adapter.methodAttributeAppenderFactory)
-                                && methodTransformer.equals(adapter.methodTransformer);
+                                && transformer.equals(adapter.transformer);
                     }
 
                     @Override
                     public int hashCode() {
                         int result = handler.hashCode();
                         result = 31 * result + methodAttributeAppenderFactory.hashCode();
-                        result = 31 * result + methodTransformer.hashCode();
+                        result = 31 * result + transformer.hashCode();
                         return result;
                     }
                 }
@@ -3135,28 +3143,31 @@ public interface DynamicType {
                      * @param token The token representing the current field definition.
                      */
                     protected FieldDefinitionAdapter(FieldDescription.Token token) {
-                        this(FieldAttributeAppender.ForInstrumentedField.INSTANCE, FieldTransformer.NoOp.INSTANCE, FieldDescription.NO_DEFAULT_VALUE, token);
+                        this(FieldAttributeAppender.ForInstrumentedField.INSTANCE,
+                                Transformer.NoOp.<FieldDescription>make(),
+                                FieldDescription.NO_DEFAULT_VALUE,
+                                token);
                     }
 
                     /**
                      * Creates a new field definition adapter.
                      *
                      * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
-                     * @param fieldTransformer              The field transformer to apply.
+                     * @param transformer              The field transformer to apply.
                      * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
                      * @param token                         The token representing the current field definition.
                      */
                     protected FieldDefinitionAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                     FieldTransformer fieldTransformer,
+                                                     Transformer<FieldDescription> transformer,
                                                      Object defaultValue,
                                                      FieldDescription.Token token) {
-                        super(fieldAttributeAppenderFactory, fieldTransformer, defaultValue);
+                        super(fieldAttributeAppenderFactory, transformer, defaultValue);
                         this.token = token;
                     }
 
                     @Override
                     public Optional<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
-                        return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, new FieldDescription.Token(token.getName(),
+                        return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, new FieldDescription.Token(token.getName(),
                                 token.getModifiers(),
                                 token.getType(),
                                 CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
@@ -3165,7 +3176,7 @@ public interface DynamicType {
                     @Override
                     protected Builder<U> materialize() {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withField(token),
-                                fieldRegistry.prepend(new LatentMatcher.ForFieldToken(token), fieldAttributeAppenderFactory, defaultValue, fieldTransformer),
+                                fieldRegistry.prepend(new LatentMatcher.ForFieldToken(token), fieldAttributeAppenderFactory, defaultValue, transformer),
                                 methodRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
@@ -3181,9 +3192,9 @@ public interface DynamicType {
 
                     @Override
                     protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                      FieldTransformer fieldTransformer,
+                                                      Transformer<FieldDescription> transformer,
                                                       Object defaultValue) {
-                        return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, token);
+                        return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, token);
                     }
 
                     /**
@@ -3217,7 +3228,7 @@ public interface DynamicType {
                         return "DynamicType.Builder.AbstractBase.Adapter.FieldDefinitionAdapter{" +
                                 "adapter=" + getOuter() +
                                 ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
-                                ", fieldTransformer=" + fieldTransformer +
+                                ", transformer=" + transformer +
                                 ", defaultValue=" + defaultValue +
                                 ", token=" + token +
                                 '}';
@@ -3240,22 +3251,25 @@ public interface DynamicType {
                      * @param matcher The matcher for any fields to apply this matcher to.
                      */
                     protected FieldMatchAdapter(LatentMatcher<? super FieldDescription> matcher) {
-                        this(FieldAttributeAppender.NoOp.INSTANCE, FieldTransformer.NoOp.INSTANCE, FieldDescription.NO_DEFAULT_VALUE, matcher);
+                        this(FieldAttributeAppender.NoOp.INSTANCE,
+                                Transformer.NoOp.<FieldDescription>make(),
+                                FieldDescription.NO_DEFAULT_VALUE,
+                                matcher);
                     }
 
                     /**
                      * Creates a new field match adapter.
                      *
                      * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
-                     * @param fieldTransformer              The field transformer to apply.
+                     * @param transformer              The field transformer to apply.
                      * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
                      * @param matcher                       The matcher for any fields to apply this matcher to.
                      */
                     protected FieldMatchAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                FieldTransformer fieldTransformer,
+                                                Transformer<FieldDescription> transformer,
                                                 Object defaultValue,
                                                 LatentMatcher<? super FieldDescription> matcher) {
-                        super(fieldAttributeAppenderFactory, fieldTransformer, defaultValue);
+                        super(fieldAttributeAppenderFactory, transformer, defaultValue);
                         this.matcher = matcher;
                     }
 
@@ -3267,7 +3281,7 @@ public interface DynamicType {
                     @Override
                     protected Builder<U> materialize() {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
-                                fieldRegistry.prepend(matcher, fieldAttributeAppenderFactory, defaultValue, fieldTransformer),
+                                fieldRegistry.prepend(matcher, fieldAttributeAppenderFactory, defaultValue, transformer),
                                 methodRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
@@ -3282,8 +3296,10 @@ public interface DynamicType {
                     }
 
                     @Override
-                    protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue) {
-                        return new FieldMatchAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, matcher);
+                    protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                                      Transformer<FieldDescription> transformer,
+                                                      Object defaultValue) {
+                        return new FieldMatchAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, matcher);
                     }
 
                     /**
@@ -3317,7 +3333,7 @@ public interface DynamicType {
                         return "DynamicType.Builder.AbstractBase.Adapter.FieldMatchAdapter{" +
                                 "adapter=" + getOuter() +
                                 ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
-                                ", fieldTransformer=" + fieldTransformer +
+                                ", transformer=" + transformer +
                                 ", defaultValue=" + defaultValue +
                                 ", matcher=" + matcher +
                                 '}';
@@ -3665,7 +3681,9 @@ public interface DynamicType {
                          * @param handler The handler that determines how a method is implemented.
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler) {
-                            this(handler, MethodAttributeAppender.ForInstrumentedMethod.INCLUDING_RECEIVER, MethodTransformer.NoOp.INSTANCE);
+                            this(handler,
+                                    MethodAttributeAppender.ForInstrumentedMethod.INCLUDING_RECEIVER,
+                                    Transformer.NoOp.<MethodDescription>make());
                         }
 
                         /**
@@ -3673,10 +3691,12 @@ public interface DynamicType {
                          *
                          * @param handler                        The handler that determines how a method is implemented.
                          * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
-                         * @param methodTransformer              The method transformer to apply onto the method that is currently being implemented.
+                         * @param transformer              The method transformer to apply onto the method that is currently being implemented.
                          */
-                        protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
-                            super(handler, methodAttributeAppenderFactory, methodTransformer);
+                        protected AnnotationAdapter(MethodRegistry.Handler handler,
+                                                    MethodAttributeAppender.Factory methodAttributeAppenderFactory,
+                                                    Transformer<MethodDescription> transformer) {
+                            super(handler, methodAttributeAppenderFactory, transformer);
                         }
 
                         @Override
@@ -3689,7 +3709,7 @@ public interface DynamicType {
                                     token.getExceptionTypes(),
                                     token.getAnnotations(),
                                     token.getDefaultValue(),
-                                    receiverType)).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
+                                    receiverType)).new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
                         }
 
                         @Override
@@ -3702,7 +3722,7 @@ public interface DynamicType {
                                     token.getExceptionTypes(),
                                     CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
                                     token.getDefaultValue(),
-                                    token.getReceiverType())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
+                                    token.getReceiverType())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
                         }
 
                         @Override
@@ -3720,12 +3740,14 @@ public interface DynamicType {
                                     token.getExceptionTypes(),
                                     token.getAnnotations(),
                                     token.getDefaultValue(),
-                                    token.getReceiverType())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
+                                    token.getReceiverType())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
                         }
 
                         @Override
-                        protected MethodDefinition<U> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
-                            return new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
+                        protected MethodDefinition<U> materialize(MethodRegistry.Handler handler,
+                                                                  MethodAttributeAppender.Factory methodAttributeAppenderFactory,
+                                                                  Transformer<MethodDescription> transformer) {
+                            return new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
                         }
 
                         @Override
@@ -3735,7 +3757,7 @@ public interface DynamicType {
                                     methodRegistry.prepend(new LatentMatcher.ForMethodToken(token),
                                             handler,
                                             methodAttributeAppenderFactory,
-                                            methodTransformer),
+                                            transformer),
                                     typeAttributeAppender,
                                     asmVisitorWrapper,
                                     classFileVersion,
@@ -3776,7 +3798,7 @@ public interface DynamicType {
                                     "adapter=" + getOuter() +
                                     ", handler=" + handler +
                                     ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
-                                    ", methodTransformer=" + methodTransformer +
+                                    ", transformer=" + transformer +
                                     '}';
                         }
                     }
@@ -3867,7 +3889,7 @@ public interface DynamicType {
                          * @param handler The handler that determines how a method is implemented.
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler) {
-                            this(handler, MethodAttributeAppender.NoOp.INSTANCE, MethodTransformer.NoOp.INSTANCE);
+                            this(handler, MethodAttributeAppender.NoOp.INSTANCE, Transformer.NoOp.<MethodDescription>make());
                         }
 
                         /**
@@ -3875,43 +3897,47 @@ public interface DynamicType {
                          *
                          * @param handler                        The handler that determines how a method is implemented.
                          * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
-                         * @param methodTransformer              The method transformer to apply onto the method that is currently being implemnted.
+                         * @param transformer              The method transformer to apply onto the method that is currently being implemnted.
                          */
-                        protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
-                            super(handler, methodAttributeAppenderFactory, methodTransformer);
+                        protected AnnotationAdapter(MethodRegistry.Handler handler,
+                                                    MethodAttributeAppender.Factory methodAttributeAppenderFactory,
+                                                    Transformer<MethodDescription> transformer) {
+                            super(handler, methodAttributeAppenderFactory, transformer);
                         }
 
                         @Override
                         public MethodDefinition<U> receiverType(TypeDescription.Generic receiverType) {
                             return new AnnotationAdapter(handler,
                                     new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.ForReceiverType(receiverType)),
-                                    methodTransformer);
+                                    transformer);
                         }
 
                         @Override
                         public MethodDefinition<U> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
                             return new AnnotationAdapter(handler,
                                     new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations))),
-                                    methodTransformer);
+                                    transformer);
                         }
 
                         @Override
                         public MethodDefinition<U> annotateParameter(int index, Collection<? extends AnnotationDescription> annotations) {
                             return new AnnotationAdapter(handler,
                                     new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.Explicit(index, new ArrayList<AnnotationDescription>(annotations))),
-                                    methodTransformer);
+                                    transformer);
                         }
 
                         @Override
-                        protected MethodDefinition<U> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
-                            return new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
+                        protected MethodDefinition<U> materialize(MethodRegistry.Handler handler,
+                                                                  MethodAttributeAppender.Factory methodAttributeAppenderFactory,
+                                                                  Transformer<MethodDescription> transformer) {
+                            return new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
                         }
 
                         @Override
                         protected Builder<U> materialize() {
                             return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
                                     fieldRegistry,
-                                    methodRegistry.prepend(matcher, handler, methodAttributeAppenderFactory, methodTransformer),
+                                    methodRegistry.prepend(matcher, handler, methodAttributeAppenderFactory, transformer),
                                     typeAttributeAppender,
                                     asmVisitorWrapper,
                                     classFileVersion,
@@ -3952,7 +3978,7 @@ public interface DynamicType {
                                     "adapter=" + getOuter() +
                                     ", handler=" + handler +
                                     ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
-                                    ", methodTransformer=" + methodTransformer +
+                                    ", transformer=" + transformer +
                                     '}';
                         }
                     }

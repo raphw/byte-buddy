@@ -10,7 +10,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
-import net.bytebuddy.dynamic.MethodTransformer;
+import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -67,7 +67,7 @@ public class ConstructorStrategyDefaultTest {
         when(methodRegistry.append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
                 any(MethodAttributeAppender.Factory.class),
-                any(MethodTransformer.class))).thenReturn(methodRegistry);
+                any(Transformer.class))).thenReturn(methodRegistry);
         when(instrumentedType.getSuperClass()).thenReturn(superClass);
         when(superClass.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InGenericShape>(methodDescription));
         when(methodDescription.isConstructor()).thenReturn(true);
@@ -109,7 +109,7 @@ public class ConstructorStrategyDefaultTest {
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER),
-                eq(MethodTransformer.NoOp.INSTANCE));
+                eq(Transformer.NoOp.<MethodDescription>make()));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperClass();
         verifyNoMoreInteractions(instrumentedType);
@@ -124,7 +124,7 @@ public class ConstructorStrategyDefaultTest {
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER),
-                eq(MethodTransformer.NoOp.INSTANCE));
+                eq(Transformer.NoOp.<MethodDescription>make()));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperClass();
         verifyNoMoreInteractions(instrumentedType);
@@ -145,7 +145,7 @@ public class ConstructorStrategyDefaultTest {
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(MethodAttributeAppender.NoOp.INSTANCE),
-                eq(MethodTransformer.NoOp.INSTANCE));
+                eq(Transformer.NoOp.<MethodDescription>make()));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType).getSuperClass();
         verifyNoMoreInteractions(instrumentedType);

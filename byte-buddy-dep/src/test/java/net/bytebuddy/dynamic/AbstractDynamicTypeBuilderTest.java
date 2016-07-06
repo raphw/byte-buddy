@@ -247,7 +247,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlain()
                 .method(named(TO_STRING))
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
-                .transform(MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
+                .transform(Transformer.ForMethod.withModifiers(MethodManifestation.FINAL))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -260,7 +260,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlain()
                 .defineField(FOO, Void.class)
                 .field(named(FOO))
-                .transform(FieldTransformer.Simple.withModifiers(Visibility.PUBLIC))
+                .transform(Transformer.ForField.withModifiers(Visibility.PUBLIC))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

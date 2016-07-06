@@ -3,7 +3,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.MethodTransformer;
+import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -89,7 +89,7 @@ public interface ConstructorStrategy {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         MethodAttributeAppender.NoOp.INSTANCE,
-                        MethodTransformer.NoOp.INSTANCE);
+                        Transformer.NoOp.<MethodDescription>make());
             }
         },
 
@@ -113,7 +113,7 @@ public interface ConstructorStrategy {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER,
-                        MethodTransformer.NoOp.INSTANCE);
+                        Transformer.NoOp.<MethodDescription>make());
             }
         },
 
@@ -136,7 +136,7 @@ public interface ConstructorStrategy {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER,
-                        MethodTransformer.NoOp.INSTANCE);
+                        Transformer.NoOp.<MethodDescription>make());
             }
         };
 

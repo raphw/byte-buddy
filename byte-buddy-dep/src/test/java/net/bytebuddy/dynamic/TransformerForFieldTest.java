@@ -22,7 +22,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-public class FieldTransformerSimpleTest {
+public class TransformerForFieldTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
@@ -35,7 +35,7 @@ public class FieldTransformerSimpleTest {
     private TypeDescription instrumentedType, rawDeclaringType, rawReturnType, rawParameterType;
 
     @Mock
-    private FieldTransformer.Simple.TokenTransformer tokenTransformer;
+    private Transformer<FieldDescription.Token> tokenTransformer;
 
     @Mock
     private FieldDescription fieldDescription;
@@ -72,8 +72,8 @@ public class FieldTransformerSimpleTest {
 
     @Test
     public void testSimpleTransformation() throws Exception {
-        when(tokenTransformer.transform(fieldToken)).thenReturn(fieldToken);
-        FieldDescription transformed = new FieldTransformer.Simple(tokenTransformer).transform(instrumentedType, fieldDescription);
+        when(tokenTransformer.transform(instrumentedType, fieldToken)).thenReturn(fieldToken);
+        FieldDescription transformed = new Transformer.ForField(tokenTransformer).transform(instrumentedType, fieldDescription);
         assertThat(transformed.getDeclaringType(), is((TypeDefinition) declaringType));
         assertThat(transformed.getInternalName(), is(FOO));
         assertThat(transformed.getModifiers(), is(MODIFIERS));
@@ -84,8 +84,8 @@ public class FieldTransformerSimpleTest {
 
     @Test
     public void testModifierTransformation() throws Exception {
-        FieldDescription.Token transformed = new FieldTransformer.Simple.TokenTransformer.ForModifierTransformation(Collections.singletonList(modifierContributor))
-                .transform(fieldToken);
+        FieldDescription.Token transformed = new Transformer.ForField.FieldModifierTransformer(Collections.singletonList(modifierContributor))
+                .transform(instrumentedType, fieldToken);
         assertThat(transformed.getName(), is(FOO));
         assertThat(transformed.getModifiers(), is((MODIFIERS & ~RANGE) | MASK));
         assertThat(transformed.getType(), is(fieldType));
@@ -93,7 +93,7 @@ public class FieldTransformerSimpleTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldTransformer.Simple.class).apply();
-        ObjectPropertyAssertion.of(FieldTransformer.Simple.TokenTransformer.ForModifierTransformation.class).apply();
+        ObjectPropertyAssertion.of(Transformer.ForField.class).apply();
+        ObjectPropertyAssertion.of(Transformer.ForField.FieldModifierTransformer.class).apply();
     }
 }

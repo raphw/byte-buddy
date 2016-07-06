@@ -27,7 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-public class MethodTransformerSimpleTest {
+public class TransformerForMethodTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
@@ -40,7 +40,7 @@ public class MethodTransformerSimpleTest {
     private TypeDescription instrumentedType, rawDeclaringType, rawReturnType, rawParameterType;
 
     @Mock
-    private MethodTransformer.Simple.TokenTransformer tokenTransformer;
+    private Transformer<MethodDescription.Token> tokenTransformer;
 
     @Mock
     private MethodDescription methodDescription;
@@ -104,8 +104,8 @@ public class MethodTransformerSimpleTest {
 
     @Test
     public void testSimpleTransformation() throws Exception {
-        when(tokenTransformer.transform(methodToken)).thenReturn(methodToken);
-        MethodDescription transformed = new MethodTransformer.Simple(tokenTransformer).transform(instrumentedType, methodDescription);
+        when(tokenTransformer.transform(instrumentedType, methodToken)).thenReturn(methodToken);
+        MethodDescription transformed = new Transformer.ForMethod(tokenTransformer).transform(instrumentedType, methodDescription);
         assertThat(transformed.getDeclaringType(), is((TypeDefinition) declaringType));
         assertThat(transformed.getInternalName(), is(FOO));
         assertThat(transformed.getModifiers(), is(MODIFIERS));
@@ -129,8 +129,8 @@ public class MethodTransformerSimpleTest {
 
     @Test
     public void testModifierTransformation() throws Exception {
-        MethodDescription.Token transformed = new MethodTransformer.Simple.TokenTransformer.ForModifierTransformation(Collections.singletonList(modifierContributor))
-                .transform(methodToken);
+        MethodDescription.Token transformed = new Transformer.ForMethod.MethodModifierTransformer(Collections.singletonList(modifierContributor))
+                .transform(instrumentedType, methodToken);
         assertThat(transformed.getName(), is(FOO));
         assertThat(transformed.getModifiers(), is((MODIFIERS & ~RANGE) | MASK));
         assertThat(transformed.getReturnType(), is(returnType));
@@ -144,7 +144,7 @@ public class MethodTransformerSimpleTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodTransformer.Simple.class).apply();
-        ObjectPropertyAssertion.of(MethodTransformer.Simple.TokenTransformer.ForModifierTransformation.class).apply();
+        ObjectPropertyAssertion.of(Transformer.ForMethod.class).apply();
+        ObjectPropertyAssertion.of(Transformer.ForMethod.MethodModifierTransformer.class).apply();
     }
 }

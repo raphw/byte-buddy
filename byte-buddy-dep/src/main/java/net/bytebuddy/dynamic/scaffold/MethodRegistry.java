@@ -3,7 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.MethodTransformer;
+import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -27,13 +27,13 @@ public interface MethodRegistry {
      * @param methodMatcher            A matcher to identify any method that this definition concerns.
      * @param handler                  The handler to instrument any matched method.
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
-     * @param methodTransformer        The method transformer to be applied to implemented methods.
+     * @param transformer        The method transformer to be applied to implemented methods.
      * @return An adapted version of this method registry.
      */
     MethodRegistry prepend(LatentMatcher<? super MethodDescription> methodMatcher,
                            Handler handler,
                            MethodAttributeAppender.Factory attributeAppenderFactory,
-                           MethodTransformer methodTransformer);
+                           Transformer<MethodDescription> transformer);
 
     /**
      * Appends the given method definition to this method registry, i.e. this configuration is applied last.
@@ -41,13 +41,13 @@ public interface MethodRegistry {
      * @param methodMatcher            A matcher to identify all entries that are to be matched.
      * @param handler                  The handler to instrument any matched method.
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
-     * @param methodTransformer        The method transformer to be applied to implemented methods.
+     * @param transformer        The method transformer to be applied to implemented methods.
      * @return An adapted version of this method registry.
      */
     MethodRegistry append(LatentMatcher<? super MethodDescription> methodMatcher,
                           Handler handler,
                           MethodAttributeAppender.Factory attributeAppenderFactory,
-                          MethodTransformer methodTransformer);
+                          Transformer<MethodDescription> transformer);
 
     /**
      * Prepares this method registry.
@@ -456,16 +456,16 @@ public interface MethodRegistry {
         public MethodRegistry prepend(LatentMatcher<? super MethodDescription> matcher,
                                       Handler handler,
                                       MethodAttributeAppender.Factory attributeAppenderFactory,
-                                      MethodTransformer methodTransformer) {
-            return new Default(CompoundList.of(new Entry(matcher, handler, attributeAppenderFactory, methodTransformer), entries));
+                                      Transformer<MethodDescription> transformer) {
+            return new Default(CompoundList.of(new Entry(matcher, handler, attributeAppenderFactory, transformer), entries));
         }
 
         @Override
         public MethodRegistry append(LatentMatcher<? super MethodDescription> matcher,
                                      Handler handler,
                                      MethodAttributeAppender.Factory attributeAppenderFactory,
-                                     MethodTransformer methodTransformer) {
-            return new Default(CompoundList.of(entries, new Entry(matcher, handler, attributeAppenderFactory, methodTransformer)));
+                                     Transformer<MethodDescription> transformer) {
+            return new Default(CompoundList.of(entries, new Entry(matcher, handler, attributeAppenderFactory, transformer)));
         }
 
         @Override
@@ -574,7 +574,7 @@ public interface MethodRegistry {
             /**
              * The method transformer to be applied to implemented methods.
              */
-            private final MethodTransformer methodTransformer;
+            private final Transformer<MethodDescription> transformer;
 
             /**
              * Creates a new entry.
@@ -582,16 +582,16 @@ public interface MethodRegistry {
              * @param matcher                  The latent method matcher that this entry represents.
              * @param handler                  The handler to apply to all matched entries.
              * @param attributeAppenderFactory A method attribute appender factory to apply to all entries.
-             * @param methodTransformer        The method transformer to be applied to implemented methods.
+             * @param transformer        The method transformer to be applied to implemented methods.
              */
             protected Entry(LatentMatcher<? super MethodDescription> matcher,
                             Handler handler,
                             MethodAttributeAppender.Factory attributeAppenderFactory,
-                            MethodTransformer methodTransformer) {
+                            Transformer<MethodDescription> transformer) {
                 this.matcher = matcher;
                 this.handler = handler;
                 this.attributeAppenderFactory = attributeAppenderFactory;
-                this.methodTransformer = methodTransformer;
+                this.transformer = transformer;
             }
 
             /**
@@ -618,7 +618,7 @@ public interface MethodRegistry {
                                                      Set<MethodDescription.TypeToken> methodTypes) {
                 return new Prepared.Entry(handler,
                         attributeAppenderFactory,
-                        methodTransformer.transform(instrumentedType, methodDescription),
+                        transformer.transform(instrumentedType, methodDescription),
                         methodTypes,
                         false);
             }
@@ -659,7 +659,7 @@ public interface MethodRegistry {
                 return matcher.equals(entry.matcher)
                         && handler.equals(entry.handler)
                         && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
-                        && methodTransformer.equals(entry.methodTransformer);
+                        && transformer.equals(entry.transformer);
             }
 
             @Override
@@ -667,7 +667,7 @@ public interface MethodRegistry {
                 int result = matcher.hashCode();
                 result = 31 * result + handler.hashCode();
                 result = 31 * result + attributeAppenderFactory.hashCode();
-                result = 31 * result + methodTransformer.hashCode();
+                result = 31 * result + transformer.hashCode();
                 return result;
             }
 
@@ -677,7 +677,7 @@ public interface MethodRegistry {
                         "matcher=" + matcher +
                         ", handler=" + handler +
                         ", attributeAppenderFactory=" + attributeAppenderFactory +
-                        ", methodTransformer=" + methodTransformer +
+                        ", transformer=" + transformer +
                         '}';
             }
         }

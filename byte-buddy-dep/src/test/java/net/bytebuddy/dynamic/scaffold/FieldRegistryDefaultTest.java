@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.dynamic.FieldTransformer;
+import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -47,7 +47,7 @@ public class FieldRegistryDefaultTest {
     private Object defaultValue, otherDefaultValue;
 
     @Mock
-    private FieldTransformer fieldTransformer;
+    private Transformer<FieldDescription> transformer;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -55,7 +55,7 @@ public class FieldRegistryDefaultTest {
         when(distinctFactory.make(instrumentedType)).thenReturn(distinct);
         when(latentMatcher.resolve(instrumentedType)).thenReturn((ElementMatcher) matcher);
         when(matcher.matches(knownField)).thenReturn(true);
-        when(fieldTransformer.transform(instrumentedType, knownField)).thenReturn(instrumentedField);
+        when(transformer.transform(instrumentedType, knownField)).thenReturn(instrumentedField);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -85,7 +85,7 @@ public class FieldRegistryDefaultTest {
     @Test
     public void testKnownFieldRegistered() throws Exception {
         TypeWriter.FieldPool fieldPool = new FieldRegistry.Default()
-                .prepend(latentMatcher, distinctFactory, defaultValue, fieldTransformer)
+                .prepend(latentMatcher, distinctFactory, defaultValue, transformer)
                 .compile(instrumentedType);
         assertThat(fieldPool.target(knownField).isImplicit(), is(false));
         assertThat(fieldPool.target(knownField).getField(), is(instrumentedField));

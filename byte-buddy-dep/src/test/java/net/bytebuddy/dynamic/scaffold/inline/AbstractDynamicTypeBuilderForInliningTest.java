@@ -8,7 +8,10 @@ import net.bytebuddy.description.modifier.MethodManifestation;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.*;
+import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
+import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
@@ -358,7 +361,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         Class<?> type = create(Transform.class)
                 .method(named(FOO))
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
-                .transform(MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
+                .transform(Transformer.ForMethod.withModifiers(MethodManifestation.FINAL))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -371,7 +374,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testFieldTransformationExistingField() throws Exception {
         Class<?> type = create(Transform.class)
                 .field(named(FOO))
-                .transform(FieldTransformer.Simple.withModifiers(Visibility.PUBLIC))
+                .transform(Transformer.ForField.withModifiers(Visibility.PUBLIC))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
