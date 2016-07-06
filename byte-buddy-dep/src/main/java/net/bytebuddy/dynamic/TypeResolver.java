@@ -175,6 +175,7 @@ public interface TypeResolver {
         }
 
         @Override
+        @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoid thread-contention")
         public TypeResolver.Resolved resolve() {
             return new Resolved(new Random().nextInt());
         }
