@@ -120,6 +120,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape SUPPRESS_ENTER;
 
+    /**
+     * A reference to the {@link OnMethodEnter#skipIfTrue()} method.
+     */
     private static final MethodDescription.InDefinedShape SKIP_IF_TRUE;
 
     /**
@@ -1463,7 +1466,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 } else if (instrumentedMethod.getReturnType().represents(double.class)) {
                     mv.visitInsn(Opcodes.DCONST_0);
                     methodVisitor.visitInsn(Opcodes.DRETURN);
-                } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                } else if (instrumentedMethod.getReturnType().represents(void.class)) {
+                    methodVisitor.visitInsn(Opcodes.RETURN);
+                } else {
                     mv.visitInsn(Opcodes.ACONST_NULL);
                     methodVisitor.visitInsn(Opcodes.ARETURN);
                 }
@@ -5065,8 +5070,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           MethodSizeHandler methodSizeHandler,
                                           StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler);
 
+                /**
+                 * A skip dispatcher is responsible for skipping the instrumented method depending on the return value of the
+                 * enter advice method.
+                 */
                 enum SkipDispatcher {
 
+                    /**
+                     *  A enabled skip dispatcher that skips the instrumented method.
+                     */
                     ENABLED {
                         @Override
                         protected void apply(MethodVisitor methodVisitor,
@@ -5082,6 +5094,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     },
 
+                    /**
+                     * A disabled skip dispatcher that does not allow for skipping the instrumented method.
+                     */
                     DISABLED {
                         @Override
                         protected void apply(MethodVisitor methodVisitor,
@@ -5092,6 +5107,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     };
 
+                    /**
+                     * Resolves a skip dispatcher for an advice method that is annotated with {@link OnMethodEnter}.
+                     *
+                     * @param adviceMethod The advice method for which to resolve a skip dispatcher.
+                     * @return A suitable skip dispatcher for the supplied method.
+                     */
                     protected static SkipDispatcher of(MethodDescription.InDefinedShape adviceMethod) {
                         boolean enabled = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_IF_TRUE, Boolean.class);
                         if (enabled && !adviceMethod.getReturnType().represents(boolean.class)) {
@@ -5102,10 +5123,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : DISABLED;
                     }
 
+                    /**
+                     * Applies this skip dispatcher.
+                     *
+                     * @param methodVisitor        The method visitor to write to.
+                     * @param stackMapFrameHandler The stack map frame handler of the advice method to use.
+                     * @param instrumentedMethod   The instrumented method.
+                     * @param skipHandler          The skip handler to use.
+                     */
                     protected abstract void apply(MethodVisitor methodVisitor,
                                                   StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                   MethodDescription.InDefinedShape instrumentedMethod,
                                                   Bound.SkipHandler skipHandler);
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher." + name();
+                    }
                 }
             }
 
@@ -5140,18 +5174,41 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             void prepare();
 
+            /**
+             * A skip handler is responsible for writing code that skips the invocation of the original code
+             * within the instrumented method.
+             */
             interface SkipHandler {
 
+                /**
+                 * Applies this skip handler.
+                 *
+                 * @param methodVisitor The method visitor to write the code to.
+                 */
                 void apply(MethodVisitor methodVisitor);
             }
 
+            /**
+             * A bound dispatcher for a method enter.
+             */
             interface ForMethodEnter extends Bound {
 
+                /**
+                 * Applies this dispatcher.
+                 *
+                 * @param skipHandler The skip handler to use.
+                 */
                 void apply(SkipHandler skipHandler);
             }
 
+            /**
+             * A bound dispatcher for a method exit.
+             */
             interface ForMethodExit extends Bound {
 
+                /**
+                 * Applies this dispatcher.
+                 */
                 void apply();
             }
         }
@@ -5406,7 +5463,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A handler for computing the method size requirements.
                      */
-                    private final MethodSizeHandler methodSizeHandler;
+                    protected final MethodSizeHandler methodSizeHandler;
 
                     /**
                      * A handler for translating and injecting stack map frames.
@@ -5416,20 +5473,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A bound suppression handler that is used for suppressing exceptions of this advice method.
                      */
-                    private final SuppressionHandler.Bound suppressionHandler;
+                    protected final SuppressionHandler.Bound suppressionHandler;
 
                     /**
                      * A class reader for parsing the class file containing the represented advice method.
                      */
-                    private final ClassReader classReader;
+                    protected final ClassReader classReader;
 
                     /**
                      * The labels that were found during parsing the method's exception handler in the order of their discovery.
                      */
-                    private List<Label> labels;
+                    protected List<Label> labels;
 
                     /**
-                     * Creates a new code copier.
+                     * Creates a new advice method inliner.
                      *
                      * @param instrumentedMethod   The instrumented method.
                      * @param methodVisitor        The method visitor for writing the instrumented method.
@@ -5460,6 +5517,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         suppressionHandler.onPrepare(methodVisitor);
                     }
 
+                    /**
+                     * Inlines the advice method.
+                     */
                     protected void doApply() {
                         classReader.accept(this, ClassReader.SKIP_DEBUG | stackMapFrameHandler.getReaderHint());
                     }
@@ -5469,19 +5529,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
                                 ? new ExceptionTableSubstitutor(Inlining.Resolved.this.apply(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedMethod, suppressionHandler))
                                 : IGNORE_METHOD;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner{" +
-                                "instrumentedMethod=" + instrumentedMethod +
-                                ", methodVisitor=" + methodVisitor +
-                                ", methodSizeHandler=" + methodSizeHandler +
-                                ", stackMapFrameHandler=" + stackMapFrameHandler +
-                                ", suppressionHandler=" + suppressionHandler +
-                                ", classReader=" + classReader +
-                                ", labels=" + labels +
-                                '}';
                     }
 
                     /**
@@ -5654,6 +5701,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
+                    /**
+                     * The skip dispatcher to use.
+                     */
                     private final SkipDispatcher skipDispatcher;
 
                     /**
@@ -5726,10 +5776,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 '}';
                     }
 
+                    /**
+                     * An advice method inliner for a method enter.
+                     */
                     protected class AdviceMethodInliner extends Inlining.Resolved.AdviceMethodInliner implements Bound.ForMethodEnter {
 
+                        /**
+                         * The skip dispatcher to use.
+                         */
                         private final SkipDispatcher skipDispatcher;
 
+                        /**
+                         * Creates a new advice method inliner for a method enter.
+                         *
+                         * @param instrumentedMethod   The instrumented method.
+                         * @param methodVisitor        The method visitor for writing the instrumented method.
+                         * @param methodSizeHandler    A handler for computing the method size requirements.
+                         * @param stackMapFrameHandler A handler for translating and injecting stack map frames.
+                         * @param suppressionHandler   A bound suppression handler that is used for suppressing exceptions of this advice method.
+                         * @param classReader          A class reader for parsing the class file containing the represented advice method.
+                         * @param skipDispatcher       The skip dispatcher to use.
+                         */
                         public AdviceMethodInliner(MethodDescription.InDefinedShape instrumentedMethod,
                                                    MethodVisitor methodVisitor,
                                                    MethodSizeHandler methodSizeHandler,
@@ -5745,6 +5812,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public void apply(SkipHandler skipHandler) {
                             doApply();
                             skipDispatcher.apply(methodVisitor, stackMapFrameHandler.bindEntry(adviceMethod), instrumentedMethod, skipHandler);
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodEnter.AdviceMethodInliner{" +
+                                    "instrumentedMethod=" + instrumentedMethod +
+                                    ", methodVisitor=" + methodVisitor +
+                                    ", methodSizeHandler=" + methodSizeHandler +
+                                    ", stackMapFrameHandler=" + stackMapFrameHandler +
+                                    ", suppressionHandler=" + suppressionHandler +
+                                    ", classReader=" + classReader +
+                                    ", labels=" + labels +
+                                    ", skipDispatcher=" + skipDispatcher +
+                                    '}';
                         }
                     }
                 }
@@ -5867,8 +5948,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return result;
                     }
 
+                    /**
+                     * An advice method inliner for a method exit.
+                     */
                     protected class AdviceMethodInliner extends Inlining.Resolved.AdviceMethodInliner implements Bound.ForMethodExit {
 
+                        /**
+                         * Creates a new advice method inliner for a method exit.
+                         *
+                         * @param instrumentedMethod   The instrumented method.
+                         * @param methodVisitor        The method visitor for writing the instrumented method.
+                         * @param methodSizeHandler    A handler for computing the method size requirements.
+                         * @param stackMapFrameHandler A handler for translating and injecting stack map frames.
+                         * @param suppressionHandler   A bound suppression handler that is used for suppressing exceptions of this advice method.
+                         * @param classReader          A class reader for parsing the class file containing the represented advice method.
+                         */
                         public AdviceMethodInliner(MethodDescription.InDefinedShape instrumentedMethod,
                                                    MethodVisitor methodVisitor,
                                                    MethodSizeHandler methodSizeHandler,
@@ -5881,6 +5975,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public void apply() {
                             doApply();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.AdviceMethodInliner{" +
+                                    "instrumentedMethod=" + instrumentedMethod +
+                                    ", methodVisitor=" + methodVisitor +
+                                    ", methodSizeHandler=" + methodSizeHandler +
+                                    ", stackMapFrameHandler=" + stackMapFrameHandler +
+                                    ", suppressionHandler=" + suppressionHandler +
+                                    ", classReader=" + classReader +
+                                    ", labels=" + labels +
+                                    '}';
                         }
                     }
 
@@ -6366,6 +6473,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             /**
              * A resolved version of a dispatcher.
+             *
+             * @param <T> The type of advice dispatcher that is bound.
              */
             protected abstract static class Resolved<T extends Bound> implements Dispatcher.Resolved {
 
@@ -6541,6 +6650,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         suppressionHandler.onPrepare(methodVisitor);
                     }
 
+                    /**
+                     * Writes the advice method invocation.
+                     */
                     protected void doApply() {
                         suppressionHandler.onStart(methodVisitor, methodSizeHandler);
                         int index = 0, currentStackSize = 0, maximumStackSize = 0;
@@ -6581,6 +6693,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected static class ForMethodEnter extends AdviceMethodWriter implements Bound.ForMethodEnter {
 
+                        /**
+                         * The skip dispatcher to use.
+                         */
                         private final Resolved.ForMethodEnter.SkipDispatcher skipDispatcher;
 
                         /**
@@ -6593,6 +6708,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodSizeHandler    A handler for computing the method size requirements.
                          * @param stackMapFrameHandler A handler for translating and injecting stack map frames.
                          * @param suppressionHandler   A bound suppression handler that is used for suppressing exceptions of this advice method.
+                         * @param skipDispatcher       The skip dispatcher to use.
                          */
                         protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
@@ -6731,6 +6847,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected static class ForMethodEnter extends Delegating.Resolved<Bound.ForMethodEnter> implements Dispatcher.Resolved.ForMethodEnter {
 
+                    /**
+                     * The skip dispatcher to use.
+                     */
                     private final SkipDispatcher skipDispatcher;
 
                     /**
@@ -6778,10 +6897,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        Delegating.Resolved.ForMethodEnter that = (Delegating.Resolved.ForMethodEnter) object;
+                        return skipDispatcher == that.skipDispatcher;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + skipDispatcher.hashCode();
+                        return result;
+                    }
+
+                    @Override
                     public String toString() {
                         return "Advice.Dispatcher.Delegating.Resolved.ForMethodEnter{" +
                                 "adviceMethod=" + adviceMethod +
                                 ", offsetMappings=" + offsetMappings +
+                                ", skipDispatcher=" + skipDispatcher +
                                 '}';
                     }
                 }
@@ -6993,6 +7129,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         Class<? extends Throwable> suppress() default NoExceptionHandler.class;
 
+        /**
+         * If set to {@code true}, the instrumented method is skipped if the annotated advice method returns {@code true}. For this,
+         * the annotated method must declare a return type {@code boolean}. If this is not the case, an exception is thrown during
+         * construction of an {@link Advice}.
+         *
+         * @return {@code true} if the instrumented method should be skipped if this advice method returns {@code true}.
+         */
         boolean skipIfTrue() default false;
     }
 
