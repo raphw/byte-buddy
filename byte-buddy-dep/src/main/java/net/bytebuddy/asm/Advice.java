@@ -4616,7 +4616,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param readOnly     {@code true} if the parameter is read-only.
                      * @return An appropriate offset mapping factory.
                      */
-                    @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
+                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected static OffsetMapping.Factory of(MethodDescription.InDefinedShape adviceMethod, boolean readOnly) {
                         TypeDescription triggeringThrowable = adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
@@ -5805,7 +5805,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param userFactories A list of user-defined factories for offset mappings.
                      * @param classReader   A class reader to query for the class file of the advice method.
                      */
-                    @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
+                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                              List<? extends OffsetMapping.Factory> userFactories,
                                              ClassReader classReader) {
@@ -6967,7 +6967,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param adviceMethod  The represented advice method.
                      * @param userFactories A list of user-defined factories for offset mappings.
                      */
-                    @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
+                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory> userFactories) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.READ_ONLY,

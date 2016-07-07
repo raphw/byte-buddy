@@ -1225,6 +1225,7 @@ public interface DynamicType {
                             }
 
                             @Override
+                            @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                             public FieldDefinition.Optional<V> transform(Transformer<FieldDescription> transformer) {
                                 return materialize(fieldAttributeAppenderFactory, new Transformer.Compound<FieldDescription>(this.transformer, transformer), defaultValue);
                             }
@@ -2312,6 +2313,7 @@ public interface DynamicType {
                     }
 
                     @Override
+                    @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     public MethodDefinition<V> transform(Transformer<MethodDescription> transformer) {
                         return materialize(handler, methodAttributeAppenderFactory, new Transformer.Compound<MethodDescription>(this.transformer, transformer));
                     }
