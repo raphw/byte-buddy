@@ -341,7 +341,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinitionWithPoolLastOptionalType() throws Exception {
         // Type descriptions with optional dependencies cannot be resolved eagerly.
         if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
@@ -375,7 +375,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinitionWithPoolOnlyOptionalType() throws Exception {
         // Type descriptions with optional dependencies cannot be resolved eagerly.
         if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
