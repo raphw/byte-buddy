@@ -198,7 +198,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinition() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -233,7 +233,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testChunkedRedefinition() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -268,7 +268,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinitionWithPoolOnly() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -292,7 +292,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinitionWithPoolFirst() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -316,7 +316,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinitionWithPoolLast() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -340,7 +340,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testRetransformation() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -375,7 +375,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testChunkedRetransformation() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -410,7 +410,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testRetransformationWithPoolOnly() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -434,7 +434,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testRetransformationWithPoolFirst() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -458,7 +458,7 @@ public class AgentBuilderDefaultApplicationTest {
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testRetransformationWithPoolLast() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is whz an external class is used.
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
