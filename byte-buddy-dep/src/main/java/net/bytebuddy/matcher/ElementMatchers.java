@@ -316,7 +316,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> anyOf(Constructor<?>... value) {
-        return definedMethod(anyOf(new MethodList.ForLoadedType(value, new Method[0])));
+        return definedMethod(anyOf(new MethodList.ForLoadedMethods(value, new Method[0])));
     }
 
     /**
@@ -328,7 +328,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> anyOf(Method... value) {
-        return definedMethod(anyOf(new MethodList.ForLoadedType(new Constructor<?>[0], value)));
+        return definedMethod(anyOf(new MethodList.ForLoadedMethods(new Constructor<?>[0], value)));
     }
 
     /**
@@ -404,7 +404,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Constructor<?>... value) {
-        return definedMethod(noneOf(new MethodList.ForLoadedType(value, new Method[0])));
+        return definedMethod(noneOf(new MethodList.ForLoadedMethods(value, new Method[0])));
     }
 
     /**
@@ -416,7 +416,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Method... value) {
-        return definedMethod(noneOf(new MethodList.ForLoadedType(new Constructor<?>[0], value)));
+        return definedMethod(noneOf(new MethodList.ForLoadedMethods(new Constructor<?>[0], value)));
     }
 
     /**

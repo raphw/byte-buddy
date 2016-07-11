@@ -18,7 +18,7 @@ public class MethodListForLoadedTypesTest extends AbstractMethodListTest<Method,
 
     @Override
     protected MethodList<MethodDescription.InDefinedShape> asList(List<Method> elements) {
-        return new MethodList.ForLoadedType(new Constructor<?>[0], elements.toArray(new Method[elements.size()]));
+        return new MethodList.ForLoadedMethods(new Constructor<?>[0], elements.toArray(new Method[elements.size()]));
     }
 
     @Override

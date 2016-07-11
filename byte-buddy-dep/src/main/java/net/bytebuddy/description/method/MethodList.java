@@ -69,7 +69,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      * A method list implementation that returns all loaded byte code methods (methods and constructors) that
      * are declared for a given type.
      */
-    class ForLoadedType extends AbstractBase<MethodDescription.InDefinedShape> {
+    class ForLoadedMethods extends AbstractBase<MethodDescription.InDefinedShape> {
 
         /**
          * The loaded methods that are represented by this method list.
@@ -86,7 +86,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          *
          * @param type The type to be represented by this method list.
          */
-        public ForLoadedType(Class<?> type) {
+        public ForLoadedMethods(Class<?> type) {
             this(type.getDeclaredConstructors(), type.getDeclaredMethods());
         }
 
@@ -97,7 +97,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          * @param constructor The constructors to be represented by the method list.
          * @param method      The methods to be represented by the method list.
          */
-        public ForLoadedType(Constructor<?>[] constructor, Method[] method) {
+        public ForLoadedMethods(Constructor<?>[] constructor, Method[] method) {
             this(Arrays.asList(constructor), Arrays.asList(method));
         }
 
@@ -108,7 +108,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          * @param constructors The constructors to be represented by the method list.
          * @param methods      The methods to be represented by the method list.
          */
-        public ForLoadedType(List<? extends Constructor<?>> constructors, List<? extends Method> methods) {
+        public ForLoadedMethods(List<? extends Constructor<?>> constructors, List<? extends Method> methods) {
             this.constructors = constructors;
             this.methods = methods;
         }

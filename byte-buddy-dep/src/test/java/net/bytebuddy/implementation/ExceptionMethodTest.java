@@ -80,13 +80,13 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(ExceptionMethod.ConstructionDelegate.ForDefaultConstructor.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
             public void apply(TypeDescription mock) {
-                when(mock.getDeclaredMethods()).thenReturn(new MethodList.ForLoadedType(Object.class));
+                when(mock.getDeclaredMethods()).thenReturn(new MethodList.ForLoadedMethods(Object.class));
             }
         }).apply();
         ObjectPropertyAssertion.of(ExceptionMethod.ConstructionDelegate.ForStringConstructor.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
             public void apply(TypeDescription mock) {
-                when(mock.getDeclaredMethods()).thenReturn(new MethodList.ForLoadedType(String.class));
+                when(mock.getDeclaredMethods()).thenReturn(new MethodList.ForLoadedMethods(String.class));
             }
         }).apply();
     }

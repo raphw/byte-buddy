@@ -2266,12 +2266,12 @@ public interface AgentBuilder {
         /**
          * Describes the given type.
          *
-         * @param typeName           The binary name of the type to describe.
-         * @param typeBeingRedefined The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
-         * @param typePool           The type pool to use for locating a type if required.
+         * @param typeName The binary name of the type to describe.
+         * @param type     The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
+         * @param typePool The type pool to use for locating a type if required.
          * @return An appropriate type description.
          */
-        TypeDescription apply(String typeName, Class<?> typeBeingRedefined, TypePool typePool);
+        TypeDescription apply(String typeName, Class<?> type, TypePool typePool);
 
         /**
          * Describes the given type.
@@ -2296,13 +2296,15 @@ public interface AgentBuilder {
              * types are missing from the class path, this eager loading will cause a {@link NoClassDefFoundError}. Some Java code declares
              * optional dependencies to other classes which are only realized if the optional dependency is present. Such code relies on the
              * Java reflection API not being used for types using optional dependencies.
+             *
+             * @see Default#POOL_LAST
              */
             HYBRID {
                 @Override
-                public TypeDescription apply(String typeName, Class<?> typeBeingRedefined, TypePool typePool) {
-                    return typeBeingRedefined == null
+                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
+                    return type == null
                             ? typePool.describe(typeName).resolve()
-                            : new TypeDescription.ForLoadedType(typeBeingRedefined);
+                            : new TypeDescription.ForLoadedType(type);
                 }
 
                 @Override
@@ -2326,15 +2328,59 @@ public interface AgentBuilder {
              */
             POOL_ONLY {
                 @Override
-                public TypeDescription apply(String typeName, Class<?> typeBeingRedefined, TypePool typePool) {
+                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
                     return typePool.describe(typeName).resolve();
                 }
+            },
 
+            /**
+             * <p>
+             * A description strategy that always describes Java types using a {@link TypePool} unless a type cannot be resolved by a pool and a loaded
+             * {@link Class} instance  is available. Doing so can cause overhead as processing loaded types is supported very efficiently by a JVM.
+             * </p>
+             * <p>
+             * Avoiding the usage of loaded types can improve robustness as this approach does not rely on the Java reflection API which triggers eager
+             * validation of this loaded type which can fail an application if optional types are used by any types field or method signatures. Also, it
+             * is possible to guarantee debugging meta data to be available also for retransformed or redefined types if a {@link TypeStrategy} specifies
+             * the extraction of such meta data.
+             * </p>
+             */
+            POOL_FIRST {
                 @Override
-                public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy) {
-                    return apply(TypeDescription.ForLoadedType.getName(type), type, typeLocator.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader()));
+                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
+                    TypePool.Resolution resolution = typePool.describe(typeName);
+                    return resolution.isResolved() || type == null
+                            ? resolution.resolve()
+                            : new TypeDescription.ForLoadedType(type);
+                }
+            },
+
+            /**
+             * A description strategy that attempts to describe a type using its loaded {@link Class} representation if available. If such a type
+             * is available, it is attempted to resolve all direct properties of this type what can cause a {@link NoClassDefFoundError} if any
+             * signature contains an optional type. In this case, or if a loaded type is not available, a type description is resolved via the
+             * configured {@link TypePool}.
+             */
+            POOL_LAST {
+                @Override
+                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
+                    if (type != null) {
+                        try {
+                            return new TypeDescription.ForLoadedType.WithEagerProperties(type);
+                        } catch (NoClassDefFoundError ignored) {
+                            /* fall back to type pool */
+                        }
+                    }
+                    return typePool.describe(typeName).resolve();
                 }
             };
+
+            @Override
+            public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy) {
+                return apply(TypeDescription.ForLoadedType.getName(type),
+                        type,
+                        typeLocator.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader()));
+            }
 
             @Override
             public String toString() {

@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.visibility.Sample;
 import org.junit.Test;
@@ -355,16 +356,16 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     public void testIsAssignableClassLoader() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
-                ClassFileExtraction.of(SampleClass.class),
+                ClassFileExtraction.of(SimpleType.class),
                 null,
                 AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
-        Class<?> otherSampleClass = classLoader.loadClass(SampleClass.class.getName());
-        assertThat(describe(SampleClass.class).isAssignableFrom(describe(otherSampleClass)), is(true));
-        assertThat(describe(SampleClass.class).isAssignableTo(describe(otherSampleClass)), is(true));
-        assertThat(describe(Object.class).isAssignableFrom(describe(otherSampleClass)), is(true));
-        assertThat(describe(otherSampleClass).isAssignableTo(describe(Object.class)), is(true));
+        Class<?> otherSimpleType = classLoader.loadClass(SimpleType.class.getName());
+        assertThat(describe(SimpleType.class).isAssignableFrom(describe(otherSimpleType)), is(true));
+        assertThat(describe(SimpleType.class).isAssignableTo(describe(otherSimpleType)), is(true));
+        assertThat(describe(Object.class).isAssignableFrom(describe(otherSimpleType)), is(true));
+        assertThat(describe(otherSimpleType).isAssignableTo(describe(Object.class)), is(true));
     }
 
     @Test
