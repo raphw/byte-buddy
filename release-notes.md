@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. July 2016: version 1.4.9
+
+- Added additional implementations of a `DescriptionStrategy` for `POOL_LAST` and `POOL_FIRST` resolution.
+ 
 ### 6. July 2016: version 1.4.8
 
 - Allow to skip execution of instrumented method from `Advice` via entry advice indicated by return value.
