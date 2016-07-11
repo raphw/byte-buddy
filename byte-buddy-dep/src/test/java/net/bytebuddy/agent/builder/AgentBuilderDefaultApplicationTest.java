@@ -1,18 +1,22 @@
 package net.bytebuddy.agent.builder;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.test.packaging.SimpleOptionalType;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
@@ -338,6 +342,74 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    public void testRedefinitionWithPoolLastOptionalType() throws Exception {
+        // Type descriptions with optional dependencies cannot be resolved eagerly.
+        if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
+            return;
+        }
+        classLoader = new ByteArrayClassLoader.ChildFirst(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                ClassFileExtraction.of(SimpleOptionalType.class, ShouldRebase.class),
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleOptionalType.class.getName()).getName(), is(SimpleOptionalType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.DISABLED))
+                .with(typeLocator)
+                .ignore(none())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(AgentBuilder.DescriptionStrategy.Default.POOL_LAST)
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleOptionalType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    public void testRedefinitionWithPoolOnlyOptionalType() throws Exception {
+        // Type descriptions with optional dependencies cannot be resolved eagerly.
+        if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
+            return;
+        }
+        classLoader = new ByteArrayClassLoader.ChildFirst(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                ClassFileExtraction.of(SimpleOptionalType.class, ShouldRebase.class),
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleOptionalType.class.getName()).getName(), is(SimpleOptionalType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.DISABLED))
+                .with(typeLocator)
+                .ignore(none())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY)
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleOptionalType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testRetransformation() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -472,6 +544,74 @@ public class AgentBuilderDefaultApplicationTest {
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    public void testRetransformationWithPoolLastOptionalType() throws Exception {
+        // Type descriptions with optional dependencies cannot be resolved eagerly.
+        if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
+            return;
+        }
+        classLoader = new ByteArrayClassLoader.ChildFirst(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                ClassFileExtraction.of(SimpleOptionalType.class, ShouldRebase.class),
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleOptionalType.class.getName()).getName(), is(SimpleOptionalType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.DISABLED))
+                .with(typeLocator)
+                .ignore(none())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(AgentBuilder.DescriptionStrategy.Default.POOL_LAST)
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleOptionalType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    public void testRetransformationWithPoolOnlyOptionalType() throws Exception {
+        // Type descriptions with optional dependencies cannot be resolved eagerly.
+        if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
+            return;
+        }
+        classLoader = new ByteArrayClassLoader.ChildFirst(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                ClassFileExtraction.of(SimpleOptionalType.class, ShouldRebase.class),
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleOptionalType.class.getName()).getName(), is(SimpleOptionalType.class.getName())); // ensure that class is loaded
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(new ByteBuddy().with(TypeValidation.DISABLED))
+                .with(typeLocator)
+                .ignore(none())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY)
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleOptionalType.class.getName());
             assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
