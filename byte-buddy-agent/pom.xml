@@ -5,7 +5,7 @@
     <parent>
         <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
-        <version>1.4.9</version>
+        <version>1.4.10-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-agent</artifactId>
