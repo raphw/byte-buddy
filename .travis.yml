@@ -21,9 +21,9 @@ jdk:
 matrix:
   include:
     - jdk: oraclejdk8
-      env: TARGET=-Pjava8
+      env: TARGET=-Pjava8 -Dnet.bytebuddy.travis=true
     - jdk: oraclejdk7
-      env: TARGET=-Pjava7
+      env: TARGET=-Pjava7 -Dnet.bytebuddy.travis=true
 
 script: mvn verify $TARGET -Pintegration
 
