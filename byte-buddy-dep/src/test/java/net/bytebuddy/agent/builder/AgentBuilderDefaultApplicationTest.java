@@ -62,12 +62,12 @@ public class AgentBuilderDefaultApplicationTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {AgentBuilder.TypeLocator.Default.EXTENDED},
+//                {AgentBuilder.TypeLocator.Default.EXTENDED},
                 {AgentBuilder.TypeLocator.Default.FAST},
-                {AgentBuilder.TypeLocator.Eager.EXTENDED},
-                {AgentBuilder.TypeLocator.Eager.FAST},
-                {AgentBuilder.TypeLocator.ClassLoading.EXTENDED},
-                {AgentBuilder.TypeLocator.ClassLoading.FAST}
+//                {AgentBuilder.TypeLocator.Eager.EXTENDED},
+//                {AgentBuilder.TypeLocator.Eager.FAST},
+//                {AgentBuilder.TypeLocator.ClassLoading.EXTENDED},
+//                {AgentBuilder.TypeLocator.ClassLoading.FAST}
         });
     }
 
