@@ -42,6 +42,7 @@ import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -61,8 +62,9 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        // Travis runs out of memory if all of these tests are run. This property serves as a protection.
+        // Travis runs out of memory if all of these tests are run. This property serves as a protection (on some profiles).
         if (Boolean.getBoolean("net.bytebuddy.travis")) {
+            Logger.getLogger("net.bytebuddy").info("Only running agent application with a single type locator on Travis CI server");
             return Arrays.asList(new Object[][]{{AgentBuilder.TypeLocator.Default.FAST}});
         }
         return Arrays.asList(new Object[][]{
