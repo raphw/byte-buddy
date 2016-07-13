@@ -1466,6 +1466,13 @@ public interface AgentBuilder {
                      */
                     protected static final ClassLoader INSTANCE = AccessController.doPrivileged(new CreationAction());
 
+                    /**
+                     * Creates a new class loader that represents the bootstrap class loader.
+                     */
+                    private BootstrapClassLoaderMarker() {
+                        super(ClassLoadingStrategy.BOOTSTRAP_LOADER);
+                    }
+
                     @Override
                     protected Class<?> loadClass(String name, boolean resolve) {
                         throw new UnsupportedOperationException("This loader is only a non-null marker and is not supposed to be used");
