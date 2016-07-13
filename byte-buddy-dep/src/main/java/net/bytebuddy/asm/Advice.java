@@ -16,6 +16,7 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.ExceptionTableSensitiveMethodVisitor;
+import net.bytebuddy.utility.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
 
 import java.io.*;
@@ -194,7 +195,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * Implements advice where every matched method is advised by the given type's advisory methods.
      *
-     * @param advice             The type declaring the advice.
+     * @param advice           The type declaring the advice.
      * @param classFileLocator The class file locator for locating the advisory class's class file.
      * @return A method visitor wrapper representing the supplied advice.
      */
@@ -1414,7 +1415,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ClassFileVersion classFileVersion,
                                 int writerFlags,
                                 int readerFlags) {
-            super(Opcodes.ASM5, methodVisitor);
+            super(Opcodes.ASM5, new StackAwareMethodVisitor(methodVisitor, instrumentedMethod));
             this.instrumentedMethod = instrumentedMethod;
             padding = methodEnter.getEnterType().getStackSize().getSize();
             List<TypeDescription> requiredTypes = methodEnter.getEnterType().represents(void.class)
@@ -1632,16 +1633,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected void onVisitInsn(int opcode) {
                 switch (opcode) {
                     case Opcodes.RETURN:
+                        ((StackAwareMethodVisitor) mv).drainStack();
+                        break;
                     case Opcodes.IRETURN:
+                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.ISTORE, Opcodes.ILOAD);
+                        break;
                     case Opcodes.FRETURN:
+                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.FSTORE, Opcodes.FLOAD);
+                        break;
                     case Opcodes.DRETURN:
+                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.DSTORE, Opcodes.DLOAD);
+                        break;
                     case Opcodes.LRETURN:
+                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.LSTORE, Opcodes.LLOAD);
+                        break;
                     case Opcodes.ARETURN:
-                        mv.visitJumpInsn(Opcodes.GOTO, returnHandler);
+                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.ASTORE, Opcodes.ALOAD);
                         break;
                     default:
                         mv.visitInsn(opcode);
+                        return;
                 }
+                mv.visitJumpInsn(Opcodes.GOTO, returnHandler);
             }
 
             @Override
