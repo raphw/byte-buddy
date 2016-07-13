@@ -13,13 +13,13 @@ branches:
   only:
     - master
 
-jdk:
-  - oraclejdk8
-  - oraclejdk7
-  - openjdk6
-
 matrix:
   include:
+    - jdk: oraclejdk8
+    - jdk: oraclejdk7
+      env: -Dnet.bytebuddy.travis=true
+    - jdk: openjdk6
+      env: -Dnet.bytebuddy.travis=true
     - jdk: oraclejdk8
       env: TARGET=-Pjava8 -Dnet.bytebuddy.travis=true
     - jdk: oraclejdk7
