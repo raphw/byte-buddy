@@ -57,7 +57,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.security.AccessControlContext;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -1421,7 +1420,7 @@ public interface AgentBuilder {
 
                 @Override
                 protected TypePool.CacheProvider locate(ClassLoader classLoader) {
-                    classLoader = classLoader == null ? BootstrapClassLoaderMarker.INSTANCE : classLoader;
+                    classLoader = classLoader == null ? getBootstrapMarkerLoader() : classLoader;
                     TypePool.CacheProvider cacheProvider = cacheProviders.get(classLoader);
                     while (cacheProvider == null) {
                         cacheProvider = TypePool.CacheProvider.Simple.withObjectType();
@@ -1431,6 +1430,24 @@ public interface AgentBuilder {
                         }
                     }
                     return cacheProvider;
+                }
+
+                /**
+                 * <p>
+                 * Returns the class loader to serve as a cache key if a cache provider for the bootstrap class loader is requested.
+                 * This class loader is represented by {@code null} in the JVM which is an invalid value for many {@link ConcurrentMap}
+                 * implementations.
+                 * </p>
+                 * <p>
+                 * By default, {@link ClassLoader#getSystemClassLoader()} is used as such a key as any resource location for the
+                 * bootstrap class loader is performed via the system class loader within Byte Buddy as {@code null} cannot be queried
+                 * for resources via method calls such that this does not make a difference.
+                 * </p>
+                 *
+                 * @return A class loader to represent the bootstrap class loader.
+                 */
+                protected ClassLoader getBootstrapMarkerLoader() {
+                    return ClassLoader.getSystemClassLoader();
                 }
 
                 @Override
@@ -1454,40 +1471,6 @@ public interface AgentBuilder {
                     return "AgentBuilder.TypeLocator.WithTypePoolCache.Simple{" +
                             "cacheProviders=" + cacheProviders +
                             '}';
-                }
-
-                /**
-                 * A marker for the bootstrap class loader which is represented by {@code null}.
-                 */
-                private static class BootstrapClassLoaderMarker extends ClassLoader {
-
-                    /**
-                     * A static reference to the a singleton instance of the marker to preserve reference equality.
-                     */
-                    protected static final ClassLoader INSTANCE = AccessController.doPrivileged(new CreationAction());
-
-                    /**
-                     * Creates a new class loader that represents the bootstrap class loader.
-                     */
-                    private BootstrapClassLoaderMarker() {
-                        super(ClassLoadingStrategy.BOOTSTRAP_LOADER);
-                    }
-
-                    @Override
-                    protected Class<?> loadClass(String name, boolean resolve) {
-                        throw new UnsupportedOperationException("This loader is only a non-null marker and is not supposed to be used");
-                    }
-
-                    /**
-                     * A simple action for creating a bootstrap class loader marker.
-                     */
-                    private static class CreationAction implements PrivilegedAction<ClassLoader> {
-
-                        @Override
-                        public ClassLoader run() {
-                            return new BootstrapClassLoaderMarker();
-                        }
-                    }
                 }
             }
         }
