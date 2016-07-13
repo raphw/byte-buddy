@@ -135,6 +135,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
                 break;
             case Opcodes.PUTSTATIC:
                 adjustStack(-baseline);
+                break;
             default:
                 throw new IllegalStateException("Unexpected opcode: " + opcode);
         }
@@ -165,8 +166,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitIincInsn(int variable, int increment) {
-        adjustStack(-1);
-        super.visitIincInsn(variable, increment);
+        super.visitIincInsn(variable, increment); // TODO: Remove
     }
 
     @Override
