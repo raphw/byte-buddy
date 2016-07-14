@@ -495,6 +495,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         int compoundLocalVariableLength(int localVariableLength);
 
+        /**
+         * Requires a minimum length of the local variable array.
+         *
+         * @param localVariableLength The minimal required length of the local variable array.
+         */
         void requireLocalVariableLength(int localVariableLength);
 
         /**

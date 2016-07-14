@@ -19,7 +19,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     private static final int[] SIZE_CHANGE;
 
     /*
-     * Computes the mapping
+     * Computes a mapping of byte codes to their size impact onto the operand stack.
      */
     static {
         SIZE_CHANGE = new int[202];
@@ -27,17 +27,32 @@ public class StackAwareMethodVisitor extends MethodVisitor {
                 + "CDCDEEEEEEEEEEEEEEEEEEEEBABABBBBDCFFFGGGEDCDCDCDCDCDCDCDCD"
                 + "CDCEEEEDDDDDDDCDCDCEFEFDDEEFFDEDEEEBDDBBDDDDDDCCCCCCCCEFED"
                 + "DDCDCDEEEEEEEEEEFEEEEEEDDEEDDEE";
-        for (int index = 0; index < SIZE_CHANGE.length; ++index) {
+        for (int index = 0; index < SIZE_CHANGE.length; index++) {
             SIZE_CHANGE[index] = encoded.charAt(index) - 'E';
         }
     }
 
+    /**
+     * A list of the current elements on the operand stack.
+     */
     private List<StackSize> current;
 
+    /**
+     * A mapping of labels to the operand stack size that is expected at this label.
+     */
     private final Map<Label, List<StackSize>> sizes;
 
+    /**
+     * The next index of the local variable array that is available.
+     */
     private int freeIndex;
 
+    /**
+     * Creates a new stack aware method visitor.
+     *
+     * @param methodVisitor     The method visitor to delegate operations to.
+     * @param methodDescription The method description for which this method visitor is applied.
+     */
     public StackAwareMethodVisitor(MethodVisitor methodVisitor, MethodDescription methodDescription) {
         super(Opcodes.ASM5, methodVisitor);
         current = new ArrayList<StackSize>();
@@ -45,29 +60,74 @@ public class StackAwareMethodVisitor extends MethodVisitor {
         freeIndex = methodDescription.getStackSize();
     }
 
-    private void adjustStack(int size) {
-        if (size == 1) {
+    /**
+     * Adjusts the current state of the operand stack.
+     *
+     * @param change The change of the current operation of the operand stack. Must not be larger than {@code 2}.
+     */
+    private void adjustStack(int change) {
+        if (change == 1) {
             current.add(StackSize.SINGLE);
-        } else if (size == 2) {
+        } else if (change == 2) {
             current.add(StackSize.DOUBLE);
-        } else if (size > 2) {
-            throw new IllegalStateException("Cannot push multiple values onto the operand stack: " + size);
+        } else if (change > 2) {
+            throw new IllegalStateException("Cannot push multiple values onto the operand stack: " + change);
         } else {
-            while (size < 0) {
-                size += current.remove(current.size() - 1).getSize();
+            while (change < 0) {
+                change += current.remove(current.size() - 1).getSize();
             }
-            if (size == 1) {
+            if (change == 1) {
                 current.add(StackSize.SINGLE);
-            } else if (size != 0) {
-                throw new AssertionError("Say what?");
-                // TODO: else { assert size == 0; }
+            } else if (change != 0) {  // else { assert size == 0; }
+                throw new AssertionError(); // TODO
             }
         }
     }
 
+    /**
+     * Pops all values currently on the stack.
+     */
     public void drainStack() {
-        for (StackSize stackSize : current) {
-            switch (stackSize) {
+        doDrain(current);
+    }
+
+    /**
+     * Drains the stack to only contain the top value. For this, the value on top of the stack is temporarily stored
+     * in the local variable array until all values on the stack are popped off. Subsequently, the top value is pushed
+     * back onto the operand stack.
+     *
+     * @param store The opcode used for storing the top value.
+     * @param load  The opcode used for loading the top value.
+     * @param size  The size of the value on top of the operand stack.
+     * @return The minimal size of the local variable array that is required to perform the operation.
+     */
+    public int drainStack(int store, int load, StackSize size) {
+        int difference = current.get(current.size() - 1).getSize() - size.getSize();
+        if (current.size() == 1 && difference == 0) {
+            return 0;
+        } else {
+            super.visitVarInsn(store, freeIndex);
+            if (difference == 1) {
+                super.visitInsn(Opcodes.POP);
+            } else if (difference != 0) { // else { assert difference == 0; }
+                throw new AssertionError(); // TODO
+            }
+            doDrain(current.subList(0, current.size() - 1));
+            super.visitVarInsn(load, freeIndex);
+            return freeIndex + size.getSize();
+        }
+    }
+
+    /**
+     * Drains all supplied elements of the operand stack.
+     *
+     * @param stackSizes The stack sizes of the elements to drain.
+     */
+    private void doDrain(List<StackSize> stackSizes) {
+        ListIterator<StackSize> iterator = stackSizes.listIterator(stackSizes.size());
+        while (iterator.hasPrevious()) {
+            StackSize current = iterator.previous();
+            switch (current) {
                 case SINGLE:
                     super.visitInsn(Opcodes.POP);
                     break;
@@ -75,30 +135,8 @@ public class StackAwareMethodVisitor extends MethodVisitor {
                     super.visitInsn(Opcodes.POP2);
                     break;
                 default:
-                    throw new IllegalStateException("Unexpected stack size: " + stackSize);
+                    throw new IllegalStateException("Unexpected stack size: " + current);
             }
-        }
-    }
-
-    public int drainStack(int store, int load, StackSize size) {
-        if (current.size() > 1) {
-            super.visitVarInsn(store, freeIndex);
-            for (StackSize stackSize : current.subList(0, current.size() - 1)) {
-                switch (stackSize) {
-                    case SINGLE:
-                        super.visitInsn(Opcodes.POP);
-                        break;
-                    case DOUBLE:
-                        super.visitInsn(Opcodes.POP2);
-                        break;
-                    default:
-                        throw new IllegalStateException("Unexpected stack size: " + stackSize);
-                }
-            }
-            super.visitVarInsn(load, freeIndex);
-            return freeIndex + size.getSize();
-        } else {
-            return 0;
         }
     }
 
