@@ -39,28 +39,40 @@ public class TypePoolDefaultLazyTypeContainmentTest {
 
     @Test
     public void testDeclaredInType() throws Exception {
-//        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
-//                .isLocalType(), is(false));
-//        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
-//                .isMemberClass(), is(true));
-//        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
-//                .isSelfContained(), is(false));
-    } // TODO
-//
-//    @Test
-//    public void testDeclaredInTypeGetTypeIsNotNull() throws Exception {
-//        TypePool typePool = mock(TypePool.class);
-//        TypeDescription typeDescription = mock(TypeDescription.class);
-//        when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
-//        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
-//                .getEnclosingType(typePool), is(typeDescription));
-//    }
-//
-//    @Test
-//    public void testDeclaredInTypeGetMethodIsNull() throws Exception {
-//        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
-//                .getEnclosingMethod(mock(TypePool.class)), nullValue(MethodDescription.class));
-//    }
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, false)
+                .isLocalType(), is(false));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, false)
+                .isMemberClass(), is(true));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, false)
+                .isSelfContained(), is(false));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, true)
+                .isLocalType(), is(true));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, true)
+                .isMemberClass(), is(false));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, true)
+                .isSelfContained(), is(false));
+    }
+
+    @Test
+    public void testDeclaredInTypeGetTypeIsNotNull() throws Exception {
+        TypePool typePool = mock(TypePool.class);
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, false).getEnclosingType(typePool), is(typeDescription));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, true).getEnclosingType(typePool), is(typeDescription));
+    }
+
+    @Test
+    public void testDeclaredInTypeGetMethodIsNull() throws Exception {
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, false)
+                .getEnclosingMethod(mock(TypePool.class)), nullValue(MethodDescription.class));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, false)
+                .getEnclosingMethod(mock(TypePool.class)), nullValue(MethodDescription.class));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, true)
+                .getEnclosingMethod(mock(TypePool.class)), nullValue(MethodDescription.class));
+        assertThat(new TypePool.Default.LazyTypeDescription.TypeContainment.WithinType(FOO_INTERNAL, true)
+                .getEnclosingMethod(mock(TypePool.class)), nullValue(MethodDescription.class));
+    }
 
     @Test
     public void testDeclaredInMethod() throws Exception {
