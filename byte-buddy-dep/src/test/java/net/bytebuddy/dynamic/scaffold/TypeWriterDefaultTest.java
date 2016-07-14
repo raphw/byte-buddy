@@ -476,16 +476,16 @@ public class TypeWriterDefaultTest {
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> redefined = new ByteBuddy()
-                .redefine(EnclosingType.ANONYMOUS)
-                .visit(new InnerClassValidator.Wrapper(EnclosingType.ANONYMOUS, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
+                .redefine(EnclosingType.ANONYMOUS_INITIALIZER)
+                .visit(new InnerClassValidator.Wrapper(EnclosingType.ANONYMOUS_INITIALIZER, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
                 .modifiers(Visibility.PUBLIC)
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded();
-        assertThat(redefined.isAnonymousClass(), is(EnclosingType.ANONYMOUS.isAnonymousClass()));
-        assertThat(redefined.isLocalClass(), is(EnclosingType.ANONYMOUS.isLocalClass()));
-        assertThat(redefined.isMemberClass(), is(EnclosingType.ANONYMOUS.isMemberClass()));
-        assertThat(redefined.getModifiers(), is(Modifier.PUBLIC | EnclosingType.ANONYMOUS.getModifiers()));
+        assertThat(redefined.isAnonymousClass(), is(EnclosingType.ANONYMOUS_INITIALIZER.isAnonymousClass()));
+        assertThat(redefined.isLocalClass(), is(EnclosingType.ANONYMOUS_INITIALIZER.isLocalClass()));
+        assertThat(redefined.isMemberClass(), is(EnclosingType.ANONYMOUS_INITIALIZER.isMemberClass()));
+        assertThat(redefined.getModifiers(), is(Modifier.PUBLIC | EnclosingType.ANONYMOUS_INITIALIZER.getModifiers()));
     }
 
     @Test
@@ -497,16 +497,16 @@ public class TypeWriterDefaultTest {
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> redefined = new ByteBuddy()
-                .redefine(EnclosingType.LOCAL)
+                .redefine(EnclosingType.LOCAL_INITIALIZER)
                 .modifiers(Visibility.PUBLIC)
-                .visit(new InnerClassValidator.Wrapper(EnclosingType.LOCAL, Opcodes.ACC_PUBLIC))
+                .visit(new InnerClassValidator.Wrapper(EnclosingType.LOCAL_INITIALIZER, Opcodes.ACC_PUBLIC))
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded();
-        assertThat(redefined.isAnonymousClass(), is(EnclosingType.LOCAL.isAnonymousClass()));
-        assertThat(redefined.isLocalClass(), is(EnclosingType.LOCAL.isLocalClass()));
-        assertThat(redefined.isMemberClass(), is(EnclosingType.LOCAL.isMemberClass()));
-        assertThat(redefined.getModifiers(), is(Modifier.PUBLIC | EnclosingType.LOCAL.getModifiers()));
+        assertThat(redefined.isAnonymousClass(), is(EnclosingType.LOCAL_INITIALIZER.isAnonymousClass()));
+        assertThat(redefined.isLocalClass(), is(EnclosingType.LOCAL_INITIALIZER.isLocalClass()));
+        assertThat(redefined.isMemberClass(), is(EnclosingType.LOCAL_INITIALIZER.isMemberClass()));
+        assertThat(redefined.getModifiers(), is(Modifier.PUBLIC | EnclosingType.LOCAL_INITIALIZER.getModifiers()));
     }
 
     @Test

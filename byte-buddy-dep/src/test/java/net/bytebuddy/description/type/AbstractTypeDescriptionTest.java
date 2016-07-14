@@ -8,6 +8,7 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.packaging.SimpleType;
+import net.bytebuddy.test.scope.EnclosingType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.visibility.Sample;
 import org.hamcrest.CoreMatchers;
@@ -22,9 +23,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericSignatureFormatError;
-import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -37,30 +36,12 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptionGenericVariableDefiningTest {
 
-    private static final Class<?> STATIC_LOCAL, STATIC_ANONYMOUS;
-
-    static {
-        class StaticLocal {
-            /* empty */
-        }
-        STATIC_LOCAL = StaticLocal.class;
-        STATIC_ANONYMOUS = new Object() {
-            /* empty */
-        }.getClass();
-    }
-
     private static final String FOO = "foo", BAR = "bar";
 
     private final List<Class<?>> standardTypes;
 
-    private final Class<?> localType;
-
     @SuppressWarnings({"unchecked", "deprecation"})
     protected AbstractTypeDescriptionTest() {
-        class LocalType {
-            /* empty */
-        }
-        localType = LocalType.class;
         standardTypes = Arrays.asList(
                 Object.class,
                 Object[].class,
@@ -94,18 +75,24 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 float[].class,
                 double.class,
                 double[].class,
-                LocalType.class,
-                LocalType[].class,
-                new Object() {
-                    /* empty */
-                }.getClass(),
-                Array.newInstance(new Object() {
-                    /* empty */
-                }.getClass(), 1).getClass(),
-                STATIC_LOCAL,
-                Array.newInstance(STATIC_LOCAL.getClass(), 1).getClass(),
-                STATIC_ANONYMOUS,
-                Array.newInstance(STATIC_ANONYMOUS.getClass(), 1).getClass());
+                new EnclosingType().localMethod,
+                Array.newInstance(new EnclosingType().localConstructor, 1).getClass(),
+                new EnclosingType().anonymousMethod,
+                Array.newInstance(new EnclosingType().anonymousMethod, 1).getClass(),
+                new EnclosingType().localConstructor,
+                Array.newInstance(new EnclosingType().localConstructor, 1).getClass(),
+                new EnclosingType().anonymousConstructor,
+                Array.newInstance(new EnclosingType().anonymousConstructor, 1).getClass(),
+                EnclosingType.LOCAL_INITIALIZER,
+                Array.newInstance(EnclosingType.LOCAL_INITIALIZER.getClass(), 1).getClass(),
+                EnclosingType.ANONYMOUS_INITIALIZER,
+                Array.newInstance(EnclosingType.ANONYMOUS_INITIALIZER, 1).getClass(),
+                EnclosingType.LOCAL_METHOD,
+                Array.newInstance(EnclosingType.LOCAL_METHOD.getClass(), 1).getClass(),
+                EnclosingType.ANONYMOUS_METHOD,
+                Array.newInstance(EnclosingType.ANONYMOUS_METHOD, 1).getClass(),
+                EnclosingType.INNER,
+                Array.newInstance(EnclosingType.INNER, 1).getClass());
     }
 
     @Test
@@ -466,26 +453,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 hasItems(new AnnotationList.ForLoadedAnnotations(type.getAnnotations())
                         .toArray(new AnnotationDescription[type.getAnnotations().length])));
         assertThat(describe(type).getInheritedAnnotations().size(), is(type.getAnnotations().length));
-    }
-
-    @Test
-    public void testDeclaredInMethod() throws Exception {
-        Method method = AbstractTypeDescriptionTest.class.getDeclaredMethod("testDeclaredInMethod");
-        Constructor<?> constructor = AbstractTypeDescriptionTest.class.getDeclaredConstructor();
-        class MethodSample {
-            /* empty */
-        }
-        assertThat(describe(MethodSample.class).getEnclosingMethod().represents(method), is(true));
-        assertThat(describe(localType).getEnclosingMethod().represents(constructor), is(true));
-        assertThat(describe(SampleClass.class).getEnclosingMethod(), nullValue(MethodDescription.class));
-        assertThat(describe(Object[].class).getEnclosingMethod(), nullValue(MethodDescription.class));
-    }
-
-    @Test
-    public void testDeclaredInType() throws Exception {
-        assertThat(describe(SampleClass.class).getEnclosingType().represents(AbstractTypeDescriptionTest.class), is(true));
-        assertThat(describe(Object.class).getEnclosingType(), nullValue(TypeDescription.class));
-        assertThat(describe(Object[].class).getEnclosingType(), nullValue(TypeDescription.class));
     }
 
     @Test
