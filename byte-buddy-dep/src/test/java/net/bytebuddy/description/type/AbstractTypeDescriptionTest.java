@@ -19,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
@@ -38,30 +39,55 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     private final List<Class<?>> standardTypes;
 
-    private final Class<?> constructorType;
+    private final Class<?> memberType;
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "deprecation"})
     protected AbstractTypeDescriptionTest() {
         class MemberType {
             /* empty */
         }
-        constructorType = MemberType.class;
-        standardTypes = Arrays.asList(Object.class,
+        memberType = MemberType.class;
+        standardTypes = Arrays.asList(
+                Object.class,
+                Object[].class,
                 SampleClass.class,
+                SampleClass[].class,
+                PrivateClass.class,
+                PrivateClass[].class,
+                StaticClass.class,
+                StaticClass[].class,
+                PrivateStaticClass.class,
+                PrivateStaticClass[].class,
+                SampleInterface.class,
+                SampleInterface[].class,
+                SampleAnnotation.class,
+                SampleAnnotation[].class,
+                DeprecatedClass.class,
+                DeprecatedClass[].class,
+                void.class,
                 void.class,
                 byte.class,
+                byte[].class,
                 short.class,
+                short[].class,
                 char.class,
+                char[].class,
                 int.class,
+                int[].class,
                 long.class,
+                long[].class,
                 float.class,
+                float[].class,
                 double.class,
-                Object[].class,
+                double[].class,
                 MemberType.class,
                 MemberType[].class,
                 new Object() {
                     /* empty */
-                }.getClass());
+                }.getClass(),
+                Array.newInstance(new Object() {
+                    /* empty */
+                }.getClass(), 1).getClass());
     }
 
     @Test
@@ -187,11 +213,14 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testModifier() throws Exception {
-        assertThat(describe(SampleClass.class).getModifiers(), is(SampleClass.class.getModifiers()));
-        assertThat(describe(SampleInterface.class).getModifiers(), is(SampleInterface.class.getModifiers()));
-        assertThat(describe(SampleAnnotation.class).getModifiers(), is(SampleAnnotation.class.getModifiers()));
-        assertThat(describe(Object[].class).getModifiers(), is(Object[].class.getModifiers()));
+    public void testModifiers() throws Exception {
+        for (Class<?> type : standardTypes) {
+            try {
+                assertThat(describe(type).getModifiers(), is(type.getModifiers()));
+            } catch (AssertionError e) {
+                System.out.println(type + " - " + (describe(type).getModifiers() & ~type.getModifiers()) + "/" + (type.getModifiers() & ~describe(type).getModifiers()));
+            }
+        }
     }
 
     @Test
@@ -275,8 +304,8 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     @SuppressWarnings("deprecation")
     public void testActualModifiersDeprecation() throws Exception {
-        assertThat(describe(DeprecationSample.class).getActualModifiers(false), is(Opcodes.ACC_DEPRECATED));
-        assertThat(describe(DeprecationSample.class).getActualModifiers(true), is(Opcodes.ACC_DEPRECATED | Opcodes.ACC_SUPER));
+        assertThat(describe(DeprecatedClass.class).getActualModifiers(false), is(Opcodes.ACC_DEPRECATED));
+        assertThat(describe(DeprecatedClass.class).getActualModifiers(true), is(Opcodes.ACC_DEPRECATED | Opcodes.ACC_SUPER));
     }
 
     @Test
@@ -409,7 +438,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
         }
         assertThat(describe(MethodSample.class).getEnclosingMethod().represents(method), is(true));
-        assertThat(describe(constructorType).getEnclosingMethod().represents(constructor), is(true));
+        assertThat(describe(memberType).getEnclosingMethod().represents(constructor), is(true));
         assertThat(describe(SampleClass.class).getEnclosingMethod(), nullValue(MethodDescription.class));
         assertThat(describe(Object[].class).getEnclosingMethod(), nullValue(MethodDescription.class));
     }
@@ -684,6 +713,18 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         /* empty */
     }
 
+    private class PrivateClass {
+        /* empty */
+    }
+
+    public static class StaticClass {
+        /* empty */
+    }
+
+    private static class PrivateStaticClass {
+        /* empty */
+    }
+
     public class SampleClassInherited extends SampleClass {
         /* empty */
     }
@@ -708,7 +749,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         Void foo;
 
         @SampleAnnotation
-        void foo(@SampleAnnotation  Void foo) {
+        void foo(@SampleAnnotation Void foo) {
             /* empty */
         }
     }
@@ -729,7 +770,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Deprecated
-    private static class DeprecationSample {
+    private static class DeprecatedClass {
         /* empty */
     }
 }

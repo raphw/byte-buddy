@@ -7645,7 +7645,7 @@ public interface TypePool {
             @Override
             public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
                 if (internalName.equals(this.internalName)) {
-                    this.modifiers = modifiers & REAL_MODIFIER_MASK;
+                    this.modifiers = (this.modifiers & ~Opcodes.ACC_PUBLIC) | (modifiers & REAL_MODIFIER_MASK);
                     if (innerName == null) {
                         anonymousType = true;
                     }

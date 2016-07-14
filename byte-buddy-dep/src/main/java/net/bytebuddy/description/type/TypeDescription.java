@@ -61,11 +61,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     TypeDescription VOID = new ForLoadedType(void.class);
 
     /**
-     * The modifiers of any array type.
-     */
-    int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
-
-    /**
      * A list of interfaces that are implicitly implemented by any array type.
      */
     TypeList.Generic ARRAY_INTERFACES = new TypeList.Generic.ForLoadedTypes(Cloneable.class, Serializable.class);
@@ -7645,6 +7640,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     class ArrayProjection extends AbstractBase {
 
         /**
+         * Modifiers that every array in Java implies.
+         */
+        private static final int ARRAY_IMPLIED = Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
+
+        /**
+         * Modifiers that no array in Java displays.
+         */
+        private static final int ARRAY_EXCLUDED = Opcodes.ACC_INTERFACE | Opcodes.ACC_ANNOTATION | Opcodes.ACC_STATIC;
+
+        /**
          * The base component type which is itself not an array.
          */
         private final TypeDescription componentType;
@@ -7829,7 +7834,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public int getModifiers() {
-            return ARRAY_MODIFIERS;
+            return (getComponentType().getModifiers() & ~ARRAY_EXCLUDED) | ARRAY_IMPLIED;
         }
 
         @Override
