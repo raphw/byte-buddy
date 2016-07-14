@@ -38,7 +38,8 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     private List<StackSize> current;
 
     /**
-     * A mapping of labels to the operand stack size that is expected at this label.
+     * A mapping of labels to the operand stack size that is expected at this label. Lists stored in this
+     * map must not be mutated.
      */
     private final Map<Label, List<StackSize>> sizes;
 
@@ -138,7 +139,20 @@ public class StackAwareMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitInsn(int opcode) {
-        adjustStack(SIZE_CHANGE[opcode]);
+        switch (opcode) {
+            case Opcodes.RETURN:
+            case Opcodes.ARETURN:
+            case Opcodes.IRETURN:
+            case Opcodes.LRETURN:
+            case Opcodes.FRETURN:
+            case Opcodes.DRETURN:
+            case Opcodes.ATHROW:
+            case Opcodes.RET:
+                current.clear();
+                break;
+            default:
+                adjustStack(SIZE_CHANGE[opcode]);
+        }
         super.visitInsn(opcode);
     }
 
@@ -150,7 +164,6 @@ public class StackAwareMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitVarInsn(int opcode, int variable) {
-        //TODO: RET
         switch (opcode) {
             case Opcodes.ASTORE:
             case Opcodes.ISTORE:
@@ -224,9 +237,11 @@ public class StackAwareMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitJumpInsn(int opcode, Label label) {
-        // TODO: JSR
         adjustStack(SIZE_CHANGE[opcode]);
         sizes.put(label, new ArrayList<StackSize>(current));
+        if (opcode == Opcodes.GOTO) {
+            current.clear();
+        }
         super.visitJumpInsn(opcode, label);
     }
 
@@ -263,7 +278,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
 
     @Override
     public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
-        sizes.put(handler, new ArrayList<StackSize>(Collections.singletonList(StackSize.SINGLE)));
+        sizes.put(handler, Collections.singletonList(StackSize.SINGLE));
         super.visitTryCatchBlock(start, end, handler, type);
     }
 

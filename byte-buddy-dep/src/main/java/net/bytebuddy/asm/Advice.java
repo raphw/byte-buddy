@@ -94,6 +94,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * the names of the parameters of an advice method do not matter when inlining, neither does any meta information on the advice method's body
  * such as annotations or parameter modifiers.
  * </p>
+ * <p>
+ * <b>Note</b>: The behavior of this component is undefined if it is supplied with invalid byte code what might result in runtime exceptions.
+ * </p>
  *
  * @see Argument
  * @see BoxedArguments
@@ -7762,6 +7765,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected WithCustomMapping(Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues) {
             this.dynamicValues = dynamicValues;
+        }
+
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Object value) {
+            return bind(type, new DynamicValue.ForFixedValue(value));
         }
 
         /**
