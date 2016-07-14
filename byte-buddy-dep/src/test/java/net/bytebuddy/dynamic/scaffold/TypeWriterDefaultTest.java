@@ -1,9 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import jdk.nashorn.internal.codegen.types.Type;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -25,8 +23,6 @@ import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.lang.annotation.Retention;
@@ -529,43 +525,5 @@ public class TypeWriterDefaultTest {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Foo {
         /* empty */
-    }
-
-    private static class InnerClassValidator extends ClassVisitor {
-
-        private final String name;
-
-        private final int modifiers;
-
-        private InnerClassValidator(ClassVisitor classVisitor, Class<?> type, int modifiers) {
-            super(Opcodes.ASM5, classVisitor);
-            this.name = Type.getInternalName(type);
-            this.modifiers = modifiers;
-        }
-
-        @Override
-        public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
-            if (internalName.equals(this.name) && this.modifiers != modifiers) {
-                throw new AssertionError("Unexpected modifiers: " + modifiers);
-            }
-            super.visitInnerClass(internalName, outerName, innerName, modifiers);
-        }
-
-        private static class Wrapper extends AsmVisitorWrapper.AbstractBase {
-
-            private final Class<?> type;
-
-            private final int modifiers;
-
-            private Wrapper(Class<?> type, int modifiers) {
-                this.type = type;
-                this.modifiers = modifiers;
-            }
-
-            @Override
-            public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
-                return new InnerClassValidator(classVisitor, type, modifiers);
-            }
-        }
     }
 }
