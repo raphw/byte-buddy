@@ -154,23 +154,26 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     TypeList getDeclaredTypes();
 
     /**
-     * Returns a description of the enclosing method of this type.
+     * Returns a description of the method that encloses this type. If this method is not enclosed by any type or is
+     * enclosed by the type initializer, {@code null} is returned by this method.
      *
      * @return A description of the enclosing method of this type or {@code null} if there is no such method.
      */
     MethodDescription getEnclosingMethod();
 
     /**
-     * Returns a description of the enclosing type of this type.
+     * Returns a description of this type's enclosing type if any.
      *
-     * @return A  description of the enclosing type of this type or {@code null} if there is no such type.
+     * @return A description of the enclosing type of this type or {@code null} if there is no such type.
      */
     TypeDescription getEnclosingType();
 
     /**
      * Returns the type's actual modifiers as present in the class file. For example, a type cannot be {@code private}.
      * but it modifiers might reflect this property nevertheless if a class was defined as a private inner class. The
-     * returned modifiers take also into account if the type is marked as {@link Deprecated}.
+     * returned modifiers take also into account if the type is marked as {@link Deprecated}. Anonymous classes that are
+     * enclosed in a static method or the type initializer are additionally marked as {@code final} as it is also done
+     * by the Java compiler.
      *
      * @param superFlag {@code true} if the modifier's super flag should be set.
      * @return The type's actual modifiers.
@@ -6998,6 +7001,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 actualModifiers = actualModifiers & ~(Opcodes.ACC_PROTECTED | Opcodes.ACC_STATIC) | Opcodes.ACC_PUBLIC;
             } else {
                 actualModifiers = actualModifiers & ~Opcodes.ACC_STATIC;
+            }
+            if (isAnonymousClass()) {
+                MethodDescription enclosingMethod = getEnclosingMethod();
+                if (enclosingMethod == null || enclosingMethod.isStatic()) {
+                    actualModifiers |= Opcodes.ACC_FINAL;
+                }
             }
             return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
         }

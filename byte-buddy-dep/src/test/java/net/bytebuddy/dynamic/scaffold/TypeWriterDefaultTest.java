@@ -14,15 +14,11 @@ import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
-import net.bytebuddy.test.scope.EnclosingType;
-import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
@@ -36,8 +32,6 @@ import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.security.AccessController;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -444,69 +438,6 @@ public class TypeWriterDefaultTest {
                 .defineMethod(FOO, Object.class)
                 .intercept(FixedValue.value(JavaConstant.MethodHandle.of(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString")))))
                 .make();
-    }
-
-    @Test
-    public void testInnerClassChangeModifierTest() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(EnclosingType.class),
-                null,
-                AccessController.getContext(),
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
-        Class<?> redefined = new ByteBuddy()
-                .redefine(EnclosingType.INNER)
-                .visit(new InnerClassValidator.Wrapper(EnclosingType.INNER, Opcodes.ACC_PUBLIC))
-                .modifiers(Visibility.PUBLIC)
-                .make()
-                .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
-                .getLoaded();
-        assertThat(redefined.isAnonymousClass(), is(EnclosingType.INNER.isAnonymousClass()));
-        assertThat(redefined.isLocalClass(), is(EnclosingType.INNER.isLocalClass()));
-        assertThat(redefined.isMemberClass(), is(EnclosingType.INNER.isMemberClass()));
-        assertThat(redefined.getModifiers(), is(Modifier.PUBLIC | EnclosingType.INNER.getModifiers()));
-    }
-
-    @Test
-    public void testAnonymousInnerClassChangeModifierTest() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(EnclosingType.class),
-                null,
-                AccessController.getContext(),
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
-        Class<?> redefined = new ByteBuddy()
-                .redefine(EnclosingType.ANONYMOUS_INITIALIZER)
-                .visit(new InnerClassValidator.Wrapper(EnclosingType.ANONYMOUS_INITIALIZER, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC))
-                .modifiers(Visibility.PUBLIC)
-                .make()
-                .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
-                .getLoaded();
-        assertThat(redefined.isAnonymousClass(), is(EnclosingType.ANONYMOUS_INITIALIZER.isAnonymousClass()));
-        assertThat(redefined.isLocalClass(), is(EnclosingType.ANONYMOUS_INITIALIZER.isLocalClass()));
-        assertThat(redefined.isMemberClass(), is(EnclosingType.ANONYMOUS_INITIALIZER.isMemberClass()));
-        assertThat(redefined.getModifiers(), is(Modifier.PUBLIC | EnclosingType.ANONYMOUS_INITIALIZER.getModifiers()));
-    }
-
-    @Test
-    public void testLocalClassChangeModifierTest() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(EnclosingType.class),
-                null,
-                AccessController.getContext(),
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
-        Class<?> redefined = new ByteBuddy()
-                .redefine(EnclosingType.LOCAL_INITIALIZER)
-                .modifiers(Visibility.PUBLIC)
-                .visit(new InnerClassValidator.Wrapper(EnclosingType.LOCAL_INITIALIZER, Opcodes.ACC_PUBLIC))
-                .make()
-                .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
-                .getLoaded();
-        assertThat(redefined.isAnonymousClass(), is(EnclosingType.LOCAL_INITIALIZER.isAnonymousClass()));
-        assertThat(redefined.isLocalClass(), is(EnclosingType.LOCAL_INITIALIZER.isLocalClass()));
-        assertThat(redefined.isMemberClass(), is(EnclosingType.LOCAL_INITIALIZER.isMemberClass()));
-        assertThat(redefined.getModifiers(), is(Modifier.PUBLIC | EnclosingType.LOCAL_INITIALIZER.getModifiers()));
     }
 
     @Test

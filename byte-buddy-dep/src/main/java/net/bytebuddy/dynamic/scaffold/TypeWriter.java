@@ -3098,9 +3098,6 @@ public interface TypeWriter<T> {
                 public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
                     if (internalName.equals(instrumentedType.getInternalName())) {
                         modifiers = instrumentedType.getModifiers();
-                        if (instrumentedType.isAnonymousClass()) {
-                            modifiers = modifiers | Opcodes.ACC_STATIC;
-                        }
                     }
                     super.visitInnerClass(internalName, outerName, innerName, modifiers);
                 }

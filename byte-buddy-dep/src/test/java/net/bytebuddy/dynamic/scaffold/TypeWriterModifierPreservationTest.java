@@ -1,8 +1,132 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.test.scope.EnclosingType;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Opcodes;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 @RunWith(Parameterized.class)
 public class TypeWriterModifierPreservationTest {
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                {Object.class},
+                {String.class},
+                {EnclosingType.class},
+                {new EnclosingType().localMethod},
+                {new EnclosingType().anonymousMethod},
+                {new EnclosingType().localConstructor},
+                {new EnclosingType().anonymousConstructor},
+                {EnclosingType.LOCAL_INITIALIZER},
+                {EnclosingType.ANONYMOUS_INITIALIZER},
+                {EnclosingType.LOCAL_METHOD},
+                {EnclosingType.ANONYMOUS_METHOD},
+                {EnclosingType.INNER},
+                {EnclosingType.NESTED},
+                {EnclosingType.PRIVATE_INNER},
+                {EnclosingType.PRIVATE_NESTED},
+                {EnclosingType.PROTECTED_INNER},
+                {EnclosingType.PROTECTED_NESTED},
+                {EnclosingType.PACKAGE_INNER},
+                {EnclosingType.PACKAGE_NESTED},
+                {EnclosingType.FINAL_NESTED},
+                {EnclosingType.FINAL_INNER},
+                {EnclosingType.DEPRECATED}
+        });
+    }
+
+    private final Class<?> type;
+
+    public TypeWriterModifierPreservationTest(Class<?> type) {
+        this.type = type;
+    }
+
+    @Test
+    public void testModifiers() throws Exception {
+        TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
+        new ClassReader(type.getName()).accept(typeModifierExtractor, 0);
+        new ByteBuddy()
+                .redefine(type)
+                .visit(new TypeValidator.Wrapper(typeModifierExtractor))
+                .make();
+    }
+
+    private static class TypeModifierExtractor extends ClassVisitor {
+
+        private String name;
+
+        public int modifiers, inner;
+
+        public TypeModifierExtractor() {
+            super(Opcodes.ASM5);
+        }
+
+        @Override
+        public void visit(int version, int modifiers, String name, String signature, String superName, String[] interfaceName) {
+            this.modifiers = modifiers;
+            this.name = name;
+        }
+
+        @Override
+        public void visitInnerClass(String name, String outerName, String innerName, int modifiers) {
+            if (name.equals(this.name)) {
+                inner = modifiers;
+            }
+        }
+    }
+
+    private static class TypeValidator extends ClassVisitor {
+
+        private String name;
+
+        public final int modifiers, inner;
+
+        public TypeValidator(ClassVisitor classVisitor, int modifiers, int inner) {
+            super(Opcodes.ASM5, classVisitor);
+            this.modifiers = modifiers;
+            this.inner = inner;
+        }
+
+        @Override
+        public void visit(int version, int modifiers, String name, String signature, String superName, String[] interfaceName) {
+            this.name = name;
+            if (modifiers != this.modifiers) {
+                throw new AssertionError("Unexpected modifiers: Observed " + modifiers + " instead of " + this.modifiers);
+            }
+            super.visit(version, modifiers, name, signature, superName, interfaceName);
+        }
+
+        @Override
+        public void visitInnerClass(String name, String outerName, String innerName, int modifiers) {
+            if (name.equals(this.name) && modifiers != inner) {
+                throw new AssertionError("Unexpected inner modifiers: Observed " + modifiers + " instead of " + inner);
+            }
+            super.visitInnerClass(name, outerName, innerName, modifiers);
+        }
+
+        private static class Wrapper extends AsmVisitorWrapper.AbstractBase {
+
+            public final int modifiers, inner;
+
+            public Wrapper(TypeModifierExtractor typeModifierExtractor) {
+                modifiers = typeModifierExtractor.modifiers;
+                inner = typeModifierExtractor.inner;
+            }
+
+            @Override
+            public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+                return new TypeValidator(classVisitor, modifiers, inner);
+            }
+        }
+    }
 }

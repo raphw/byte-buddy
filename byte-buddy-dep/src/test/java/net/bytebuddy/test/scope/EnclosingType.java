@@ -29,9 +29,9 @@ public class EnclosingType {
 
     public static final Class<?> LOCAL_INITIALIZER;
 
-    public static final Class<?> ANONYMOUS_METHOD = localStatic();
+    public static final Class<?> ANONYMOUS_METHOD = anonymousStatic();
 
-    public static final Class<?> LOCAL_METHOD = localAnonymous();
+    public static final Class<?> LOCAL_METHOD = localStatic();
 
     static {
         ANONYMOUS_INITIALIZER = new Object() {
@@ -43,17 +43,17 @@ public class EnclosingType {
         LOCAL_INITIALIZER = Foo.class;
     }
 
+    private static Class<?> anonymousStatic() {
+        return new Object() {
+            /* empty */
+        }.getClass();
+    }
+
     private static Class<?> localStatic() {
         class FooBar {
             /* empty */
         }
         return FooBar.class;
-    }
-
-    private static Class<?> localAnonymous() {
-        return new Object() {
-            /* empty */
-        }.getClass();
     }
 
     public class Bar {
