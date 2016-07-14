@@ -10,6 +10,8 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.visibility.Sample;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.mockito.asm.Type;
 import org.objectweb.asm.*;
@@ -35,18 +37,30 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptionGenericVariableDefiningTest {
 
+    private static final Class<?> STATIC_LOCAL, STATIC_ANONYMOUS;
+
+    static {
+        class StaticLocal {
+            /* empty */
+        }
+        STATIC_LOCAL = StaticLocal.class;
+        STATIC_ANONYMOUS = new Object() {
+            /* empty */
+        }.getClass();
+    }
+
     private static final String FOO = "foo", BAR = "bar";
 
     private final List<Class<?>> standardTypes;
 
-    private final Class<?> memberType;
+    private final Class<?> localType;
 
     @SuppressWarnings({"unchecked", "deprecation"})
     protected AbstractTypeDescriptionTest() {
-        class MemberType {
+        class LocalType {
             /* empty */
         }
-        memberType = MemberType.class;
+        localType = LocalType.class;
         standardTypes = Arrays.asList(
                 Object.class,
                 Object[].class,
@@ -80,14 +94,18 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 float[].class,
                 double.class,
                 double[].class,
-                MemberType.class,
-                MemberType[].class,
+                LocalType.class,
+                LocalType[].class,
                 new Object() {
                     /* empty */
                 }.getClass(),
                 Array.newInstance(new Object() {
                     /* empty */
-                }.getClass(), 1).getClass());
+                }.getClass(), 1).getClass(),
+                STATIC_LOCAL,
+                Array.newInstance(STATIC_LOCAL.getClass(), 1).getClass(),
+                STATIC_ANONYMOUS,
+                Array.newInstance(STATIC_ANONYMOUS.getClass(), 1).getClass());
     }
 
     @Test
@@ -215,21 +233,41 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     public void testModifiers() throws Exception {
         for (Class<?> type : standardTypes) {
-            try {
-                assertThat(describe(type).getModifiers(), is(type.getModifiers()));
-            } catch (AssertionError e) {
-                System.out.println(type + " - " + (describe(type).getModifiers() & ~type.getModifiers()) + "/" + (type.getModifiers() & ~describe(type).getModifiers()));
-            }
+            assertThat(describe(type).getModifiers(), is(type.getModifiers()));
         }
     }
 
     @Test
     public void testDeclaringType() throws Exception {
-        assertThat(describe(SampleClass.class).getDeclaringType(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(AbstractTypeDescriptionTest.class)));
-        assertThat(describe(Object.class).getDeclaringType(), nullValue(TypeDescription.class));
-        assertThat(describe(Object[].class).getDeclaringType(), nullValue(TypeDescription.class));
-        assertThat(describe(void.class).getDeclaringType(), nullValue(TypeDescription.class));
+        for (Class<?> type : standardTypes) {
+            assertThat(describe(type).getDeclaringType(), type.getDeclaringClass() == null
+                    ? nullValue(TypeDescription.class)
+                    : is((TypeDescription) new TypeDescription.ForLoadedType(type.getDeclaringClass())));
+        }
+    }
+
+    @Test
+    public void testEnclosingMethod() throws Exception {
+        for (Class<?> type : standardTypes) {
+            Matcher<MethodDescription> matcher;
+            if (type.getEnclosingMethod() != null) {
+                matcher = CoreMatchers.<MethodDescription>is(new MethodDescription.ForLoadedMethod(type.getEnclosingMethod()));
+            } else if (type.getEnclosingConstructor() != null) {
+                matcher = CoreMatchers.<MethodDescription>is(new MethodDescription.ForLoadedConstructor(type.getEnclosingConstructor()));
+            } else {
+                matcher = nullValue(MethodDescription.class);
+            }
+            assertThat(describe(type).getEnclosingMethod(), matcher);
+        }
+    }
+
+    @Test
+    public void testEnclosingType() throws Exception {
+        for (Class<?> type : standardTypes) {
+            assertThat(describe(type).getEnclosingType(), type.getEnclosingClass() == null
+                    ? nullValue(TypeDescription.class)
+                    : is((TypeDescription) new TypeDescription.ForLoadedType(type.getEnclosingClass())));
+        }
     }
 
     @Test
@@ -435,10 +473,10 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         Method method = AbstractTypeDescriptionTest.class.getDeclaredMethod("testDeclaredInMethod");
         Constructor<?> constructor = AbstractTypeDescriptionTest.class.getDeclaredConstructor();
         class MethodSample {
-
+            /* empty */
         }
         assertThat(describe(MethodSample.class).getEnclosingMethod().represents(method), is(true));
-        assertThat(describe(memberType).getEnclosingMethod().represents(constructor), is(true));
+        assertThat(describe(localType).getEnclosingMethod().represents(constructor), is(true));
         assertThat(describe(SampleClass.class).getEnclosingMethod(), nullValue(MethodDescription.class));
         assertThat(describe(Object[].class).getEnclosingMethod(), nullValue(MethodDescription.class));
     }
