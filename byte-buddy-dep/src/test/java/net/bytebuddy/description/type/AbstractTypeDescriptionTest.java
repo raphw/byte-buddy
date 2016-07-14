@@ -47,19 +47,10 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 Object[].class,
                 SampleClass.class,
                 SampleClass[].class,
-                PrivateClass.class,
-                PrivateClass[].class,
-                StaticClass.class,
-                StaticClass[].class,
-                PrivateStaticClass.class,
-                PrivateStaticClass[].class,
                 SampleInterface.class,
                 SampleInterface[].class,
                 SampleAnnotation.class,
                 SampleAnnotation[].class,
-                DeprecatedClass.class,
-                DeprecatedClass[].class,
-                void.class,
                 void.class,
                 byte.class,
                 byte[].class,
@@ -92,7 +83,27 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 EnclosingType.ANONYMOUS_METHOD,
                 Array.newInstance(EnclosingType.ANONYMOUS_METHOD, 1).getClass(),
                 EnclosingType.INNER,
-                Array.newInstance(EnclosingType.INNER, 1).getClass());
+                Array.newInstance(EnclosingType.INNER, 1).getClass(),
+                EnclosingType.NESTED,
+                Array.newInstance(EnclosingType.NESTED, 1).getClass(),
+                EnclosingType.PRIVATE_INNER,
+                Array.newInstance(EnclosingType.PRIVATE_INNER, 1).getClass(),
+                EnclosingType.PRIVATE_NESTED,
+                Array.newInstance(EnclosingType.PRIVATE_NESTED, 1).getClass(),
+                EnclosingType.PROTECTED_INNER,
+                Array.newInstance(EnclosingType.PROTECTED_INNER, 1).getClass(),
+                EnclosingType.PROTECTED_NESTED,
+                Array.newInstance(EnclosingType.PROTECTED_NESTED, 1).getClass(),
+                EnclosingType.PACKAGE_INNER,
+                Array.newInstance(EnclosingType.PACKAGE_INNER, 1).getClass(),
+                EnclosingType.PACKAGE_NESTED,
+                Array.newInstance(EnclosingType.PACKAGE_NESTED, 1).getClass(),
+                EnclosingType.FINAL_NESTED,
+                Array.newInstance(EnclosingType.FINAL_NESTED, 1).getClass(),
+                EnclosingType.FINAL_INNER,
+                Array.newInstance(EnclosingType.FINAL_INNER, 1).getClass(),
+                EnclosingType.DEPRECATED,
+                Array.newInstance(EnclosingType.DEPRECATED, 1).getClass());
     }
 
     @Test
@@ -327,10 +338,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testActualModifiersDeprecation() throws Exception {
-        assertThat(describe(DeprecatedClass.class).getActualModifiers(false), is(Opcodes.ACC_DEPRECATED));
-        assertThat(describe(DeprecatedClass.class).getActualModifiers(true), is(Opcodes.ACC_DEPRECATED | Opcodes.ACC_SUPER));
+        assertThat(describe(EnclosingType.DEPRECATED).getActualModifiers(false), is(Opcodes.ACC_DEPRECATED));
+        assertThat(describe(EnclosingType.DEPRECATED).getActualModifiers(true), is(Opcodes.ACC_DEPRECATED | Opcodes.ACC_SUPER));
     }
 
     @Test
@@ -718,18 +728,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         /* empty */
     }
 
-    private class PrivateClass {
-        /* empty */
-    }
-
-    public static class StaticClass {
-        /* empty */
-    }
-
-    private static class PrivateStaticClass {
-        /* empty */
-    }
-
     public class SampleClassInherited extends SampleClass {
         /* empty */
     }
@@ -772,10 +770,5 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         interface NestedInterface {
             /* empty */
         }
-    }
-
-    @Deprecated
-    private static class DeprecatedClass {
-        /* empty */
     }
 }

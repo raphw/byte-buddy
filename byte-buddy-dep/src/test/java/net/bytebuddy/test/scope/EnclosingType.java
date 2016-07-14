@@ -4,6 +4,27 @@ public class EnclosingType {
 
     public static final Class<?> INNER = Bar.class;
 
+    public static final Class<?> NESTED = BarBaz.class;
+
+    @SuppressWarnings("deprecation")
+    public static final Class<?> DEPRECATED = DeprecatedClass.class;
+
+    public static final Class<?> FINAL_INNER = FinalBar.class;
+
+    public static final Class<?> FINAL_NESTED = FinalBarBaz.class;
+
+    public static final Class<?> PRIVATE_INNER = PrivateBar.class;
+
+    public static final Class<?> PRIVATE_NESTED = PrivateBarBaz.class;
+
+    public static final Class<?> PACKAGE_INNER = PackageBar.class;
+
+    public static final Class<?> PACKAGE_NESTED = PackageBarBaz.class;
+
+    public static final Class<?> PROTECTED_INNER = ProtectedBar.class;
+
+    public static final Class<?> PROTECTED_NESTED = ProtectedBarBaz.class;
+
     public static final Class<?> ANONYMOUS_INITIALIZER;
 
     public static final Class<?> LOCAL_INITIALIZER;
@@ -35,7 +56,48 @@ public class EnclosingType {
         }.getClass();
     }
 
-    class Bar {
+    public class Bar {
+        /* empty */
+    }
+
+    public static class BarBaz {
+        /* empty */
+    }
+
+    public final class FinalBar {
+        /* empty */
+    }
+
+    public static final class FinalBarBaz {
+        /* empty */
+    }
+
+    private class PrivateBar {
+        /* empty */
+    }
+
+    private static class PrivateBarBaz {
+        /* empty */
+    }
+
+    class PackageBar {
+        /* empty */
+    }
+
+    static class PackageBarBaz {
+        /* empty */
+    }
+
+    protected class ProtectedBar {
+        /* empty */
+    }
+
+    protected static class ProtectedBarBaz {
+        /* empty */
+    }
+
+    @Deprecated
+    class DeprecatedClass {
         /* empty */
     }
 
