@@ -8,7 +8,7 @@ import java.util.*;
 
 /**
  * A method visitor that is aware of the current size of the operand stack at all times. Additionally, this method takes
- * care of the
+ * care of maintaining an index for the next currently unused index of the local variable array.
  */
 public class StackAwareMethodVisitor extends MethodVisitor {
 
