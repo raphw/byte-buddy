@@ -6,18 +6,29 @@ import org.objectweb.asm.*;
 
 import java.util.*;
 
+/**
+ * A method visitor that is aware of the current size of the operand stack at all times. Additionally, this method takes
+ * care of the
+ */
 public class StackAwareMethodVisitor extends MethodVisitor {
 
-    private static final int[] SIZE;
+    /**
+     * An array mapping any opcode to its size impact onto the operand stack. This mapping is taken from
+     * {@link org.objectweb.asm.Frame} where its computation is explained in detail.
+     */
+    private static final int[] SIZE_CHANGE;
 
+    /*
+     * Computes the mapping
+     */
     static {
-        SIZE = new int[202];
+        SIZE_CHANGE = new int[202];
         String encoded = "EFFFFFFFFGGFFFGGFFFEEFGFGFEEEEEEEEEEEEEEEEEEEEDEDEDDDDD"
                 + "CDCDEEEEEEEEEEEEEEEEEEEEBABABBBBDCFFFGGGEDCDCDCDCDCDCDCDCD"
                 + "CDCEEEEDDDDDDDCDCDCEFEFDDEEFFDEDEEEBDDBBDDDDDDCCCCCCCCEFED"
                 + "DDCDCDEEEEEEEEEEFEEEEEEDDEEDDEE";
-        for (int index = 0; index < SIZE.length; ++index) {
-            SIZE[index] = encoded.charAt(index) - 'E';
+        for (int index = 0; index < SIZE_CHANGE.length; ++index) {
+            SIZE_CHANGE[index] = encoded.charAt(index) - 'E';
         }
     }
 
@@ -49,7 +60,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
                 current.add(StackSize.SINGLE);
             } else if (size != 0) {
                 throw new AssertionError("Say what?");
-                // else { assert size == 0; }
+                // TODO: else { assert size == 0; }
             }
         }
     }
@@ -69,8 +80,8 @@ public class StackAwareMethodVisitor extends MethodVisitor {
         }
     }
 
-    public void drainStack(int store, int load) {
-        if (current.size() != 1) {
+    public int drainStack(int store, int load, StackSize size) {
+        if (current.size() > 1) {
             super.visitVarInsn(store, freeIndex);
             for (StackSize stackSize : current.subList(0, current.size() - 1)) {
                 switch (stackSize) {
@@ -85,18 +96,21 @@ public class StackAwareMethodVisitor extends MethodVisitor {
                 }
             }
             super.visitVarInsn(load, freeIndex);
+            return freeIndex + size.getSize();
+        } else {
+            return 0;
         }
     }
 
     @Override
     public void visitInsn(int opcode) {
-        adjustStack(SIZE[opcode]);
+        adjustStack(SIZE_CHANGE[opcode]);
         super.visitInsn(opcode);
     }
 
     @Override
     public void visitIntInsn(int opcode, int operand) {
-        adjustStack(SIZE[opcode]);
+        adjustStack(SIZE_CHANGE[opcode]);
         super.visitIntInsn(opcode, operand);
     }
 
@@ -114,19 +128,19 @@ public class StackAwareMethodVisitor extends MethodVisitor {
                 freeIndex = Math.max(freeIndex, variable + 2);
                 break;
         }
-        adjustStack(SIZE[opcode]);
+        adjustStack(SIZE_CHANGE[opcode]);
         super.visitVarInsn(opcode, variable);
     }
 
     @Override
     public void visitTypeInsn(int opcode, String type) {
-        adjustStack(SIZE[opcode]);
+        adjustStack(SIZE_CHANGE[opcode]);
         super.visitTypeInsn(opcode, type);
     }
 
     @Override
     public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-        int baseline = (descriptor.charAt(0) == 'D' || descriptor.charAt(0) == 'J' ? 2 : 1);
+        int baseline = Type.getType(descriptor).getSize();
         switch (opcode) {
             case Opcodes.GETFIELD:
                 adjustStack(baseline - 1);
@@ -177,7 +191,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     @Override
     public void visitJumpInsn(int opcode, Label label) {
         // TODO: JSR
-        adjustStack(SIZE[opcode]);
+        adjustStack(SIZE_CHANGE[opcode]);
         sizes.put(label, new ArrayList<StackSize>(current));
         super.visitJumpInsn(opcode, label);
     }
@@ -192,25 +206,25 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     }
 
     @Override
-    public void visitTableSwitchInsn(int minimum, int maximum, Label defaultOption, Label... label) {
+    public void visitTableSwitchInsn(int minimum, int maximum, Label defaultOption, Label... option) {
         adjustStack(-1);
         List<StackSize> current = new ArrayList<StackSize>(this.current);
         sizes.put(defaultOption, current);
-        for (Label aLabel : label) {
-            sizes.put(aLabel, current);
+        for (Label label : option) {
+            sizes.put(label, current);
         }
-        super.visitTableSwitchInsn(minimum, maximum, defaultOption, label);
+        super.visitTableSwitchInsn(minimum, maximum, defaultOption, option);
     }
 
     @Override
-    public void visitLookupSwitchInsn(Label defaultOption, int[] key, Label[] label) {
+    public void visitLookupSwitchInsn(Label defaultOption, int[] key, Label[] option) {
         adjustStack(-1);
         List<StackSize> current = new ArrayList<StackSize>(this.current);
         sizes.put(defaultOption, current);
-        for (Label aLabel : label) {
-            sizes.put(aLabel, current);
+        for (Label label : option) {
+            sizes.put(label, current);
         }
-        super.visitLookupSwitchInsn(defaultOption, key, label);
+        super.visitLookupSwitchInsn(defaultOption, key, option);
     }
 
     @Override

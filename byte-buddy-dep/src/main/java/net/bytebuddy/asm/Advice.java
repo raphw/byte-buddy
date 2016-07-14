@@ -495,6 +495,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         int compoundLocalVariableLength(int localVariableLength);
 
+        void requireLocalVariableLength(int localVariableLength);
+
         /**
          * A method size handler for an advice method.
          */
@@ -552,6 +554,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public int compoundLocalVariableLength(int localVariableLength) {
                 return UNDEFINED_SIZE;
+            }
+
+            @Override
+            public void requireLocalVariableLength(int localVariableLength) {
+                /* do nothing */
             }
 
             @Override
@@ -660,6 +667,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 return Math.max(this.localVariableLength, localVariableLength
                         + requiredTypes.getStackSize()
                         + yieldedTypes.getStackSize());
+            }
+
+            @Override
+            public void requireLocalVariableLength(int localVariableLength) {
+                this.localVariableLength = Math.max(this.localVariableLength, localVariableLength);
             }
 
             @Override
@@ -1641,19 +1653,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         ((StackAwareMethodVisitor) mv).drainStack();
                         break;
                     case Opcodes.IRETURN:
-                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.ISTORE, Opcodes.ILOAD);
+                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.ISTORE, Opcodes.ILOAD, StackSize.SINGLE));
                         break;
                     case Opcodes.FRETURN:
-                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.FSTORE, Opcodes.FLOAD);
+                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.FSTORE, Opcodes.FLOAD, StackSize.SINGLE));
                         break;
                     case Opcodes.DRETURN:
-                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.DSTORE, Opcodes.DLOAD);
+                        methodSizeHandler.requireLocalVariableLength(((StackAwareMethodVisitor) mv).drainStack(Opcodes.DSTORE, Opcodes.DLOAD, StackSize.DOUBLE));
                         break;
                     case Opcodes.LRETURN:
-                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.LSTORE, Opcodes.LLOAD);
+                        methodSizeHandler.requireLocalVariableLength((((StackAwareMethodVisitor) mv).drainStack(Opcodes.LSTORE, Opcodes.LLOAD, StackSize.DOUBLE)));
                         break;
                     case Opcodes.ARETURN:
-                        ((StackAwareMethodVisitor) mv).drainStack(Opcodes.ASTORE, Opcodes.ALOAD);
+                        methodSizeHandler.requireLocalVariableLength((((StackAwareMethodVisitor) mv).drainStack(Opcodes.ASTORE, Opcodes.ALOAD, StackSize.SINGLE)));
                         break;
                     default:
                         mv.visitInsn(opcode);

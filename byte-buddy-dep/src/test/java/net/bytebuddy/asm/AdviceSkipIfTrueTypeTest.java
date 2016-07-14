@@ -21,15 +21,15 @@ public class AdviceSkipIfTrueTypeTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {BooleanAdvice.class, false},
+                /*{BooleanAdvice.class, false},
                 {ByteAdvice.class, (byte) 0},
                 {ShortAdvice.class, (short) 0},
                 {CharacterAdvice.class, (char) 0},
-                {IntegerAdvice.class, 0},
-                {LongAdvice.class, 0L},
-                {FloatAdvice.class, 0f},
+                {IntegerAdvice.class, 0},*/
+//                {LongAdvice.class, 0L},
+//                {FloatAdvice.class, 0f},
                 {DoubleAdvice.class, 0d},
-                {ReferenceAdvice.class, null},
+                /*{ReferenceAdvice.class, null},
                 {VoidAdvice.class, null},
                 {BooleanDelegateAdvice.class, false},
                 {ByteDelegateAdvice.class, (byte) 0},
@@ -60,7 +60,7 @@ public class AdviceSkipIfTrueTypeTest {
                 {FloatDelegateWithOutExitAdvice.class, 0f},
                 {DoubleDelegateWithOutExitAdvice.class, 0d},
                 {ReferenceDelegateWithOutExitAdvice.class, null},
-                {VoidDelegateWithOutExitAdvice.class, null}
+                {VoidDelegateWithOutExitAdvice.class, null}*/
         });
     }
 
