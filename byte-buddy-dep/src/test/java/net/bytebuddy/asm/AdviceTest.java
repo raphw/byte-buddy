@@ -2576,7 +2576,6 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void exit(@Advice.Origin("\\#\\#\\\\#m") String origin, @Advice.Origin Class<?> type) throws Exception {
             if (!origin.equals("##\\" + FOO)) {
-                System.out.println(origin);
                 throw new AssertionError();
             }
             if (type != Sample.class) {

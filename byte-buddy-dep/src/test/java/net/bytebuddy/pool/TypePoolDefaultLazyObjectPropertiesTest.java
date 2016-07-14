@@ -133,8 +133,8 @@ public class TypePoolDefaultLazyObjectPropertiesTest {
 
     @Test
     public void testDeclarationContextObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType.class).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInMethod.class).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.LazyTypeDescription.DeclarationContext.SelfDeclared.class).apply();
+        ObjectPropertyAssertion.of(TypePool.Default.LazyTypeDescription.TypeContainment.WithinType.class).apply();
+        ObjectPropertyAssertion.of(TypePool.Default.LazyTypeDescription.TypeContainment.WithinMethod.class).apply();
+        ObjectPropertyAssertion.of(TypePool.Default.LazyTypeDescription.TypeContainment.SelfContained.class).apply();
     }
 }

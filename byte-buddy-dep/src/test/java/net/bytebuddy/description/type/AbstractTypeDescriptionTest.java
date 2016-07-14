@@ -8,8 +8,11 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.packaging.SimpleType;
+import net.bytebuddy.test.scope.EnclosingType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.visibility.Sample;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.mockito.asm.Type;
 import org.objectweb.asm.*;
@@ -19,9 +22,8 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Array;
 import java.lang.reflect.GenericSignatureFormatError;
-import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -38,30 +40,70 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     private final List<Class<?>> standardTypes;
 
-    private final Class<?> constructorType;
-
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "deprecation"})
     protected AbstractTypeDescriptionTest() {
-        class MemberType {
-            /* empty */
-        }
-        constructorType = MemberType.class;
-        standardTypes = Arrays.asList(Object.class,
+        standardTypes = Arrays.asList(
+                Object.class,
+                Object[].class,
                 SampleClass.class,
+                SampleClass[].class,
+                SampleInterface.class,
+                SampleInterface[].class,
+                SampleAnnotation.class,
+                SampleAnnotation[].class,
                 void.class,
                 byte.class,
+                byte[].class,
                 short.class,
+                short[].class,
                 char.class,
+                char[].class,
                 int.class,
+                int[].class,
                 long.class,
+                long[].class,
                 float.class,
+                float[].class,
                 double.class,
-                Object[].class,
-                MemberType.class,
-                MemberType[].class,
-                new Object() {
-                    /* empty */
-                }.getClass());
+                double[].class,
+                new EnclosingType().localMethod,
+                Array.newInstance(new EnclosingType().localConstructor, 1).getClass(),
+                new EnclosingType().anonymousMethod,
+                Array.newInstance(new EnclosingType().anonymousMethod, 1).getClass(),
+                new EnclosingType().localConstructor,
+                Array.newInstance(new EnclosingType().localConstructor, 1).getClass(),
+                new EnclosingType().anonymousConstructor,
+                Array.newInstance(new EnclosingType().anonymousConstructor, 1).getClass(),
+                EnclosingType.LOCAL_INITIALIZER,
+                Array.newInstance(EnclosingType.LOCAL_INITIALIZER.getClass(), 1).getClass(),
+                EnclosingType.ANONYMOUS_INITIALIZER,
+                Array.newInstance(EnclosingType.ANONYMOUS_INITIALIZER, 1).getClass(),
+                EnclosingType.LOCAL_METHOD,
+                Array.newInstance(EnclosingType.LOCAL_METHOD.getClass(), 1).getClass(),
+                EnclosingType.ANONYMOUS_METHOD,
+                Array.newInstance(EnclosingType.ANONYMOUS_METHOD, 1).getClass(),
+                EnclosingType.INNER,
+                Array.newInstance(EnclosingType.INNER, 1).getClass(),
+                EnclosingType.NESTED,
+                Array.newInstance(EnclosingType.NESTED, 1).getClass(),
+                EnclosingType.PRIVATE_INNER,
+                Array.newInstance(EnclosingType.PRIVATE_INNER, 1).getClass(),
+                EnclosingType.PRIVATE_NESTED,
+                Array.newInstance(EnclosingType.PRIVATE_NESTED, 1).getClass(),
+                EnclosingType.PROTECTED_INNER,
+                Array.newInstance(EnclosingType.PROTECTED_INNER, 1).getClass(),
+                EnclosingType.PROTECTED_NESTED,
+                Array.newInstance(EnclosingType.PROTECTED_NESTED, 1).getClass(),
+                EnclosingType.PACKAGE_INNER,
+                Array.newInstance(EnclosingType.PACKAGE_INNER, 1).getClass(),
+                EnclosingType.PACKAGE_NESTED,
+                Array.newInstance(EnclosingType.PACKAGE_NESTED, 1).getClass(),
+                EnclosingType.FINAL_NESTED,
+                Array.newInstance(EnclosingType.FINAL_NESTED, 1).getClass(),
+                EnclosingType.FINAL_INNER,
+                Array.newInstance(EnclosingType.FINAL_INNER, 1).getClass(),
+                EnclosingType.DEPRECATED,
+                Array.newInstance(EnclosingType.DEPRECATED, 1).getClass());
     }
 
     @Test
@@ -187,20 +229,43 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testModifier() throws Exception {
-        assertThat(describe(SampleClass.class).getModifiers(), is(SampleClass.class.getModifiers()));
-        assertThat(describe(SampleInterface.class).getModifiers(), is(SampleInterface.class.getModifiers()));
-        assertThat(describe(SampleAnnotation.class).getModifiers(), is(SampleAnnotation.class.getModifiers()));
-        assertThat(describe(Object[].class).getModifiers(), is(Object[].class.getModifiers()));
+    public void testModifiers() throws Exception {
+        for (Class<?> type : standardTypes) {
+            assertThat(describe(type).getModifiers(), is(type.getModifiers()));
+        }
     }
 
     @Test
     public void testDeclaringType() throws Exception {
-        assertThat(describe(SampleClass.class).getDeclaringType(),
-                is((TypeDescription) new TypeDescription.ForLoadedType(AbstractTypeDescriptionTest.class)));
-        assertThat(describe(Object.class).getDeclaringType(), nullValue(TypeDescription.class));
-        assertThat(describe(Object[].class).getDeclaringType(), nullValue(TypeDescription.class));
-        assertThat(describe(void.class).getDeclaringType(), nullValue(TypeDescription.class));
+        for (Class<?> type : standardTypes) {
+            assertThat(describe(type).getDeclaringType(), type.getDeclaringClass() == null
+                    ? nullValue(TypeDescription.class)
+                    : is((TypeDescription) new TypeDescription.ForLoadedType(type.getDeclaringClass())));
+        }
+    }
+
+    @Test
+    public void testEnclosingMethod() throws Exception {
+        for (Class<?> type : standardTypes) {
+            Matcher<MethodDescription> matcher;
+            if (type.getEnclosingMethod() != null) {
+                matcher = CoreMatchers.<MethodDescription>is(new MethodDescription.ForLoadedMethod(type.getEnclosingMethod()));
+            } else if (type.getEnclosingConstructor() != null) {
+                matcher = CoreMatchers.<MethodDescription>is(new MethodDescription.ForLoadedConstructor(type.getEnclosingConstructor()));
+            } else {
+                matcher = nullValue(MethodDescription.class);
+            }
+            assertThat(describe(type).getEnclosingMethod(), matcher);
+        }
+    }
+
+    @Test
+    public void testEnclosingType() throws Exception {
+        for (Class<?> type : standardTypes) {
+            assertThat(describe(type).getEnclosingType(), type.getEnclosingClass() == null
+                    ? nullValue(TypeDescription.class)
+                    : is((TypeDescription) new TypeDescription.ForLoadedType(type.getEnclosingClass())));
+        }
     }
 
     @Test
@@ -273,10 +338,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testActualModifiersDeprecation() throws Exception {
-        assertThat(describe(DeprecationSample.class).getActualModifiers(false), is(Opcodes.ACC_DEPRECATED));
-        assertThat(describe(DeprecationSample.class).getActualModifiers(true), is(Opcodes.ACC_DEPRECATED | Opcodes.ACC_SUPER));
+        assertThat(describe(EnclosingType.DEPRECATED).getActualModifiers(false), is(Opcodes.ACC_DEPRECATED));
+        assertThat(describe(EnclosingType.DEPRECATED).getActualModifiers(true), is(Opcodes.ACC_DEPRECATED | Opcodes.ACC_SUPER));
     }
 
     @Test
@@ -399,26 +463,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                 hasItems(new AnnotationList.ForLoadedAnnotations(type.getAnnotations())
                         .toArray(new AnnotationDescription[type.getAnnotations().length])));
         assertThat(describe(type).getInheritedAnnotations().size(), is(type.getAnnotations().length));
-    }
-
-    @Test
-    public void testDeclaredInMethod() throws Exception {
-        Method method = AbstractTypeDescriptionTest.class.getDeclaredMethod("testDeclaredInMethod");
-        Constructor<?> constructor = AbstractTypeDescriptionTest.class.getDeclaredConstructor();
-        class MethodSample {
-
-        }
-        assertThat(describe(MethodSample.class).getEnclosingMethod().represents(method), is(true));
-        assertThat(describe(constructorType).getEnclosingMethod().represents(constructor), is(true));
-        assertThat(describe(SampleClass.class).getEnclosingMethod(), nullValue(MethodDescription.class));
-        assertThat(describe(Object[].class).getEnclosingMethod(), nullValue(MethodDescription.class));
-    }
-
-    @Test
-    public void testDeclaredInType() throws Exception {
-        assertThat(describe(SampleClass.class).getEnclosingType().represents(AbstractTypeDescriptionTest.class), is(true));
-        assertThat(describe(Object.class).getEnclosingType(), nullValue(TypeDescription.class));
-        assertThat(describe(Object[].class).getEnclosingType(), nullValue(TypeDescription.class));
     }
 
     @Test
@@ -708,7 +752,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         Void foo;
 
         @SampleAnnotation
-        void foo(@SampleAnnotation  Void foo) {
+        void foo(@SampleAnnotation Void foo) {
             /* empty */
         }
     }
@@ -726,10 +770,5 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         interface NestedInterface {
             /* empty */
         }
-    }
-
-    @Deprecated
-    private static class DeprecationSample {
-        /* empty */
     }
 }

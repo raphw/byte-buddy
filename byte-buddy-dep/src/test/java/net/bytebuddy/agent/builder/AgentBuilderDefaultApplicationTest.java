@@ -20,6 +20,7 @@ import net.bytebuddy.test.packaging.SimpleOptionalType;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -83,6 +84,9 @@ public class AgentBuilderDefaultApplicationTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
+    @Rule
+    public MethodRule integrationRule = new IntegrationRule();
+
     private ClassLoader classLoader;
 
     private final AgentBuilder.TypeLocator typeLocator;
@@ -117,6 +121,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testAgentWithoutSelfInitialization() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -135,6 +140,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testAgentSelfInitialization() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -152,6 +158,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testAgentSelfInitializationAuxiliaryTypeEager() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -169,6 +176,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testAgentSelfInitializationAuxiliaryTypeLazy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -186,6 +194,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testAgentWithoutSelfInitializationWithNativeMethodPrefix() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -206,6 +215,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testRedefinition() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -229,6 +239,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testEmptyRedefinition() throws Exception {
         ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
                 .with(typeLocator)
@@ -241,6 +252,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testChunkedRedefinition() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -264,6 +276,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testEmptyChunkedRedefinition() throws Exception {
         ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
                 .with(typeLocator)
@@ -276,6 +289,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testRedefinitionWithPoolOnly() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -300,6 +314,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testRedefinitionWithPoolFirst() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -324,6 +339,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testRedefinitionWithPoolLast() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -348,6 +364,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testRedefinitionWithPoolLastOptionalType() throws Exception {
         // Type descriptions with optional dependencies cannot be resolved eagerly.
         if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
@@ -382,6 +399,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testRedefinitionWithPoolOnlyOptionalType() throws Exception {
         // Type descriptions with optional dependencies cannot be resolved eagerly.
         if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
@@ -416,6 +434,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testRetransformation() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -439,6 +458,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testEmptyRetransformation() throws Exception {
         ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
                 .with(typeLocator)
@@ -451,6 +471,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testChunkedRetransformation() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -474,6 +495,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testChunkedEmptyRetransformation() throws Exception {
         ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
                 .with(typeLocator)
@@ -486,6 +508,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testRetransformationWithPoolOnly() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -510,6 +533,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testRetransformationWithPoolFirst() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -534,6 +558,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testRetransformationWithPoolLast() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is why an external class is used.
@@ -558,6 +583,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testRetransformationWithPoolLastOptionalType() throws Exception {
         // Type descriptions with optional dependencies cannot be resolved eagerly.
         if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
@@ -592,6 +618,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testRetransformationWithPoolOnlyOptionalType() throws Exception {
         // Type descriptions with optional dependencies cannot be resolved eagerly.
         if (typeLocator instanceof AgentBuilder.TypeLocator.Eager) {
@@ -626,6 +653,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testChainedAgent() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         AgentBuilder agentBuilder = new AgentBuilder.Default()
@@ -645,6 +673,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testSignatureTypesAreAvailableAfterLoad() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -663,6 +692,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testDecoration() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -681,6 +711,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testDecorationFallThrough() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -699,6 +730,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
     public void testDecorationBlocked() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
@@ -718,6 +750,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testNonCapturingLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -741,6 +774,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testNonCapturingLambdaIsConstant() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -763,6 +797,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testLambdaFactoryIsReset() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -782,6 +817,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testArgumentCapturingLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -805,6 +841,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testArgumentCapturingLambdaIsNotConstant() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -827,6 +864,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testInstanceCapturingLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -850,6 +888,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testNonCapturingLambdaWithArguments() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -872,6 +911,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testCapturingLambdaWithArguments() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -894,6 +934,7 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testSerializableLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();

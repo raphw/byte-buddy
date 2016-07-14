@@ -28,7 +28,6 @@ import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -438,17 +437,6 @@ public class TypeWriterDefaultTest {
     }
 
     @Test
-    public void testInnerClassChangeModifierTest() throws Exception {
-        assertThat(new ByteBuddy()
-                .redefine(Bar.class)
-                .modifiers(Visibility.PUBLIC)
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded()
-                .getModifiers(), is(Modifier.PUBLIC));
-    }
-
-    @Test
     public void testBridgeNonLegacyType() throws Exception {
         Class<?> base = new ByteBuddy(ClassFileVersion.JAVA_V5)
                 .subclass(Object.class)
@@ -536,10 +524,6 @@ public class TypeWriterDefaultTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Foo {
-        /* empty */
-    }
-
-    class Bar {
         /* empty */
     }
 }

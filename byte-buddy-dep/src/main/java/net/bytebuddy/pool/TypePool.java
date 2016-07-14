@@ -2989,9 +2989,9 @@ public interface TypePool {
             private static final int SUPER_CLASS_INDEX = -1;
 
             /**
-             * Indicates that a type does not define a super type.
+             * Indicates that a type does not exist and does therefore not have a name.
              */
-            private static final String NO_SUPER_CLASS = null;
+            private static final String NO_TYPE = null;
 
             /**
              * The type pool to be used for looking up linked types.
@@ -3024,9 +3024,14 @@ public interface TypePool {
             private final List<String> interfaceTypeDescriptors;
 
             /**
-             * The declaration context of this type.
+             * A definition of this type's containment within another type or method.
              */
-            private final DeclarationContext declarationContext;
+            private final TypeContainment typeContainment;
+
+            /**
+             * The binary name of this type's declaring type or {@code null} if no such type exists.
+             */
+            private final String declaringTypeName;
 
             /**
              * A list of descriptors representing the types that are declared by this type.
@@ -3077,7 +3082,8 @@ public interface TypePool {
              * @param superClassInternalName             The internal name of this type's super type or {@code null} if no such super type is defined.
              * @param interfaceInternalName              An array of this type's interfaces or {@code null} if this type does not define any interfaces.
              * @param signatureResolution                The resolution of this type's generic types.
-             * @param declarationContext                 The declaration context of this type.
+             * @param typeContainment                    A definition of this type's containment within another type or method.
+             * @param declaringTypeInternalName          The internal name of this type's declaring type or {@code null} if no such type exists.
              * @param declaredTypes                      A list of descriptors representing the types that are declared by this type.
              * @param anonymousType                      {@code true} if this type is an anonymous type.
              * @param superTypeAnnotationTokens          A mapping of type annotations for this type's super type and interface types by their indices.
@@ -3094,7 +3100,8 @@ public interface TypePool {
                                           String superClassInternalName,
                                           String[] interfaceInternalName,
                                           GenericTypeToken.Resolution.ForType signatureResolution,
-                                          DeclarationContext declarationContext,
+                                          TypeContainment typeContainment,
+                                          String declaringTypeInternalName,
                                           List<String> declaredTypes,
                                           boolean anonymousType,
                                           Map<Integer, Map<String, List<AnnotationToken>>> superTypeAnnotationTokens,
@@ -3107,7 +3114,7 @@ public interface TypePool {
                 this.modifiers = modifiers & ~(Opcodes.ACC_SUPER | Opcodes.ACC_DEPRECATED);
                 this.name = Type.getObjectType(name).getClassName();
                 this.superClassDescriptor = superClassInternalName == null
-                        ? NO_SUPER_CLASS
+                        ? NO_TYPE
                         : Type.getObjectType(superClassInternalName).getDescriptor();
                 this.signatureResolution = signatureResolution;
                 if (interfaceInternalName == null) {
@@ -3118,7 +3125,10 @@ public interface TypePool {
                         interfaceTypeDescriptors.add(Type.getObjectType(internalName).getDescriptor());
                     }
                 }
-                this.declarationContext = declarationContext;
+                this.typeContainment = typeContainment;
+                declaringTypeName = declaringTypeInternalName == null
+                        ? NO_TYPE
+                        : declaringTypeInternalName.replace('/', '.');
                 this.declaredTypes = declaredTypes;
                 this.anonymousType = anonymousType;
                 this.superTypeAnnotationTokens = superTypeAnnotationTokens;
@@ -3143,12 +3153,12 @@ public interface TypePool {
 
             @Override
             public MethodDescription getEnclosingMethod() {
-                return declarationContext.getEnclosingMethod(typePool);
+                return typeContainment.getEnclosingMethod(typePool);
             }
 
             @Override
             public TypeDescription getEnclosingType() {
-                return declarationContext.getEnclosingType(typePool);
+                return typeContainment.getEnclosingType(typePool);
             }
 
             @Override
@@ -3163,12 +3173,12 @@ public interface TypePool {
 
             @Override
             public boolean isLocalClass() {
-                return !anonymousType && declarationContext.isDeclaredInMethod();
+                return !anonymousType && typeContainment.isLocalType();
             }
 
             @Override
             public boolean isMemberClass() {
-                return declarationContext.isDeclaredInType();
+                return typeContainment.isMemberClass();
             }
 
             @Override
@@ -3197,9 +3207,9 @@ public interface TypePool {
 
             @Override
             public TypeDescription getDeclaringType() {
-                return declarationContext.isDeclaredInType()
-                        ? declarationContext.getEnclosingType(typePool)
-                        : TypeDescription.UNDEFINED;
+                return declaringTypeName == null
+                        ? TypeDescription.UNDEFINED
+                        : typePool.describe(declaringTypeName).resolve();
             }
 
             @Override
@@ -3253,7 +3263,7 @@ public interface TypePool {
              * A declaration context encapsulates information about whether a type was declared within another type
              * or within a method of another type.
              */
-            protected interface DeclarationContext {
+            protected interface TypeContainment {
 
                 /**
                  * Returns the enclosing method or {@code null} if no such method exists.
@@ -3272,32 +3282,30 @@ public interface TypePool {
                 TypeDescription getEnclosingType(TypePool typePool);
 
                 /**
-                 * Returns {@code true} if this instance represents a self declared type.
+                 * Returns {@code true} if the type is self-contained.
                  *
-                 * @return {@code true} if this instance represents a self declared type.
+                 * @return {@code true} if the type is self-contained.
                  */
-                boolean isSelfDeclared();
+                boolean isSelfContained();
 
                 /**
-                 * Returns {@code true} if this instance represents a type that was declared within another type but not
-                 * within a method.
+                 * Returns {@code true} if the type is a member type.
                  *
-                 * @return {@code true} if this instance represents a type that was declared within another type but not
-                 * within a method.
+                 * @return {@code true} if the type is a member type.
                  */
-                boolean isDeclaredInType();
+                boolean isMemberClass();
 
                 /**
-                 * Returns {@code true} if this instance represents a type that was declared within a method.
+                 * Returns {@code true} if the type is a local type unless it is an anonymous type.
                  *
-                 * @return {@code true} if this instance represents a type that was declared within a method.
+                 * @return {@code true} if the type is a local type unless it is an anonymous type
                  */
-                boolean isDeclaredInMethod();
+                boolean isLocalType();
 
                 /**
-                 * Represents a self-declared type that is not defined within another type.
+                 * Describes a type that is not contained within another type, a method or a constructor.
                  */
-                enum SelfDeclared implements DeclarationContext {
+                enum SelfContained implements TypeContainment {
 
                     /**
                      * The singleton instance.
@@ -3315,44 +3323,50 @@ public interface TypePool {
                     }
 
                     @Override
-                    public boolean isSelfDeclared() {
+                    public boolean isSelfContained() {
                         return true;
                     }
 
                     @Override
-                    public boolean isDeclaredInType() {
+                    public boolean isMemberClass() {
                         return false;
                     }
 
                     @Override
-                    public boolean isDeclaredInMethod() {
+                    public boolean isLocalType() {
                         return false;
                     }
 
                     @Override
                     public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.DeclarationContext.SelfDeclared." + name();
+                        return "TypePool.Default.LazyTypeDescription.TypeContainment.SelfContained." + name();
                     }
                 }
 
                 /**
-                 * A declaration context representing a type that is declared within another type but not within
-                 * a method.
+                 * Describes a type that is contained within another type.
                  */
-                class DeclaredInType implements DeclarationContext {
+                class WithinType implements TypeContainment {
 
                     /**
-                     * The binary name of the referenced type.
+                     * The type's binary name.
                      */
                     private final String name;
 
                     /**
-                     * Creates a new declaration context for a type that is declared within another type.
-                     *
-                     * @param internalName The internal name of the declaring type.
+                     * {@code true} if the type is a local type unless it is an anonymous type.
                      */
-                    public DeclaredInType(String internalName) {
+                    private final boolean localType;
+
+                    /**
+                     * Creates a new type containment for a type that is declared within another type.
+                     *
+                     * @param internalName The type's internal name.
+                     * @param localType    {@code true} if the type is a local type unless it is an anonymous type.
+                     */
+                    public WithinType(String internalName, boolean localType) {
                         name = internalName.replace('/', '.');
+                        this.localType = localType;
                     }
 
                     @Override
@@ -3366,67 +3380,72 @@ public interface TypePool {
                     }
 
                     @Override
-                    public boolean isSelfDeclared() {
+                    public boolean isSelfContained() {
                         return false;
                     }
 
                     @Override
-                    public boolean isDeclaredInType() {
-                        return true;
+                    public boolean isMemberClass() {
+                        return !localType;
                     }
 
                     @Override
-                    public boolean isDeclaredInMethod() {
-                        return false;
+                    public boolean isLocalType() {
+                        return localType;
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && name.equals(((DeclaredInType) other).name);
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        WithinType that = (WithinType) object;
+                        return localType == that.localType && name.equals(that.name);
                     }
 
                     @Override
                     public int hashCode() {
-                        return name.hashCode();
+                        int result = name.hashCode();
+                        result = 31 * result + (localType ? 1 : 0);
+                        return result;
                     }
 
                     @Override
                     public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType{" +
+                        return "TypePool.Default.LazyTypeDescription.TypeContainment.WithinType{" +
                                 "name='" + name + '\'' +
+                                ", localType=" + localType +
                                 '}';
                     }
                 }
 
                 /**
-                 * A declaration context representing a type that is declared within a method of another type.
+                 * Describes a type that is contained within a method or constructor.
                  */
-                class DeclaredInMethod implements DeclarationContext {
+                class WithinMethod implements TypeContainment {
 
                     /**
-                     * The binary name of the declaring type.
+                     * The method's declaring type's internal name.
                      */
                     private final String name;
 
                     /**
-                     * The name of the method that is declaring a type.
+                     * The method's internal name.
                      */
                     private final String methodName;
 
                     /**
-                     * The descriptor of the method that is declaring a type.
+                     * The method's descriptor.
                      */
                     private final String methodDescriptor;
 
                     /**
-                     * Creates a new declaration context for a method that declares a type.
+                     * Creates a new type containment for a type that is declared within a method.
                      *
-                     * @param internalName     The internal name of the declaring type.
-                     * @param methodName       The name of the method that is declaring a type.
-                     * @param methodDescriptor The descriptor of the method that is declaring a type.
+                     * @param internalName     The method's declaring type's internal name.
+                     * @param methodName       The method's internal name.
+                     * @param methodDescriptor The method's descriptor.
                      */
-                    public DeclaredInMethod(String internalName, String methodName, String methodDescriptor) {
+                    public WithinMethod(String internalName, String methodName, String methodDescriptor) {
                         name = internalName.replace('/', '.');
                         this.methodName = methodName;
                         this.methodDescriptor = methodDescriptor;
@@ -3443,28 +3462,28 @@ public interface TypePool {
                     }
 
                     @Override
-                    public boolean isSelfDeclared() {
+                    public boolean isSelfContained() {
                         return false;
                     }
 
                     @Override
-                    public boolean isDeclaredInType() {
+                    public boolean isMemberClass() {
                         return false;
                     }
 
                     @Override
-                    public boolean isDeclaredInMethod() {
+                    public boolean isLocalType() {
                         return true;
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        DeclaredInMethod that = (DeclaredInMethod) other;
-                        return methodDescriptor.equals(that.methodDescriptor)
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        WithinMethod that = (WithinMethod) object;
+                        return name.equals(that.name)
                                 && methodName.equals(that.methodName)
-                                && name.equals(that.name);
+                                && methodDescriptor.equals(that.methodDescriptor);
                     }
 
                     @Override
@@ -3477,7 +3496,7 @@ public interface TypePool {
 
                     @Override
                     public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInMethod{" +
+                        return "TypePool.Default.LazyTypeDescription.TypeContainment.WithinMethod{" +
                                 "name='" + name + '\'' +
                                 ", methodName='" + methodName + '\'' +
                                 ", methodDescriptor='" + methodDescriptor + '\'' +
@@ -7595,7 +7614,12 @@ public interface TypePool {
             /**
              * The declaration context found for this type.
              */
-            private LazyTypeDescription.DeclarationContext declarationContext;
+            private LazyTypeDescription.TypeContainment typeContainment;
+
+            /**
+             * The binary name of this type's declaring type or {@code null} if no such type exists.
+             */
+            private String declaringTypeName;
 
             /**
              * A list of descriptors representing the types that are declared by the parsed type.
@@ -7614,7 +7638,7 @@ public interface TypePool {
                 fieldTokens = new ArrayList<LazyTypeDescription.FieldToken>();
                 methodTokens = new ArrayList<LazyTypeDescription.MethodToken>();
                 anonymousType = false;
-                declarationContext = LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE;
+                typeContainment = LazyTypeDescription.TypeContainment.SelfContained.INSTANCE;
                 declaredTypes = new ArrayList<String>();
             }
 
@@ -7636,9 +7660,9 @@ public interface TypePool {
             @Override
             public void visitOuterClass(String typeName, String methodName, String methodDescriptor) {
                 if (methodName != null) {
-                    declarationContext = new LazyTypeDescription.DeclarationContext.DeclaredInMethod(typeName, methodName, methodDescriptor);
+                    typeContainment = new LazyTypeDescription.TypeContainment.WithinMethod(typeName, methodName, methodDescriptor);
                 } else if (typeName != null) {
-                    declarationContext = new LazyTypeDescription.DeclarationContext.DeclaredInType(typeName);
+                    typeContainment = new LazyTypeDescription.TypeContainment.WithinType(typeName, true);
                 }
             }
 
@@ -7649,9 +7673,11 @@ public interface TypePool {
                     if (innerName == null) {
                         anonymousType = true;
                     }
-                    // Older Java compilers do not add the outer class attribute.
-                    if (outerName != null && declarationContext.isSelfDeclared()) {
-                        declarationContext = new LazyTypeDescription.DeclarationContext.DeclaredInType(outerName);
+                    if (outerName != null) {
+                        declaringTypeName = outerName;
+                        if (typeContainment.isSelfContained()) {
+                            typeContainment = new LazyTypeDescription.TypeContainment.WithinType(outerName, false);
+                        }
                     }
                 } else if (outerName != null && innerName != null && internalName.equals(this.internalName + "$" + innerName)) {
                     declaredTypes.add("L" + internalName + ";");
@@ -7718,7 +7744,8 @@ public interface TypePool {
                         superClassName,
                         interfaceName,
                         GenericTypeExtractor.ForSignature.OfType.extract(genericSignature),
-                        declarationContext,
+                        typeContainment,
+                        declaringTypeName,
                         declaredTypes,
                         anonymousType,
                         superTypeAnnotationTokens,
@@ -7742,7 +7769,7 @@ public interface TypePool {
                         ", genericSignature='" + genericSignature + '\'' +
                         ", interfaceName=" + Arrays.toString(interfaceName) +
                         ", anonymousType=" + anonymousType +
-                        ", declarationContext=" + declarationContext +
+                        ", declarationContext=" + typeContainment +
                         '}';
             }
 

@@ -61,11 +61,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     TypeDescription VOID = new ForLoadedType(void.class);
 
     /**
-     * The modifiers of any array type.
-     */
-    int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
-
-    /**
      * A list of interfaces that are implicitly implemented by any array type.
      */
     TypeList.Generic ARRAY_INTERFACES = new TypeList.Generic.ForLoadedTypes(Cloneable.class, Serializable.class);
@@ -159,23 +154,26 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     TypeList getDeclaredTypes();
 
     /**
-     * Returns a description of the enclosing method of this type.
+     * Returns a description of the method that encloses this type. If this method is not enclosed by any type or is
+     * enclosed by the type initializer, {@code null} is returned by this method.
      *
      * @return A description of the enclosing method of this type or {@code null} if there is no such method.
      */
     MethodDescription getEnclosingMethod();
 
     /**
-     * Returns a description of the enclosing type of this type.
+     * Returns a description of this type's enclosing type if any.
      *
-     * @return A  description of the enclosing type of this type or {@code null} if there is no such type.
+     * @return A description of the enclosing type of this type or {@code null} if there is no such type.
      */
     TypeDescription getEnclosingType();
 
     /**
      * Returns the type's actual modifiers as present in the class file. For example, a type cannot be {@code private}.
      * but it modifiers might reflect this property nevertheless if a class was defined as a private inner class. The
-     * returned modifiers take also into account if the type is marked as {@link Deprecated}.
+     * returned modifiers take also into account if the type is marked as {@link Deprecated}. Anonymous classes that are
+     * enclosed in a static method or the type initializer are additionally marked as {@code final} as it is also done
+     * by the Java compiler.
      *
      * @param superFlag {@code true} if the modifier's super flag should be set.
      * @return The type's actual modifiers.
@@ -7004,6 +7002,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             } else {
                 actualModifiers = actualModifiers & ~Opcodes.ACC_STATIC;
             }
+            if (isAnonymousClass()) {
+                MethodDescription enclosingMethod = getEnclosingMethod();
+                if (enclosingMethod == null || enclosingMethod.isStatic()) {
+                    actualModifiers |= Opcodes.ACC_FINAL;
+                }
+            }
             return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
         }
 
@@ -7645,6 +7649,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     class ArrayProjection extends AbstractBase {
 
         /**
+         * Modifiers that every array in Java implies.
+         */
+        private static final int ARRAY_IMPLIED = Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
+
+        /**
+         * Modifiers that no array in Java displays.
+         */
+        private static final int ARRAY_EXCLUDED = Opcodes.ACC_INTERFACE | Opcodes.ACC_ANNOTATION | Opcodes.ACC_STATIC;
+
+        /**
          * The base component type which is itself not an array.
          */
         private final TypeDescription componentType;
@@ -7829,7 +7843,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public int getModifiers() {
-            return ARRAY_MODIFIERS;
+            return (getComponentType().getModifiers() & ~ARRAY_EXCLUDED) | ARRAY_IMPLIED;
         }
 
         @Override
