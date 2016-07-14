@@ -78,9 +78,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             }
             if (change == 1) {
                 current.add(StackSize.SINGLE);
-            } else if (change != 0) {  // else { assert size == 0; }
-                throw new AssertionError(); // TODO
-            }
+            } // else { assert size == 0; }
         }
     }
 
@@ -109,9 +107,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             super.visitVarInsn(store, freeIndex);
             if (difference == 1) {
                 super.visitInsn(Opcodes.POP);
-            } else if (difference != 0) { // else { assert difference == 0; }
-                throw new AssertionError(); // TODO
-            }
+            } // else { assert difference == 0; }
             doDrain(current.subList(0, current.size() - 1));
             super.visitVarInsn(load, freeIndex);
             return freeIndex + size.getSize();
