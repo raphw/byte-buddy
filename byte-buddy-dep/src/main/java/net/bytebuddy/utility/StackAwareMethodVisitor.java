@@ -39,28 +39,32 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             current.add(StackSize.SINGLE);
         } else if (size == 2) {
             current.add(StackSize.DOUBLE);
-        } else if (size > 0) {
+        } else if (size > 2) {
             throw new IllegalStateException("Cannot push multiple values onto the operand stack: " + size);
         } else {
             while (size < 0) {
                 size += current.remove(current.size() - 1).getSize();
             }
+            if (size == 1) {
+                current.add(StackSize.SINGLE);
+            } else if (size != 0) {
+                throw new AssertionError("Say what?");
+                // else { assert size == 0; }
+            }
         }
     }
 
     public void drainStack() {
-        if (!current.isEmpty()) {
-            for (StackSize stackSize : current) {
-                switch (stackSize) {
-                    case SINGLE:
-                        super.visitInsn(Opcodes.POP);
-                        break;
-                    case DOUBLE:
-                        super.visitInsn(Opcodes.POP2);
-                        break;
-                    default:
-                        throw new IllegalStateException("Unexpected stack size: " + stackSize);
-                }
+        for (StackSize stackSize : current) {
+            switch (stackSize) {
+                case SINGLE:
+                    super.visitInsn(Opcodes.POP);
+                    break;
+                case DOUBLE:
+                    super.visitInsn(Opcodes.POP2);
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected stack size: " + stackSize);
             }
         }
     }
@@ -165,11 +169,6 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     }
 
     @Override
-    public void visitIincInsn(int variable, int increment) {
-        super.visitIincInsn(variable, increment); // TODO: Remove
-    }
-
-    @Override
     public void visitMultiANewArrayInsn(String descriptor, int dimension) {
         adjustStack(1 - dimension);
         super.visitMultiANewArrayInsn(descriptor, dimension);
@@ -193,21 +192,23 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     }
 
     @Override
-    public void visitTableSwitchInsn(int min, int max, Label defaultOption, Label... label) {
+    public void visitTableSwitchInsn(int minimum, int maximum, Label defaultOption, Label... label) {
         adjustStack(-1);
-        sizes.put(defaultOption, new ArrayList<StackSize>(current));
+        List<StackSize> current = new ArrayList<StackSize>(this.current);
+        sizes.put(defaultOption, current);
         for (Label aLabel : label) {
-            sizes.put(aLabel, new ArrayList<StackSize>(current));
+            sizes.put(aLabel, current);
         }
-        super.visitTableSwitchInsn(min, max, defaultOption, label);
+        super.visitTableSwitchInsn(minimum, maximum, defaultOption, label);
     }
 
     @Override
     public void visitLookupSwitchInsn(Label defaultOption, int[] key, Label[] label) {
         adjustStack(-1);
-        sizes.put(defaultOption, new ArrayList<StackSize>(current));
+        List<StackSize> current = new ArrayList<StackSize>(this.current);
+        sizes.put(defaultOption, current);
         for (Label aLabel : label) {
-            sizes.put(aLabel, new ArrayList<StackSize>(current));
+            sizes.put(aLabel, current);
         }
         super.visitLookupSwitchInsn(defaultOption, key, label);
     }
@@ -216,5 +217,15 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
         sizes.put(handler, new ArrayList<StackSize>(Collections.singletonList(StackSize.SINGLE)));
         super.visitTryCatchBlock(start, end, handler, type);
+    }
+
+    @Override
+    public String toString() {
+        return "StackAwareMethodVisitor{" +
+                "methodVisitor=" + mv +
+                ", current=" + current +
+                ", sizes=" + sizes +
+                ", freeIndex=" + freeIndex +
+                '}';
     }
 }

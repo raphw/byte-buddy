@@ -1406,6 +1406,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param classFileVersion   The instrumented type's class file version.
          * @param writerFlags        The ASM writer flags that were set.
          * @param readerFlags        The ASM reader flags that were set.
+         * @param traceStack         If set to {@code true}, the delegate {@link MethodVisitor} is represented as a {@link StackAwareMethodVisitor}.
          */
         protected AdviceVisitor(MethodVisitor methodVisitor,
                                 MethodDescription.InDefinedShape instrumentedMethod,
@@ -1414,8 +1415,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 List<? extends TypeDescription> yieldedTypes,
                                 ClassFileVersion classFileVersion,
                                 int writerFlags,
-                                int readerFlags) {
-            super(Opcodes.ASM5, new StackAwareMethodVisitor(methodVisitor, instrumentedMethod));
+                                int readerFlags,
+                                boolean traceStack) {
+            super(Opcodes.ASM5, traceStack
+                    ? new StackAwareMethodVisitor(methodVisitor, instrumentedMethod)
+                    : methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
             padding = methodEnter.getEnterType().getStackSize().getSize();
             List<TypeDescription> requiredTypes = methodEnter.getEnterType().represents(void.class)
@@ -1523,7 +1527,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         Collections.<TypeDescription>emptyList(),
                         classFileVersion,
                         writerFlags,
-                        readerFlags);
+                        readerFlags,
+                        false);
             }
 
             @Override
@@ -1548,21 +1553,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         || instrumentedMethod.getReturnType().represents(short.class)
                         || instrumentedMethod.getReturnType().represents(char.class)
                         || instrumentedMethod.getReturnType().represents(int.class)) {
-                    mv.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
                     methodVisitor.visitInsn(Opcodes.IRETURN);
                 } else if (instrumentedMethod.getReturnType().represents(long.class)) {
-                    mv.visitInsn(Opcodes.LCONST_0);
+                    methodVisitor.visitInsn(Opcodes.LCONST_0);
                     methodVisitor.visitInsn(Opcodes.LRETURN);
                 } else if (instrumentedMethod.getReturnType().represents(float.class)) {
-                    mv.visitInsn(Opcodes.FCONST_0);
+                    methodVisitor.visitInsn(Opcodes.FCONST_0);
                     methodVisitor.visitInsn(Opcodes.FRETURN);
                 } else if (instrumentedMethod.getReturnType().represents(double.class)) {
-                    mv.visitInsn(Opcodes.DCONST_0);
+                    methodVisitor.visitInsn(Opcodes.DCONST_0);
                     methodVisitor.visitInsn(Opcodes.DRETURN);
                 } else if (instrumentedMethod.getReturnType().represents(void.class)) {
                     methodVisitor.visitInsn(Opcodes.RETURN);
                 } else {
-                    mv.visitInsn(Opcodes.ACONST_NULL);
+                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                     methodVisitor.visitInsn(Opcodes.ARETURN);
                 }
             }
@@ -1605,7 +1610,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                      ClassFileVersion classFileVersion,
                                      int writerFlags,
                                      int readerFlags) {
-                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, yieldedTypes, classFileVersion, writerFlags, readerFlags);
+                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, yieldedTypes, classFileVersion, writerFlags, readerFlags, true);
                 returnHandler = new Label();
             }
 
@@ -1616,15 +1621,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         || instrumentedMethod.getReturnType().represents(short.class)
                         || instrumentedMethod.getReturnType().represents(char.class)
                         || instrumentedMethod.getReturnType().represents(int.class)) {
-                    mv.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
                 } else if (instrumentedMethod.getReturnType().represents(long.class)) {
-                    mv.visitInsn(Opcodes.LCONST_0);
+                    methodVisitor.visitInsn(Opcodes.LCONST_0);
                 } else if (instrumentedMethod.getReturnType().represents(float.class)) {
-                    mv.visitInsn(Opcodes.FCONST_0);
+                    methodVisitor.visitInsn(Opcodes.FCONST_0);
                 } else if (instrumentedMethod.getReturnType().represents(double.class)) {
-                    mv.visitInsn(Opcodes.DCONST_0);
+                    methodVisitor.visitInsn(Opcodes.DCONST_0);
                 } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                    mv.visitInsn(Opcodes.ACONST_NULL);
+                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                 }
                 methodVisitor.visitJumpInsn(Opcodes.GOTO, returnHandler);
             }
