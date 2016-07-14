@@ -3171,7 +3171,7 @@ public interface TypePool {
 
             @Override
             public boolean isMemberClass() {
-                return !typeContainment.isLocalType() && typeContainment.isMemberClass();
+                return typeContainment.isMemberClass();
             }
 
             @Override
@@ -3346,7 +3346,7 @@ public interface TypePool {
 
                     @Override
                     public boolean isMemberClass() {
-                        return true;
+                        return !localType;
                     }
 
                     @Override
