@@ -4964,7 +4964,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Instructs this return value producer to assure the production of a default value for the return type of the currently handled method.
                  */
-                void onDefaultValue();
+                void onDefaultValue(MethodVisitor methodVisitor);
             }
 
             /**
@@ -5151,7 +5151,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitLabel(endOfMethod);
                         stackMapFrameHandler.injectExceptionFrame(methodVisitor);
                         methodVisitor.visitInsn(Opcodes.POP);
-                        returnValueProducer.onDefaultValue();
+                        returnValueProducer.onDefaultValue(methodVisitor);
                     }
 
                     @Override
@@ -6447,21 +6447,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void onDefaultValue() {
+                    public void onDefaultValue(MethodVisitor methodVisitor) {
                         if (adviceMethod.getReturnType().represents(boolean.class)
                                 || adviceMethod.getReturnType().represents(byte.class)
                                 || adviceMethod.getReturnType().represents(short.class)
                                 || adviceMethod.getReturnType().represents(char.class)
                                 || adviceMethod.getReturnType().represents(int.class)) {
-                            mv.visitInsn(Opcodes.ICONST_0);
+                            methodVisitor.visitInsn(Opcodes.ICONST_0);
                         } else if (adviceMethod.getReturnType().represents(long.class)) {
-                            mv.visitInsn(Opcodes.LCONST_0);
+                            methodVisitor.visitInsn(Opcodes.LCONST_0);
                         } else if (adviceMethod.getReturnType().represents(float.class)) {
-                            mv.visitInsn(Opcodes.FCONST_0);
+                            methodVisitor.visitInsn(Opcodes.FCONST_0);
                         } else if (adviceMethod.getReturnType().represents(double.class)) {
-                            mv.visitInsn(Opcodes.DCONST_0);
+                            methodVisitor.visitInsn(Opcodes.DCONST_0);
                         } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                            mv.visitInsn(Opcodes.ACONST_NULL);
+                            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                         }
                     }
 
@@ -6550,7 +6550,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void onDefaultValue() {
+                    public void onDefaultValue(MethodVisitor methodVisitor) {
                         /* do nothing */
                     }
 
@@ -6907,7 +6907,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void onDefaultValue() {
+                        public void onDefaultValue(MethodVisitor methodVisitor) {
                             if (adviceMethod.getReturnType().represents(boolean.class)
                                     || adviceMethod.getReturnType().represents(byte.class)
                                     || adviceMethod.getReturnType().represents(short.class)
@@ -6987,7 +6987,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void onDefaultValue() {
+                        public void onDefaultValue(MethodVisitor methodVisitor) {
                             /* do nothing */
                         }
 
