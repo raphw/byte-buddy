@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import org.objectweb.asm.*;
@@ -171,6 +172,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     }
 
     @Override
+    @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "No default behavior is applied")
     public void visitVarInsn(int opcode, int variable) {
         switch (opcode) {
             case Opcodes.ASTORE:

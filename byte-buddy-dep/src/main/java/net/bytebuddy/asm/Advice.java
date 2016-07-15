@@ -7796,7 +7796,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             if (!type.isAnnotation()) {
                 throw new IllegalArgumentException("Not an annotation type: " + type);
             } else if (dynamicValues.put(type, dynamicValue) != null) {
-                throw new IllegalArgumentException("Annotation-type already mapped: " + type);
+                throw new IllegalArgumentException("Annotation type already mapped: " + type);
             }
             return new WithCustomMapping(dynamicValues);
         }
