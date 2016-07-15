@@ -1,10 +1,13 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -20,11 +23,15 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 @RunWith(Parameterized.class)
 public class AdviceInconsistentStackSizeTest {
+
+    private static final String FOO = "foo";
 
     private final Class<?> type;
 
@@ -59,18 +66,46 @@ public class AdviceInconsistentStackSizeTest {
     public void testInconsistentStackSize() throws Exception {
         Class<?> atypical = new ByteBuddy()
                 .subclass(Object.class)
-                .defineMethod("foo", type, Visibility.PUBLIC)
+                .defineMethod(FOO, type, Visibility.PUBLIC)
                 .intercept(new InconsistentSizeAppender())
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
                 .getLoaded();
         Class<?> adviced = new ByteBuddy()
                 .redefine(atypical)
-                .visit(Advice.withCustomMapping().bind(Value.class, replaced).to(ExitAdvice.class).on(named("foo")))
+                .visit(Advice.withCustomMapping().bind(Value.class, replaced).to(ExitAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(adviced.getDeclaredMethod("foo").invoke(adviced.newInstance()), is(replaced));
+        assertThat(adviced.getDeclaredMethod(FOO).invoke(adviced.newInstance()), is(replaced));
+    }
+
+    @Test
+    public void testInconsistentStackSizeAdvice() throws Exception {
+        Class<?> advice = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, type, Ownership.STATIC)
+                .intercept(new InconsistentSizeAppender())
+                .annotateMethod(AnnotationDescription.Builder.ofType(Advice.OnMethodEnter.class).define("suppress", RuntimeException.class).build())
+                .annotateMethod(AnnotationDescription.Builder.ofType(Advice.OnMethodExit.class).define("suppress", RuntimeException.class).build())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        Class<?> foo = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod("foo", String.class, Visibility.PUBLIC)
+                .intercept(FixedValue.value(FOO))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        Class<?> redefined = new ByteBuddy()
+                .redefine(foo)
+                .visit(Advice.to(advice).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(redefined, not(sameInstance((Object) foo)));
+        assertThat(redefined.getDeclaredMethod(FOO).invoke(redefined.newInstance()), is((Object) FOO));
     }
 
     @SuppressWarnings("all")
