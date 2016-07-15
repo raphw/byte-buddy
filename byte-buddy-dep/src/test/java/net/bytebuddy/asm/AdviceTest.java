@@ -1806,14 +1806,14 @@ public class AdviceTest {
     @SuppressWarnings("unused")
     public static class TrivialAdvice {
 
-//        @Advice.OnMethodEnter // TODO
-//        private static void enter() {
-//            Sample.enter++;
-//        }
+        @Advice.OnMethodEnter
+        private static void enter() {
+            Sample.enter++;
+        }
 
-        @Advice.OnMethodExit//(onThrowable = Exception.class) // TODO
+        @Advice.OnMethodExit(onThrowable = Exception.class)
         private static void exit() {
-//            Sample.exit++; // TODO
+            Sample.exit++;
         }
     }
 

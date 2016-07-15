@@ -75,6 +75,10 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             throw new IllegalStateException("Cannot push multiple values onto the operand stack: " + change);
         } else {
             while (change < 0) {
+                // The operand stack can legally underflow while traversing dead code.
+                if (current.isEmpty()) {
+                    return;
+                }
                 change += current.remove(current.size() - 1).getSize();
             }
             if (change == 1) {
