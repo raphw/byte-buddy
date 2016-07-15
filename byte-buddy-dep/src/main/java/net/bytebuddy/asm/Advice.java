@@ -4963,6 +4963,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 /**
                  * Instructs this return value producer to assure the production of a default value for the return type of the currently handled method.
+                 *
+                 * @param methodVisitor The method visitor to write the default value to.
                  */
                 void onDefaultValue(MethodVisitor methodVisitor);
             }
@@ -7767,6 +7769,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             this.dynamicValues = dynamicValues;
         }
 
+        /**
+         * Binds the supplied annotation to the supplied fixed value.
+         *
+         * @param type  The type of the annotation being bound.
+         * @param value The value to bind to this annotation.
+         * @param <T>   The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         * @see DynamicValue.ForFixedValue
+         */
         public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Object value) {
             return bind(type, new DynamicValue.ForFixedValue(value));
         }
