@@ -1625,6 +1625,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final Label returnHandler;
 
+            protected boolean doesReturn;
+
             /**
              * Creates an advice visitor that applies exit advice.
              *
@@ -1655,6 +1657,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         writerFlags,
                         readerFlags);
                 returnHandler = new Label();
+                doesReturn = false;
             }
 
             @Override
@@ -1675,6 +1678,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                 }
                 methodVisitor.visitJumpInsn(Opcodes.GOTO, returnHandler);
+                doesReturn = true;
             }
 
             @Override
@@ -1703,15 +1707,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return;
                 }
                 mv.visitJumpInsn(Opcodes.GOTO, returnHandler);
+                doesReturn = true;
             }
 
             @Override
             protected void onUserEnd() {
-                methodVisitor.visitLabel(returnHandler);
-                stackMapFrameHandler.injectReturnFrame(methodVisitor);
                 Type returnType = Type.getType(instrumentedMethod.getReturnType().asErasure().getDescriptor());
-                if (!returnType.equals(Type.VOID_TYPE)) {
-                    variable(returnType.getOpcode(Opcodes.ISTORE));
+                methodVisitor.visitLabel(returnHandler);
+                if (doesReturn) {
+                    stackMapFrameHandler.injectReturnFrame(methodVisitor);
+                    if (!returnType.equals(Type.VOID_TYPE)) {
+                        variable(returnType.getOpcode(Opcodes.ISTORE));
+                    }
                 }
                 onUserReturn();
                 methodExit.apply();
@@ -1866,15 +1873,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onUserReturn() {
-                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                    variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
                     Label endOfHandler = new Label();
-                    methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
+                    if (doesReturn) {
+                        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                        variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+                        methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
+                    }
                     methodVisitor.visitLabel(exceptionHandler);
                     stackMapFrameHandler.injectExceptionFrame(methodVisitor);
                     variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
                     storeDefaultReturn();
-                    methodVisitor.visitLabel(endOfHandler);
+                    if (doesReturn) {
+                        methodVisitor.visitLabel(endOfHandler);
+                    }
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
                 }
 
