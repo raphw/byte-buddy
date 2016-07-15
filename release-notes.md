@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. July 2016: version 1.4.12
+
+- Monitor advice code for inconsistent stack heights at return statements to clean the stack during instrumentation to not trigger verifier errors if such atypical but legal code is encountered.
+- Do not generate handlers for return values if an instrumented method or an advice method only throws exceptions but never returns regularly.
+
 ### 15. July 2016: version 1.4.11
 
 - Added tracer for the state of the operand stack for the `Advice` component to clear the stack upon a return. Without this, if code would return without leaving the stack empty, a verifier error would be thrown. This typically is only a problem when processing code that was produced by other code generation libraries.
