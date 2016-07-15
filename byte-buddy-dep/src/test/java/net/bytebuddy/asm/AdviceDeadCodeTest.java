@@ -8,6 +8,7 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import org.junit.Test;
@@ -73,21 +74,21 @@ public class AdviceDeadCodeTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
                 .getLoaded();
+        Class<?> foo = new ByteBuddy(classFileVersion)
+                .subclass(Object.class)
+                .defineMethod("foo", String.class, Visibility.PUBLIC)
+                .intercept(FixedValue.value(FOO))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
         Class<?> redefined = new ByteBuddy()
-                .redefine(Foo.class)
+                .redefine(foo)
                 .visit(Advice.to(advice).on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
-        assertThat(redefined, not(sameInstance((Object) Foo.class)));
+        assertThat(redefined, not(sameInstance((Object) foo)));
         assertThat(redefined.getDeclaredMethod(FOO).invoke(redefined.newInstance()), is((Object) FOO));
-    }
-
-    public static class Foo {
-
-        public String foo() {
-            return FOO;
-        }
     }
 
     @SuppressWarnings("all")
