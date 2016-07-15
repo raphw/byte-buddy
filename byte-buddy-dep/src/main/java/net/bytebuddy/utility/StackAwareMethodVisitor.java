@@ -79,7 +79,9 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             }
             if (change == 1) {
                 current.add(StackSize.SINGLE);
-            } // else { assert size == 0; }
+            } else if (change != 0) {
+                throw new IllegalStateException("Unexpected remainder on the operand stack: " + change);
+            }
         }
     }
 
@@ -108,7 +110,9 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             super.visitVarInsn(store, freeIndex);
             if (difference == 1) {
                 super.visitInsn(Opcodes.POP);
-            } // else { assert difference == 0; }
+            } else if (difference != 0) {
+                throw new IllegalStateException("Unexpected remainder on the operand stack: " + difference);
+            }
             doDrain(current.subList(0, current.size() - 1));
             super.visitVarInsn(load, freeIndex);
             return freeIndex + size.getSize();
