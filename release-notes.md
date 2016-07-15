@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. July 2016: version 1.4.10
+
+- Fixed resolution of modifiers and local type properties from a default type pool.
+- Improved key for caching `TypeLocator` to share a key for the system and bootstrap class loader.
+
 ### 11. July 2016: version 1.4.9
 
 - Added additional implementations of a `DescriptionStrategy` for `POOL_LAST` and `POOL_FIRST` resolution.
