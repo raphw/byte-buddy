@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. July 2016: version 1.4.11
+
+- Added tracer for the state of the operand stack for the `Advice` component to clear the stack upon a return. Without this, if code would return without leaving the stack empty, a verifier error would be thrown. This typically is only a problem when processing code that was produced by other code generation libraries.
+
 ### 15. July 2016: version 1.4.10
 
 - Fixed resolution of modifiers and local type properties from a default type pool.
