@@ -1625,6 +1625,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final Label returnHandler;
 
+            /**
+             * {@code true} if the advice method ever returns non-exceptionally.
+             */
             protected boolean doesReturn;
 
             /**
@@ -1802,6 +1805,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public String toString() {
                     return "Advice.AdviceVisitor.WithExitAdvice.WithoutExceptionHandling{" +
                             "instrumentedMethod=" + instrumentedMethod +
+                            ", doesReturn=" + doesReturn +
                             "}";
                 }
             }
@@ -1931,6 +1935,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return "Advice.AdviceVisitor.WithExitAdvice.WithExceptionHandling{" +
                             "instrumentedMethod=" + instrumentedMethod +
                             ", triggeringThrowable=" + triggeringThrowable +
+                            ", doesReturn=" + doesReturn +
                             "}";
                 }
             }
@@ -6447,6 +6452,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected static class ForMethodEnter extends CodeTranslationVisitor {
 
                     /**
+                     * {@code true} if the method can return non-exceptionally.
+                     */
+                    private boolean doesReturn;
+
+                    /**
                      * Creates a code translation visitor for translating exit advice.
                      *
                      * @param methodVisitor        A method visitor for writing the instrumented method's byte code.
@@ -6465,6 +6475,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
                                              SuppressionHandler.Bound suppressionHandler) {
                         super(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedMethod, adviceMethod, offsetMappings, suppressionHandler);
+                        doesReturn = false;
                     }
 
                     @Override
@@ -6493,6 +6504,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 return;
                         }
                         mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                        doesReturn = true;
                     }
 
                     @Override
@@ -6517,12 +6529,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else if (!adviceMethod.getReturnType().represents(void.class)) {
                             methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                         }
+                        doesReturn = true;
                     }
 
                     @Override
                     protected void onMethodReturn() {
                         Type returnType = Type.getType(adviceMethod.getReturnType().asErasure().getDescriptor());
-                        if (!returnType.equals(Type.VOID_TYPE)) {
+                        if (doesReturn && !returnType.equals(Type.VOID_TYPE)) {
                             stackMapFrameHandler.injectReturnFrame(methodVisitor);
                             methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize());
                         }
@@ -6533,6 +6546,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return "Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodEnter{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", adviceMethod=" + adviceMethod +
+                                ", doesReturn=" + doesReturn +
                                 '}';
                     }
                 }
