@@ -126,6 +126,15 @@ public class StackAwareMethodVisitorTest {
     }
 
     @Test
+    public void testStackCanUnderflow() throws Exception {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        methodVisitor.visitInsn(Opcodes.POP);
+        methodVisitor.drainStack();
+        verify(this.methodVisitor).visitInsn(Opcodes.POP);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(StackAwareMethodVisitor.class).applyBasic();
     }
