@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 public class IntegrationRule implements MethodRule {
 
-    private static final String PROPERTY_KEY = "net.bytebuddy.property.integration";
+    private static final String PROPERTY_KEY = "net.bytebuddy.test.integration";
 
     private final boolean integration;
 

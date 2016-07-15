@@ -146,6 +146,16 @@ public class StackAwareMethodVisitor extends MethodVisitor {
         }
     }
 
+    /**
+     * Explicitly registers a label to define a given stack state.
+     *
+     * @param label      The label to register a stack state for.
+     * @param stackSizes The stack sizes to assume when reaching the supplied label.
+     */
+    public void register(Label label, List<StackSize> stackSizes) {
+        sizes.put(label, stackSizes);
+    }
+
     @Override
     public void visitInsn(int opcode) {
         switch (opcode) {

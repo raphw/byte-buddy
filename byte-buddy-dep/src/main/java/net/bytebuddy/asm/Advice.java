@@ -5784,7 +5784,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
                             substitutions.put(start, labels.get(index++));
                             substitutions.put(end, labels.get(index++));
-                            substitutions.put(handler, labels.get(index++));
+                            Label actualHandler = labels.get(index++);
+                            substitutions.put(handler, actualHandler);
+                            ((CodeTranslationVisitor) mv).propagateHandler(actualHandler);
                         }
 
                         @Override
@@ -6326,6 +6328,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.offsetMappings = offsetMappings;
                     this.suppressionHandler = suppressionHandler;
                     endOfMethod = new Label();
+                }
+
+                /**
+                 * Propagates a label for an exception handler that is typically suppressed by the overlaying
+                 * {@link Resolved.AdviceMethodInliner.ExceptionTableSubstitutor}.
+                 *
+                 * @param label The label to register as a target for an exception handler.
+                 */
+                protected void propagateHandler(Label label) {
+                    ((StackAwareMethodVisitor) mv).register(label, Collections.singletonList(StackSize.SINGLE));
                 }
 
                 @Override

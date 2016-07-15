@@ -9,8 +9,11 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
+import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -122,6 +125,20 @@ public class StackAwareMethodVisitorTest {
         inOrder.verify(this.methodVisitor).visitVarInsn(Opcodes.ISTORE, 42);
         inOrder.verify(this.methodVisitor).visitInsn(Opcodes.POP);
         inOrder.verify(this.methodVisitor).visitVarInsn(Opcodes.ILOAD, 42);
+        verifyNoMoreInteractions(this.methodVisitor);
+    }
+
+    @Test
+    public void testManualRegistration() throws Exception {
+        StackAwareMethodVisitor methodVisitor = new StackAwareMethodVisitor(this.methodVisitor, methodDescription);
+        Label label = new Label();
+        methodVisitor.register(label, Arrays.asList(StackSize.DOUBLE, StackSize.SINGLE));
+        methodVisitor.visitLabel(label);
+        methodVisitor.drainStack();
+        InOrder inOrder = inOrder(this.methodVisitor);
+        inOrder.verify(this.methodVisitor).visitLabel(label);
+        inOrder.verify(this.methodVisitor).visitInsn(Opcodes.POP);
+        inOrder.verify(this.methodVisitor).visitInsn(Opcodes.POP2);
         verifyNoMoreInteractions(this.methodVisitor);
     }
 
