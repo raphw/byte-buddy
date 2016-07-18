@@ -29,8 +29,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 
-import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -433,6 +432,16 @@ public class TypeWriterDefaultTest {
                 .subclass(Object.class)
                 .defineMethod(FOO, Object.class)
                 .intercept(FixedValue.value(JavaConstant.MethodHandle.of(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString")))))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(8)
+    public void testDefaultMethodCallFromLegacyType() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V7)
+                .subclass(Class.forName("net.bytebuddy.test.precompiled.SingleDefaultMethodInterface"))
+                .method(isDefaultMethod())
+                .intercept(SuperMethodCall.INSTANCE)
                 .make();
     }
 

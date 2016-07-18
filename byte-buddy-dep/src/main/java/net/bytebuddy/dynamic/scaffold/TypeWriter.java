@@ -1867,6 +1867,15 @@ public interface TypeWriter<T> {
             protected interface Constraint {
 
                 /**
+                 * Asserts if the type can legally represent a package description.
+                 *
+                 * @param modifier          The modifier that is to be written to the type.
+                 * @param definesInterfaces {@code true} if this type implements at least one interface.
+                 * @param isGeneric         {@code true} if this type defines a generic type signature.
+                 */
+                void assertType(int modifier, boolean definesInterfaces, boolean isGeneric);
+
+                /**
                  * Asserts a field for being valid.
                  *
                  * @param name      The name of the field.
@@ -1912,14 +1921,7 @@ public interface TypeWriter<T> {
                  */
                 void assertDefaultValue(String name);
 
-                /**
-                 * Asserts if the type can legally represent a package description.
-                 *
-                 * @param modifier          The modifier that is to be written to the type.
-                 * @param definesInterfaces {@code true} if this type implements at least one interface.
-                 * @param isGeneric         {@code true} if this type defines a generic type signature.
-                 */
-                void assertType(int modifier, boolean definesInterfaces, boolean isGeneric);
+                void assertDefaultMethodCall();
 
                 /**
                  * Asserts the capability to store a type constant in the class's constant pool.
@@ -1976,6 +1978,11 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
                         /* do nothing */
                     }
@@ -2009,7 +2016,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                    public void assertDefaultMethodCall() {
                         /* do nothing */
                     }
 
@@ -2083,6 +2090,11 @@ public interface TypeWriter<T> {
                     @Override
                     public void assertDefaultValue(String name) {
                         /* do nothing, implicit by forbidding methods */
+                    }
+
+                    @Override
+                    public void assertDefaultMethodCall() {
+                        /* do nothing */
                     }
 
                     @Override
@@ -2196,6 +2208,11 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertDefaultMethodCall() {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
                         /* do nothing */
                     }
@@ -2298,6 +2315,11 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void assertDefaultValue(String name) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertDefaultMethodCall() {
                         /* do nothing */
                     }
 
@@ -2409,6 +2431,13 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertDefaultMethodCall() {
+                        if (classFileVersion.isLessThan(ClassFileVersion.JAVA_V8)) {
+                            throw new IllegalStateException("Cannot invoke default method for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
                     public void assertTypeInConstantPool() {
                         if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write type to constant pool for class file version " + classFileVersion);
@@ -2482,6 +2511,13 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertType(modifier, definesInterfaces, isGeneric);
+                        }
+                    }
+
+                    @Override
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
                         for (Constraint constraint : constraints) {
                             constraint.assertField(name, isPublic, isStatic, isGeneric);
@@ -2515,6 +2551,13 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertDefaultMethodCall() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertDefaultMethodCall();
+                        }
+                    }
+
+                    @Override
                     public void assertAnnotation() {
                         for (Constraint constraint : constraints) {
                             constraint.assertAnnotation();
@@ -2525,13 +2568,6 @@ public interface TypeWriter<T> {
                     public void assertTypeAnnotation() {
                         for (Constraint constraint : constraints) {
                             constraint.assertTypeAnnotation();
-                        }
-                    }
-
-                    @Override
-                    public void assertType(int modifier, boolean definesInterfaces, boolean isGeneric) {
-                        for (Constraint constraint : constraints) {
-                            constraint.assertType(modifier, definesInterfaces, isGeneric);
                         }
                     }
 
@@ -2669,6 +2705,14 @@ public interface TypeWriter<T> {
                         constraint.assertHandleInConstantPool();
                     }
                     super.visitLdcInsn(constant);
+                }
+
+                @Override
+                public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
+                    if (isInterface && opcode == Opcodes.INVOKESPECIAL) {
+                        constraint.assertDefaultMethodCall();
+                    }
+                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
                 }
 
                 @Override
