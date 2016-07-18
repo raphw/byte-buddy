@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. July 2016: version 1.4.13
+
+- Lazily compute `Implementation.Target` and `Implementation.Context` in case of a type inlining to provide correct feature set. Added validation if this constraint is broken.
+- Make `TypePool` using an eager `TypeDescription` more robust towards errors.
+
 ### 15. July 2016: version 1.4.12
 
 - Monitor advice code for inconsistent stack heights at return statements to clean the stack during instrumentation to not trigger verifier errors if such atypical but legal code is encountered.
