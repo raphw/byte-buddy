@@ -320,10 +320,9 @@ public interface TypeWriter<T> {
          * Looks up a handler entry for a given method.
          *
          * @param methodDescription The method being processed.
-         * @param supportsBridges   {@code true} if the created class supports bridge methods.
          * @return A handler entry for the given method.
          */
-        Record target(MethodDescription methodDescription, boolean supportsBridges);
+        Record target(MethodDescription methodDescription);
 
         /**
          * An entry of a method pool that describes how a method is implemented.
@@ -3226,11 +3225,6 @@ public interface TypeWriter<T> {
                 private MethodPool methodPool;
 
                 /**
-                 * {@code true} if the redefined class file supports bridge methods or {@code null} if this state is yet unknown.
-                 */
-                private Boolean supportsBridges;
-
-                /**
                  * Creates a class visitor which is capable of redefining an existent class on the fly.
                  *
                  * @param classVisitor    The underlying class visitor to which writes are delegated.
@@ -3262,7 +3256,6 @@ public interface TypeWriter<T> {
                                   String[] interfaceTypeInternalName) {
                     ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(classFileVersionNumber);
                     methodPool = methodRegistry.compile(implementationTargetFactory, classFileVersion);
-                    supportsBridges = classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5);
                     implementationContext = implementationContextFactory.make(instrumentedType,
                             auxiliaryTypeNamingStrategy,
                             typeInitializer,
@@ -3372,7 +3365,7 @@ public interface TypeWriter<T> {
                  * @return A method visitor which is capable of consuming the original method.
                  */
                 protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin) {
-                    MethodPool.Record record = methodPool.target(methodDescription, supportsBridges);
+                    MethodPool.Record record = methodPool.target(methodDescription);
                     if (!record.getSort().isDefined()) {
                         return super.visitMethod(methodDescription.getActualModifiers(),
                                 methodDescription.getInternalName(),
@@ -3397,9 +3390,9 @@ public interface TypeWriter<T> {
                         fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
                     }
                     for (MethodDescription methodDescription : declarableMethods.values()) {
-                        methodPool.target(methodDescription, supportsBridges).apply(cv, implementationContext, annotationValueFilterFactory);
+                        methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
                     }
-                    implementationContext.drain(cv, methodPool, injectedCode, annotationValueFilterFactory, supportsBridges);
+                    implementationContext.drain(cv, methodPool, injectedCode, annotationValueFilterFactory);
                     super.visitEnd();
                 }
 
@@ -3414,7 +3407,6 @@ public interface TypeWriter<T> {
                             ", declarableMethods=" + declarableMethods +
                             ", injectedCode=" + injectedCode +
                             ", methodPool=" + methodPool +
-                            ", supportsBridges=" + supportsBridges +
                             '}';
                 }
 
@@ -3780,15 +3772,13 @@ public interface TypeWriter<T> {
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);
                 }
-                boolean supportsBridges = classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5);
                 for (MethodDescription methodDescription : instrumentedMethods) {
-                    methodPool.target(methodDescription, supportsBridges).apply(classVisitor, implementationContext, annotationValueFilterFactory);
+                    methodPool.target(methodDescription).apply(classVisitor, implementationContext, annotationValueFilterFactory);
                 }
                 implementationContext.drain(classVisitor,
                         methodPool,
                         Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE,
-                        annotationValueFilterFactory,
-                        supportsBridges);
+                        annotationValueFilterFactory);
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
             }

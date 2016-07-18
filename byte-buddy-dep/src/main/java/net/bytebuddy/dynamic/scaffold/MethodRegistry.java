@@ -778,7 +778,7 @@ public interface MethodRegistry {
                             entry.getValue().resolveBridgeTypes(),
                             entry.getValue().isBridgeMethod()));
                 }
-                return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries);
+                return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries, classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5));
             }
 
             @Override
@@ -987,21 +987,29 @@ public interface MethodRegistry {
             private final LinkedHashMap<MethodDescription, Entry> implementations;
 
             /**
+             * {@code true} if the created type supports bridge methods.
+             */
+            private final boolean supportsBridges;
+
+            /**
              * Creates a new compiled version of a default method registry.
              *
              * @param instrumentedType      The instrumented type.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type initializer of the instrumented type.
              * @param implementations       A map of all method descriptions mapped to their handling entries.
+             * @param supportsBridges       {@code true} if the created type supports bridge methods.
              */
             protected Compiled(TypeDescription instrumentedType,
                                LoadedTypeInitializer loadedTypeInitializer,
                                TypeInitializer typeInitializer,
-                               LinkedHashMap<MethodDescription, Entry> implementations) {
+                               LinkedHashMap<MethodDescription, Entry> implementations,
+                               boolean supportsBridges) {
                 this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
                 this.implementations = implementations;
+                this.supportsBridges = supportsBridges;
             }
 
             @Override
@@ -1025,7 +1033,7 @@ public interface MethodRegistry {
             }
 
             @Override
-            public Record target(MethodDescription methodDescription, boolean supportsBridges) {
+            public Record target(MethodDescription methodDescription) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
                         ? Record.ForNonDefinedMethod.INSTANCE
@@ -1040,7 +1048,8 @@ public interface MethodRegistry {
                 return instrumentedType.equals(compiled.instrumentedType)
                         && loadedTypeInitializer.equals(compiled.loadedTypeInitializer)
                         && typeInitializer.equals(compiled.typeInitializer)
-                        && implementations.equals(compiled.implementations);
+                        && implementations.equals(compiled.implementations)
+                        && supportsBridges == compiled.supportsBridges;
             }
 
             @Override
@@ -1049,6 +1058,7 @@ public interface MethodRegistry {
                 result = 31 * result + loadedTypeInitializer.hashCode();
                 result = 31 * result + typeInitializer.hashCode();
                 result = 31 * result + implementations.hashCode();
+                result = 31 * result + (supportsBridges ? 1 : 0);
                 return result;
             }
 
@@ -1059,6 +1069,7 @@ public interface MethodRegistry {
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
                         ", typeInitializer=" + typeInitializer +
                         ", implementations=" + implementations +
+                        ", supportsBridges=" + supportsBridges +
                         '}';
             }
 

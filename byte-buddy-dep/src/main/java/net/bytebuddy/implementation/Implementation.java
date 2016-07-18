@@ -513,13 +513,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param methodPool                   A method pool which is queried for any user code to add to the type initializer.
              * @param injectedCode                 Potential code that is to be injected into the type initializer.
              * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotation.
-             * @param supportsBridges              {@code true} if the created class file supports bridge methods.
              */
             void drain(ClassVisitor classVisitor,
                        TypeWriter.MethodPool methodPool,
                        InjectedCode injectedCode,
-                       AnnotationValueFilter.Factory annotationValueFilterFactory,
-                       boolean supportsBridges);
+                       AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             /**
              * Prohibits any instrumentation of an instrumented class's type initializer.
@@ -666,9 +664,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
             public void drain(ClassVisitor classVisitor,
                               TypeWriter.MethodPool methodPool,
                               InjectedCode injectedCode,
-                              AnnotationValueFilter.Factory annotationValueFilterFactory,
-                              boolean supportsBridges) {
-                if (injectedCode.isDefined() || methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType), supportsBridges).getSort().isDefined()) {
+                              AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                if (injectedCode.isDefined() || methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType)).getSort().isDefined()) {
                     throw new IllegalStateException("Type initializer interception is impossible or was disabled for " + instrumentedType);
                 }
             }
@@ -915,8 +912,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             public void drain(ClassVisitor classVisitor,
                               TypeWriter.MethodPool methodPool,
                               InjectedCode injectedCode,
-                              AnnotationValueFilter.Factory annotationValueFilterFactory,
-                              boolean supportsBridges) {
+                              AnnotationValueFilter.Factory annotationValueFilterFactory) {
                 fieldCacheCanAppendEntries = false;
                 TypeInitializer typeInitializer = this.typeInitializer;
                 for (Map.Entry<FieldCacheEntry, FieldDescription.InDefinedShape> entry : registeredFieldCacheEntries.entrySet()) {
@@ -931,7 +927,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     typeInitializer = typeInitializer.expandWith(injectedCode.getByteCodeAppender());
                 }
                 MethodDescription typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
-                TypeWriter.MethodPool.Record initializerRecord = methodPool.target(typeInitializerMethod, supportsBridges);
+                TypeWriter.MethodPool.Record initializerRecord = methodPool.target(typeInitializerMethod);
                 if (initializerRecord.getSort().isImplemented() && typeInitializer.isDefined()) {
                     initializerRecord = initializerRecord.prepend(typeInitializer);
                 } else if (typeInitializer.isDefined()) {

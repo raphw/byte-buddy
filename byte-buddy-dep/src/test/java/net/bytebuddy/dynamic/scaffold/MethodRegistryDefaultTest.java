@@ -243,7 +243,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verify(firstFactory).make(typeDescription);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod, true), is(firstRecord));
+        assertThat(methodRegistry.target(instrumentedMethod), is(firstRecord));
     }
 
     @Test
@@ -266,7 +266,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verify(firstFactory).make(typeDescription);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod, true), is(firstRecord));
+        assertThat(methodRegistry.target(instrumentedMethod), is(firstRecord));
     }
 
     @Test
@@ -289,7 +289,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verify(secondFactory).make(typeDescription);
-        assertThat(methodRegistry.target(instrumentedMethod, true), is(secondRecord));
+        assertThat(methodRegistry.target(instrumentedMethod), is(secondRecord));
     }
 
     @Test
@@ -314,7 +314,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod, true), instanceOf(TypeWriter.MethodPool.Record.ForNonDefinedMethod.class));
+        assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForNonDefinedMethod.class));
     }
 
     @Test
@@ -339,6 +339,7 @@ public class MethodRegistryDefaultTest {
         MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
         when(instrumentedMethod.asToken(ElementMatchers.is(typeDescription))).thenReturn(methodToken);
         when(methodToken.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(methodToken);
+        when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)).thenReturn(true);
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, transformer)
                 .append(secondMatcher, secondHandler, secondFactory, transformer)
@@ -352,7 +353,7 @@ public class MethodRegistryDefaultTest {
         verify(secondHandler).prepare(secondType);
         verifyZeroInteractions(firstFactory);
         verifyZeroInteractions(secondFactory);
-        assertThat(methodRegistry.target(instrumentedMethod, true), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class));
+        assertThat(methodRegistry.target(instrumentedMethod), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class));
     }
 
     @Test

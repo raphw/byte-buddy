@@ -44,7 +44,7 @@ public class ImplementationContextDisabledTest {
 
     @Before
     public void setUp() throws Exception {
-        when(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType), true)).thenReturn(record);
+        when(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType))).thenReturn(record);
     }
 
     @Test
@@ -101,8 +101,7 @@ public class ImplementationContextDisabledTest {
         new Implementation.Context.Disabled(instrumentedType, classFileVersion).drain(mock(ClassVisitor.class),
                 methodPool,
                 injectedCode,
-                mock(AnnotationValueFilter.Factory.class),
-                true);
+                mock(AnnotationValueFilter.Factory.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -111,8 +110,7 @@ public class ImplementationContextDisabledTest {
         new Implementation.Context.Disabled(instrumentedType, classFileVersion).drain(mock(ClassVisitor.class),
                 methodPool,
                 injectedCode,
-                mock(AnnotationValueFilter.Factory.class),
-                true);
+                mock(AnnotationValueFilter.Factory.class));
     }
 
     @Test
