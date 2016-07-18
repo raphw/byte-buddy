@@ -1921,6 +1921,9 @@ public interface TypeWriter<T> {
                  */
                 void assertDefaultValue(String name);
 
+                /**
+                 * Asserts if it is legal to invoke a default method from a type.
+                 */
                 void assertDefaultMethodCall();
 
                 /**
