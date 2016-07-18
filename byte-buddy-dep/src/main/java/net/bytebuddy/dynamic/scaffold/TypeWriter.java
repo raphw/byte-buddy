@@ -40,6 +40,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -1321,7 +1322,7 @@ public interface TypeWriter<T> {
                 dumpFolder = System.getProperty(DUMP_PROPERTY);
             } catch (RuntimeException exception) {
                 dumpFolder = null;
-                Logger.getLogger("net.bytebuddy").warning("Could not enable dumping of class files: " + exception.getMessage());
+                Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not enable dumping of class files", exception);
             }
             DUMP_FOLDER = dumpFolder;
         }
@@ -1331,6 +1332,8 @@ public interface TypeWriter<T> {
          */
         protected final TypeDescription instrumentedType;
 
+        protected final ClassFileVersion classFileVersion;
+
         /**
          * The field pool to use.
          */
@@ -1339,7 +1342,7 @@ public interface TypeWriter<T> {
         /**
          * The explicit auxiliary types to add to the created type.
          */
-        protected final List<DynamicType> explicitAuxiliaryTypes;
+        protected final List<DynamicType> auxiliaryTypes;
 
         /**
          * The instrumented methods relevant to this type creation.
@@ -1365,11 +1368,6 @@ public interface TypeWriter<T> {
          * The ASM visitor wrapper to apply onto the class writer.
          */
         protected final AsmVisitorWrapper asmVisitorWrapper;
-
-        /**
-         * The class file version to use when no explicit class file version is applied.
-         */
-        protected final ClassFileVersion classFileVersion;
 
         /**
          * The annotation value filter factory to apply.
@@ -1406,13 +1404,12 @@ public interface TypeWriter<T> {
          *
          * @param instrumentedType             The instrumented type to be created.
          * @param fieldPool                    The field pool to use.
-         * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
+         * @param auxiliaryTypes       The explicit auxiliary types to add to the created type.
          * @param instrumentedMethods          The instrumented methods relevant to this type creation.
          * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
          * @param typeInitializer              The type initializer to include in the created type's type initializer.
          * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
          * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
-         * @param classFileVersion             The class file version to use when no explicit class file version is applied.
          * @param annotationValueFilterFactory The annotation value filter factory to apply.
          * @param annotationRetention          The annotation retention to apply.
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
@@ -1421,14 +1418,14 @@ public interface TypeWriter<T> {
          * @param typePool                     The type pool to use for computing stack map frames, if required.
          */
         protected Default(TypeDescription instrumentedType,
+                          ClassFileVersion classFileVersion,
                           FieldPool fieldPool,
-                          List<DynamicType> explicitAuxiliaryTypes,
+                          List<DynamicType> auxiliaryTypes,
                           MethodList<?> instrumentedMethods,
                           LoadedTypeInitializer loadedTypeInitializer,
                           TypeInitializer typeInitializer,
                           TypeAttributeAppender typeAttributeAppender,
                           AsmVisitorWrapper asmVisitorWrapper,
-                          ClassFileVersion classFileVersion,
                           AnnotationValueFilter.Factory annotationValueFilterFactory,
                           AnnotationRetention annotationRetention,
                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -1436,14 +1433,14 @@ public interface TypeWriter<T> {
                           TypeValidation typeValidation,
                           TypePool typePool) {
             this.instrumentedType = instrumentedType;
+            this.classFileVersion = classFileVersion;
             this.fieldPool = fieldPool;
-            this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
+            this.auxiliaryTypes = auxiliaryTypes;
             this.instrumentedMethods = instrumentedMethods;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.typeInitializer = typeInitializer;
             this.typeAttributeAppender = typeAttributeAppender;
             this.asmVisitorWrapper = asmVisitorWrapper;
-            this.classFileVersion = classFileVersion;
             this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
             this.annotationValueFilterFactory = annotationValueFilterFactory;
             this.annotationRetention = annotationRetention;
@@ -1481,6 +1478,7 @@ public interface TypeWriter<T> {
                                                     TypeValidation typeValidation,
                                                     TypePool typePool) {
             return new ForCreation<U>(methodRegistry.getInstrumentedType(),
+                    classFileVersion,
                     fieldPool,
                     methodRegistry,
                     Collections.<DynamicType>emptyList(),
@@ -1489,7 +1487,6 @@ public interface TypeWriter<T> {
                     methodRegistry.getTypeInitializer(),
                     typeAttributeAppender,
                     asmVisitorWrapper,
-                    classFileVersion,
                     annotationValueFilterFactory,
                     annotationRetention,
                     auxiliaryTypeNamingStrategy,
@@ -1531,6 +1528,7 @@ public interface TypeWriter<T> {
                                                         TypeDescription originalType,
                                                         ClassFileLocator classFileLocator) {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
+                    classFileVersion,
                     fieldPool,
                     methodRegistry,
                     SubclassImplementationTarget.Factory.LEVEL_TYPE,
@@ -1540,7 +1538,6 @@ public interface TypeWriter<T> {
                     methodRegistry.getTypeInitializer(),
                     typeAttributeAppender,
                     asmVisitorWrapper,
-                    classFileVersion,
                     annotationValueFilterFactory,
                     annotationRetention,
                     auxiliaryTypeNamingStrategy,
@@ -1587,6 +1584,7 @@ public interface TypeWriter<T> {
                                                     ClassFileLocator classFileLocator,
                                                     MethodRebaseResolver methodRebaseResolver) {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
+                    classFileVersion,
                     fieldPool,
                     methodRegistry,
                     new RebaseImplementationTarget.Factory(methodRebaseResolver),
@@ -1596,7 +1594,6 @@ public interface TypeWriter<T> {
                     methodRegistry.getTypeInitializer(),
                     typeAttributeAppender,
                     asmVisitorWrapper,
-                    classFileVersion,
                     annotationValueFilterFactory,
                     annotationRetention,
                     auxiliaryTypeNamingStrategy,
@@ -1611,37 +1608,23 @@ public interface TypeWriter<T> {
         @Override
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should not change program outcome")
         public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
-            Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
-                    auxiliaryTypeNamingStrategy,
-                    typeResolutionStrategy.injectedInto(typeInitializer),
-                    classFileVersion);
-            byte[] binaryRepresentation = create(implementationContext);
+            UnresolvedType<S> unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
             if (DUMP_FOLDER != null) {
                 try {
                     OutputStream outputStream = new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis()));
                     try {
-                        outputStream.write(binaryRepresentation);
+                        outputStream.write(unresolvedType.getBinaryRepresentation());
                     } finally {
                         outputStream.close();
                     }
                 } catch (Exception exception) {
-                    Logger.getLogger("net.bytebuddy").warning("Could not dump class file for " + instrumentedType + ": " + exception.getMessage());
+                    Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not dump class file for " + instrumentedType, exception);
                 }
             }
-            return new DynamicType.Default.Unloaded<S>(instrumentedType,
-                    binaryRepresentation,
-                    loadedTypeInitializer,
-                    CompoundList.of(explicitAuxiliaryTypes, implementationContext.getRegisteredAuxiliaryTypes()),
-                    typeResolutionStrategy);
+            return unresolvedType.resolve(typeResolutionStrategy);
         }
 
-        /**
-         * Creates the instrumented type.
-         *
-         * @param implementationContext The implementation context to use.
-         * @return A byte array that is represented by the instrumented type.
-         */
-        protected abstract byte[] create(Implementation.Context.ExtractableView implementationContext);
+        protected abstract UnresolvedType<S> create(TypeInitializer typeInitializer);
 
         @Override
         public boolean equals(Object other) {
@@ -1650,13 +1633,12 @@ public interface TypeWriter<T> {
             Default<?> aDefault = (Default<?>) other;
             return instrumentedType.equals(aDefault.instrumentedType)
                     && fieldPool.equals(aDefault.fieldPool)
-                    && explicitAuxiliaryTypes.equals(aDefault.explicitAuxiliaryTypes)
+                    && auxiliaryTypes.equals(aDefault.auxiliaryTypes)
                     && instrumentedMethods.equals(aDefault.instrumentedMethods)
                     && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer)
                     && typeInitializer.equals(aDefault.typeInitializer)
                     && typeAttributeAppender.equals(aDefault.typeAttributeAppender)
                     && asmVisitorWrapper.equals(aDefault.asmVisitorWrapper)
-                    && classFileVersion.equals(aDefault.classFileVersion)
                     && annotationValueFilterFactory.equals(aDefault.annotationValueFilterFactory)
                     && annotationRetention == aDefault.annotationRetention
                     && auxiliaryTypeNamingStrategy.equals(aDefault.auxiliaryTypeNamingStrategy)
@@ -1669,13 +1651,12 @@ public interface TypeWriter<T> {
         public int hashCode() {
             int result = instrumentedType.hashCode();
             result = 31 * result + fieldPool.hashCode();
-            result = 31 * result + explicitAuxiliaryTypes.hashCode();
+            result = 31 * result + auxiliaryTypes.hashCode();
             result = 31 * result + instrumentedMethods.hashCode();
             result = 31 * result + loadedTypeInitializer.hashCode();
             result = 31 * result + typeInitializer.hashCode();
             result = 31 * result + typeAttributeAppender.hashCode();
             result = 31 * result + asmVisitorWrapper.hashCode();
-            result = 31 * result + classFileVersion.hashCode();
             result = 31 * result + annotationValueFilterFactory.hashCode();
             result = 31 * result + annotationRetention.hashCode();
             result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
@@ -1683,6 +1664,30 @@ public interface TypeWriter<T> {
             result = 31 * result + typeValidation.hashCode();
             result = 31 * result + typePool.hashCode();
             return result;
+        }
+
+        protected class UnresolvedType<U> {
+
+            private final byte[] binaryRepresentation;
+
+            private final List<? extends DynamicType> auxiliaryTypes;
+
+            protected UnresolvedType(byte[] binaryRepresentation, List<? extends DynamicType> auxiliaryTypes) {
+                this.binaryRepresentation = binaryRepresentation;
+                this.auxiliaryTypes = auxiliaryTypes;
+            }
+
+            protected DynamicType.Unloaded<U> resolve(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
+                return new DynamicType.Default.Unloaded<U>(instrumentedType,
+                        binaryRepresentation,
+                        loadedTypeInitializer,
+                        CompoundList.of(Default.this.auxiliaryTypes, auxiliaryTypes),
+                        typeResolutionStrategy);
+            }
+
+            protected byte[] getBinaryRepresentation() {
+                return binaryRepresentation;
+            }
         }
 
         /**
@@ -2855,6 +2860,7 @@ public interface TypeWriter<T> {
              * @param methodRebaseResolver         The method rebase resolver to use for rebasing methods.
              */
             protected ForInlining(TypeDescription instrumentedType,
+                                  ClassFileVersion classFileVersion,
                                   FieldPool fieldPool,
                                   MethodRegistry.Prepared methodRegistry,
                                   Implementation.Target.Factory implementationTargetFactory,
@@ -2864,7 +2870,6 @@ public interface TypeWriter<T> {
                                   TypeInitializer typeInitializer,
                                   TypeAttributeAppender typeAttributeAppender,
                                   AsmVisitorWrapper asmVisitorWrapper,
-                                  ClassFileVersion classFileVersion,
                                   AnnotationValueFilter.Factory annotationValueFilterFactory,
                                   AnnotationRetention annotationRetention,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -2875,6 +2880,7 @@ public interface TypeWriter<T> {
                                   ClassFileLocator classFileLocator,
                                   MethodRebaseResolver methodRebaseResolver) {
                 super(instrumentedType,
+                        classFileVersion,
                         fieldPool,
                         explicitAuxiliaryTypes,
                         instrumentedMethods,
@@ -2882,7 +2888,6 @@ public interface TypeWriter<T> {
                         typeInitializer,
                         typeAttributeAppender,
                         asmVisitorWrapper,
-                        classFileVersion,
                         annotationValueFilterFactory,
                         annotationRetention,
                         auxiliaryTypeNamingStrategy,
@@ -2897,47 +2902,36 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public byte[] create(Implementation.Context.ExtractableView implementationContext) {
+            protected UnresolvedType<U> create(TypeInitializer typeInitializer) {
                 try {
                     ClassFileLocator.Resolution resolution = classFileLocator.locate(originalType.getName());
                     if (!resolution.isResolved()) {
                         throw new IllegalArgumentException("Cannot locate the class file for " + originalType + " using " + classFileLocator);
                     }
-                    return doCreate(implementationContext, resolution.resolve());
+                    int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS), readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
+                    ClassReader classReader = new ClassReader(resolution.resolve());
+                    ClassWriter classWriter = new FrameComputingClassWriter(classReader, writerFlags, typePool);
+                    ContextRegistry contextRegistry = new ContextRegistry();
+                    classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType,
+                            ValidatingClassVisitor.of(classWriter, typeValidation),
+                            writerFlags,
+                            readerFlags), typeInitializer, contextRegistry), readerFlags);
+                    return new UnresolvedType<U>(classWriter.toByteArray(), contextRegistry.getAuxiliaryTypes());
                 } catch (IOException exception) {
                     throw new RuntimeException("The class file could not be written", exception);
                 }
             }
 
             /**
-             * Performs the actual creation of a class file.
-             *
-             * @param implementationContext The implementation context to use for implementing the class file.
-             * @param binaryRepresentation  The binary representation of the class file.
-             * @return The byte array representing the created class.
-             */
-            private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
-                int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS), readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
-                ClassReader classReader = new ClassReader(binaryRepresentation);
-                ClassWriter classWriter = new FrameComputingClassWriter(classReader, writerFlags, typePool);
-                classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType,
-                        ValidatingClassVisitor.of(classWriter, typeValidation),
-                        writerFlags,
-                        readerFlags), implementationContext), readerFlags);
-                return classWriter.toByteArray();
-            }
-
-            /**
              * Creates a class visitor which weaves all changes and additions on the fly.
              *
              * @param classVisitor          The class visitor to which this entry is to be written to.
-             * @param implementationContext The implementation context to use for implementing the class file.
              * @return A class visitor which is capable of applying the changes.
              */
-            private ClassVisitor writeTo(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+            private ClassVisitor writeTo(ClassVisitor classVisitor, TypeInitializer typeInitializer, ContextRegistry contextRegistry) {
                 return originalType.getName().equals(instrumentedType.getName())
-                        ? new RedefinitionClassVisitor(classVisitor, implementationContext)
-                        : new ClassRemapper(new RedefinitionClassVisitor(classVisitor, implementationContext), new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
+                        ? new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry)
+                        : new ClassRemapper(new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry), new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
             }
 
             @Override
@@ -2965,13 +2959,12 @@ public interface TypeWriter<T> {
                 return "TypeWriter.Default.ForInlining{" +
                         "instrumentedType=" + instrumentedType +
                         ", fieldPool=" + fieldPool +
-                        ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
+                        ", auxiliaryTypes=" + auxiliaryTypes +
                         ", instrumentedMethods=" + instrumentedMethods +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
                         ", typeInitializer=" + typeInitializer +
                         ", typeAttributeAppender=" + typeAttributeAppender +
                         ", asmVisitorWrapper=" + asmVisitorWrapper +
-                        ", classFileVersion=" + classFileVersion +
                         ", annotationValueFilterFactory=" + annotationValueFilterFactory +
                         ", annotationRetention=" + annotationRetention +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
@@ -2981,6 +2974,19 @@ public interface TypeWriter<T> {
                         ", classFileLocator=" + classFileLocator +
                         ", methodRebaseResolver=" + methodRebaseResolver +
                         '}';
+            }
+
+            protected static class ContextRegistry {
+
+                private Implementation.Context.ExtractableView implementationContext;
+
+                public void setImplementationContext(Implementation.Context.ExtractableView implementationContext) {
+                    this.implementationContext = implementationContext;
+                }
+
+                public List<DynamicType> getAuxiliaryTypes() {
+                    return implementationContext.getAuxiliaryTypes();
+                }
             }
 
             /**
@@ -3068,10 +3074,9 @@ public interface TypeWriter<T> {
             @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
             protected class RedefinitionClassVisitor extends ClassVisitor {
 
-                /**
-                 * The implementation context for this class creation.
-                 */
-                private final Implementation.Context.ExtractableView implementationContext;
+                private final TypeInitializer typeInitializer;
+
+                private final ContextRegistry contextRegistry;
 
                 /**
                  * A mapping of fields to write by their names.
@@ -3082,6 +3087,11 @@ public interface TypeWriter<T> {
                  * A mapping of methods to write by a concatenation of internal name and descriptor.
                  */
                 private final Map<String, MethodDescription> declarableMethods;
+
+                /**
+                 * The implementation context for this class creation.
+                 */
+                private Implementation.Context.ExtractableView implementationContext;
 
                 /**
                  * A mutable reference for code that is to be injected into the actual type initializer, if any.
@@ -3101,11 +3111,11 @@ public interface TypeWriter<T> {
                  * Creates a class visitor which is capable of redefining an existent class on the fly.
                  *
                  * @param classVisitor          The underlying class visitor to which writes are delegated.
-                 * @param implementationContext The implementation context to use for implementing the class file.
                  */
-                protected RedefinitionClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                protected RedefinitionClassVisitor(ClassVisitor classVisitor, TypeInitializer typeInitializer, ContextRegistry contextRegistry) {
                     super(Opcodes.ASM5, classVisitor);
-                    this.implementationContext = implementationContext;
+                    this.typeInitializer = typeInitializer;
+                    this.contextRegistry = contextRegistry;
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
                     declaredFields = new HashMap<String, FieldDescription>();
                     for (FieldDescription fieldDescription : fieldDescriptions) {
@@ -3125,8 +3135,18 @@ public interface TypeWriter<T> {
                                   String genericSignature,
                                   String superClassInternalName,
                                   String[] interfaceTypeInternalName) {
-                    supportsBridges = ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V5);
+                    ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(classFileVersionNumber);
+                    supportsBridges = classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5);
                     methodPool = methodRegistry.compile(implementationTargetFactory);
+                    implementationContext = implementationContextFactory.make(instrumentedType,
+                            auxiliaryTypeNamingStrategy,
+                            typeInitializer,
+                            classFileVersion,
+                            ForInlining.this.classFileVersion);
+                    contextRegistry.setImplementationContext(implementationContext);
+                    if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
+                        implementationContext.prohibitTypeInitializer();
+                    }
                     super.visit(classFileVersionNumber,
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),
                             instrumentedType.getInternalName(),
@@ -3135,11 +3155,7 @@ public interface TypeWriter<T> {
                                     TypeDescription.OBJECT :
                                     instrumentedType.getSuperClass().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
-                    implementationContext.setClassFileVersion(ClassFileVersion.ofMinorMajor(classFileVersionNumber));
                     typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
-                    if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
-                        implementationContext.prohibitTypeInitializer();
-                    }
                 }
 
                 @Override
@@ -3575,6 +3591,7 @@ public interface TypeWriter<T> {
              * @param typePool                     The type pool to use for computing stack map frames, if required.
              */
             protected ForCreation(TypeDescription instrumentedType,
+                                  ClassFileVersion classFileVersion,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
                                   List<DynamicType> explicitAuxiliaryTypes,
@@ -3583,7 +3600,6 @@ public interface TypeWriter<T> {
                                   TypeInitializer typeInitializer,
                                   TypeAttributeAppender typeAttributeAppender,
                                   AsmVisitorWrapper asmVisitorWrapper,
-                                  ClassFileVersion classFileVersion,
                                   AnnotationValueFilter.Factory annotationValueFilterFactory,
                                   AnnotationRetention annotationRetention,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -3591,6 +3607,7 @@ public interface TypeWriter<T> {
                                   TypeValidation typeValidation,
                                   TypePool typePool) {
                 super(instrumentedType,
+                        classFileVersion,
                         fieldPool,
                         explicitAuxiliaryTypes,
                         instrumentedMethods,
@@ -3598,7 +3615,6 @@ public interface TypeWriter<T> {
                         typeInitializer,
                         typeAttributeAppender,
                         asmVisitorWrapper,
-                        classFileVersion,
                         annotationValueFilterFactory,
                         annotationRetention,
                         auxiliaryTypeNamingStrategy,
@@ -3609,7 +3625,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public byte[] create(Implementation.Context.ExtractableView implementationContext) {
+            protected UnresolvedType<U> create(TypeInitializer typeInitializer) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = new FrameComputingClassWriter(writerFlags, typePool);
                 ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType,
@@ -3624,7 +3640,11 @@ public interface TypeWriter<T> {
                                 ? TypeDescription.OBJECT
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
-                implementationContext.setClassFileVersion(classFileVersion);
+                Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
+                        auxiliaryTypeNamingStrategy,
+                        typeInitializer,
+                        classFileVersion,
+                        classFileVersion);
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);
@@ -3639,7 +3659,7 @@ public interface TypeWriter<T> {
                         annotationValueFilterFactory,
                         supportsBridges);
                 classVisitor.visitEnd();
-                return classWriter.toByteArray();
+                return new UnresolvedType<U>(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
             }
 
             @Override
@@ -3648,7 +3668,7 @@ public interface TypeWriter<T> {
                         "instrumentedType=" + instrumentedType +
                         ", fieldPool=" + fieldPool +
                         ", methodPool=" + methodPool +
-                        ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
+                        ", auxiliaryTypes=" + auxiliaryTypes +
                         ", instrumentedMethods=" + instrumentedMethods +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
                         ", typeInitializer=" + typeInitializer +

@@ -428,13 +428,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
         interface ExtractableView extends Context {
 
             /**
-             * Sets the class file version this implementation context should represent.
-             *
-             * @param classFileVersion The class file version to represent.
-             */
-            void setClassFileVersion(ClassFileVersion classFileVersion);
-
-            /**
              * Determines if this implementation context allows for the retention of a static type initializer.
              *
              * @return {@code true} if the original type initializer can be retained. {@code false} if the original type
@@ -448,7 +441,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              *
              * @return A list of all manifested registered auxiliary types.
              */
-            List<DynamicType> getRegisteredAuxiliaryTypes();
+            List<DynamicType> getAuxiliaryTypes();
 
             /**
              * Writes any information that was registered with an {@link Implementation.Context}
@@ -531,22 +524,15 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  */
                 protected final TypeDescription instrumentedType;
 
-                /**
-                 * The class file version of the instrumented type.
-                 */
-                private ClassFileVersion classFileVersion;
+                protected final ClassFileVersion classFileVersion;
 
                 /**
                  * Create a new extractable view.
                  *
                  * @param instrumentedType The instrumented type.
                  */
-                protected AbstractBase(TypeDescription instrumentedType) {
+                protected AbstractBase(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
                     this.instrumentedType = instrumentedType;
-                }
-
-                @Override
-                public void setClassFileVersion(ClassFileVersion classFileVersion) {
                     this.classFileVersion = classFileVersion;
                 }
 
@@ -557,9 +543,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 @Override
                 public ClassFileVersion getClassFileVersion() {
-                    if (classFileVersion == null) {
-                        throw new IllegalStateException("Cannot read class file version before it was set");
-                    }
                     return classFileVersion;
                 }
             }
@@ -582,7 +565,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
             ExtractableView make(TypeDescription instrumentedType,
                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                  TypeInitializer typeInitializer,
-                                 ClassFileVersion classFileVersion);
+                                 ClassFileVersion classFileVersion,
+                                 ClassFileVersion auxiliaryClassFileVersion);
         }
 
         /**
@@ -597,8 +581,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
              *
              * @param instrumentedType The instrumented type.
              */
-            protected Disabled(TypeDescription instrumentedType) {
-                super(instrumentedType);
+            protected Disabled(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
+                super(instrumentedType, classFileVersion);
             }
 
             @Override
@@ -607,7 +591,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public List<DynamicType> getRegisteredAuxiliaryTypes() {
+            public List<DynamicType> getAuxiliaryTypes() {
                 return Collections.emptyList();
             }
 
@@ -669,11 +653,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                             TypeInitializer typeInitializer,
-                                            ClassFileVersion classFileVersion) {
+                                            ClassFileVersion classFileVersion,
+                                            ClassFileVersion auxiliaryClassFileVersion) {
                     if (typeInitializer.isDefined()) {
                         throw new IllegalStateException("Cannot define type initializer which was explicitly disabled: " + typeInitializer);
                     }
-                    return new Disabled(instrumentedType);
+                    return new Disabled(instrumentedType, classFileVersion);
                 }
 
                 @Override
@@ -700,19 +685,16 @@ public interface Implementation extends InstrumentedType.Prepareable {
             public static final String FIELD_CACHE_PREFIX = "cachedValue";
 
             /**
+             * The naming strategy for naming auxiliary types that are registered.
+             */
+            private final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
+
+            /**
              * The type initializer of the created instrumented type.
              */
             private final TypeInitializer typeInitializer;
 
-            /**
-             * The class file version that the instrumented type is written in.
-             */
-            private final ClassFileVersion classFileVersion;
-
-            /**
-             * The naming strategy for naming auxiliary types that are registered.
-             */
-            private final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
+            private final ClassFileVersion auxiliaryClassFileVersion;
 
             /**
              * A mapping of special method invocations to their accessor methods that each invoke their mapped invocation.
@@ -758,7 +740,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * If {@code true}, this instance suggests the retention of the original type initializer and prohibits the definition of a custom initializer.
              * This property is required for interfaces before the Java 8 byte code level where type initializers are not allowed.
              */
-            private boolean prohibitTypeInitiailzer;
+            private boolean prohibitTypeInitializer;
 
             /**
              * Creates a new default implementation context.
@@ -769,13 +751,14 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param classFileVersion            The class file version of the created class.
              */
             protected Default(TypeDescription instrumentedType,
+                              ClassFileVersion classFileVersion,
                               AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                               TypeInitializer typeInitializer,
-                              ClassFileVersion classFileVersion) {
-                super(instrumentedType);
+                              ClassFileVersion auxiliaryClassFileVersion) {
+                super(instrumentedType, classFileVersion);
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
-                this.classFileVersion = classFileVersion;
+                this.auxiliaryClassFileVersion = auxiliaryClassFileVersion;
                 registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription.InDefinedShape>();
                 registeredGetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
                 registeredSetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
@@ -784,7 +767,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
                 suffix = RandomString.make();
                 fieldCacheCanAppendEntries = true;
-                prohibitTypeInitiailzer = false;
+                prohibitTypeInitializer = false;
             }
 
             @Override
@@ -824,7 +807,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             public TypeDescription register(AuxiliaryType auxiliaryType) {
                 DynamicType dynamicType = auxiliaryTypes.get(auxiliaryType);
                 if (dynamicType == null) {
-                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(instrumentedType), classFileVersion, this);
+                    dynamicType = auxiliaryType.make(auxiliaryTypeNamingStrategy.name(instrumentedType), auxiliaryClassFileVersion, this);
                     auxiliaryTypes.put(auxiliaryType, dynamicType);
                 }
                 return dynamicType.getTypeDescription();
@@ -832,11 +815,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
             @Override
             public boolean isRetainTypeInitializer() {
-                return prohibitTypeInitiailzer;
+                return prohibitTypeInitializer;
             }
 
             @Override
-            public List<DynamicType> getRegisteredAuxiliaryTypes() {
+            public List<DynamicType> getAuxiliaryTypes() {
                 return new ArrayList<DynamicType>(auxiliaryTypes.values());
             }
 
@@ -881,7 +864,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 } else if (typeInitializer.isDefined()) {
                     initializerRecord = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
                 }
-                if (prohibitTypeInitiailzer && initializerRecord.getSort().isDefined()) {
+                if (prohibitTypeInitializer && initializerRecord.getSort().isDefined()) {
                     throw new IllegalStateException("It is impossible to define a class initializer or cached values for " + instrumentedType);
                 }
                 initializerRecord.apply(classVisitor, this, annotationValueFilterFactory);
@@ -892,7 +875,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
             @Override
             public void prohibitTypeInitializer() {
-                prohibitTypeInitiailzer = true;
+                prohibitTypeInitializer = true;
             }
 
             @Override
@@ -910,7 +893,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                         ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
                         ", suffix=" + suffix +
                         ", fieldCacheCanAppendEntries=" + fieldCacheCanAppendEntries +
-                        ", prohibitTypeInitiailzer=" + prohibitTypeInitiailzer +
+                        ", prohibitTypeInitializer=" + prohibitTypeInitializer +
                         '}';
             }
 
@@ -1554,8 +1537,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                             TypeInitializer typeInitializer,
-                                            ClassFileVersion classFileVersion) {
-                    return new Default(instrumentedType, auxiliaryTypeNamingStrategy, typeInitializer, classFileVersion);
+                                            ClassFileVersion classFileVersion,
+                                            ClassFileVersion auxiliaryClassFileVersion) {
+                    return new Default(instrumentedType, classFileVersion, auxiliaryTypeNamingStrategy, typeInitializer, auxiliaryClassFileVersion);
                 }
 
                 @Override
