@@ -1,6 +1,5 @@
 package net.bytebuddy.description.field;
 
-import com.sun.org.apache.bcel.internal.classfile.Synthetic;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
