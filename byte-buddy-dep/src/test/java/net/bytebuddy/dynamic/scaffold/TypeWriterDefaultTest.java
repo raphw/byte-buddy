@@ -494,8 +494,10 @@ public class TypeWriterDefaultTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypeWriter.Default.UnresolvedType.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.ContextRegistry.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.class).create(new ObjectPropertyAssertion.Creator<TypeWriter.Default.ForInlining<?>>() {
             @Override
             @SuppressWarnings("unchecked")

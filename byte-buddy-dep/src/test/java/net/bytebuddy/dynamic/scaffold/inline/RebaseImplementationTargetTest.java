@@ -30,9 +30,6 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     private static final String BAR = "bar";
 
     @Mock
-    private MethodRebaseResolver methodRebaseResolver;
-
-    @Mock
     private MethodDescription.InDefinedShape rebasedMethod;
 
     @Mock
@@ -65,15 +62,12 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(rebasedMethod.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(rebasedMethod.asSignatureToken()).thenReturn(rebasedSignatureToken);
-        when(methodRebaseResolver.asTokenMap()).thenReturn(Collections.singletonMap(rebasedSignatureToken, resolution));
         super.setUp();
     }
 
     @Override
-    protected Implementation.Target makeImplementationTarget() {
-        return RebaseImplementationTarget.of(instrumentedType,
-                methodGraph,
-                methodRebaseResolver);
+    protected Implementation.Target makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation defaultMethodInvocation) {
+        return new RebaseImplementationTarget(instrumentedType, methodGraph, defaultMethodInvocation, Collections.singletonMap(rebasedSignatureToken, resolution));
     }
 
     @Test
@@ -82,9 +76,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(invokableMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         when(resolution.isRebased()).thenReturn(false);
         when(resolution.getResolvedMethod()).thenReturn(invokableMethod);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedSignatureToken);
-        verify(methodRebaseResolver).asTokenMap();
-        verifyNoMoreInteractions(methodRebaseResolver);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(rebasedSignatureToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) invokableMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(instrumentedType));
@@ -105,9 +97,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Trivial.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedSignatureToken);
-        verify(methodRebaseResolver).asTokenMap();
-        verifyNoMoreInteractions(methodRebaseResolver);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(rebasedSignatureToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) rebasedMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(instrumentedType));
@@ -129,9 +119,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
         when(resolution.getAdditionalArguments()).thenReturn(NullConstant.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedSignatureToken);
-        verify(methodRebaseResolver).asTokenMap();
-        verifyNoMoreInteractions(methodRebaseResolver);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(rebasedSignatureToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) rebasedMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(instrumentedType));
@@ -153,15 +141,14 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Trivial.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(false);
-        when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.Preserved(invokableMethod));
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedSignatureToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(rebasedSignatureToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 
     @Test
     public void testSuperTypeMethodIsInvokable() throws Exception {
         when(invokableMethod.isSpecializableFor(rawSuperClass)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) invokableMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(rawSuperClass));
@@ -180,13 +167,13 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(invokableMethod.isSpecializableFor(rawSuperClass)).thenReturn(false);
         when(resolution.isRebased()).thenReturn(false);
         when(resolution.getResolvedMethod()).thenReturn(invokableMethod);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 
     @Test
     public void testOriginType() throws Exception {
-        assertThat(implementationTarget.getOriginType(), is((TypeDefinition) instrumentedType));
+        assertThat(makeImplementationTarget().getOriginType(), is((TypeDefinition) instrumentedType));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -27,7 +28,7 @@ public interface MethodRegistry {
      * @param methodMatcher            A matcher to identify any method that this definition concerns.
      * @param handler                  The handler to instrument any matched method.
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
-     * @param transformer        The method transformer to be applied to implemented methods.
+     * @param transformer              The method transformer to be applied to implemented methods.
      * @return An adapted version of this method registry.
      */
     MethodRegistry prepend(LatentMatcher<? super MethodDescription> methodMatcher,
@@ -41,7 +42,7 @@ public interface MethodRegistry {
      * @param methodMatcher            A matcher to identify all entries that are to be matched.
      * @param handler                  The handler to instrument any matched method.
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
-     * @param transformer        The method transformer to be applied to implemented methods.
+     * @param transformer              The method transformer to be applied to implemented methods.
      * @return An adapted version of this method registry.
      */
     MethodRegistry append(LatentMatcher<? super MethodDescription> methodMatcher,
@@ -387,9 +388,10 @@ public interface MethodRegistry {
          * Compiles this prepared method registry.
          *
          * @param implementationTargetFactory A factory for creating an implementation target.
+         * @param classFileVersion            The type's class file version.
          * @return A factory for creating an implementation target.
          */
-        Compiled compile(Implementation.Target.Factory implementationTargetFactory);
+        Compiled compile(Implementation.Target.Factory implementationTargetFactory, ClassFileVersion classFileVersion);
     }
 
     /**
@@ -582,7 +584,7 @@ public interface MethodRegistry {
              * @param matcher                  The latent method matcher that this entry represents.
              * @param handler                  The handler to apply to all matched entries.
              * @param attributeAppenderFactory A method attribute appender factory to apply to all entries.
-             * @param transformer        The method transformer to be applied to implemented methods.
+             * @param transformer              The method transformer to be applied to implemented methods.
              */
             protected Entry(LatentMatcher<? super MethodDescription> matcher,
                             Handler handler,
@@ -754,11 +756,11 @@ public interface MethodRegistry {
             }
 
             @Override
-            public MethodRegistry.Compiled compile(Implementation.Target.Factory implementationTargetFactory) {
+            public MethodRegistry.Compiled compile(Implementation.Target.Factory implementationTargetFactory, ClassFileVersion classFileVersion) {
                 Map<Handler, Handler.Compiled> compilationCache = new HashMap<Handler, Handler.Compiled>();
                 Map<MethodAttributeAppender.Factory, MethodAttributeAppender> attributeAppenderCache = new HashMap<MethodAttributeAppender.Factory, MethodAttributeAppender>();
                 LinkedHashMap<MethodDescription, Compiled.Entry> entries = new LinkedHashMap<MethodDescription, Compiled.Entry>();
-                Implementation.Target implementationTarget = implementationTargetFactory.make(instrumentedType, methodGraph);
+                Implementation.Target implementationTarget = implementationTargetFactory.make(instrumentedType, methodGraph, classFileVersion);
                 for (Map.Entry<MethodDescription, Entry> entry : implementations.entrySet()) {
                     Handler.Compiled cachedHandler = compilationCache.get(entry.getValue().getHandler());
                     if (cachedHandler == null) {

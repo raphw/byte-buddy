@@ -296,9 +296,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
              *
              * @param instrumentedType The instrumented type.
              * @param methodGraph      A method graph of the instrumented type.
+             * @param classFileVersion The type's class file version.
              * @return An implementation target for the instrumented type.
              */
-            Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph);
+            Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion);
         }
 
         /**
@@ -317,14 +318,21 @@ public interface Implementation extends InstrumentedType.Prepareable {
             protected final MethodGraph.Linked methodGraph;
 
             /**
+             * The default method invocation mode to apply.
+             */
+            protected final DefaultMethodInvocation defaultMethodInvocation;
+
+            /**
              * Creates a new implementation target.
              *
-             * @param instrumentedType The instrumented type.
-             * @param methodGraph      The instrumented type's method graph.
+             * @param instrumentedType        The instrumented type.
+             * @param methodGraph             The instrumented type's method graph.
+             * @param defaultMethodInvocation The default method invocation mode to apply.
              */
-            protected AbstractBase(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
+            protected AbstractBase(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, DefaultMethodInvocation defaultMethodInvocation) {
                 this.instrumentedType = instrumentedType;
                 this.methodGraph = methodGraph;
+                this.defaultMethodInvocation = defaultMethodInvocation;
             }
 
             @Override
@@ -334,10 +342,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
             @Override
             public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.SignatureToken token) {
-                MethodGraph.Node node = methodGraph.getInterfaceGraph(targetType).locate(token);
-                return node.getSort().isUnique()
-                        ? SpecialMethodInvocation.Simple.of(node.getRepresentative(), targetType)
-                        : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
+                return defaultMethodInvocation.apply(methodGraph.getInterfaceGraph(targetType).locate(token), targetType);
             }
 
             @Override
@@ -363,14 +368,70 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 if (other == null || getClass() != other.getClass()) return false;
                 AbstractBase that = (AbstractBase) other;
                 return instrumentedType.equals(that.instrumentedType)
-                        && methodGraph.equals(that.methodGraph);
+                        && methodGraph.equals(that.methodGraph)
+                        && defaultMethodInvocation == that.defaultMethodInvocation;
             }
 
             @Override
             public int hashCode() {
                 int result = instrumentedType.hashCode();
                 result = 31 * result + methodGraph.hashCode();
+                result = 31 * result + defaultMethodInvocation.hashCode();
                 return result;
+            }
+
+            /**
+             * Determines if default method invocations are possible.
+             */
+            public enum DefaultMethodInvocation {
+
+                /**
+                 * Permits default method invocations, if an interface declaring a default method is possible.
+                 */
+                ENABLED {
+                    @Override
+                    protected SpecialMethodInvocation apply(MethodGraph.Node node, TypeDescription targetType) {
+                        return node.getSort().isUnique()
+                                ? SpecialMethodInvocation.Simple.of(node.getRepresentative(), targetType)
+                                : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
+                    }
+                },
+
+                /**
+                 * Does not permit default method invocations.
+                 */
+                DISABLED {
+                    @Override
+                    protected SpecialMethodInvocation apply(MethodGraph.Node node, TypeDescription targetType) {
+                        return SpecialMethodInvocation.Illegal.INSTANCE;
+                    }
+                };
+
+                /**
+                 * Resolves a default method invocation depending on the class file version permitting such calls.
+                 *
+                 * @param classFileVersion The class file version to resolve for.
+                 * @return A suitable default method invocation mode.
+                 */
+                public static DefaultMethodInvocation of(ClassFileVersion classFileVersion) {
+                    return classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8)
+                            ? ENABLED
+                            : DISABLED;
+                }
+
+                /**
+                 * Resolves a default method invocation for a given node.
+                 *
+                 * @param node       The node representing the default method call.
+                 * @param targetType The target type defining the default method.
+                 * @return A suitable special method invocation.
+                 */
+                protected abstract SpecialMethodInvocation apply(MethodGraph.Node node, TypeDescription targetType);
+
+                @Override
+                public String toString() {
+                    return "Implementation.Target.AbstractBase.DefaultMethodInvocation." + name();
+                }
             }
         }
     }
@@ -415,9 +476,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
         TypeDescription getInstrumentedType();
 
         /**
-         * Returns the class file version of the current implementation.
+         * Returns the class file version of the currently created dynamic type.
          *
-         * @return The class file version of the current implementation.
+         * @return The class file version of the currently created dynamic type.
          */
         ClassFileVersion getClassFileVersion();
 
@@ -524,12 +585,16 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  */
                 protected final TypeDescription instrumentedType;
 
+                /**
+                 * The class file version of the dynamic type.
+                 */
                 protected final ClassFileVersion classFileVersion;
 
                 /**
                  * Create a new extractable view.
                  *
                  * @param instrumentedType The instrumented type.
+                 * @param classFileVersion The class file version of the dynamic type.
                  */
                 protected AbstractBase(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
                     this.instrumentedType = instrumentedType;
@@ -560,6 +625,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
              * @param typeInitializer             The type initializer of the created instrumented type.
              * @param classFileVersion            The class file version of the created class.
+             * @param auxiliaryClassFileVersion   The class file version of any auxiliary classes.
              * @return An implementation context in its extractable view.
              */
             ExtractableView make(TypeDescription instrumentedType,
@@ -580,6 +646,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * Creates a new disabled implementation context.
              *
              * @param instrumentedType The instrumented type.
+             * @param classFileVersion The class file version to create the class in.
              */
             protected Disabled(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
                 super(instrumentedType, classFileVersion);
@@ -624,18 +691,20 @@ public interface Implementation extends InstrumentedType.Prepareable {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Disabled) other).instrumentedType);
+                        && instrumentedType.equals(((Disabled) other).instrumentedType)
+                        && classFileVersion.equals(((Disabled) other).classFileVersion);
             }
 
             @Override
             public int hashCode() {
-                return instrumentedType.hashCode();
+                return instrumentedType.hashCode() + 31 * classFileVersion.hashCode();
             }
 
             @Override
             public String toString() {
                 return "Implementation.Context.Disabled{" +
                         "instrumentedType=" + instrumentedType +
+                        ", classFileVersion=" + classFileVersion +
                         '}';
             }
 
@@ -694,6 +763,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             private final TypeInitializer typeInitializer;
 
+            /**
+             * The class file version to use for auxiliary classes.
+             */
             private final ClassFileVersion auxiliaryClassFileVersion;
 
             /**
@@ -746,9 +818,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * Creates a new default implementation context.
              *
              * @param instrumentedType            The description of the type that is currently subject of creation.
+             * @param classFileVersion            The class file version of the created class.
              * @param auxiliaryTypeNamingStrategy The naming strategy for naming an auxiliary type.
              * @param typeInitializer             The type initializer of the created instrumented type.
-             * @param classFileVersion            The class file version of the created class.
+             * @param auxiliaryClassFileVersion   The class file version to use for auxiliary classes.
              */
             protected Default(TypeDescription instrumentedType,
                               ClassFileVersion classFileVersion,
@@ -884,6 +957,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                         "instrumentedType=" + instrumentedType +
                         ", typeInitializer=" + typeInitializer +
                         ", classFileVersion=" + classFileVersion +
+                        ", auxiliaryClassFileVersion=" + auxiliaryClassFileVersion +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", registeredAccessorMethods=" + registeredAccessorMethods +
                         ", registeredGetters=" + registeredGetters +

@@ -1332,6 +1332,9 @@ public interface TypeWriter<T> {
          */
         protected final TypeDescription instrumentedType;
 
+        /**
+         * The class file specified by the user.
+         */
         protected final ClassFileVersion classFileVersion;
 
         /**
@@ -1342,7 +1345,7 @@ public interface TypeWriter<T> {
         /**
          * The explicit auxiliary types to add to the created type.
          */
-        protected final List<DynamicType> auxiliaryTypes;
+        protected final List<? extends DynamicType> auxiliaryTypes;
 
         /**
          * The instrumented methods relevant to this type creation.
@@ -1403,8 +1406,9 @@ public interface TypeWriter<T> {
          * Creates a new default type writer.
          *
          * @param instrumentedType             The instrumented type to be created.
+         * @param classFileVersion             The class file specified by the user.
          * @param fieldPool                    The field pool to use.
-         * @param auxiliaryTypes       The explicit auxiliary types to add to the created type.
+         * @param auxiliaryTypes               The explicit auxiliary types to add to the created type.
          * @param instrumentedMethods          The instrumented methods relevant to this type creation.
          * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
          * @param typeInitializer              The type initializer to include in the created type's type initializer.
@@ -1420,7 +1424,7 @@ public interface TypeWriter<T> {
         protected Default(TypeDescription instrumentedType,
                           ClassFileVersion classFileVersion,
                           FieldPool fieldPool,
-                          List<DynamicType> auxiliaryTypes,
+                          List<? extends DynamicType> auxiliaryTypes,
                           MethodList<?> instrumentedMethods,
                           LoadedTypeInitializer loadedTypeInitializer,
                           TypeInitializer typeInitializer,
@@ -1608,7 +1612,7 @@ public interface TypeWriter<T> {
         @Override
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should not change program outcome")
         public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
-            UnresolvedType<S> unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
+            UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
             if (DUMP_FOLDER != null) {
                 try {
                     OutputStream outputStream = new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis()));
@@ -1621,17 +1625,24 @@ public interface TypeWriter<T> {
                     Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not dump class file for " + instrumentedType, exception);
                 }
             }
-            return unresolvedType.resolve(typeResolutionStrategy);
+            return unresolvedType.toDynamicType(typeResolutionStrategy);
         }
 
-        protected abstract UnresolvedType<S> create(TypeInitializer typeInitializer);
+        /**
+         * Creates an unresolved version of the dynamic type.
+         *
+         * @param typeInitializer The type initializer to use.
+         * @return An unresolved type.
+         */
+        protected abstract UnresolvedType create(TypeInitializer typeInitializer);
 
         @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Default<?> aDefault = (Default<?>) other;
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            Default<?> aDefault = (Default<?>) object;
             return instrumentedType.equals(aDefault.instrumentedType)
+                    && classFileVersion.equals(aDefault.classFileVersion)
                     && fieldPool.equals(aDefault.fieldPool)
                     && auxiliaryTypes.equals(aDefault.auxiliaryTypes)
                     && instrumentedMethods.equals(aDefault.instrumentedMethods)
@@ -1643,13 +1654,14 @@ public interface TypeWriter<T> {
                     && annotationRetention == aDefault.annotationRetention
                     && auxiliaryTypeNamingStrategy.equals(aDefault.auxiliaryTypeNamingStrategy)
                     && implementationContextFactory.equals(aDefault.implementationContextFactory)
-                    && typeValidation.equals(aDefault.typeValidation)
+                    && typeValidation == aDefault.typeValidation
                     && typePool.equals(aDefault.typePool);
         }
 
         @Override
         public int hashCode() {
             int result = instrumentedType.hashCode();
+            result = 31 * result + classFileVersion.hashCode();
             result = 31 * result + fieldPool.hashCode();
             result = 31 * result + auxiliaryTypes.hashCode();
             result = 31 * result + instrumentedMethods.hashCode();
@@ -1666,27 +1678,89 @@ public interface TypeWriter<T> {
             return result;
         }
 
-        protected class UnresolvedType<U> {
+        /**
+         * An unresolved type.
+         */
+        protected class UnresolvedType {
 
+            /**
+             * The type's binary representation.
+             */
             private final byte[] binaryRepresentation;
 
+            /**
+             * A list of auxiliary types for this unresolved type.
+             */
             private final List<? extends DynamicType> auxiliaryTypes;
 
+            /**
+             * Creates a new unresolved type.
+             *
+             * @param binaryRepresentation The type's binary representation.
+             * @param auxiliaryTypes       A list of auxiliary types for this unresolved type.
+             */
             protected UnresolvedType(byte[] binaryRepresentation, List<? extends DynamicType> auxiliaryTypes) {
                 this.binaryRepresentation = binaryRepresentation;
                 this.auxiliaryTypes = auxiliaryTypes;
             }
 
-            protected DynamicType.Unloaded<U> resolve(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
-                return new DynamicType.Default.Unloaded<U>(instrumentedType,
+            /**
+             * Resolves this type to a dynamic type.
+             *
+             * @param typeResolutionStrategy The type resolution strategy to apply.
+             * @return A dynamic type representing the inlined type.
+             */
+            protected DynamicType.Unloaded<S> toDynamicType(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
+                return new DynamicType.Default.Unloaded<S>(instrumentedType,
                         binaryRepresentation,
                         loadedTypeInitializer,
                         CompoundList.of(Default.this.auxiliaryTypes, auxiliaryTypes),
                         typeResolutionStrategy);
             }
 
+            /**
+             * Returns the binary representation of this unresolved type.
+             *
+             * @return The binary representation of this unresolved type.
+             */
             protected byte[] getBinaryRepresentation() {
                 return binaryRepresentation;
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private Default getOuter() {
+                return Default.this;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Default<?>.UnresolvedType that = (Default<?>.UnresolvedType) object;
+                return Arrays.equals(binaryRepresentation, that.binaryRepresentation)
+                        && Default.this.equals(that.getOuter())
+                        && auxiliaryTypes.equals(that.auxiliaryTypes);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = Arrays.hashCode(binaryRepresentation);
+                result = 31 * result + auxiliaryTypes.hashCode();
+                result = 31 * result + Default.this.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "TypeWriter.Default.UnresolvedType{" +
+                        "outer=" + Default.this +
+                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
+                        ", auxiliaryTypes=" + auxiliaryTypes +
+                        '}';
             }
         }
 
@@ -2818,8 +2892,14 @@ public interface TypeWriter<T> {
              */
             private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
+            /**
+             * The method registry to use.
+             */
             private final MethodRegistry.Prepared methodRegistry;
 
+            /**
+             * The implementation target factory to use.
+             */
             private final Implementation.Target.Factory implementationTargetFactory;
 
             /**
@@ -2841,14 +2921,16 @@ public interface TypeWriter<T> {
              * Creates a new default type writer for creating a new type that is not based on an existing class file.
              *
              * @param instrumentedType             The instrumented type to be created.
+             * @param classFileVersion             The class file version to define auxiliary types in.
              * @param fieldPool                    The field pool to use.
+             * @param methodRegistry               The method registry to use.
+             * @param implementationTargetFactory  The implementation target factory to use.
              * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
              * @param instrumentedMethods          The instrumented methods relevant to this type creation.
              * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
              * @param typeInitializer              The type initializer to include in the created type's type initializer.
              * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
              * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
-             * @param classFileVersion             The class file version to define auxiliary types in.
              * @param annotationValueFilterFactory The annotation value filter factory to apply.
              * @param annotationRetention          The annotation retention to apply.
              * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
@@ -2902,7 +2984,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            protected UnresolvedType<U> create(TypeInitializer typeInitializer) {
+            protected UnresolvedType create(TypeInitializer typeInitializer) {
                 try {
                     ClassFileLocator.Resolution resolution = classFileLocator.locate(originalType.getName());
                     if (!resolution.isResolved()) {
@@ -2916,7 +2998,7 @@ public interface TypeWriter<T> {
                             ValidatingClassVisitor.of(classWriter, typeValidation),
                             writerFlags,
                             readerFlags), typeInitializer, contextRegistry), readerFlags);
-                    return new UnresolvedType<U>(classWriter.toByteArray(), contextRegistry.getAuxiliaryTypes());
+                    return new UnresolvedType(classWriter.toByteArray(), contextRegistry.getAuxiliaryTypes());
                 } catch (IOException exception) {
                     throw new RuntimeException("The class file could not be written", exception);
                 }
@@ -2925,7 +3007,9 @@ public interface TypeWriter<T> {
             /**
              * Creates a class visitor which weaves all changes and additions on the fly.
              *
-             * @param classVisitor          The class visitor to which this entry is to be written to.
+             * @param classVisitor    The class visitor to which this entry is to be written to.
+             * @param typeInitializer The type initializer to apply.
+             * @param contextRegistry A context registry to register the lazily created implementation context to.
              * @return A class visitor which is capable of applying the changes.
              */
             private ClassVisitor writeTo(ClassVisitor classVisitor, TypeInitializer typeInitializer, ContextRegistry contextRegistry) {
@@ -2935,12 +3019,14 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                if (!super.equals(other)) return false;
-                ForInlining<?> that = (ForInlining<?>) other;
-                return originalType.equals(that.originalType)
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                if (!super.equals(object)) return false;
+                ForInlining<?> that = (ForInlining<?>) object;
+                return methodRegistry.equals(that.methodRegistry)
+                        && implementationTargetFactory.equals(that.implementationTargetFactory)
+                        && originalType.equals(that.originalType)
                         && classFileLocator.equals(that.classFileLocator)
                         && methodRebaseResolver.equals(that.methodRebaseResolver);
             }
@@ -2948,6 +3034,8 @@ public interface TypeWriter<T> {
             @Override
             public int hashCode() {
                 int result = super.hashCode();
+                result = 31 * result + methodRegistry.hashCode();
+                result = 31 * result + implementationTargetFactory.hashCode();
                 result = 31 * result + originalType.hashCode();
                 result = 31 * result + classFileLocator.hashCode();
                 result = 31 * result + methodRebaseResolver.hashCode();
@@ -2959,6 +3047,7 @@ public interface TypeWriter<T> {
                 return "TypeWriter.Default.ForInlining{" +
                         "instrumentedType=" + instrumentedType +
                         ", fieldPool=" + fieldPool +
+                        ", methodRegistry=" + methodRegistry +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         ", instrumentedMethods=" + instrumentedMethods +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
@@ -2969,6 +3058,7 @@ public interface TypeWriter<T> {
                         ", annotationRetention=" + annotationRetention +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", implementationContextFactory=" + implementationContextFactory +
+                        ", implementationTargetFactory=" + implementationTargetFactory +
                         ", typeValidation=" + typeValidation +
                         ", originalType=" + originalType +
                         ", classFileLocator=" + classFileLocator +
@@ -2976,16 +3066,40 @@ public interface TypeWriter<T> {
                         '}';
             }
 
+            /**
+             * A context registry allows to extract auxiliary types from a lazily created implementation context.
+             */
             protected static class ContextRegistry {
 
+                /**
+                 * The implementation context that is used for creating a class or {@code null} if it was not registered.
+                 */
                 private Implementation.Context.ExtractableView implementationContext;
 
+                /**
+                 * Registers the implementation context.
+                 *
+                 * @param implementationContext The implementation context.
+                 */
                 public void setImplementationContext(Implementation.Context.ExtractableView implementationContext) {
                     this.implementationContext = implementationContext;
                 }
 
+                /**
+                 * Returns the auxiliary types that were registered during class creation. This method must only be called after
+                 * a class was created.
+                 *
+                 * @return The auxiliary types that were registered during class creation
+                 */
                 public List<DynamicType> getAuxiliaryTypes() {
                     return implementationContext.getAuxiliaryTypes();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.Default.ForInlining.ContextRegistry{" +
+                            "implementationContext=" + implementationContext +
+                            '}';
                 }
             }
 
@@ -3074,8 +3188,14 @@ public interface TypeWriter<T> {
             @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
             protected class RedefinitionClassVisitor extends ClassVisitor {
 
+                /**
+                 * The type initializer to apply.
+                 */
                 private final TypeInitializer typeInitializer;
 
+                /**
+                 * A context registry to register the lazily created implementation context to.
+                 */
                 private final ContextRegistry contextRegistry;
 
                 /**
@@ -3089,7 +3209,7 @@ public interface TypeWriter<T> {
                 private final Map<String, MethodDescription> declarableMethods;
 
                 /**
-                 * The implementation context for this class creation.
+                 * The implementation context for this class creation or {@code null} if it was not yet created.
                  */
                 private Implementation.Context.ExtractableView implementationContext;
 
@@ -3100,6 +3220,9 @@ public interface TypeWriter<T> {
                  */
                 private Implementation.Context.ExtractableView.InjectedCode injectedCode;
 
+                /**
+                 * The method pool to use or {@code null} until it is created upon discovering the class file version.
+                 */
                 private MethodPool methodPool;
 
                 /**
@@ -3110,7 +3233,9 @@ public interface TypeWriter<T> {
                 /**
                  * Creates a class visitor which is capable of redefining an existent class on the fly.
                  *
-                 * @param classVisitor          The underlying class visitor to which writes are delegated.
+                 * @param classVisitor    The underlying class visitor to which writes are delegated.
+                 * @param typeInitializer The type initializer to apply.
+                 * @param contextRegistry A context registry to register the lazily created implementation context to.
                  */
                 protected RedefinitionClassVisitor(ClassVisitor classVisitor, TypeInitializer typeInitializer, ContextRegistry contextRegistry) {
                     super(Opcodes.ASM5, classVisitor);
@@ -3136,8 +3261,8 @@ public interface TypeWriter<T> {
                                   String superClassInternalName,
                                   String[] interfaceTypeInternalName) {
                     ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(classFileVersionNumber);
+                    methodPool = methodRegistry.compile(implementationTargetFactory, classFileVersion);
                     supportsBridges = classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5);
-                    methodPool = methodRegistry.compile(implementationTargetFactory);
                     implementationContext = implementationContextFactory.make(instrumentedType,
                             auxiliaryTypeNamingStrategy,
                             typeInitializer,
@@ -3282,10 +3407,13 @@ public interface TypeWriter<T> {
                 public String toString() {
                     return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor{" +
                             "typeWriter=" + TypeWriter.Default.ForInlining.this +
+                            ", typeInitializer=" + typeInitializer +
+                            ", contextRegistry=" + contextRegistry +
                             ", implementationContext=" + implementationContext +
                             ", declaredFields=" + declaredFields +
                             ", declarableMethods=" + declarableMethods +
                             ", injectedCode=" + injectedCode +
+                            ", methodPool=" + methodPool +
                             ", supportsBridges=" + supportsBridges +
                             '}';
                 }
@@ -3568,21 +3696,24 @@ public interface TypeWriter<T> {
          */
         public static class ForCreation<U> extends Default<U> {
 
+            /**
+             * The method pool to use.
+             */
             private final MethodPool methodPool;
 
             /**
              * Creates a new default type writer for creating a new type that is not based on an existing class file.
              *
              * @param instrumentedType             The instrumented type to be created.
+             * @param classFileVersion             The class file version to write the instrumented type in and to apply when creating auxiliary types.
              * @param fieldPool                    The field pool to use.
              * @param methodPool                   The method pool to use.
-             * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
+             * @param auxiliaryTypes               A list of auxiliary types to add to the created type.
              * @param instrumentedMethods          The instrumented methods relevant to this type creation.
              * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
              * @param typeInitializer              The type initializer to include in the created type's type initializer.
              * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
              * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
-             * @param classFileVersion             The class file version to write the instrumented type in and to apply when creating auxiliary types.
              * @param annotationValueFilterFactory The annotation value filter factory to apply.
              * @param annotationRetention          The annotation retention to apply.
              * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
@@ -3594,7 +3725,7 @@ public interface TypeWriter<T> {
                                   ClassFileVersion classFileVersion,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
-                                  List<DynamicType> explicitAuxiliaryTypes,
+                                  List<? extends DynamicType> auxiliaryTypes,
                                   MethodList<?> instrumentedMethods,
                                   LoadedTypeInitializer loadedTypeInitializer,
                                   TypeInitializer typeInitializer,
@@ -3609,7 +3740,7 @@ public interface TypeWriter<T> {
                 super(instrumentedType,
                         classFileVersion,
                         fieldPool,
-                        explicitAuxiliaryTypes,
+                        auxiliaryTypes,
                         instrumentedMethods,
                         loadedTypeInitializer,
                         typeInitializer,
@@ -3625,7 +3756,7 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            protected UnresolvedType<U> create(TypeInitializer typeInitializer) {
+            protected UnresolvedType create(TypeInitializer typeInitializer) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = new FrameComputingClassWriter(writerFlags, typePool);
                 ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType,
@@ -3659,7 +3790,23 @@ public interface TypeWriter<T> {
                         annotationValueFilterFactory,
                         supportsBridges);
                 classVisitor.visitEnd();
-                return new UnresolvedType<U>(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
+                return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                if (!super.equals(object)) return false;
+                ForCreation<?> that = (ForCreation<?>) object;
+                return methodPool.equals(that.methodPool);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = super.hashCode();
+                result = 31 * result + methodPool.hashCode();
+                return result;
             }
 
             @Override

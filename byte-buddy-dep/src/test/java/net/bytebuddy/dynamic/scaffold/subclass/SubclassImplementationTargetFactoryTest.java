@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -30,6 +31,9 @@ public class SubclassImplementationTargetFactoryTest {
     private TypeDescription instrumentedType, rawSuperClass;
 
     @Mock
+    private ClassFileVersion classFileVersion;
+
+    @Mock
     private TypeDescription.Generic superClass;
 
     @Before
@@ -41,18 +45,18 @@ public class SubclassImplementationTargetFactoryTest {
 
     @Test
     public void testReturnsSubclassImplementationTarget() throws Exception {
-        assertThat(SubclassImplementationTarget.Factory.SUPER_CLASS.make(instrumentedType, methodGraph), instanceOf(SubclassImplementationTarget.class));
-        assertThat(SubclassImplementationTarget.Factory.LEVEL_TYPE.make(instrumentedType, methodGraph), instanceOf(SubclassImplementationTarget.class));
+        assertThat(SubclassImplementationTarget.Factory.SUPER_CLASS.make(instrumentedType, methodGraph, classFileVersion), instanceOf(SubclassImplementationTarget.class));
+        assertThat(SubclassImplementationTarget.Factory.LEVEL_TYPE.make(instrumentedType, methodGraph, classFileVersion), instanceOf(SubclassImplementationTarget.class));
     }
 
     @Test
     public void testOriginTypeSuperClass() throws Exception {
-        assertThat(SubclassImplementationTarget.Factory.SUPER_CLASS.make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) superClass));
+        assertThat(SubclassImplementationTarget.Factory.SUPER_CLASS.make(instrumentedType, methodGraph, classFileVersion).getOriginType(), is((TypeDefinition) superClass));
     }
 
     @Test
     public void testOriginTypeLevelType() throws Exception {
-        assertThat(SubclassImplementationTarget.Factory.LEVEL_TYPE.make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) instrumentedType));
+        assertThat(SubclassImplementationTarget.Factory.LEVEL_TYPE.make(instrumentedType, methodGraph, classFileVersion).getOriginType(), is((TypeDefinition) instrumentedType));
     }
 
     @Test

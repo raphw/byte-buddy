@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -31,12 +32,16 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     /**
      * Creates a new subclass implementation target.
      *
-     * @param instrumentedType   The instrumented type.
-     * @param methodGraph        A method graph of the instrumented type.
-     * @param originTypeResolver A resolver for the origin type.
+     * @param instrumentedType        The instrumented type.
+     * @param methodGraph             A method graph of the instrumented type.
+     * @param defaultMethodInvocation The default method invocation mode to apply.
+     * @param originTypeResolver      A resolver for the origin type.
      */
-    protected SubclassImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, OriginTypeResolver originTypeResolver) {
-        super(instrumentedType, methodGraph);
+    protected SubclassImplementationTarget(TypeDescription instrumentedType,
+                                           MethodGraph.Linked methodGraph,
+                                           DefaultMethodInvocation defaultMethodInvocation,
+                                           OriginTypeResolver originTypeResolver) {
+        super(instrumentedType, methodGraph, defaultMethodInvocation);
         TypeDescription.Generic superClass = instrumentedType.getSuperClass();
         MethodList<?> superConstructors = superClass == null
                 ? new MethodList.Empty<MethodDescription.InGenericShape>()
@@ -109,6 +114,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                 ", originTypeResolver=" + originTypeResolver +
                 ", instrumentedType=" + instrumentedType +
                 ", methodGraph=" + methodGraph +
+                ", defaultMethodInvocation=" + defaultMethodInvocation +
                 '}';
     }
 
@@ -182,8 +188,8 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         }
 
         @Override
-        public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
-            return new SubclassImplementationTarget(instrumentedType, methodGraph, originTypeResolver);
+        public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion) {
+            return new SubclassImplementationTarget(instrumentedType, methodGraph, DefaultMethodInvocation.of(classFileVersion), originTypeResolver);
         }
 
         @Override

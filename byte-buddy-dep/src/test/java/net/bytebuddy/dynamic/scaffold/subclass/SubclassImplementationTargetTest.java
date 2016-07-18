@@ -71,14 +71,14 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     }
 
     @Override
-    protected Implementation.Target makeImplementationTarget() {
-        return new SubclassImplementationTarget(instrumentedType, methodGraph, SubclassImplementationTarget.OriginTypeResolver.SUPER_CLASS);
+    protected Implementation.Target makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation defaultMethodInvocation) {
+        return new SubclassImplementationTarget(instrumentedType, methodGraph, defaultMethodInvocation, SubclassImplementationTarget.OriginTypeResolver.SUPER_CLASS);
     }
 
     @Test
     public void testSuperTypeMethodIsInvokable() throws Exception {
         when(invokableMethod.isSpecializableFor(rawSuperClass)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) invokableMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(rawSuperClass));
@@ -95,7 +95,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     @Test
     public void testNonSpecializableSuperClassMethodIsNotInvokable() throws Exception {
         when(invokableMethod.isSpecializableFor(rawSuperClass)).thenReturn(false);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 
@@ -103,7 +103,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     public void testSuperConstructorIsInvokable() throws Exception {
         when(invokableMethod.isConstructor()).thenReturn(true);
         when(definedSuperClassConstructor.isSpecializableFor(rawSuperClass)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superConstructorToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeSuper(superConstructorToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) superClassConstructor));
         assertThat(specialMethodInvocation.getTypeDescription(), is(rawSuperClass));

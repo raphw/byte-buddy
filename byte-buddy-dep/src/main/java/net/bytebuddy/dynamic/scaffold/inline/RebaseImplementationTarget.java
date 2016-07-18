@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -30,14 +31,16 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     /**
      * Creates a rebase implementation target.
      *
-     * @param instrumentedType  The instrumented type.
-     * @param methodGraph       A method graph of the instrumented type.
-     * @param rebaseableMethods A mapping of the instrumented type's declared methods by each method's token.
+     * @param instrumentedType        The instrumented type.
+     * @param methodGraph             A method graph of the instrumented type.
+     * @param defaultMethodInvocation The default method invocation mode to apply.
+     * @param rebaseableMethods       A mapping of the instrumented type's declared methods by each method's token.
      */
     protected RebaseImplementationTarget(TypeDescription instrumentedType,
                                          MethodGraph.Linked methodGraph,
+                                         DefaultMethodInvocation defaultMethodInvocation,
                                          Map<MethodDescription.SignatureToken, MethodRebaseResolver.Resolution> rebaseableMethods) {
-        super(instrumentedType, methodGraph);
+        super(instrumentedType, methodGraph, defaultMethodInvocation);
         this.rebaseableMethods = rebaseableMethods;
     }
 
@@ -46,11 +49,15 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      *
      * @param instrumentedType     The instrumented type.
      * @param methodGraph          A method graph of the instrumented type.
+     * @param classFileVersion     The type's class file version.
      * @param methodRebaseResolver A method rebase resolver to be used when calling a rebased method.
      * @return An implementation target for the given input.
      */
-    protected static Implementation.Target of(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, MethodRebaseResolver methodRebaseResolver) {
-        return new RebaseImplementationTarget(instrumentedType, methodGraph, methodRebaseResolver.asTokenMap());
+    protected static Implementation.Target of(TypeDescription instrumentedType,
+                                              MethodGraph.Linked methodGraph,
+                                              ClassFileVersion classFileVersion,
+                                              MethodRebaseResolver methodRebaseResolver) {
+        return new RebaseImplementationTarget(instrumentedType, methodGraph, DefaultMethodInvocation.of(classFileVersion), methodRebaseResolver.asTokenMap());
     }
 
     @Override
@@ -211,8 +218,8 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         }
 
         @Override
-        public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
-            return RebaseImplementationTarget.of(instrumentedType, methodGraph, methodRebaseResolver);
+        public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion) {
+            return RebaseImplementationTarget.of(instrumentedType, methodGraph, classFileVersion, methodRebaseResolver);
         }
 
         @Override

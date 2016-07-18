@@ -11,10 +11,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 public class ByteBuddyTest {
 

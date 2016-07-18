@@ -16,7 +16,7 @@ import java.lang.annotation.ElementType;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;

@@ -11,7 +11,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -41,18 +40,16 @@ public abstract class AbstractImplementationTargetTest {
     @Mock
     protected MethodDescription.SignatureToken invokableToken, defaultToken;
 
-    protected Implementation.Target implementationTarget;
-
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
         when(methodGraph.getSuperClassGraph()).thenReturn(superGraph);
-        when(superGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
+        when(superGraph.locate(any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(methodGraph.getInterfaceGraph(defaultMethodDeclaringType)).thenReturn(defaultGraph);
-        when(defaultGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
+        when(defaultGraph.locate(any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(defaultGraph.locate(defaultToken)).thenReturn(new MethodGraph.Node.Simple(defaultMethod));
         when(methodDeclaringType.asErasure()).thenReturn(methodDeclaringType);
         when(invokableMethod.getDeclaringType()).thenReturn(methodDeclaringType);
@@ -80,14 +77,17 @@ public abstract class AbstractImplementationTargetTest {
         when(genericInstrumentedType.asErasure()).thenReturn(instrumentedType);
         when(genericInstrumentedType.asGenericType()).thenReturn(genericInstrumentedType);
         when(instrumentedType.asGenericType()).thenReturn(genericInstrumentedType);
-        implementationTarget = makeImplementationTarget();
     }
 
-    protected abstract Implementation.Target makeImplementationTarget();
+    protected Implementation.Target makeImplementationTarget() {
+        return makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation.ENABLED);
+    }
+
+    protected abstract Implementation.Target makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation defaultMethodInvocation);
 
     @Test
     public void testDefaultMethodInvocation() throws Exception {
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeDefault(defaultMethodDeclaringType, defaultToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeDefault(defaultMethodDeclaringType, defaultToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) defaultMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(defaultMethodDeclaringType));
@@ -102,21 +102,28 @@ public abstract class AbstractImplementationTargetTest {
     }
 
     @Test
+    public void testDefaultMethodInvocationNotSupported() throws Exception {
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation.DISABLED)
+                .invokeDefault(defaultMethodDeclaringType, defaultToken);
+        assertThat(specialMethodInvocation.isValid(), is(false));
+    }
+
+    @Test
     public void testIllegalDefaultMethod() throws Exception {
-        assertThat(implementationTarget.invokeDefault(defaultMethodDeclaringType, mock(MethodDescription.SignatureToken.class)).isValid(), is(false));
+        assertThat(makeImplementationTarget().invokeDefault(defaultMethodDeclaringType, mock(MethodDescription.SignatureToken.class)).isValid(), is(false));
     }
 
     @Test
     public void testIllegalSuperMethod() throws Exception {
         MethodDescription.SignatureToken token = mock(MethodDescription.SignatureToken.class);
         when(token.getName()).thenReturn(FOO);
-        assertThat(implementationTarget.invokeSuper(token).isValid(), is(false));
+        assertThat(makeImplementationTarget().invokeSuper(token).isValid(), is(false));
     }
 
     @Test
     public void testIllegalSuperConstructor() throws Exception {
         MethodDescription.SignatureToken token = mock(MethodDescription.SignatureToken.class);
         when(token.getName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
-        assertThat(implementationTarget.invokeSuper(token).isValid(), is(false));
+        assertThat(makeImplementationTarget().invokeSuper(token).isValid(), is(false));
     }
 }

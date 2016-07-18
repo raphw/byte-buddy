@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -29,6 +30,9 @@ public class RebaseImplementationTargetFactoryTest {
     private MethodGraph.Linked methodGraph;
 
     @Mock
+    private ClassFileVersion classFileVersion;
+
+    @Mock
     private TypeDescription instrumentedType;
 
     @Mock
@@ -46,7 +50,7 @@ public class RebaseImplementationTargetFactoryTest {
 
     @Test
     public void testReturnsRebaseImplementationTarget() throws Exception {
-        assertThat(factory.make(instrumentedType, methodGraph) instanceof RebaseImplementationTarget, is(true));
+        assertThat(factory.make(instrumentedType, methodGraph, classFileVersion) instanceof RebaseImplementationTarget, is(true));
     }
 
     @Test
