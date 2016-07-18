@@ -171,20 +171,19 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
 
     @Override
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
-        MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(instrumentedType,
+        MethodRegistry.Prepared methodRegistry = this.methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
                 typeValidation,
                 InliningImplementationMatcher.of(ignoredMethods, originalType));
-        MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(preparedMethodRegistry.getInstrumentedType(),
+        MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(methodRegistry.getInstrumentedType(),
                 new HashSet<MethodDescription.Token>(originalType.getDeclaredMethods()
-                        .filter(RebaseableMatcher.of(preparedMethodRegistry.getInstrumentedType(), preparedMethodRegistry.getInstrumentedMethods()))
+                        .filter(RebaseableMatcher.of(methodRegistry.getInstrumentedType(), methodRegistry.getInstrumentedMethods()))
                         .asTokenList(is(originalType))),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
-        MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(new RebaseImplementationTarget.Factory(methodRebaseResolver));
-        return TypeWriter.Default.<T>forRebasing(compiledMethodRegistry,
-                fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
+        return TypeWriter.Default.<T>forRebasing(methodRegistry,
+                fieldRegistry.compile(methodRegistry.getInstrumentedType()),
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,

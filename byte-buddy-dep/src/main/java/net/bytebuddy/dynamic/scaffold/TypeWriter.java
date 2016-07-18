@@ -16,6 +16,8 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
+import net.bytebuddy.dynamic.scaffold.inline.RebaseImplementationTarget;
+import net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.*;
@@ -1335,11 +1337,6 @@ public interface TypeWriter<T> {
         protected final FieldPool fieldPool;
 
         /**
-         * The method pool to use.
-         */
-        protected final MethodPool methodPool;
-
-        /**
          * The explicit auxiliary types to add to the created type.
          */
         protected final List<DynamicType> explicitAuxiliaryTypes;
@@ -1409,7 +1406,6 @@ public interface TypeWriter<T> {
          *
          * @param instrumentedType             The instrumented type to be created.
          * @param fieldPool                    The field pool to use.
-         * @param methodPool                   The method pool to use.
          * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
          * @param instrumentedMethods          The instrumented methods relevant to this type creation.
          * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
@@ -1426,7 +1422,6 @@ public interface TypeWriter<T> {
          */
         protected Default(TypeDescription instrumentedType,
                           FieldPool fieldPool,
-                          MethodPool methodPool,
                           List<DynamicType> explicitAuxiliaryTypes,
                           MethodList<?> instrumentedMethods,
                           LoadedTypeInitializer loadedTypeInitializer,
@@ -1442,7 +1437,6 @@ public interface TypeWriter<T> {
                           TypePool typePool) {
             this.instrumentedType = instrumentedType;
             this.fieldPool = fieldPool;
-            this.methodPool = methodPool;
             this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
             this.instrumentedMethods = instrumentedMethods;
             this.loadedTypeInitializer = loadedTypeInitializer;
@@ -1523,7 +1517,7 @@ public interface TypeWriter<T> {
          * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
          * @return A suitable type writer.
          */
-        public static <U> TypeWriter<U> forRedefinition(MethodRegistry.Compiled methodRegistry,
+        public static <U> TypeWriter<U> forRedefinition(MethodRegistry.Prepared methodRegistry,
                                                         FieldPool fieldPool,
                                                         TypeAttributeAppender typeAttributeAppender,
                                                         AsmVisitorWrapper asmVisitorWrapper,
@@ -1539,6 +1533,7 @@ public interface TypeWriter<T> {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
                     fieldPool,
                     methodRegistry,
+                    SubclassImplementationTarget.Factory.LEVEL_TYPE,
                     Collections.<DynamicType>emptyList(),
                     methodRegistry.getInstrumentedMethods(),
                     methodRegistry.getLoadedTypeInitializer(),
@@ -1577,7 +1572,7 @@ public interface TypeWriter<T> {
          * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
          * @return A suitable type writer.
          */
-        public static <U> TypeWriter<U> forRebasing(MethodRegistry.Compiled methodRegistry,
+        public static <U> TypeWriter<U> forRebasing(MethodRegistry.Prepared methodRegistry,
                                                     FieldPool fieldPool,
                                                     TypeAttributeAppender typeAttributeAppender,
                                                     AsmVisitorWrapper asmVisitorWrapper,
@@ -1594,6 +1589,7 @@ public interface TypeWriter<T> {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
                     fieldPool,
                     methodRegistry,
+                    new RebaseImplementationTarget.Factory(methodRebaseResolver),
                     methodRebaseResolver.getAuxiliaryTypes(),
                     methodRegistry.getInstrumentedMethods(),
                     methodRegistry.getLoadedTypeInitializer(),
@@ -1654,7 +1650,6 @@ public interface TypeWriter<T> {
             Default<?> aDefault = (Default<?>) other;
             return instrumentedType.equals(aDefault.instrumentedType)
                     && fieldPool.equals(aDefault.fieldPool)
-                    && methodPool.equals(aDefault.methodPool)
                     && explicitAuxiliaryTypes.equals(aDefault.explicitAuxiliaryTypes)
                     && instrumentedMethods.equals(aDefault.instrumentedMethods)
                     && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer)
@@ -1674,7 +1669,6 @@ public interface TypeWriter<T> {
         public int hashCode() {
             int result = instrumentedType.hashCode();
             result = 31 * result + fieldPool.hashCode();
-            result = 31 * result + methodPool.hashCode();
             result = 31 * result + explicitAuxiliaryTypes.hashCode();
             result = 31 * result + instrumentedMethods.hashCode();
             result = 31 * result + loadedTypeInitializer.hashCode();
@@ -2819,6 +2813,10 @@ public interface TypeWriter<T> {
              */
             private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
+            private final MethodRegistry.Prepared methodRegistry;
+
+            private final Implementation.Target.Factory implementationTargetFactory;
+
             /**
              * The original type that is being redefined or rebased.
              */
@@ -2839,7 +2837,6 @@ public interface TypeWriter<T> {
              *
              * @param instrumentedType             The instrumented type to be created.
              * @param fieldPool                    The field pool to use.
-             * @param methodPool                   The method pool to use.
              * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
              * @param instrumentedMethods          The instrumented methods relevant to this type creation.
              * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
@@ -2859,7 +2856,8 @@ public interface TypeWriter<T> {
              */
             protected ForInlining(TypeDescription instrumentedType,
                                   FieldPool fieldPool,
-                                  MethodPool methodPool,
+                                  MethodRegistry.Prepared methodRegistry,
+                                  Implementation.Target.Factory implementationTargetFactory,
                                   List<DynamicType> explicitAuxiliaryTypes,
                                   MethodList<?> instrumentedMethods,
                                   LoadedTypeInitializer loadedTypeInitializer,
@@ -2878,7 +2876,6 @@ public interface TypeWriter<T> {
                                   MethodRebaseResolver methodRebaseResolver) {
                 super(instrumentedType,
                         fieldPool,
-                        methodPool,
                         explicitAuxiliaryTypes,
                         instrumentedMethods,
                         loadedTypeInitializer,
@@ -2892,6 +2889,8 @@ public interface TypeWriter<T> {
                         implementationContextFactory,
                         typeValidation,
                         typePool);
+                this.methodRegistry = methodRegistry;
+                this.implementationTargetFactory = implementationTargetFactory;
                 this.originalType = originalType;
                 this.classFileLocator = classFileLocator;
                 this.methodRebaseResolver = methodRebaseResolver;
@@ -2966,7 +2965,6 @@ public interface TypeWriter<T> {
                 return "TypeWriter.Default.ForInlining{" +
                         "instrumentedType=" + instrumentedType +
                         ", fieldPool=" + fieldPool +
-                        ", methodPool=" + methodPool +
                         ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
                         ", instrumentedMethods=" + instrumentedMethods +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
@@ -3092,6 +3090,8 @@ public interface TypeWriter<T> {
                  */
                 private Implementation.Context.ExtractableView.InjectedCode injectedCode;
 
+                private MethodPool methodPool;
+
                 /**
                  * {@code true} if the redefined class file supports bridge methods or {@code null} if this state is yet unknown.
                  */
@@ -3126,6 +3126,7 @@ public interface TypeWriter<T> {
                                   String superClassInternalName,
                                   String[] interfaceTypeInternalName) {
                     supportsBridges = ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V5);
+                    methodPool = methodRegistry.compile(implementationTargetFactory);
                     super.visit(classFileVersionNumber,
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),
                             instrumentedType.getInternalName(),
@@ -3551,6 +3552,8 @@ public interface TypeWriter<T> {
          */
         public static class ForCreation<U> extends Default<U> {
 
+            private final MethodPool methodPool;
+
             /**
              * Creates a new default type writer for creating a new type that is not based on an existing class file.
              *
@@ -3589,7 +3592,6 @@ public interface TypeWriter<T> {
                                   TypePool typePool) {
                 super(instrumentedType,
                         fieldPool,
-                        methodPool,
                         explicitAuxiliaryTypes,
                         instrumentedMethods,
                         loadedTypeInitializer,
@@ -3603,6 +3605,7 @@ public interface TypeWriter<T> {
                         implementationContextFactory,
                         typeValidation,
                         typePool);
+                this.methodPool = methodPool;
             }
 
             @Override

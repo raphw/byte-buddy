@@ -8,7 +8,6 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.scaffold.*;
-import net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
@@ -153,12 +152,12 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
 
     @Override
     public DynamicType.Unloaded<T> make(TypeResolutionStrategy typeResolutionStrategy, TypePool typePool) {
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(instrumentedType,
+        MethodRegistry.Prepared methodRegistry = this.methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
                 typeValidation,
-                InliningImplementationMatcher.of(ignoredMethods, originalType)).compile(SubclassImplementationTarget.Factory.LEVEL_TYPE);
-        return TypeWriter.Default.<T>forRedefinition(compiledMethodRegistry,
-                fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
+                InliningImplementationMatcher.of(ignoredMethods, originalType));
+        return TypeWriter.Default.<T>forRedefinition(methodRegistry,
+                fieldRegistry.compile(methodRegistry.getInstrumentedType()),
                 typeAttributeAppender,
                 asmVisitorWrapper,
                 classFileVersion,
