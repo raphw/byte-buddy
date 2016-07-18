@@ -66,7 +66,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     }
 
     @Override
-    protected Implementation.Target makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation defaultMethodInvocation) {
+    protected Implementation.Target makeImplementationTarget() {
         return new RebaseImplementationTarget(instrumentedType, methodGraph, defaultMethodInvocation, Collections.singletonMap(rebasedSignatureToken, resolution));
     }
 

@@ -40,6 +40,8 @@ public abstract class AbstractImplementationTargetTest {
     @Mock
     protected MethodDescription.SignatureToken invokableToken, defaultToken;
 
+    protected Implementation.Target.AbstractBase.DefaultMethodInvocation defaultMethodInvocation;
+
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -77,13 +79,10 @@ public abstract class AbstractImplementationTargetTest {
         when(genericInstrumentedType.asErasure()).thenReturn(instrumentedType);
         when(genericInstrumentedType.asGenericType()).thenReturn(genericInstrumentedType);
         when(instrumentedType.asGenericType()).thenReturn(genericInstrumentedType);
+        defaultMethodInvocation = Implementation.Target.AbstractBase.DefaultMethodInvocation.ENABLED;
     }
 
-    protected Implementation.Target makeImplementationTarget() {
-        return makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation.ENABLED);
-    }
-
-    protected abstract Implementation.Target makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation defaultMethodInvocation);
+    protected abstract Implementation.Target makeImplementationTarget();
 
     @Test
     public void testDefaultMethodInvocation() throws Exception {
@@ -103,8 +102,8 @@ public abstract class AbstractImplementationTargetTest {
 
     @Test
     public void testDefaultMethodInvocationNotSupported() throws Exception {
-        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation.DISABLED)
-                .invokeDefault(defaultMethodDeclaringType, defaultToken);
+        defaultMethodInvocation = Implementation.Target.AbstractBase.DefaultMethodInvocation.DISABLED;
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeDefault(defaultMethodDeclaringType, defaultToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 

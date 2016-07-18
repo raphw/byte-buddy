@@ -383,7 +383,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * Determines if default method invocations are possible.
              */
-            public enum DefaultMethodInvocation {
+            protected enum DefaultMethodInvocation {
 
                 /**
                  * Permits default method invocations, if an interface declaring a default method is possible.

@@ -71,7 +71,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     }
 
     @Override
-    protected Implementation.Target makeImplementationTarget(Implementation.Target.AbstractBase.DefaultMethodInvocation defaultMethodInvocation) {
+    protected Implementation.Target makeImplementationTarget() {
         return new SubclassImplementationTarget(instrumentedType, methodGraph, defaultMethodInvocation, SubclassImplementationTarget.OriginTypeResolver.SUPER_CLASS);
     }
 
