@@ -3090,6 +3090,7 @@ public interface TypeWriter<T> {
                  *
                  * @return The auxiliary types that were registered during class creation
                  */
+                @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Lazy value definition is intended")
                 public List<DynamicType> getAuxiliaryTypes() {
                     return implementationContext.getAuxiliaryTypes();
                 }
