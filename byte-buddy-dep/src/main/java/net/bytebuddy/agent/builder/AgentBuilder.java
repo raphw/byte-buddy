@@ -2357,7 +2357,7 @@ public interface AgentBuilder {
                     if (type != null) {
                         try {
                             return new TypeDescription.ForLoadedType.WithEagerProperties(type);
-                        } catch (NoClassDefFoundError ignored) {
+                        } catch (Throwable ignored) {
                             /* fall back to type pool */
                         }
                     }

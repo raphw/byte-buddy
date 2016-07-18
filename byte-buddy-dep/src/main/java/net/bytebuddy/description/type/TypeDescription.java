@@ -7613,8 +7613,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             private final Class<?>[] declaredClass;
 
             /**
-             * Creates a new eagerly resolved loaded type description. Might cause a {@link NoClassDefFoundError} if any property is not visible
-             * to the class loader.
+             * Creates a new eagerly resolved loaded type description. Accessing any of these properties can cause an error such as a
+             * {@link IllegalAccessError} or a {@link NoClassDefFoundError} if the class loader is inconsistent.
              *
              * @param type The loaded type this instance represents.
              */
