@@ -1740,7 +1740,7 @@ public interface TypeWriter<T> {
             public boolean equals(Object object) {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
-                UnresolvedType that = (UnresolvedType) object; // Java 6 compilers cannot cast to nested wildcard.
+                UnresolvedType that = (UnresolvedType) object; // Java 6 compilers cannot cast to a nested wildcard.
                 return Arrays.equals(binaryRepresentation, that.binaryRepresentation)
                         && Default.this.equals(that.getOuter())
                         && auxiliaryTypes.equals(that.auxiliaryTypes);
