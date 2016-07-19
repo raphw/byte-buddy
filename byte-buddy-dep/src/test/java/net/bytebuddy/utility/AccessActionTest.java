@@ -1,36 +1,57 @@
 package net.bytebuddy.utility;
 
-import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.mockito.Mock;
 
 import java.lang.reflect.AccessibleObject;
+import java.util.Arrays;
+import java.util.Iterator;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AccessActionTest {
 
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    @Mock
-    private AccessibleObject accessibleObject;
+    private static final String BAR = "bar";
 
     @Test
     public void testAccessAction() throws Exception {
-        assertThat(AccessAction.of(accessibleObject).run(), is(accessibleObject));
-        verify(accessibleObject).setAccessible(true);
-        verifyNoMoreInteractions(accessibleObject);
+        AccessibleObjectSpy accessibleObjectSpy = new AccessibleObjectSpy(Foo.class.getDeclaredField(BAR));
+        assertThat(AccessAction.of(accessibleObjectSpy).run(), is(accessibleObjectSpy));
+        assertThat(accessibleObjectSpy.accessible, is(true));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AccessAction.class).apply();
+        final Iterator<AccessibleObject> iterator = Arrays.<AccessibleObject>asList(Foo.class.getDeclaredFields()).iterator();
+        ObjectPropertyAssertion.of(AccessAction.class).create(new ObjectPropertyAssertion.Creator<AccessibleObject>() {
+            @Override
+            public AccessibleObject create() {
+                return iterator.next();
+            }
+        }).apply();
+    }
+
+    @SuppressWarnings("unused")
+    private static class Foo {
+
+        Object bar, qux;
+    }
+
+    private static class AccessibleObjectSpy extends AccessibleObject {
+
+        private final AccessibleObject accessibleObject;
+
+        public boolean accessible;
+
+        public AccessibleObjectSpy(AccessibleObject accessibleObject) {
+            this.accessibleObject = accessibleObject;
+        }
+
+        @Override
+        public void setAccessible(boolean flag) {
+            accessible = flag;
+            accessibleObject.setAccessible(flag);
+        }
     }
 }
