@@ -123,7 +123,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
             if (!zipFile.createNewFile()) {
                 throw new IllegalStateException("Cannot create " + zipFile);
             }
-            JarOutputStream zipOutputStream = new JarOutputStream(new FileOutputStream(zipFile));
+            JarOutputStream zipOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
             try {
                 zipOutputStream.putNextEntry(new JarEntry(DEX_CLASS_FILE));
                 conversion.drainTo(zipOutputStream);

@@ -3003,7 +3003,7 @@ public interface AgentBuilder {
     /**
      * Implements the instrumentation of the {@code LambdaMetafactory} if this feature is enabled.
      */
-    enum LambdaInstrumentationStrategy implements Callable<Class<?>> {
+    enum LambdaInstrumentationStrategy {
 
         /**
          * A strategy that enables instrumentation of the {@code LambdaMetafactory} if such a factory exists on the current VM.
@@ -3023,7 +3023,7 @@ public interface AgentBuilder {
                                  Instrumentation instrumentation,
                                  ClassFileTransformer classFileTransformer,
                                  AccessControlContext accessControlContext) {
-                if (LambdaFactory.register(classFileTransformer, new LambdaInstanceFactory(byteBuddy), this)) {
+                if (LambdaFactory.register(classFileTransformer, new LambdaInstanceFactory(byteBuddy), new LambdaInjector(accessControlContext))) {
                     Class<?> lambdaMetaFactory;
                     try {
                         lambdaMetaFactory = Class.forName("java.lang.invoke.LambdaMetafactory");
@@ -3039,14 +3039,6 @@ public interface AgentBuilder {
                             .load(ClassLoaderAction.apply(lambdaMetaFactory, accessControlContext), ClassReloadingStrategy.of(instrumentation, accessControlContext));
                 }
             }
-
-            @Override
-            public Class<?> call() throws Exception {
-                TypeDescription lambdaFactory = new TypeDescription.ForLoadedType(LambdaFactory.class);
-                return ClassInjector.UsingReflection.ofSystemClassLoader()
-                        .inject(Collections.singletonMap(lambdaFactory, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
-                        .get(lambdaFactory);
-            }
         },
 
         /**
@@ -3059,11 +3051,6 @@ public interface AgentBuilder {
                                  ClassFileTransformer classFileTransformer,
                                  AccessControlContext accessControlContext) {
                     /* do nothing */
-            }
-
-            @Override
-            public Class<?> call() throws Exception {
-                throw new IllegalStateException("Cannot inject LambdaFactory from disabled instrumentation strategy");
             }
         };
 
@@ -3080,9 +3067,21 @@ public interface AgentBuilder {
          * @param instrumentation      The instrumentation instance that is used to potentially rollback the instrumentation of the {@code LambdaMetafactory}.
          */
         public static void release(ClassFileTransformer classFileTransformer, Instrumentation instrumentation) {
+            release(classFileTransformer, instrumentation, AccessController.getContext());
+        }
+
+        /**
+         * Releases the supplied class file transformer when it was built with {@link AgentBuilder#with(LambdaInstrumentationStrategy)} enabled.
+         * Subsequently, the class file transformer is no longer applied when a class that represents a lambda expression is created.
+         *
+         * @param classFileTransformer The class file transformer to release.
+         * @param instrumentation      The instrumentation instance that is used to potentially rollback the instrumentation of the {@code LambdaMetafactory}.
+         * @param accessControlContext The access control context to use.
+         */
+        public static void release(ClassFileTransformer classFileTransformer, Instrumentation instrumentation, AccessControlContext accessControlContext) {
             if (LambdaFactory.release(classFileTransformer)) {
                 try {
-                    ClassReloadingStrategy.of(instrumentation).reset(Class.forName("java.lang.invoke.LambdaMetafactory"));
+                    ClassReloadingStrategy.of(instrumentation, accessControlContext).reset(accessControlContext, Class.forName("java.lang.invoke.LambdaMetafactory"));
                 } catch (Exception exception) {
                     throw new IllegalStateException("Could not release lambda transformer", exception);
                 }
@@ -3126,6 +3125,54 @@ public interface AgentBuilder {
         @Override
         public String toString() {
             return "AgentBuilder.LambdaInstrumentationStrategy." + name();
+        }
+
+        /**
+         * An injector for injecting the lambda class dispatcher to the system class path.
+         */
+        protected static class LambdaInjector implements Callable<Class<?>> {
+
+            /**
+             * The access control context to use.
+             */
+            private final AccessControlContext accessControlContext;
+
+            /**
+             * Creates a new lambda injector.
+             *
+             * @param accessControlContext The access control context to use.
+             */
+            protected LambdaInjector(AccessControlContext accessControlContext) {
+                this.accessControlContext = accessControlContext;
+            }
+
+            @Override
+            public Class<?> call() throws Exception {
+                TypeDescription lambdaFactory = new TypeDescription.ForLoadedType(LambdaFactory.class);
+                return ClassInjector.UsingReflection.ofSystemClassLoader(accessControlContext)
+                        .inject(Collections.singletonMap(lambdaFactory, ClassFileLocator.ForClassLoader.read(LambdaFactory.class, accessControlContext).resolve()))
+                        .get(lambdaFactory);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                LambdaInjector that = (LambdaInjector) object;
+                return accessControlContext.equals(that.accessControlContext);
+            }
+
+            @Override
+            public int hashCode() {
+                return accessControlContext.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector{" +
+                        "accessControlContext=" + accessControlContext +
+                        '}';
+            }
         }
 
         /**
@@ -5082,10 +5129,11 @@ public interface AgentBuilder {
             /**
              * Creates an injector for the bootstrap class loader.
              *
-             * @param protectionDomain The protection domain to be used.
+             * @param protectionDomain     The protection domain to be used.
+             * @param accessControlContext The access control context to use.
              * @return A class injector for the bootstrap class loader.
              */
-            ClassInjector make(ProtectionDomain protectionDomain);
+            ClassInjector make(ProtectionDomain protectionDomain, AccessControlContext accessControlContext);
 
             /**
              * A disabled bootstrap injection strategy.
@@ -5098,7 +5146,7 @@ public interface AgentBuilder {
                 INSTANCE;
 
                 @Override
-                public ClassInjector make(ProtectionDomain protectionDomain) {
+                public ClassInjector make(ProtectionDomain protectionDomain, AccessControlContext accessControlContext) {
                     throw new IllegalStateException("Injecting classes into the bootstrap class loader was not enabled");
                 }
 
@@ -5135,8 +5183,11 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public ClassInjector make(ProtectionDomain protectionDomain) {
-                    return ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
+                public ClassInjector make(ProtectionDomain protectionDomain, AccessControlContext accessControlContext) {
+                    return ClassInjector.UsingInstrumentation.of(folder,
+                            ClassInjector.UsingInstrumentation.Target.BOOTSTRAP,
+                            instrumentation,
+                            accessControlContext);
                 }
 
                 @Override
@@ -5144,7 +5195,8 @@ public interface AgentBuilder {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     Enabled enabled = (Enabled) other;
-                    return folder.equals(enabled.folder) && instrumentation.equals(enabled.instrumentation);
+                    return folder.equals(enabled.folder)
+                            && instrumentation.equals(enabled.instrumentation);
                 }
 
                 @Override
@@ -5859,7 +5911,7 @@ public interface AgentBuilder {
                         @Override
                         public ClassInjector resolve() {
                             return classLoader == null
-                                    ? bootstrapInjectionStrategy.make(protectionDomain)
+                                    ? bootstrapInjectionStrategy.make(protectionDomain, accessControlContext)
                                     : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext);
                         }
 

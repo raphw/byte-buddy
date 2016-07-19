@@ -437,7 +437,7 @@ public interface ClassFileLocator {
              */
             public static ClassFileLocator of(ClassLoader classLoader, AccessControlContext accessControlContext) {
                 return classLoader == null || classLoader == SystemClassLoaderAction.apply(accessControlContext)
-                        ? ForClassLoader.of(classLoader)
+                        ? ForClassLoader.of(classLoader, accessControlContext)
                         : new WeaklyReferenced(classLoader);
             }
 
@@ -619,13 +619,19 @@ public interface ClassFileLocator {
         private final ClassLoadingDelegate classLoadingDelegate;
 
         /**
+         * The access control context to use.
+         */
+        private final AccessControlContext accessControlContext;
+
+        /**
          * Creates an agent-based class file locator.
          *
-         * @param instrumentation The instrumentation to be used.
-         * @param classLoader     The class loader to read a class from.
+         * @param instrumentation      The instrumentation to be used.
+         * @param classLoader          The class loader to read a class from.
+         * @param accessControlContext The access control context to use.
          */
-        public AgentBased(Instrumentation instrumentation, ClassLoader classLoader) {
-            this(instrumentation, ClassLoadingDelegate.Default.of(classLoader));
+        public AgentBased(Instrumentation instrumentation, ClassLoader classLoader, AccessControlContext accessControlContext) {
+            this(instrumentation, ClassLoadingDelegate.Default.of(classLoader, accessControlContext), accessControlContext);
         }
 
         /**
@@ -633,13 +639,15 @@ public interface ClassFileLocator {
          *
          * @param instrumentation      The instrumentation to be used.
          * @param classLoadingDelegate The delegate responsible for class loading.
+         * @param accessControlContext The access control context to use.
          */
-        public AgentBased(Instrumentation instrumentation, ClassLoadingDelegate classLoadingDelegate) {
+        public AgentBased(Instrumentation instrumentation, ClassLoadingDelegate classLoadingDelegate, AccessControlContext accessControlContext) {
             if (!instrumentation.isRetransformClassesSupported()) {
                 throw new IllegalArgumentException(instrumentation + " does not support retransformation");
             }
             this.instrumentation = instrumentation;
             this.classLoadingDelegate = classLoadingDelegate;
+            this.accessControlContext = accessControlContext;
         }
 
         /**
@@ -650,15 +658,27 @@ public interface ClassFileLocator {
          * @return A class file locator for the given class loader based on a Byte Buddy agent.
          */
         public static ClassFileLocator fromInstalledAgent(ClassLoader classLoader) {
+            return fromInstalledAgent(classLoader, AccessController.getContext());
+        }
+
+        /**
+         * Returns an agent-based class file locator for the given class loader and an already installed
+         * Byte Buddy-agent.
+         *
+         * @param classLoader          The class loader that is expected to load the looked-up a class.
+         * @param accessControlContext The access control context to use.
+         * @return A class file locator for the given class loader based on a Byte Buddy agent.
+         */
+        public static ClassFileLocator fromInstalledAgent(ClassLoader classLoader, AccessControlContext accessControlContext) {
             try {
-                Instrumentation instrumentation = (Instrumentation) AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE)
+                Instrumentation instrumentation = (Instrumentation) SystemClassLoaderAction.apply(accessControlContext)
                         .loadClass(INSTALLER_TYPE)
                         .getDeclaredField(INSTRUMENTATION_FIELD)
                         .get(STATIC_FIELD);
                 if (instrumentation == null) {
                     throw new IllegalStateException("The Byte Buddy agent is not installed");
                 }
-                return new AgentBased(instrumentation, classLoader);
+                return new AgentBased(instrumentation, classLoader, accessControlContext);
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {
@@ -674,7 +694,19 @@ public interface ClassFileLocator {
          * @return A class file locator for locating the class file of the given type.
          */
         public static ClassFileLocator of(Instrumentation instrumentation, Class<?> type) {
-            return new AgentBased(instrumentation, ClassLoadingDelegate.Explicit.of(type));
+            return of(instrumentation, type, AccessController.getContext());
+        }
+
+        /**
+         * Returns a class file locator that is capable of locating a class file for the given type using the given instrumentation instance.
+         *
+         * @param instrumentation      The instrumentation instance to query for a retransformation.
+         * @param type                 The locatable type which class loader is used as a fallback.
+         * @param accessControlContext The access control context to use.
+         * @return A class file locator for locating the class file of the given type.
+         */
+        public static ClassFileLocator of(Instrumentation instrumentation, Class<?> type, AccessControlContext accessControlContext) {
+            return new AgentBased(instrumentation, ClassLoadingDelegate.Explicit.of(type, accessControlContext), accessControlContext);
         }
 
         @Override
@@ -702,12 +734,13 @@ public interface ClassFileLocator {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && classLoadingDelegate.equals(((AgentBased) other).classLoadingDelegate)
-                    && instrumentation.equals(((AgentBased) other).instrumentation);
+                    && instrumentation.equals(((AgentBased) other).instrumentation)
+                    && accessControlContext.equals(((AgentBased) other).accessControlContext);
         }
 
         @Override
         public int hashCode() {
-            return 31 * instrumentation.hashCode() + classLoadingDelegate.hashCode();
+            return 31 * (31 * instrumentation.hashCode() + classLoadingDelegate.hashCode()) + accessControlContext.hashCode();
         }
 
         @Override
@@ -715,6 +748,7 @@ public interface ClassFileLocator {
             return "ClassFileLocator.AgentBased{" +
                     "instrumentation=" + instrumentation +
                     ", classLoadingDelegate=" + classLoadingDelegate +
+                    ", accessControlContext=" + accessControlContext +
                     '}';
         }
 
@@ -1066,11 +1100,12 @@ public interface ClassFileLocator {
                  * Creates a new class loading delegate with a possibility of looking up explicitly
                  * registered classes.
                  *
-                 * @param classLoader The class loader to be used for looking up classes.
-                 * @param types       A collection of classes that cannot be looked up explicitly.
+                 * @param classLoader          The class loader to be used for looking up classes.
+                 * @param types                A collection of classes that cannot be looked up explicitly.
+                 * @param accessControlContext The access control context to use.
                  */
-                public Explicit(ClassLoader classLoader, Collection<? extends Class<?>> types) {
-                    this(Default.of(classLoader), types);
+                public Explicit(ClassLoader classLoader, Collection<? extends Class<?>> types, AccessControlContext accessControlContext) {
+                    this(Default.of(classLoader, accessControlContext), types);
                 }
 
                 /**
@@ -1107,7 +1142,7 @@ public interface ClassFileLocator {
                  * @return A suitable class loading delegate.
                  */
                 public static ClassLoadingDelegate of(Class<?> type, AccessControlContext accessControlContext) {
-                    return new Explicit(ClassLoaderAction.apply(type, accessControlContext), Collections.singleton(type));
+                    return new Explicit(ClassLoaderAction.apply(type, accessControlContext), Collections.singleton(type), accessControlContext);
                 }
 
                 @Override

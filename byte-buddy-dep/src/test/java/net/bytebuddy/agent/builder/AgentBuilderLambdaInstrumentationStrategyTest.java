@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.security.AccessControlContext;
 import java.security.AccessController;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -14,6 +15,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class AgentBuilderLambdaInstrumentationStrategyTest {
+
+    private AccessControlContext accessControlContext = AccessController.getContext();
 
     @Test
     public void testEnabled() throws Exception {
@@ -26,13 +29,13 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
         ClassFileTransformer initialClassFileTransformer = mock(ClassFileTransformer.class);
         assertThat(LambdaFactory.register(initialClassFileTransformer,
                 mock(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class),
-                AgentBuilder.LambdaInstrumentationStrategy.ENABLED), is(true));
+                new AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector(accessControlContext)), is(true));
         try {
             ByteBuddy byteBuddy = mock(ByteBuddy.class);
             Instrumentation instrumentation = mock(Instrumentation.class);
             ClassFileTransformer classFileTransformer = mock(ClassFileTransformer.class);
             try {
-                AgentBuilder.Default.LambdaInstrumentationStrategy.ENABLED.apply(byteBuddy, instrumentation, classFileTransformer, AccessController.getContext());
+                AgentBuilder.Default.LambdaInstrumentationStrategy.ENABLED.apply(byteBuddy, instrumentation, classFileTransformer, accessControlContext);
             } finally {
                 assertThat(LambdaFactory.release(classFileTransformer), is(false));
             }
@@ -46,20 +49,16 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
         ByteBuddy byteBuddy = mock(ByteBuddy.class);
         Instrumentation instrumentation = mock(Instrumentation.class);
         ClassFileTransformer classFileTransformer = mock(ClassFileTransformer.class);
-        AgentBuilder.Default.LambdaInstrumentationStrategy.DISABLED.apply(byteBuddy, instrumentation, classFileTransformer, AccessController.getContext());
+        AgentBuilder.Default.LambdaInstrumentationStrategy.DISABLED.apply(byteBuddy, instrumentation, classFileTransformer, accessControlContext);
         verifyZeroInteractions(byteBuddy);
         verifyZeroInteractions(instrumentation);
         verifyZeroInteractions(classFileTransformer);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testDisabledStrategyCannotInject() throws Exception {
-        AgentBuilder.Default.LambdaInstrumentationStrategy.DISABLED.call();
-    }
-
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInjector.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.MetaFactoryRedirection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.AlternativeMetaFactoryRedirection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class).apply();

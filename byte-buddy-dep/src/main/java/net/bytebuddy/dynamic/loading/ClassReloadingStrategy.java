@@ -221,7 +221,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             strategy.apply(instrumentation, classDefinitions);
             if (!unloadedClasses.isEmpty()) {
                 loadedClasses.putAll((classLoader == null
-                        ? bootstrapInjection.make(instrumentation)
+                        ? bootstrapInjection.make(instrumentation, accessControlContext)
                         : new ClassInjector.UsingReflection(classLoader, accessControlContext)).inject(unloadedClasses));
             }
         } catch (ClassNotFoundException exception) {
@@ -254,7 +254,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     public ClassReloadingStrategy reset(AccessControlContext accessControlContext, Class<?>... type) throws IOException {
         return type.length == 0
                 ? this
-                : reset(ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(type[0], accessControlContext)), type);
+                : reset(ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(type[0], accessControlContext), accessControlContext), type);
     }
 
     /**
@@ -577,7 +577,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
          * @param instrumentation The instrumentation of this instance.
          * @return A class injector for the bootstrap class loader.
          */
-        ClassInjector make(Instrumentation instrumentation);
+        ClassInjector make(Instrumentation instrumentation, AccessControlContext accessControlContext);
 
         /**
          * A disabled bootstrap injection strategy.
@@ -590,7 +590,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             INSTANCE;
 
             @Override
-            public ClassInjector make(Instrumentation instrumentation) {
+            public ClassInjector make(Instrumentation instrumentation, AccessControlContext accessControlContext) {
                 throw new IllegalStateException("Bootstrap injection is not enabled");
             }
 
@@ -620,8 +620,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             }
 
             @Override
-            public ClassInjector make(Instrumentation instrumentation) {
-                return ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
+            public ClassInjector make(Instrumentation instrumentation, AccessControlContext accessControlContext) {
+                return ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation, accessControlContext);
             }
 
             @Override

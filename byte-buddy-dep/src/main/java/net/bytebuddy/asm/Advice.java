@@ -207,7 +207,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(Class<?> advice, AccessControlContext accessControlContext) {
-        return to(advice, ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(advice, accessControlContext)));
+        return to(advice, ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(advice, accessControlContext), accessControlContext));
     }
 
     /**
@@ -7917,7 +7917,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(Class<?> advice, AccessControlContext accessControlContext) {
-            return to(advice, ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(advice, accessControlContext)));
+            return to(advice, ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(advice, accessControlContext), accessControlContext));
         }
 
         /**

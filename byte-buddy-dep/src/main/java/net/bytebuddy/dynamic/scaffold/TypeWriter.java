@@ -35,10 +35,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -1614,7 +1611,7 @@ public interface TypeWriter<T> {
             UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
             if (DUMP_FOLDER != null) {
                 try {
-                    OutputStream outputStream = new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis()));
+                    OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis())));
                     try {
                         outputStream.write(unresolvedType.getBinaryRepresentation());
                     } finally {

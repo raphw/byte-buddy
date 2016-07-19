@@ -1094,7 +1094,7 @@ public interface TypePool {
          * @return A type pool that reads its data from the system class path.
          */
         public static TypePool ofClassPath(AccessControlContext accessControlContext) {
-            return of(SystemClassLoaderAction.apply(accessControlContext));
+            return of(SystemClassLoaderAction.apply(accessControlContext), accessControlContext);
         }
 
         /**
@@ -1104,7 +1104,18 @@ public interface TypePool {
          * @return An appropriate type pool.
          */
         public static TypePool of(ClassLoader classLoader) {
-            return of(ClassFileLocator.ForClassLoader.of(classLoader));
+            return of(classLoader, AccessController.getContext());
+        }
+
+        /**
+         * Returns a type pool for the provided class loader.
+         *
+         * @param classLoader          The class loader for which this class pool is representing types.
+         * @param accessControlContext The access control context to use.
+         * @return An appropriate type pool.
+         */
+        public static TypePool of(ClassLoader classLoader, AccessControlContext accessControlContext) {
+            return of(ClassFileLocator.ForClassLoader.of(classLoader, accessControlContext));
         }
 
         /**
@@ -1240,7 +1251,7 @@ public interface TypePool {
              * @param readerMode       The reader mode to apply by this default type pool.
              */
             public WithLazyResolution(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
-                super(cacheProvider, classFileLocator, readerMode);
+                this(cacheProvider, classFileLocator, readerMode, Empty.INSTANCE);
             }
 
             /**

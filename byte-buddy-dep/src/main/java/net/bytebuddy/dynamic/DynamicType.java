@@ -4330,7 +4330,7 @@ public interface DynamicType {
                     Logger.getLogger("net.bytebuddy").info("Writing file to existing folder structure: " + target.getParent());
                 }
             }
-            OutputStream outputStream = new FileOutputStream(target);
+            OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(target));
             try {
                 outputStream.write(binaryRepresentation);
             } finally {
