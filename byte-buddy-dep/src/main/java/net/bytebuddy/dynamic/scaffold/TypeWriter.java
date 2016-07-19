@@ -2883,6 +2883,11 @@ public interface TypeWriter<T> {
         public static class ForInlining<U> extends Default<U> {
 
             /**
+             * Indicates that a type does not define a super type in its class file, i.e. the {@link Object} type.
+             */
+            private static final String NO_SUPER_TYPE = null;
+
+            /**
              * Indicates that a method should be ignored.
              */
             private static final MethodVisitor IGNORE_METHOD = null;
@@ -3267,9 +3272,9 @@ public interface TypeWriter<T> {
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
-                            (instrumentedType.getSuperClass() == null ?
-                                    TypeDescription.OBJECT :
-                                    instrumentedType.getSuperClass().asErasure()).getInternalName(),
+                            instrumentedType.getSuperClass() == null
+                                    ? (instrumentedType.isInterface() ? TypeDescription.OBJECT.getInternalName() : NO_SUPER_TYPE)
+                                    : instrumentedType.getSuperClass().asErasure().getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
                     typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 }
