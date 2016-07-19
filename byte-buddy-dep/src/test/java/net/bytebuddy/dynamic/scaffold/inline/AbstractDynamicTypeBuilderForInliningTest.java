@@ -121,7 +121,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @Test
     @JavaVersionRule.Enforce(8)
     public void testParameterMetaDataRetention() throws Exception {
-        Class<?> dynamicType = create(typePool.describe(PARAMETER_NAME_CLASS).resolve(), ClassFileLocator.ForClassLoader.ofClassPath())
+        Class<?> dynamicType = create(Class.forName(PARAMETER_NAME_CLASS))
                 .method(named(FOO)).intercept(StubMethod.INSTANCE)
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
