@@ -8,6 +8,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.ProtectionDomain;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,7 +59,12 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInjector.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInjector.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.MetaFactoryRedirection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.AlternativeMetaFactoryRedirection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class).apply();

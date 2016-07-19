@@ -14,6 +14,7 @@ import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
@@ -98,7 +99,12 @@ public class ClassFileLocatorAgentBasedTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
             @Override
             public void apply(Instrumentation mock) {
                 when(mock.isRetransformClassesSupported()).thenReturn(true);
@@ -135,7 +141,7 @@ public class ClassFileLocatorAgentBasedTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonCompatible() throws Exception {
-        new ClassFileLocator.AgentBased(mock(Instrumentation.class), getClass().getClassLoader());
+        new ClassFileLocator.AgentBased(mock(Instrumentation.class), getClass().getClassLoader(), AccessController.getContext());
     }
 
     private static class Foo {

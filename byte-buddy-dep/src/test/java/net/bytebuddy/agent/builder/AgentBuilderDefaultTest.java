@@ -15,7 +15,6 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
-import net.bytebuddy.utility.JavaType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1214,24 +1213,24 @@ public class AgentBuilderDefaultTest {
         AgentBuilder.Default.BootstrapInjectionStrategy bootstrapInjectionStrategy = mock(AgentBuilder.Default.BootstrapInjectionStrategy.class);
         ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
         ClassInjector classInjector = mock(ClassInjector.class);
-        when(bootstrapInjectionStrategy.make(protectionDomain)).thenReturn(classInjector);
+        when(bootstrapInjectionStrategy.make(protectionDomain, accessControlContext)).thenReturn(classInjector);
         assertThat(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
                 null,
                 protectionDomain,
                 accessControlContext).resolve(), is(classInjector));
-        verify(bootstrapInjectionStrategy).make(protectionDomain);
+        verify(bootstrapInjectionStrategy).make(protectionDomain, accessControlContext);
         verifyNoMoreInteractions(bootstrapInjectionStrategy);
     }
 
     @Test
     public void testEnabledBootstrapInjection() throws Exception {
-        assertThat(new AgentBuilder.Default.BootstrapInjectionStrategy.Enabled(mock(File.class), mock(Instrumentation.class)).make(mock(ProtectionDomain.class)),
-                instanceOf(ClassInjector.UsingInstrumentation.class));
+        assertThat(new AgentBuilder.Default.BootstrapInjectionStrategy.Enabled(mock(File.class), mock(Instrumentation.class))
+                        .make(mock(ProtectionDomain.class), accessControlContext), instanceOf(ClassInjector.UsingInstrumentation.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testDisabledBootstrapInjection() throws Exception {
-        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE.make(mock(ProtectionDomain.class));
+        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE.make(mock(ProtectionDomain.class), accessControlContext);
     }
 
     @Test
