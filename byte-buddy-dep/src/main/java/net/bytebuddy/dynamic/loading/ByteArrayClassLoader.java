@@ -45,6 +45,24 @@ public class ByteArrayClassLoader extends ClassLoader {
     private static final URL NO_URL = null;
 
     /**
+     * A strategy for locating a package by name.
+     */
+    private static final PackageLookupStrategy PACKAGE_LOOKUP_STRATEGY;
+
+    /*
+     * Locates the best available package lookup strategy.
+     */
+    static {
+        PackageLookupStrategy packageLookupStrategy;
+        try {
+            packageLookupStrategy = new PackageLookupStrategy.ForJava9CapableVm(ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class));
+        } catch (NoSuchMethodException ignored) {
+            packageLookupStrategy = PackageLookupStrategy.ForLegacyVm.INSTANCE;
+        }
+        PACKAGE_LOOKUP_STRATEGY = packageLookupStrategy;
+    }
+
+    /**
      * A mutable map of type names mapped to their binary representation.
      */
     protected final Map<String, byte[]> typeDefinitions;
@@ -178,8 +196,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 String packageName = name.substring(0, packageIndex);
                 PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(ByteArrayClassLoader.this, packageName, name);
                 if (definition.isDefined()) {
-                    @SuppressWarnings("deprecation")
-                    Package definedPackage = getPackage(packageName);
+                    Package definedPackage = PACKAGE_LOOKUP_STRATEGY.apply(this, packageName);
                     if (definedPackage == null) {
                         definePackage(packageName,
                                 definition.getSpecificationTitle(),
@@ -212,6 +229,17 @@ public class ByteArrayClassLoader extends ClassLoader {
                 : new SingletonEnumeration(url);
     }
 
+    /**
+     * Returns the package for a given name.
+     *
+     * @param name The name of the package.
+     * @return A suitable package or {@code null} if no such package exists.
+     */
+    @SuppressWarnings("deprecation")
+    private Package doGetPackage(String name) {
+        return getPackage(name);
+    }
+
     @Override
     public String toString() {
         return "ByteArrayClassLoader{" +
@@ -222,6 +250,93 @@ public class ByteArrayClassLoader extends ClassLoader {
                 ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                 ", accessControlContext=" + accessControlContext +
                 '}';
+    }
+
+    /**
+     * A package lookup strategy for locating a package by name.
+     */
+    protected interface PackageLookupStrategy {
+
+        /**
+         * Returns a package for a given byte array class loader and a name.
+         *
+         * @param classLoader The class loader to locate a package for.
+         * @param name        The name of the package.
+         * @return A suitable package or {@code null} if no such package exists.
+         */
+        Package apply(ByteArrayClassLoader classLoader, String name);
+
+        /**
+         * A package lookup strategy for a VM prior to Java 9.
+         */
+        enum ForLegacyVm implements PackageLookupStrategy {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Package apply(ByteArrayClassLoader classLoader, String name) {
+                return classLoader.doGetPackage(name);
+            }
+
+            @Override
+            public String toString() {
+                return "ByteArrayClassLoader.PackageLookupStrategy.ForLegacyVm." + name();
+            }
+        }
+
+        /**
+         * A package lookup strategy for Java 9 or newer.
+         */
+        class ForJava9CapableVm implements PackageLookupStrategy {
+
+            /**
+             * The {@code java.lang.ClassLoader#getDefinedPackage(String)} method.
+             */
+            private final Method getDefinedPackage;
+
+            /**
+             * Creates a new package lookup strategy for a modern VM.
+             *
+             * @param getDefinedPackage The {@code java.lang.ClassLoader#getDefinedPackage(String)} method.
+             */
+            protected ForJava9CapableVm(Method getDefinedPackage) {
+                this.getDefinedPackage = getDefinedPackage;
+            }
+
+            @Override
+            public Package apply(ByteArrayClassLoader classLoader, String name) {
+                try {
+                    return (Package) getDefinedPackage.invoke(classLoader, name);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access " + getDefinedPackage, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot invoke " + getDefinedPackage, exception.getCause());
+                }
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForJava9CapableVm that = (ForJava9CapableVm) object;
+                return getDefinedPackage.equals(that.getDefinedPackage);
+            }
+
+            @Override
+            public int hashCode() {
+                return getDefinedPackage.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "ByteArrayClassLoader.PackageLookupStrategy.ForJava9CapableVm{" +
+                        "getDefinedPackage=" + getDefinedPackage +
+                        '}';
+            }
+        }
     }
 
     /**
