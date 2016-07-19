@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;
@@ -78,7 +79,10 @@ public class ByteArrayClassLoaderChildFirstTest {
         assertEquals(classLoader.loadClass(Foo.class.getName()), type);
         assertThat(type, not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(type.getPackage(), notNullValue(Package.class));
-        assertThat(type.getPackage(), is(Foo.class.getPackage()));
+        // Due to change in API in Java 9 where package identity is no longer bound by hierarchy.
+        assertThat(type.getPackage(), ClassFileVersion.forCurrentJavaVersion().isAtLeast(ClassFileVersion.JAVA_V9)
+                ? not(is(Foo.class.getPackage()))
+                : is(Foo.class.getPackage()));
     }
 
     @Test
