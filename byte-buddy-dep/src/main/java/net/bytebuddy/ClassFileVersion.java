@@ -151,12 +151,30 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     /**
      * Finds the highest class file version that is compatible to the current JVM version by parsing the java.version
-     * property which is provided by {@link java.lang.System#getProperty(String)}.
+     * property which is provided by {@link java.lang.System#getProperty(String)} or by querying available APIs. If
+     * neither is possible, an {@link IllegalStateException} is thrown.
      *
      * @return The currently running Java process's class file version.
      */
     public static ClassFileVersion forCurrentJavaVersion() {
         return VERSION_LOCATOR.findCurrentVersion();
+    }
+
+    /**
+     * Finds the highest class file version that is compatible to the current JVM version by parsing the java.version
+     * property which is provided by {@link java.lang.System#getProperty(String)} or by querying available APIs. If this
+     * is not possible, the {@code fallback} version is returned.
+     *
+     * @param fallback The version to fallback to if locating a class file version is not possible.
+     * @return The currently running Java process's class file version or the fallback if locating this version is impossible.
+     */
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception not supposed to be rethrown")
+    public static ClassFileVersion forCurrentJavaVersion(ClassFileVersion fallback) {
+        try {
+            return forCurrentJavaVersion();
+        } catch (Exception ignored) {
+            return fallback;
+        }
     }
 
     /**

@@ -142,14 +142,14 @@ public class ByteBuddy {
      * Creates a new Byte Buddy instance with a default configuration that is suitable for most use cases.
      * </p>
      * <p>
-     * When creating this configuration, Byte Buddy attempts to discover the current JVM's version by parsing
-     * the {@code java.home} system property. If this is not possible on the executing VM, an
-     * {@link IllegalStateException} is thrown. To overcome this, a class file version can be specified explicitly
-     * by {@link ByteBuddy#ByteBuddy(ClassFileVersion)}.
+     * When creating this configuration, Byte Buddy attempts to discover the current JVM's version. If this
+     * is not possible, class files are created Java 6-compatible.
      * </p>
+     *
+     * @see ClassFileVersion#forCurrentJavaVersion(ClassFileVersion)
      */
     public ByteBuddy() {
-        this(ClassFileVersion.forCurrentJavaVersion());
+        this(ClassFileVersion.forCurrentJavaVersion(ClassFileVersion.JAVA_V6));
     }
 
     /**
