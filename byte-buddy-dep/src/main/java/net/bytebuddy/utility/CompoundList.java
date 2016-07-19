@@ -72,8 +72,8 @@ public class CompoundList<T> extends AbstractList<T> {
     public T get(int index) {
         int leftSize = left.size();
         return leftSize - index > 0
-                ? left.get(index)
-                : right.get(index - leftSize);
+                ? (T) left.get(index)
+                : (T) right.get(index - leftSize);
     }
 
     @Override

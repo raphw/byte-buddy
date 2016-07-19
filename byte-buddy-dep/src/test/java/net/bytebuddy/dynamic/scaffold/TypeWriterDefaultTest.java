@@ -17,6 +17,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
@@ -334,7 +335,9 @@ public class TypeWriterDefaultTest {
                 .makeInterface()
                 .invokable(isTypeInitializer())
                 .intercept(StubMethod.INSTANCE)
-                .make(), notNullValue(DynamicType.class));
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded(), notNullValue(Class.class));
     }
 
     @Test
@@ -343,7 +346,9 @@ public class TypeWriterDefaultTest {
                 .makeAnnotation()
                 .invokable(isTypeInitializer())
                 .intercept(StubMethod.INSTANCE)
-                .make(), notNullValue(DynamicType.class));
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded(), notNullValue(Class.class));
     }
 
     @Test

@@ -3265,6 +3265,9 @@ public interface TypeWriter<T> {
                             classFileVersion,
                             ForInlining.this.classFileVersion);
                     contextRegistry.setImplementationContext(implementationContext);
+                    if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
+                        implementationContext.prohibitTypeInitializer();
+                    }
                     super.visit(classFileVersionNumber,
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),
                             instrumentedType.getInternalName(),

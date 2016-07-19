@@ -78,8 +78,9 @@ public class ImplementationContextDisabledTest {
     }
 
     @Test
-    public void testIsRetainTypeInitializer() throws Exception {
+    public void testFreezeHasNoEffect() throws Exception {
         Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Disabled(instrumentedType, classFileVersion);
+        implementationContext.prohibitTypeInitializer();
         assertThat(implementationContext.isRetainTypeInitializer(), is(true));
     }
 

@@ -520,6 +520,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
                        AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             /**
+             * Prohibits any instrumentation of an instrumented class's type initializer.
+             */
+            void prohibitTypeInitializer();
+
+            /**
              * When draining an implementation context, a type initializer might be written to the created class
              * file. If any code must be explicitly invoked from within the type initializer, this can be achieved
              * by providing a code injection by this instance. The injected code is added after the class is set up but
@@ -676,6 +681,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
+            public void prohibitTypeInitializer() {
+                /* do nothing */
+            }
+
+            @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && instrumentedType.equals(((Disabled) other).instrumentedType)
@@ -796,6 +806,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
             private boolean fieldCacheCanAppendEntries;
 
             /**
+             * If {@code true}, this instance suggests the retention of the original type initializer and prohibits the definition of a custom initializer.
+             * This property is required for interfaces before the Java 8 byte code level where type initializers are not allowed.
+             */
+            private boolean prohibitTypeInitializer;
+
+            /**
              * Creates a new default implementation context.
              *
              * @param instrumentedType            The description of the type that is currently subject of creation.
@@ -821,6 +837,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
                 suffix = RandomString.make();
                 fieldCacheCanAppendEntries = true;
+                prohibitTypeInitializer = false;
             }
 
             @Override
@@ -868,7 +885,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
             @Override
             public boolean isRetainTypeInitializer() {
-                return instrumentedType.isInterface() && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8);
+                return prohibitTypeInitializer;
             }
 
             @Override
@@ -916,13 +933,18 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 } else if (typeInitializer.isDefined()) {
                     initializerRecord = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
                 }
-                if (isRetainTypeInitializer() && initializerRecord.getSort().isDefined()) {
+                if (prohibitTypeInitializer && initializerRecord.getSort().isDefined()) {
                     throw new IllegalStateException("It is impossible to define a class initializer or cached values for " + instrumentedType);
                 }
                 initializerRecord.apply(classVisitor, this, annotationValueFilterFactory);
                 for (TypeWriter.MethodPool.Record record : accessorMethods) {
                     record.apply(classVisitor, this, annotationValueFilterFactory);
                 }
+            }
+
+            @Override
+            public void prohibitTypeInitializer() {
+                prohibitTypeInitializer = true;
             }
 
             @Override
@@ -941,6 +963,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                         ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
                         ", suffix=" + suffix +
                         ", fieldCacheCanAppendEntries=" + fieldCacheCanAppendEntries +
+                        ", prohibitTypeInitializer=" + prohibitTypeInitializer +
                         '}';
             }
 

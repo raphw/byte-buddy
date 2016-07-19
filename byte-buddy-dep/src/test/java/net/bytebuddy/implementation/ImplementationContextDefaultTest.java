@@ -267,7 +267,6 @@ public class ImplementationContextDefaultTest {
         when(firstSpecialType.asErasure()).thenReturn(firstSpecialType);
         when(secondSpecialMethod.getDeclaringType()).thenReturn(secondSpecialType);
         when(secondSpecialType.asErasure()).thenReturn(secondSpecialType);
-        when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8)).thenReturn(true);
     }
 
     @Test

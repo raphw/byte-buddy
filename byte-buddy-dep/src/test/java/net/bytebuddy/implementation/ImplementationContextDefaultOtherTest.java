@@ -39,29 +39,24 @@ public class ImplementationContextDefaultOtherTest {
 
     @Test
     public void testFrozenTypeInitializerRetainsInitializer() throws Exception {
-        TypeDescription instrumentedType = mock(TypeDescription.class);
-        ClassFileVersion classFileVersion = mock(ClassFileVersion.class);
-        Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
-                classFileVersion,
+        Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(mock(TypeDescription.class),
+                mock(ClassFileVersion.class),
                 mock(AuxiliaryType.NamingStrategy.class),
                 mock(TypeInitializer.class),
                 mock(ClassFileVersion.class));
-        when(instrumentedType.isInterface()).thenReturn(true);
-        when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8)).thenReturn(false);
+        implementationContext.prohibitTypeInitializer();
         assertThat(implementationContext.isRetainTypeInitializer(), is(true));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFrozenTypeInitializerFrozenThrowsExceptionOnDrain() throws Exception {
         TypeDescription instrumentedType = mock(TypeDescription.class);
-        ClassFileVersion classFileVersion = mock(ClassFileVersion.class);
         Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
-                classFileVersion,
+                mock(ClassFileVersion.class),
                 mock(AuxiliaryType.NamingStrategy.class),
                 mock(TypeInitializer.class),
                 mock(ClassFileVersion.class));
-        when(instrumentedType.isInterface()).thenReturn(true);
-        when(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8)).thenReturn(false);
+        implementationContext.prohibitTypeInitializer();
         TypeWriter.MethodPool methodPool = mock(TypeWriter.MethodPool.class);
         TypeWriter.MethodPool.Record record = mock(TypeWriter.MethodPool.Record.class);
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.DEFINED);
