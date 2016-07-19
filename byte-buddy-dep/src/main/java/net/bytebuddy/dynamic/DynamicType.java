@@ -4330,7 +4330,7 @@ public interface DynamicType {
                     Logger.getLogger("net.bytebuddy").info("Writing file to existing folder structure: " + target.getParent());
                 }
             }
-            OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(target));
+            OutputStream outputStream = new FileOutputStream(target);
             try {
                 outputStream.write(binaryRepresentation);
             } finally {
@@ -4350,7 +4350,7 @@ public interface DynamicType {
                 if (!targetJar.createNewFile()) {
                     Logger.getLogger("net.bytebuddy").info("Overwriting file " + targetJar);
                 }
-                JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(targetJar)), jarInputStream.getManifest());
+                JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(targetJar), jarInputStream.getManifest());
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getAuxiliaryTypes();
                     Map<String, byte[]> files = new HashMap<String, byte[]>();
@@ -4427,7 +4427,7 @@ public interface DynamicType {
             if (!file.createNewFile()) {
                 Logger.getLogger("net.bytebuddy").info("Overwriting existing file: " + file);
             }
-            JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)), manifest);
+            JarOutputStream outputStream = new JarOutputStream(new FileOutputStream(file), manifest);
             try {
                 for (Map.Entry<TypeDescription, byte[]> entry : getAuxiliaryTypes().entrySet()) {
                     outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));

@@ -636,7 +636,7 @@ public interface ClassInjector {
                 if (!jarFile.createNewFile()) {
                     throw new IllegalStateException("Cannot create file " + jarFile);
                 }
-                JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)));
+                JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile));
                 try {
                     for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
                         jarOutputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));

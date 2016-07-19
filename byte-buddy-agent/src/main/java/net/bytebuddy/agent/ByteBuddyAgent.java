@@ -1024,7 +1024,7 @@ public class ByteBuddyAgent {
                     manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
                     manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
                     manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
-                    JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(agentJar)), manifest);
+                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentJar), manifest);
                     try {
                         jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
                         byte[] buffer = new byte[BUFFER_SIZE];

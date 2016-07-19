@@ -1611,7 +1611,7 @@ public interface TypeWriter<T> {
             UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
             if (DUMP_FOLDER != null) {
                 try {
-                    OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis())));
+                    OutputStream outputStream = new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis()));
                     try {
                         outputStream.write(unresolvedType.getBinaryRepresentation());
                     } finally {

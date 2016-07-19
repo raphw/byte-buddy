@@ -556,7 +556,7 @@ public interface ClassFileLocator {
         public Resolution locate(String typeName) throws IOException {
             File file = new File(folder, typeName.replace('.', File.separatorChar) + CLASS_FILE_EXTENSION);
             if (file.exists()) {
-                InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+                InputStream inputStream = new FileInputStream(file);
                 try {
                     return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
                 } finally {
