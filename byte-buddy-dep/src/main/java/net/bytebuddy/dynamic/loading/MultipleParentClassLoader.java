@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.privilege.ClassLoaderAction;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -338,7 +339,20 @@ public class MultipleParentClassLoader extends ClassLoader {
          * yet collected.
          */
         public Builder append(Class<?>... type) {
-            return append(Arrays.asList(type));
+            return append(AccessController.getContext(), type);
+        }
+
+        /**
+         * Appends the class loaders of the given types. The bootstrap class loader is implicitly skipped as
+         * it is an implicit parent of any class loader.
+         *
+         * @param accessControlContext The access control context to use.
+         * @param type                 The types of which to collect the class loaders.
+         * @return A new builder instance with the additional class loaders of the provided types if they were not
+         * yet collected.
+         */
+        public Builder append(AccessControlContext accessControlContext, Class<?>... type) {
+            return append(accessControlContext, Arrays.asList(type));
         }
 
         /**
@@ -349,9 +363,21 @@ public class MultipleParentClassLoader extends ClassLoader {
          * @return A new builder instance with the additional class loaders.
          */
         public Builder append(Collection<? extends Class<?>> types) {
+            return append(AccessController.getContext(), types);
+        }
+
+        /**
+         * Appends the class loaders of the given types if those class loaders were not yet collected. The bootstrap class
+         * loader is implicitly skipped as it is an implicit parent of any class loader.
+         *
+         * @param accessControlContext The access control context to use.
+         * @param types The types of which to collect the class loaders.
+         * @return A new builder instance with the additional class loaders.
+         */
+        public Builder append(AccessControlContext accessControlContext, Collection<? extends Class<?>> types) {
             List<ClassLoader> classLoaders = new ArrayList<ClassLoader>(types.size());
             for (Class<?> type : types) {
-                classLoaders.add(type.getClassLoader());
+                classLoaders.add(ClassLoaderAction.apply(type, accessControlContext));
             }
             return append(classLoaders);
         }
