@@ -2986,12 +2986,8 @@ public interface TypeWriter<T> {
             @Override
             protected UnresolvedType create(TypeInitializer typeInitializer) {
                 try {
-                    ClassFileLocator.Resolution resolution = classFileLocator.locate(originalType.getName());
-                    if (!resolution.isResolved()) {
-                        throw new IllegalArgumentException("Cannot locate the class file for " + originalType + " using " + classFileLocator);
-                    }
                     int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS), readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
-                    ClassReader classReader = new ClassReader(resolution.resolve());
+                    ClassReader classReader = new ClassReader(classFileLocator.locate(originalType.getName()).resolve());
                     ClassWriter classWriter = new FrameComputingClassWriter(classReader, writerFlags, typePool);
                     ContextRegistry contextRegistry = new ContextRegistry();
                     classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType,

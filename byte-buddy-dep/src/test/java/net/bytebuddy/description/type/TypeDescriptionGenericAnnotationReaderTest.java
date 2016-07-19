@@ -4,6 +4,7 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.CompoundList;
 import org.junit.Test;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -113,7 +114,13 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                         return types.next();
                     }
                 }).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedParameterizedType.class).apply();
+        final Iterator<AccessibleObject> iterator = Arrays.<AccessibleObject>asList(Object.class.getDeclaredMethods()).iterator();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedParameterizedType.class).create(new ObjectPropertyAssertion.Creator<AccessibleObject>() {
+            @Override
+            public AccessibleObject create() {
+                return iterator.next();
+            }
+        }).apply();
         final Iterator<Method> methods2 = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedReturnType.class)
                 .create(new ObjectPropertyAssertion.Creator<Method>() {
@@ -131,6 +138,11 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                     }
                 }).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedTypeVariableType.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedExceptionType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedExceptionType.class).create(new ObjectPropertyAssertion.Creator<AccessibleObject>() {
+            @Override
+            public AccessibleObject create() {
+                return iterator.next();
+            }
+        }).apply();
     }
 }

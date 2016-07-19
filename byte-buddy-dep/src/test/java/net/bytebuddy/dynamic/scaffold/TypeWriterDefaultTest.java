@@ -472,8 +472,9 @@ public class TypeWriterDefaultTest {
     @Test
     public void testNoBridgeLegacyType() throws Exception {
         Class<?> base = new ByteBuddy(ClassFileVersion.JAVA_V4)
-                .subclass(Object.class)
+                .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .modifiers(Visibility.PACKAGE_PRIVATE)
+                .defineConstructor(Visibility.PUBLIC).intercept(SuperMethodCall.INSTANCE)
                 .defineMethod("foo", void.class, Visibility.PUBLIC).intercept(StubMethod.INSTANCE)
                 .defineMethod("bar", Object.class).intercept(StubMethod.INSTANCE)
                 .defineMethod("bar", String.class).intercept(StubMethod.INSTANCE)

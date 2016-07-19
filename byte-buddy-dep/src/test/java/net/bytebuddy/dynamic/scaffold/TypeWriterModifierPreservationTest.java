@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.scope.EnclosingType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,7 +55,7 @@ public class TypeWriterModifierPreservationTest {
     @Test
     public void testModifiers() throws Exception {
         TypeModifierExtractor typeModifierExtractor = new TypeModifierExtractor();
-        new ClassReader(type.getName()).accept(typeModifierExtractor, 0);
+        new ClassReader(ClassFileLocator.ForClassLoader.read(type).resolve()).accept(typeModifierExtractor, 0);
         new ByteBuddy()
                 .redefine(type)
                 .visit(new TypeValidator.Wrapper(typeModifierExtractor))

@@ -1,6 +1,7 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.AccessibleObject;
@@ -14,19 +15,26 @@ public class ParameterDescriptionForLoadedParameterDispatcherTest {
 
     private static final int FOO = 42;
 
+    private AccessibleObject accessibleObject;
+
+    @Before
+    public void setUp() throws Exception {
+        accessibleObject = Foo.class.getDeclaredConstructor();
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmGetName() throws Exception {
-        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getName(mock(AccessibleObject.class), FOO);
+        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getName(accessibleObject, FOO);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmGetModifiers() throws Exception {
-        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getModifiers(mock(AccessibleObject.class), FOO);
+        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getModifiers(accessibleObject, FOO);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmIsNamePresent() throws Exception {
-        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.isNamePresent(mock(AccessibleObject.class), FOO);
+        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.isNamePresent(accessibleObject, FOO);
     }
 
     @Test
@@ -39,5 +47,9 @@ public class ParameterDescriptionForLoadedParameterDispatcherTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.class).apply();
+    }
+
+    private static class Foo {
+        /* empty */
     }
 }
