@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.utility.AccessAction;
+import net.bytebuddy.utility.privilege.AccessAction;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -100,15 +100,9 @@ public interface LoadedTypeInitializer {
             try {
                 Field field = type.getDeclaredField(fieldName);
                 if (!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers())) {
-                    AccessController.doPrivileged(AccessAction.of(field));
+                    AccessAction.apply(field, AccessController.getContext());
                 }
-                try {
-                    field.set(STATIC_FIELD, value);
-                } catch (IllegalArgumentException exception) {
-                    throw new IllegalStateException("cannot assign runtime type "
-                            + value.getClass() + " (" + value.getClass().getClassLoader() + ")"
-                            + " to " + field.getType() + " (" + field.getType().getClassLoader() + ")", exception);
-                }
+                field.set(STATIC_FIELD, value);
             } catch (IllegalAccessException exception) {
                 throw new IllegalArgumentException("Cannot access " + fieldName + " from " + type, exception);
             } catch (NoSuchFieldException exception) {

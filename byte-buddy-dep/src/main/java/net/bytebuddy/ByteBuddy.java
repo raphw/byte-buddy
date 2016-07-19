@@ -38,11 +38,14 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
+import net.bytebuddy.utility.privilege.ClassLoaderAction;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -511,7 +514,33 @@ public class ByteBuddy {
      * @return A type builder for redefining the provided type.
      */
     public <T> DynamicType.Builder<T> redefine(Class<T> type) {
-        return redefine(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
+        return redefine(type, AccessController.getContext());
+    }
+
+    /**
+     * <p>
+     * Redefines the given type where any intercepted method that is declared by the redefined type is fully replaced
+     * by the new implementation.
+     * </p>
+     * <p>
+     * The class file of the redefined type is located by querying the redefined type's class loader by name. For specifying an
+     * alternative {@link ClassFileLocator}, use {@link ByteBuddy#redefine(Class, ClassFileLocator)}.
+     * </p>
+     * <p>
+     * <b>Note</b>: When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy},
+     * it is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
+     * Finally, Byte Buddy might be forced to add a method if a redefined class already defines a class initializer. This can be disabled by setting
+     * {@link ByteBuddy#with(Implementation.Context.Factory)} to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled.Factory}
+     * where the class initializer is retained <i>as is</i>.
+     * </p>
+     *
+     * @param type                 The type that is being redefined.
+     * @param accessControlContext The access control context to use for reading the type's class loader.
+     * @param <T>                  The loaded type of the redefined type.
+     * @return A type builder for redefining the provided type.
+     */
+    public <T> DynamicType.Builder<T> redefine(Class<T> type, AccessControlContext accessControlContext) {
+        return redefine(type, ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(type, accessControlContext), accessControlContext));
     }
 
     /**
@@ -584,7 +613,27 @@ public class ByteBuddy {
      * @return A type builder for rebasing the provided type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> type) {
-        return rebase(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
+        return rebase(type, AccessController.getContext());
+    }
+
+    /**
+     * <p>
+     * Rebases the given type where any intercepted method that is declared by the redefined type is preserved within the
+     * rebased type's class such that the class's original can be invoked from the new method implementations. Rebasing a
+     * type can be seen similarly to creating a subclass where the subclass is later merged with the original class file.
+     * </p>
+     * <p>
+     * The class file of the rebased type is located by querying the rebased type's class loader by name. For specifying an
+     * alternative {@link ClassFileLocator}, use {@link ByteBuddy#redefine(Class, ClassFileLocator)}.
+     * </p>
+     *
+     * @param type                 The type that is being rebased.
+     * @param accessControlContext The access control context to use for reading the type's class loader.
+     * @param <T>                  The loaded type of the rebased type.
+     * @return A type builder for rebasing the provided type.
+     */
+    public <T> DynamicType.Builder<T> rebase(Class<T> type, AccessControlContext accessControlContext) {
+        return rebase(type, ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(type, accessControlContext), accessControlContext));
     }
 
     /**

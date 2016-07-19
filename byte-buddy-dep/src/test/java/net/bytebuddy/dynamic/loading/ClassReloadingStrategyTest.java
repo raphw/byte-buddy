@@ -17,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
+import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Collections;
@@ -117,7 +118,8 @@ public class ClassReloadingStrategyTest {
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
         ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(),
-                ClassReloadingStrategy.Strategy.REDEFINITION);
+                ClassReloadingStrategy.Strategy.REDEFINITION,
+                AccessController.getContext());
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
@@ -139,7 +141,8 @@ public class ClassReloadingStrategyTest {
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
         ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(),
-                ClassReloadingStrategy.Strategy.RETRANSFORMATION);
+                ClassReloadingStrategy.Strategy.RETRANSFORMATION,
+                AccessController.getContext());
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
@@ -182,19 +185,19 @@ public class ClassReloadingStrategyTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoRedefinition() throws Exception {
-        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.REDEFINITION);
+        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.REDEFINITION, AccessController.getContext());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoRetransformation() throws Exception {
-        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.RETRANSFORMATION);
+        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.RETRANSFORMATION, AccessController.getContext());
     }
 
     @Test
     public void testResetNotSupported() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
-        new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Strategy.RETRANSFORMATION).reset();
+        new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Strategy.RETRANSFORMATION, AccessController.getContext()).reset();
     }
 
     @Test
@@ -218,8 +221,9 @@ public class ClassReloadingStrategyTest {
         @SuppressWarnings("unchecked")
         Callable<String> instance = (Callable<String>) factory.getDeclaredMethod("nonCapturing").invoke(factory.newInstance());
         // Anonymous types can only be reset to their original format, if a retransformation is applied.
-        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Strategy.RETRANSFORMATION)
-                .preregistered(instance.getClass());
+        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(instrumentation,
+                ClassReloadingStrategy.Strategy.RETRANSFORMATION,
+                AccessController.getContext()).preregistered(instance.getClass());
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.of(instrumentation, instance.getClass());
         try {
             assertThat(instance.call(), is(FOO));
@@ -272,6 +276,11 @@ public class ClassReloadingStrategyTest {
             public void apply(Instrumentation mock) {
                 when(mock.isRedefineClassesSupported()).thenReturn(true);
                 when(mock.isRetransformClassesSupported()).thenReturn(true);
+            }
+        }).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();

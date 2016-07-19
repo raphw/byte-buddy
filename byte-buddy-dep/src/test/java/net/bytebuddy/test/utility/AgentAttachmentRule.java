@@ -10,6 +10,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.instrument.Instrumentation;
+import java.security.AccessController;
 import java.util.logging.Logger;
 
 /**
@@ -21,7 +22,7 @@ public class AgentAttachmentRule implements MethodRule {
     private final boolean available;
 
     public AgentAttachmentRule() {
-        available = ByteBuddyAgent.AttachmentProvider.DEFAULT.attempt().isAvailable();
+        available = ByteBuddyAgent.AttachmentProvider.DEFAULT.attempt(AccessController.getContext()).isAvailable();
     }
 
     @Override

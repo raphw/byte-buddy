@@ -465,21 +465,28 @@ public interface ClassLoadingStrategy {
         private final File folder;
 
         /**
+         * The access control context to use.
+         */
+        private final AccessControlContext accessControlContext;
+
+        /**
          * Creates a new injector which is capable of injecting classes into the bootstrap class loader.
          *
-         * @param instrumentation The instrumentation to use.
-         * @param folder          The folder to save jar files in.
+         * @param instrumentation      The instrumentation to use.
+         * @param folder               The folder to save jar files in.
+         * @param accessControlContext The access control context to use.
          */
-        public ForBootstrapInjection(Instrumentation instrumentation, File folder) {
+        public ForBootstrapInjection(Instrumentation instrumentation, File folder, AccessControlContext accessControlContext) {
             this.instrumentation = instrumentation;
             this.folder = folder;
+            this.accessControlContext = accessControlContext;
         }
 
         @Override
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             ClassInjector classInjector = classLoader == null
-                    ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
-                    : new ClassInjector.UsingReflection(classLoader);
+                    ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation, accessControlContext)
+                    : new ClassInjector.UsingReflection(classLoader, accessControlContext);
             return classInjector.inject(types);
         }
 
@@ -489,13 +496,15 @@ public interface ClassLoadingStrategy {
             if (other == null || getClass() != other.getClass()) return false;
             ForBootstrapInjection that = (ForBootstrapInjection) other;
             return folder.equals(that.folder)
-                    && instrumentation.equals(that.instrumentation);
+                    && instrumentation.equals(that.instrumentation)
+                    && accessControlContext.equals(that.accessControlContext);
         }
 
         @Override
         public int hashCode() {
             int result = instrumentation.hashCode();
             result = 31 * result + folder.hashCode();
+            result = 31 * result + accessControlContext.hashCode();
             return result;
         }
 
@@ -504,6 +513,7 @@ public interface ClassLoadingStrategy {
             return "ClassLoadingStrategy.ForBootstrapInjection{" +
                     "instrumentation=" + instrumentation +
                     ", folder=" + folder +
+                    ", accessControlContext=" + accessControlContext +
                     '}';
         }
     }

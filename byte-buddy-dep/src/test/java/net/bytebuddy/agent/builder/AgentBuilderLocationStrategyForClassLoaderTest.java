@@ -9,6 +9,9 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.security.AccessControlContext;
+import java.security.AccessController;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -23,14 +26,18 @@ public class AgentBuilderLocationStrategyForClassLoaderTest {
     @Mock
     private JavaModule module;
 
+    private AccessControlContext accessControlContext = AccessController.getContext();
+
     @Test
     public void testStrongLocationStrategy() throws Exception {
-        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.STRONG.classFileLocator(classLoader, module), is(ClassFileLocator.ForClassLoader.of(classLoader)));
+        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.STRONG.classFileLocator(classLoader, module, accessControlContext),
+                is(ClassFileLocator.ForClassLoader.of(classLoader)));
     }
 
     @Test
     public void testWeakLocationStrategy() throws Exception {
-        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.WEAK.classFileLocator(classLoader, module), is(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader)));
+        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.WEAK.classFileLocator(classLoader, module, accessControlContext),
+                is(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader)));
     }
 
     @Test

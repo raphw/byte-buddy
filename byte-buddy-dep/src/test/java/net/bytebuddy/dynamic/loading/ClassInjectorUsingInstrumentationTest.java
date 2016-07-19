@@ -13,12 +13,15 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.io.File;
+import java.security.AccessControlContext;
+import java.security.ProtectionDomain;
 import java.util.Collections;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class ClassInjectorUsingInstrumentationTest {
 
@@ -67,7 +70,12 @@ public class ClassInjectorUsingInstrumentationTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassInjector.UsingInstrumentation.class).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingInstrumentation.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).apply();
         ObjectPropertyAssertion.of(ClassInjector.UsingInstrumentation.Target.class).apply();
     }
 }

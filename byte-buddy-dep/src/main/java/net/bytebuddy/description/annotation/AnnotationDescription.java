@@ -5,8 +5,11 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.utility.AccessAction;
 import net.bytebuddy.utility.PropertyDispatcher;
+import net.bytebuddy.utility.privilege.AccessAction;
+import net.bytebuddy.utility.privilege.ClassLoaderAction;
+import net.bytebuddy.utility.privilege.ParentClassLoaderAction;
+import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
@@ -1147,7 +1150,7 @@ public interface AnnotationDescription {
                 AnnotationDescription.AnnotationValue<?, ?> annotationValue = values.get(method.getName());
                 loadedValues.put(method, annotationValue == null
                         ? DefaultValue.of(method)
-                        : annotationValue.load(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader));
+                        : annotationValue.load(classLoader == null ? AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE) : classLoader));
             }
             return new AnnotationInvocationHandler<S>(annotationType, loadedValues);
         }
@@ -1627,13 +1630,13 @@ public interface AnnotationDescription {
 
         @Override
         public S load(ClassLoader classLoader) {
-            ClassLoader thisClassLoader = annotation.getClass().getClassLoader();
+            ClassLoader thisClassLoader = AccessController.doPrivileged(new ClassLoaderAction(annotation.getClass()));
             ClassLoader otherClassLoader = classLoader;
             while (otherClassLoader != null) {
                 if (otherClassLoader == thisClassLoader) {
                     break;
                 }
-                otherClassLoader = otherClassLoader.getParent();
+                otherClassLoader = AccessController.doPrivileged(new ParentClassLoaderAction(otherClassLoader));
             }
             if (otherClassLoader != thisClassLoader) {
                 throw new IllegalArgumentException(annotation + " is not loaded using " + classLoader);
@@ -1654,7 +1657,7 @@ public interface AnnotationDescription {
                 if (method == null || (!accessible && !method.isAccessible())) {
                     method = annotation.annotationType().getDeclaredMethod(methodDescription.getName());
                     if (!accessible) {
-                        AccessController.doPrivileged(AccessAction.of(method));
+                        AccessAction.apply(method, AccessController.getContext());
                     }
                 }
                 return describe(method.invoke(annotation), methodDescription.getReturnType().asErasure());
@@ -1755,7 +1758,7 @@ public interface AnnotationDescription {
 
             @Override
             public S load() throws ClassNotFoundException {
-                return load(annotationType.getClassLoader());
+                return load(AccessController.doPrivileged(new ClassLoaderAction(annotationType)));
             }
 
             @Override

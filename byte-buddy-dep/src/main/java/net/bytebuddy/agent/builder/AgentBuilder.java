@@ -43,6 +43,9 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
+import net.bytebuddy.utility.privilege.ClassLoaderAction;
+import net.bytebuddy.utility.privilege.ProtectionDomainAction;
+import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -1447,7 +1450,7 @@ public interface AgentBuilder {
                  * @return A class loader to represent the bootstrap class loader.
                  */
                 protected ClassLoader getBootstrapMarkerLoader() {
-                    return ClassLoader.getSystemClassLoader();
+                    return AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE);
                 }
 
                 @Override
@@ -2266,12 +2269,13 @@ public interface AgentBuilder {
         /**
          * Describes the given type.
          *
-         * @param type             The loaded type to be described.
-         * @param typeLocator      The type locator to use.
-         * @param locationStrategy The location strategy to use.
+         * @param type                 The loaded type to be described.
+         * @param typeLocator          The type locator to use.
+         * @param locationStrategy     The location strategy to use.
+         * @param accessControlContext The access control context to use.
          * @return An appropriate type description.
          */
-        TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy);
+        TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy, AccessControlContext accessControlContext);
 
         /**
          * Default implementations of a {@link DescriptionStrategy}.
@@ -2298,7 +2302,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy) {
+                public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy, AccessControlContext accessControlContext) {
                     return new TypeDescription.ForLoadedType(type);
                 }
             },
@@ -2366,10 +2370,10 @@ public interface AgentBuilder {
             };
 
             @Override
-            public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy) {
+            public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy, AccessControlContext accessControlContext) {
                 return apply(TypeDescription.ForLoadedType.getName(type),
                         type,
-                        typeLocator.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader()));
+                        typeLocator.typePool(locationStrategy.classFileLocator(ClassLoaderAction.apply(type, accessControlContext), JavaModule.ofType(type), accessControlContext), ClassLoaderAction.apply(type, accessControlContext)));
             }
 
             @Override
@@ -2437,11 +2441,12 @@ public interface AgentBuilder {
         /**
          * Creates a class file locator for a given class loader and module combination.
          *
-         * @param classLoader The class loader that is loading an instrumented type. Might be {@code null} to represent the bootstrap class loader.
-         * @param module      The type's module or {@code null} if Java modules are not supported on the current VM.
+         * @param classLoader          The class loader that is loading an instrumented type. Might be {@code null} to represent the bootstrap class loader.
+         * @param module               The type's module or {@code null} if Java modules are not supported on the current VM.
+         * @param accessControlContext The access control context to use.
          * @return The class file locator to use.
          */
-        ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module);
+        ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module, AccessControlContext accessControlContext);
 
         /**
          * A location strategy that locates class files by querying an instrumented type's {@link ClassLoader}.
@@ -2453,8 +2458,8 @@ public interface AgentBuilder {
              */
             STRONG {
                 @Override
-                public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
-                    return ClassFileLocator.ForClassLoader.of(classLoader);
+                public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module, AccessControlContext accessControlContext) {
+                    return ClassFileLocator.ForClassLoader.of(classLoader, accessControlContext);
                 }
             },
 
@@ -2464,8 +2469,8 @@ public interface AgentBuilder {
              */
             WEAK {
                 @Override
-                public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
-                    return ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader);
+                public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module, AccessControlContext accessControlContext) {
+                    return ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader, accessControlContext);
                 }
             };
 
@@ -2657,27 +2662,30 @@ public interface AgentBuilder {
             /**
              * Considers a loaded class for modification.
              *
-             * @param typeDescription    The type description of the type that is to be considered.
-             * @param type               The loaded representation of the type that is to be considered.
-             * @param ignoredTypeMatcher Identifies types that should not be instrumented.
+             * @param typeDescription      The type description of the type that is to be considered.
+             * @param type                 The loaded representation of the type that is to be considered.
+             * @param ignoredTypeMatcher   Identifies types that should not be instrumented.
+             * @param accessControlContext The access control context to use.
              * @return {@code true} if the class is considered to be redefined.
              */
-            boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher);
+            boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher, AccessControlContext accessControlContext);
 
             /**
              * Applies this collector.
              *
-             * @param instrumentation  The instrumentation instance to apply the transformation for.
-             * @param typeLocator      The type locator to use.
-             * @param locationStrategy The location strategy to use.
-             * @param listener         the listener to notify.
+             * @param instrumentation      The instrumentation instance to apply the transformation for.
+             * @param typeLocator          The type locator to use.
+             * @param locationStrategy     The location strategy to use.
+             * @param listener             the listener to notify.
+             * @param accessControlContext The access control context to use.
              * @throws UnmodifiableClassException If a class is not modifiable.
              * @throws ClassNotFoundException     If a class could not be found.
              */
             void apply(Instrumentation instrumentation,
                        TypeLocator typeLocator,
                        LocationStrategy locationStrategy,
-                       Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
+                       Listener listener,
+                       AccessControlContext accessControlContext) throws UnmodifiableClassException, ClassNotFoundException;
 
             /**
              * A collector that applies a <b>redefinition</b> of already loaded classes.
@@ -2705,12 +2713,12 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher) {
+                public boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher, AccessControlContext accessControlContext) {
                     return transformation.isAlive(typeDescription,
-                            type.getClassLoader(),
+                            ClassLoaderAction.apply(type, accessControlContext),
                             JavaModule.ofType(type),
                             type,
-                            type.getProtectionDomain(),
+                            ProtectionDomainAction.apply(type, accessControlContext),
                             ignoredTypeMatcher) && entries.add(new Entry(type));
                 }
 
@@ -2718,17 +2726,18 @@ public interface AgentBuilder {
                 public void apply(Instrumentation instrumentation,
                                   TypeLocator typeLocator,
                                   LocationStrategy locationStrategy,
-                                  Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
+                                  Listener listener,
+                                  AccessControlContext accessControlContext) throws UnmodifiableClassException, ClassNotFoundException {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
                     for (Entry entry : entries) {
                         try {
-                            classDefinitions.add(entry.resolve(locationStrategy));
+                            classDefinitions.add(entry.resolve(locationStrategy, accessControlContext));
                         } catch (Throwable throwable) {
                             JavaModule module = JavaModule.ofType(entry.getType());
                             try {
-                                listener.onError(TypeDescription.ForLoadedType.getName(entry.getType()), entry.getType().getClassLoader(), module, throwable);
+                                listener.onError(TypeDescription.ForLoadedType.getName(entry.getType()), ClassLoaderAction.apply(entry.getType(), accessControlContext), module, throwable);
                             } finally {
-                                listener.onComplete(TypeDescription.ForLoadedType.getName(entry.getType()), entry.getType().getClassLoader(), module);
+                                listener.onComplete(TypeDescription.ForLoadedType.getName(entry.getType()), ClassLoaderAction.apply(entry.getType(), accessControlContext), module);
                             }
                         }
                     }
@@ -2844,12 +2853,15 @@ public interface AgentBuilder {
                     /**
                      * Resolves the entry to a class definition.
                      *
-                     * @param locationStrategy A strategy for creating a class file locator.
+                     * @param locationStrategy     A strategy for creating a class file locator.
+                     * @param accessControlContext The access control context to use.
                      * @return A class definition representing the redefined class.
                      * @throws IOException If an IO exception occurs.
                      */
-                    protected ClassDefinition resolve(LocationStrategy locationStrategy) throws IOException {
-                        return new ClassDefinition(type, locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)).locate(TypeDescription.ForLoadedType.getName(type)).resolve());
+                    protected ClassDefinition resolve(LocationStrategy locationStrategy, AccessControlContext accessControlContext) throws IOException {
+                        return new ClassDefinition(type, locationStrategy
+                                .classFileLocator(ClassLoaderAction.apply(type, accessControlContext), JavaModule.ofType(type), accessControlContext)
+                                .locate(TypeDescription.ForLoadedType.getName(type)).resolve());
                     }
 
                     @Override
@@ -2900,12 +2912,12 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher) {
+                public boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher, AccessControlContext accessControlContext) {
                     return transformation.isAlive(typeDescription,
-                            type.getClassLoader(),
+                            ClassLoaderAction.apply(type, accessControlContext),
                             JavaModule.ofType(type),
                             type,
-                            type.getProtectionDomain(),
+                            ProtectionDomainAction.apply(type, accessControlContext),
                             ignoredTypeMatcher) && types.add(type);
                 }
 
@@ -2927,7 +2939,8 @@ public interface AgentBuilder {
                     public void apply(Instrumentation instrumentation,
                                       TypeLocator typeLocator,
                                       LocationStrategy locationStrategy,
-                                      Listener listener) throws UnmodifiableClassException {
+                                      Listener listener,
+                                      AccessControlContext accessControlContext) throws UnmodifiableClassException {
                         if (!types.isEmpty()) {
                             instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
                         }
@@ -2960,7 +2973,8 @@ public interface AgentBuilder {
                     public void apply(Instrumentation instrumentation,
                                       TypeLocator typeLocator,
                                       LocationStrategy locationStrategy,
-                                      Listener listener) throws UnmodifiableClassException {
+                                      Listener listener,
+                                      AccessControlContext accessControlContext) throws UnmodifiableClassException {
                         Map<Class<?>, Exception> exceptions = new HashMap<Class<?>, Exception>();
                         for (Class<?> type : types) {
                             try {
@@ -3005,7 +3019,10 @@ public interface AgentBuilder {
          */
         ENABLED {
             @Override
-            protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
+            protected void apply(ByteBuddy byteBuddy,
+                                 Instrumentation instrumentation,
+                                 ClassFileTransformer classFileTransformer,
+                                 AccessControlContext accessControlContext) {
                 if (LambdaFactory.register(classFileTransformer, new LambdaInstanceFactory(byteBuddy), this)) {
                     Class<?> lambdaMetaFactory;
                     try {
@@ -3019,7 +3036,7 @@ public interface AgentBuilder {
                                     .method(named("metafactory"), MetaFactoryRedirection.INSTANCE)
                                     .method(named("altMetafactory"), AlternativeMetaFactoryRedirection.INSTANCE))
                             .make()
-                            .load(lambdaMetaFactory.getClassLoader(), ClassReloadingStrategy.of(instrumentation));
+                            .load(ClassLoaderAction.apply(lambdaMetaFactory, accessControlContext), ClassReloadingStrategy.of(instrumentation, accessControlContext));
                 }
             }
 
@@ -3037,7 +3054,10 @@ public interface AgentBuilder {
          */
         DISABLED {
             @Override
-            protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
+            protected void apply(ByteBuddy byteBuddy,
+                                 Instrumentation instrumentation,
+                                 ClassFileTransformer classFileTransformer,
+                                 AccessControlContext accessControlContext) {
                     /* do nothing */
             }
 
@@ -3087,8 +3107,12 @@ public interface AgentBuilder {
          * @param byteBuddy            The Byte Buddy instance to use.
          * @param instrumentation      The instrumentation instance for applying a redefinition.
          * @param classFileTransformer The class file transformer to apply.
+         * @param accessControlContext The access control context to use.
          */
-        protected abstract void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer);
+        protected abstract void apply(ByteBuddy byteBuddy,
+                                      Instrumentation instrumentation,
+                                      ClassFileTransformer classFileTransformer,
+                                      AccessControlContext accessControlContext);
 
         /**
          * Indicates if this strategy enables instrumentation of the {@code LambdaMetafactory}.
@@ -3232,10 +3256,10 @@ public interface AgentBuilder {
                 byte[] classFile = builder.make().getBytes();
                 for (ClassFileTransformer classFileTransformer : classFileTransformers) {
                     try {
-                        byte[] transformedClassFile = classFileTransformer.transform(targetType.getClassLoader(),
+                        byte[] transformedClassFile = classFileTransformer.transform(AccessController.doPrivileged(new ClassLoaderAction(targetType)),
                                 lambdaClassName.replace('.', '/'),
                                 NOT_PREVIOUSLY_DEFINED,
-                                targetType.getProtectionDomain(),
+                                AccessController.doPrivileged(new ProtectionDomainAction(targetType)),
                                 classFile);
                         classFile = transformedClassFile == null
                                 ? classFile
@@ -4931,19 +4955,19 @@ public interface AgentBuilder {
                 if (nativeMethodStrategy.isEnabled(instrumentation)) {
                     instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
                 }
-                lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
+                lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer, accessControlContext);
                 if (redefinitionStrategy.isEnabled()) {
                     RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                     for (Class<?> type : instrumentation.getAllLoadedClasses()) {
                         JavaModule module = JavaModule.ofType(type);
                         try {
-                            TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator, locationStrategy);
-                            if (!instrumentation.isModifiableClass(type) || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
+                            TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator, locationStrategy, accessControlContext);
+                            if (!instrumentation.isModifiableClass(type) || !collector.consider(typeDescription, type, ignoredTypeMatcher, accessControlContext)) {
                                 try {
                                     try {
-                                        listener.onIgnored(typeDescription, type.getClassLoader(), module);
+                                        listener.onIgnored(typeDescription, ClassLoaderAction.apply(type, accessControlContext), module);
                                     } finally {
-                                        listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
+                                        listener.onComplete(typeDescription.getName(), ClassLoaderAction.apply(type, accessControlContext), module);
                                     }
                                 } catch (Throwable ignored) {
                                     // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
@@ -4952,16 +4976,16 @@ public interface AgentBuilder {
                         } catch (Throwable throwable) {
                             try {
                                 try {
-                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, throwable);
+                                    listener.onError(TypeDescription.ForLoadedType.getName(type), ClassLoaderAction.apply(type, accessControlContext), module, throwable);
                                 } finally {
-                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module);
+                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), ClassLoaderAction.apply(type, accessControlContext), module);
                                 }
                             } catch (Throwable ignored) {
                                 // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                             }
                         }
                     }
-                    collector.apply(instrumentation, typeLocator, locationStrategy, listener);
+                    collector.apply(instrumentation, typeLocator, locationStrategy, listener, accessControlContext);
                 }
                 return classFileTransformer;
             } catch (Throwable throwable) {
@@ -4972,7 +4996,7 @@ public interface AgentBuilder {
         @Override
         public ClassFileTransformer installOnByteBuddyAgent() {
             try {
-                Instrumentation instrumentation = (Instrumentation) ClassLoader.getSystemClassLoader()
+                Instrumentation instrumentation = (Instrumentation) SystemClassLoaderAction.apply(accessControlContext)
                         .loadClass(INSTALLER_TYPE)
                         .getDeclaredField(INSTRUMENTATION_FIELD)
                         .get(STATIC_FIELD);
@@ -5995,7 +6019,7 @@ public interface AgentBuilder {
                                     ProtectionDomain.class,
                                     byte[].class)).onSuper().withAllArguments())
                             .make()
-                            .load(ExecutingTransformer.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                            .load(AccessController.doPrivileged(new ClassLoaderAction(ExecutingTransformer.class)), ClassLoadingStrategy.Default.WRAPPER)
                             .getLoaded()
                             .getDeclaredConstructor(ByteBuddy.class,
                                     TypeLocator.class,
@@ -6176,7 +6200,7 @@ public interface AgentBuilder {
                 try {
                     ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(binaryTypeName,
                             binaryRepresentation,
-                            locationStrategy.classFileLocator(classLoader, module));
+                            locationStrategy.classFileLocator(classLoader, module, accessControlContext));
                     TypePool typePool = typeLocator.typePool(classFileLocator, classLoader);
                     return transformation.resolve(descriptionStrategy.apply(binaryTypeName, classBeingRedefined, typePool),
                             classLoader,

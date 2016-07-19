@@ -148,7 +148,8 @@
                                     net.bytebuddy.implementation.bytecode.member,
                                     net.bytebuddy.matcher,
                                     net.bytebuddy.pool,
-                                    net.bytebuddy.utility
+                                    net.bytebuddy.utility,
+                                    net.bytebuddy.utility.privilege
                                 </Export-Package>
                             </instructions>
                         </configuration>

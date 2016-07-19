@@ -15,12 +15,16 @@ import org.junit.rules.MethodRule;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.ProtectionDomain;
 import java.util.Collections;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class ClassLoadingStrategyForBootstrapInjectionTest {
 
@@ -42,7 +46,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
     @Test
     @AgentAttachmentRule.Enforce
     public void testBootstrapInjection() throws Exception {
-        ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file);
+        ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file, AccessController.getContext());
         String name = FOO + RandomString.make();
         DynamicType dynamicType = new ByteBuddy().subclass(Object.class).name(name).make();
         Map<TypeDescription, Class<?>> loaded = bootstrapStrategy.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, Collections.singletonMap(dynamicType.getTypeDescription(), dynamicType.getBytes()));
@@ -54,7 +58,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
     @Test
     @AgentAttachmentRule.Enforce
     public void testClassLoaderInjection() throws Exception {
-        ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file);
+        ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file, AccessController.getContext());
         String name = BAR + RandomString.make();
         ClassLoader classLoader = new URLClassLoader(new URL[0], null);
         DynamicType dynamicType = new ByteBuddy().subclass(Object.class).name(name).make();
@@ -66,6 +70,11 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassLoadingStrategy.ForBootstrapInjection.class).apply();
+        ObjectPropertyAssertion.of(ClassLoadingStrategy.ForBootstrapInjection.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).apply();
     }
 }

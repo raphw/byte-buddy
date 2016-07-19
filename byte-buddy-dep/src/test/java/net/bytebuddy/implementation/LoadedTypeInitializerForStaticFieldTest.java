@@ -37,7 +37,7 @@ public class LoadedTypeInitializerForStaticFieldTest {
         assertThat(Qux.foo, is(object));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testNonAssignableField() throws Exception {
         new LoadedTypeInitializer.ForStaticField(FOO, new Object()).onLoad(FooBar.class);
     }

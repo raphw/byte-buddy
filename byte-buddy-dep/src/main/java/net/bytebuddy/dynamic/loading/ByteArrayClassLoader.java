@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.privilege.ClassLoaderAction;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -176,7 +177,7 @@ public class ByteArrayClassLoader extends ClassLoader {
         for (TypeDescription typeDescription : types.keySet()) {
             try {
                 Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
-                if (forbidExisting && type.getClassLoader() != classLoader) {
+                if (forbidExisting && ClassLoaderAction.apply(type, accessControlContext) != classLoader) {
                     throw new IllegalStateException("Class already loaded: " + type);
                 }
                 loadedTypes.put(typeDescription, type);
@@ -243,8 +244,7 @@ public class ByteArrayClassLoader extends ClassLoader {
     @Override
     public String toString() {
         return "ByteArrayClassLoader{" +
-                "parent=" + getParent() +
-                ", typeDefinitions=" + typeDefinitions +
+                "typeDefinitions=" + typeDefinitions +
                 ", persistenceHandler=" + persistenceHandler +
                 ", protectionDomain=" + protectionDomain +
                 ", packageDefinitionStrategy=" + packageDefinitionStrategy +
@@ -716,15 +716,14 @@ public class ByteArrayClassLoader extends ClassLoader {
                     return true;
                 }
                 Class<?> loadedClass = findLoadedClass(typeName);
-                return loadedClass != null && loadedClass.getClassLoader() == this;
+                return loadedClass != null && ClassLoaderAction.apply(loadedClass, accessControlContext) == this;
             }
         }
 
         @Override
         public String toString() {
             return "ByteArrayClassLoader.ChildFirst{" +
-                    "parent=" + getParent() +
-                    ", typeDefinitions=" + typeDefinitions +
+                    "typeDefinitions=" + typeDefinitions +
                     ", protectionDomain=" + protectionDomain +
                     ", accessControlContext=" + accessControlContext +
                     ", persistenceHandler=" + persistenceHandler +

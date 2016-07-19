@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.security.AccessController;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,7 +32,7 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
             Instrumentation instrumentation = mock(Instrumentation.class);
             ClassFileTransformer classFileTransformer = mock(ClassFileTransformer.class);
             try {
-                AgentBuilder.Default.LambdaInstrumentationStrategy.ENABLED.apply(byteBuddy, instrumentation, classFileTransformer);
+                AgentBuilder.Default.LambdaInstrumentationStrategy.ENABLED.apply(byteBuddy, instrumentation, classFileTransformer, AccessController.getContext());
             } finally {
                 assertThat(LambdaFactory.release(classFileTransformer), is(false));
             }
@@ -45,7 +46,7 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
         ByteBuddy byteBuddy = mock(ByteBuddy.class);
         Instrumentation instrumentation = mock(Instrumentation.class);
         ClassFileTransformer classFileTransformer = mock(ClassFileTransformer.class);
-        AgentBuilder.Default.LambdaInstrumentationStrategy.DISABLED.apply(byteBuddy, instrumentation, classFileTransformer);
+        AgentBuilder.Default.LambdaInstrumentationStrategy.DISABLED.apply(byteBuddy, instrumentation, classFileTransformer, AccessController.getContext());
         verifyZeroInteractions(byteBuddy);
         verifyZeroInteractions(instrumentation);
         verifyZeroInteractions(classFileTransformer);

@@ -6,6 +6,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
+import java.security.AccessControlContext;
+import java.security.ProtectionDomain;
+
+import static org.mockito.Mockito.mock;
+
 public abstract class AbstractElementMatcherTest<T extends ElementMatcher<?>> {
 
     private final Class<? extends T> type;
@@ -22,7 +27,12 @@ public abstract class AbstractElementMatcherTest<T extends ElementMatcher<?>> {
 
     @Test
     public void testObjectProperties() throws Exception {
-        modify(ObjectPropertyAssertion.of(type)).specificToString(makeRegex(startsWith)).apply();
+        modify(ObjectPropertyAssertion.of(type)).specificToString(makeRegex(startsWith)).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).apply();
     }
 
     protected String makeRegex(String startsWith) {

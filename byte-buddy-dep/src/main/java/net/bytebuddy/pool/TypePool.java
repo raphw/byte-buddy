@@ -17,6 +17,8 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.PropertyDispatcher;
+import net.bytebuddy.utility.privilege.ClassLoaderAction;
+import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -26,6 +28,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Proxy;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -1079,7 +1083,18 @@ public interface TypePool {
          * @return A type pool that reads its data from the system class path.
          */
         public static TypePool ofClassPath() {
-            return of(ClassLoader.getSystemClassLoader());
+            return ofClassPath(AccessController.getContext());
+        }
+
+        /**
+         * Creates a default {@link net.bytebuddy.pool.TypePool} that looks up data by querying the system class
+         * loader. The returned instance is configured to use a fast reading mode and a simple cache.
+         *
+         * @param accessControlContext The access control context to use.
+         * @return A type pool that reads its data from the system class path.
+         */
+        public static TypePool ofClassPath(AccessControlContext accessControlContext) {
+            return of(SystemClassLoaderAction.apply(accessControlContext));
         }
 
         /**
@@ -1247,7 +1262,18 @@ public interface TypePool {
              * @return A type pool that reads its data from the system class path.
              */
             public static TypePool ofClassPath() {
-                return of(ClassLoader.getSystemClassLoader());
+                return ofClassPath(AccessController.getContext());
+            }
+
+            /**
+             * Creates a default {@link net.bytebuddy.pool.TypePool} with lazy resolution that looks up data by querying the system class
+             * loader. The returned instance is configured to use a fast reading mode and a simple cache.
+             *
+             * @param accessControlContext The access control context to use.
+             * @return A type pool that reads its data from the system class path.
+             */
+            public static TypePool ofClassPath(AccessControlContext accessControlContext) {
+                return of(SystemClassLoaderAction.apply(accessControlContext));
             }
 
             /**
@@ -6465,7 +6491,7 @@ public interface TypePool {
 
                     @Override
                     public S load() throws ClassNotFoundException {
-                        return load(annotationType.getClassLoader());
+                        return load(AccessController.doPrivileged(new ClassLoaderAction(annotationType)));
                     }
 
                     @Override
@@ -8531,7 +8557,17 @@ public interface TypePool {
          * @return An class loading type pool.
          */
         public static TypePool ofClassPath() {
-            return of(ClassLoader.getSystemClassLoader());
+            return ofClassPath(AccessController.getContext());
+        }
+
+        /**
+         * Returns a type pool that attempts type descriptions by loadings types from the system class loader.
+         *
+         * @param accessControlContext The access control context to use.
+         * @return An class loading type pool.
+         */
+        public static TypePool ofClassPath(AccessControlContext accessControlContext) {
+            return of(SystemClassLoaderAction.apply(accessControlContext));
         }
 
         @Override

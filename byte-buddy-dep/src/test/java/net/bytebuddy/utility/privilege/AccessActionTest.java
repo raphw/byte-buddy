@@ -1,9 +1,10 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.utility.privilege;
 
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.AccessibleObject;
+import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -17,7 +18,7 @@ public class AccessActionTest {
     @Test
     public void testAccessAction() throws Exception {
         AccessibleObjectSpy accessibleObjectSpy = new AccessibleObjectSpy(Foo.class.getDeclaredField(BAR));
-        assertThat(AccessAction.of(accessibleObjectSpy).run(), is(accessibleObjectSpy));
+        assertThat(AccessAction.apply(accessibleObjectSpy, AccessController.getContext()), is(accessibleObjectSpy));
         assertThat(accessibleObjectSpy.accessible, is(true));
     }
 

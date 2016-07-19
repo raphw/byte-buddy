@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
+import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -121,10 +122,11 @@ public interface ClassInjector {
          * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain},
          * {@link PackageDefinitionStrategy}, {@link AccessControlContext} which does not trigger an error when discovering existent classes.
          *
-         * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+         * @param classLoader          The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+         * @param accessControlContext The access control context to use.
          */
-        public UsingReflection(ClassLoader classLoader) {
-            this(classLoader, DEFAULT_PROTECTION_DOMAIN, AccessController.getContext());
+        public UsingReflection(ClassLoader classLoader, AccessControlContext accessControlContext) {
+            this(classLoader, DEFAULT_PROTECTION_DOMAIN, accessControlContext);
         }
 
         /**
@@ -173,7 +175,17 @@ public interface ClassInjector {
          * @return A class injector for the system class loader.
          */
         public static ClassInjector ofSystemClassLoader() {
-            return new UsingReflection(ClassLoader.getSystemClassLoader());
+            return ofSystemClassLoader(AccessController.getContext());
+        }
+
+        /**
+         * Creates a class injector for the system class loader.
+         *
+         * @param accessControlContext The access control context to use.
+         * @return A class injector for the system class loader.
+         */
+        public static ClassInjector ofSystemClassLoader(AccessControlContext accessControlContext) {
+            return new UsingReflection(SystemClassLoaderAction.apply(accessControlContext), accessControlContext);
         }
 
         @Override
@@ -552,6 +564,11 @@ public interface ClassInjector {
         private final Instrumentation instrumentation;
 
         /**
+         * The access control context to use.
+         */
+        private final AccessControlContext accessControlContext;
+
+        /**
          * A representation of the target path to which classes are to be appended.
          */
         private final Target target;
@@ -575,21 +592,40 @@ public interface ClassInjector {
          * @return An appropriate class injector that applies instrumentation.
          */
         public static ClassInjector of(File folder, Target target, Instrumentation instrumentation) {
-            return new UsingInstrumentation(folder, target, instrumentation, new RandomString());
+            return of(folder, target, instrumentation, AccessController.getContext());
         }
 
         /**
          * Creates an instrumentation-based class injector.
          *
-         * @param folder          The folder to be used for storing jar files.
-         * @param target          A representation of the target path to which classes are to be appended.
-         * @param instrumentation The instrumentation to use for appending to the class path or the boot path.
-         * @param randomString    The random string generator to use.
+         * @param folder               The folder to be used for storing jar files.
+         * @param target               A representation of the target path to which classes are to be appended.
+         * @param instrumentation      The instrumentation to use for appending to the class path or the boot path.
+         * @param accessControlContext The access control context to use.
+         * @return An appropriate class injector that applies instrumentation.
          */
-        protected UsingInstrumentation(File folder, Target target, Instrumentation instrumentation, RandomString randomString) {
+        public static ClassInjector of(File folder, Target target, Instrumentation instrumentation, AccessControlContext accessControlContext) {
+            return new UsingInstrumentation(folder, target, instrumentation, accessControlContext, new RandomString());
+        }
+
+        /**
+         * Creates an instrumentation-based class injector.
+         *
+         * @param folder               The folder to be used for storing jar files.
+         * @param target               A representation of the target path to which classes are to be appended.
+         * @param instrumentation      The instrumentation to use for appending to the class path or the boot path.
+         * @param accessControlContext The access control context to use.
+         * @param randomString         The random string generator to use.
+         */
+        protected UsingInstrumentation(File folder,
+                                       Target target,
+                                       Instrumentation instrumentation,
+                                       AccessControlContext accessControlContext,
+                                       RandomString randomString) {
             this.folder = folder;
             this.target = target;
             this.instrumentation = instrumentation;
+            this.accessControlContext = accessControlContext;
             this.randomString = randomString;
         }
 
@@ -612,7 +648,7 @@ public interface ClassInjector {
                 target.inject(instrumentation, new JarFile(jarFile));
                 Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
                 for (TypeDescription typeDescription : types.keySet()) {
-                    loaded.put(typeDescription, Class.forName(typeDescription.getName(), false, ClassLoader.getSystemClassLoader()));
+                    loaded.put(typeDescription, Class.forName(typeDescription.getName(), false, SystemClassLoaderAction.apply(accessControlContext)));
                 }
                 return loaded;
             } catch (IOException exception) {
@@ -630,6 +666,7 @@ public interface ClassInjector {
             return folder.equals(that.folder)
                     && instrumentation.equals(that.instrumentation)
                     && target == that.target
+                    && accessControlContext.equals(that.accessControlContext)
                     && randomString.equals(that.randomString);
         }
 
@@ -638,6 +675,7 @@ public interface ClassInjector {
             int result = instrumentation.hashCode();
             result = 31 * result + target.hashCode();
             result = 31 * result + folder.hashCode();
+            result = 31 * result + accessControlContext.hashCode();
             result = 31 * result + randomString.hashCode();
             return result;
         }
@@ -648,6 +686,7 @@ public interface ClassInjector {
                     "instrumentation=" + instrumentation +
                     ", target=" + target +
                     ", folder=" + folder +
+                    ", accessControlContext=" + accessControlContext +
                     ", randomString=" + randomString +
                     '}';
         }

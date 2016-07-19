@@ -45,6 +45,8 @@ public class ClassInjectorUsingReflectionTest {
     @Mock
     private TypeDescription typeDescription;
 
+    private AccessControlContext accessControlContext = AccessController.getContext();
+
     private ClassLoader classLoader;
 
     private ClassInjector classInjector;
@@ -52,12 +54,12 @@ public class ClassInjectorUsingReflectionTest {
     @Before
     public void setUp() throws Exception {
         classLoader = new URLClassLoader(new URL[0], null);
-        classInjector = new ClassInjector.UsingReflection(classLoader);
+        classInjector = new ClassInjector.UsingReflection(classLoader, accessControlContext);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBootstrapClassLoader() throws Exception {
-        new ClassInjector.UsingReflection(null);
+        new ClassInjector.UsingReflection(null, accessControlContext);
     }
 
     @Test

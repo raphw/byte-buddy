@@ -1,9 +1,11 @@
 package net.bytebuddy.agent.builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
+import java.security.AccessController;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -104,7 +106,7 @@ public class LambdaFactory {
     public static boolean release(ClassFileTransformer classFileTransformer) {
         try {
             @SuppressWarnings("unchecked")
-            Map<ClassFileTransformer, ?> classFileTransformers = (Map<ClassFileTransformer, ?>) ClassLoader.getSystemClassLoader()
+            Map<ClassFileTransformer, ?> classFileTransformers = (Map<ClassFileTransformer, ?>) AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE)
                     .loadClass(LambdaFactory.class.getName())
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
                     .get(null);

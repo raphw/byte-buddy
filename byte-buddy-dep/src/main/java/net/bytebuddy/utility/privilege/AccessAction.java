@@ -1,6 +1,8 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.utility.privilege;
 
 import java.lang.reflect.AccessibleObject;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 /**
@@ -27,12 +29,13 @@ public class AccessAction<T extends AccessibleObject> implements PrivilegedActio
     /**
      * Creates a new access action that returns the accessible object on execution.
      *
-     * @param accessibleObject The accessible object.
-     * @param <S>              The type of the accessible object.
+     * @param accessibleObject     The accessible object.
+     * @param accessControlContext The access control context to use.
+     * @param <S>                  The type of the accessible object.
      * @return An access action that makes the accessible object accessible and returns it subsequently.
      */
-    public static <S extends AccessibleObject> PrivilegedAction<S> of(S accessibleObject) {
-        return new AccessAction<S>(accessibleObject);
+    public static <S extends AccessibleObject> S apply(S accessibleObject, AccessControlContext accessControlContext) {
+        return AccessController.doPrivileged(new AccessAction<S>(accessibleObject), accessControlContext);
     }
 
     @Override

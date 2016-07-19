@@ -15,10 +15,12 @@ import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -80,7 +82,7 @@ public enum NexusAccessor {
                     .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
         } catch (Exception exception) {
             try {
-                dispatcher = new Dispatcher.Available(ClassLoader.getSystemClassLoader()
+                dispatcher = new Dispatcher.Available(AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE)
                         .loadClass(Nexus.class.getName())
                         .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
             } catch (Exception ignored) {
