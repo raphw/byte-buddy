@@ -99,27 +99,15 @@ public class ClassFileLocatorAgentBasedTest {
     }
 
     @Test
-    @Ignore("Needs to be reset after access controller clean up") // REFACTOR
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
             @Override
             public void apply(Instrumentation mock) {
                 when(mock.isRetransformClassesSupported()).thenReturn(true);
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.Default.class).apply();
-        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.class)
-                .create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-                    @Override
-                    public AccessControlContext create() {
-                        return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-                    }
-                }).apply();
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.class).apply();
         final Iterator<Field> iterator = Arrays.asList(Foo.class.getDeclaredFields()).iterator();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Resolved.class)
                 .create(new ObjectPropertyAssertion.Creator<Field>() {
@@ -136,11 +124,6 @@ public class ClassFileLocatorAgentBasedTest {
             public Collection<Class<?>> create() {
                 return Collections.<Class<?>>singletonList(otherIterator.next());
             }
-        }).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
         }).apply();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ExtractionClassFileTransformer.class).applyBasic();
     }
@@ -148,7 +131,7 @@ public class ClassFileLocatorAgentBasedTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonCompatible() throws Exception {
-        new ClassFileLocator.AgentBased(mock(Instrumentation.class), getClass().getClassLoader(), AccessController.getContext());
+        new ClassFileLocator.AgentBased(mock(Instrumentation.class), getClass().getClassLoader());
     }
 
     private static class Foo {

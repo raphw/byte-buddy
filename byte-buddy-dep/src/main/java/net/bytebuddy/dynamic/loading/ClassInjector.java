@@ -1,8 +1,8 @@
 package net.bytebuddy.dynamic.loading;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
-import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -11,9 +11,6 @@ import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,8 +19,14 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 /**
+ * <p>
  * A class injector is capable of injecting classes into a {@link java.lang.ClassLoader} without
  * requiring the class loader to being able to explicitly look up these classes.
+ * </p>
+ * <p>
+ * <b>Important</b>: Byte Buddy does not supply privileges when injecting code. When using a {@link SecurityManager},
+ * the user of this injector is responsible for providing access to non-public properties.
+ * </p>
  */
 public interface ClassInjector {
 
@@ -103,11 +106,6 @@ public interface ClassInjector {
         private final ProtectionDomain protectionDomain;
 
         /**
-         * The access control context of this class loader's instantiation.
-         */
-        private final AccessControlContext accessControlContext;
-
-        /**
          * The package definer to be queried for package definitions.
          */
         private final PackageDefinitionStrategy packageDefinitionStrategy;
@@ -118,28 +116,25 @@ public interface ClassInjector {
         private final boolean forbidExisting;
 
         /**
-         * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain},
-         * {@link PackageDefinitionStrategy}, {@link AccessControlContext} which does not trigger an error when discovering existent classes.
+         * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain} and a
+         * trivial {@link PackageDefinitionStrategy} which does not trigger an error when discovering existent classes.
          *
-         * @param classLoader          The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
-         * @param accessControlContext The access control context to use.
+         * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          */
-        public UsingReflection(ClassLoader classLoader, AccessControlContext accessControlContext) {
-            this(classLoader, DEFAULT_PROTECTION_DOMAIN, accessControlContext);
+        public UsingReflection(ClassLoader classLoader) {
+            this(classLoader, DEFAULT_PROTECTION_DOMAIN);
         }
 
         /**
          * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link PackageDefinitionStrategy} where the
          * injection of existent classes does not trigger an error.
          *
-         * @param classLoader          The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
-         * @param protectionDomain     The protection domain to apply during class definition.
-         * @param accessControlContext The access control context of this class loader's instantiation.
+         * @param classLoader      The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+         * @param protectionDomain The protection domain to apply during class definition.
          */
-        public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain, AccessControlContext accessControlContext) {
+        public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain) {
             this(classLoader,
                     protectionDomain,
-                    accessControlContext,
                     PackageDefinitionStrategy.Trivial.INSTANCE,
                     DEFAULT_FORBID_EXISTING);
         }
@@ -149,13 +144,11 @@ public interface ClassInjector {
          *
          * @param classLoader               The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
          * @param protectionDomain          The protection domain to apply during class definition.
-         * @param accessControlContext      The access control context of this class loader's instantiation.
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
          */
         public UsingReflection(ClassLoader classLoader,
                                ProtectionDomain protectionDomain,
-                               AccessControlContext accessControlContext,
                                PackageDefinitionStrategy packageDefinitionStrategy,
                                boolean forbidExisting) {
             if (classLoader == null) {
@@ -164,7 +157,6 @@ public interface ClassInjector {
             this.classLoader = classLoader;
             this.protectionDomain = protectionDomain;
             this.packageDefinitionStrategy = packageDefinitionStrategy;
-            this.accessControlContext = accessControlContext;
             this.forbidExisting = forbidExisting;
         }
 
@@ -174,17 +166,7 @@ public interface ClassInjector {
          * @return A class injector for the system class loader.
          */
         public static ClassInjector ofSystemClassLoader() {
-            return ofSystemClassLoader(AccessController.getContext());
-        }
-
-        /**
-         * Creates a class injector for the system class loader.
-         *
-         * @param accessControlContext The access control context to use.
-         * @return A class injector for the system class loader.
-         */
-        public static ClassInjector ofSystemClassLoader(AccessControlContext accessControlContext) {
-            return new UsingReflection(SystemClassLoaderAction.apply(accessControlContext), accessControlContext);
+            return new UsingReflection(ClassLoader.getSystemClassLoader());
         }
 
         @Override
@@ -193,7 +175,7 @@ public interface ClassInjector {
                 Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
                 for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
                     String typeName = entry.getKey().getName();
-                    Dispatcher dispatcher = DISPATCHER.initialize(accessControlContext);
+                    Dispatcher dispatcher = DISPATCHER.initialize();
                     Class<?> type = dispatcher.findClass(classLoader, typeName);
                     if (type == null) {
                         int packageIndex = typeName.lastIndexOf('.');
@@ -238,8 +220,7 @@ public interface ClassInjector {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             UsingReflection that = (UsingReflection) other;
-            return accessControlContext.equals(that.accessControlContext)
-                    && classLoader.equals(that.classLoader)
+            return classLoader.equals(that.classLoader)
                     && forbidExisting == that.forbidExisting
                     && packageDefinitionStrategy.equals(that.packageDefinitionStrategy)
                     && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null);
@@ -251,7 +232,6 @@ public interface ClassInjector {
             result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
             result = 31 * result + (forbidExisting ? 1 : 0);
             result = 31 * result + packageDefinitionStrategy.hashCode();
-            result = 31 * result + accessControlContext.hashCode();
             return result;
         }
 
@@ -261,7 +241,6 @@ public interface ClassInjector {
                     "classLoader=" + classLoader +
                     ", protectionDomain=" + protectionDomain +
                     ", packageDefinitionStrategy=" + packageDefinitionStrategy +
-                    ", accessControlContext=" + accessControlContext +
                     ", forbidExisting=" + forbidExisting +
                     '}';
         }
@@ -339,16 +318,15 @@ public interface ClassInjector {
                 /**
                  * Initializes this dispatcher.
                  *
-                 * @param accessControlContext The access control context to use for initialization.
                  * @return The initiailized dispatcher.
                  */
-                Dispatcher initialize(AccessControlContext accessControlContext);
+                Dispatcher initialize();
             }
 
             /**
              * Represents a successfully loaded method lookup for the dispatcher.
              */
-            class Resolved implements Dispatcher, Initializable, PrivilegedAction<Dispatcher> {
+            class Resolved implements Dispatcher, Initializable {
 
                 /**
                  * An accessible instance of {@link ClassLoader#findLoadedClass(String)}.
@@ -452,12 +430,8 @@ public interface ClassInjector {
                 }
 
                 @Override
-                public Dispatcher initialize(AccessControlContext accessControlContext) {
-                    return AccessController.doPrivileged(this, accessControlContext);
-                }
-
-                @Override
-                public Dispatcher run() {
+                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privileges should be provided by user")
+                public Dispatcher initialize() {
                     // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
                     // By always setting accessability, the security manager is always triggered if this operation was illegal.
                     findLoadedClass.setAccessible(true);
@@ -518,7 +492,7 @@ public interface ClassInjector {
                 }
 
                 @Override
-                public Dispatcher initialize(AccessControlContext accessControlContext) {
+                public Dispatcher initialize() {
                     throw new IllegalStateException("Error locating class loader API", exception);
                 }
 
@@ -563,11 +537,6 @@ public interface ClassInjector {
         private final Instrumentation instrumentation;
 
         /**
-         * The access control context to use.
-         */
-        private final AccessControlContext accessControlContext;
-
-        /**
          * A representation of the target path to which classes are to be appended.
          */
         private final Target target;
@@ -591,40 +560,24 @@ public interface ClassInjector {
          * @return An appropriate class injector that applies instrumentation.
          */
         public static ClassInjector of(File folder, Target target, Instrumentation instrumentation) {
-            return of(folder, target, instrumentation, AccessController.getContext());
+            return new UsingInstrumentation(folder, target, instrumentation, new RandomString());
         }
 
         /**
          * Creates an instrumentation-based class injector.
          *
-         * @param folder               The folder to be used for storing jar files.
-         * @param target               A representation of the target path to which classes are to be appended.
-         * @param instrumentation      The instrumentation to use for appending to the class path or the boot path.
-         * @param accessControlContext The access control context to use.
-         * @return An appropriate class injector that applies instrumentation.
-         */
-        public static ClassInjector of(File folder, Target target, Instrumentation instrumentation, AccessControlContext accessControlContext) {
-            return new UsingInstrumentation(folder, target, instrumentation, accessControlContext, new RandomString());
-        }
-
-        /**
-         * Creates an instrumentation-based class injector.
-         *
-         * @param folder               The folder to be used for storing jar files.
-         * @param target               A representation of the target path to which classes are to be appended.
-         * @param instrumentation      The instrumentation to use for appending to the class path or the boot path.
-         * @param accessControlContext The access control context to use.
-         * @param randomString         The random string generator to use.
+         * @param folder          The folder to be used for storing jar files.
+         * @param target          A representation of the target path to which classes are to be appended.
+         * @param instrumentation The instrumentation to use for appending to the class path or the boot path.
+         * @param randomString    The random string generator to use.
          */
         protected UsingInstrumentation(File folder,
                                        Target target,
                                        Instrumentation instrumentation,
-                                       AccessControlContext accessControlContext,
                                        RandomString randomString) {
             this.folder = folder;
             this.target = target;
             this.instrumentation = instrumentation;
-            this.accessControlContext = accessControlContext;
             this.randomString = randomString;
         }
 
@@ -647,7 +600,7 @@ public interface ClassInjector {
                 target.inject(instrumentation, new JarFile(jarFile));
                 Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
                 for (TypeDescription typeDescription : types.keySet()) {
-                    loaded.put(typeDescription, Class.forName(typeDescription.getName(), false, SystemClassLoaderAction.apply(accessControlContext)));
+                    loaded.put(typeDescription, Class.forName(typeDescription.getName(), false, ClassLoader.getSystemClassLoader()));
                 }
                 return loaded;
             } catch (IOException exception) {
@@ -665,7 +618,6 @@ public interface ClassInjector {
             return folder.equals(that.folder)
                     && instrumentation.equals(that.instrumentation)
                     && target == that.target
-                    && accessControlContext.equals(that.accessControlContext)
                     && randomString.equals(that.randomString);
         }
 
@@ -674,7 +626,6 @@ public interface ClassInjector {
             int result = instrumentation.hashCode();
             result = 31 * result + target.hashCode();
             result = 31 * result + folder.hashCode();
-            result = 31 * result + accessControlContext.hashCode();
             result = 31 * result + randomString.hashCode();
             return result;
         }
@@ -685,7 +636,6 @@ public interface ClassInjector {
                     "instrumentation=" + instrumentation +
                     ", target=" + target +
                     ", folder=" + folder +
-                    ", accessControlContext=" + accessControlContext +
                     ", randomString=" + randomString +
                     '}';
         }

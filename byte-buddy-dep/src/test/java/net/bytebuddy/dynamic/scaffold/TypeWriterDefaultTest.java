@@ -17,7 +17,6 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
@@ -25,6 +24,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.io.File;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -499,8 +499,27 @@ public class TypeWriterDefaultTest {
     }
 
     @Test
+    public void testClassDump() throws Exception {
+        TypeDescription instrumentedType = mock(TypeDescription.class);
+        byte[] binaryRepresentation = new byte[]{1, 2, 3};
+        File file = File.createTempFile(FOO, BAR);
+        assertThat(file.delete(), is(true));
+        file = new File(file.getParentFile(), "temp" + System.currentTimeMillis());
+        assertThat(file.mkdir(), is(true));
+        when(instrumentedType.getName()).thenReturn(FOO + "." + BAR);
+        new TypeWriter.Default.ClassDumpAction(file.getAbsolutePath(), instrumentedType, binaryRepresentation).run();
+        File[] child = file.listFiles();
+        assertThat(child, notNullValue(File[].class));
+        assertThat(child.length, is(1));
+        assertThat(child[0].length(), is(3L));
+        assertThat(child[0].delete(), is(true));
+        assertThat(file.delete(), is(true));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.UnresolvedType.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ClassDumpAction.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.ContextRegistry.class).applyBasic();

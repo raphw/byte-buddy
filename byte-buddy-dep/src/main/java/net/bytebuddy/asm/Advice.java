@@ -17,13 +17,10 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.ExceptionTableSensitiveMethodVisitor;
 import net.bytebuddy.utility.StackAwareMethodVisitor;
-import net.bytebuddy.utility.privilege.ClassLoaderAction;
 import org.objectweb.asm.*;
 
 import java.io.*;
 import java.lang.annotation.*;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -195,19 +192,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(Class<?> advice) {
-        return to(advice, AccessController.getContext());
-    }
-
-    /**
-     * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
-     * accessed by querying the class loader of the supplied class for a class file.
-     *
-     * @param advice The type declaring the advice.
-     * @param accessControlContext The access control context to use.
-     * @return A method visitor wrapper representing the supplied advice.
-     */
-    public static Advice to(Class<?> advice, AccessControlContext accessControlContext) {
-        return to(advice, ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(advice, accessControlContext), accessControlContext));
+        return to(advice, ClassFileLocator.ForClassLoader.of(advice.getClassLoader()));
     }
 
     /**
@@ -281,23 +266,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(Class<?> enterAdvice, Class<?> exitAdvice) {
-        return to(enterAdvice, exitAdvice, AccessController.getContext());
-    }
-
-    /**
-     * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
-     * accessed by querying the class loader of the supplied class for a class file.
-     *
-     * @param enterAdvice The type declaring the enter advice.
-     * @param exitAdvice  The type declaring the exit advice.
-     * @param accessControlContext The access control context to use.
-     * @return A method visitor wrapper representing the supplied advice.
-     */
-    public static Advice to(Class<?> enterAdvice, Class<?> exitAdvice, AccessControlContext accessControlContext) {
-        ClassLoader enterLoader = ClassLoaderAction.apply(enterAdvice, accessControlContext), exitLoader = ClassLoaderAction.apply(enterAdvice, accessControlContext);
+        ClassLoader enterLoader = enterAdvice.getClassLoader(), exitLoader = exitAdvice.getClassLoader();
         return to(enterAdvice, exitAdvice, enterLoader == exitLoader
-                ? ClassFileLocator.ForClassLoader.of(enterLoader, accessControlContext)
-                : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterLoader, accessControlContext), ClassFileLocator.ForClassLoader.of(exitLoader, accessControlContext)));
+                ? ClassFileLocator.ForClassLoader.of(enterLoader)
+                : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterLoader), ClassFileLocator.ForClassLoader.of(exitLoader)));
     }
 
     /**
@@ -7905,19 +7877,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(Class<?> advice) {
-            return to(advice, AccessController.getContext());
-        }
-
-        /**
-         * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
-         * accessed by querying the class loader of the supplied class for a class file.
-         *
-         * @param advice The type declaring the advice.
-         * @param accessControlContext The access control context to use.
-         * @return A method visitor wrapper representing the supplied advice.
-         */
-        public Advice to(Class<?> advice, AccessControlContext accessControlContext) {
-            return to(advice, ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(advice, accessControlContext), accessControlContext));
+            return to(advice, ClassFileLocator.ForClassLoader.of(advice.getClassLoader()));
         }
 
         /**
@@ -7955,23 +7915,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(Class<?> enterAdvice, Class<?> exitAdvice) {
-            return to(enterAdvice, exitAdvice, AccessController.getContext());
-        }
-
-        /**
-         * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
-         * accessed by querying the class loader of the supplied class for a class file.
-         *
-         * @param enterAdvice          The type declaring the enter advice.
-         * @param exitAdvice           The type declaring the exit advice.
-         * @param accessControlContext The access control context to use.
-         * @return A method visitor wrapper representing the supplied advice.
-         */
-        public Advice to(Class<?> enterAdvice, Class<?> exitAdvice, AccessControlContext accessControlContext) {
-            ClassLoader enterLoader = ClassLoaderAction.apply(enterAdvice, accessControlContext), exitLoader = ClassLoaderAction.apply(enterAdvice, accessControlContext);
+            ClassLoader enterLoader = enterAdvice.getClassLoader(), exitLoader = exitAdvice.getClassLoader();
             return to(enterAdvice, exitAdvice, enterLoader == exitLoader
-                    ? ClassFileLocator.ForClassLoader.of(enterLoader, accessControlContext)
-                    : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterLoader, accessControlContext), ClassFileLocator.ForClassLoader.of(exitLoader, accessControlContext)));
+                    ? ClassFileLocator.ForClassLoader.of(enterLoader)
+                    : new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(enterLoader), ClassFileLocator.ForClassLoader.of(exitLoader)));
         }
 
         /**

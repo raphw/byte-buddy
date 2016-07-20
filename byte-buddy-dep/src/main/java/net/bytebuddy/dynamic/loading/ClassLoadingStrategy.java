@@ -199,7 +199,6 @@ public interface ClassLoadingStrategy {
             public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
                 return new ClassInjector.UsingReflection(classLoader,
                         protectionDomain,
-                        accessControlContext,
                         packageDefinitionStrategy,
                         forbidExisting).inject(types);
             }
@@ -485,8 +484,8 @@ public interface ClassLoadingStrategy {
         @Override
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             ClassInjector classInjector = classLoader == null
-                    ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation, accessControlContext)
-                    : new ClassInjector.UsingReflection(classLoader, accessControlContext);
+                    ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
+                    : new ClassInjector.UsingReflection(classLoader);
             return classInjector.inject(types);
         }
 

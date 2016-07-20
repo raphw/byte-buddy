@@ -17,8 +17,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class AgentBuilderLambdaInstrumentationStrategyTest {
 
-    private AccessControlContext accessControlContext = AccessController.getContext();
-
     @Test
     public void testEnabled() throws Exception {
         assertThat(AgentBuilder.LambdaInstrumentationStrategy.of(true).isEnabled(), is(true));
@@ -30,13 +28,13 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
         ClassFileTransformer initialClassFileTransformer = mock(ClassFileTransformer.class);
         assertThat(LambdaFactory.register(initialClassFileTransformer,
                 mock(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class),
-                new AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector(accessControlContext)), is(true));
+                AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE), is(true));
         try {
             ByteBuddy byteBuddy = mock(ByteBuddy.class);
             Instrumentation instrumentation = mock(Instrumentation.class);
             ClassFileTransformer classFileTransformer = mock(ClassFileTransformer.class);
             try {
-                AgentBuilder.Default.LambdaInstrumentationStrategy.ENABLED.apply(byteBuddy, instrumentation, classFileTransformer, accessControlContext);
+                AgentBuilder.Default.LambdaInstrumentationStrategy.ENABLED.apply(byteBuddy, instrumentation, classFileTransformer);
             } finally {
                 assertThat(LambdaFactory.release(classFileTransformer), is(false));
             }
@@ -50,7 +48,7 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
         ByteBuddy byteBuddy = mock(ByteBuddy.class);
         Instrumentation instrumentation = mock(Instrumentation.class);
         ClassFileTransformer classFileTransformer = mock(ClassFileTransformer.class);
-        AgentBuilder.Default.LambdaInstrumentationStrategy.DISABLED.apply(byteBuddy, instrumentation, classFileTransformer, accessControlContext);
+        AgentBuilder.Default.LambdaInstrumentationStrategy.DISABLED.apply(byteBuddy, instrumentation, classFileTransformer);
         verifyZeroInteractions(byteBuddy);
         verifyZeroInteractions(instrumentation);
         verifyZeroInteractions(classFileTransformer);
@@ -59,12 +57,7 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInjector.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInjector.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.MetaFactoryRedirection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.AlternativeMetaFactoryRedirection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class).apply();

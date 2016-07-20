@@ -10,8 +10,6 @@ import org.mockito.Mock;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -35,14 +33,12 @@ public class LambdaFactoryTest {
     @Mock
     private ClassFileTransformer classFileTransformer, otherTransformer;
 
-    private AccessControlContext accessControlContext = AccessController.getContext();
-
     @Test
     public void testValidFactory() throws Exception {
         PseudoFactory pseudoFactory = new PseudoFactory();
-        assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, new AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector(accessControlContext)), is(true));
+        assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE), is(true));
         try {
-            assertThat(new AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector(accessControlContext)
+            assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE
                     .call()
                     .getDeclaredMethod("make", Object.class, String.class, Object.class, Object.class, Object.class, Object.class, boolean.class, List.class, List.class)
                     .invoke(null, a1, FOO, a3, a4, a5, a6, true, a8, a9), is((Object) BAR));
@@ -70,8 +66,8 @@ public class LambdaFactoryTest {
     public void testPreviousTransformer() throws Exception {
         PseudoFactory pseudoFactory = new PseudoFactory();
         try {
-            assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, new AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector(accessControlContext)), is(true));
-            assertThat(LambdaFactory.register(otherTransformer, pseudoFactory, new AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector(accessControlContext)), is(false));
+            assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE), is(true));
+            assertThat(LambdaFactory.register(otherTransformer, pseudoFactory, AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE), is(false));
         } finally {
             assertThat(LambdaFactory.release(classFileTransformer), is(false));
             assertThat(LambdaFactory.release(otherTransformer), is(true));
@@ -80,7 +76,7 @@ public class LambdaFactoryTest {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalTransformer() throws Exception {
-        LambdaFactory.register(classFileTransformer, new Object(), new AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector(accessControlContext));
+        LambdaFactory.register(classFileTransformer, new Object(), AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE);
     }
 
     @Test

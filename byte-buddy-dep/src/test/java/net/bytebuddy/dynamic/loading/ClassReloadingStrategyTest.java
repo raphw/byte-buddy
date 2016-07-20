@@ -117,9 +117,7 @@ public class ClassReloadingStrategyTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
-        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(),
-                ClassReloadingStrategy.Strategy.REDEFINITION,
-                AccessController.getContext());
+        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(), ClassReloadingStrategy.Strategy.REDEFINITION);
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
@@ -140,9 +138,7 @@ public class ClassReloadingStrategyTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
-        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(),
-                ClassReloadingStrategy.Strategy.RETRANSFORMATION,
-                AccessController.getContext());
+        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(), ClassReloadingStrategy.Strategy.RETRANSFORMATION);
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
@@ -185,19 +181,19 @@ public class ClassReloadingStrategyTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoRedefinition() throws Exception {
-        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.REDEFINITION, AccessController.getContext());
+        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.REDEFINITION);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoRetransformation() throws Exception {
-        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.RETRANSFORMATION, AccessController.getContext());
+        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.RETRANSFORMATION);
     }
 
     @Test
     public void testResetNotSupported() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
-        new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Strategy.RETRANSFORMATION, AccessController.getContext()).reset();
+        new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Strategy.RETRANSFORMATION).reset();
     }
 
     @Test
@@ -222,8 +218,7 @@ public class ClassReloadingStrategyTest {
         Callable<String> instance = (Callable<String>) factory.getDeclaredMethod("nonCapturing").invoke(factory.newInstance());
         // Anonymous types can only be reset to their original format, if a retransformation is applied.
         ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(instrumentation,
-                ClassReloadingStrategy.Strategy.RETRANSFORMATION,
-                AccessController.getContext()).preregistered(instance.getClass());
+                ClassReloadingStrategy.Strategy.RETRANSFORMATION).preregistered(instance.getClass());
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.of(instrumentation, instance.getClass());
         try {
             assertThat(instance.call(), is(FOO));
@@ -276,11 +271,6 @@ public class ClassReloadingStrategyTest {
             public void apply(Instrumentation mock) {
                 when(mock.isRedefineClassesSupported()).thenReturn(true);
                 when(mock.isRetransformClassesSupported()).thenReturn(true);
-            }
-        }).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();

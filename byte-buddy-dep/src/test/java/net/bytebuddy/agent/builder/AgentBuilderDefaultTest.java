@@ -162,8 +162,7 @@ public class AgentBuilderDefaultTest {
                 new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain(),
-                        accessControlContext));
+                        REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
@@ -203,8 +202,7 @@ public class AgentBuilderDefaultTest {
                 new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain(),
-                        accessControlContext));
+                        REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
         verifyZeroInteractions(installationStrategy);
     }
@@ -240,8 +238,7 @@ public class AgentBuilderDefaultTest {
                 new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain(),
-                        accessControlContext));
+                        REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
         verifyZeroInteractions(installationStrategy);
     }
@@ -276,8 +273,7 @@ public class AgentBuilderDefaultTest {
                 new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain(),
-                        accessControlContext));
+                        REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
         verifyZeroInteractions(installationStrategy);
     }
@@ -1038,8 +1034,7 @@ public class AgentBuilderDefaultTest {
                 new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain(),
-                        accessControlContext));
+                        REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
         verifyZeroInteractions(installationStrategy);
     }
@@ -1186,8 +1181,7 @@ public class AgentBuilderDefaultTest {
                 new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
                         AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain(),
-                        accessControlContext));
+                        REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
         verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
@@ -1203,8 +1197,7 @@ public class AgentBuilderDefaultTest {
         ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
         assertThat(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
                 classLoader,
-                protectionDomain,
-                accessControlContext).resolve(), is((ClassInjector) new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext)));
+                protectionDomain).resolve(), is((ClassInjector) new ClassInjector.UsingReflection(classLoader, protectionDomain)));
         verifyZeroInteractions(bootstrapInjectionStrategy);
     }
 
@@ -1213,24 +1206,23 @@ public class AgentBuilderDefaultTest {
         AgentBuilder.Default.BootstrapInjectionStrategy bootstrapInjectionStrategy = mock(AgentBuilder.Default.BootstrapInjectionStrategy.class);
         ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
         ClassInjector classInjector = mock(ClassInjector.class);
-        when(bootstrapInjectionStrategy.make(protectionDomain, accessControlContext)).thenReturn(classInjector);
+        when(bootstrapInjectionStrategy.make(protectionDomain)).thenReturn(classInjector);
         assertThat(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
                 null,
-                protectionDomain,
-                accessControlContext).resolve(), is(classInjector));
-        verify(bootstrapInjectionStrategy).make(protectionDomain, accessControlContext);
+                protectionDomain).resolve(), is(classInjector));
+        verify(bootstrapInjectionStrategy).make(protectionDomain);
         verifyNoMoreInteractions(bootstrapInjectionStrategy);
     }
 
     @Test
     public void testEnabledBootstrapInjection() throws Exception {
         assertThat(new AgentBuilder.Default.BootstrapInjectionStrategy.Enabled(mock(File.class), mock(Instrumentation.class))
-                        .make(mock(ProtectionDomain.class), accessControlContext), instanceOf(ClassInjector.UsingInstrumentation.class));
+                .make(mock(ProtectionDomain.class)), instanceOf(ClassInjector.UsingInstrumentation.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testDisabledBootstrapInjection() throws Exception {
-        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE.make(mock(ProtectionDomain.class), accessControlContext);
+        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE.make(mock(ProtectionDomain.class));
     }
 
     @Test

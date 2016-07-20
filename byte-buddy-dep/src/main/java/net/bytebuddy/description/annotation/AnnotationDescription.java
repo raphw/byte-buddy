@@ -7,9 +7,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.utility.PropertyDispatcher;
 import net.bytebuddy.utility.privilege.AccessAction;
-import net.bytebuddy.utility.privilege.ClassLoaderAction;
-import net.bytebuddy.utility.privilege.ParentClassLoaderAction;
-import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
@@ -1150,7 +1147,7 @@ public interface AnnotationDescription {
                 AnnotationDescription.AnnotationValue<?, ?> annotationValue = values.get(method.getName());
                 loadedValues.put(method, annotationValue == null
                         ? DefaultValue.of(method)
-                        : annotationValue.load(classLoader == null ? AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE) : classLoader));
+                        : annotationValue.load(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader));
             }
             return new AnnotationInvocationHandler<S>(annotationType, loadedValues);
         }
@@ -1630,13 +1627,13 @@ public interface AnnotationDescription {
 
         @Override
         public S load(ClassLoader classLoader) {
-            ClassLoader thisClassLoader = AccessController.doPrivileged(new ClassLoaderAction(annotation.getClass()));
+            ClassLoader thisClassLoader = annotation.getClass().getClassLoader();
             ClassLoader otherClassLoader = classLoader;
             while (otherClassLoader != null) {
                 if (otherClassLoader == thisClassLoader) {
                     break;
                 }
-                otherClassLoader = AccessController.doPrivileged(new ParentClassLoaderAction(otherClassLoader));
+                otherClassLoader = otherClassLoader.getParent();
             }
             if (otherClassLoader != thisClassLoader) {
                 throw new IllegalArgumentException(annotation + " is not loaded using " + classLoader);
@@ -1758,7 +1755,7 @@ public interface AnnotationDescription {
 
             @Override
             public S load() throws ClassNotFoundException {
-                return load(AccessController.doPrivileged(new ClassLoaderAction(annotationType)));
+                return load(annotationType.getClassLoader());
             }
 
             @Override

@@ -1,9 +1,5 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.utility.privilege.ParentClassLoaderAction;
-
-import java.security.AccessControlContext;
-
 /**
  * An element matcher that matches all {@link java.lang.ClassLoader}s in the matched class loaders hierarchy
  * against a given matcher.
@@ -18,19 +14,12 @@ public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementM
     private final ElementMatcher<? super ClassLoader> matcher;
 
     /**
-     * The access control context to use.
-     */
-    private final AccessControlContext accessControlContext;
-
-    /**
      * Creates a new class loader hierarchy matcher.
      *
-     * @param matcher              The matcher to apply on each class loader in the hierarchy.
-     * @param accessControlContext The access control context to use.
+     * @param matcher The matcher to apply on each class loader in the hierarchy.
      */
-    public ClassLoaderHierarchyMatcher(ElementMatcher<? super ClassLoader> matcher, AccessControlContext accessControlContext) {
+    public ClassLoaderHierarchyMatcher(ElementMatcher<? super ClassLoader> matcher) {
         this.matcher = matcher;
-        this.accessControlContext = accessControlContext;
     }
 
     @Override
@@ -40,7 +29,7 @@ public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementM
             if (matcher.matches(current)) {
                 return true;
             }
-            current = ParentClassLoaderAction.apply(current, accessControlContext);
+            current = current.getParent();
         }
         return matcher.matches(null);
     }
@@ -48,13 +37,12 @@ public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementM
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((ClassLoaderHierarchyMatcher<?>) other).matcher)
-                && accessControlContext.equals(((ClassLoaderHierarchyMatcher<?>) other).accessControlContext);
+                && matcher.equals(((ClassLoaderHierarchyMatcher<?>) other).matcher);
     }
 
     @Override
     public int hashCode() {
-        return matcher.hashCode() + 31 * accessControlContext.hashCode();
+        return matcher.hashCode();
     }
 
     @Override

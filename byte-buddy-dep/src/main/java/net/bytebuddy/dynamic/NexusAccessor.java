@@ -15,7 +15,6 @@ import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
-import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.InvocationTargetException;
@@ -91,13 +90,13 @@ public enum NexusAccessor implements PrivilegedAction<NexusAccessor.Dispatcher> 
     public Dispatcher run() {
         try {
             TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-            return new Dispatcher.Available(new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), NexusAccessor.class.getProtectionDomain(), AccessController.getContext()) // REFACTOR
+            return new Dispatcher.Available(new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), Nexus.class.getProtectionDomain())
                     .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
                     .get(nexusType)
                     .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
         } catch (Exception exception) {
             try {
-                return new Dispatcher.Available(AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE)
+                return new Dispatcher.Available(ClassLoader.getSystemClassLoader()
                         .loadClass(Nexus.class.getName())
                         .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
             } catch (Exception ignored) {

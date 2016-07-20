@@ -5,15 +5,11 @@ import org.junit.Test;
 
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ClassLoaderParentMatcherTest extends AbstractElementMatcherTest<ClassLoaderParentMatcher<?>> {
-
-    private AccessControlContext accessControlContext = AccessController.getContext();
 
     private ClassLoader parent, child, noChild;
 
@@ -31,16 +27,16 @@ public class ClassLoaderParentMatcherTest extends AbstractElementMatcherTest<Cla
 
     @Test
     public void testMatch() throws Exception {
-        assertThat(new ClassLoaderParentMatcher<ClassLoader>(child, accessControlContext).matches(parent), is(true));
+        assertThat(new ClassLoaderParentMatcher<ClassLoader>(child).matches(parent), is(true));
     }
 
     @Test
     public void testMatchBootstrap() throws Exception {
-        assertThat(new ClassLoaderParentMatcher<ClassLoader>(child, accessControlContext).matches(null), is(true));
+        assertThat(new ClassLoaderParentMatcher<ClassLoader>(child).matches(null), is(true));
     }
 
     @Test
     public void testNoMatch() throws Exception {
-        assertThat(new ClassLoaderParentMatcher<ClassLoader>(noChild, accessControlContext).matches(parent), is(false));
+        assertThat(new ClassLoaderParentMatcher<ClassLoader>(noChild).matches(parent), is(false));
     }
 }

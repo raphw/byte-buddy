@@ -16,16 +16,12 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.utility.JavaModule;
-import net.bytebuddy.utility.privilege.ParentClassLoaderAction;
-import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1885,19 +1881,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the system class loader.
      */
     public static <T extends ClassLoader> ElementMatcher.Junction<T> isSystemClassLoader() {
-        return isSystemClassLoader(AccessController.getContext());
-    }
-
-    /**
-     * Matches exactly the system {@link java.lang.ClassLoader}. The returned matcher is a synonym to
-     * a matcher matching {@code ClassLoader.gerSystemClassLoader()}.
-     *
-     * @param accessControlContext The access control context to use.
-     * @param <T>                  The type of the matched object.
-     * @return A matcher that only matches the system class loader.
-     */
-    public static <T extends ClassLoader> ElementMatcher.Junction<T> isSystemClassLoader(AccessControlContext accessControlContext) {
-        return new EqualityMatcher<T>(SystemClassLoaderAction.apply(accessControlContext));
+        return new EqualityMatcher<T>(ClassLoader.getSystemClassLoader());
     }
 
     /**
@@ -1908,19 +1892,7 @@ public final class ElementMatchers {
      * @return A matcher that only matches the extension class loader.
      */
     public static <T extends ClassLoader> ElementMatcher.Junction<T> isExtensionClassLoader() {
-        return isExtensionClassLoader(AccessController.getContext());
-    }
-
-    /**
-     * Matches exactly the extension {@link java.lang.ClassLoader}. The returned matcher is a synonym to
-     * a matcher matching {@code ClassLoader.gerSystemClassLoader().getParent()}.
-     *
-     * @param accessControlContext The access control context to use.
-     * @param <T>                  The type of the matched object.
-     * @return A matcher that only matches the extension class loader.
-     */
-    public static <T extends ClassLoader> ElementMatcher.Junction<T> isExtensionClassLoader(AccessControlContext accessControlContext) {
-        ClassLoader classLoader = ParentClassLoaderAction.apply(SystemClassLoaderAction.apply(accessControlContext), accessControlContext);
+        ClassLoader classLoader = ClassLoader.getSystemClassLoader().getParent();
         return classLoader == null // Check if VM supports the extension class loader.
                 ? ElementMatchers.<T>none()
                 : new EqualityMatcher<T>(classLoader);
@@ -1948,19 +1920,7 @@ public final class ElementMatchers {
      * @return A matcher that matches all class loaders in the hierarchy of the matched class loader.
      */
     public static <T extends ClassLoader> ElementMatcher.Junction<T> hasChild(ElementMatcher<? super ClassLoader> matcher) {
-        return hasChild(matcher, AccessController.getContext());
-    }
-
-    /**
-     * Matches all class loaders in the hierarchy of the matched class loader against a given matcher.
-     *
-     * @param matcher              The matcher to apply to all class loaders in the hierarchy of the matched class loader.
-     * @param accessControlContext The access control context to use.
-     * @param <T>                  The type of the matched object.
-     * @return A matcher that matches all class loaders in the hierarchy of the matched class loader.
-     */
-    public static <T extends ClassLoader> ElementMatcher.Junction<T> hasChild(ElementMatcher<? super ClassLoader> matcher, AccessControlContext accessControlContext) {
-        return new ClassLoaderHierarchyMatcher<T>(matcher, accessControlContext);
+        return new ClassLoaderHierarchyMatcher<T>(matcher);
     }
 
     /**
@@ -1972,22 +1932,9 @@ public final class ElementMatchers {
      * class loader.
      */
     public static <T extends ClassLoader> ElementMatcher.Junction<T> isParentOf(ClassLoader classLoader) {
-        return isParentOf(classLoader, AccessController.getContext());
-    }
-
-    /**
-     * Matches any class loader that is either the given class loader or a parent of the given class loader.
-     *
-     * @param classLoader          The class loader of which parent class loaders are matched.
-     * @param accessControlContext The access control context to use.
-     * @param <T>                  The type of the matched object.
-     * @return A matcher that matches the given class loader and any class loader that is a parent of the given
-     * class loader.
-     */
-    public static <T extends ClassLoader> ElementMatcher.Junction<T> isParentOf(ClassLoader classLoader, AccessControlContext accessControlContext) {
         return classLoader == BOOTSTRAP_CLASSLOADER
                 ? ElementMatchers.<T>isBootstrapClassLoader()
-                : new ClassLoaderParentMatcher<T>(classLoader, accessControlContext);
+                : new ClassLoaderParentMatcher<T>(classLoader);
     }
 
     /**

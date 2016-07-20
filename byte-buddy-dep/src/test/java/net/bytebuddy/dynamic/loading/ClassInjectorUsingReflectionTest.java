@@ -45,8 +45,6 @@ public class ClassInjectorUsingReflectionTest {
     @Mock
     private TypeDescription typeDescription;
 
-    private AccessControlContext accessControlContext = AccessController.getContext();
-
     private ClassLoader classLoader;
 
     private ClassInjector classInjector;
@@ -54,12 +52,12 @@ public class ClassInjectorUsingReflectionTest {
     @Before
     public void setUp() throws Exception {
         classLoader = new URLClassLoader(new URL[0], null);
-        classInjector = new ClassInjector.UsingReflection(classLoader, accessControlContext);
+        classInjector = new ClassInjector.UsingReflection(classLoader);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testBootstrapClassLoader() throws Exception {
-        new ClassInjector.UsingReflection(null, accessControlContext);
+        new ClassInjector.UsingReflection(null);
     }
 
     @Test
@@ -70,7 +68,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test(expected = IllegalStateException.class)
     public void testDispatcherFaultyInitialization() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Faulty(new Exception()).initialize(AccessController.getContext());
+        new ClassInjector.UsingReflection.Dispatcher.Faulty(new Exception()).initialize();
     }
 
     @Test
@@ -91,12 +89,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).apply();
         final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
         ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Resolved.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override

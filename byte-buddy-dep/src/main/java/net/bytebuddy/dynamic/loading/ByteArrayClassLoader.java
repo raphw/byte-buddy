@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.privilege.ClassLoaderAction;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -177,7 +176,7 @@ public class ByteArrayClassLoader extends ClassLoader {
         for (TypeDescription typeDescription : types.keySet()) {
             try {
                 Class<?> type = Class.forName(typeDescription.getName(), false, classLoader);
-                if (forbidExisting && ClassLoaderAction.apply(type, accessControlContext) != classLoader) {
+                if (forbidExisting && type.getClassLoader() != classLoader) {
                     throw new IllegalStateException("Class already loaded: " + type);
                 }
                 loadedTypes.put(typeDescription, type);
@@ -716,7 +715,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                     return true;
                 }
                 Class<?> loadedClass = findLoadedClass(typeName);
-                return loadedClass != null && ClassLoaderAction.apply(loadedClass, accessControlContext) == this;
+                return loadedClass != null && loadedClass.getClassLoader() == this;
             }
         }
 

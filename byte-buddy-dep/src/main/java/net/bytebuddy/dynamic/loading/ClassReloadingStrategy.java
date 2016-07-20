@@ -3,8 +3,6 @@ package net.bytebuddy.dynamic.loading;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.utility.privilege.ClassLoaderAction;
-import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,8 +10,6 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,11 +56,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     private final Strategy strategy;
 
     /**
-     * The access control context to use.
-     */
-    private final AccessControlContext accessControlContext;
-
-    /**
      * The strategy to apply for injecting classes into the bootstrap class loader.
      */
     private final BootstrapInjection bootstrapInjection;
@@ -79,14 +70,12 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * is represented by an {@link Strategy}. The given instrumentation
      * must support the strategy's transformation type.
      *
-     * @param instrumentation      The instrumentation to be used by this reloading strategy.
-     * @param strategy             A strategy which performs the actual redefinition of a {@link java.lang.Class}.
-     * @param accessControlContext The access control context to use.
+     * @param instrumentation The instrumentation to be used by this reloading strategy.
+     * @param strategy        A strategy which performs the actual redefinition of a {@link java.lang.Class}.
      */
-    public ClassReloadingStrategy(Instrumentation instrumentation, Strategy strategy, AccessControlContext accessControlContext) {
+    public ClassReloadingStrategy(Instrumentation instrumentation, Strategy strategy) {
         this(instrumentation,
                 strategy,
-                accessControlContext,
                 BootstrapInjection.Disabled.INSTANCE,
                 Collections.<String, Class<?>>emptyMap());
     }
@@ -94,20 +83,17 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     /**
      * Creates a new class reloading strategy.
      *
-     * @param instrumentation      The instrumentation to be used by this reloading strategy.
-     * @param strategy             An strategy which performs the actual redefinition of a {@link java.lang.Class}.
-     * @param accessControlContext The access control context to use.
-     * @param bootstrapInjection   The bootstrap class loader injection strategy to use.
-     * @param preregisteredTypes   The preregistered types of this instance.
+     * @param instrumentation    The instrumentation to be used by this reloading strategy.
+     * @param strategy           An strategy which performs the actual redefinition of a {@link java.lang.Class}.
+     * @param bootstrapInjection The bootstrap class loader injection strategy to use.
+     * @param preregisteredTypes The preregistered types of this instance.
      */
     protected ClassReloadingStrategy(Instrumentation instrumentation,
                                      Strategy strategy,
-                                     AccessControlContext accessControlContext,
                                      BootstrapInjection bootstrapInjection,
                                      Map<String, Class<?>> preregisteredTypes) {
         this.instrumentation = instrumentation;
         this.strategy = strategy.validate(instrumentation);
-        this.accessControlContext = accessControlContext;
         this.bootstrapInjection = bootstrapInjection;
         this.preregisteredTypes = preregisteredTypes;
     }
@@ -122,20 +108,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * @return A suitable class reloading strategy.
      */
     public static ClassReloadingStrategy of(Instrumentation instrumentation) {
-        return of(instrumentation, AccessController.getContext());
-    }
-
-    /**
-     * Creates a class reloading strategy for the given instrumentation. The given instrumentation must either
-     * support {@link java.lang.instrument.Instrumentation#isRedefineClassesSupported()} or
-     * {@link java.lang.instrument.Instrumentation#isRetransformClassesSupported()}. If both modes are supported,
-     * classes will be transformed using a class retransformation.
-     *
-     * @param instrumentation      The instrumentation to be used by this reloading strategy.
-     * @param accessControlContext The access control context to use.
-     * @return A suitable class reloading strategy.
-     */
-    public static ClassReloadingStrategy of(Instrumentation instrumentation, AccessControlContext accessControlContext) {
         Strategy strategy;
         if (instrumentation.isRedefineClassesSupported()) {
             strategy = Strategy.REDEFINITION;
@@ -144,7 +116,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         } else {
             throw new IllegalArgumentException("Instrumentation does not support manipulation of loaded classes: " + instrumentation);
         }
-        return new ClassReloadingStrategy(instrumentation, strategy, accessControlContext);
+        return new ClassReloadingStrategy(instrumentation, strategy);
     }
 
     /**
@@ -163,35 +135,15 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * @return A class reloading strategy which uses the Byte Buddy agent's {@link java.lang.instrument.Instrumentation}.
      */
     public static ClassReloadingStrategy fromInstalledAgent() {
-        return fromInstalledAgent(AccessController.getContext());
-    }
-
-    /**
-     * <p>
-     * Obtains a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy} from an installed Byte Buddy agent. This
-     * agent must be installed either by adding the {@code byte-buddy-agent.jar} when starting up the JVM by
-     * </p>
-     * <p>
-     * <code>
-     * java -javaagent:byte-buddy-agent.jar -jar app.jar
-     * </code>
-     * </p>
-     * or after the start up using the Attach API. A convenience installer for the OpenJDK is provided by the
-     * {@code ByteBuddyAgent} within the {@code byte-buddy-agent} module.
-     *
-     * @param accessControlContext The access control context to use.
-     * @return A class reloading strategy which uses the Byte Buddy agent's {@link java.lang.instrument.Instrumentation}.
-     */
-    public static ClassReloadingStrategy fromInstalledAgent(AccessControlContext accessControlContext) {
         try {
-            Instrumentation instrumentation = (Instrumentation) SystemClassLoaderAction.apply(accessControlContext)
+            Instrumentation instrumentation = (Instrumentation) ClassLoader.getSystemClassLoader()
                     .loadClass(INSTALLER_TYPE)
                     .getDeclaredField(INSTRUMENTATION_FIELD)
                     .get(STATIC_FIELD);
             if (instrumentation == null) {
                 throw new IllegalStateException("The Byte Buddy agent is not installed");
             }
-            return ClassReloadingStrategy.of(instrumentation, accessControlContext);
+            return ClassReloadingStrategy.of(instrumentation);
         } catch (RuntimeException exception) {
             throw exception;
         } catch (Exception exception) {
@@ -221,8 +173,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             strategy.apply(instrumentation, classDefinitions);
             if (!unloadedClasses.isEmpty()) {
                 loadedClasses.putAll((classLoader == null
-                        ? bootstrapInjection.make(instrumentation, accessControlContext)
-                        : new ClassInjector.UsingReflection(classLoader, accessControlContext)).inject(unloadedClasses));
+                        ? bootstrapInjection.make(instrumentation)
+                        : new ClassInjector.UsingReflection(classLoader)).inject(unloadedClasses));
             }
         } catch (ClassNotFoundException exception) {
             throw new IllegalArgumentException("Could not locate classes for redefinition", exception);
@@ -240,21 +192,9 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * @throws IOException If a class file locator causes an IO exception.
      */
     public ClassReloadingStrategy reset(Class<?>... type) throws IOException {
-        return reset(AccessController.getContext(), type);
-    }
-
-    /**
-     * Resets all classes to their original definition while using the first type's class loader as a class file locator.
-     *
-     * @param accessControlContext The access control context to use.
-     * @param type                 The types to reset.
-     * @return This class reloading strategy.
-     * @throws IOException If a class file locator causes an IO exception.
-     */
-    public ClassReloadingStrategy reset(AccessControlContext accessControlContext, Class<?>... type) throws IOException {
         return type.length == 0
                 ? this
-                : reset(ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(type[0], accessControlContext), accessControlContext), type);
+                : reset(ClassFileLocator.ForClassLoader.of(type[0].getClassLoader()), type);
     }
 
     /**
@@ -285,7 +225,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * @return A class reloading strategy with bootstrap injection enabled.
      */
     public ClassReloadingStrategy enableBootstrapInjection(File folder) {
-        return new ClassReloadingStrategy(instrumentation, strategy, accessControlContext, new BootstrapInjection.Enabled(folder), preregisteredTypes);
+        return new ClassReloadingStrategy(instrumentation, strategy, new BootstrapInjection.Enabled(folder), preregisteredTypes);
     }
 
     /**
@@ -299,7 +239,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         for (Class<?> aType : type) {
             preregisteredTypes.put(TypeDescription.ForLoadedType.getName(aType), aType);
         }
-        return new ClassReloadingStrategy(instrumentation, strategy, accessControlContext, bootstrapInjection, preregisteredTypes);
+        return new ClassReloadingStrategy(instrumentation, strategy, bootstrapInjection, preregisteredTypes);
     }
 
     @Override
@@ -310,8 +250,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         return instrumentation.equals(that.instrumentation)
                 && strategy == that.strategy
                 && bootstrapInjection.equals(that.bootstrapInjection)
-                && preregisteredTypes.equals(that.preregisteredTypes)
-                && accessControlContext.equals(that.accessControlContext);
+                && preregisteredTypes.equals(that.preregisteredTypes);
     }
 
     @Override
@@ -320,7 +259,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         result = 31 * result + strategy.hashCode();
         result = 31 * result + bootstrapInjection.hashCode();
         result = 31 * result + preregisteredTypes.hashCode();
-        result = 31 * result + accessControlContext.hashCode();
         return result;
     }
 
@@ -331,7 +269,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                 ", strategy=" + strategy +
                 ", bootstrapInjection=" + bootstrapInjection +
                 ", preregisteredTypes=" + preregisteredTypes +
-                ", accessControlContext=" + accessControlContext +
                 '}';
     }
 
@@ -574,11 +511,10 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         /**
          * Creates a class injector to use.
          *
-         * @param instrumentation      The instrumentation of this instance.
-         * @param accessControlContext The access control context to use.
+         * @param instrumentation The instrumentation of this instance.
          * @return A class injector for the bootstrap class loader.
          */
-        ClassInjector make(Instrumentation instrumentation, AccessControlContext accessControlContext);
+        ClassInjector make(Instrumentation instrumentation);
 
         /**
          * A disabled bootstrap injection strategy.
@@ -591,7 +527,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             INSTANCE;
 
             @Override
-            public ClassInjector make(Instrumentation instrumentation, AccessControlContext accessControlContext) {
+            public ClassInjector make(Instrumentation instrumentation) {
                 throw new IllegalStateException("Bootstrap injection is not enabled");
             }
 
@@ -621,8 +557,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             }
 
             @Override
-            public ClassInjector make(Instrumentation instrumentation, AccessControlContext accessControlContext) {
-                return ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation, accessControlContext);
+            public ClassInjector make(Instrumentation instrumentation) {
+                return ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
             }
 
             @Override

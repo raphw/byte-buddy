@@ -5,14 +5,11 @@ import net.bytebuddy.description.NamedElement;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * Type-safe representation of a {@code java.lang.reflect.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
  */
-public class JavaModule implements NamedElement.WithOptionalName, PrivilegedAction<ClassLoader> {
+public class JavaModule implements NamedElement.WithOptionalName {
 
     /**
      * Canonical representation of a Java module on a JVM that does not support the module API.
@@ -105,11 +102,10 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
     /**
      * Returns the class loader of this module.
      *
-     * @param accessControlContext The access control context to use for using extracting the class loader.
      * @return The class loader of the represented module.
      */
-    public ClassLoader getClassLoader(AccessControlContext accessControlContext) {
-        return AccessController.doPrivileged(this, accessControlContext);
+    public ClassLoader getClassLoader() {
+        return DISPATCHER.getClassLoader(module);
     }
 
     /**
@@ -139,11 +135,6 @@ public class JavaModule implements NamedElement.WithOptionalName, PrivilegedActi
      */
     public void addReads(Instrumentation instrumentation, JavaModule module) {
         DISPATCHER.addReads(instrumentation, this.module, module.unwrap());
-    }
-
-    @Override
-    public ClassLoader run() {
-        return DISPATCHER.getClassLoader(module);
     }
 
     @Override

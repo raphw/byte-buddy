@@ -27,12 +27,7 @@ public abstract class AbstractElementMatcherTest<T extends ElementMatcher<?>> {
 
     @Test
     public void testObjectProperties() throws Exception {
-        modify(ObjectPropertyAssertion.of(type)).specificToString(makeRegex(startsWith)).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).apply();
+        modify(ObjectPropertyAssertion.of(type)).specificToString(makeRegex(startsWith)).apply();
     }
 
     protected String makeRegex(String startsWith) {

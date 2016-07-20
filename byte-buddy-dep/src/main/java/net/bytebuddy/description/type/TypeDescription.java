@@ -16,7 +16,6 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
-import net.bytebuddy.utility.privilege.ClassLoaderAction;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -26,7 +25,6 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.*;
-import java.security.AccessController;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -7396,13 +7394,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         @Override
         public boolean isAssignableFrom(Class<?> type) {
             // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
-            return this.type.isAssignableFrom(type) || (AccessController.doPrivileged(new ClassLoaderAction(this.type)) != AccessController.doPrivileged(new ClassLoaderAction(type)) && super.isAssignableFrom(type));
+            return this.type.isAssignableFrom(type) || super.isAssignableFrom(type);
         }
 
         @Override
         public boolean isAssignableTo(Class<?> type) {
             // The JVM conducts more efficient assignability lookups of loaded types what is attempted first.
-            return type.isAssignableFrom(this.type) || (AccessController.doPrivileged(new ClassLoaderAction(this.type)) != AccessController.doPrivileged(new ClassLoaderAction(type)) && super.isAssignableTo(type));
+            return type.isAssignableFrom(this.type) || super.isAssignableTo(type);
         }
 
         @Override

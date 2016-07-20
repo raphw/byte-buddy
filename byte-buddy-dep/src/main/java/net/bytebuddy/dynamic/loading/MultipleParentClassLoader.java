@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.privilege.ClassLoaderAction;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -136,11 +135,10 @@ public class MultipleParentClassLoader extends ClassLoader {
              *
              * @return A dispatcher for invoking the {@link ClassLoader#loadClass(String, boolean)} method.
              */
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception is not meant to be rethrown")
             protected static Dispatcher make() {
                 try {
                     return AccessController.doPrivileged(new Active(ClassLoader.class.getDeclaredMethod("loadClass", String.class, boolean.class)));
-                } catch (RuntimeException exception) {
-                    throw exception;
                 } catch (Exception exception) {
                     return new Erroneous(exception);
                 }
@@ -371,13 +369,13 @@ public class MultipleParentClassLoader extends ClassLoader {
          * loader is implicitly skipped as it is an implicit parent of any class loader.
          *
          * @param accessControlContext The access control context to use.
-         * @param types The types of which to collect the class loaders.
+         * @param types                The types of which to collect the class loaders.
          * @return A new builder instance with the additional class loaders.
          */
         public Builder append(AccessControlContext accessControlContext, Collection<? extends Class<?>> types) {
             List<ClassLoader> classLoaders = new ArrayList<ClassLoader>(types.size());
             for (Class<?> type : types) {
-                classLoaders.add(ClassLoaderAction.apply(type, accessControlContext));
+                classLoaders.add(type.getClassLoader());
             }
             return append(classLoaders);
         }

@@ -3,8 +3,6 @@ package net.bytebuddy.matcher;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import java.security.AccessController;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -25,7 +23,7 @@ public class ClassLoaderHierarchyMatcherTest extends AbstractElementMatcherTest<
     @Test
     public void testMatchesChild() throws Exception {
         when(classLoaderMatcher.matches(classLoader)).thenReturn(true);
-        assertThat(new ClassLoaderHierarchyMatcher<ClassLoader>(classLoaderMatcher, AccessController.getContext()).matches(classLoader), is(true));
+        assertThat(new ClassLoaderHierarchyMatcher<ClassLoader>(classLoaderMatcher).matches(classLoader), is(true));
         verify(classLoaderMatcher).matches(classLoader);
         verifyNoMoreInteractions(classLoaderMatcher);
     }
@@ -33,7 +31,7 @@ public class ClassLoaderHierarchyMatcherTest extends AbstractElementMatcherTest<
     @Test
     public void testMatchesParent() throws Exception {
         when(classLoaderMatcher.matches(null)).thenReturn(true);
-        assertThat(new ClassLoaderHierarchyMatcher<ClassLoader>(classLoaderMatcher, AccessController.getContext()).matches(classLoader), is(true));
+        assertThat(new ClassLoaderHierarchyMatcher<ClassLoader>(classLoaderMatcher).matches(classLoader), is(true));
         verify(classLoaderMatcher).matches(classLoader);
         verify(classLoaderMatcher).matches(null);
         verifyNoMoreInteractions(classLoaderMatcher);
@@ -41,7 +39,7 @@ public class ClassLoaderHierarchyMatcherTest extends AbstractElementMatcherTest<
 
     @Test
     public void testNoMatch() throws Exception {
-        assertThat(new ClassLoaderHierarchyMatcher<ClassLoader>(classLoaderMatcher, AccessController.getContext()).matches(classLoader), is(false));
+        assertThat(new ClassLoaderHierarchyMatcher<ClassLoader>(classLoaderMatcher).matches(classLoader), is(false));
         verify(classLoaderMatcher).matches(classLoader);
         verify(classLoaderMatcher).matches(null);
         verifyNoMoreInteractions(classLoaderMatcher);

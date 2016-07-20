@@ -22,7 +22,7 @@ public class AgentAttachmentRule implements MethodRule {
     private final boolean available;
 
     public AgentAttachmentRule() {
-        available = ByteBuddyAgent.AttachmentProvider.DEFAULT.attempt(AccessController.getContext()).isAvailable();
+        available = ByteBuddyAgent.AttachmentProvider.DEFAULT.attempt().isAvailable();
     }
 
     @Override

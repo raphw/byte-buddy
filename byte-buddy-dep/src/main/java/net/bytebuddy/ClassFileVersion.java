@@ -3,7 +3,6 @@ package net.bytebuddy;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.utility.privilege.ClassLoaderAction;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
@@ -11,7 +10,6 @@ import org.objectweb.asm.Opcodes;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -170,7 +168,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @param fallback The version to fallback to if locating a class file version is not possible.
      * @return The currently running Java process's class file version or the fallback if locating this version is impossible.
      */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception not supposed to be rethrown")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception is not supposed to be rethrown")
     public static ClassFileVersion forCurrentJavaVersion(ClassFileVersion fallback) {
         try {
             return forCurrentJavaVersion();
@@ -187,19 +185,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @throws IOException If an error occurs while reading the class file.
      */
     public static ClassFileVersion of(Class<?> type) throws IOException {
-        return of(type, AccessController.getContext());
-    }
-
-    /**
-     * Extracts a class' class version. The class' byte code is located by querying the {@link ClassLoader} of the class.
-     *
-     * @param type                 The type for which to locate a class file version.
-     * @param accessControlContext The access control context to use.
-     * @return The type's class file version.
-     * @throws IOException If an error occurs while reading the class file.
-     */
-    public static ClassFileVersion of(Class<?> type, AccessControlContext accessControlContext) throws IOException {
-        return of(type, ClassFileLocator.ForClassLoader.of(ClassLoaderAction.apply(type, accessControlContext), accessControlContext));
+        return of(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
     }
 
     /**

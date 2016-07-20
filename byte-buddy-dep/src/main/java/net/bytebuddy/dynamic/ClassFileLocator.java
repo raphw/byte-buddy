@@ -3,16 +3,12 @@ package net.bytebuddy.dynamic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.StreamDrainer;
-import net.bytebuddy.utility.privilege.ClassLoaderAction;
-import net.bytebuddy.utility.privilege.ParentClassLoaderAction;
-import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 
 import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
-import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
@@ -275,17 +271,7 @@ public interface ClassFileLocator {
          * @return A class file locator that queries the system class loader.
          */
         public static ClassFileLocator ofClassPath() {
-            return ofClassPath(AccessController.getContext());
-        }
-
-        /**
-         * Creates a class file locator that queries the system class loader.
-         *
-         * @param accessControlContext The access control context to use.
-         * @return A class file locator that queries the system class loader.
-         */
-        public static ClassFileLocator ofClassPath(AccessControlContext accessControlContext) {
-            return new ForClassLoader(SystemClassLoaderAction.apply(accessControlContext));
+            return new ForClassLoader(ClassLoader.getSystemClassLoader());
         }
 
         /**
@@ -297,21 +283,8 @@ public interface ClassFileLocator {
          * @return A corresponding source locator.
          */
         public static ClassFileLocator of(ClassLoader classLoader) {
-            return of(classLoader, AccessController.getContext());
-        }
-
-        /**
-         * Creates a class file locator for a given class loader.
-         *
-         * @param classLoader          The class loader to be used. If this class loader represents the bootstrap class
-         *                             loader which is represented by the {@code null} value, this system class loader
-         *                             is used instead.
-         * @param accessControlContext The access control context to use for locating the system class loader.
-         * @return A corresponding source locator.
-         */
-        public static ClassFileLocator of(ClassLoader classLoader, AccessControlContext accessControlContext) {
             return new ForClassLoader(classLoader == null
-                    ? SystemClassLoaderAction.apply(accessControlContext)
+                    ? ClassLoader.getSystemClassLoader()
                     : classLoader);
         }
 
@@ -323,22 +296,10 @@ public interface ClassFileLocator {
          * @return The binary data to this type which might be illegal.
          */
         public static Resolution read(Class<?> type) {
-            return read(type, AccessController.getContext());
-        }
-
-        /**
-         * Attempts to create a binary representation of a loaded type by requesting data from its
-         * {@link java.lang.ClassLoader}.
-         *
-         * @param type                 The type of interest.
-         * @param accessControlContext The access control context to use.
-         * @return The binary data to this type which might be illegal.
-         */
-        public static Resolution read(Class<?> type, AccessControlContext accessControlContext) {
             try {
-                ClassLoader classLoader = ClassLoaderAction.apply(type, accessControlContext);
+                ClassLoader classLoader = type.getClassLoader();
                 return locate(classLoader == null
-                        ? SystemClassLoaderAction.apply(accessControlContext)
+                        ? ClassLoader.getSystemClassLoader()
                         : classLoader, TypeDescription.ForLoadedType.getName(type));
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot read class file for " + type, exception);
@@ -421,23 +382,8 @@ public interface ClassFileLocator {
              * @return A corresponding source locator.
              */
             public static ClassFileLocator of(ClassLoader classLoader) {
-                return of(classLoader, AccessController.getContext());
-            }
-
-            /**
-             * Creates a class file locator for a given class loader. If the class loader is not the bootstrap
-             * class loader or the system class loader which cannot be collected, the class loader is only weakly
-             * referenced.
-             *
-             * @param classLoader          The class loader to be used. If this class loader represents the bootstrap class
-             *                             loader which is represented by the {@code null} value, this system class loader
-             *                             is used instead.
-             * @param accessControlContext The access control context to use.
-             * @return A corresponding source locator.
-             */
-            public static ClassFileLocator of(ClassLoader classLoader, AccessControlContext accessControlContext) {
-                return classLoader == null || classLoader == SystemClassLoaderAction.apply(accessControlContext)
-                        ? ForClassLoader.of(classLoader, accessControlContext)
+                return classLoader == null || classLoader == ClassLoader.getSystemClassLoader()
+                        ? ForClassLoader.of(classLoader)
                         : new WeaklyReferenced(classLoader);
             }
 
@@ -619,19 +565,13 @@ public interface ClassFileLocator {
         private final ClassLoadingDelegate classLoadingDelegate;
 
         /**
-         * The access control context to use.
-         */
-        private final AccessControlContext accessControlContext;
-
-        /**
          * Creates an agent-based class file locator.
          *
-         * @param instrumentation      The instrumentation to be used.
-         * @param classLoader          The class loader to read a class from.
-         * @param accessControlContext The access control context to use.
+         * @param instrumentation The instrumentation to be used.
+         * @param classLoader     The class loader to read a class from.
          */
-        public AgentBased(Instrumentation instrumentation, ClassLoader classLoader, AccessControlContext accessControlContext) {
-            this(instrumentation, ClassLoadingDelegate.Default.of(classLoader, accessControlContext), accessControlContext);
+        public AgentBased(Instrumentation instrumentation, ClassLoader classLoader) {
+            this(instrumentation, ClassLoadingDelegate.Default.of(classLoader));
         }
 
         /**
@@ -639,15 +579,13 @@ public interface ClassFileLocator {
          *
          * @param instrumentation      The instrumentation to be used.
          * @param classLoadingDelegate The delegate responsible for class loading.
-         * @param accessControlContext The access control context to use.
          */
-        public AgentBased(Instrumentation instrumentation, ClassLoadingDelegate classLoadingDelegate, AccessControlContext accessControlContext) {
+        public AgentBased(Instrumentation instrumentation, ClassLoadingDelegate classLoadingDelegate) {
             if (!instrumentation.isRetransformClassesSupported()) {
                 throw new IllegalArgumentException(instrumentation + " does not support retransformation");
             }
             this.instrumentation = instrumentation;
             this.classLoadingDelegate = classLoadingDelegate;
-            this.accessControlContext = accessControlContext;
         }
 
         /**
@@ -658,27 +596,15 @@ public interface ClassFileLocator {
          * @return A class file locator for the given class loader based on a Byte Buddy agent.
          */
         public static ClassFileLocator fromInstalledAgent(ClassLoader classLoader) {
-            return fromInstalledAgent(classLoader, AccessController.getContext());
-        }
-
-        /**
-         * Returns an agent-based class file locator for the given class loader and an already installed
-         * Byte Buddy-agent.
-         *
-         * @param classLoader          The class loader that is expected to load the looked-up a class.
-         * @param accessControlContext The access control context to use.
-         * @return A class file locator for the given class loader based on a Byte Buddy agent.
-         */
-        public static ClassFileLocator fromInstalledAgent(ClassLoader classLoader, AccessControlContext accessControlContext) {
             try {
-                Instrumentation instrumentation = (Instrumentation) SystemClassLoaderAction.apply(accessControlContext)
+                Instrumentation instrumentation = (Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
                         .getDeclaredField(INSTRUMENTATION_FIELD)
                         .get(STATIC_FIELD);
                 if (instrumentation == null) {
                     throw new IllegalStateException("The Byte Buddy agent is not installed");
                 }
-                return new AgentBased(instrumentation, classLoader, accessControlContext);
+                return new AgentBased(instrumentation, classLoader);
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {
@@ -694,19 +620,7 @@ public interface ClassFileLocator {
          * @return A class file locator for locating the class file of the given type.
          */
         public static ClassFileLocator of(Instrumentation instrumentation, Class<?> type) {
-            return of(instrumentation, type, AccessController.getContext());
-        }
-
-        /**
-         * Returns a class file locator that is capable of locating a class file for the given type using the given instrumentation instance.
-         *
-         * @param instrumentation      The instrumentation instance to query for a retransformation.
-         * @param type                 The locatable type which class loader is used as a fallback.
-         * @param accessControlContext The access control context to use.
-         * @return A class file locator for locating the class file of the given type.
-         */
-        public static ClassFileLocator of(Instrumentation instrumentation, Class<?> type, AccessControlContext accessControlContext) {
-            return new AgentBased(instrumentation, ClassLoadingDelegate.Explicit.of(type, accessControlContext), accessControlContext);
+            return new AgentBased(instrumentation, ClassLoadingDelegate.Explicit.of(type));
         }
 
         @Override
@@ -734,13 +648,12 @@ public interface ClassFileLocator {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && classLoadingDelegate.equals(((AgentBased) other).classLoadingDelegate)
-                    && instrumentation.equals(((AgentBased) other).instrumentation)
-                    && accessControlContext.equals(((AgentBased) other).accessControlContext);
+                    && instrumentation.equals(((AgentBased) other).instrumentation);
         }
 
         @Override
         public int hashCode() {
-            return 31 * (31 * instrumentation.hashCode() + classLoadingDelegate.hashCode()) + accessControlContext.hashCode();
+            return 31 * instrumentation.hashCode() + classLoadingDelegate.hashCode();
         }
 
         @Override
@@ -748,7 +661,6 @@ public interface ClassFileLocator {
             return "ClassFileLocator.AgentBased{" +
                     "instrumentation=" + instrumentation +
                     ", classLoadingDelegate=" + classLoadingDelegate +
-                    ", accessControlContext=" + accessControlContext +
                     '}';
         }
 
@@ -799,20 +711,9 @@ public interface ClassFileLocator {
                  * @return The class loading delegate for the provided class loader.
                  */
                 public static ClassLoadingDelegate of(ClassLoader classLoader) {
-                    return of(classLoader, AccessController.getContext());
-                }
-
-                /**
-                 * Creates a class loading delegate for the given class loader.
-                 *
-                 * @param classLoader          The class loader for which to create a delegate.
-                 * @param accessControlContext The access control context to use when reading a class from a delegating class loader.
-                 * @return The class loading delegate for the provided class loader.
-                 */
-                public static ClassLoadingDelegate of(ClassLoader classLoader, AccessControlContext accessControlContext) {
                     return ForDelegatingClassLoader.isDelegating(classLoader)
-                            ? new ForDelegatingClassLoader(classLoader, accessControlContext)
-                            : new Default(classLoader == null ? AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE) : classLoader);
+                            ? new ForDelegatingClassLoader(classLoader)
+                            : new Default(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader);
                 }
 
                 @Override
@@ -874,26 +775,19 @@ public interface ClassFileLocator {
                     Dispatcher.Initializable dispatcher;
                     try {
                         dispatcher = new Dispatcher.Resolved(ClassLoader.class.getDeclaredField("classes"));
-                    } catch (Exception exception) {
+                    } catch (NoSuchFieldException exception) {
                         dispatcher = new Dispatcher.Unresolved(exception);
                     }
                     DISPATCHER = dispatcher;
                 }
 
                 /**
-                 * The access control context to use for accessing the field.
-                 */
-                private final AccessControlContext accessControlContext;
-
-                /**
                  * Creates a class loading delegate for a delegating class loader.
                  *
-                 * @param classLoader          The delegating class loader.
-                 * @param accessControlContext The access control context to be used for accessing
+                 * @param classLoader The delegating class loader.
                  */
-                protected ForDelegatingClassLoader(ClassLoader classLoader, AccessControlContext accessControlContext) {
+                protected ForDelegatingClassLoader(ClassLoader classLoader) {
                     super(classLoader);
-                    this.accessControlContext = accessControlContext;
                 }
 
                 /**
@@ -911,7 +805,7 @@ public interface ClassFileLocator {
                 public Class<?> locate(String name) throws ClassNotFoundException {
                     Vector<Class<?>> classes;
                     try {
-                        classes = DISPATCHER.initialize(accessControlContext).extract(classLoader);
+                        classes = DISPATCHER.initialize().extract(classLoader);
                     } catch (RuntimeException ignored) {
                         return super.locate(name);
                     }
@@ -925,26 +819,9 @@ public interface ClassFileLocator {
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    if (!super.equals(other)) return false;
-                    ForDelegatingClassLoader that = (ForDelegatingClassLoader) other;
-                    return accessControlContext.equals(that.accessControlContext);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = super.hashCode();
-                    result = 31 * result + accessControlContext.hashCode();
-                    return result;
-                }
-
-                @Override
                 public String toString() {
                     return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader{" +
                             "classLoader=" + classLoader +
-                            ", accessControlContext=" + accessControlContext +
                             '}';
                 }
 
@@ -969,10 +846,9 @@ public interface ClassFileLocator {
                         /**
                          * Initializes the dispatcher.
                          *
-                         * @param accessControlContext The access control context to use for accessing the private API.
                          * @return An initialized dispatcher.
                          */
-                        Dispatcher initialize(AccessControlContext accessControlContext);
+                        Dispatcher initialize();
                     }
 
                     /**
@@ -995,14 +871,8 @@ public interface ClassFileLocator {
                         }
 
                         @Override
-                        public Dispatcher initialize(AccessControlContext accessControlContext) {
-                            return AccessController.doPrivileged(this, accessControlContext);
-                        }
-
-                        @Override
-                        public Dispatcher run() {
-                            field.setAccessible(true);
-                            return this;
+                        public Dispatcher initialize() {
+                            return AccessController.doPrivileged(this);
                         }
 
                         @Override
@@ -1013,6 +883,12 @@ public interface ClassFileLocator {
                             } catch (IllegalAccessException exception) {
                                 throw new IllegalStateException("Cannot access field", exception);
                             }
+                        }
+
+                        @Override
+                        public Dispatcher run() {
+                            field.setAccessible(true);
+                            return this;
                         }
 
                         @Override
@@ -1054,7 +930,7 @@ public interface ClassFileLocator {
                         }
 
                         @Override
-                        public Dispatcher initialize(AccessControlContext accessControlContext) {
+                        public Dispatcher initialize() {
                             throw new IllegalStateException("Could not locate classes vector", exception);
                         }
 
@@ -1100,12 +976,11 @@ public interface ClassFileLocator {
                  * Creates a new class loading delegate with a possibility of looking up explicitly
                  * registered classes.
                  *
-                 * @param classLoader          The class loader to be used for looking up classes.
-                 * @param types                A collection of classes that cannot be looked up explicitly.
-                 * @param accessControlContext The access control context to use.
+                 * @param classLoader The class loader to be used for looking up classes.
+                 * @param types       A collection of classes that cannot be looked up explicitly.
                  */
-                public Explicit(ClassLoader classLoader, Collection<? extends Class<?>> types, AccessControlContext accessControlContext) {
-                    this(Default.of(classLoader, accessControlContext), types);
+                public Explicit(ClassLoader classLoader, Collection<? extends Class<?>> types) {
+                    this(Default.of(classLoader), types);
                 }
 
                 /**
@@ -1131,18 +1006,7 @@ public interface ClassFileLocator {
                  * @return A suitable class loading delegate.
                  */
                 public static ClassLoadingDelegate of(Class<?> type) {
-                    return of(type, AccessController.getContext());
-                }
-
-                /**
-                 * Creates an explicit class loading delegate for the given type.
-                 *
-                 * @param type                 The type that is explicitly locatable.
-                 * @param accessControlContext The access control context to use.
-                 * @return A suitable class loading delegate.
-                 */
-                public static ClassLoadingDelegate of(Class<?> type, AccessControlContext accessControlContext) {
-                    return new Explicit(ClassLoaderAction.apply(type, accessControlContext), Collections.singleton(type), accessControlContext);
+                    return new Explicit(type.getClassLoader(), Collections.singleton(type));
                 }
 
                 @Override
@@ -1246,7 +1110,7 @@ public interface ClassFileLocator {
                     if (classLoader == this.classLoader) {
                         return true;
                     }
-                } while ((classLoader = AccessController.doPrivileged(new ParentClassLoaderAction(classLoader))) != null);
+                } while ((classLoader = classLoader.getParent()) != null);
                 return false;
             }
 

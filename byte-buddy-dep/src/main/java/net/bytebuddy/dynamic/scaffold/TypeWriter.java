@@ -31,11 +31,17 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.RandomString;
+import net.bytebuddy.utility.privilege.GetSystemPropertyAction;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -1315,7 +1321,7 @@ public interface TypeWriter<T> {
         static {
             String dumpFolder;
             try {
-                dumpFolder = System.getProperty(DUMP_PROPERTY);
+                dumpFolder = AccessController.doPrivileged(new GetSystemPropertyAction(DUMP_PROPERTY));
             } catch (RuntimeException exception) {
                 dumpFolder = null;
                 Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not enable dumping of class files", exception);
@@ -1611,14 +1617,9 @@ public interface TypeWriter<T> {
             UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
             if (DUMP_FOLDER != null) {
                 try {
-                    OutputStream outputStream = new FileOutputStream(new File(DUMP_FOLDER, instrumentedType.getName() + "." + System.currentTimeMillis()));
-                    try {
-                        outputStream.write(unresolvedType.getBinaryRepresentation());
-                    } finally {
-                        outputStream.close();
-                    }
+                    AccessController.doPrivileged(new ClassDumpAction(DUMP_FOLDER, instrumentedType, unresolvedType.getBinaryRepresentation()));
                 } catch (Exception exception) {
-                    Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not dump class file for " + instrumentedType, exception);
+                    Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not dump class file for " + instrumentedType, exception.getCause());
                 }
             }
             return unresolvedType.toDynamicType(typeResolutionStrategy);
@@ -3818,6 +3819,83 @@ public interface TypeWriter<T> {
                         ", implementationContextFactory=" + implementationContextFactory +
                         ", typeValidation=" + typeValidation +
                         ", typePool=" + typePool +
+                        '}';
+            }
+        }
+
+        /**
+         * An action to write a class file to the dumping location.
+         */
+        protected static class ClassDumpAction implements PrivilegedExceptionAction<Void> {
+
+            /**
+             * Indicates that nothing is returned from this action.
+             */
+            private static final Void NOTHING = null;
+
+            /**
+             * The target folder for writing the class file to.
+             */
+            private final String target;
+
+            /**
+             * The instrumented type.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * The type's binary representation.
+             */
+            private final byte[] binaryRepresentation;
+
+            /**
+             * Creates a new class dump action.
+             *
+             * @param target               The target folder for writing the class file to.
+             * @param instrumentedType     The instrumented type.
+             * @param binaryRepresentation The type's binary representation.
+             */
+            protected ClassDumpAction(String target, TypeDescription instrumentedType, byte[] binaryRepresentation) {
+                this.target = target;
+                this.instrumentedType = instrumentedType;
+                this.binaryRepresentation = binaryRepresentation;
+            }
+
+            @Override
+            public Void run() throws Exception {
+                OutputStream outputStream = new FileOutputStream(new File(target, instrumentedType.getName() + "." + System.currentTimeMillis()));
+                try {
+                    outputStream.write(binaryRepresentation);
+                    return NOTHING;
+                } finally {
+                    outputStream.close();
+                }
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ClassDumpAction that = (ClassDumpAction) object;
+                return instrumentedType.equals(that.instrumentedType)
+                        && target.equals(that.target)
+                        && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentedType.hashCode();
+                result = 31 * result + target.hashCode();
+                result = 31 * result + Arrays.hashCode(binaryRepresentation);
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "TypeWriter.Default.ClassDumpAction{" +
+                        "target=" + target +
+                        ", instrumentedType=" + instrumentedType +
+                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                         '}';
             }
         }

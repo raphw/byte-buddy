@@ -2,7 +2,10 @@ package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
@@ -10,9 +13,6 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -38,6 +38,10 @@ import java.util.jar.Manifest;
  * </p>
  * <p>
  * <b>Important</b>: This class's name is known to the Byte Buddy main application and must not be altered.
+ * </p>
+ * <p>
+ * <b>Note</b>: Byte Buddy does not execute code using an {@link java.security.AccessController}. If a security manager
+ * is present, the user of this class is responsible for assuring any required privileges.
  * </p>
  */
 public class ByteBuddyAgent {
@@ -160,20 +164,7 @@ public class ByteBuddyAgent {
      * @param processId The target process id.
      */
     public static void attach(File agentJar, String processId) {
-        attach(agentJar, processId, AccessController.getContext());
-    }
-
-    /**
-     * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
-     * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
-     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
-     *
-     * @param agentJar             The agent jar file.
-     * @param processId            The target process id.
-     * @param accessControlContext The access control context to use.
-     */
-    public static void attach(File agentJar, String processId, AccessControlContext accessControlContext) {
-        attach(agentJar, processId, AttachmentProvider.DEFAULT, accessControlContext);
+        attach(agentJar, processId, AttachmentProvider.DEFAULT);
     }
 
     /**
@@ -185,20 +176,7 @@ public class ByteBuddyAgent {
      * @param attachmentProvider The attachment provider to use.
      */
     public static void attach(File agentJar, String processId, AttachmentProvider attachmentProvider) {
-        attach(agentJar, processId, attachmentProvider, AccessController.getContext());
-    }
-
-    /**
-     * Attaches the given agent Jar on the target process which must be a virtual machine process. This operation blocks until the
-     * attachment is complete.
-     *
-     * @param agentJar             The agent jar file.
-     * @param processId            The target process id.
-     * @param attachmentProvider   The attachment provider to use.
-     * @param accessControlContext The access control context to use.
-     */
-    public static void attach(File agentJar, String processId, AttachmentProvider attachmentProvider, AccessControlContext accessControlContext) {
-        install(attachmentProvider, processId, new AgentProvider.ForExistingAgent(agentJar), accessControlContext);
+        install(attachmentProvider, processId, new AgentProvider.ForExistingAgent(agentJar));
     }
 
     /**
@@ -227,37 +205,7 @@ public class ByteBuddyAgent {
      * @return An instrumentation instance representing the currently running JVM.
      */
     public static Instrumentation install() {
-        return install(AccessController.getContext());
-    }
-
-    /**
-     * <p>
-     * Installs an agent on the currently running Java virtual machine. Unfortunately, this does
-     * not always work. The runtime installation of a Java agent is supported for:
-     * </p>
-     * <ul>
-     * <li><b>JVM version 9+</b>: For Java VM of at least version 9, the attachment API was merged
-     * into a Jigsaw module and the runtime installation is always possible.</li>
-     * <li><b>OpenJDK / Oracle JDK / IBM J9 versions 8-</b>: The installation for HotSpot is only
-     * possible when bundled with a JDK up until Java version 8. It is not possible for runtime-only
-     * installations of HotSpot or J9 for these versions.</li>
-     * </ul>
-     * <p>
-     * If an agent cannot be installed, an {@link IllegalStateException} is thrown.
-     * </p>
-     * <p>
-     * <b>Important</b>: This is a rather computation-heavy operation. Therefore, this operation is
-     * not repeated after an agent was successfully installed for the first time. Instead, the previous
-     * instrumentation instance is returned. However, invoking this method requires synchronization
-     * such that subsequently to an installation, {@link ByteBuddyAgent#getInstrumentation()} should
-     * be invoked instead.
-     * </p>
-     *
-     * @param accessControlContext The access control context to use.
-     * @return An instrumentation instance representing the currently running JVM.
-     */
-    public static Instrumentation install(AccessControlContext accessControlContext) {
-        return install(AttachmentProvider.DEFAULT, accessControlContext);
+        return install(AttachmentProvider.DEFAULT);
     }
 
     /**
@@ -271,22 +219,7 @@ public class ByteBuddyAgent {
      * @return An instrumentation instance representing the currently running JVM.
      */
     public static Instrumentation install(AttachmentProvider attachmentProvider) {
-        return install(attachmentProvider, AccessController.getContext());
-    }
-
-    /**
-     * Installs a Java agent using the Java attach API. This API is available under different
-     * access routes for different JVMs and JVM versions or it might not be available at all.
-     * If a Java agent cannot be installed by using the supplied attachment provider, an
-     * {@link IllegalStateException} is thrown. The same happens if the default process provider
-     * cannot resolve a process id for the current VM.
-     *
-     * @param attachmentProvider   The attachment provider to use for the installation.
-     * @param accessControlContext The access control context to use.
-     * @return An instrumentation instance representing the currently running JVM.
-     */
-    public static Instrumentation install(AttachmentProvider attachmentProvider, AccessControlContext accessControlContext) {
-        return install(attachmentProvider, ProcessProvider.ForCurrentVm.INSTANCE, accessControlContext);
+        return install(attachmentProvider, ProcessProvider.ForCurrentVm.INSTANCE);
     }
 
     /**
@@ -300,22 +233,7 @@ public class ByteBuddyAgent {
      * @return An instrumentation instance representing the currently running JVM.
      */
     public static Instrumentation install(ProcessProvider processProvider) {
-        return install(processProvider, AccessController.getContext());
-    }
-
-    /**
-     * Installs a Java agent using the Java attach API. This API is available under different
-     * access routes for different JVMs and JVM versions or it might not be available at all.
-     * If a Java agent cannot be installed by using the supplied process provider, an
-     * {@link IllegalStateException} is thrown. The same happens if the default attachment
-     * provider cannot be used.
-     *
-     * @param processProvider      The provider for the current JVM's process id.
-     * @param accessControlContext The access control context to use.
-     * @return An instrumentation instance representing the currently running JVM.
-     */
-    public static Instrumentation install(ProcessProvider processProvider, AccessControlContext accessControlContext) {
-        return install(AttachmentProvider.DEFAULT, processProvider, accessControlContext);
+        return install(AttachmentProvider.DEFAULT, processProvider);
     }
 
     /**
@@ -328,42 +246,24 @@ public class ByteBuddyAgent {
      * @param processProvider    The provider for the current JVM's process id.
      * @return An instrumentation instance representing the currently running JVM.
      */
-    public static Instrumentation install(AttachmentProvider attachmentProvider, ProcessProvider processProvider) {
-        return install(attachmentProvider, processProvider, AccessController.getContext());
-    }
-
-    /**
-     * Installs a Java agent using the Java attach API. This API is available under different
-     * access routes for different JVMs and JVM versions or it might not be available at all.
-     * If a Java agent cannot be installed by using the supplied attachment provider and process
-     * provider, an {@link IllegalStateException} is thrown.
-     *
-     * @param attachmentProvider   The attachment provider to use for the installation.
-     * @param processProvider      The provider for the current JVM's process id.
-     * @param accessControlContext The access control context to use.
-     * @return An instrumentation instance representing the currently running JVM.
-     */
-    public static synchronized Instrumentation install(AttachmentProvider attachmentProvider,
-                                                       ProcessProvider processProvider,
-                                                       AccessControlContext accessControlContext) {
+    public static synchronized Instrumentation install(AttachmentProvider attachmentProvider, ProcessProvider processProvider) {
         Instrumentation instrumentation = doGetInstrumentation();
         if (instrumentation != null) {
             return instrumentation;
         }
-        install(attachmentProvider, processProvider.resolve(), AgentProvider.ForByteBuddyAgent.INSTANCE, accessControlContext);
+        install(attachmentProvider, processProvider.resolve(), AgentProvider.ForByteBuddyAgent.INSTANCE);
         return doGetInstrumentation();
     }
 
     /**
      * Installs a Java agent on a target VM.
      *
-     * @param attachmentProvider   The attachment provider to use.
-     * @param processId            The process id of the target JVM process.
-     * @param agentProvider        The agent provider for the agent jar.
-     * @param accessControlContext The access control context to use.
+     * @param attachmentProvider The attachment provider to use.
+     * @param processId          The process id of the target JVM process.
+     * @param agentProvider      The agent provider for the agent jar.
      */
-    private static void install(AttachmentProvider attachmentProvider, String processId, AgentProvider agentProvider, AccessControlContext accessControlContext) {
-        AttachmentProvider.Accessor attachmentAccessor = attachmentProvider.attempt(accessControlContext);
+    private static void install(AttachmentProvider attachmentProvider, String processId, AgentProvider agentProvider) {
+        AttachmentProvider.Accessor attachmentAccessor = attachmentProvider.attempt();
         if (!attachmentAccessor.isAvailable()) {
             throw new IllegalStateException();
         }
@@ -421,10 +321,9 @@ public class ByteBuddyAgent {
         /**
          * Attempts the creation of an accessor for a specific JVM's attachment API.
          *
-         * @param accessControlContext The access control context for this attempt.
          * @return The accessor this attachment provider can supply for the currently running JVM.
          */
-        Accessor attempt(AccessControlContext accessControlContext);
+        Accessor attempt();
 
         /**
          * An accessor for a JVM's attachment API.
@@ -530,12 +429,11 @@ public class ByteBuddyAgent {
                  * This accessor is supposed to work on any implementation of IBM's J9.
                  * </p>
                  *
-                 * @param accessControlContext The access control context to use.
                  * @return An appropriate accessor.
                  */
-                public static Accessor ofJ9(AccessControlContext accessControlContext) {
+                public static Accessor ofJ9() {
                     try {
-                        return new Simple(SystemClassLoaderAction.apply(accessControlContext).loadClass(VIRTUAL_MACHINE_TYPE_NAME_J9));
+                        return new Simple(ClassLoader.getSystemClassLoader().loadClass(VIRTUAL_MACHINE_TYPE_NAME_J9));
                     } catch (ClassNotFoundException ignored) {
                         return Unavailable.INSTANCE;
                     }
@@ -584,8 +482,8 @@ public class ByteBuddyAgent {
             INSTANCE;
 
             @Override
-            public Accessor attempt(AccessControlContext accessControlContext) {
-                return Accessor.Simple.of(SystemClassLoaderAction.apply(accessControlContext));
+            public Accessor attempt() {
+                return Accessor.Simple.of(ClassLoader.getSystemClassLoader());
             }
 
             @Override
@@ -606,8 +504,8 @@ public class ByteBuddyAgent {
             INSTANCE;
 
             @Override
-            public Accessor attempt(AccessControlContext accessControlContext) {
-                return Accessor.Simple.ofJ9(accessControlContext);
+            public Accessor attempt() {
+                return Accessor.Simple.ofJ9();
             }
 
             @Override
@@ -641,6 +539,11 @@ public class ByteBuddyAgent {
             MACINTOSH("../Classes/classes.jar");
 
             /**
+             * The Java home system property.
+             */
+            private static final String JAVA_HOME_PROPERTY = "java.home";
+
+            /**
              * The path to the <i>tools.jar</i> file, starting from the Java home directory.
              */
             private final String toolsJarPath;
@@ -655,110 +558,21 @@ public class ByteBuddyAgent {
             }
 
             @Override
-            public Accessor attempt(AccessControlContext accessControlContext) {
-                File toolsJar = new File(SystemPropertyAction.apply(accessControlContext).replace('\\', '/') + "/../" + toolsJarPath);
-                return toolsJar.isFile() && toolsJar.canRead()
-                        ? Accessor.Simple.of(ClassLoaderCreationAction.apply(toolsJar, accessControlContext))
-                        : Accessor.Unavailable.INSTANCE;
+            @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege should be provided by user")
+            public Accessor attempt() {
+                File toolsJar = new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + "/../" + toolsJarPath);
+                try {
+                    return toolsJar.isFile() && toolsJar.canRead()
+                            ? Accessor.Simple.of(new URLClassLoader(new URL[]{toolsJar.toURI().toURL()}, BOOTSTRAP_CLASS_LOADER))
+                            : Accessor.Unavailable.INSTANCE;
+                } catch (MalformedURLException exception) {
+                    throw new IllegalStateException("Could not represent " + toolsJar + " as URL");
+                }
             }
 
             @Override
             public String toString() {
                 return "ByteBuddyAgent.AttachmentProvider.ForToolsJarVm." + name();
-            }
-
-            /**
-             * The action creates a class loader that is capable of reading form the provided <i>tools.jar</i>.
-             */
-            protected static class ClassLoaderCreationAction implements PrivilegedAction<ClassLoader> {
-
-                /**
-                 * The file representing the <i>tools.jar</i> location.
-                 */
-                private final File toolsJar;
-
-                /**
-                 * Creates a new class loader creation action.
-                 *
-                 * @param toolsJar The file representing the <i>tools.jar</i> location.
-                 */
-                protected ClassLoaderCreationAction(File toolsJar) {
-                    this.toolsJar = toolsJar;
-                }
-
-                /**
-                 * @param toolsJar             A reference to {@code tools.jar}.
-                 * @param accessControlContext The access control context to use for creating a class loader.
-                 * @return A class loader for this file.
-                 */
-                protected static ClassLoader apply(File toolsJar, AccessControlContext accessControlContext) {
-                    return AccessController.doPrivileged(new ClassLoaderCreationAction(toolsJar), accessControlContext);
-                }
-
-                @Override
-                public ClassLoader run() {
-                    try {
-                        return new URLClassLoader(new URL[]{toolsJar.toURI().toURL()}, BOOTSTRAP_CLASS_LOADER);
-                    } catch (MalformedURLException exception) {
-                        throw new IllegalStateException("Could not represent " + toolsJar + " as URL");
-                    }
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ClassLoaderCreationAction that = (ClassLoaderCreationAction) other;
-                    return toolsJar.equals(that.toolsJar);
-                }
-
-                @Override
-                public int hashCode() {
-                    return toolsJar.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.AttachmentProvider.ForToolsJarVm.ClassLoaderCreationAction{" +
-                            "toolsJar=" + toolsJar +
-                            '}';
-                }
-            }
-
-            /**
-             * A privileged action for reading the {@code java.home} property.
-             */
-            protected enum SystemPropertyAction implements PrivilegedAction<String> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                /**
-                 * The JVM property for this JVM instance's home folder.
-                 */
-                private static final String JAVA_HOME_PROPERTY = "java.home";
-
-                /**
-                 * Reads the {@code java.home} property.
-                 *
-                 * @param accessControlContext The access control context to use.
-                 * @return The property value.
-                 */
-                protected static String apply(AccessControlContext accessControlContext) {
-                    return AccessController.doPrivileged(INSTANCE, accessControlContext);
-                }
-
-                @Override
-                public String run() {
-                    return System.getProperty(JAVA_HOME_PROPERTY);
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.AttachmentProvider.ForToolsJarVm.SystemPropertyAction." + name();
-                }
             }
         }
 
@@ -793,9 +607,9 @@ public class ByteBuddyAgent {
             }
 
             @Override
-            public Accessor attempt(AccessControlContext accessControlContext) {
+            public Accessor attempt() {
                 for (AttachmentProvider attachmentProvider : attachmentProviders) {
-                    Accessor accessor = attachmentProvider.attempt(accessControlContext);
+                    Accessor accessor = attachmentProvider.attempt();
                     if (accessor.isAvailable()) {
                         return accessor;
                     }
@@ -992,7 +806,7 @@ public class ByteBuddyAgent {
         /**
          * An agent provider for a temporary Byte Buddy agent.
          */
-        enum ForByteBuddyAgent implements AgentProvider, PrivilegedAction<File> {
+        enum ForByteBuddyAgent implements AgentProvider {
 
             /**
              * The singleton instance.
@@ -1017,7 +831,8 @@ public class ByteBuddyAgent {
                     throw new IllegalStateException("Cannot locate class file for Byte Buddy installer");
                 }
                 try {
-                    agentJar = AccessController.doPrivileged(this);
+                    agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
+                    agentJar.deleteOnExit(); // Agent jar is required until VM shutdown due to lazy class loading.
                     Manifest manifest = new Manifest();
                     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
                     manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), Installer.class.getName());
@@ -1040,17 +855,6 @@ public class ByteBuddyAgent {
                     inputStream.close();
                 }
                 return agentJar;
-            }
-
-            @Override
-            public File run() {
-                try {
-                    File agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
-                    agentJar.deleteOnExit(); // Agent jar is required until VM shutdown due to lazy class loading.
-                    return agentJar;
-                } catch (IOException exception) {
-                    throw new IllegalStateException("Cannot create temporary file for local agent", exception);
-                }
             }
 
             @Override
@@ -1102,37 +906,6 @@ public class ByteBuddyAgent {
                         "agent='" + agent + '\'' +
                         '}';
             }
-        }
-    }
-
-    /**
-     * An action for calling {@link ClassLoader#getSystemClassLoader()}.
-     */
-    protected enum SystemClassLoaderAction implements PrivilegedAction<ClassLoader> {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        /**
-         * Returns the system class loader.
-         *
-         * @param accessControlContext The access control context to use.
-         * @return The system class loader.
-         */
-        protected static ClassLoader apply(AccessControlContext accessControlContext) {
-            return AccessController.doPrivileged(INSTANCE, accessControlContext);
-        }
-
-        @Override
-        public ClassLoader run() {
-            return ClassLoader.getSystemClassLoader();
-        }
-
-        @Override
-        public String toString() {
-            return "ByteBuddyAgent.SystemClassLoaderAction." + name();
         }
     }
 }
