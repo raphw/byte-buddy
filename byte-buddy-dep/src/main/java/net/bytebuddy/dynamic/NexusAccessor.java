@@ -21,6 +21,7 @@ import org.objectweb.asm.MethodVisitor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -31,7 +32,7 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
  * The Nexus accessor is creating a VM-global singleton {@link Nexus} such that it can be seen by all class loaders of
  * a virtual machine. Furthermore, it provides an API to access this global instance.
  */
-public enum NexusAccessor {
+public enum NexusAccessor implements PrivilegedAction<NexusAccessor.Dispatcher> {
 
     /**
      * The singleton instance.
@@ -71,25 +72,8 @@ public enum NexusAccessor {
     /**
      * Creates the singleton accessor.
      */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Explicit delegation of the exception")
     NexusAccessor() {
-        Dispatcher dispatcher;
-        try {
-            TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-            dispatcher = new Dispatcher.Available(ClassInjector.UsingReflection.ofSystemClassLoader()
-                    .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
-                    .get(nexusType)
-                    .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
-        } catch (Exception exception) {
-            try {
-                dispatcher = new Dispatcher.Available(AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE)
-                        .loadClass(Nexus.class.getName())
-                        .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
-            } catch (Exception ignored) {
-                dispatcher = new Dispatcher.Unavailable(exception);
-            }
-        }
-        this.dispatcher = dispatcher;
+        this.dispatcher = AccessController.doPrivileged(this);
         getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
                 .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
         loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
@@ -100,6 +84,26 @@ public enum NexusAccessor {
                 .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
         valueOf = new TypeDescription.ForLoadedType(Integer.class).getDeclaredMethods()
                 .filter(named("valueOf").and(takesArguments(int.class))).getOnly();
+    }
+
+    @Override
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Explicit delegation of the exception")
+    public Dispatcher run() {
+        try {
+            TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
+            return new Dispatcher.Available(new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), NexusAccessor.class.getProtectionDomain(), AccessController.getContext()) // REFACTOR
+                    .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
+                    .get(nexusType)
+                    .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
+        } catch (Exception exception) {
+            try {
+                return new Dispatcher.Available(AccessController.doPrivileged(SystemClassLoaderAction.INSTANCE)
+                        .loadClass(Nexus.class.getName())
+                        .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
+            } catch (Exception ignored) {
+                return new Dispatcher.Unavailable(exception);
+            }
+        }
     }
 
     /**

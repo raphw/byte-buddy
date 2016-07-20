@@ -37,7 +37,7 @@ public class MethodOverrideMatcherTest extends AbstractElementMatcherTest<Method
 
     @SuppressWarnings("unchecked")
     public MethodOverrideMatcherTest() {
-        super((Class<? extends MethodOverrideMatcher<?>>) (Object) MethodOverrideMatcher.class, "returns");
+        super((Class<? extends MethodOverrideMatcher<?>>) (Object) MethodOverrideMatcher.class, "isOverriddenFrom");
     }
 
     @Before

@@ -1287,6 +1287,42 @@ public class AgentBuilderDefaultTest {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).apply();
+        final Iterator<Class<?>> execution = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.ExecutionDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return execution.next();
+            }
+        }).apply();
+        final Iterator<Class<?>> java9Dispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return java9Dispatcher.next();
+            }
+        }).apply();
+        final Iterator<Class<?>> legacyDispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.LegacyDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+            @Override
+            public AccessControlContext create() {
+                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return legacyDispatcher.next();
+            }
+        }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory.class)
                 .create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
                     @Override

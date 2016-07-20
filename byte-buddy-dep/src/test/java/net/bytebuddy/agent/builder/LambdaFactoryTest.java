@@ -16,7 +16,6 @@ import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static sun.java2d.cmm.ColorTransform.In;
 
 public class LambdaFactoryTest {
 

@@ -84,8 +84,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception not supposed to be rethrown")
     private static VersionLocator findVersionLocator() {
         try {
-            Class<?> version = Class.forName("java.lang.Runtime$Version");
-            return new VersionLocator.ForJava9CapableVm(version.getDeclaredMethod("current"), version.getDeclaredMethod("major"));
+            return new VersionLocator.ForJava9CapableVm(Runtime.class.getDeclaredMethod("version"),
+                    Class.forName("java.lang.Runtime$Version").getDeclaredMethod("major"));
         } catch (Exception ignored) {
             return VersionLocator.ForLegacyVm.INSTANCE;
         }
@@ -331,7 +331,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             private static final Object STATIC_METHOD = null;
 
             /**
-             * The {@code java java.lang.Runtime.Version#current()} method.
+             * The {@code java java.lang.Runtime#current()} method.
              */
             private final Method current;
 
@@ -343,7 +343,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             /**
              * Creates a new version locator for a Java 9 capable VM.
              *
-             * @param current The {@code java.lang.Runtime.Version#current()} method.
+             * @param current The {@code java.lang.Runtime#current()} method.
              * @param major   The {@code java.lang.Runtime.Version#major()} method.
              */
             protected ForJava9CapableVm(Method current, Method major) {
@@ -404,10 +404,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             @Override
             public ClassFileVersion findCurrentVersion() {
                 String versionString = AccessController.doPrivileged(this);
-                // To be removed once the implementation of Java 9 is finalized.
-                if (versionString.startsWith("9")) {
-                    return ClassFileVersion.JAVA_V9;
-                }
                 int[] versionIndex = {-1, 0, 0};
                 for (int i = 1; i < 3; i++) {
                     versionIndex[i] = versionString.indexOf('.', versionIndex[i - 1] + 1);
