@@ -15,7 +15,8 @@ public class StackAwareMethodVisitor extends MethodVisitor {
 
     /**
      * An array mapping any opcode to its size impact onto the operand stack. This mapping is taken from
-     * {@link org.objectweb.asm.Frame} where its computation is explained in detail.
+     * {@link org.objectweb.asm.Frame} with the difference that the {@link Opcodes#JSR} instruction is
+     * mapped to a size of {@code 0} as it does not impact the stack after returning from the instruction.
      */
     private static final int[] SIZE_CHANGE;
 
@@ -24,10 +25,10 @@ public class StackAwareMethodVisitor extends MethodVisitor {
      */
     static {
         SIZE_CHANGE = new int[202];
-        String encoded = "EFFFFFFFFGGFFFGGFFFEEFGFGFEEEEEEEEEEEEEEEEEEEEDEDEDDDDD"
-                + "CDCDEEEEEEEEEEEEEEEEEEEEBABABBBBDCFFFGGGEDCDCDCDCDCDCDCDCD"
-                + "CDCEEEEDDDDDDDCDCDCEFEFDDEEFFDEDEEEBDDBBDDDDDDCCCCCCCCEFED"
-                + "DDCDCDEEEEEEEEEEFEEEEEEDDEEDDEE";
+        String encoded = "EFFFFFFFFGGFFFGGFFFEEFGFGFEEEEEEEEEEEEEEEEEEEEDEDEDDDDDCD" +
+                "CDEEEEEEEEEEEEEEEEEEEEBABABBBBDCFFFGGGEDCDCDCDCDCDCDCDCDCDCEEEEDDD" +
+                "DDDDCDCDCEFEFDDEEFFDEDEEEBDDBBDDDDDDCCCCCCCCEEEDDDCDCDEEEEEEEEEEFE" +
+                "EEEEEDDEEDDEE";
         for (int index = 0; index < SIZE_CHANGE.length; index++) {
             SIZE_CHANGE[index] = encoded.charAt(index) - 'E';
         }
@@ -166,7 +167,6 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             case Opcodes.FRETURN:
             case Opcodes.DRETURN:
             case Opcodes.ATHROW:
-            case Opcodes.RET:
                 current.clear();
                 break;
             default:
@@ -194,6 +194,9 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             case Opcodes.DSTORE:
                 freeIndex = Math.max(freeIndex, variable + 2);
                 break;
+            case Opcodes.RET:
+                current.clear();
+                break;
         }
         adjustStack(SIZE_CHANGE[opcode]);
         super.visitVarInsn(opcode, variable);
@@ -210,7 +213,8 @@ public class StackAwareMethodVisitor extends MethodVisitor {
         int baseline = Type.getType(descriptor).getSize();
         switch (opcode) {
             case Opcodes.GETFIELD:
-                adjustStack(baseline - 1);
+                adjustStack(-1);
+                adjustStack(baseline);
                 break;
             case Opcodes.GETSTATIC:
                 adjustStack(baseline);
@@ -230,7 +234,7 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
         int baseline = Type.getArgumentsAndReturnSizes(descriptor);
-        adjustStack(-(baseline >> 2) + ((opcode == Opcodes.INVOKESTATIC) ? 1 : 0));
+        adjustStack(-(baseline >> 2) + (opcode == Opcodes.INVOKESTATIC ? 1 : 0));
         adjustStack(baseline & 0x03);
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
     }
@@ -258,7 +262,9 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     @Override
     public void visitJumpInsn(int opcode, Label label) {
         adjustStack(SIZE_CHANGE[opcode]);
-        sizes.put(label, new ArrayList<StackSize>(current));
+        sizes.put(label, new ArrayList<StackSize>(opcode == Opcodes.JSR
+                ? CompoundList.of(current, StackSize.SINGLE)
+                : current));
         if (opcode == Opcodes.GOTO) {
             current.clear();
         }
@@ -272,6 +278,11 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             this.current = new ArrayList<StackSize>(current);
         }
         super.visitLabel(label);
+    }
+
+    @Override
+    public void visitLineNumber(int line, Label start) {
+        super.visitLineNumber(line, start);
     }
 
     @Override

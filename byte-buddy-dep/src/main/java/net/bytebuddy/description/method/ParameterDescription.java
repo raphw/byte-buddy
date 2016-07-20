@@ -189,26 +189,25 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         /**
          * A dispatcher for reading properties from {@code java.lang.reflect.Executable} instances.
          */
-        private static final Dispatcher DISPATCHER;
+        private static final Dispatcher DISPATCHER = dispatcher();
 
-        /*
+        /**
          * Creates a dispatcher for a loaded parameter if the type is available for the running JVM.
+         *
+         * @return A dispatcher for the current VM.
          */
-        static {
-            Dispatcher dispatcher;
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+        private static Dispatcher dispatcher() {
             try {
                 Class<?> executableType = Class.forName("java.lang.reflect.Executable");
                 Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
-                dispatcher = new Dispatcher.ForJava8CapableVm(executableType.getDeclaredMethod("getParameters"),
+                return new Dispatcher.ForJava8CapableVm(executableType.getDeclaredMethod("getParameters"),
                         parameterType.getDeclaredMethod("getName"),
                         parameterType.getDeclaredMethod("isNamePresent"),
                         parameterType.getDeclaredMethod("getModifiers"));
-            } catch (RuntimeException exception) {
-                throw exception;
             } catch (Exception ignored) {
-                dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
+                return Dispatcher.ForLegacyVm.INSTANCE;
             }
-            DISPATCHER = dispatcher;
         }
 
         /**
@@ -963,9 +962,9 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         /**
          * Creates a parameter token without annotations. The parameter type must be represented in its detached format.
          *
-         * @param type The type of the represented parameter.
-         * @param name            The name of the parameter or {@code null} if no explicit name is defined.
-         * @param modifiers       The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
+         * @param type      The type of the represented parameter.
+         * @param name      The name of the parameter or {@code null} if no explicit name is defined.
+         * @param modifiers The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
         public Token(TypeDescription.Generic type, String name, Integer modifiers) {
             this(type, Collections.<AnnotationDescription>emptyList(), name, modifiers);
@@ -976,8 +975,8 @@ public interface ParameterDescription extends AnnotatedCodeElement,
          *
          * @param type        The type of the represented parameter.
          * @param annotations The annotations of the parameter.
-         * @param name                   The name of the parameter or {@code null} if no explicit name is defined.
-         * @param modifiers              The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
+         * @param name        The name of the parameter or {@code null} if no explicit name is defined.
+         * @param modifiers   The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
         public Token(TypeDescription.Generic type,
                      List<? extends AnnotationDescription> annotations,

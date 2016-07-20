@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -14,7 +15,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
@@ -56,22 +56,21 @@ public interface JavaConstant {
         /**
          * A dispatcher for extracting information from a {@code java.lang.invoke.MethodType} instance.
          */
-        private static final Dispatcher DISPATCHER;
+        private static final Dispatcher DISPATCHER = dispatcher();
 
-        /*
+        /**
          * Locates a dispatcher depending on the feature set of the currently running JVM.
+         *
+         * @return A dispatcher for the current VM.
          */
-        static {
-            Dispatcher dispatcher;
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+        private static Dispatcher dispatcher() {
             try {
                 Class<?> methodType = JavaType.METHOD_TYPE.load();
-                dispatcher = new Dispatcher.ForJava7CapableVm(methodType.getDeclaredMethod("returnType"), methodType.getDeclaredMethod("parameterArray"));
-            } catch (RuntimeException exception) {
-                throw exception;
+                return new Dispatcher.ForJava7CapableVm(methodType.getDeclaredMethod("returnType"), methodType.getDeclaredMethod("parameterArray"));
             } catch (Exception ignored) {
-                dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
+                return Dispatcher.ForLegacyVm.INSTANCE;
             }
-            DISPATCHER = dispatcher;
         }
 
         /**
@@ -435,16 +434,18 @@ public interface JavaConstant {
         /**
          * A dispatcher for receiving the type information that is represented by a {@code java.lang.invoke.MethodHandle} instance.
          */
-        private static final Dispatcher.Initializable DISPATCHER;
+        private static final Dispatcher.Initializable DISPATCHER = dispatcher();
 
-        /*
+        /**
          * Locates a dispatcher depending on the feature set of the currently running JVM.
+         *
+         * @return A dispatcher for the current VM.
          */
-        static {
-            Dispatcher.Initializable dispatcher;
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+        private static Dispatcher.Initializable dispatcher() {
             try {
                 try {
-                    dispatcher = new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
+                    return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
                             Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
                             Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
                             Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
@@ -453,10 +454,8 @@ public interface JavaConstant {
                             JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
                             JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
                             JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
-                } catch (RuntimeException exception) {
-                    throw exception;
                 } catch (Exception ignored) {
-                    dispatcher = new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
+                    return new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
                             Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
                             Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
                             Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
@@ -466,12 +465,9 @@ public interface JavaConstant {
                             JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
                             Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredConstructor(JavaType.METHOD_HANDLE.load()));
                 }
-            } catch (RuntimeException exception) {
-                throw exception;
             } catch (Exception ignored) {
-                dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
+                return Dispatcher.ForLegacyVm.INSTANCE;
             }
-            DISPATCHER = dispatcher;
         }
 
         /**
@@ -529,7 +525,7 @@ public interface JavaConstant {
          * @return A representation of the loaded method handle
          */
         public static MethodHandle ofLoaded(Object methodHandle) {
-            return ofLoaded(methodHandle, DISPATCHER.publicLookup(), AccessController.getContext());
+            return ofLoaded(methodHandle, DISPATCHER.publicLookup());
         }
 
         /**
@@ -542,39 +538,12 @@ public interface JavaConstant {
          * @return A representation of the loaded method handle
          */
         public static MethodHandle ofLoaded(Object methodHandle, Object lookup) {
-            return ofLoaded(methodHandle, lookup, AccessController.getContext());
-        }
-
-        /**
-         * Creates a method handles representation of a loaded method handle which is analyzed using a public {@code MethodHandles.Lookup} object.
-         * A method handle can only be analyzed on virtual machines that support the corresponding API (Java 7+). For virtual machines before Java 8+,
-         * a method handle instance can only be analyzed by taking advantage of private APIs what might require a access context.
-         *
-         * @param methodHandle         The loaded method handle to represent.
-         * @param accessControlContext The access control context to be used for making private methods accessible when using Java 7.
-         * @return A representation of the loaded method handle
-         */
-        public static MethodHandle ofLoaded(Object methodHandle, AccessControlContext accessControlContext) {
-            return ofLoaded(methodHandle, DISPATCHER.publicLookup(), accessControlContext);
-        }
-
-        /**
-         * Creates a method handles representation of a loaded method handle which is analyzed using the given lookup context.
-         * A method handle can only be analyzed on virtual machines that support the corresponding API (Java 7+). For virtual machines before Java 8+,
-         * a method handle instance can only be analyzed by taking advantage of private APIs what might require a access context.
-         *
-         * @param methodHandle         The loaded method handle to represent.
-         * @param lookup               The lookup object to use for analyzing the method handle.
-         * @param accessControlContext The access control context to be used for making private methods accessible when using Java 7.
-         * @return A representation of the loaded method handle
-         */
-        public static MethodHandle ofLoaded(Object methodHandle, Object lookup, AccessControlContext accessControlContext) {
             if (!JavaType.METHOD_HANDLE.getTypeStub().isInstance(methodHandle)) {
                 throw new IllegalArgumentException("Expected method handle object: " + methodHandle);
             } else if (!JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isInstance(lookup)) {
                 throw new IllegalArgumentException("Expected method handle lookup object: " + lookup);
             }
-            Dispatcher dispatcher = DISPATCHER.initialize(accessControlContext);
+            Dispatcher dispatcher = DISPATCHER.initialize();
             Object methodHandleInfo = dispatcher.reveal(lookup, methodHandle);
             Object methodType = dispatcher.getMethodType(methodHandleInfo);
             return new MethodHandle(HandleType.of(dispatcher.getReferenceKind(methodHandleInfo)),
@@ -834,7 +803,7 @@ public interface JavaConstant {
              * Returns a method handle info's method type.
              *
              * @param methodHandleInfo The method handle info to introspect.
-             * @return The {@link java.lang.invoke.MethodType} instance representing the method handle's type.
+             * @return The {@code java.lang.invoke.MethodType} instance representing the method handle's type.
              */
             Object getMethodType(Object methodHandleInfo);
 
@@ -886,10 +855,9 @@ public interface JavaConstant {
                 /**
                  * Initializes the dispatcher, if required.
                  *
-                 * @param accessControlContext The access control context to be used for introspecting private APIs, if required.
                  * @return The initialized dispatcher.
                  */
-                Dispatcher initialize(AccessControlContext accessControlContext);
+                Dispatcher initialize();
 
                 /**
                  * Returns a public {@code java.lang.invoke.MethodHandles.Lookup} instance.
@@ -1148,7 +1116,7 @@ public interface JavaConstant {
                 }
 
                 @Override
-                public Dispatcher initialize(AccessControlContext accessControlContext) {
+                public Dispatcher initialize() {
                     return this;
                 }
 
@@ -1221,8 +1189,8 @@ public interface JavaConstant {
                 }
 
                 @Override
-                public Dispatcher initialize(AccessControlContext accessControlContext) {
-                    return AccessController.doPrivileged(this, accessControlContext);
+                public Dispatcher initialize() {
+                    return AccessController.doPrivileged(this);
                 }
 
                 @Override
@@ -1293,7 +1261,7 @@ public interface JavaConstant {
                 INSTANCE;
 
                 @Override
-                public Dispatcher initialize(AccessControlContext accessControlContext) {
+                public Dispatcher initialize() {
                     throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
                 }
 

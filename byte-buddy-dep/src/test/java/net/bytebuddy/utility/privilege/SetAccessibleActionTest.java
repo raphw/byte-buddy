@@ -4,28 +4,27 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.AccessibleObject;
-import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class AccessActionTest {
+public class SetAccessibleActionTest {
 
     private static final String BAR = "bar";
 
     @Test
     public void testAccessAction() throws Exception {
         AccessibleObjectSpy accessibleObjectSpy = new AccessibleObjectSpy(Foo.class.getDeclaredField(BAR));
-        assertThat(AccessAction.apply(accessibleObjectSpy, AccessController.getContext()), is(accessibleObjectSpy));
+        assertThat(new SetAccessibleAction<AccessibleObjectSpy>(accessibleObjectSpy).run(), is(accessibleObjectSpy));
         assertThat(accessibleObjectSpy.accessible, is(true));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         final Iterator<AccessibleObject> iterator = Arrays.<AccessibleObject>asList(Foo.class.getDeclaredFields()).iterator();
-        ObjectPropertyAssertion.of(AccessAction.class).create(new ObjectPropertyAssertion.Creator<AccessibleObject>() {
+        ObjectPropertyAssertion.of(SetAccessibleAction.class).create(new ObjectPropertyAssertion.Creator<AccessibleObject>() {
             @Override
             public AccessibleObject create() {
                 return iterator.next();

@@ -1,7 +1,7 @@
 package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.utility.privilege.AccessAction;
+import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -100,7 +100,7 @@ public interface LoadedTypeInitializer {
             try {
                 Field field = type.getDeclaredField(fieldName);
                 if (!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers())) {
-                    AccessAction.apply(field, AccessController.getContext());
+                    AccessController.doPrivileged(new SetAccessibleAction<Field>(field));
                 }
                 field.set(STATIC_FIELD, value);
             } catch (IllegalAccessException exception) {

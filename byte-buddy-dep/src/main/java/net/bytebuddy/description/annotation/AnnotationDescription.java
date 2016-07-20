@@ -1,12 +1,13 @@
 package net.bytebuddy.description.annotation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.utility.PropertyDispatcher;
-import net.bytebuddy.utility.privilege.AccessAction;
+import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
@@ -1642,6 +1643,7 @@ public interface AnnotationDescription {
         }
 
         @Override
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
         public Object getValue(MethodDescription.InDefinedShape methodDescription) {
             if (!methodDescription.getDeclaringType().represents(annotation.annotationType())) {
                 throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
@@ -1654,14 +1656,12 @@ public interface AnnotationDescription {
                 if (method == null || (!accessible && !method.isAccessible())) {
                     method = annotation.annotationType().getDeclaredMethod(methodDescription.getName());
                     if (!accessible) {
-                        AccessAction.apply(method, AccessController.getContext());
+                        AccessController.doPrivileged(new SetAccessibleAction<Method>(method));
                     }
                 }
                 return describe(method.invoke(annotation), methodDescription.getReturnType().asErasure());
-            } catch (RuntimeException exception) {
-                throw exception;
             } catch (Exception exception) {
-                throw new IllegalStateException("Cannot access annotation property " + methodDescription, exception);
+                throw new IllegalStateException("Cannot access annotation property " + methodDescription, exception.getCause());
             }
         }
 

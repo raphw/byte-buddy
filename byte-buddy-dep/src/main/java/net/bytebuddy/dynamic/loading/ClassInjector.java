@@ -61,16 +61,18 @@ public interface ClassInjector {
         /**
          * The dispatcher to use for accessing a class loader via reflection.
          */
-        private static final Dispatcher.Initializable DISPATCHER;
+        private static final Dispatcher.Initializable DISPATCHER = dispatcher();
 
-        /*
+        /**
          * Obtains the reflective instances used by this injector or a no-op instance that throws the exception
          * that occurred when attempting to obtain the reflective member instances.
+         *
+         * @return A dispatcher for the current VM.
          */
-        static {
-            Dispatcher.Initializable dispatcher;
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+        private static Dispatcher.Initializable dispatcher() {
             try {
-                dispatcher = new Dispatcher.Resolved(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
+                return new Dispatcher.Resolved(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
                         ClassLoader.class.getDeclaredMethod("defineClass",
                                 String.class,
                                 byte[].class,
@@ -87,12 +89,9 @@ public interface ClassInjector {
                                 String.class,
                                 String.class,
                                 URL.class));
-            } catch (RuntimeException exception) {
-                throw exception;
             } catch (Exception exception) {
-                dispatcher = new Dispatcher.Faulty(exception);
+                return new Dispatcher.Faulty(exception);
             }
-            DISPATCHER = dispatcher;
         }
 
         /**

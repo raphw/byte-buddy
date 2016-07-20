@@ -1279,6 +1279,7 @@ public class AgentBuilderDefaultTest {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.InheritanceAction.class);
         final Iterator<Class<?>> execution = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.ExecutionDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
             @Override

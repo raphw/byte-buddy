@@ -1612,7 +1612,7 @@ public interface TypeWriter<T> {
         }
 
         @Override
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should not change program outcome")
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Setting a debugging property should never change the program outcome")
         public DynamicType.Unloaded<S> make(TypeResolutionStrategy.Resolved typeResolutionStrategy) {
             UnresolvedType unresolvedType = create(typeResolutionStrategy.injectedInto(typeInitializer));
             if (DUMP_FOLDER != null) {

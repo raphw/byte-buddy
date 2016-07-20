@@ -742,12 +742,11 @@ public class ByteBuddyAgent {
                  *
                  * @return A dispatcher for the current VM.
                  */
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public static ProcessProvider make() {
                     try {
                         return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getDeclaredMethod("current"),
                                 Class.forName("java.lang.ProcessHandle").getDeclaredMethod("getPid"));
-                    } catch (RuntimeException exception) {
-                        throw exception;
                     } catch (Exception ignored) {
                         return ForLegacyVm.INSTANCE;
                     }

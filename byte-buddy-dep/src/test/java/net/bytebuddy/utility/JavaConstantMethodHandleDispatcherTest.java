@@ -5,7 +5,6 @@ import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -15,7 +14,7 @@ public class JavaConstantMethodHandleDispatcherTest {
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmInitialization() throws Exception {
-        JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.initialize(AccessController.getContext());
+        JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.INSTANCE.initialize();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -38,7 +37,7 @@ public class JavaConstantMethodHandleDispatcherTest {
             }
         }).apply();
         final Iterator<Method> methods2 = Arrays.asList(Foo.class.getDeclaredMethods()).iterator();
-        final Iterator<Constructor<?>> constructors2 = Arrays.asList(Foo.class.getDeclaredConstructors()).iterator();
+        final Iterator<Constructor<?>> constructors2 = Arrays.<Constructor<?>>asList(Foo.class.getDeclaredConstructors()).iterator();
         ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {

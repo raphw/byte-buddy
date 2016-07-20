@@ -5985,47 +5985,7 @@ public interface AgentBuilder {
             /**
              * A factory for creating a {@link ClassFileTransformer} that supports the features of the current VM.
              */
-            protected static final Factory FACTORY;
-
-            /*
-             * Creates a factory for a class file transformer that supports the features of the current VM.
-             */
-            static {
-                Factory factory;
-                try {
-                    // REFACTOR: Privileded
-                    factory = new Factory.ForJava9CapableVm(new ByteBuddy()
-                            .subclass(ExecutingTransformer.class)
-                            .name(ExecutingTransformer.class.getName() + "$ByteBuddy$ModuleSupport")
-                            .method(named("transform").and(takesArgument(0, JavaType.MODULE.load())))
-                            .intercept(MethodCall.invoke(ExecutingTransformer.class.getDeclaredMethod("transform",
-                                    Object.class,
-                                    String.class,
-                                    Class.class,
-                                    ProtectionDomain.class,
-                                    byte[].class)).onSuper().withAllArguments())
-                            .make()
-                            .load(ExecutingTransformer.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                            .getLoaded()
-                            .getDeclaredConstructor(ByteBuddy.class,
-                                    TypeLocator.class,
-                                    TypeStrategy.class,
-                                    LocationStrategy.class,
-                                    Listener.class,
-                                    NativeMethodStrategy.class,
-                                    AccessControlContext.class,
-                                    InitializationStrategy.class,
-                                    BootstrapInjectionStrategy.class,
-                                    DescriptionStrategy.class,
-                                    RawMatcher.class,
-                                    Transformation.class));
-                } catch (RuntimeException exception) {
-                    throw exception;
-                } catch (Exception ignored) {
-                    factory = Factory.ForLegacyVm.INSTANCE;
-                }
-                FACTORY = factory;
-            }
+            protected static final Factory FACTORY = AccessController.doPrivileged(InheritanceAction.INSTANCE);
 
             /**
              * The Byte Buddy instance to be used.
@@ -6401,6 +6361,56 @@ public interface AgentBuilder {
                     public String toString() {
                         return "AgentBuilder.Default.ExecutingTransformer.Factory.ForLegacyVm." + name();
                     }
+                }
+            }
+
+            /**
+             * An action to create an implementation of {@link ExecutingTransformer} that support Java 9 modules.
+             */
+            protected enum InheritanceAction implements PrivilegedAction<Factory> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                public Factory run() {
+                    try {
+                        return new Factory.ForJava9CapableVm(new ByteBuddy()
+                                .subclass(ExecutingTransformer.class)
+                                .name(ExecutingTransformer.class.getName() + "$ByteBuddy$ModuleSupport")
+                                .method(named("transform").and(takesArgument(0, JavaType.MODULE.load())))
+                                .intercept(MethodCall.invoke(ExecutingTransformer.class.getDeclaredMethod("transform",
+                                        Object.class,
+                                        String.class,
+                                        Class.class,
+                                        ProtectionDomain.class,
+                                        byte[].class)).onSuper().withAllArguments())
+                                .make()
+                                .load(ExecutingTransformer.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                                .getLoaded()
+                                .getDeclaredConstructor(ByteBuddy.class,
+                                        TypeLocator.class,
+                                        TypeStrategy.class,
+                                        LocationStrategy.class,
+                                        Listener.class,
+                                        NativeMethodStrategy.class,
+                                        AccessControlContext.class,
+                                        InitializationStrategy.class,
+                                        BootstrapInjectionStrategy.class,
+                                        DescriptionStrategy.class,
+                                        RawMatcher.class,
+                                        Transformation.class));
+                    } catch (Exception ignored) {
+                        return Factory.ForLegacyVm.INSTANCE;
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.ExecutingTransformer.InheritanceAction." + name();
                 }
             }
 

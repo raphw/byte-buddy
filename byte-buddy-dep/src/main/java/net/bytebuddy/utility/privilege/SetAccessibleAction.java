@@ -1,8 +1,6 @@
 package net.bytebuddy.utility.privilege;
 
 import java.lang.reflect.AccessibleObject;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 /**
@@ -10,7 +8,7 @@ import java.security.PrivilegedAction;
  *
  * @param <T> The type of the accessible object.
  */
-public class AccessAction<T extends AccessibleObject> implements PrivilegedAction<T> {
+public class SetAccessibleAction<T extends AccessibleObject> implements PrivilegedAction<T> {
 
     /**
      * The accessible object.
@@ -22,20 +20,8 @@ public class AccessAction<T extends AccessibleObject> implements PrivilegedActio
      *
      * @param accessibleObject The accessible object.
      */
-    protected AccessAction(T accessibleObject) {
+    public SetAccessibleAction(T accessibleObject) {
         this.accessibleObject = accessibleObject;
-    }
-
-    /**
-     * Creates a new access action that returns the accessible object on execution.
-     *
-     * @param accessibleObject     The accessible object.
-     * @param accessControlContext The access control context to use.
-     * @param <S>                  The type of the accessible object.
-     * @return An access action that makes the accessible object accessible and returns it subsequently.
-     */
-    public static <S extends AccessibleObject> S apply(S accessibleObject, AccessControlContext accessControlContext) {
-        return AccessController.doPrivileged(new AccessAction<S>(accessibleObject), accessControlContext);
     }
 
     @Override
@@ -47,7 +33,7 @@ public class AccessAction<T extends AccessibleObject> implements PrivilegedActio
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
-                && accessibleObject.equals(((AccessAction<?>) other).accessibleObject);
+                && accessibleObject.equals(((SetAccessibleAction<?>) other).accessibleObject);
     }
 
     @Override
@@ -57,7 +43,7 @@ public class AccessAction<T extends AccessibleObject> implements PrivilegedActio
 
     @Override
     public String toString() {
-        return "AccessAction{" +
+        return "SetAccessibleAction{" +
                 "accessibleObject=" + accessibleObject +
                 '}';
     }

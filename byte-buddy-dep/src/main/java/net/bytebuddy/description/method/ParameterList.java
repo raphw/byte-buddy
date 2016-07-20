@@ -1,5 +1,6 @@
 package net.bytebuddy.description.method;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -112,21 +113,20 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         /**
          * The dispatcher used creating parameter list instances and for accessing {@code java.lang.reflect.Executable} instances.
          */
-        private static final Dispatcher DISPATCHER;
+        private static final Dispatcher DISPATCHER = dispatcher();
 
-        /*
+        /**
          * Creates a dispatcher for a loaded parameter if the type is available for the running JVM.
+         *
+         * @return A dispatcher for the current VM.
          */
-        static {
-            Dispatcher dispatcher;
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+        private static Dispatcher dispatcher() {
             try {
-                dispatcher = new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameterCount"));
-            } catch (RuntimeException exception) {
-                throw exception;
+                return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameterCount"));
             } catch (Exception ignored) {
-                dispatcher = Dispatcher.ForLegacyVm.INSTANCE;
+                return Dispatcher.ForLegacyVm.INSTANCE;
             }
-            DISPATCHER = dispatcher;
         }
 
         /**
@@ -475,7 +475,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
              * Creates a new parameter type list.
              *
              * @param methodDescription The method description that declares the parameters.
-             * @param typeDefinition   A list of detached types representing the parameters.
+             * @param typeDefinition    A list of detached types representing the parameters.
              */
             public ForTypes(MethodDescription.InDefinedShape methodDescription, TypeDefinition... typeDefinition) {
                 this(methodDescription, Arrays.asList(typeDefinition));

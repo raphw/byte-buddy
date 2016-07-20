@@ -79,7 +79,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      *
      * @return An appropriate version locator.
      */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception not supposed to be rethrown")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
     private static VersionLocator findVersionLocator() {
         try {
             return new VersionLocator.ForJava9CapableVm(Runtime.class.getDeclaredMethod("version"),
@@ -168,7 +168,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @param fallback The version to fallback to if locating a class file version is not possible.
      * @return The currently running Java process's class file version or the fallback if locating this version is impossible.
      */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception is not supposed to be rethrown")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
     public static ClassFileVersion forCurrentJavaVersion(ClassFileVersion fallback) {
         try {
             return forCurrentJavaVersion();

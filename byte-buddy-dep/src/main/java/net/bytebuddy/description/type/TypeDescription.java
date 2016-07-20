@@ -3481,6 +3481,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected abstract static class Chained extends Delegator {
 
                     /**
+                     * Indicates that a method is not available on the current VM.
+                     */
+                    protected static final Method NOT_AVAILABLE = null;
+
+                    /**
                      * The underlying annotation reader.
                      */
                     protected final AnnotationReader annotationReader;
@@ -3528,21 +3533,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * The {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds} method.
                  */
-                private static final Method GET_ANNOTATED_UPPER_BOUNDS;
+                private static final Method GET_ANNOTATED_UPPER_BOUNDS = method();
 
-                /*
+                /**
                  * Reads the {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds} method.
+                 *
+                 * @return The method or {@code null} if it is not provided by the current VM.
                  */
-                static {
-                    Method getAnnotatedUpperBounds;
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                private static Method method() {
                     try {
-                        getAnnotatedUpperBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedUpperBounds");
-                    } catch (RuntimeException exception) {
-                        throw exception;
+                        return Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedUpperBounds");
                     } catch (Exception exception) {
-                        getAnnotatedUpperBounds = null;
+                        return NOT_AVAILABLE;
                     }
-                    GET_ANNOTATED_UPPER_BOUNDS = getAnnotatedUpperBounds;
                 }
 
                 /**
@@ -3606,21 +3610,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * The {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds} method.
                  */
-                private static final Method GET_ANNOTATED_LOWER_BOUNDS;
+                private static final Method GET_ANNOTATED_LOWER_BOUNDS = method();
 
-                /*
+                /**
                  * Reads the {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds} method.
+                 *
+                 * @return The method or {@code null} if it is not provided by the current VM.
                  */
-                static {
-                    Method getAnnotatedLowerBounds;
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                private static Method method() {
                     try {
-                        getAnnotatedLowerBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedLowerBounds");
-                    } catch (RuntimeException exception) {
-                        throw exception;
+                        return Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedLowerBounds");
                     } catch (Exception exception) {
-                        getAnnotatedLowerBounds = null;
+                        return NOT_AVAILABLE;
                     }
-                    GET_ANNOTATED_LOWER_BOUNDS = getAnnotatedLowerBounds;
                 }
 
                 /**
@@ -3681,21 +3684,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * The {@code java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds} method.
                  */
-                private static final Method GET_ANNOTATED_BOUNDS;
+                private static final Method GET_ANNOTATED_BOUNDS = method();
 
                 /*
                  * Reads the {@code java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds} method.
+                 *
+                 * @return The method or {@code null} if it is not provided by the current VM.
                  */
-                static {
-                    Method getAnnotatedBounds;
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                private static Method method() {
                     try {
-                        getAnnotatedBounds = Class.forName("java.lang.reflect.AnnotatedTypeVariable").getDeclaredMethod("getAnnotatedBounds");
-                    } catch (RuntimeException exception) {
-                        throw exception;
+                        return Class.forName("java.lang.reflect.AnnotatedTypeVariable").getDeclaredMethod("getAnnotatedBounds");
                     } catch (Exception exception) {
-                        getAnnotatedBounds = null;
+                        return NOT_AVAILABLE;
                     }
-                    GET_ANNOTATED_BOUNDS = getAnnotatedBounds;
                 }
 
                 /**
@@ -3755,21 +3757,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * The {@code java.lang.reflect.TypeVariable#getAnnotatedBounds} method.
                      */
-                    private static final Method GET_ANNOTATED_BOUNDS;
+                    private static final Method GET_ANNOTATED_BOUNDS = method();
 
                     /*
                      * Reads the {@code java.lang.reflect.TypeVariable#getAnnotatedBounds} method.
-                     */
-                    static {
-                        Method getAnnotatedBounds;
+                 *
+                 * @return The method or {@code null} if it is not provided by the current VM.
+                 */
+                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                    private static Method method() {
                         try {
-                            getAnnotatedBounds = TypeVariable.class.getDeclaredMethod("getAnnotatedBounds");
-                        } catch (RuntimeException exception) {
-                            throw exception;
+                            return TypeVariable.class.getDeclaredMethod("getAnnotatedBounds");
                         } catch (Exception exception) {
-                            getAnnotatedBounds = null;
+                            return NOT_AVAILABLE;
                         }
-                        GET_ANNOTATED_BOUNDS = getAnnotatedBounds;
                     }
 
                     /**
@@ -3834,21 +3835,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * The {@code java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments} method.
                  */
-                private static final Method GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS;
+                private static final Method GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = method();
 
                 /*
                  * Reads the {@code java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments} method.
+                 *
+                 * @return The method or {@code null} if it is not provided by the current VM.
                  */
-                static {
-                    Method getAnnotatedActualTypeArguments;
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                private static Method method() {
                     try {
-                        getAnnotatedActualTypeArguments = Class.forName("java.lang.reflect.AnnotatedParameterizedType").getDeclaredMethod("getAnnotatedActualTypeArguments");
-                    } catch (RuntimeException exception) {
-                        throw exception;
+                        return Class.forName("java.lang.reflect.AnnotatedParameterizedType").getDeclaredMethod("getAnnotatedActualTypeArguments");
                     } catch (Exception exception) {
-                        getAnnotatedActualTypeArguments = null;
+                        return NOT_AVAILABLE;
                     }
-                    GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = getAnnotatedActualTypeArguments;
                 }
 
                 /**
@@ -3909,21 +3909,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * The {@code java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType} method.
                  */
-                private static final Method GET_ANNOTATED_GENERIC_COMPONENT_TYPE;
+                private static final Method GET_ANNOTATED_GENERIC_COMPONENT_TYPE = method();
 
-                /*
+                /**
                  * Reads the {@code java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType} method.
+                 *
+                 * @return The method or {@code null} if it is not provided by the current VM.
                  */
-                static {
-                    Method getAnnotatedGenericComponentType;
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                private static Method method() {
                     try {
-                        getAnnotatedGenericComponentType = Class.forName("java.lang.reflect.AnnotatedArrayType").getDeclaredMethod("getAnnotatedGenericComponentType");
-                    } catch (RuntimeException exception) {
-                        throw exception;
+                        return Class.forName("java.lang.reflect.AnnotatedArrayType").getDeclaredMethod("getAnnotatedGenericComponentType");
                     } catch (Exception exception) {
-                        getAnnotatedGenericComponentType = null;
+                        return NOT_AVAILABLE;
                     }
-                    GET_ANNOTATED_GENERIC_COMPONENT_TYPE = getAnnotatedGenericComponentType;
                 }
 
                 /**
@@ -3962,21 +3961,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * The {@code java.lang.reflect.AnnotatedType#getAnnotatedOwnerType} method.
                  */
-                private static final Method GET_ANNOTATED_OWNER_TYPE;
+                private static final Method GET_ANNOTATED_OWNER_TYPE = method();
 
-                /*
+                /**
                  * Reads the {@code java.lang.reflect.AnnotatedType#getAnnotatedOwnerType} method.
+                 *
+                 * @return The method or {@code null} if it is not available on the current VM.
                  */
-                static {
-                    Method getAnnotatedOwnerType;
+                @SuppressFBWarnings(value = "", justification = "Exception should not be rethrown but trigger a fallback")
+                private static Method method() {
                     try {
-                        getAnnotatedOwnerType = Class.forName("java.lang.reflect.AnnotatedType").getDeclaredMethod("getAnnotatedOwnerType");
-                    } catch (RuntimeException exception) {
-                        throw exception;
+                        return Class.forName("java.lang.reflect.AnnotatedType").getDeclaredMethod("getAnnotatedOwnerType");
                     } catch (Exception exception) {
-                        getAnnotatedOwnerType = null;
+                        return null;
                     }
-                    GET_ANNOTATED_OWNER_TYPE = getAnnotatedOwnerType;
                 }
 
                 /**

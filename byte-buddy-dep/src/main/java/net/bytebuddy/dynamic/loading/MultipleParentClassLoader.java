@@ -135,7 +135,7 @@ public class MultipleParentClassLoader extends ClassLoader {
              *
              * @return A dispatcher for invoking the {@link ClassLoader#loadClass(String, boolean)} method.
              */
-            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception is not meant to be rethrown")
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             protected static Dispatcher make() {
                 try {
                     return AccessController.doPrivileged(new Active(ClassLoader.class.getDeclaredMethod("loadClass", String.class, boolean.class)));

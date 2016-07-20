@@ -86,7 +86,7 @@ public enum NexusAccessor implements PrivilegedAction<NexusAccessor.Dispatcher> 
     }
 
     @Override
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Explicit delegation of the exception")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
     public Dispatcher run() {
         try {
             TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);

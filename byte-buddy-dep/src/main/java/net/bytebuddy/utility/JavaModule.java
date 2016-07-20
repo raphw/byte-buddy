@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.NamedElement;
 
 import java.lang.instrument.Instrumentation;
@@ -19,27 +20,26 @@ public class JavaModule implements NamedElement.WithOptionalName {
     /**
      * The dispatcher to use for accessing Java modules, if available.
      */
-    private static final Dispatcher DISPATCHER;
+    private static final Dispatcher DISPATCHER = dispatcher();
 
-    /*
+    /**
      * Extracts the dispatcher for Java modules that is supported by the current JVM.
+     *
+     * @return A dispatcher for the current VM.
      */
-    static {
-        Dispatcher dispatcher;
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+    private static Dispatcher dispatcher() {
         try {
             Class<?> module = Class.forName("java.lang.reflect.Module");
-            dispatcher = new Dispatcher.Enabled(Class.class.getDeclaredMethod("getModule"),
+            return new Dispatcher.Enabled(Class.class.getDeclaredMethod("getModule"),
                     module.getDeclaredMethod("getClassLoader"),
                     module.getDeclaredMethod("isNamed"),
                     module.getDeclaredMethod("getName"),
                     module.getDeclaredMethod("canRead", module),
                     Instrumentation.class.getDeclaredMethod("addModuleReads", module, module));
-        } catch (RuntimeException exception) {
-            throw exception;
         } catch (Exception ignored) {
-            dispatcher = Dispatcher.Disabled.INSTANCE;
+            return Dispatcher.Disabled.INSTANCE;
         }
-        DISPATCHER = dispatcher;
     }
 
     /**
