@@ -1308,6 +1308,74 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches any virtual method with a signature that is compatible to a method that is declared the supplied type.
+     *
+     * @param type The super type of interest for which to check if it declares a method with the same signature as the matched method.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that checks a method's signature equality for any method declared by the declaring type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverriddenFrom(Class<?> type) {
+        return isOverriddenFrom(new TypeDescription.ForLoadedType(type));
+    }
+
+    /**
+     * Matches any virtual method with a signature that is compatible to a method that is declared the supplied type.
+     *
+     * @param type The super type of interest for which to check if it declares a method with the same signature as the matched method.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that checks a method's signature equality for any method declared by the declaring type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverriddenFrom(TypeDescription type) {
+        return isOverriddenFrom(is(type));
+    }
+
+    /**
+     * Matches any virtual method with a signature that is compatible to a method that is declared by a type that matches the supplied matcher.
+     *
+     * @param matcher A matcher for a method's declaring type that needs to be matched if that type declares a method with the same signature
+     *                as the matched method.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that checks a method's signature equality for any method declared by the declaring type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverriddenFrom(ElementMatcher<? super TypeDescription> matcher) {
+        return isOverriddenFromGeneric(rawType(matcher));
+    }
+
+    /**
+     * Matches any virtual method with a signature that is compatible to a method that is declared the supplied type.
+     *
+     * @param type The super type of interest for which to check if it declares a method with the same signature as the matched method.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that checks a method's signature equality for any method declared by the declaring type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverriddenFromGeneric(Type type) {
+        return isOverriddenFromGeneric(TypeDescription.Generic.Sort.describe(type));
+    }
+
+    /**
+     * Matches any virtual method with a signature that is compatible to a method that is declared the supplied type.
+     *
+     * @param type The super type of interest for which to check if it declares a method with the same signature as the matched method.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that checks a method's signature equality for any method declared by the declaring type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverriddenFromGeneric(TypeDescription.Generic type) {
+        return isOverriddenFromGeneric(is(type));
+    }
+
+    /**
+     * Matches any virtual method with a signature that is compatible to a method that is declared by a type that matches the supplied matcher.
+     *
+     * @param matcher A matcher for a method's declaring type that needs to be matched if that type declares a method with the same signature
+     *                as the matched method.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that checks a method's signature equality for any method declared by the declaring type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverriddenFromGeneric(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        return new MethodOverrideMatcher<T>(matcher);
+    }
+
+    /**
      * Matches a {@link TypeDescription} that is an interface.
      *
      * @param <T> The type of the matched object.

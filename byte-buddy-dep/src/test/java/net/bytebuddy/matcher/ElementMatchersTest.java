@@ -539,6 +539,18 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testIsOverriddenFrom() throws Exception {
+        assertThat(ElementMatchers.isOverriddenFrom(Object.class).matches(new MethodDescription.ForLoadedMethod(String.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(ElementMatchers.isOverriddenFrom(Object.class).matches(new MethodDescription.ForLoadedMethod(String.class.getDeclaredMethod("substring", int.class))), is(false));
+        assertThat(ElementMatchers.isOverriddenFrom(Comparable.class).matches(new MethodDescription.ForLoadedMethod(String.class.getDeclaredMethod("compareTo", String.class))), is(true));
+        assertThat(ElementMatchers.isOverriddenFromGeneric(Object.class).matches(new MethodDescription.ForLoadedMethod(String.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(ElementMatchers.isOverriddenFromGeneric(Object.class).matches(new MethodDescription.ForLoadedMethod(String.class.getDeclaredMethod("substring", int.class))), is(false));
+        assertThat(ElementMatchers.isOverriddenFromGeneric(Comparable.class).matches(new MethodDescription.ForLoadedMethod(String.class.getDeclaredMethod("compareTo", String.class))), is(false));
+        assertThat(ElementMatchers.isOverriddenFromGeneric(String.class.getGenericInterfaces()[1])
+                .matches(new MethodDescription.ForLoadedMethod(String.class.getDeclaredMethod("compareTo", String.class))), is(true));
+    }
+
+    @Test
     public void testIsVisibleTo() throws Exception {
         assertThat(ElementMatchers.isVisibleTo(Object.class).matches(new TypeDescription.ForLoadedType(IsVisibleTo.class)), is(true));
         assertThat(ElementMatchers.isVisibleTo(Object.class).matches(new TypeDescription.ForLoadedType(IsNotVisibleTo.class)), is(false));
@@ -1319,11 +1331,11 @@ public class ElementMatchersTest {
 
     @OtherAnnotation
     public static class Other {
-
+        /* empty */
     }
 
     public static class OtherInherited extends Other {
-
+        /* empty */
     }
 
     @SuppressWarnings("unused")
