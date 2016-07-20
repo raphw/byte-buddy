@@ -4155,7 +4155,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure instance")
+            @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure implementation")
             public boolean equals(Object other) {
                 return asErasure().equals(other);
             }
@@ -4467,7 +4467,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure instance")
+            @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Type check is performed by erasure implementation")
             public boolean equals(Object other) {
                 if (getSort().isNonGeneric()) {
                     return asErasure().equals(other);

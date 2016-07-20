@@ -7118,7 +7118,6 @@ public interface TypePool {
                  *                                          class was corrupt.
                  * @param defaultValue                      The default value of this method or {@code null} if there is no
                  */
-                @SuppressFBWarnings(value = "URF_UNREAD_FIELD", justification = "To be removed once type annotations are in place")
                 private LazyMethodDescription(String internalName,
                                               int modifiers,
                                               String methodDescriptor,
@@ -7643,7 +7642,7 @@ public interface TypePool {
             }
 
             @Override
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received value is never modified")
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not to be modified by contract")
             public void visit(int classFileVersion,
                               int modifiers,
                               String internalName,

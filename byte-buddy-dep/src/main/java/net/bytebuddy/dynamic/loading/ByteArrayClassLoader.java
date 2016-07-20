@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.io.ByteArrayInputStream;
@@ -47,19 +48,20 @@ public class ByteArrayClassLoader extends ClassLoader {
     /**
      * A strategy for locating a package by name.
      */
-    private static final PackageLookupStrategy PACKAGE_LOOKUP_STRATEGY;
+    private static final PackageLookupStrategy PACKAGE_LOOKUP_STRATEGY = packageLookupStrategy();
 
-    /*
+    /**
      * Locates the best available package lookup strategy.
+     *
+     * @return A package lookup strategy for the current VM.
      */
-    static {
-        PackageLookupStrategy packageLookupStrategy;
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+    private static PackageLookupStrategy packageLookupStrategy() {
         try {
-            packageLookupStrategy = new PackageLookupStrategy.ForJava9CapableVm(ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class));
-        } catch (NoSuchMethodException ignored) {
-            packageLookupStrategy = PackageLookupStrategy.ForLegacyVm.INSTANCE;
+            return new PackageLookupStrategy.ForJava9CapableVm(ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class));
+        } catch (Exception ignored) {
+            return PackageLookupStrategy.ForLegacyVm.INSTANCE;
         }
-        PACKAGE_LOOKUP_STRATEGY = packageLookupStrategy;
     }
 
     /**
@@ -218,12 +220,12 @@ public class ByteArrayClassLoader extends ClassLoader {
 
     @Override
     protected URL findResource(String name) {
-        return persistenceHandler.url(name, typeDefinitions, accessControlContext);
+        return persistenceHandler.url(name, typeDefinitions);
     }
 
     @Override
     protected Enumeration<URL> findResources(String name) {
-        URL url = persistenceHandler.url(name, typeDefinitions, accessControlContext);
+        URL url = persistenceHandler.url(name, typeDefinitions);
         return url == null
                 ? EmptyEnumeration.INSTANCE
                 : new SingletonEnumeration(url);
@@ -354,7 +356,7 @@ public class ByteArrayClassLoader extends ClassLoader {
             }
 
             @Override
-            protected URL url(String resourceName, Map<String, byte[]> typeDefinitions, AccessControlContext accessControlContext) {
+            protected URL url(String resourceName, Map<String, byte[]> typeDefinitions) {
                 if (!resourceName.endsWith(CLASS_FILE_SUFFIX)) {
                     return NO_URL;
                 } else if (resourceName.startsWith("/")) {
@@ -364,7 +366,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 byte[] binaryRepresentation = typeDefinitions.get(typeName);
                 return binaryRepresentation == null
                         ? NO_URL
-                        : AccessController.doPrivileged(new UrlDefinitionAction(resourceName, binaryRepresentation), accessControlContext);
+                        : AccessController.doPrivileged(new UrlDefinitionAction(resourceName, binaryRepresentation));
 
             }
         },
@@ -380,7 +382,7 @@ public class ByteArrayClassLoader extends ClassLoader {
             }
 
             @Override
-            protected URL url(String resourceName, Map<String, byte[]> typeDefinitions, AccessControlContext accessControlContext) {
+            protected URL url(String resourceName, Map<String, byte[]> typeDefinitions) {
                 return NO_URL;
             }
         };
@@ -425,12 +427,11 @@ public class ByteArrayClassLoader extends ClassLoader {
         /**
          * Returns a URL representing a class file.
          *
-         * @param resourceName         The name of the requested resource.
-         * @param typeDefinitions      A mapping of byte arrays by their type names.
-         * @param accessControlContext The access control context to be used for creating the URL.
+         * @param resourceName    The name of the requested resource.
+         * @param typeDefinitions A mapping of byte arrays by their type names.
          * @return A URL representing the type definition or {@code null} if the requested resource does not represent a class file.
          */
-        protected abstract URL url(String resourceName, Map<String, byte[]> typeDefinitions, AccessControlContext accessControlContext);
+        protected abstract URL url(String resourceName, Map<String, byte[]> typeDefinitions);
 
         @Override
         public String toString() {
@@ -681,7 +682,7 @@ public class ByteArrayClassLoader extends ClassLoader {
 
         @Override
         public URL getResource(String name) {
-            URL url = persistenceHandler.url(name, typeDefinitions, accessControlContext);
+            URL url = persistenceHandler.url(name, typeDefinitions);
             // If a class resource is defined by this class loader but it is not defined in a manifest manner,
             // the resource of the parent class loader should be shadowed by 'null'. Note that the delegation
             // model causes a redundant query to the persistent handler but renders a correct result.
@@ -692,7 +693,7 @@ public class ByteArrayClassLoader extends ClassLoader {
 
         @Override
         public Enumeration<URL> getResources(String name) throws IOException {
-            URL url = persistenceHandler.url(name, typeDefinitions, accessControlContext);
+            URL url = persistenceHandler.url(name, typeDefinitions);
             return url == null
                     ? super.getResources(name)
                     : new PrependingEnumeration(url, super.getResources(name));

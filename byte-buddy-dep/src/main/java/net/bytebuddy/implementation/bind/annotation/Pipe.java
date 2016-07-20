@@ -358,7 +358,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
              * constructor.
              */
-            @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "Enumerations are not serialized by field")
+            @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "Fields of enumerations are never serialized")
             protected enum ConstructorCall implements Implementation {
 
                 /**

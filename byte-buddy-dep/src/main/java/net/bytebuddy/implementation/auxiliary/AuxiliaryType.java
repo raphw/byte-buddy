@@ -26,8 +26,7 @@ public interface AuxiliaryType {
     /**
      * The default type access of an auxiliary type. <b>This array must not be mutated</b>.
      */
-    @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"},
-            justification = "Favor simplicity with current API in overall immutable library layout - value should be accessible to extensions")
+    @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "The array is not to be modified by contract")
     ModifierContributor.ForType[] DEFAULT_TYPE_MODIFIER = {SyntheticState.SYNTHETIC};
 
     /**

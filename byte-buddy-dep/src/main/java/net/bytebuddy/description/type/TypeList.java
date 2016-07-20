@@ -28,7 +28,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * Represents that a type list does not contain any values for ASM interoperability which is represented by {@code null}.
      */
-    @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "value is null and should be available to extensions")
+    @SuppressFBWarnings(value = {"MS_MUTABLE_ARRAY", "MS_OOI_PKGPROTECT"}, justification = "Value is null")
     String[] NO_INTERFACES = null;
 
     /**
@@ -178,7 +178,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     class Empty extends FilterableList.Empty<TypeDescription, TypeList> implements TypeList {
 
         @Override
-        @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Return value is always null")
+        @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Value is null")
         public String[] toInternalNames() {
             return NO_INTERFACES;
         }

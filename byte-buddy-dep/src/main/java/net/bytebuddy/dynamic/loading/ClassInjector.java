@@ -429,7 +429,7 @@ public interface ClassInjector {
                 }
 
                 @Override
-                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privileges should be provided by user")
+                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
                 public Dispatcher initialize() {
                     // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
                     // By always setting accessability, the security manager is always triggered if this operation was illegal.

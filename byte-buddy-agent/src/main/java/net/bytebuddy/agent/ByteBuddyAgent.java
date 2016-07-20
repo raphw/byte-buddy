@@ -291,7 +291,7 @@ public class ByteBuddyAgent {
      *
      * @return The Byte Buddy agent's {@link java.lang.instrument.Instrumentation} instance.
      */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Legal state where reflection communicates errors by exception")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Legal outcome where reflection communicates errors by throwing an exception")
     private static Instrumentation doGetInstrumentation() {
         try {
             return (Instrumentation) ClassLoader.getSystemClassLoader()
@@ -306,7 +306,7 @@ public class ByteBuddyAgent {
     /**
      * An attachment provider is responsible for making the Java attachment API available.
      */
-    @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "No circularity, initialization is safe")
+    @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied")
     public interface AttachmentProvider {
 
         /**
@@ -558,7 +558,7 @@ public class ByteBuddyAgent {
             }
 
             @Override
-            @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege should be provided by user")
+            @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
             public Accessor attempt() {
                 File toolsJar = new File(System.getProperty(JAVA_HOME_PROPERTY).replace('\\', '/') + "/../" + toolsJarPath);
                 try {

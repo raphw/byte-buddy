@@ -447,7 +447,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             }
 
             @Override
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Return value is always null")
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Value is always null")
             public byte[] transform(ClassLoader classLoader,
                                     String internalTypeName,
                                     Class<?> classBeingRedefined,

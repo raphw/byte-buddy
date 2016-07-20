@@ -599,7 +599,7 @@ public interface MethodDelegationBinder {
      * Implementations of this interface are able to attempt the resolution of two successful bindings of a method
      * to two different target methods in order to identify a dominating binding.
      */
-    @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "No circularity, initialization is safe")
+    @SuppressFBWarnings(value = "IC_SUPERCLASS_USES_SUBCLASS_DURING_INITIALIZATION", justification = "Safe initialization is implied")
     interface AmbiguityResolver {
 
         /**

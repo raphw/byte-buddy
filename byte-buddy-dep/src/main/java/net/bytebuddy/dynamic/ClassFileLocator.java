@@ -120,7 +120,7 @@ public interface ClassFileLocator {
              *
              * @param binaryRepresentation The binary data to represent. The array must not be modified.
              */
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The received value is never modified by contract")
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "The array is not to be modified by contract")
             public Explicit(byte[] binaryRepresentation) {
                 this.binaryRepresentation = binaryRepresentation;
             }
@@ -131,7 +131,7 @@ public interface ClassFileLocator {
             }
 
             @Override
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Return value must never be modified by contract")
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not to be modified by contract")
             public byte[] resolve() {
                 return binaryRepresentation;
             }
@@ -1069,7 +1069,7 @@ public interface ClassFileLocator {
             /**
              * The binary representation of the looked-up class.
              */
-            @SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY", justification = "By contract, the referenced array is not to be modified")
+            @SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY", justification = "The array is not to be modified by contract")
             private volatile byte[] binaryRepresentation;
 
             /**
@@ -1084,7 +1084,7 @@ public interface ClassFileLocator {
             }
 
             @Override
-            @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "Return value is always null; received value is never modified")
+            @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "The array is not to be modified by contract")
             public byte[] transform(ClassLoader classLoader,
                                     String internalName,
                                     Class<?> redefinedType,
@@ -1120,7 +1120,7 @@ public interface ClassFileLocator {
              * @return The binary representation of the class file or {@code null} if no such class file could
              * be located.
              */
-            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Return value must never be modified by contract")
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not to be modified by contract")
             protected byte[] getBinaryRepresentation() {
                 return binaryRepresentation;
             }

@@ -412,6 +412,7 @@ public class MultipleParentClassLoader extends ClassLoader {
          *
          * @return A suitable class loader.
          */
+        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
         public ClassLoader build() {
             return classLoaders.size() == 1
                     ? classLoaders.get(ONLY)
