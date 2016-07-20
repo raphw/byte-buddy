@@ -176,7 +176,6 @@ public class MultipleParentClassLoaderTest {
         ObjectPropertyAssertion.of(MultipleParentClassLoader.Dispatcher.Erroneous.class).apply();
         ObjectPropertyAssertion.of(MultipleParentClassLoader.CompoundEnumeration.class).applyBasic();
         ObjectPropertyAssertion.of(MultipleParentClassLoader.Builder.class).apply();
-        ObjectPropertyAssertion.of(MultipleParentClassLoader.Builder.ClassLoaderCreationAction.class).apply();
     }
 
     public static class Foo {
