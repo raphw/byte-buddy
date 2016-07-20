@@ -3686,7 +3686,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private static final Method GET_ANNOTATED_BOUNDS = method();
 
-                /*
+                /**
                  * Reads the {@code java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds} method.
                  *
                  * @return The method or {@code null} if it is not provided by the current VM.
@@ -3759,11 +3759,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      */
                     private static final Method GET_ANNOTATED_BOUNDS = method();
 
-                    /*
+                    /**
                      * Reads the {@code java.lang.reflect.TypeVariable#getAnnotatedBounds} method.
-                 *
-                 * @return The method or {@code null} if it is not provided by the current VM.
-                 */
+                     *
+                     * @return The method or {@code null} if it is not provided by the current VM.
+                     */
                     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                     private static Method method() {
                         try {
@@ -3837,7 +3837,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private static final Method GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = method();
 
-                /*
+                /**
                  * Reads the {@code java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments} method.
                  *
                  * @return The method or {@code null} if it is not provided by the current VM.

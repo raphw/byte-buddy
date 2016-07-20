@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
@@ -337,20 +336,7 @@ public class MultipleParentClassLoader extends ClassLoader {
          * yet collected.
          */
         public Builder append(Class<?>... type) {
-            return append(AccessController.getContext(), type);
-        }
-
-        /**
-         * Appends the class loaders of the given types. The bootstrap class loader is implicitly skipped as
-         * it is an implicit parent of any class loader.
-         *
-         * @param accessControlContext The access control context to use.
-         * @param type                 The types of which to collect the class loaders.
-         * @return A new builder instance with the additional class loaders of the provided types if they were not
-         * yet collected.
-         */
-        public Builder append(AccessControlContext accessControlContext, Class<?>... type) {
-            return append(accessControlContext, Arrays.asList(type));
+            return append(Arrays.asList(type));
         }
 
         /**
@@ -361,18 +347,6 @@ public class MultipleParentClassLoader extends ClassLoader {
          * @return A new builder instance with the additional class loaders.
          */
         public Builder append(Collection<? extends Class<?>> types) {
-            return append(AccessController.getContext(), types);
-        }
-
-        /**
-         * Appends the class loaders of the given types if those class loaders were not yet collected. The bootstrap class
-         * loader is implicitly skipped as it is an implicit parent of any class loader.
-         *
-         * @param accessControlContext The access control context to use.
-         * @param types                The types of which to collect the class loaders.
-         * @return A new builder instance with the additional class loaders.
-         */
-        public Builder append(AccessControlContext accessControlContext, Collection<? extends Class<?>> types) {
             List<ClassLoader> classLoaders = new ArrayList<ClassLoader>(types.size());
             for (Class<?> type : types) {
                 classLoaders.add(type.getClassLoader());
@@ -427,25 +401,21 @@ public class MultipleParentClassLoader extends ClassLoader {
         }
 
         /**
-         * Returns an appropriate class loader that represents all the collected class loaders using the current access control context.
+         * <p>
+         * Returns the only class loader that was appended if exactly one class loader was appended or a multiple parent class loader as
+         * a parent of all supplied class loader and with the bootstrap class loader as an implicit parent. If no class loader
+         * </p>
+         * <p>
+         * <b>Important</b>: Byte Buddy does not provide any access control for the creation of the class loader. It is the responsibility
+         * of the user of this builder to provide such privileges.
+         * </p>
          *
          * @return A suitable class loader.
          */
         public ClassLoader build() {
-            return build(AccessController.getContext());
-        }
-
-        /**
-         * Returns the only class loader that was appended if exactly one class loader was appended or a multiple parent class loader as
-         * a parent of all supplied class loader and with the bootstrap class loader as an implicit parent. If no class loader
-         *
-         * @param accessControlContext The access control context to be used for creating the class loader.
-         * @return A suitable class loader.
-         */
-        public ClassLoader build(AccessControlContext accessControlContext) {
             return classLoaders.size() == 1
                     ? classLoaders.get(ONLY)
-                    : AccessController.doPrivileged(new ClassLoaderCreationAction(classLoaders), accessControlContext);
+                    : new MultipleParentClassLoader(classLoaders);
         }
 
         @Override
@@ -466,49 +436,6 @@ public class MultipleParentClassLoader extends ClassLoader {
             return "MultipleParentClassLoader.Builder{" +
                     "classLoaders=" + classLoaders +
                     '}';
-        }
-
-        /**
-         * A privileged action for creating a multiple-parent class loader.
-         */
-        protected static class ClassLoaderCreationAction implements PrivilegedAction<ClassLoader> {
-
-            /**
-             * The class loaders to combine.
-             */
-            private final List<? extends ClassLoader> classLoaders;
-
-            /**
-             * Creates a new action for creating a multiple-parent class loader.
-             *
-             * @param classLoaders The class loaders to combine.
-             */
-            protected ClassLoaderCreationAction(List<? extends ClassLoader> classLoaders) {
-                this.classLoaders = classLoaders;
-            }
-
-            @Override
-            public ClassLoader run() {
-                return new MultipleParentClassLoader(classLoaders);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && classLoaders.equals(((ClassLoaderCreationAction) other).classLoaders);
-            }
-
-            @Override
-            public int hashCode() {
-                return classLoaders.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MultipleParentClassLoader.Builder.ClassLoaderCreationAction{" +
-                        "classLoaders=" + classLoaders +
-                        '}';
-            }
         }
     }
 }
