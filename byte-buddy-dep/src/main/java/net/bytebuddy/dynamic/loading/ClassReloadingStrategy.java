@@ -574,7 +574,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         /**
          * Creates a class injector to use.
          *
-         * @param instrumentation The instrumentation of this instance.
+         * @param instrumentation      The instrumentation of this instance.
+         * @param accessControlContext The access control context to use.
          * @return A class injector for the bootstrap class loader.
          */
         ClassInjector make(Instrumentation instrumentation, AccessControlContext accessControlContext);

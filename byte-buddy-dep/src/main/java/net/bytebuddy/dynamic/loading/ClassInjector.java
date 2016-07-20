@@ -4,7 +4,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
 import net.bytebuddy.utility.privilege.SystemClassLoaderAction;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
