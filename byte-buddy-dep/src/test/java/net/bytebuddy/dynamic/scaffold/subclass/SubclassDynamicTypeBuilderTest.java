@@ -33,7 +33,6 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -302,7 +301,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(PackagePrivateReturnType.class, PackagePrivateReturnType.Argument.class),
                         DEFAULT_PROTECTION_DOMAIN,
-                        AccessController.getContext(),
                         ByteArrayClassLoader.PersistenceHandler.LATENT,
                         PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -320,7 +318,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(PackagePrivateArgumentType.class, PackagePrivateArgumentType.Argument.class),
                         DEFAULT_PROTECTION_DOMAIN,
-                        AccessController.getContext(),
                         ByteArrayClassLoader.PersistenceHandler.LATENT,
                         PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -337,7 +334,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(PrivateMethod.class),
                         DEFAULT_PROTECTION_DOMAIN,
-                        AccessController.getContext(),
                         ByteArrayClassLoader.PersistenceHandler.LATENT,
                         PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

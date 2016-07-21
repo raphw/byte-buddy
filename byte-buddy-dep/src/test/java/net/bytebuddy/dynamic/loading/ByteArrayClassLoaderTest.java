@@ -70,7 +70,6 @@ public class ByteArrayClassLoaderTest {
         classLoader = new ByteArrayClassLoader(BOOTSTRAP_CLASS_LOADER,
                 ClassFileExtraction.of(Foo.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 persistenceHandler,
                 packageDefinitionStrategy);
         sealBase = new URL("file://foo");

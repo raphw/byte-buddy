@@ -17,8 +17,6 @@ import org.mockito.ArgumentCaptor;
 
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Collections;
 import java.util.concurrent.Callable;
@@ -209,7 +207,6 @@ public class ClassReloadingStrategyTest {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(Class.forName(LAMBDA_SAMPLE_FACTORY)),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Instrumentation instrumentation = ByteBuddyAgent.install();

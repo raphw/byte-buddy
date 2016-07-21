@@ -95,22 +95,20 @@ public class ByteArrayClassLoader extends ClassLoader {
      * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
      * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
      * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
-     * @param accessControlContext      The access control context to use for loading classes.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param persistenceHandler        The persistence handler of this class loader.
      */
     public ByteArrayClassLoader(ClassLoader parent,
                                 Map<String, byte[]> typeDefinitions,
                                 ProtectionDomain protectionDomain,
-                                AccessControlContext accessControlContext,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy) {
         super(parent);
         this.typeDefinitions = new HashMap<String, byte[]>(typeDefinitions);
         this.protectionDomain = protectionDomain;
-        this.accessControlContext = accessControlContext;
         this.persistenceHandler = persistenceHandler;
         this.packageDefinitionStrategy = packageDefinitionStrategy;
+        accessControlContext = AccessController.getContext();
     }
 
     /**
@@ -119,7 +117,6 @@ public class ByteArrayClassLoader extends ClassLoader {
      * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
      * @param typeDefinitions           A map of type descriptions pointing to their binary representations.
      * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
-     * @param accessControlContext      The access control context to use for loading classes.
      * @param persistenceHandler        The persistence handler to be used by the created class loader.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param childFirst                {@code true} if the class loader should apply child first semantics when loading
@@ -129,7 +126,6 @@ public class ByteArrayClassLoader extends ClassLoader {
     public static ClassLoader of(ClassLoader parent,
                                  Map<TypeDescription, byte[]> typeDefinitions,
                                  ProtectionDomain protectionDomain,
-                                 AccessControlContext accessControlContext,
                                  PersistenceHandler persistenceHandler,
                                  PackageDefinitionStrategy packageDefinitionStrategy,
                                  boolean childFirst) {
@@ -137,13 +133,9 @@ public class ByteArrayClassLoader extends ClassLoader {
         for (Map.Entry<TypeDescription, byte[]> entry : typeDefinitions.entrySet()) {
             namedTypeDefinitions.put(entry.getKey().getName(), entry.getValue());
         }
-        return AccessController.doPrivileged(new ClassLoaderCreationAction(parent,
-                namedTypeDefinitions,
-                protectionDomain,
-                accessControlContext,
-                persistenceHandler,
-                packageDefinitionStrategy,
-                childFirst), accessControlContext);
+        return childFirst
+                ? new ChildFirst(parent, namedTypeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy)
+                : new ByteArrayClassLoader(parent, namedTypeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
     }
 
     /**
@@ -152,7 +144,6 @@ public class ByteArrayClassLoader extends ClassLoader {
      * @param classLoader               The parent class loader.
      * @param types                     The unloaded types to be loaded.
      * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
-     * @param accessControlContext      The access control context to use for loading classes.
      * @param persistenceHandler        The persistence handler of the created class loader.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param childFirst                {@code true} if the created class loader should apply child-first semantics when loading the {@code types}.
@@ -162,7 +153,6 @@ public class ByteArrayClassLoader extends ClassLoader {
     public static Map<TypeDescription, Class<?>> load(ClassLoader classLoader,
                                                       Map<TypeDescription, byte[]> types,
                                                       ProtectionDomain protectionDomain,
-                                                      AccessControlContext accessControlContext,
                                                       PersistenceHandler persistenceHandler,
                                                       PackageDefinitionStrategy packageDefinitionStrategy,
                                                       boolean childFirst,
@@ -171,7 +161,6 @@ public class ByteArrayClassLoader extends ClassLoader {
         classLoader = ByteArrayClassLoader.of(classLoader,
                 types,
                 protectionDomain,
-                accessControlContext,
                 persistenceHandler,
                 packageDefinitionStrategy,
                 childFirst);
@@ -191,31 +180,12 @@ public class ByteArrayClassLoader extends ClassLoader {
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        byte[] javaType = persistenceHandler.lookup(name, typeDefinitions);
-        if (javaType != null) {
-            int packageIndex = name.lastIndexOf('.');
-            if (packageIndex != -1) {
-                String packageName = name.substring(0, packageIndex);
-                PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(ByteArrayClassLoader.this, packageName, name);
-                if (definition.isDefined()) {
-                    Package definedPackage = PACKAGE_LOOKUP_STRATEGY.apply(this, packageName);
-                    if (definedPackage == null) {
-                        definePackage(packageName,
-                                definition.getSpecificationTitle(),
-                                definition.getSpecificationVersion(),
-                                definition.getSpecificationVendor(),
-                                definition.getImplementationTitle(),
-                                definition.getImplementationVersion(),
-                                definition.getImplementationVendor(),
-                                definition.getSealBase());
-                    } else if (!definition.isCompatibleTo(definedPackage)) {
-                        throw new SecurityException("Sealing violation for package " + packageName);
-                    }
-                }
-            }
-            return defineClass(name, javaType, FROM_BEGINNING, javaType.length, protectionDomain);
+        byte[] binaryRepresentation = persistenceHandler.lookup(name, typeDefinitions);
+        if (binaryRepresentation == null) {
+            throw new ClassNotFoundException(name);
+        } else {
+            return AccessController.doPrivileged(new ClassDefinitionAction(name, binaryRepresentation), accessControlContext);
         }
-        throw new ClassNotFoundException(name);
     }
 
     @Override
@@ -251,6 +221,94 @@ public class ByteArrayClassLoader extends ClassLoader {
                 ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                 ", accessControlContext=" + accessControlContext +
                 '}';
+    }
+
+    /**
+     * An action for defining a located class that is not yet loaded.
+     */
+    protected class ClassDefinitionAction implements PrivilegedAction<Class<?>> {
+
+        /**
+         * The binary name of the class to define.
+         */
+        private final String name;
+
+        /**
+         * The binary representation of the class to be loaded.
+         */
+        private final byte[] binaryRepresentation;
+
+        /**
+         * Creates a new class definition action.
+         *
+         * @param name                 The binary name of the class to define.
+         * @param binaryRepresentation The binary representation of the class to be loaded.
+         */
+        protected ClassDefinitionAction(String name, byte[] binaryRepresentation) {
+            this.name = name;
+            this.binaryRepresentation = binaryRepresentation;
+        }
+
+        @Override
+        public Class<?> run() {
+            int packageIndex = name.lastIndexOf('.');
+            if (packageIndex != -1) {
+                String packageName = name.substring(0, packageIndex);
+                PackageDefinitionStrategy.Definition definition = packageDefinitionStrategy.define(ByteArrayClassLoader.this, packageName, name);
+                if (definition.isDefined()) {
+                    Package definedPackage = PACKAGE_LOOKUP_STRATEGY.apply(ByteArrayClassLoader.this, packageName);
+                    if (definedPackage == null) {
+                        definePackage(packageName,
+                                definition.getSpecificationTitle(),
+                                definition.getSpecificationVersion(),
+                                definition.getSpecificationVendor(),
+                                definition.getImplementationTitle(),
+                                definition.getImplementationVersion(),
+                                definition.getImplementationVendor(),
+                                definition.getSealBase());
+                    } else if (!definition.isCompatibleTo(definedPackage)) {
+                        throw new SecurityException("Sealing violation for package " + packageName);
+                    }
+                }
+            }
+            return defineClass(name, binaryRepresentation, FROM_BEGINNING, binaryRepresentation.length, protectionDomain);
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private ByteArrayClassLoader getOuter() {
+            return ByteArrayClassLoader.this;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            ClassDefinitionAction that = (ClassDefinitionAction) object;
+            return name.equals(that.name)
+                    && ByteArrayClassLoader.this.equals(that.getOuter())
+                    && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + ByteArrayClassLoader.this.hashCode();
+            result = 31 * result + Arrays.hashCode(binaryRepresentation);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "ByteArrayClassLoader.ClassDefinitionAction{" +
+                    "outer=" + ByteArrayClassLoader.this +
+                    ", name='" + name + '\'' +
+                    ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
+                    '}';
+        }
     }
 
     /**
@@ -645,17 +703,15 @@ public class ByteArrayClassLoader extends ClassLoader {
          * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
          * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
          * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
-         * @param accessControlContext      The access control context to use for loading classes.
          * @param persistenceHandler        The persistence handler of this class loader.
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          */
         public ChildFirst(ClassLoader parent,
                           Map<String, byte[]> typeDefinitions,
                           ProtectionDomain protectionDomain,
-                          AccessControlContext accessControlContext,
                           PersistenceHandler persistenceHandler,
                           PackageDefinitionStrategy packageDefinitionStrategy) {
-            super(parent, typeDefinitions, protectionDomain, accessControlContext, persistenceHandler, packageDefinitionStrategy);
+            super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
         }
 
         @Override
@@ -725,9 +781,9 @@ public class ByteArrayClassLoader extends ClassLoader {
             return "ByteArrayClassLoader.ChildFirst{" +
                     "typeDefinitions=" + typeDefinitions +
                     ", protectionDomain=" + protectionDomain +
-                    ", accessControlContext=" + accessControlContext +
                     ", persistenceHandler=" + persistenceHandler +
                     ", packageDefinitionStrategy=" + packageDefinitionStrategy +
+                    ", accessControlContext=" + accessControlContext +
                     '}';
         }
 
@@ -881,120 +937,6 @@ public class ByteArrayClassLoader extends ClassLoader {
                         ", enumeration=" + enumeration +
                         '}';
             }
-        }
-    }
-
-    /**
-     * An action for creating a class loader.
-     */
-    protected static class ClassLoaderCreationAction implements PrivilegedAction<ClassLoader> {
-
-        /**
-         * The {@link java.lang.ClassLoader} that is the parent of this class loader.
-         */
-        private final ClassLoader parent;
-
-        /**
-         * A map of fully qualified class names pointing to their binary representations.
-         */
-        private final Map<String, byte[]> typeDefinitions;
-
-        /**
-         * The protection domain to apply where {@code null} references an implicit protection domain.
-         */
-        private final ProtectionDomain protectionDomain;
-
-        /**
-         * The access control context to use for loading classes.
-         */
-        private final AccessControlContext accessControlContext;
-
-        /**
-         * The persistence handler of this class loader.
-         */
-        private final PersistenceHandler persistenceHandler;
-
-        /**
-         * The package definer to be queried for package definitions.
-         */
-        private final PackageDefinitionStrategy packageDefinitionStrategy;
-
-        /**
-         * {@code true} if this action should create a child-first class loader.
-         */
-        private final boolean childFirst;
-
-        /**
-         * Creates a new class loader creation action.
-         *
-         * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
-         * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
-         * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
-         * @param accessControlContext      The access control context to use for loading classes.
-         * @param persistenceHandler        The persistence handler of this class loader.
-         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
-         * @param childFirst                {@code true} if this action should create a child-first class loader.
-         */
-        protected ClassLoaderCreationAction(ClassLoader parent,
-                                            Map<String, byte[]> typeDefinitions,
-                                            ProtectionDomain protectionDomain,
-                                            AccessControlContext accessControlContext,
-                                            PersistenceHandler persistenceHandler,
-                                            PackageDefinitionStrategy packageDefinitionStrategy,
-                                            boolean childFirst) {
-            this.parent = parent;
-            this.typeDefinitions = typeDefinitions;
-            this.protectionDomain = protectionDomain;
-            this.accessControlContext = accessControlContext;
-            this.persistenceHandler = persistenceHandler;
-            this.packageDefinitionStrategy = packageDefinitionStrategy;
-            this.childFirst = childFirst;
-        }
-
-        @Override
-        public ClassLoader run() {
-            return childFirst
-                    ? new ChildFirst(parent, typeDefinitions, protectionDomain, accessControlContext, persistenceHandler, packageDefinitionStrategy)
-                    : new ByteArrayClassLoader(parent, typeDefinitions, protectionDomain, accessControlContext, persistenceHandler, packageDefinitionStrategy);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ClassLoaderCreationAction that = (ClassLoaderCreationAction) other;
-            return childFirst == that.childFirst
-                    && parent.equals(that.parent)
-                    && typeDefinitions.equals(that.typeDefinitions)
-                    && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
-                    && accessControlContext.equals(that.accessControlContext)
-                    && persistenceHandler == that.persistenceHandler
-                    && packageDefinitionStrategy.equals(that.packageDefinitionStrategy);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = parent.hashCode();
-            result = 31 * result + typeDefinitions.hashCode();
-            result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
-            result = 31 * result + accessControlContext.hashCode();
-            result = 31 * result + persistenceHandler.hashCode();
-            result = 31 * result + packageDefinitionStrategy.hashCode();
-            result = 31 * result + (childFirst ? 1 : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "ByteArrayClassLoader.ClassLoaderCreationAction{" +
-                    "parent=" + parent +
-                    ", typeDefinitions=" + typeDefinitions +
-                    ", protectionDomain=" + protectionDomain +
-                    ", accessControlContext=" + accessControlContext +
-                    ", persistenceHandler=" + persistenceHandler +
-                    ", packageDefinitionStrategy=" + packageDefinitionStrategy +
-                    ", childFirst=" + childFirst +
-                    '}';
         }
     }
 

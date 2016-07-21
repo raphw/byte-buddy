@@ -13,7 +13,6 @@ import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
 
 import java.io.Serializable;
-import java.security.AccessController;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
@@ -83,7 +82,6 @@ public class MethodDelegationSuperTest extends AbstractImplementationTest {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SimpleInterceptor.class),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = new ByteBuddy()

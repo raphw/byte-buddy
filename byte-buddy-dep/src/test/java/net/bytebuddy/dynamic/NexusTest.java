@@ -15,7 +15,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.security.AccessController;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -71,7 +70,6 @@ public class NexusTest {
                         NexusAccessor.Dispatcher.Available.class,
                         NexusAccessor.Dispatcher.Unavailable.class),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Field duplicateInitializers = classLoader.loadClass(Nexus.class.getName()).getDeclaredField("TYPE_INITIALIZERS");
@@ -106,7 +104,6 @@ public class NexusTest {
                         NexusAccessor.Dispatcher.Available.class,
                         NexusAccessor.Dispatcher.Unavailable.class),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Field duplicateInitializers = classLoader.loadClass(Nexus.class.getName()).getDeclaredField("TYPE_INITIALIZERS");
@@ -141,7 +138,6 @@ public class NexusTest {
                         NexusAccessor.Dispatcher.Available.class,
                         NexusAccessor.Dispatcher.Unavailable.class),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Field duplicateInitializers = classLoader.loadClass(Nexus.class.getName()).getDeclaredField("TYPE_INITIALIZERS");

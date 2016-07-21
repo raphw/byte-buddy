@@ -10,7 +10,6 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.security.AccessController;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -21,6 +20,7 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
     protected TypeDescription describe(Class<?> type) {
         return new TypeDescription.ForLoadedType(type);
     }
+
     @Override
     protected TypeDescription.Generic describeType(Field field) {
         return new TypeDescription.ForLoadedType(field.getDeclaringClass()).getDeclaredFields().filter(ElementMatchers.is(field)).getOnly().getType();
@@ -138,7 +138,6 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(TypeDescriptionForLoadedTypeWithEagerPropertiesTest.Foo.class),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         new TypeDescription.ForLoadedType(classLoader.loadClass(TypeDescriptionForLoadedTypeWithEagerPropertiesTest.Foo.class.getName()));

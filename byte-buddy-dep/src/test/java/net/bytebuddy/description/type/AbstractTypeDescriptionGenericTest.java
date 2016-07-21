@@ -22,7 +22,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.security.AccessController;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -1882,7 +1881,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
             return new ByteArrayClassLoader(null,
                     Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.toByteArray()),
                     null,
-                    AccessController.getContext(),
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                     PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(InconsistentGenerics.class.getName()).getDeclaredField(FOO);
         }

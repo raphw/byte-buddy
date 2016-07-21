@@ -24,7 +24,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericSignatureFormatError;
-import java.security.AccessController;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -422,7 +421,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SimpleType.class),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> otherSimpleType = classLoader.loadClass(SimpleType.class.getName());
@@ -561,7 +559,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         TypeDescription typeDescription = describe(new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(MissingAnnotations.class),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(MissingAnnotations.class.getName()));
         assertThat(typeDescription.getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
@@ -660,7 +657,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
             ClassLoader classLoader = new ByteArrayClassLoader(null,
                     Collections.singletonMap(type.getName(), classWriter.toByteArray()),
                     null,
-                    AccessController.getContext(),
                     ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                     PackageDefinitionStrategy.NoOp.INSTANCE);
             return classLoader.loadClass(type.getName());

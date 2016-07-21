@@ -22,7 +22,6 @@ import org.objectweb.asm.*;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Collections;
 
@@ -181,7 +180,6 @@ public class AnnotationAppenderDefaultTest {
         Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(),
                 Collections.singletonMap(BAR, classWriter.toByteArray()),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(BAR);
         assertThat(bar.getName(), is(BAR));
@@ -209,7 +207,6 @@ public class AnnotationAppenderDefaultTest {
         Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(),
                 Collections.singletonMap(BAR, classWriter.toByteArray()),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(BAR);
         assertThat(bar.getName(), is(BAR));

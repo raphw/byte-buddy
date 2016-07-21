@@ -42,7 +42,6 @@ import java.lang.reflect.*;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
@@ -145,7 +144,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testGenericType() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(GenericType.class), DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> dynamicType = create(GenericType.Inner.class)
@@ -273,7 +271,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
@@ -310,7 +307,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = create(PackagePrivateVisibilityBridgeExtension.class)
@@ -327,7 +323,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(PublicVisibilityBridgeExtension.class, VisibilityBridge.class, FooBar.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = new ByteBuddy().subclass(PublicVisibilityBridgeExtension.class)
@@ -344,7 +339,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class, VisibilityBridgeAbstractMethod.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = create(PackagePrivateVisibilityBridgeExtensionAbstractMethod.class)
@@ -425,7 +419,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(SampleAnnotation.class),
                         null,
-                        AccessController.getContext(),
                         ByteArrayClassLoader.PersistenceHandler.LATENT,
                         PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -446,7 +439,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .load(new ByteArrayClassLoader(null,
                         ClassFileExtraction.of(SampleAnnotation.class),
                         null,
-                        AccessController.getContext(),
                         ByteArrayClassLoader.PersistenceHandler.LATENT,
                         PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

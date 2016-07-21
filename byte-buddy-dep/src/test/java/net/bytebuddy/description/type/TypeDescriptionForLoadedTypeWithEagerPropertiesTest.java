@@ -10,7 +10,6 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.security.AccessController;
 
 public class TypeDescriptionForLoadedTypeWithEagerPropertiesTest extends AbstractTypeDescriptionTest {
 
@@ -131,7 +130,6 @@ public class TypeDescriptionForLoadedTypeWithEagerPropertiesTest extends Abstrac
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(Foo.class),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         new TypeDescription.ForLoadedType.WithEagerProperties(classLoader.loadClass(Foo.class.getName()));

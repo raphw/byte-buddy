@@ -29,7 +29,6 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Constructor;
 import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -101,8 +100,6 @@ public class AgentBuilderDefaultTest {
     @Mock
     private AgentBuilder.InstallationStrategy installationStrategy;
 
-    private AccessControlContext accessControlContext;
-
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -128,7 +125,6 @@ public class AgentBuilderDefaultTest {
                 return (ClassFileTransformer) invocationOnMock.getArguments()[1];
             }
         });
-        accessControlContext = AccessController.getContext();
     }
 
     @Test
@@ -144,7 +140,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -184,7 +179,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(ElementMatchers.any()).and(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -220,7 +214,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(none()).or(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -255,7 +248,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -291,7 +283,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -324,7 +315,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
@@ -356,7 +346,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -391,7 +380,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -426,7 +414,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -460,7 +447,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -497,7 +483,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -528,7 +513,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
     }
@@ -547,7 +531,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -580,7 +563,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -613,7 +595,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -648,7 +629,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(ignoredTypes)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -687,7 +667,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(ignoredTypes, ignoredClassLoaders)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -725,7 +704,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(ElementMatchers.any()).and(ignoredTypes)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -761,7 +739,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none()).or(ignoredTypes)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -797,7 +774,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -832,7 +808,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -866,7 +841,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -902,7 +876,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -931,7 +904,6 @@ public class AgentBuilderDefaultTest {
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
-                .with(accessControlContext)
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -951,7 +923,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX),
@@ -978,7 +949,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX),
@@ -1016,7 +986,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -1055,7 +1024,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -1082,7 +1050,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -1110,7 +1077,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -1138,7 +1104,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -1162,7 +1127,6 @@ public class AgentBuilderDefaultTest {
                 .with(installationStrategy)
                 .with(listener)
                 .disableNativeMethodPrefix()
-                .with(accessControlContext)
                 .ignore(none())
                 .type(typeMatcher).transform(transformer)
                 .type(typeMatcher).transform(transformer).asDecorator()
@@ -1234,7 +1198,6 @@ public class AgentBuilderDefaultTest {
                 locationStrategy,
                 listener,
                 mock(AgentBuilder.Default.NativeMethodStrategy.class),
-                accessControlContext,
                 initializationStrategy,
                 mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
                 AgentBuilder.DescriptionStrategy.Default.HYBRID,
@@ -1257,12 +1220,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.Default.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Ignoring.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transforming.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.class).apply();
@@ -1281,48 +1239,27 @@ public class AgentBuilderDefaultTest {
         }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.InheritanceAction.class);
         final Iterator<Class<?>> execution = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.ExecutionDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.ExecutionDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
                 return execution.next();
             }
         }).apply();
         final Iterator<Class<?>> java9Dispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
                 return java9Dispatcher.next();
             }
         }).apply();
         final Iterator<Class<?>> legacyDispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.LegacyDispatcher.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.LegacyDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
                 return legacyDispatcher.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory.class)
-                .create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-                    @Override
-                    public AccessControlContext create() {
-                        return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-                    }
-                }).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory.class).apply();
         final Iterator<Constructor<?>> iterator = Arrays.<Constructor<?>>asList(String.class.getDeclaredConstructors()).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.ForJava9CapableVm.class).create(new ObjectPropertyAssertion.Creator<Constructor<?>>() {
             @Override

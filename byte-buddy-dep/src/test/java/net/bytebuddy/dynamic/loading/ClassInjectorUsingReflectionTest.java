@@ -20,9 +20,6 @@ import org.mockito.Mock;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -30,7 +27,6 @@ import java.util.Iterator;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
 
 public class ClassInjectorUsingReflectionTest {
 
@@ -76,7 +72,6 @@ public class ClassInjectorUsingReflectionTest {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(Bar.class, Interceptor.class),
                 null,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = new ByteBuddy().rebase(Bar.class)

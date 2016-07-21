@@ -38,7 +38,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
@@ -105,7 +104,6 @@ public class AgentBuilderDefaultApplicationTest {
                         QuxBaz.class,
                         SimpleType.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
     }
@@ -114,7 +112,6 @@ public class AgentBuilderDefaultApplicationTest {
         return new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(Class.forName(LAMBDA_SAMPLE_FACTORY)),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
     }
@@ -373,7 +370,6 @@ public class AgentBuilderDefaultApplicationTest {
         classLoader = new ByteArrayClassLoader.ChildFirst(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(SimpleOptionalType.class, ShouldRebase.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
@@ -408,7 +404,6 @@ public class AgentBuilderDefaultApplicationTest {
         classLoader = new ByteArrayClassLoader.ChildFirst(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(SimpleOptionalType.class, ShouldRebase.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
@@ -592,7 +587,6 @@ public class AgentBuilderDefaultApplicationTest {
         classLoader = new ByteArrayClassLoader.ChildFirst(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(SimpleOptionalType.class, ShouldRebase.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
@@ -627,7 +621,6 @@ public class AgentBuilderDefaultApplicationTest {
         classLoader = new ByteArrayClassLoader.ChildFirst(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(SimpleOptionalType.class, ShouldRebase.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).

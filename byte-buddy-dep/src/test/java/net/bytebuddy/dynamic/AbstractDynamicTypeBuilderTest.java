@@ -47,7 +47,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Collection;
 import java.util.Collections;
@@ -217,7 +216,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(Bar.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()
@@ -296,7 +294,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SampleAnnotation.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()
@@ -321,7 +318,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(SampleAnnotation.class),
                 DEFAULT_PROTECTION_DOMAIN,
-                AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()

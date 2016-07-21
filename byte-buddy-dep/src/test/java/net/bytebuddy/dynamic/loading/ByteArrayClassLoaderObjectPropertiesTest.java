@@ -28,6 +28,7 @@ public class ByteArrayClassLoaderObjectPropertiesTest {
                 return new URLClassLoader(new URL[0], null);
             }
         }).applyBasic();
+        ObjectPropertyAssertion.of(ByteArrayClassLoader.ClassDefinitionAction.class).apply();
         ObjectPropertyAssertion.of(ByteArrayClassLoader.ChildFirst.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
             @Override
             public AccessControlContext create() {
@@ -51,11 +52,5 @@ public class ByteArrayClassLoaderObjectPropertiesTest {
                         return urls.next();
                     }
                 }).applyBasic();
-        ObjectPropertyAssertion.of(ByteArrayClassLoader.ClassLoaderCreationAction.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).apply();
     }
 }

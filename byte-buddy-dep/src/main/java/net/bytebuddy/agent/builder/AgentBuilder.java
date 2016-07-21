@@ -125,14 +125,6 @@ public interface AgentBuilder {
     AgentBuilder with(TypeStrategy typeStrategy);
 
     /**
-     * Assures that critical actions are performed using the supplied access control context.
-     *
-     * @param accessControlContext The access control context to be used for performing security critical action.
-     * @return A new instance of this agent builder which uses the given access control context for performing critical actions.
-     */
-    AgentBuilder with(AccessControlContext accessControlContext);
-
-    /**
      * Defines a given initialization strategy to be applied to generated types. An initialization strategy is responsible
      * for setting up a type after it was loaded. This initialization must be performed after the transformation because
      * a Java agent is only invoked before loading a type. By default, the initialization logic is added to a class's type
@@ -4411,11 +4403,6 @@ public interface AgentBuilder {
         private final NativeMethodStrategy nativeMethodStrategy;
 
         /**
-         * The access control context to use for loading classes.
-         */
-        private final AccessControlContext accessControlContext;
-
-        /**
          * The initialization strategy to use for creating classes.
          */
         private final InitializationStrategy initializationStrategy;
@@ -4480,7 +4467,6 @@ public interface AgentBuilder {
                     LocationStrategy.ForClassLoader.STRONG,
                     Listener.NoOp.INSTANCE,
                     NativeMethodStrategy.Disabled.INSTANCE,
-                    AccessController.getContext(),
                     InitializationStrategy.SelfInjection.SPLIT,
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
@@ -4500,7 +4486,6 @@ public interface AgentBuilder {
          * @param locationStrategy              The location strategy to use.
          * @param listener                      The listener to notify on transformations.
          * @param nativeMethodStrategy          The native method strategy to apply.
-         * @param accessControlContext          The access control context to use for loading classes.
          * @param initializationStrategy        The initialization strategy to use for transformed types.
          * @param redefinitionStrategy          The redefinition strategy to apply.
          * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
@@ -4517,7 +4502,6 @@ public interface AgentBuilder {
                           LocationStrategy locationStrategy,
                           Listener listener,
                           NativeMethodStrategy nativeMethodStrategy,
-                          AccessControlContext accessControlContext,
                           InitializationStrategy initializationStrategy,
                           RedefinitionStrategy redefinitionStrategy,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
@@ -4532,7 +4516,6 @@ public interface AgentBuilder {
             this.locationStrategy = locationStrategy;
             this.listener = listener;
             this.nativeMethodStrategy = nativeMethodStrategy;
-            this.accessControlContext = accessControlContext;
             this.initializationStrategy = initializationStrategy;
             this.redefinitionStrategy = redefinitionStrategy;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
@@ -4551,7 +4534,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4570,7 +4552,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     new Listener.Compound(this.listener, listener),
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4589,7 +4570,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4608,7 +4588,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4627,7 +4606,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4646,7 +4624,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     NativeMethodStrategy.ForPrefix.of(prefix),
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4665,26 +4642,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     NativeMethodStrategy.Disabled.INSTANCE,
-                    accessControlContext,
-                    initializationStrategy,
-                    redefinitionStrategy,
-                    bootstrapInjectionStrategy,
-                    lambdaInstrumentationStrategy,
-                    descriptionStrategy,
-                    installationStrategy,
-                    ignoredTypeMatcher,
-                    transformation);
-        }
-
-        @Override
-        public AgentBuilder with(AccessControlContext accessControlContext) {
-            return new Default(byteBuddy,
-                    typeLocator,
-                    typeStrategy,
-                    locationStrategy,
-                    listener,
-                    nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4703,7 +4660,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4722,7 +4678,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4741,7 +4696,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4760,7 +4714,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4779,7 +4732,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4798,7 +4750,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
@@ -4817,7 +4768,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
@@ -4836,7 +4786,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     InitializationStrategy.NoOp.INSTANCE,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
@@ -4933,7 +4882,6 @@ public interface AgentBuilder {
                     locationStrategy,
                     listener,
                     nativeMethodStrategy,
-                    accessControlContext,
                     initializationStrategy,
                     bootstrapInjectionStrategy,
                     descriptionStrategy,
@@ -5016,7 +4964,6 @@ public interface AgentBuilder {
                     && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
                     && typeStrategy.equals(aDefault.typeStrategy)
                     && locationStrategy.equals(aDefault.locationStrategy)
-                    && accessControlContext.equals(aDefault.accessControlContext)
                     && initializationStrategy == aDefault.initializationStrategy
                     && redefinitionStrategy == aDefault.redefinitionStrategy
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
@@ -5035,7 +4982,6 @@ public interface AgentBuilder {
             result = 31 * result + typeStrategy.hashCode();
             result = 31 * result + locationStrategy.hashCode();
             result = 31 * result + nativeMethodStrategy.hashCode();
-            result = 31 * result + accessControlContext.hashCode();
             result = 31 * result + initializationStrategy.hashCode();
             result = 31 * result + redefinitionStrategy.hashCode();
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
@@ -5056,7 +5002,6 @@ public interface AgentBuilder {
                     ", locationStrategy=" + locationStrategy +
                     ", listener=" + listener +
                     ", nativeMethodStrategy=" + nativeMethodStrategy +
-                    ", accessControlContext=" + accessControlContext +
                     ", initializationStrategy=" + initializationStrategy +
                     ", redefinitionStrategy=" + redefinitionStrategy +
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
@@ -6013,11 +5958,6 @@ public interface AgentBuilder {
             private final NativeMethodStrategy nativeMethodStrategy;
 
             /**
-             * The access control context to use for loading classes.
-             */
-            private final AccessControlContext accessControlContext;
-
-            /**
              * The initialization strategy to use for transformed types.
              */
             private final InitializationStrategy initializationStrategy;
@@ -6048,6 +5988,11 @@ public interface AgentBuilder {
             private final Transformation transformation;
 
             /**
+             * The access control context to use for loading classes.
+             */
+            private final AccessControlContext accessControlContext;
+
+            /**
              * Creates a new class file transformer.
              *
              * @param byteBuddy                  The Byte Buddy instance to be used.
@@ -6056,7 +6001,6 @@ public interface AgentBuilder {
              * @param locationStrategy           The location strategy to use.
              * @param listener                   The listener to notify on transformations.
              * @param nativeMethodStrategy       The native method strategy to apply.
-             * @param accessControlContext       The access control context to use for loading classes.
              * @param initializationStrategy     The initialization strategy to use for transformed types.
              * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
              * @param descriptionStrategy        The description strategy for resolving type descriptions for types.
@@ -6069,7 +6013,6 @@ public interface AgentBuilder {
                                            LocationStrategy locationStrategy,
                                            Listener listener,
                                            NativeMethodStrategy nativeMethodStrategy,
-                                           AccessControlContext accessControlContext,
                                            InitializationStrategy initializationStrategy,
                                            BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                            DescriptionStrategy descriptionStrategy,
@@ -6081,12 +6024,12 @@ public interface AgentBuilder {
                 this.typeStrategy = typeStrategy;
                 this.listener = listener;
                 this.nativeMethodStrategy = nativeMethodStrategy;
-                this.accessControlContext = accessControlContext;
                 this.initializationStrategy = initializationStrategy;
                 this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
                 this.descriptionStrategy = descriptionStrategy;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
                 this.transformation = transformation;
+                accessControlContext = AccessController.getContext();
             }
 
             @Override
@@ -6221,7 +6164,6 @@ public interface AgentBuilder {
                  * @param locationStrategy           The location strategy to use.
                  * @param listener                   The listener to notify on transformations.
                  * @param nativeMethodStrategy       The native method strategy to apply.
-                 * @param accessControlContext       The access control context to use for loading classes.
                  * @param initializationStrategy     The initialization strategy to use for transformed types.
                  * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
                  * @param descriptionStrategy        The description strategy for resolving type descriptions for types.
@@ -6235,7 +6177,6 @@ public interface AgentBuilder {
                                           LocationStrategy locationStrategy,
                                           Listener listener,
                                           NativeMethodStrategy nativeMethodStrategy,
-                                          AccessControlContext accessControlContext,
                                           InitializationStrategy initializationStrategy,
                                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                           DescriptionStrategy descriptionStrategy,
@@ -6271,7 +6212,6 @@ public interface AgentBuilder {
                                                      LocationStrategy locationStrategy,
                                                      Listener listener,
                                                      NativeMethodStrategy nativeMethodStrategy,
-                                                     AccessControlContext accessControlContext,
                                                      InitializationStrategy initializationStrategy,
                                                      BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                                      DescriptionStrategy descriptionStrategy,
@@ -6284,7 +6224,6 @@ public interface AgentBuilder {
                                     locationStrategy,
                                     listener,
                                     nativeMethodStrategy,
-                                    accessControlContext,
                                     initializationStrategy,
                                     bootstrapInjectionStrategy,
                                     descriptionStrategy,
@@ -6337,7 +6276,6 @@ public interface AgentBuilder {
                                                      LocationStrategy locationStrategy,
                                                      Listener listener,
                                                      NativeMethodStrategy nativeMethodStrategy,
-                                                     AccessControlContext accessControlContext,
                                                      InitializationStrategy initializationStrategy,
                                                      BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                                      DescriptionStrategy descriptionStrategy,
@@ -6349,7 +6287,6 @@ public interface AgentBuilder {
                                 locationStrategy,
                                 listener,
                                 nativeMethodStrategy,
-                                accessControlContext,
                                 initializationStrategy,
                                 bootstrapInjectionStrategy,
                                 descriptionStrategy,
@@ -6397,7 +6334,6 @@ public interface AgentBuilder {
                                         LocationStrategy.class,
                                         Listener.class,
                                         NativeMethodStrategy.class,
-                                        AccessControlContext.class,
                                         InitializationStrategy.class,
                                         BootstrapInjectionStrategy.class,
                                         DescriptionStrategy.class,
@@ -6632,7 +6568,7 @@ public interface AgentBuilder {
 
             /**
              * A dispatcher for applying the actual transformation. In order to avoid that all code within a transformer is executed as
-             * privileged code, the supplied {@link AccessControlContext} is used to limit the available privileges to the intersection
+             * privileged code, the contextual {@link AccessControlContext} is used to limit the available privileges to the intersection
              * of privileges during the transformation process.
              */
             protected class ExecutionDispatcher implements PrivilegedAction<byte[]> {
@@ -6810,11 +6746,6 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder with(AccessControlContext accessControlContext) {
-                return materialize().with(accessControlContext);
-            }
-
-            @Override
             public AgentBuilder with(InitializationStrategy initializationStrategy) {
                 return materialize().with(initializationStrategy);
             }
@@ -6982,7 +6913,6 @@ public interface AgentBuilder {
                         locationStrategy,
                         listener,
                         nativeMethodStrategy,
-                        accessControlContext,
                         initializationStrategy,
                         redefinitionStrategy,
                         bootstrapInjectionStrategy,
@@ -7078,7 +7008,6 @@ public interface AgentBuilder {
                         locationStrategy,
                         listener,
                         nativeMethodStrategy,
-                        accessControlContext,
                         initializationStrategy,
                         redefinitionStrategy,
                         bootstrapInjectionStrategy,
