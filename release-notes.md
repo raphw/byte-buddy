@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. July 2016: version 1.4.14
+
+- Fixed bug with handling of legacy byte code instructions in `Advice` component.
+- Cleaned up and refactored usage of `AccessController`. Added privileged handling to `AgentBuilder`.
+- Added proper buffering to non-buffered interaction with file streams.
+- Make `ByteBuddy` creation more robust by adding a default fallback for unknown VMs.
+- Improved support for Java 9.
+
 ### 19. July 2016: version 1.4.13
 
 - Lazily compute `Implementation.Target` and `Implementation.Context` in case of a type inlining to provide correct feature set. Added validation if this constraint is broken.
