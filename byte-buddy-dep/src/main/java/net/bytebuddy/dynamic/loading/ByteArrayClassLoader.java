@@ -123,6 +123,7 @@ public class ByteArrayClassLoader extends ClassLoader {
      *                                  the {@code typeDefinitions}.
      * @return A corresponding class loader.
      */
+    @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
     public static ClassLoader of(ClassLoader parent,
                                  Map<TypeDescription, byte[]> typeDefinitions,
                                  ProtectionDomain protectionDomain,
