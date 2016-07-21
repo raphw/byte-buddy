@@ -259,7 +259,7 @@ public interface LatentMatcher<T> {
          *
          * @param matcher The matchers this compound matcher represents.
          */
-        //@SafeVarargs
+        @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
         public Compound(LatentMatcher<? super S>... matcher) {
             this(Arrays.asList(matcher));
         }

@@ -4926,7 +4926,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param annotation The set of illegal annotations.
                  */
-                //@SafeVarargs
+                @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                 protected Illegal(Class<? extends Annotation>... annotation) {
                     this(Arrays.asList(annotation));
                 }

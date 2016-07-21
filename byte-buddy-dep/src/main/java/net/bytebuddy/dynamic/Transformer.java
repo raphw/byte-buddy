@@ -533,7 +533,7 @@ public interface Transformer<T> {
          *
          * @param transformer The list of transformers to apply in their application order.
          */
-        // @SafeVarargs
+        @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
         public Compound(Transformer<S>... transformer) {
             this(Arrays.asList(transformer));
         }
