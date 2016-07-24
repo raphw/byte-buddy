@@ -1792,7 +1792,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected void onUserReturn() {
-                    if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                    if (!doesReturn || !instrumentedMethod.getReturnType().represents(void.class)) {
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
                     }
                 }
