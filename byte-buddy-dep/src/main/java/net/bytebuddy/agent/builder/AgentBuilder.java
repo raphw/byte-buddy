@@ -78,6 +78,9 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * applies the transformers that were supplied with the last applicable matcher. Therefore, more general transformers
  * should be defined first.
  * </p>
+ * <p>
+ * <b>Note</b>: Any transformation is performed using the {@link AccessControlContext} of an agent's creator.
+ * </p>
  */
 public interface AgentBuilder {
 
@@ -6038,11 +6041,11 @@ public interface AgentBuilder {
                                     Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
-                return AccessController.doPrivileged(new LegacyDispatcher(classLoader,
+                return AccessController.doPrivileged(new LegacyVmDispatcher(classLoader,
                         internalTypeName,
                         classBeingRedefined,
                         protectionDomain,
-                        binaryRepresentation));
+                        binaryRepresentation), accessControlContext);
             }
 
             /**
@@ -6065,7 +6068,7 @@ public interface AgentBuilder {
                         internalTypeName,
                         classBeingRedefined,
                         protectionDomain,
-                        binaryRepresentation));
+                        binaryRepresentation), accessControlContext);
             }
 
             /**
@@ -6088,12 +6091,32 @@ public interface AgentBuilder {
                 if (internalTypeName == null) {
                     return NO_TRANSFORMATION;
                 }
-                return AccessController.doPrivileged(new ExecutionDispatcher(module,
-                        classLoader,
-                        internalTypeName.replace('/', '.'),
-                        classBeingRedefined,
-                        protectionDomain,
-                        binaryRepresentation), accessControlContext);
+                String typeName = internalTypeName.replace('/', '.');
+                try {
+                    ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(typeName,
+                            binaryRepresentation,
+                            locationStrategy.classFileLocator(classLoader, module));
+                    TypePool typePool = typeLocator.typePool(classFileLocator, classLoader);
+                    return transformation.resolve(descriptionStrategy.apply(typeName, classBeingRedefined, typePool),
+                            classLoader,
+                            module,
+                            classBeingRedefined,
+                            protectionDomain,
+                            typePool,
+                            ignoredTypeMatcher).apply(initializationStrategy,
+                            classFileLocator,
+                            typeStrategy,
+                            byteBuddy,
+                            nativeMethodStrategy,
+                            bootstrapInjectionStrategy,
+                            accessControlContext,
+                            listener);
+                } catch (Throwable throwable) {
+                    listener.onError(typeName, classLoader, module, throwable);
+                    return NO_TRANSFORMATION;
+                } finally {
+                    listener.onComplete(typeName, classLoader, module);
+                }
             }
 
             @Override
@@ -6326,7 +6349,8 @@ public interface AgentBuilder {
                                         ProtectionDomain.class,
                                         byte[].class)).onSuper().withAllArguments())
                                 .make()
-                                .load(ExecutingTransformer.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                                .load(ExecutingTransformer.class.getClassLoader(),
+                                        ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(ExecutingTransformer.class.getProtectionDomain()))
                                 .getLoaded()
                                 .getDeclaredConstructor(ByteBuddy.class,
                                         TypeLocator.class,
@@ -6353,7 +6377,7 @@ public interface AgentBuilder {
             /**
              * A privileged action for transforming a class on a JVM prior to Java 9.
              */
-            protected class LegacyDispatcher implements PrivilegedAction<byte[]> {
+            protected class LegacyVmDispatcher implements PrivilegedAction<byte[]> {
 
                 /**
                  * The type's class loader or {@code null} if the bootstrap class loader is represented.
@@ -6389,11 +6413,11 @@ public interface AgentBuilder {
                  * @param protectionDomain     The type's protection domain.
                  * @param binaryRepresentation The type's binary representation.
                  */
-                protected LegacyDispatcher(ClassLoader classLoader,
-                                           String internalTypeName,
-                                           Class<?> classBeingRedefined,
-                                           ProtectionDomain protectionDomain,
-                                           byte[] binaryRepresentation) {
+                protected LegacyVmDispatcher(ClassLoader classLoader,
+                                             String internalTypeName,
+                                             Class<?> classBeingRedefined,
+                                             ProtectionDomain protectionDomain,
+                                             byte[] binaryRepresentation) {
                     this.classLoader = classLoader;
                     this.internalTypeName = internalTypeName;
                     this.classBeingRedefined = classBeingRedefined;
@@ -6424,7 +6448,7 @@ public interface AgentBuilder {
                 public boolean equals(Object object) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
-                    LegacyDispatcher that = (LegacyDispatcher) object;
+                    LegacyVmDispatcher that = (LegacyVmDispatcher) object;
                     return (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null)
                             && (internalTypeName != null ? internalTypeName.equals(that.internalTypeName) : that.internalTypeName == null)
                             && (classBeingRedefined != null ? classBeingRedefined.equals(that.classBeingRedefined) : that.classBeingRedefined == null)
@@ -6446,7 +6470,7 @@ public interface AgentBuilder {
 
                 @Override
                 public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.LegacyDispatcher{" +
+                    return "AgentBuilder.Default.ExecutingTransformer.LegacyVmDispatcher{" +
                             "outer=" + ExecutingTransformer.this +
                             ", classLoader=" + classLoader +
                             ", internalTypeName='" + internalTypeName + '\'' +
@@ -6559,145 +6583,6 @@ public interface AgentBuilder {
                             "outer=" + ExecutingTransformer.this +
                             ", rawModule=" + rawModule +
                             ", internalTypeName='" + internalTypeName + '\'' +
-                            ", classBeingRedefined=" + classBeingRedefined +
-                            ", protectionDomain=" + protectionDomain +
-                            ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                            '}';
-                }
-            }
-
-            /**
-             * A dispatcher for applying the actual transformation. In order to avoid that all code within a transformer is executed as
-             * privileged code, the contextual {@link AccessControlContext} is used to limit the available privileges to the intersection
-             * of privileges during the transformation process.
-             */
-            protected class ExecutionDispatcher implements PrivilegedAction<byte[]> {
-
-                /**
-                 * The Java module of the transformed class or {@code null} if the current VM does not support modules.
-                 */
-                private final JavaModule module;
-
-                /**
-                 * The type's class loader or {@code null} if it is the bootstrap class loader.
-                 */
-                private final ClassLoader classLoader;
-
-                /**
-                 * The type's internal name or {@code null} if no such name exists.
-                 */
-                private final String binaryTypeName;
-
-                /**
-                 * The class being redefined or {@code null} if no such class exists.
-                 */
-                private final Class<?> classBeingRedefined;
-
-                /**
-                 * The type's protection domain.
-                 */
-                private final ProtectionDomain protectionDomain;
-
-                /**
-                 * The type's binary representation.
-                 */
-                private final byte[] binaryRepresentation;
-
-                /**
-                 * Creates a new execution dispatcher.
-                 *
-                 * @param module               The Java module of the transformed class or {@code null} if the current VM does not support modules.
-                 * @param classLoader          The type's class loader or {@code null} if it is the bootstrap class loader.
-                 * @param binaryTypeName       The type's internal name or {@code null} if no such name exists.
-                 * @param classBeingRedefined  The class being redefined or {@code null} if no such class exists.
-                 * @param protectionDomain     The type's protection domain.
-                 * @param binaryRepresentation The type's binary representation.
-                 */
-                protected ExecutionDispatcher(JavaModule module,
-                                              ClassLoader classLoader,
-                                              String binaryTypeName,
-                                              Class<?> classBeingRedefined,
-                                              ProtectionDomain protectionDomain,
-                                              byte[] binaryRepresentation) {
-                    this.module = module;
-                    this.classLoader = classLoader;
-                    this.binaryTypeName = binaryTypeName;
-                    this.classBeingRedefined = classBeingRedefined;
-                    this.protectionDomain = protectionDomain;
-                    this.binaryRepresentation = binaryRepresentation;
-                }
-
-                @Override
-                public byte[] run() {
-                    try {
-                        ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(binaryTypeName,
-                                binaryRepresentation,
-                                locationStrategy.classFileLocator(classLoader, module));
-                        TypePool typePool = typeLocator.typePool(classFileLocator, classLoader);
-                        return transformation.resolve(descriptionStrategy.apply(binaryTypeName, classBeingRedefined, typePool),
-                                classLoader,
-                                module,
-                                classBeingRedefined,
-                                protectionDomain,
-                                typePool,
-                                ignoredTypeMatcher).apply(initializationStrategy,
-                                classFileLocator,
-                                typeStrategy,
-                                byteBuddy,
-                                nativeMethodStrategy,
-                                bootstrapInjectionStrategy,
-                                accessControlContext,
-                                listener);
-                    } catch (Throwable throwable) {
-                        listener.onError(binaryTypeName, classLoader, module, throwable);
-                        return NO_TRANSFORMATION;
-                    } finally {
-                        listener.onComplete(binaryTypeName, classLoader, module);
-                    }
-                }
-
-                /**
-                 * Returns the outer instance.
-                 *
-                 * @return The outer instance.
-                 */
-                private ExecutingTransformer getOuter() {
-                    return ExecutingTransformer.this;
-                }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ExecutionDispatcher that = (ExecutionDispatcher) object;
-                    return module.equals(that.module)
-                            && binaryTypeName.equals(that.binaryTypeName)
-                            && (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null)
-                            && (classBeingRedefined != null ? classBeingRedefined.equals(that.classBeingRedefined) : that.classBeingRedefined == null)
-                            && protectionDomain.equals(that.protectionDomain)
-                            && ExecutingTransformer.this.equals(that.getOuter())
-                            && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = module != null ? module.hashCode() : 0;
-                    result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
-                    result = 31 * result + binaryTypeName.hashCode();
-                    result = 31 * result + (classBeingRedefined != null ? classBeingRedefined.hashCode() : 0);
-                    result = 31 * result + protectionDomain.hashCode();
-                    result = 31 * result + ExecutingTransformer.this.hashCode();
-                    result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.ExecutionDispatcher{" +
-                            "outer=" + ExecutingTransformer.this +
-                            ", module=" + module +
-                            ", classLoader=" + classLoader +
-                            ", binaryTypeName='" + binaryTypeName + '\'' +
                             ", classBeingRedefined=" + classBeingRedefined +
                             ", protectionDomain=" + protectionDomain +
                             ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +

@@ -27,6 +27,9 @@ import java.util.*;
  * These URLs do not represent URIs as two classes with the same name yield identical URLs but might represents different byte
  * arrays.
  * </p>
+ * <p>
+ * <b>Note</b>: Any class and package definition is performed using the creator's {@link AccessControlContext}.
+ * </p>
  */
 public class ByteArrayClassLoader extends ClassLoader {
 

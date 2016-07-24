@@ -1238,13 +1238,6 @@ public class AgentBuilderDefaultTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.InheritanceAction.class);
-        final Iterator<Class<?>> execution = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.ExecutionDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return execution.next();
-            }
-        }).apply();
         final Iterator<Class<?>> java9Dispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
@@ -1253,7 +1246,7 @@ public class AgentBuilderDefaultTest {
             }
         }).apply();
         final Iterator<Class<?>> legacyDispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.LegacyDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.LegacyVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
                 return legacyDispatcher.next();

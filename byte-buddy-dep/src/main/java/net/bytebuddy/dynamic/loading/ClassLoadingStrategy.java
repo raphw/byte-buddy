@@ -118,13 +118,13 @@ public interface ClassLoadingStrategy {
         }
 
         @Override
-        public Configurable withProtectionDomain(ProtectionDomain protectionDomain) {
-            return dispatcher.withProtectionDomain(protectionDomain);
+        public Configurable with(ProtectionDomain protectionDomain) {
+            return dispatcher.with(protectionDomain);
         }
 
         @Override
-        public Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy) {
-            return dispatcher.withPackageDefinitionStrategy(packageDefinitionStrategy);
+        public Configurable with(PackageDefinitionStrategy packageDefinitionStrategy) {
+            return dispatcher.with(packageDefinitionStrategy);
         }
 
         @Override
@@ -189,12 +189,12 @@ public interface ClassLoadingStrategy {
             }
 
             @Override
-            public Configurable withProtectionDomain(ProtectionDomain protectionDomain) {
+            public Configurable with(ProtectionDomain protectionDomain) {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, forbidExisting);
             }
 
             @Override
-            public Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy) {
+            public Configurable with(PackageDefinitionStrategy packageDefinitionStrategy) {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, forbidExisting);
             }
 
@@ -319,12 +319,12 @@ public interface ClassLoadingStrategy {
             }
 
             @Override
-            public Configurable withProtectionDomain(ProtectionDomain protectionDomain) {
+            public Configurable with(ProtectionDomain protectionDomain) {
                 return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting);
             }
 
             @Override
-            public Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy) {
+            public Configurable with(PackageDefinitionStrategy packageDefinitionStrategy) {
                 return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting);
             }
 
@@ -379,7 +379,7 @@ public interface ClassLoadingStrategy {
          * @param protectionDomain The protection domain to apply.
          * @return This class loading strategy with an explicitly set {@link java.security.ProtectionDomain}.
          */
-        Configurable withProtectionDomain(ProtectionDomain protectionDomain);
+        Configurable with(ProtectionDomain protectionDomain);
 
         /**
          * Defines the supplied package definition strategy to be used for defining packages.
@@ -387,7 +387,7 @@ public interface ClassLoadingStrategy {
          * @param packageDefinitionStrategy The package definer to be used.
          * @return A version of this class loading strategy that applies the supplied package definition strategy.
          */
-        Configurable withPackageDefinitionStrategy(PackageDefinitionStrategy packageDefinitionStrategy);
+        Configurable with(PackageDefinitionStrategy packageDefinitionStrategy);
 
         /**
          * Determines if this class loading strategy should not throw an exception when attempting to load a class that
