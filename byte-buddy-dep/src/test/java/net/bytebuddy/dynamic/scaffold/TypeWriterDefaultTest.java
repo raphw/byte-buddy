@@ -7,6 +7,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.modifier.ModifierConstributorObjectPropertiesTest;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
@@ -171,7 +172,16 @@ public class TypeWriterDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testNonPublicMethodOnInterfaceAssertion() throws Exception {
-        new ByteBuddy()
+        new ByteBuddy(ClassFileVersion.JAVA_V6)
+                .makeInterface()
+                .defineMethod(FOO, void.class)
+                .withoutCode()
+                .make();
+    }
+
+    @Test
+    public void testNonPublicMethodOnInterfaceAssertionJava8() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V8)
                 .makeInterface()
                 .defineMethod(FOO, void.class)
                 .withoutCode()
@@ -229,6 +239,7 @@ public class TypeWriterDefaultTest {
     public void testAnnotationDefaultValueOnClassAssertion() throws Exception {
         new ByteBuddy()
                 .subclass(Object.class)
+                .merge(TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, String.class)
                 .defaultValue(BAR)
                 .make();
@@ -237,8 +248,7 @@ public class TypeWriterDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testAnnotationDefaultValueOnInterfaceClassAssertion() throws Exception {
         new ByteBuddy()
-                .subclass(Object.class)
-                .modifiers(TypeManifestation.INTERFACE)
+                .makeInterface()
                 .defineMethod(FOO, String.class)
                 .defaultValue(BAR)
                 .make();
