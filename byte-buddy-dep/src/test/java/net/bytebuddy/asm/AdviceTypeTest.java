@@ -1,11 +1,18 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.Implementation;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
+import java.io.ObjectInputStream;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -75,6 +82,7 @@ public class AdviceTypeTest {
     public void testAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
+                .visit(new SerializationAssertion())
                 .visit(Advice.withCustomMapping()
                         .bind(CustomAnnotation.class, value)
                         .to(advice)
@@ -91,6 +99,7 @@ public class AdviceTypeTest {
     public void testAdviceWithException() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
+                .visit(new SerializationAssertion())
                 .visit(Advice.withCustomMapping()
                         .bind(CustomAnnotation.class, value)
                         .to(advice)
@@ -1781,5 +1790,40 @@ public class AdviceTypeTest {
     @Target(ElementType.PARAMETER)
     private @interface CustomAnnotation {
         /* empty */
+    }
+
+    private static class SerializationAssertion extends AsmVisitorWrapper.AbstractBase {
+
+        @Override
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+            return new SerializationClassVisitor(classVisitor);
+        }
+
+        private static class SerializationClassVisitor extends ClassVisitor {
+
+            public SerializationClassVisitor(ClassVisitor classVisitor) {
+                super(Opcodes.ASM5, classVisitor);
+            }
+
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+                return new SerializationMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions));
+            }
+        }
+
+        private static class SerializationMethodVisitor extends MethodVisitor {
+
+            public SerializationMethodVisitor(MethodVisitor methodVisitor) {
+                super(Opcodes.ASM5, methodVisitor);
+            }
+
+            @Override
+            public void visitTypeInsn(int opcode, String type) {
+                if (type.equals(Type.getInternalName(ObjectInputStream.class))) {
+                    throw new AssertionError("Unexpected deserialization");
+                }
+                super.visitTypeInsn(opcode, type);
+            }
+        }
     }
 }
