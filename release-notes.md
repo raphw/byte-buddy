@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 25. July 2016: version 1.4.15
+
+- Fixed frame generation for `void` methods without regular return in `Advice`.
+- Fixed `TypeValidation` for Java 8 interfaces not allowing private methods.
+- Simplified and documented `AccessController` usage.
+
 ### 21. July 2016: version 1.4.14
 
 - Fixed bug with handling of legacy byte code instructions in `Advice` component.
