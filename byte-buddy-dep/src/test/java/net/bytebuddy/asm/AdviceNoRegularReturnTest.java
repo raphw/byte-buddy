@@ -43,10 +43,26 @@ public class AdviceNoRegularReturnTest {
     }
 
     @Test
+    public void testNoRegularReturnWithSkip() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(this.type)
+                .visit(Advice.to(EnterAdviceSkip.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+        }
+    }
+
+    @Test
     public void testNoRegularReturnWithoutHandler() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(this.type)
-                .visit(Advice.to(AdviceWithoutHandler.class).on(named(FOO)))
+                .visit(Advice.to(ExitAdviceWithoutHandler.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -62,7 +78,7 @@ public class AdviceNoRegularReturnTest {
     public void testNoRegularReturnWithHandler() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(this.type)
-                .visit(Advice.to(AdviceWithHandler.class).on(named(FOO)))
+                .visit(Advice.to(ExitAdviceWithHandler.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -74,7 +90,15 @@ public class AdviceNoRegularReturnTest {
         }
     }
 
-    private static class AdviceWithoutHandler {
+    private static class EnterAdviceSkip {
+
+        @Advice.OnMethodEnter(skipIfTrue = true)
+        private static boolean enter() {
+            return false;
+        }
+    }
+
+    private static class ExitAdviceWithoutHandler {
 
         @Advice.OnMethodExit
         private static void exit() {
@@ -82,7 +106,7 @@ public class AdviceNoRegularReturnTest {
         }
     }
 
-    private static class AdviceWithHandler {
+    private static class ExitAdviceWithHandler {
 
         @Advice.OnMethodExit(onThrowable = RuntimeException.class)
         private static void exit() {
