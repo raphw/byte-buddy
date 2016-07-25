@@ -17,6 +17,7 @@ import org.junit.runners.Parameterized;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Arrays;
@@ -33,11 +34,11 @@ public class AdviceInconsistentStackSizeTest {
 
     private final Class<?> type;
 
-    private final Object original, replaced;
+    private final Serializable original, replaced;
 
     private final int opcode;
 
-    public AdviceInconsistentStackSizeTest(Class<?> type, Object original, Object replaced, int opcode) {
+    public AdviceInconsistentStackSizeTest(Class<?> type, Serializable original, Serializable replaced, int opcode) {
         this.type = type;
         this.original = original;
         this.replaced = replaced;
@@ -75,7 +76,7 @@ public class AdviceInconsistentStackSizeTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(adviced.getDeclaredMethod(FOO).invoke(adviced.newInstance()), is(replaced));
+        assertThat(adviced.getDeclaredMethod(FOO).invoke(adviced.newInstance()), is((Object) replaced));
     }
 
     @Test

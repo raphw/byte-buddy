@@ -14,6 +14,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -1547,12 +1548,12 @@ public class AdviceTest {
                                   boolean initialized) {
                 return null;
             }
-        }).bind(Custom.class, null);
+        }).bind(Custom.class, (Serializable) null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNotAnnotationType() throws Exception {
-        Advice.withCustomMapping().bind(Annotation.class, null);
+        Advice.withCustomMapping().bind(Annotation.class, (Serializable) null);
     }
 
     @Test(expected = IllegalStateException.class)

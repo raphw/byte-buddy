@@ -13,6 +13,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -70,9 +71,9 @@ public class AdviceTypeTest {
 
     private final Class<?> type;
 
-    private final Object value;
+    private final Serializable value;
 
-    public AdviceTypeTest(Class<?> advice, Class<?> type, Object value) {
+    public AdviceTypeTest(Class<?> advice, Class<?> type, Serializable value) {
         this.advice = advice;
         this.type = type;
         this.value = value;
@@ -90,7 +91,7 @@ public class AdviceTypeTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, this.type, this.type).invoke(type.newInstance(), value, value), is(value));
+        assertThat(type.getDeclaredMethod(FOO, this.type, this.type).invoke(type.newInstance(), value, value), is((Object) value));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
@@ -109,7 +110,7 @@ public class AdviceTypeTest {
                 .getLoaded();
         type.getDeclaredField(exception).set(null, true);
         try {
-            assertThat(type.getDeclaredMethod(BAR, this.type, this.type).invoke(type.newInstance(), value, value), is(value));
+            assertThat(type.getDeclaredMethod(BAR, this.type, this.type).invoke(type.newInstance(), value, value), is((Object) value));
             fail();
         } catch (InvocationTargetException exception) {
             assertThat(exception.getCause(), instanceOf(RuntimeException.class));
