@@ -1723,6 +1723,7 @@ public class AdviceTest {
             }
         }).applyBasic();
         ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.DynamicValue.ForAnnotationProperty.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.class).apply();
     }
 
