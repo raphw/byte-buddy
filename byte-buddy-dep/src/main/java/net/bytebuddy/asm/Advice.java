@@ -7930,7 +7930,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Binds the supplied annotation to the annotation property of the specified name.
+         * Binds the supplied annotation to the annotation's property of the specified name.
          *
          * @param type     The type of the annotation being bound.
          * @param property The name of the annotation property to be bound.
