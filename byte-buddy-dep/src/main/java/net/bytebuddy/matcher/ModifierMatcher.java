@@ -120,12 +120,24 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
          */
         ANNOTATION(Opcodes.ACC_ANNOTATION, "isAnnotation()"),
 
+        /**
+         * Matches a volatile field.
+         */
         VOLATILE(Opcodes.ACC_VOLATILE, "isVolatile()"),
 
+        /**
+         * Matches a transient field.
+         */
         TRANSIENT(Opcodes.ACC_TRANSIENT, "isTransient()"),
 
+        /**
+         * Matches a mandated parameter.
+         */
         MANDATED(Opcodes.ACC_MANDATED, "isMandated()"),
 
+        /**
+         * Matches a type or field for describing an enumeration.
+         */
         ENUMERATION(Opcodes.ACC_ENUM, "isEnum()");
 
         /**

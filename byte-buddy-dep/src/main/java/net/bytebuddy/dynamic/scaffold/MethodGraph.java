@@ -7,6 +7,7 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
+import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
@@ -125,7 +126,7 @@ public interface MethodGraph {
              * Creates a new delegation method graph.
              *
              * @param methodGraph     The represented type's method graph.
-             * @param superClassGraph      The super class's method graph.
+             * @param superClassGraph The super class's method graph.
              * @param interfaceGraphs A mapping of method graphs of the represented type's directly implemented interfaces to their graph representatives.
              */
             public Delegation(MethodGraph methodGraph, MethodGraph superClassGraph, Map<TypeDescription, MethodGraph> interfaceGraphs) {
@@ -1275,6 +1276,12 @@ public interface MethodGraph {
                         class Resolved<U> implements Entry<U> {
 
                             /**
+                             * Indicates that a type's methods are already globally visible, meaning that a bridge method is not added
+                             * with the intend of creating a visibility bridge.
+                             */
+                            private static final int MADE_VISIBLE = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED;
+
+                            /**
                              * The harmonized key this entry represents.
                              */
                             private final Harmonized<U> key;
@@ -1302,6 +1309,21 @@ public interface MethodGraph {
                                 this.madeVisible = madeVisible;
                             }
 
+                            /**
+                             * Creates an entry for an override where a method overrides another method within a super class.
+                             *
+                             * @param key      The merged key for both methods.
+                             * @param override The method declared by the extending type, potentially a bridge method.
+                             * @param original The method that is overridden by the extending type.
+                             * @param <V>      The type of the harmonized key to determine method equality.
+                             * @return An entry representing the merger of both methods.
+                             */
+                            private static <V> Entry<V> of(Harmonized<V> key, MethodDescription override, MethodDescription original) {
+                                return override.isBridge()
+                                        ? new Resolved<V>(key, original, (original.getDeclaringType().asErasure().getModifiers() & MADE_VISIBLE) == 0)
+                                        : new Resolved<V>(key, override, false);
+                            }
+
                             @Override
                             public Harmonized<U> getKey() {
                                 return key;
@@ -1317,7 +1339,7 @@ public interface MethodGraph {
                                 Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription)
-                                        : new Resolved<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, methodDescription.isBridge() && !this.methodDescription.getDeclaringType().asErasure().isPublic()); // TODO: or protected -> check visibility
+                                        : Resolved.of(key, methodDescription, this.methodDescription);
                             }
 
                             @Override
@@ -1355,15 +1377,6 @@ public interface MethodGraph {
                                         ", methodDescription=" + methodDescription +
                                         ", madeVisible=" + madeVisible +
                                         '}';
-                            }
-
-                            protected enum TypeContext {
-
-                                PUBLIC,
-
-                                VISIBLE,
-
-                                INVISIBLE;
                             }
 
                             /**

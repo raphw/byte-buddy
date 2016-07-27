@@ -36,9 +36,12 @@ public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatc
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {ModifierMatcher.Mode.ABSTRACT, Opcodes.ACC_ABSTRACT},
+                {ModifierMatcher.Mode.ANNOTATION, Opcodes.ACC_ANNOTATION},
                 {ModifierMatcher.Mode.BRIDGE, Opcodes.ACC_BRIDGE},
+                {ModifierMatcher.Mode.ENUMERATION, Opcodes.ACC_ENUM},
                 {ModifierMatcher.Mode.FINAL, Opcodes.ACC_FINAL},
                 {ModifierMatcher.Mode.INTERFACE, Opcodes.ACC_INTERFACE},
+                {ModifierMatcher.Mode.MANDATED, Opcodes.ACC_MANDATED},
                 {ModifierMatcher.Mode.NATIVE, Opcodes.ACC_NATIVE},
                 {ModifierMatcher.Mode.PRIVATE, Opcodes.ACC_PRIVATE},
                 {ModifierMatcher.Mode.PROTECTED, Opcodes.ACC_PROTECTED},
@@ -46,7 +49,8 @@ public class ModifierMatcherTest extends AbstractElementMatcherTest<ModifierMatc
                 {ModifierMatcher.Mode.STATIC, Opcodes.ACC_STATIC},
                 {ModifierMatcher.Mode.STRICT, Opcodes.ACC_STRICT},
                 {ModifierMatcher.Mode.SYNCHRONIZED, Opcodes.ACC_SYNCHRONIZED},
-                {ModifierMatcher.Mode.SYNTHETIC, Opcodes.ACC_SYNTHETIC}
+                {ModifierMatcher.Mode.SYNTHETIC, Opcodes.ACC_SYNTHETIC},
+                {ModifierMatcher.Mode.TRANSIENT, Opcodes.ACC_TRANSIENT}
         });
     }
 
