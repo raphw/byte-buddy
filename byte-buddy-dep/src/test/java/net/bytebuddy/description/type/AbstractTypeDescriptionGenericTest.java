@@ -1249,6 +1249,14 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    public void testChangedVarialeName() throws Exception {
+        TypeDescription.Generic typeDescription = describeReturnType(ChangedVariableName.class.getDeclaredMethod(BAR));
+        MethodDescription methodDescription = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(named(FOO)).getOnly();
+        assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(8)
     @SuppressWarnings("unchecked")
     public void testTypeAnnotationsFieldType() throws Exception {
@@ -1856,6 +1864,17 @@ public abstract class AbstractTypeDescriptionGenericTest {
         <S> void qux(SampleType<S, T> arg);
 
         interface SampleType<U, V> {
+            /* empty */
+        }
+    }
+
+    interface ChangedVariableName<T> {
+
+        T foo();
+
+        Inner<T> bar();
+
+        interface Inner<S> extends ChangedVariableName<S> {
             /* empty */
         }
     }
