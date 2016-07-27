@@ -203,6 +203,16 @@ public final class ElementMatchers {
     }
 
     /**
+     * Matches a parameter description for a {@code mandated} parameter.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code mandated} parameter.
+     */
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> isMandated() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.MANDATED);
+    }
+
+    /**
      * Exactly matches a given type as a {@link TypeDescription}.
      *
      * @param type The type to match by its description
@@ -790,13 +800,23 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link ModifierReviewable} that is {@code abstract}.
+     * Matches a {@link ModifierReviewable.OfAbstraction} that is {@code abstract}.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code abstract} modifier reviewable.
      */
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isAbstract() {
+    public static <T extends ModifierReviewable.OfAbstraction> ElementMatcher.Junction<T> isAbstract() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.ABSTRACT);
+    }
+
+    /**
+     * Matches a {@link ModifierReviewable.OfEnumeration} that is an {@code enum} or a field holding an enum.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for an enum.
+     */
+    public static <T extends ModifierReviewable.OfEnumeration> ElementMatcher.Junction<T> isEnum() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.ENUMERATION);
     }
 
     /**
@@ -862,7 +882,7 @@ public final class ElementMatchers {
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code public} modifier reviewable.
      */
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPublic() {
+    public static <T extends ModifierReviewable.OfByteCodeElement> ElementMatcher.Junction<T> isPublic() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.PUBLIC);
     }
 
@@ -872,7 +892,7 @@ public final class ElementMatchers {
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code protected} modifier reviewable.
      */
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isProtected() {
+    public static <T extends ModifierReviewable.OfByteCodeElement> ElementMatcher.Junction<T> isProtected() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.PROTECTED);
     }
 
@@ -882,7 +902,7 @@ public final class ElementMatchers {
      * @param <T> The type of the matched object.
      * @return A matcher for a package-private modifier reviewable.
      */
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPackagePrivate() {
+    public static <T extends ModifierReviewable.OfByteCodeElement> ElementMatcher.Junction<T> isPackagePrivate() {
         return not(isPublic().or(isProtected()).or(isPrivate()));
     }
 
@@ -892,8 +912,18 @@ public final class ElementMatchers {
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code private} modifier reviewable.
      */
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isPrivate() {
+    public static <T extends ModifierReviewable.OfByteCodeElement> ElementMatcher.Junction<T> isPrivate() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.PRIVATE);
+    }
+
+    /**
+     * Matches a {@link ModifierReviewable} that is {@code static}.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code static} modifier reviewable.
+     */
+    public static <T extends ModifierReviewable.OfByteCodeElement> ElementMatcher.Junction<T> isStatic() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.STATIC);
     }
 
     /**
@@ -904,16 +934,6 @@ public final class ElementMatchers {
      */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isFinal() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.FINAL);
-    }
-
-    /**
-     * Matches a {@link ModifierReviewable} that is {@code static}.
-     *
-     * @param <T> The type of the matched object.
-     * @return A matcher for a {@code static} modifier reviewable.
-     */
-    public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isStatic() {
-        return new ModifierMatcher<T>(ModifierMatcher.Mode.STATIC);
     }
 
     /**
@@ -932,7 +952,7 @@ public final class ElementMatchers {
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code synchronized} method description.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSynchronized() {
+    public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isSynchronized() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.SYNCHRONIZED);
     }
 
@@ -942,7 +962,7 @@ public final class ElementMatchers {
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code native} method description.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isNative() {
+    public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isNative() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.NATIVE);
     }
 
@@ -952,7 +972,7 @@ public final class ElementMatchers {
      * @param <T> The type of the matched object.
      * @return A matcher for a {@code strictfp} method description.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isStrict() {
+    public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isStrict() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.STRICT);
     }
 
@@ -962,7 +982,7 @@ public final class ElementMatchers {
      * @param <T> The type of the matched object.
      * @return A matcher for a var-args method description.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isVarArgs() {
+    public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isVarArgs() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.VAR_ARGS);
     }
 
@@ -972,7 +992,7 @@ public final class ElementMatchers {
      * @param <T> The type of the matched object.
      * @return A matcher for a bridge method.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isBridge() {
+    public static <T extends ModifierReviewable.ForMethodDescription> ElementMatcher.Junction<T> isBridge() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.BRIDGE);
     }
 
@@ -1372,13 +1392,24 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link TypeDescription} that is an interface.
+     * Matches a {@link TypeDescription} that is an interface. Annotation types are also considered interface types.
      *
      * @param <T> The type of the matched object.
      * @return A matcher for an interface.
+     * @see ElementMatchers#isAnnotation()
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isInterface() {
         return new ModifierMatcher<T>(ModifierMatcher.Mode.INTERFACE);
+    }
+
+    /**
+     * Matches a {@link TypeDescription} that is an annotation type.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for an annotation type.
+     */
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> isAnnotation() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.ANNOTATION);
     }
 
     /**
@@ -1827,6 +1858,26 @@ public final class ElementMatchers {
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldType(ElementMatcher<? super TypeDescription> matcher) {
         return genericFieldType(rawType(matcher));
+    }
+
+    /**
+     * Matches a {@code volatile} field.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code volatile} field.
+     */
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> isVolatile() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.VOLATILE);
+    }
+
+    /**
+     * Matches a {@code transient} field.
+     *
+     * @param <T> The type of the matched object.
+     * @return A matcher for a {@code transient} field.
+     */
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> isTransient() {
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.TRANSIENT);
     }
 
     /**

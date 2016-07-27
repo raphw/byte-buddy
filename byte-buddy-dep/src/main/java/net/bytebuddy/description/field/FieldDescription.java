@@ -21,6 +21,7 @@ import java.util.List;
  * {@code equal(Object)} and {@code hashCode()} implementations.
  */
 public interface FieldDescription extends ByteCodeElement,
+        ModifierReviewable.ForFieldDescription,
         NamedElement.WithGenericName,
         ByteCodeElement.TypeDependant<FieldDescription.InDefinedShape, FieldDescription.Token> {
 

@@ -22,7 +22,7 @@ public class ModifierReviewableTest {
 
     public ModifierReviewableTest(int modifiers, String methodName) throws Exception {
         simpleModifierReviewable = new SimpleModifierReviewable(modifiers);
-        method = ModifierReviewable.class.getDeclaredMethod(methodName);
+        method = ModifierReviewable.AbstractBase.class.getMethod(methodName);
     }
 
     @Parameterized.Parameters
@@ -42,13 +42,12 @@ public class ModifierReviewableTest {
                 {Opcodes.ACC_PUBLIC, "isPublic"},
                 {Opcodes.ACC_STATIC, "isStatic"},
                 {Opcodes.ACC_STRICT, "isStrict"},
-                {Opcodes.ACC_SUPER, "isSuper"},
                 {Opcodes.ACC_SYNCHRONIZED, "isSynchronized"},
                 {Opcodes.ACC_SYNTHETIC, "isSynthetic"},
                 {Opcodes.ACC_TRANSIENT, "isTransient"},
                 {Opcodes.ACC_VARARGS, "isVarArgs"},
                 {Opcodes.ACC_VOLATILE, "isVolatile"},
-                {0, "isPackagePrivate"}
+                {ModifierReviewable.EMPTY_MASK, "isPackagePrivate"}
         });
     }
 

@@ -112,10 +112,24 @@ public class ElementMatchersTest {
 
     @Test
     public void testIsField() throws Exception {
-        assertThat(ElementMatchers.is(FieldType.class.getDeclaredField("foo"))
-                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(true));
-        assertThat(ElementMatchers.is(FieldType.class.getDeclaredField("bar"))
-                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(false));
+        assertThat(ElementMatchers.is(FieldSample.class.getDeclaredField("foo"))
+                .matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("foo"))), is(true));
+        assertThat(ElementMatchers.is(FieldSample.class.getDeclaredField("bar"))
+                .matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("foo"))), is(false));
+    }
+
+    @Test
+    public void testIsVolatile() throws Exception {
+        assertThat(ElementMatchers.isVolatile().matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("foo"))), is(false));
+        assertThat(ElementMatchers.isVolatile().matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("qux"))), is(true));
+        assertThat(ElementMatchers.isVolatile().matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("baz"))), is(false));
+    }
+
+    @Test
+    public void testIsTransient() throws Exception {
+        assertThat(ElementMatchers.isTransient().matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("foo"))), is(false));
+        assertThat(ElementMatchers.isTransient().matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("qux"))), is(false));
+        assertThat(ElementMatchers.isTransient().matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("baz"))), is(true));
     }
 
     @Test
@@ -332,12 +346,12 @@ public class ElementMatchersTest {
 
     @Test
     public void testNoneOfField() throws Exception {
-        assertThat(ElementMatchers.noneOf(FieldType.class.getDeclaredField("foo"))
-                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(false));
-        assertThat(ElementMatchers.noneOf(FieldType.class.getDeclaredField("bar"))
-                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(true));
-        assertThat(ElementMatchers.noneOf(FieldType.class.getDeclaredField("foo"), FieldType.class.getDeclaredField("bar"))
-                .matches(new FieldDescription.ForLoadedField(FieldType.class.getDeclaredField("foo"))), is(false));
+        assertThat(ElementMatchers.noneOf(FieldSample.class.getDeclaredField("foo"))
+                .matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("foo"))), is(false));
+        assertThat(ElementMatchers.noneOf(FieldSample.class.getDeclaredField("bar"))
+                .matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("foo"))), is(true));
+        assertThat(ElementMatchers.noneOf(FieldSample.class.getDeclaredField("foo"), FieldSample.class.getDeclaredField("bar"))
+                .matches(new FieldDescription.ForLoadedField(FieldSample.class.getDeclaredField("foo"))), is(false));
     }
 
     @Test
@@ -566,58 +580,74 @@ public class ElementMatchersTest {
 
     @Test
     public void testIsPublic() throws Exception {
-        ModifierReviewable modifierReviewable = mock(ModifierReviewable.class);
+        ModifierReviewable.OfByteCodeElement modifierReviewable = mock(ModifierReviewable.OfByteCodeElement.class);
         when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC);
         assertThat(ElementMatchers.isPublic().matches(modifierReviewable), is(true));
-        assertThat(ElementMatchers.isPublic().matches(mock(ModifierReviewable.class)), is(false));
+        assertThat(ElementMatchers.isPublic().matches(mock(ModifierReviewable.OfByteCodeElement.class)), is(false));
     }
 
     @Test
     public void testIsProtected() throws Exception {
-        ModifierReviewable modifierReviewable = mock(ModifierReviewable.class);
+        ModifierReviewable.OfByteCodeElement modifierReviewable = mock(ModifierReviewable.OfByteCodeElement.class);
         when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_PROTECTED);
         assertThat(ElementMatchers.isProtected().matches(modifierReviewable), is(true));
-        assertThat(ElementMatchers.isProtected().matches(mock(ModifierReviewable.class)), is(false));
+        assertThat(ElementMatchers.isProtected().matches(mock(ModifierReviewable.OfByteCodeElement.class)), is(false));
     }
 
     @Test
     public void testIsPackagePrivate() throws Exception {
-        ModifierReviewable modifierReviewable = mock(ModifierReviewable.class);
+        ModifierReviewable.OfByteCodeElement modifierReviewable = mock(ModifierReviewable.OfByteCodeElement.class);
         when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED);
-        assertThat(ElementMatchers.isPackagePrivate().matches(mock(ModifierReviewable.class)), is(true));
+        assertThat(ElementMatchers.isPackagePrivate().matches(mock(ModifierReviewable.OfByteCodeElement.class)), is(true));
         assertThat(ElementMatchers.isPackagePrivate().matches(modifierReviewable), is(false));
     }
 
     @Test
     public void testIsPrivate() throws Exception {
-        ModifierReviewable modifierReviewable = mock(ModifierReviewable.class);
+        ModifierReviewable.OfByteCodeElement modifierReviewable = mock(ModifierReviewable.OfByteCodeElement.class);
         when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_PRIVATE);
         assertThat(ElementMatchers.isPrivate().matches(modifierReviewable), is(true));
-        assertThat(ElementMatchers.isPrivate().matches(mock(ModifierReviewable.class)), is(false));
+        assertThat(ElementMatchers.isPrivate().matches(mock(ModifierReviewable.OfByteCodeElement.class)), is(false));
     }
 
     @Test
     public void testIsAbstract() throws Exception {
-        ModifierReviewable modifierReviewable = mock(ModifierReviewable.class);
+        ModifierReviewable.OfAbstraction modifierReviewable = mock(ModifierReviewable.OfAbstraction.class);
         when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_ABSTRACT);
         assertThat(ElementMatchers.isAbstract().matches(modifierReviewable), is(true));
-        assertThat(ElementMatchers.isAbstract().matches(mock(ModifierReviewable.class)), is(false));
+        assertThat(ElementMatchers.isAbstract().matches(mock(ModifierReviewable.OfAbstraction.class)), is(false));
+    }
+
+    @Test
+    public void testIsEnum() throws Exception {
+        ModifierReviewable.OfEnumeration modifierReviewable = mock(ModifierReviewable.OfEnumeration.class);
+        when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_ENUM);
+        assertThat(ElementMatchers.isEnum().matches(modifierReviewable), is(true));
+        assertThat(ElementMatchers.isEnum().matches(mock(ModifierReviewable.OfEnumeration.class)), is(false));
+    }
+
+    @Test
+    public void testIsMandated() throws Exception {
+        ParameterDescription parameterDescription = mock(ParameterDescription.class);
+        when(parameterDescription.getModifiers()).thenReturn(Opcodes.ACC_MANDATED);
+        assertThat(ElementMatchers.isMandated().matches(parameterDescription), is(true));
+        assertThat(ElementMatchers.isMandated().matches(mock(ParameterDescription.class)), is(false));
     }
 
     @Test
     public void testIsFinal() throws Exception {
-        ModifierReviewable modifierReviewable = mock(ModifierReviewable.class);
+        ModifierReviewable.OfByteCodeElement modifierReviewable = mock(ModifierReviewable.OfByteCodeElement.class);
         when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_FINAL);
         assertThat(ElementMatchers.isFinal().matches(modifierReviewable), is(true));
-        assertThat(ElementMatchers.isFinal().matches(mock(ModifierReviewable.class)), is(false));
+        assertThat(ElementMatchers.isFinal().matches(mock(ModifierReviewable.OfByteCodeElement.class)), is(false));
     }
 
     @Test
     public void testIsStatic() throws Exception {
-        ModifierReviewable modifierReviewable = mock(ModifierReviewable.class);
+        ModifierReviewable.OfByteCodeElement modifierReviewable = mock(ModifierReviewable.OfByteCodeElement.class);
         when(modifierReviewable.getModifiers()).thenReturn(Opcodes.ACC_STATIC);
         assertThat(ElementMatchers.isStatic().matches(modifierReviewable), is(true));
-        assertThat(ElementMatchers.isStatic().matches(mock(ModifierReviewable.class)), is(false));
+        assertThat(ElementMatchers.isStatic().matches(mock(ModifierReviewable.OfByteCodeElement.class)), is(false));
     }
 
     @Test
@@ -1150,11 +1180,15 @@ public class ElementMatchersTest {
     }
 
     @SuppressWarnings("unused")
-    public static class FieldType {
+    public static class FieldSample {
 
         String foo;
 
         Object bar;
+
+        volatile Object qux;
+
+        transient Object baz;
     }
 
     private static class IsDeclaredBy {

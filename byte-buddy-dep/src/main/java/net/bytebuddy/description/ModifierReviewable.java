@@ -2,8 +2,6 @@ package net.bytebuddy.description;
 
 import org.objectweb.asm.Opcodes;
 
-import java.lang.reflect.Modifier;
-
 /**
  * Implementations of this interface can be described in terms of a Java modifier.
  */
@@ -15,74 +13,18 @@ public interface ModifierReviewable {
     int EMPTY_MASK = 0;
 
     /**
+     * Returns the modifier that is described by this object.
+     *
+     * @return The modifier that is described by this object.
+     */
+    int getModifiers();
+
+    /**
      * Specifies if the modifier described by this object is {@code final}.
      *
      * @return {@code true} if the modifier described by this object is {@code final}.
      */
     boolean isFinal();
-
-    /**
-     * Specifies if the modifier described by this object is {@code static}.
-     *
-     * @return {@code true} if the modifier described by this object is {@code static}.
-     */
-    boolean isStatic();
-
-    /**
-     * Specifies if the modifier described by this object is {@code public}.
-     *
-     * @return {@code true} if the modifier described by this object is {@code public}.
-     */
-    boolean isPublic();
-
-    /**
-     * Specifies if the modifier described by this object is {@code protected}.
-     *
-     * @return {@code true} if the modifier described by this object is {@code protected}.
-     */
-    boolean isProtected();
-
-    /**
-     * Specifies if the modifier described by this object is package private.
-     *
-     * @return {@code true} if the modifier described by this object is package private.
-     */
-    boolean isPackagePrivate();
-
-    /**
-     * Specifies if the modifier described by this object is {@code private}.
-     *
-     * @return {@code true} if the modifier described by this object is {@code private}.
-     */
-    boolean isPrivate();
-
-    /**
-     * Specifies if the modifier described by this object is {@code abstract}.
-     *
-     * @return {@code true} if the modifier described by this object is {@code abstract}.
-     */
-    boolean isAbstract();
-
-    /**
-     * Specifies if the modifier described by this object is {@code native}.
-     *
-     * @return {@code true} if the modifier described by this object is {@code native}.
-     */
-    boolean isNative();
-
-    /**
-     * Specifies if the modifier described by this object is {@code synchronized}.
-     *
-     * @return {@code true} if the modifier described by this object is {@code synchronized}.
-     */
-    boolean isSynchronized();
-
-    /**
-     * Specifies if the modifier described by this object is {@code strictfp}.
-     *
-     * @return {@code true} if the modifier described by this object is {@code strictfp}.
-     */
-    boolean isStrict();
 
     /**
      * Specifies if the modifier described by this object is synthetic.
@@ -92,110 +34,203 @@ public interface ModifierReviewable {
     boolean isSynthetic();
 
     /**
-     * CSpecifies if the modifier described by this object is mandated.
-     *
-     * @return {@code true} if the modifier described by this object is mandated.
+     * A modifier reviewable for a {@link ByteCodeElement}, i.e. a type, a field or a method.
      */
-    boolean isMandated();
+    interface OfByteCodeElement extends ModifierReviewable {
+
+        /**
+         * Specifies if the modifier described by this object is {@code public}.
+         *
+         * @return {@code true} if the modifier described by this object is {@code public}.
+         */
+        boolean isPublic();
+
+        /**
+         * Specifies if the modifier described by this object is {@code protected}.
+         *
+         * @return {@code true} if the modifier described by this object is {@code protected}.
+         */
+        boolean isProtected();
+
+        /**
+         * Specifies if the modifier described by this object is package private.
+         *
+         * @return {@code true} if the modifier described by this object is package private.
+         */
+        boolean isPackagePrivate();
+
+        /**
+         * Specifies if the modifier described by this object is {@code private}.
+         *
+         * @return {@code true} if the modifier described by this object is {@code private}.
+         */
+        boolean isPrivate();
+
+        /**
+         * Specifies if the modifier described by this object is {@code static}.
+         *
+         * @return {@code true} if the modifier described by this object is {@code static}.
+         */
+        boolean isStatic();
+
+        /**
+         * Specifies if the modifier described by this object represents the deprecated flag.
+         *
+         * @return {@code true} if the modifier described by this object represents the deprecated flag.
+         */
+        boolean isDeprecated();
+    }
 
     /**
-     * Specifies if the modifier described by this object reflects the type super flag.
-     *
-     * @return {@code true} if the modifier described by this object reflects the type super flag.
+     * A modifier reviewable for a byte code element that can be abstract, i.e. a {@link net.bytebuddy.description.type.TypeDescription}
+     * or a {@link net.bytebuddy.description.method.MethodDescription}.
      */
-    boolean isSuper();
+    interface OfAbstraction extends OfByteCodeElement {
+
+        /**
+         * Specifies if the modifier described by this object is {@code abstract}.
+         *
+         * @return {@code true} if the modifier described by this object is {@code abstract}.
+         */
+        boolean isAbstract();
+    }
 
     /**
-     * Specifies if the modifier described by this object represents the bridge flag.
-     *
-     * @return {@code true} if the modifier described by this object represents the bridge flag
+     * A modifier reviewable for a byte code element that can represent an enumeration, i.e. a {@link net.bytebuddy.description.field.FieldDescription}
+     * that holds an enumeration value or a {@link net.bytebuddy.description.type.TypeDescription} that represents an enumeration.
      */
-    boolean isBridge();
+    interface OfEnumeration extends OfByteCodeElement {
+
+        /**
+         * Specifies if the modifier described by this object represents the enum flag.
+         *
+         * @return {@code true} if the modifier described by this object represents the enum flag.
+         */
+        boolean isEnum();
+    }
 
     /**
-     * Specifies if the modifier described by this object represents the deprecated flag.
-     *
-     * @return {@code true} if the modifier described by this object represents the deprecated flag.
+     * A modifier reviewable for a {@link net.bytebuddy.description.type.TypeDescription}.
      */
-    boolean isDeprecated();
+    interface ForTypeDescription extends OfAbstraction, OfEnumeration {
+
+        /**
+         * Specifies if the modifier described by this object represents the interface flag.
+         *
+         * @return {@code true} if the modifier described by this object represents the interface flag.
+         */
+        boolean isInterface();
+
+        /**
+         * Specifies if the modifier described by this object represents the annotation flag.
+         *
+         * @return {@code true} if the modifier described by this object represents the annotation flag.
+         */
+        boolean isAnnotation();
+    }
 
     /**
-     * Specifies if the modifier described by this object represents the annotation flag.
-     *
-     * @return {@code true} if the modifier described by this object represents the annotation flag.
+     * A modifier reviewable for a {@link net.bytebuddy.description.field.FieldDescription}.
      */
-    boolean isAnnotation();
+    interface ForFieldDescription extends OfEnumeration {
+
+        /**
+         * Specifies if the modifier described by this object represents the volatile flag.
+         *
+         * @return {@code true} if the modifier described by this object represents the volatile flag.
+         */
+        boolean isVolatile();
+
+        /**
+         * Specifies if the modifier described by this object represents the transient flag.
+         *
+         * @return {@code true} if the modifier described by this object represents the transient flag.
+         */
+        boolean isTransient();
+    }
 
     /**
-     * Specifies if the modifier described by this object represents the enum flag.
-     *
-     * @return {@code true} if the modifier described by this object represents the enum flag.
+     * A modifier reviewable for a {@link net.bytebuddy.description.method.MethodDescription}.
      */
-    boolean isEnum();
+    interface ForMethodDescription extends OfAbstraction {
+
+        /**
+         * Specifies if the modifier described by this object is {@code synchronized}.
+         *
+         * @return {@code true} if the modifier described by this object is {@code synchronized}.
+         */
+        boolean isSynchronized();
+
+        /**
+         * Specifies if the modifier described by this object is {@code native}.
+         *
+         * @return {@code true} if the modifier described by this object is {@code native}.
+         */
+        boolean isNative();
+
+        /**
+         * Specifies if the modifier described by this object represents the var args flag.
+         *
+         * @return {@code true} if the modifier described by this object represents the var args flag.
+         */
+        boolean isVarArgs();
+
+        /**
+         * Specifies if the modifier described by this object represents the bridge flag.
+         *
+         * @return {@code true} if the modifier described by this object represents the bridge flag
+         */
+        boolean isBridge();
+
+        /**
+         * Specifies if the modifier described by this object is {@code strictfp}.
+         *
+         * @return {@code true} if the modifier described by this object is {@code strictfp}.
+         */
+        boolean isStrict();
+    }
 
     /**
-     * Specifies if the modifier described by this object represents the interface flag.
-     *
-     * @return {@code true} if the modifier described by this object represents the interface flag.
+     * A modifier reviewable for a {@link net.bytebuddy.description.method.ParameterDescription}.
      */
-    boolean isInterface();
+    interface ForParameterDescription extends ModifierReviewable {
 
-    /**
-     * Specifies if the modifier described by this object represents the transient flag.
-     *
-     * @return {@code true} if the modifier described by this object represents the transient flag.
-     */
-    boolean isTransient();
-
-    /**
-     * Specifies if the modifier described by this object represents the volatile flag.
-     *
-     * @return {@code true} if the modifier described by this object represents the volatile flag.
-     */
-    boolean isVolatile();
-
-    /**
-     * Specifies if the modifier described by this object represents the var args flag.
-     *
-     * @return {@code true} if the modifier described by this object represents the var args flag.
-     */
-    boolean isVarArgs();
-
-    /**
-     * Returns the modifier that is described by this object.
-     *
-     * @return The modifier that is described by this object.
-     */
-    int getModifiers();
+        /**
+         * CSpecifies if the modifier described by this object is mandated.
+         *
+         * @return {@code true} if the modifier described by this object is mandated.
+         */
+        boolean isMandated();
+    }
 
     /**
      * An abstract base implementation of a {@link ModifierReviewable} class.
      */
-    abstract class AbstractBase implements ModifierReviewable {
+    abstract class AbstractBase implements ForTypeDescription, ForFieldDescription, ForMethodDescription, ForParameterDescription {
 
         @Override
         public boolean isAbstract() {
-            return matchesMask(Modifier.ABSTRACT);
+            return matchesMask(Opcodes.ACC_ABSTRACT);
         }
 
         @Override
         public boolean isFinal() {
-            return matchesMask(Modifier.FINAL);
+            return matchesMask(Opcodes.ACC_FINAL);
         }
 
         @Override
         public boolean isStatic() {
-            return matchesMask(Modifier.STATIC);
+            return matchesMask(Opcodes.ACC_STATIC);
         }
 
         @Override
         public boolean isPublic() {
-            return matchesMask(Modifier.PUBLIC);
+            return matchesMask(Opcodes.ACC_PUBLIC);
         }
 
         @Override
         public boolean isProtected() {
-            return matchesMask(Modifier.PROTECTED);
+            return matchesMask(Opcodes.ACC_PROTECTED);
         }
 
         @Override
@@ -205,22 +240,22 @@ public interface ModifierReviewable {
 
         @Override
         public boolean isPrivate() {
-            return matchesMask(Modifier.PRIVATE);
+            return matchesMask(Opcodes.ACC_PRIVATE);
         }
 
         @Override
         public boolean isNative() {
-            return matchesMask(Modifier.NATIVE);
+            return matchesMask(Opcodes.ACC_NATIVE);
         }
 
         @Override
         public boolean isSynchronized() {
-            return matchesMask(Modifier.SYNCHRONIZED);
+            return matchesMask(Opcodes.ACC_SYNCHRONIZED);
         }
 
         @Override
         public boolean isStrict() {
-            return matchesMask(Modifier.STRICT);
+            return matchesMask(Opcodes.ACC_STRICT);
         }
 
         @Override
@@ -231,11 +266,6 @@ public interface ModifierReviewable {
         @Override
         public boolean isSynthetic() {
             return matchesMask(Opcodes.ACC_SYNTHETIC);
-        }
-
-        @Override
-        public boolean isSuper() {
-            return matchesMask(Opcodes.ACC_SUPER);
         }
 
         @Override

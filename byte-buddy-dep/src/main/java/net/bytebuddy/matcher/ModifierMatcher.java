@@ -113,7 +113,20 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
         /**
          * Matches a type that is considered an interface.
          */
-        INTERFACE(Opcodes.ACC_INTERFACE, "isInterface()");
+        INTERFACE(Opcodes.ACC_INTERFACE, "isInterface()"),
+
+        /**
+         * Matches a type that is considered an annotation.
+         */
+        ANNOTATION(Opcodes.ACC_ANNOTATION, "isAnnotation()"),
+
+        VOLATILE(Opcodes.ACC_VOLATILE, "isVolatile()"),
+
+        TRANSIENT(Opcodes.ACC_TRANSIENT, "isTransient()"),
+
+        MANDATED(Opcodes.ACC_MANDATED, "isMandated()"),
+
+        ENUMERATION(Opcodes.ACC_ENUM, "isEnum()");
 
         /**
          * The mask of the modifier to match.

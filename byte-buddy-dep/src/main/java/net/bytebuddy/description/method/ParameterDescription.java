@@ -25,7 +25,7 @@ import java.util.List;
 public interface ParameterDescription extends AnnotatedCodeElement,
         NamedElement.WithRuntimeName,
         NamedElement.WithOptionalName,
-        ModifierReviewable,
+        ModifierReviewable.ForParameterDescription,
         ByteCodeElement.TypeDependant<ParameterDescription.InDefinedShape, ParameterDescription.Token> {
 
     /**

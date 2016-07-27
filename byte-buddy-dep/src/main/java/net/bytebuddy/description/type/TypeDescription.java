@@ -1,6 +1,7 @@
 package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -33,7 +34,7 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
  * Implementations of this interface represent a Java type, i.e. a class or interface. Instances of this interface always
  * represent non-generic types of sort {@link Generic.Sort#NON_GENERIC}.
  */
-public interface TypeDescription extends TypeDefinition, TypeVariableSource {
+public interface TypeDescription extends TypeDefinition, TypeVariableSource, ModifierReviewable.ForTypeDescription {
 
     /**
      * A representation of the {@link java.lang.Object} type.
