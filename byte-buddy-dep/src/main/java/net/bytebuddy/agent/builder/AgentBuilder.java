@@ -5,10 +5,13 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.NexusAccessor;
@@ -2362,13 +2365,25 @@ public interface AgentBuilder {
             },
 
             /**
-             * Applies the same logic as {@link Default#POOL_LAST} but only resolves the actual {@link TypeDescription}
-             * if any property that cannot be derived by the type name is accessed.
+             * A description strategy that applies the same resolution as {@link Default#POOL_LAST} but only resolves the actual
+             * {@link TypeDescription} if any property that cannot be derived by the type name is accessed.
              */
             POOL_LAST_DEFERRED {
                 @Override
                 public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
                     return new LazyTypeDescriptionWithEagerProperties(typeName, type, typePool);
+                }
+            },
+
+            /**
+             * A description strategy that falls back to the type pool if a field, method or name cannot be resolved from a loaded type.
+             */
+            POOL_LAST_FALLBACK {
+                @Override
+                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
+                    return type == null
+                            ? typePool.describe(typeName).resolve()
+                            : new TypeDescriptionWithFallbackProperties(typeName, type, typePool);
                 }
             };
 
@@ -2395,7 +2410,7 @@ public interface AgentBuilder {
                 private final String typeName;
 
                 /**
-                 * The loaded version of the type being described.
+                 * The loaded version of the type being described or {@code null} if no such type is available.
                  */
                 private final Class<?> type;
 
@@ -2414,7 +2429,7 @@ public interface AgentBuilder {
                  * Creates a new lazy type description with eager properties.
                  *
                  * @param typeName The binary name of the type being described.
-                 * @param type     The loaded version of the type being described.
+                 * @param type     The loaded version of the type being described or {@code null} if no such type is available.
                  * @param typePool The type pool to use.
                  */
                 protected LazyTypeDescriptionWithEagerProperties(String typeName, Class<?> type, TypePool typePool) {
@@ -2436,6 +2451,61 @@ public interface AgentBuilder {
                         this.delegate = delegate;
                     }
                     return delegate;
+                }
+            }
+
+            /**
+             * A type description that falls back to a {@link TypePool} description if the type's declared types,
+             * fields or methods cannot be resolved successfully.
+             */
+            protected static class TypeDescriptionWithFallbackProperties extends TypeDescription.ForLoadedType {
+
+                /**
+                 * The type's binary name.
+                 */
+                private final String typeName;
+
+                /**
+                 * The type pool for resolving the type description.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * @param typeName The type's binary name.
+                 * @param type     The loaded type this instance represents.
+                 * @param typePool The type pool for resolving the type description.
+                 */
+                protected TypeDescriptionWithFallbackProperties(String typeName, Class<?> type, TypePool typePool) {
+                    super(type);
+                    this.typeName = typeName;
+                    this.typePool = typePool;
+                }
+
+                @Override
+                public TypeList getDeclaredTypes() {
+                    try {
+                        return super.getDeclaredTypes();
+                    } catch (Throwable ignored) {
+                        return typePool.describe(typeName).resolve().getDeclaredTypes();
+                    }
+                }
+
+                @Override
+                public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
+                    try {
+                        return super.getDeclaredFields();
+                    } catch (Throwable ignored) {
+                        return typePool.describe(typeName).resolve().getDeclaredFields();
+                    }
+                }
+
+                @Override
+                public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
+                    try {
+                        return super.getDeclaredMethods();
+                    } catch (Throwable ignored) {
+                        return typePool.describe(typeName).resolve().getDeclaredMethods();
+                    }
                 }
             }
         }
