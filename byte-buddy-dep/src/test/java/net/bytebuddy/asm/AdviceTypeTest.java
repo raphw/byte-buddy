@@ -3,7 +3,6 @@ package net.bytebuddy.asm;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.implementation.Implementation;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -21,6 +20,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Locale;
 
 import static junit.framework.TestCase.fail;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -115,6 +115,26 @@ public class AdviceTypeTest {
         } catch (InvocationTargetException exception) {
             assertThat(exception.getCause(), instanceOf(RuntimeException.class));
         }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceWithProperty() throws Exception {
+        if (type == Void.class) {
+            return; // No void property on annotations.
+        }
+        Class<?> type = new ByteBuddy()
+                .redefine(advice)
+                .visit(new SerializationAssertion())
+                .visit(Advice.withCustomMapping()
+                        .bindProperty(CustomAnnotation.class, this.type.getSimpleName().toLowerCase(Locale.US) + "Value")
+                        .to(advice)
+                        .on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, this.type, this.type).invoke(type.newInstance(), value, value), is((Object) value));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
@@ -1789,8 +1809,26 @@ public class AdviceTypeTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
+    @SuppressWarnings("unused")
     private @interface CustomAnnotation {
-        /* empty */
+
+        boolean booleanValue() default BOOLEAN;
+
+        byte byteValue() default VALUE;
+
+        short shortValue() default VALUE;
+
+        char charValue() default VALUE;
+
+        int intValue() default VALUE;
+
+        long longValue() default VALUE;
+
+        float floatValue() default VALUE;
+
+        double doubleValue() default VALUE;
+
+        String objectValue() default FOO;
     }
 
     private static class SerializationAssertion extends AsmVisitorWrapper.AbstractBase {

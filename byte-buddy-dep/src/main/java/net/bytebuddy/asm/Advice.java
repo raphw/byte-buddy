@@ -7809,6 +7809,72 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         '}';
             }
         }
+
+        /**
+         * A dynamic value for an annotation type's property.
+         *
+         * @param <T> The type of the annotation for which a property is bound.
+         */
+        class ForAnnotationProperty<T extends Annotation> implements DynamicValue<T> {
+
+            /**
+             * The annotation property.
+             */
+            private final MethodDescription.InDefinedShape annotationProperty;
+
+            /**
+             * Creates a new dynamic value for an annotation property.
+             *
+             * @param annotationProperty The annotation property.
+             */
+            protected ForAnnotationProperty(MethodDescription.InDefinedShape annotationProperty) {
+                this.annotationProperty = annotationProperty;
+            }
+
+            /**
+             * Locates the annotation property of the given name or throws an exception if no such property exists.
+             *
+             * @param type     The annotation type being bound.
+             * @param property The name of the annotation property.
+             * @param <T>      The type of the annotation.
+             * @return A dynamic value for the located property type.
+             */
+            protected static <T extends Annotation> DynamicValue<T> of(Class<? extends T> type, String property) {
+                try {
+                    return new ForAnnotationProperty<T>(new MethodDescription.ForLoadedMethod(type.getDeclaredMethod(property)));
+                } catch (NoSuchMethodException exception) {
+                    throw new IllegalArgumentException("Property '" + property + "' does not exist for " + type, exception);
+                }
+            }
+
+            @Override
+            public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                  ParameterDescription.InDefinedShape target,
+                                  AnnotationDescription.Loadable<T> annotation,
+                                  boolean initialized) {
+                return annotation.getValue(annotationProperty);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForAnnotationProperty<?> that = (ForAnnotationProperty<?>) object;
+                return annotationProperty.equals(that.annotationProperty);
+            }
+
+            @Override
+            public int hashCode() {
+                return annotationProperty.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Advice.DynamicValue.ForAnnotationProperty{" +
+                        "annotationProperty=" + annotationProperty +
+                        '}';
+            }
+        }
     }
 
     /**
@@ -7861,6 +7927,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Serializable value) {
             return bind(type, new DynamicValue.ForFixedValue(value));
+        }
+
+        /**
+         * Binds the supplied annotation to the annotation's property of the specified name.
+         *
+         * @param type     The type of the annotation being bound.
+         * @param property The name of the annotation property to be bound.
+         * @param <T>      The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bindProperty(Class<? extends T> type, String property) {
+            return bind(type, DynamicValue.ForAnnotationProperty.of(type, property));
         }
 
         /**
