@@ -2359,6 +2359,17 @@ public interface AgentBuilder {
                     }
                     return typePool.describe(typeName).resolve();
                 }
+            },
+
+            /**
+             * Applies the same logic as {@link Default#POOL_LAST} but only resolves the actual {@link TypeDescription}
+             * if any property that cannot be derived by the type name is accessed.
+             */
+            POOL_LAST_DEFERRED {
+                @Override
+                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
+                    return new LazyTypeDescriptionWithEagerProperties(typeName, type, typePool);
+                }
             };
 
             @Override
@@ -2371,6 +2382,61 @@ public interface AgentBuilder {
             @Override
             public String toString() {
                 return "AgentBuilder.DescriptionStrategy.Default." + name();
+            }
+
+            /**
+             * A type description that lazily resolves a instance of {@link LazyTypeDescriptionWithEagerProperties}.
+             */
+            protected static class LazyTypeDescriptionWithEagerProperties extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation {
+
+                /**
+                 * The binary name of the type being described.
+                 */
+                private final String typeName;
+
+                /**
+                 * The loaded version of the type being described.
+                 */
+                private final Class<?> type;
+
+                /**
+                 * The type pool to use.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * A cached version of this delegate. This field is {@code volatile} as a custom {@link TypePool} implementation
+                 * might return non-thread safe instances.
+                 */
+                private volatile TypeDescription delegate;
+
+                /**
+                 * Creates a new lazy type description with eager properties.
+                 *
+                 * @param typeName The binary name of the type being described.
+                 * @param type     The loaded version of the type being described.
+                 * @param typePool The type pool to use.
+                 */
+                protected LazyTypeDescriptionWithEagerProperties(String typeName, Class<?> type, TypePool typePool) {
+                    this.typeName = typeName;
+                    this.type = type;
+                    this.typePool = typePool;
+                }
+
+                @Override
+                public String getName() {
+                    return typeName;
+                }
+
+                @Override
+                protected TypeDescription delegate() {
+                    TypeDescription delegate = this.delegate;
+                    if (delegate == null) {
+                        delegate = POOL_LAST.apply(typeName, type, typePool);
+                        this.delegate = delegate;
+                    }
+                    return delegate;
+                }
             }
         }
     }
@@ -4788,7 +4854,7 @@ public interface AgentBuilder {
                     TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
                     locationStrategy,
                     listener,
-                    nativeMethodStrategy,
+                    NativeMethodStrategy.Disabled.INSTANCE,
                     InitializationStrategy.NoOp.INSTANCE,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
