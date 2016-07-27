@@ -356,6 +356,41 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    public void testGenericReturnTypeClassSingleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericReturnClassBase.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
+        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly().asSignatureToken();
+        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.getMethodTypes().size(), is(2));
+        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(methodNode.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+    }
+
+    @Test
+    public void testGenericReturnTypeClassMultipleEvolution() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericReturnClassBase.Intermediate.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
+        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodDescription.SignatureToken firstBridgeToken = typeDescription.getSuperClass().getDeclaredMethods()
+                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asDefined().asSignatureToken();
+        MethodDescription.SignatureToken secondBridgeToken = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods()
+                .filter(isMethod()).getOnly().asDefined().asSignatureToken();
+        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodNode.getMethodTypes().size(), is(3));
+        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(methodNode.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(methodNode.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+    }
+
+    @Test
     public void testGenericInterfaceSingleEvolution() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericInterfaceBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
@@ -905,6 +940,36 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    public void testDiamondInheritanceClass() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericDiamondClassBase.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        MethodDescription diamondOverride = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
+        MethodDescription explicitOverride = typeDescription.getSuperClass().getDeclaredMethods().filter(isVirtual()).getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(diamondOverride.asSignatureToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.VISIBLE)); // TODO.
+        assertThat(methodGraph.locate(explicitOverride.asDefined().asSignatureToken()), is(methodNode));
+        assertThat(methodNode.getMethodTypes().size(), is(2));
+        assertThat(methodNode.getMethodTypes().contains(diamondOverride.asTypeToken()), is(true));
+        assertThat(methodNode.getMethodTypes().contains(explicitOverride.asDefined().asTypeToken()), is(true));
+    }
+
+    @Test
+    public void testDiamondInheritanceInterface() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericDiamondInterfaceBase.Inner.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1));
+        MethodDescription diamondOverride = typeDescription.getInterfaces().get(0).getDeclaredMethods().getOnly();
+        MethodDescription explicitOverride = typeDescription.getInterfaces().get(1).getDeclaredMethods().getOnly();
+        MethodGraph.Node methodNode = methodGraph.locate(diamondOverride.asSignatureToken());
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(methodGraph.locate(explicitOverride.asDefined().asSignatureToken()), is(methodNode));
+        assertThat(methodNode.getMethodTypes().size(), is(2));
+        assertThat(methodNode.getMethodTypes().contains(diamondOverride.asTypeToken()), is(true));
+        assertThat(methodNode.getMethodTypes().contains(explicitOverride.asDefined().asTypeToken()), is(true));
+    }
+
+    @Test
     public void testOrphanedBridge() throws Exception {
         MethodDescription.SignatureToken bridgeMethod = new MethodDescription.SignatureToken("foo",
                 TypeDescription.VOID,
@@ -1205,6 +1270,37 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
+    public static class GenericReturnClassBase<T> {
+
+        public T foo() {
+            return null;
+        }
+
+        public static class Inner extends GenericReturnClassBase<Void> {
+
+            @Override
+            public Void foo() {
+                return null;
+            }
+        }
+
+        public static class Intermediate<T extends Number> extends GenericReturnClassBase<T> {
+
+            @Override
+            public T foo() {
+                return null;
+            }
+
+            public static class Inner extends Intermediate<Integer> {
+
+                @Override
+                public Integer foo() {
+                    return null;
+                }
+            }
+        }
+    }
+
     public static class ReturnTypeClassBase {
 
         public Object foo() {
@@ -1267,7 +1363,6 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    @SuppressWarnings("unused")
     public static class GenericNonOverriddenClassBase<T> {
 
         public T foo(T t) {
@@ -1279,7 +1374,36 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    @SuppressWarnings("unused")
+    public static class GenericDiamondClassBase<T> {
+
+        public T foo(T t) {
+            return null;
+        }
+
+        public interface DiamondInterface {
+
+            Void foo(Void t);
+        }
+
+        public class Inner extends GenericNonOverriddenClassBase<Void> implements DiamondInterface {
+            /* empty */
+        }
+    }
+
+    public interface GenericDiamondInterfaceBase<T> {
+
+        T foo(T t);
+
+        interface DiamondInterface  {
+
+            Void foo(Void s);
+        }
+
+        interface Inner extends GenericDiamondInterfaceBase<Void>, DiamondInterface {
+            /* empty */
+        }
+    }
+
     public static class DuplicateNameClass {
 
         public void foo(Object o) {
@@ -1298,7 +1422,6 @@ public class MethodGraphCompilerDefaultTest {
         }
     }
 
-    @SuppressWarnings("unused")
     public static class DuplicateNameGenericClass<T> {
 
         public void foo(T o) {

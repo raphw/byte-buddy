@@ -1322,7 +1322,7 @@ public interface MethodGraph {
 
                             @Override
                             public Entry<U> inject(Harmonized<U> key) {
-                                return new Resolved<U>(key.combineWith(key), methodDescription, madeVisible);
+                                return new Resolved<U>(this.key.combineWith(key), methodDescription, madeVisible);
                             }
 
                             @Override
@@ -1516,7 +1516,7 @@ public interface MethodGraph {
 
                             @Override
                             public Entry<U> inject(Harmonized<U> key) {
-                                return new Ambiguous<U>(key.combineWith(key), methodDescriptions);
+                                return new Ambiguous<U>(this.key.combineWith(key), methodDescriptions);
                             }
 
                             @Override
