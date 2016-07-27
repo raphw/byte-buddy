@@ -947,7 +947,7 @@ public class MethodGraphCompilerDefaultTest {
         MethodDescription diamondOverride = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
         MethodDescription explicitOverride = typeDescription.getSuperClass().getDeclaredMethods().filter(isVirtual()).getOnly();
         MethodGraph.Node methodNode = methodGraph.locate(diamondOverride.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.VISIBLE)); // TODO.
+        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(methodGraph.locate(explicitOverride.asDefined().asSignatureToken()), is(methodNode));
         assertThat(methodNode.getMethodTypes().size(), is(2));
         assertThat(methodNode.getMethodTypes().contains(diamondOverride.asTypeToken()), is(true));
@@ -1394,7 +1394,7 @@ public class MethodGraphCompilerDefaultTest {
 
         T foo(T t);
 
-        interface DiamondInterface  {
+        interface DiamondInterface {
 
             Void foo(Void s);
         }

@@ -1317,7 +1317,7 @@ public interface MethodGraph {
                                 Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
                                 return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
                                         ? Ambiguous.of(key, methodDescription, this.methodDescription)
-                                        : new Resolved<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, methodDescription.isBridge());
+                                        : new Resolved<U>(key, methodDescription.isBridge() ? this.methodDescription : methodDescription, methodDescription.isBridge() && !this.methodDescription.getDeclaringType().asErasure().isPublic()); // TODO: or protected -> check visibility
                             }
 
                             @Override
@@ -1355,6 +1355,15 @@ public interface MethodGraph {
                                         ", methodDescription=" + methodDescription +
                                         ", madeVisible=" + madeVisible +
                                         '}';
+                            }
+
+                            protected enum TypeContext {
+
+                                PUBLIC,
+
+                                VISIBLE,
+
+                                INVISIBLE;
                             }
 
                             /**
