@@ -32,6 +32,6 @@ public abstract class AbstractBlackHoleTest {
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Method method = blackHoleGenerator.getDeclaredMethod(BLACK_HOLE_METHOD);
-        blackHole = (Blackhole) method.invoke(blackHoleGenerator.getConstructor().newInstance());
+        blackHole = (Blackhole) method.invoke(blackHoleGenerator.getDeclaredConstructor().newInstance());
     }
 }

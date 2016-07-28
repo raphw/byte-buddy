@@ -70,7 +70,7 @@ public class ByteBuddyTest {
                 .make(TypeResolutionStrategy.Active.INSTANCE)
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getConstructor().newInstance(), instanceOf(type));
+        assertThat(type.getDeclaredConstructor().newInstance(), instanceOf(type));
         assertThat(recorder.counter, is(1));
     }
 

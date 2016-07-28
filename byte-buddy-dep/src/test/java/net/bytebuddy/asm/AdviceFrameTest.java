@@ -52,7 +52,7 @@ public class AdviceFrameTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) count));
     }
 
@@ -76,7 +76,7 @@ public class AdviceFrameTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) count));
     }
 
@@ -100,7 +100,7 @@ public class AdviceFrameTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) count));
     }
 
@@ -124,7 +124,7 @@ public class AdviceFrameTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) count));
     }
 

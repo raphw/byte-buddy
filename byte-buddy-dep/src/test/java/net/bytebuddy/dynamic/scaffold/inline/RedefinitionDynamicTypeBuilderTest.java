@@ -130,7 +130,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
                 .make()
                 .load(dynamicInterfaceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicClassType.getMethod(FOO).invoke(dynamicClassType.getConstructor().newInstance()), is((Object) BAR));
+        assertThat(dynamicClassType.getMethod(FOO).invoke(dynamicClassType.getDeclaredConstructor().newInstance()), is((Object) BAR));
         assertThat(dynamicInterfaceType.getDeclaredMethods().length, is(1));
         assertThat(dynamicClassType.getDeclaredMethods().length, is(0));
     }

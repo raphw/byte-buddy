@@ -14,7 +14,7 @@ public class MethodDelegationRuntimeTypeTest extends AbstractImplementationTest 
     @Test
     public void testRuntimeType() throws Exception {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(Bar.class));
-        Foo instance = loaded.getLoaded().getConstructor().newInstance();
+        Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(FOO), is(FOO));
     }
 

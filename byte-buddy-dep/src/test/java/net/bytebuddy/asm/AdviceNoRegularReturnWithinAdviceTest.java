@@ -72,7 +72,7 @@ public class AdviceNoRegularReturnWithinAdviceTest {
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
-            type.getDeclaredMethod(FOO).invoke(type.getConstructor().newInstance());
+            type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance());
             fail();
         } catch (InvocationTargetException exception) {
             assertThat(exception.getCause(), instanceOf(RuntimeException.class));

@@ -86,7 +86,7 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends Ab
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        T instance = loaded.getLoaded().getConstructor().newInstance();
+        T instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(StringTarget.class)));
         assertThat(instance, instanceOf(helperClass));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO).invoke(instance), is(fixedValue));
@@ -100,7 +100,7 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends Ab
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(fixedValue == null ? 0 : 1));
-        T instance = loaded.getLoaded().getConstructor().newInstance();
+        T instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(StringTarget.class)));
         assertThat(instance, instanceOf(helperClass));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO).invoke(instance), is(fixedValue));

@@ -58,7 +58,7 @@ public class AdviceDeadCodeTest {
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(redefined.getDeclaredMethod(FOO).invoke(redefined.getConstructor().newInstance()), is((Object) FOO));
+        assertThat(redefined.getDeclaredMethod(FOO).invoke(redefined.getDeclaredConstructor().newInstance()), is((Object) FOO));
     }
 
     @Test
@@ -86,7 +86,7 @@ public class AdviceDeadCodeTest {
                 .load(null, ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(redefined, not(sameInstance((Object) foo)));
-        assertThat(redefined.getDeclaredMethod(FOO).invoke(redefined.getConstructor().newInstance()), is((Object) FOO));
+        assertThat(redefined.getDeclaredMethod(FOO).invoke(redefined.getDeclaredConstructor().newInstance()), is((Object) FOO));
     }
 
     @SuppressWarnings("all")

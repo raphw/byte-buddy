@@ -8,7 +8,7 @@ public class MethodDelegationCheckedExceptionTest extends AbstractImplementation
     public void testUndeclaredCheckedException() throws Exception {
         implement(Foo.class, MethodDelegation.to(Foo.class))
                 .getLoaded()
-                .getConstructor()
+                .getDeclaredConstructor()
                 .newInstance()
                 .bar();
     }

@@ -79,7 +79,7 @@ public class ClassInjectorUsingReflectionTest {
                 .intercept(MethodDelegation.to(Interceptor.class)).make()
                 .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.getConstructor().newInstance(), FOO), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) BAR));
     }
 
     @Test

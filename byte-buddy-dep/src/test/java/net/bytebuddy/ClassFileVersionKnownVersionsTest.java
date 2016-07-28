@@ -110,7 +110,7 @@ public class ClassFileVersionKnownVersionsTest {
                     .make()
                     .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                     .getLoaded();
-            assertThat(type.getConstructor().newInstance(), notNullValue(Object.class));
+            assertThat(type.getDeclaredConstructor().newInstance(), notNullValue(Object.class));
         }
     }
 

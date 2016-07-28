@@ -212,7 +212,7 @@ public class ClassReloadingStrategyTest {
         Instrumentation instrumentation = ByteBuddyAgent.install();
         Class<?> factory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
         @SuppressWarnings("unchecked")
-        Callable<String> instance = (Callable<String>) factory.getDeclaredMethod("nonCapturing").invoke(factory.getConstructor().newInstance());
+        Callable<String> instance = (Callable<String>) factory.getDeclaredMethod("nonCapturing").invoke(factory.getDeclaredConstructor().newInstance());
         // Anonymous types can only be reset to their original format, if a retransformation is applied.
         ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(instrumentation,
                 ClassReloadingStrategy.Strategy.RETRANSFORMATION).preregistered(instance.getClass());
