@@ -6069,7 +6069,7 @@ public interface AgentBuilder {
             /**
              * A factory for creating a {@link ClassFileTransformer} that supports the features of the current VM.
              */
-            protected static final Factory FACTORY = AccessController.doPrivileged(InheritanceAction.INSTANCE);
+            protected static final Factory FACTORY = AccessController.doPrivileged(FactoryCreationOption.INSTANCE);
 
             /**
              * The Byte Buddy instance to be used.
@@ -6463,7 +6463,7 @@ public interface AgentBuilder {
             /**
              * An action to create an implementation of {@link ExecutingTransformer} that support Java 9 modules.
              */
-            protected enum InheritanceAction implements PrivilegedAction<Factory> {
+            protected enum FactoryCreationOption implements PrivilegedAction<Factory> {
 
                 /**
                  * The singleton instance.

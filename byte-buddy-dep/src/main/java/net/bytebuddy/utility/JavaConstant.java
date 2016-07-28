@@ -735,7 +735,7 @@ public interface JavaConstant {
          * @return The method descriptor of this method handle representation.
          */
         public String getDescriptor() {
-            StringBuilder stringBuilder = new StringBuilder("(");
+            StringBuilder stringBuilder = new StringBuilder().append('(');
             for (TypeDescription parameterType : parameterTypes) {
                 stringBuilder.append(parameterType.getDescriptor());
             }
