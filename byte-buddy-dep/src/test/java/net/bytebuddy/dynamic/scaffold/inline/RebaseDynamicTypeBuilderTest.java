@@ -161,7 +161,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
                 .make()
                 .load(dynamicInterfaceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicClassType.getMethod(FOO).invoke(dynamicClassType.newInstance()), is((Object) (FOO + BAR)));
+        assertThat(dynamicClassType.getMethod(FOO).invoke(dynamicClassType.getConstructor().newInstance()), is((Object) (FOO + BAR)));
         assertThat(dynamicInterfaceType.getDeclaredMethods().length, is(3));
         assertThat(dynamicClassType.getDeclaredMethods().length, is(0));
     }

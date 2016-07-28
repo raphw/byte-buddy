@@ -34,7 +34,7 @@ public class MethodDelegationDefaultTest extends AbstractImplementationTest {
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 Class.forName(DEFAULT_INTERFACE));
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO).invoke(instance), is((Object) (FOO + BAR)));
     }
 
@@ -46,7 +46,7 @@ public class MethodDelegationDefaultTest extends AbstractImplementationTest {
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 DelegationNoDefaultInterface.class);
-        DelegationNoDefaultInterface instance = (DelegationNoDefaultInterface) loaded.getLoaded().newInstance();
+        DelegationNoDefaultInterface instance = (DelegationNoDefaultInterface) loaded.getLoaded().getConstructor().newInstance();
         instance.foo();
     }
 
@@ -58,7 +58,7 @@ public class MethodDelegationDefaultTest extends AbstractImplementationTest {
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 Class.forName(DEFAULT_INTERFACE));
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO).invoke(instance), is((Object) (FOO + BAR)));
     }
 
@@ -70,7 +70,7 @@ public class MethodDelegationDefaultTest extends AbstractImplementationTest {
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 Class.forName(DEFAULT_INTERFACE));
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.getClass().getDeclaredMethod(FOO).invoke(instance), is((Object) (FOO + BAR)));
     }
 

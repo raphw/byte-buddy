@@ -96,7 +96,7 @@ public class MethodDelegationConstructionTest<T extends CallTraceable>
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        T instance = loaded.getLoaded().newInstance();
+        T instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(sourceType)));
         assertThat(instance, instanceOf(sourceType));
         Object value = loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments);

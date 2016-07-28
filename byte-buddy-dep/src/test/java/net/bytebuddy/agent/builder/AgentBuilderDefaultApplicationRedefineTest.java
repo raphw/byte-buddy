@@ -98,7 +98,7 @@ public class AgentBuilderDefaultApplicationRedefineTest {
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = simpleTypeLoader.loadClass(SimpleType.class.getName());
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
@@ -122,9 +122,8 @@ public class AgentBuilderDefaultApplicationRedefineTest {
         try {
             Class<?> type = optionalTypeLoader.loadClass(SimpleOptionalType.class.getName());
             // The hybrid strategy cannot transform optional types.
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (descriptionStrategy == AgentBuilder.DescriptionStrategy.Default.HYBRID
-                    ? FOO
-                    : BAR)));
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getConstructor().newInstance()),
+                    is((Object) (descriptionStrategy == AgentBuilder.DescriptionStrategy.Default.HYBRID ? FOO : BAR)));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
@@ -147,7 +146,7 @@ public class AgentBuilderDefaultApplicationRedefineTest {
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = simpleTypeLoader.loadClass(SimpleType.class.getName());
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
@@ -171,7 +170,7 @@ public class AgentBuilderDefaultApplicationRedefineTest {
         try {
             Class<?> type = optionalTypeLoader.loadClass(SimpleOptionalType.class.getName());
             // The hybrid strategy cannot transform optional types.
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (descriptionStrategy == AgentBuilder.DescriptionStrategy.Default.HYBRID
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) (descriptionStrategy == AgentBuilder.DescriptionStrategy.Default.HYBRID
                     ? FOO
                     : BAR)));
         } finally {

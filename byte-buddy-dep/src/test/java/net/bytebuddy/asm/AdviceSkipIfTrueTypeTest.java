@@ -81,7 +81,7 @@ public class AdviceSkipIfTrueTypeTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is(value));
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getConstructor().newInstance()), is(value));
     }
 
     @SuppressWarnings("unused")

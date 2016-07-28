@@ -193,7 +193,7 @@ public class FieldAccessorTest<T extends CallTraceable,
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(definesField ? 1 : 0));
-        Z instance = loaded.getLoaded().newInstance();
+        Z instance = loaded.getLoaded().getConstructor().newInstance();
         if (definesField) {
             initializeField(instance);
         }
@@ -214,7 +214,7 @@ public class FieldAccessorTest<T extends CallTraceable,
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(definesField ? 1 : 0));
-        Z instance = loaded.getLoaded().newInstance();
+        Z instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(target)));
         assertThat(instance, instanceOf(target));
         Method setter = loaded.getLoaded()

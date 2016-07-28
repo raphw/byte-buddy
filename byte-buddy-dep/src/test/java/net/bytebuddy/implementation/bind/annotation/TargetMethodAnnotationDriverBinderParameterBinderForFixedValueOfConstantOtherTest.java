@@ -40,6 +40,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .foo(), is((Object) Object.class));
     }
@@ -54,6 +55,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .foo(), nullValue(Object.class));
     }
@@ -73,6 +75,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .foo()), is(JavaConstant.MethodHandle.ofLoaded(methodHandleLoaded)));
     }
@@ -92,6 +95,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .foo()), is(JavaConstant.MethodHandle.ofLoaded(methodHandleLoaded)));
     }
@@ -109,6 +113,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .foo()), is(JavaConstant.MethodType.ofLoaded(loadedMethodType)));
     }
@@ -126,6 +131,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .foo()), is(JavaConstant.MethodType.ofLoaded(loadedMethodType)));
     }

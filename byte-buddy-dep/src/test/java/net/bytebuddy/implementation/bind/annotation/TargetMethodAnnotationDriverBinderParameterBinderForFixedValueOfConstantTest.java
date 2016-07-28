@@ -56,6 +56,7 @@ public class TargetMethodAnnotationDriverBinderParameterBinderForFixedValueOfCon
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .foo(), is(value));
     }

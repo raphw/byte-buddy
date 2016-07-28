@@ -12,7 +12,7 @@ public class MethodDelegationThisTest extends AbstractImplementationTest {
     @Test
     public void testThis() throws Exception {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(Bar.class));
-        Foo instance = loaded.getLoaded().newInstance();
+        Foo instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.foo(), is((Object) instance));
     }
 

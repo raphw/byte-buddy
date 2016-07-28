@@ -100,7 +100,7 @@ public class SuperMethodCallTest extends AbstractImplementationTest {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, SuperMethodCall.INSTANCE);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(11));
-        Foo instance = loaded.getLoaded().newInstance();
+        Foo instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(instance, instanceOf(Foo.class));
         assertThat(loaded.getLoaded().getDeclaredMethod(methodName, methodParameterTypes)

@@ -101,7 +101,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.newInstance(), notNullValue(Object.class));
+        assertThat(type.getConstructor().newInstance(), notNullValue(Object.class));
         assertThat(type.getDeclaredField(FOO).get(null), is((Object) FOO));
         assertThat(type.getDeclaredField(BAR).get(null), is((Object) BAR));
     }
@@ -222,7 +222,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .getLoaded();
         assertEquals(String.class, dynamicType.getDeclaredMethod(FOO).getReturnType());
         assertThat(dynamicType.getDeclaredMethod(FOO).getGenericReturnType(), is((Type) String.class));
-        BridgeRetention<String> bridgeRetention = (BridgeRetention<String>) dynamicType.newInstance();
+        BridgeRetention<String> bridgeRetention = (BridgeRetention<String>) dynamicType.getConstructor().newInstance();
         assertThat(bridgeRetention.foo(), is(FOO));
         bridgeRetention.assertZeroCalls();
     }
@@ -242,7 +242,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         assertEquals(Object.class, dynamicType.getDeclaredMethod(FOO, Object.class).getReturnType());
         assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).getGenericReturnType(), is((Type) Object.class));
         assertThat(dynamicType.getDeclaredMethod(FOO, Object.class).isBridge(), is(true));
-        CallSuperMethod<String> callSuperMethod = (CallSuperMethod<String>) dynamicType.newInstance();
+        CallSuperMethod<String> callSuperMethod = (CallSuperMethod<String>) dynamicType.getConstructor().newInstance();
         assertThat(callSuperMethod.foo(FOO), is(FOO));
         callSuperMethod.assertOnlyCall(FOO);
     }
@@ -360,7 +360,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Method foo = type.getDeclaredMethod(FOO);
-        assertThat(foo.invoke(type.newInstance()), is((Object) FOO));
+        assertThat(foo.invoke(type.getConstructor().newInstance()), is((Object) FOO));
         assertThat(foo.getModifiers(), is(Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC));
     }
 
@@ -396,7 +396,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getConstructor().newInstance()), is((Object) BAR));
         verify(asmVisitorWrapper).mergeWriter(0);
         verify(asmVisitorWrapper).mergeReader(0);
         verify(asmVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class), anyInt(), anyInt());

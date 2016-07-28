@@ -14,7 +14,7 @@ public class MethodDelegationIgnoreForBindingTest extends AbstractImplementation
     @Test
     public void testIgnoreForBinding() throws Exception {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(Bar.class));
-        Foo instance = loaded.getLoaded().newInstance();
+        Foo instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.foo(), is(FOO));
     }
 

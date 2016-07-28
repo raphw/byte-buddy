@@ -29,7 +29,7 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
-        Bar instance = loaded.getLoaded().newInstance();
+        Bar instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.bar(FOO), is((Object) instance));
         assertThat(foo.methods.size(), is(1));
         assertThat(instance.bar(FOO), is((Object) instance));
@@ -45,7 +45,7 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
-        Baz instance = loaded.getLoaded().newInstance();
+        Baz instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.bar(BAZ), is(BAZ * 2L));
         instance.assertZeroCalls();
     }
@@ -57,7 +57,7 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(2));
-        Bar instance = loaded.getLoaded().newInstance();
+        Bar instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(instance.bar(FOO), is((Object) instance));
         assertThat(foo.methods.size(), is(1));
         assertThat(instance.bar(FOO), is((Object) instance));
@@ -75,7 +75,7 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
         Field field = loaded.getLoaded().getDeclaredField(QUX);
         assertThat(field.getModifiers(), is(Modifier.PUBLIC | Opcodes.ACC_SYNTHETIC));
         field.setAccessible(true);
-        Bar instance = loaded.getLoaded().newInstance();
+        Bar instance = loaded.getLoaded().getConstructor().newInstance();
         Foo foo = new Foo();
         field.set(instance, foo);
         assertThat(instance.bar(FOO), is((Object) instance));
@@ -95,7 +95,7 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
         Field field = loaded.getLoaded().getDeclaredField(QUX);
         assertThat(field.getModifiers(), is(Modifier.PUBLIC | Opcodes.ACC_SYNTHETIC));
         field.setAccessible(true);
-        Bar instance = loaded.getLoaded().newInstance();
+        Bar instance = loaded.getLoaded().getConstructor().newInstance();
         Foo foo = new Foo();
         field.set(instance, foo);
         assertThat(instance.bar(FOO), is((Object) instance));

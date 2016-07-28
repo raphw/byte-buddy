@@ -19,7 +19,7 @@ public class MethodDelegationChainedTest extends AbstractImplementationTest {
         DynamicType.Loaded<Foo> dynamicType = implement(Foo.class, MethodDelegation.to(voidInterceptor)
                 .filter(isDeclaredBy(VoidInterceptor.class))
                 .andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)));
-        assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
+        assertThat(dynamicType.getLoaded().getConstructor().newInstance().foo(), is(FOO));
         assertThat(voidInterceptor.intercepted, is(true));
     }
 
@@ -29,7 +29,7 @@ public class MethodDelegationChainedTest extends AbstractImplementationTest {
         DynamicType.Loaded<Foo> dynamicType = implement(Foo.class, MethodDelegation.to(nonVoidInterceptor)
                 .filter(isDeclaredBy(NonVoidInterceptor.class))
                 .andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)));
-        assertThat(dynamicType.getLoaded().newInstance().foo(), is(FOO));
+        assertThat(dynamicType.getLoaded().getConstructor().newInstance().foo(), is(FOO));
         assertThat(nonVoidInterceptor.intercepted, is(true));
     }
 

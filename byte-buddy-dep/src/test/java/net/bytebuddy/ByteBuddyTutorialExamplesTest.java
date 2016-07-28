@@ -79,7 +79,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
+        assertThat(dynamicType.getConstructor().newInstance().toString(), is("Hello World!"));
     }
 
     @Test
@@ -92,7 +92,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.newInstance().apply("Byte Buddy"), is((Object) "Hello from Byte Buddy"));
+        assertThat(dynamicType.getConstructor().newInstance().apply("Byte Buddy"), is((Object) "Hello from Byte Buddy"));
     }
 
     @Test
@@ -181,6 +181,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .toString();
         assertThat(toString, startsWith("example.Type"));
@@ -203,6 +204,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance();
         assertThat(foo.bar(), is("Hello World!"));
         assertThat(foo.foo(), is("Hello Foo!"));
@@ -225,6 +227,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .hello("World");
         assertThat(helloWorld, is("Hello World!"));
@@ -238,6 +241,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .hello("World");
         assertThat(helloWorld, is("Hello World!"));
@@ -251,6 +255,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance();
         assertThat(loggingDatabase.load("qux"), is(Arrays.asList("qux: foo", "qux: bar")));
     }
@@ -272,6 +277,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance();
         Method method = instance.getClass().getMethod("foo");
         assertThat(method.invoke(instance), is((Object) "foo"));
@@ -299,6 +305,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance();
         assertThat(loggingDatabase.load("qux"), is(Arrays.asList("qux (logged access): foo", "qux (logged access): bar")));
     }
@@ -311,6 +318,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance();
         assertThat(trivialGetterBean.loop(42), is(42));
         assertThat(trivialGetterBean.loop("foo"), is("foo"));
@@ -327,6 +335,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance();
         assertThat(loggingDatabase.load("qux"), is(Arrays.asList("qux: foo", "qux: bar")));
     }
@@ -346,7 +355,9 @@ public class ByteBuddyTutorialExamplesTest {
                 .method(not(isDeclaredBy(Object.class))).intercept(MethodDelegation.toConstructor(dynamicUserType))
                 .make()
                 .load(dynamicUserType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded().newInstance();
+                .getLoaded()
+                .getConstructor()
+                .newInstance();
         UserType userType = (UserType) factory.makeInstance();
         ((InterceptionAccessor) userType).setInterceptor(new HelloWorldInterceptor());
         assertThat(userType.doSomething(), is("Hello World!"));
@@ -387,6 +398,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .calculate(), is(60));
     }
@@ -400,6 +412,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .toString(), is("42"));
     }
@@ -414,6 +427,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
+                .getConstructor()
                 .newInstance()
                 .toString(), is("Hello!"));
     }

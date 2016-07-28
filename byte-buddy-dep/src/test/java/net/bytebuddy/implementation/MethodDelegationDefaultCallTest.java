@@ -40,7 +40,7 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 Class.forName(SINGLE_DEFAULT_METHOD));
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) QUX));
     }
@@ -53,7 +53,7 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 Class.forName(SINGLE_DEFAULT_METHOD));
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) FOO));
     }
@@ -76,7 +76,7 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) FOO));
     }
@@ -89,7 +89,7 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) QUX));
     }
@@ -112,7 +112,7 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
                 getClass().getClassLoader(),
                 isMethod().and(not(isDeclaredBy(Object.class))),
                 Class.forName(SINGLE_DEFAULT_METHOD));
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) FOO));
     }

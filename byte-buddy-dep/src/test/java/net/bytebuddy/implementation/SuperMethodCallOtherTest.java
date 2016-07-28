@@ -133,7 +133,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     public void testAndThen() throws Exception {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, SuperMethodCall.INSTANCE
                 .andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)));
-        Foo foo = loaded.getLoaded().newInstance();
+        Foo foo = loaded.getLoaded().getConstructor().newInstance();
         assertThat(foo.foo(), is(FOO));
         foo.assertOnlyCall(FOO);
     }
@@ -148,7 +148,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
                 Class.forName(SINGLE_DEFAULT_METHOD));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(method.invoke(instance), is((Object) FOO));
     }
 
@@ -161,7 +161,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
                 isMethod().and(not(isDeclaredBy(Object.class))));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
-        Object instance = loaded.getLoaded().newInstance();
+        Object instance = loaded.getLoaded().getConstructor().newInstance();
         assertThat(method.invoke(instance), is((Object) FOO));
     }
 

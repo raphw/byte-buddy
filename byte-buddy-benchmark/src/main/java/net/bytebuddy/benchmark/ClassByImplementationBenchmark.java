@@ -274,6 +274,7 @@ public class ClassByImplementationBenchmark {
                 .make()
                 .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded()
+                .getConstructor()
                 .newInstance();
     }
 
@@ -331,7 +332,8 @@ public class ClassByImplementationBenchmark {
                 return true;
             }
         });
-        Object instance = proxyFactory.createClass().newInstance();
+        @SuppressWarnings("unchecked")
+        Object instance = proxyFactory.createClass().getConstructor().newInstance();
         ((javassist.util.proxy.Proxy) instance).setHandler(new MethodHandler() {
             public Object invoke(Object self,
                                  Method thisMethod,

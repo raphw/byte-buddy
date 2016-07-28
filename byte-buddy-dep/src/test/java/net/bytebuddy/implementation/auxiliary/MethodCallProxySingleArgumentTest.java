@@ -69,7 +69,7 @@ public class MethodCallProxySingleArgumentTest<T extends CallTraceable> extends 
         Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(targetType);
         Constructor<?> constructor = auxiliaryType.getDeclaredConstructor(targetType, valueType);
         constructor.setAccessible(true);
-        T proxiedInstance = targetType.newInstance();
+        T proxiedInstance = targetType.getConstructor().newInstance();
         ((Runnable) constructor.newInstance(proxiedInstance, value)).run();
         proxiedInstance.assertOnlyCall(FOO, value);
     }
@@ -79,7 +79,7 @@ public class MethodCallProxySingleArgumentTest<T extends CallTraceable> extends 
         Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(targetType);
         Constructor<?> constructor = auxiliaryType.getDeclaredConstructor(targetType, valueType);
         constructor.setAccessible(true);
-        T proxiedInstance = targetType.newInstance();
+        T proxiedInstance = targetType.getConstructor().newInstance();
         assertThat(((Callable<?>) constructor.newInstance(proxiedInstance, value)).call(), is(value));
         proxiedInstance.assertOnlyCall(FOO, value);
     }
