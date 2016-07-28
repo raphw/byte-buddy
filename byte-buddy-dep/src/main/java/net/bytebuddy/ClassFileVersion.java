@@ -72,7 +72,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * A version locator for the executing JVM.
      */
-    private static final VersionLocator VERSION_LOCATOR = findVersionLocator();
+    private static final VersionLocator VERSION_LOCATOR = make();
 
     /**
      * Creates a version locator of the executing JVM.
@@ -80,7 +80,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @return An appropriate version locator.
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-    private static VersionLocator findVersionLocator() {
+    private static VersionLocator make() {
         try {
             return new VersionLocator.ForJava9CapableVm(Runtime.class.getDeclaredMethod("version"),
                     Class.forName("java.lang.Runtime$Version").getDeclaredMethod("major"));
