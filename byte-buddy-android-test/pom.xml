@@ -8,7 +8,7 @@
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
         <!-- The version number is not updated by the release plugin as this artifact is not released! -->
-        <version>1.4.12-SNAPSHOT</version>
+        <version>1.4.16-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-android-test</artifactId>

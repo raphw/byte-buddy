@@ -146,10 +146,10 @@ public class ByteBuddy {
      * is not possible, class files are created Java 6-compatible.
      * </p>
      *
-     * @see ClassFileVersion#forCurrentJavaVersion(ClassFileVersion)
+     * @see ClassFileVersion#forThisVm(ClassFileVersion)
      */
     public ByteBuddy() {
-        this(ClassFileVersion.forCurrentJavaVersion(ClassFileVersion.JAVA_V6));
+        this(ClassFileVersion.forThisVm(ClassFileVersion.JAVA_V6));
     }
 
     /**

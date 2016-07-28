@@ -1031,11 +1031,9 @@ public interface AnnotationDescription {
 
                 @Override
                 public String toString() {
-                    StringBuilder stringBuilder = new StringBuilder().append(componentType == Class.class ? PropertyDispatcher.TypeRenderer.CURRENT.adjust('[') : '[');
-                    for (AnnotationValue.Loaded<?> value : values) {
-                        stringBuilder.append(value.toString());
-                    }
-                    return stringBuilder.append(componentType == Class.class ? PropertyDispatcher.TypeRenderer.CURRENT.adjust(']') : ']').toString();
+                    return componentType == Class.class
+                            ? PropertyDispatcher.TypeRenderer.CURRENT.render(values.toArray(new Object[values.size()]))
+                            : Arrays.toString(values.toArray(new Object[values.size()]));
                 }
             }
         }

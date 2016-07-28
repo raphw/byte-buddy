@@ -46,7 +46,7 @@ public class TestActivity extends Activity {
             public void onClick(View view) {
                 ByteBuddy byteBuddy;
                 try {
-                    byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V6);
+                    byteBuddy = new ByteBuddy();
                 } catch (Throwable e) {
                     Log.w(BYTE_BUDDY_TAG, e);
                     Toast.makeText(TestActivity.this, "Failure: Could not create Byte Buddy instance. (" + e.getMessage() + ")", Toast.LENGTH_LONG).show();

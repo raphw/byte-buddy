@@ -19,7 +19,7 @@ public class JavaVersionRule implements MethodRule {
     private final boolean hotSpot;
 
     public JavaVersionRule() {
-        currentVersion = ClassFileVersion.forCurrentJavaVersion();
+        currentVersion = ClassFileVersion.forThisVm();
         hotSpot = System.getProperty("java.vm.name", "").toLowerCase(Locale.US).contains("hotspot");
     }
 

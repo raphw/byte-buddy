@@ -156,8 +156,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      *
      * @return The currently running Java process's class file version.
      */
-    public static ClassFileVersion forCurrentJavaVersion() {
-        return VERSION_LOCATOR.findCurrentVersion();
+    public static ClassFileVersion forThisVm() {
+        return VERSION_LOCATOR.locate();
     }
 
     /**
@@ -169,9 +169,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @return The currently running Java process's class file version or the fallback if locating this version is impossible.
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-    public static ClassFileVersion forCurrentJavaVersion(ClassFileVersion fallback) {
+    public static ClassFileVersion forThisVm(ClassFileVersion fallback) {
         try {
-            return forCurrentJavaVersion();
+            return forThisVm();
         } catch (Exception ignored) {
             return fallback;
         }
@@ -304,7 +304,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
          *
          * @return The current VM's major version number.
          */
-        ClassFileVersion findCurrentVersion();
+        ClassFileVersion locate();
 
         /**
          * A version locator for a JVM of at least version 9.
@@ -338,7 +338,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             }
 
             @Override
-            public ClassFileVersion findCurrentVersion() {
+            public ClassFileVersion locate() {
                 try {
                     return ClassFileVersion.ofJavaVersion((Integer) major.invoke(current.invoke(STATIC_METHOD)));
                 } catch (InvocationTargetException exception) {
@@ -388,7 +388,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             private static final String JAVA_VERSION_PROPERTY = "java.version";
 
             @Override
-            public ClassFileVersion findCurrentVersion() {
+            public ClassFileVersion locate() {
                 String versionString = AccessController.doPrivileged(this);
                 int[] versionIndex = {-1, 0, 0};
                 for (int i = 1; i < 3; i++) {

@@ -166,7 +166,7 @@ public class AnnotationAppenderDefaultTest {
     private Class<?> makeTypeWithAnnotation(Annotation annotation) throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
-        classWriter.visit(ClassFileVersion.forCurrentJavaVersion().getMinorMajorVersion(),
+        classWriter.visit(ClassFileVersion.forThisVm().getMinorMajorVersion(),
                 Opcodes.ACC_PUBLIC,
                 BAR.replace('.', '/'),
                 null,
@@ -190,7 +190,7 @@ public class AnnotationAppenderDefaultTest {
     private Class<?> makeTypeWithSuperClassAnnotation(Annotation annotation) throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
-        classWriter.visit(ClassFileVersion.forCurrentJavaVersion().getMinorMajorVersion(),
+        classWriter.visit(ClassFileVersion.forThisVm().getMinorMajorVersion(),
                 Opcodes.ACC_PUBLIC,
                 BAR.replace('.', '/'),
                 null,

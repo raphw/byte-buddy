@@ -233,7 +233,7 @@ public enum PropertyDispatcher {
     TYPE_LOADED {
         @Override
         public String toString(Object value) {
-            return TypeRenderer.CURRENT.render((Class<?>) value);
+            return TypeRenderer.CURRENT.render(value);
         }
 
         @Override
@@ -258,17 +258,7 @@ public enum PropertyDispatcher {
     TYPE_LOADED_ARRAY {
         @Override
         public String toString(Object value) {
-            StringBuilder stringBuilder = new StringBuilder().append(TypeRenderer.CURRENT.adjust('['));
-            boolean initial = true;
-            for (Class<?> type : (Class<?>[]) value) {
-                stringBuilder.append(TypeRenderer.CURRENT.render(type));
-                if (initial) {
-                    initial = false;
-                } else {
-                    stringBuilder.append(", ");
-                }
-            }
-            return stringBuilder.append(TypeRenderer.CURRENT.adjust(']')).toString();
+            return TypeRenderer.CURRENT.render((Object[]) value);
         }
 
         @Override
@@ -295,7 +285,7 @@ public enum PropertyDispatcher {
     TYPE_DESCRIBED {
         @Override
         public String toString(Object value) {
-            return TypeRenderer.CURRENT.render((TypeDescription) value);
+            return TypeRenderer.CURRENT.render(value);
         }
 
         @Override
@@ -320,17 +310,7 @@ public enum PropertyDispatcher {
     TYPE_DESCRIBED_ARRAY {
         @Override
         public String toString(Object value) {
-            StringBuilder stringBuilder = new StringBuilder().append(TypeRenderer.CURRENT.adjust('['));
-            boolean initial = true;
-            for (TypeDescription typeDescription : (TypeDescription[]) value) {
-                stringBuilder.append(TypeRenderer.CURRENT.render(typeDescription));
-                if (initial) {
-                    initial = false;
-                } else {
-                    stringBuilder.append(", ");
-                }
-            }
-            return stringBuilder.append(TypeRenderer.CURRENT.adjust(']')).toString();
+            return TypeRenderer.CURRENT.render((Object[]) value);
         }
 
         @Override
@@ -501,30 +481,51 @@ public enum PropertyDispatcher {
         /**
          * A type renderer for a legacy VM prior to Java 8.
          */
-        FOR_LEGACY_VM(0) {
+        FOR_LEGACY_VM {
             @Override
-            protected String render(Class<?> type) {
+            public String render(Object type) {
+                if (!(type instanceof Class || type instanceof TypeDescription)) {
+                    throw new IllegalArgumentException("Unexpected type description: " + type);
+                }
                 return type.toString();
             }
 
             @Override
-            protected String render(TypeDescription typeDescription) {
-                return typeDescription.toString();
+            public String render(Object[] type) {
+                return Arrays.toString(type);
             }
         },
 
         /**
          * A type renderer for a VM of at least Java version 9.
          */
-        FOR_JAVA9_CAPABLE_VM('{' - '[') {
+        FOR_JAVA9_CAPABLE_VM {
             @Override
-            protected String render(Class<?> type) {
-                return type.getName() + JAVA9_NAME_SUFFIX;
+            public String render(Object type) {
+                String name;
+                if (type instanceof Class) {
+                    name = ((Class<?>) type).getName();
+                } else if (type instanceof TypeDescription) {
+                    name = ((TypeDescription) type).getName();
+                } else {
+                    throw new IllegalArgumentException("Unexpected type description: " + type);
+                }
+                return name + JAVA9_NAME_SUFFIX;
             }
 
             @Override
-            protected String render(TypeDescription typeDescription) {
-                return typeDescription.getName() + JAVA9_NAME_SUFFIX;
+            public String render(Object[] type) {
+                StringBuilder stringBuilder = new StringBuilder().append('{');
+                boolean initial = true;
+                for (Object aType : type) {
+                    stringBuilder.append(render(aType));
+                    if (initial) {
+                        initial = false;
+                    } else {
+                        stringBuilder.append(", ");
+                    }
+                }
+                return stringBuilder.append('}').toString();
             }
         };
 
@@ -544,50 +545,26 @@ public enum PropertyDispatcher {
          * @return The type renderer to be used on the current VM.
          */
         private static TypeRenderer make() {
-            return ClassFileVersion.forCurrentJavaVersion(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+            return ClassFileVersion.forThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
                     ? FOR_JAVA9_CAPABLE_VM
                     : FOR_LEGACY_VM;
         }
 
         /**
-         * The offset to add for braces starting from {@code [} or {@code ]}.
-         */
-        private final int offset;
-
-        /**
-         * Creates a new type renderer.
-         *
-         * @param offset The offset to add for braces.
-         */
-        TypeRenderer(int offset) {
-            this.offset = offset;
-        }
-
-        /**
-         * Adjusts a brace character.
-         *
-         * @param delimiter The delimiter being used.
-         * @return The adjusted delimiter.
-         */
-        public char adjust(char delimiter) {
-            return (char) (delimiter + offset);
-        }
-
-        /**
-         * Renders a {@link Class} constant.
+         * Renders a {@link Class} or {@link TypeDescription} constant.
          *
          * @param type The type to be rendered.
          * @return The rendered string.
          */
-        protected abstract String render(Class<?> type);
+        public abstract String render(Object type);
 
         /**
-         * Renders a {@link TypeDescription} which represents a constant.
+         * Renders an array of {@link Class} or {@link TypeDescription} constants.
          *
-         * @param typeDescription The type to be rendered.
+         * @param type The types to be rendered.
          * @return The rendered string.
          */
-        protected abstract String render(TypeDescription typeDescription);
+        public abstract String render(Object[] type);
 
         @Override
         public String toString() {
