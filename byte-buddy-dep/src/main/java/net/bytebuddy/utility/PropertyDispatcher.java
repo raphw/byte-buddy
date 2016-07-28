@@ -496,7 +496,7 @@ public enum PropertyDispatcher {
      * A delegate for rendering a {@link Class} or {@link TypeDescription}. Starting with Java 9, such values are enclosed
      * in curly braces and are rendered as class literals to better match the source code.
      */
-    protected enum TypeRenderer {
+    public enum TypeRenderer {
 
         /**
          * A type renderer for a legacy VM prior to Java 8.
@@ -536,7 +536,7 @@ public enum PropertyDispatcher {
         /**
          * The type renderer to be used on the current VM.
          */
-        protected static final TypeRenderer CURRENT = make();
+        public static final TypeRenderer CURRENT = make();
 
         /**
          * Finds the type renderer for the current VM.
@@ -569,7 +569,7 @@ public enum PropertyDispatcher {
          * @param delimiter The delimiter being used.
          * @return The adjusted delimiter.
          */
-        protected char adjust(char delimiter) {
+        public char adjust(char delimiter) {
             return (char) (delimiter + offset);
         }
 

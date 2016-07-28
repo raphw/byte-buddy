@@ -803,7 +803,7 @@ public interface AnnotationDescription {
 
                 @Override
                 public String toString() {
-                    return type.toString();
+                    return PropertyDispatcher.TYPE_LOADED.toString(type);
                 }
             }
         }
@@ -944,7 +944,7 @@ public interface AnnotationDescription {
 
             @Override
             public String toString() {
-                return "AnnotationDescription.AnnotationValue.ForComplexArra{" +
+                return "AnnotationDescription.AnnotationValue.ForComplexArray{" +
                         "unloadedComponentType=" + unloadedComponentType +
                         ", componentType=" + componentType +
                         ", annotationValues=" + annotationValues +
@@ -1031,11 +1031,11 @@ public interface AnnotationDescription {
 
                 @Override
                 public String toString() {
-                    StringBuilder stringBuilder = new StringBuilder("[");
+                    StringBuilder stringBuilder = new StringBuilder().append(componentType == Class.class ? PropertyDispatcher.TypeRenderer.CURRENT.adjust('[') : '[');
                     for (AnnotationValue.Loaded<?> value : values) {
                         stringBuilder.append(value.toString());
                     }
-                    return stringBuilder.append("]").toString();
+                    return stringBuilder.append(componentType == Class.class ? PropertyDispatcher.TypeRenderer.CURRENT.adjust(']') : ']').toString();
                 }
             }
         }
@@ -1222,9 +1222,7 @@ public interface AnnotationDescription {
                 } else {
                     toString.append(", ");
                 }
-                toString.append(entry.getKey().getName());
-                toString.append('=');
-                toString.append(entry.getValue().toString());
+                toString.append(entry.getKey().getName()).append('=').append(entry.getValue().toString());
             }
             toString.append(')');
             return toString.toString();

@@ -454,6 +454,10 @@ public abstract class AbstractAnnotationDescriptionTest {
         VALUE,
         OTHER
     }
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Sample2 {
+        Class<?> foo();
+    }
 
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Sample {
