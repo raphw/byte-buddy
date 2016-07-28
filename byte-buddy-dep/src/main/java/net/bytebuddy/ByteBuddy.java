@@ -305,9 +305,9 @@ public class ByteBuddy {
     public <T> DynamicType.Builder<T> subclass(TypeDefinition superType, ConstructorStrategy constructorStrategy) {
         TypeDescription.Generic actualSuperType;
         TypeList.Generic interfaceTypes;
-        if (superType.isPrimitive() || superType.isArray() || superType.asErasure().isFinal()) {
+        if (superType.isPrimitive() || superType.isArray() || superType.isFinal()) {
             throw new IllegalArgumentException("Cannot subclass primitive, array or final types: " + superType);
-        } else if (superType.asErasure().isInterface()) {
+        } else if (superType.isInterface()) {
             interfaceTypes = new TypeList.Generic.Explicit(superType.asGenericType());
             actualSuperType = TypeDescription.Generic.OBJECT;
         } else {
@@ -315,7 +315,7 @@ public class ByteBuddy {
             actualSuperType = superType.asGenericType();
         }
         return new SubclassDynamicTypeBuilder<T>(InstrumentedType.Default.subclass(namingStrategy.subclass(superType.asGenericType()),
-                ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.PLAIN).resolve(superType.asErasure().getModifiers()),
+                ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.PLAIN).resolve(superType.getModifiers()),
                 actualSuperType).withInterfaces(interfaceTypes),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,

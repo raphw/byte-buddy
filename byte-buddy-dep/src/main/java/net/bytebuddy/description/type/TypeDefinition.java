@@ -1,6 +1,8 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -12,7 +14,7 @@ import java.util.NoSuchElementException;
 /**
  * Implementations define a type, either as a {@link TypeDescription} or as a {@link TypeDescription.Generic}.
  */
-public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
+public interface TypeDefinition extends NamedElement, TypeVariableSource, ModifierReviewable.ForTypeDefinition, Iterable<TypeDefinition> {
 
     /**
      * Returns this type definition as a generic type.

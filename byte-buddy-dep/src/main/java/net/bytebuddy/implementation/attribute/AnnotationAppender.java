@@ -632,7 +632,7 @@ public interface AnnotationAppender {
                 for (AnnotationDescription annotationDescription : typeVariable.getDeclaredAnnotations()) {
                     annotationAppender = annotationAppender.append(annotationDescription, annotationValueFilter, typeReference, EMPTY_TYPE_PATH);
                 }
-                int boundIndex = !typeVariable.getUpperBounds().get(0).getSort().isTypeVariable() && typeVariable.getUpperBounds().get(0).asErasure().isInterface()
+                int boundIndex = !typeVariable.getUpperBounds().get(0).getSort().isTypeVariable() && typeVariable.getUpperBounds().get(0).isInterface()
                         ? 1
                         : 0;
                 for (TypeDescription.Generic typeBound : typeVariable.getUpperBounds()) {

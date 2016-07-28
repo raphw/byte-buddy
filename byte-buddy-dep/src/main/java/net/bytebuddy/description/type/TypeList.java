@@ -593,7 +593,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                      */
                     protected AttachedTypeVariable(TypeVariableSource typeVariableSource,
                                                    TypeVariableToken typeVariableToken,
-                                                   Visitor<? extends TypeDescription.Generic> visitor) {
+                                                   TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                         this.typeVariableSource = typeVariableSource;
                         this.typeVariableToken = typeVariableToken;
                         this.visitor = visitor;

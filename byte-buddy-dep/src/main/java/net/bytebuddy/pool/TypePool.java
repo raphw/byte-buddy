@@ -3757,12 +3757,12 @@ public interface TypePool {
 
                         @Override
                         public Generic getOwnerType() {
-                            return UNDEFINED;
+                            return Generic.UNDEFINED;
                         }
 
                         @Override
                         public Generic getComponentType() {
-                            return UNDEFINED;
+                            return Generic.UNDEFINED;
                         }
 
                         @Override
@@ -4019,7 +4019,7 @@ public interface TypePool {
                             public Generic getOwnerType() {
                                 TypeDescription declaringType = typeDescription.getDeclaringType();
                                 return declaringType == null
-                                        ? UNDEFINED
+                                        ? Generic.UNDEFINED
                                         : new RawAnnotatedType(typePool, typePath, annotationTokens, declaringType);
                             }
 
@@ -4027,7 +4027,7 @@ public interface TypePool {
                             public Generic getComponentType() {
                                 TypeDescription componentType = typeDescription.getComponentType();
                                 return componentType == null
-                                        ? UNDEFINED
+                                        ? Generic.UNDEFINED
                                         : new RawAnnotatedType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType);
                             }
 
@@ -5579,7 +5579,7 @@ public interface TypePool {
                         public Generic getOwnerType() {
                             TypeDescription ownerType = typePool.describe(name).resolve().getEnclosingType();
                             return ownerType == null
-                                    ? UNDEFINED
+                                    ? Generic.UNDEFINED
                                     : ownerType.asGenericType();
                         }
 
@@ -7372,7 +7372,7 @@ public interface TypePool {
                     public Generic getOwnerType() {
                         TypeDescription declaringType = typeDescription.getDeclaringType();
                         if (declaringType == null) {
-                            return UNDEFINED;
+                            return Generic.UNDEFINED;
                         } else {
                             return !typeDescription.isStatic() && declaringType.isGenericDeclaration()
                                     ? new LazyParameterizedReceiverType(declaringType)
@@ -7513,13 +7513,13 @@ public interface TypePool {
                     public Generic getOwnerType() {
                         TypeDescription declaringType = typeDescription.getDeclaringType();
                         return declaringType == null
-                                ? UNDEFINED
+                                ? Generic.UNDEFINED
                                 : new LazyNonGenericReceiverType(declaringType);
                     }
 
                     @Override
                     public Generic getComponentType() {
-                        return UNDEFINED;
+                        return Generic.UNDEFINED;
                     }
 
                     @Override

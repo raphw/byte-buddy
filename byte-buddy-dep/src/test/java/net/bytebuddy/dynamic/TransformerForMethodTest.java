@@ -22,6 +22,7 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
@@ -143,8 +144,28 @@ public class TransformerForMethodTest {
     }
 
     @Test
+    public void testNoChangesUnlessSpecified() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Bar.class);
+        MethodDescription methodDescription = typeDescription.getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly();
+        MethodDescription transformed = Transformer.ForMethod.withModifiers().transform(typeDescription, methodDescription);
+        assertThat(transformed, is(methodDescription));
+        assertThat(transformed.getModifiers(), is(methodDescription.getModifiers()));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Transformer.ForMethod.class).apply();
         ObjectPropertyAssertion.of(Transformer.ForMethod.MethodModifierTransformer.class).apply();
+    }
+
+    private static class Foo<T> {
+
+        T foo() {
+            return null;
+        }
+    }
+
+    private static class Bar<S> extends Foo<S> {
+        /* empty */
     }
 }

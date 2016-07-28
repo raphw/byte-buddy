@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -17,6 +18,7 @@ import org.mockito.Mock;
 
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
@@ -92,8 +94,26 @@ public class TransformerForFieldTest {
     }
 
     @Test
+    public void testNoChangesUnlessSpecified() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Bar.class);
+        FieldDescription fieldDescription = typeDescription.getSuperClass().getDeclaredFields().filter(named(FOO)).getOnly();
+        FieldDescription transformed = Transformer.ForField.withModifiers().transform(typeDescription, fieldDescription);
+        assertThat(transformed, is(fieldDescription));
+        assertThat(transformed.getModifiers(), is(fieldDescription.getModifiers()));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Transformer.ForField.class).apply();
         ObjectPropertyAssertion.of(Transformer.ForField.FieldModifierTransformer.class).apply();
+    }
+
+    private static class Foo<T> {
+
+        T foo;
+    }
+
+    private static class Bar<S> extends Foo<S> {
+        /* empty */
     }
 }

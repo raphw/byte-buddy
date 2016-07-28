@@ -38,6 +38,7 @@ import static net.bytebuddy.matcher.ElementMatchers.ofSort;
 public interface MethodDescription extends TypeVariableSource,
         ModifierReviewable.ForMethodDescription,
         NamedElement.WithGenericName,
+        ByteCodeElement,
         ByteCodeElement.TypeDependant<MethodDescription.InDefinedShape, MethodDescription.Token> {
 
     /**
@@ -458,7 +459,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean isDefaultMethod() {
-            return !isAbstract() && !isBridge() && getDeclaringType().asErasure().isInterface();
+            return !isAbstract() && !isBridge() && getDeclaringType().isInterface();
         }
 
         @Override
@@ -648,7 +649,7 @@ public interface MethodDescription extends TypeVariableSource,
         public TypeVariableSource getEnclosingSource() {
             return isStatic()
                     ? TypeVariableSource.UNDEFINED
-                    : getDeclaringType().asErasure();
+                    : getDeclaringType();
         }
 
         @Override

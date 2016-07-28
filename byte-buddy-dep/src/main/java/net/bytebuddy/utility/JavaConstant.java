@@ -1359,7 +1359,7 @@ public interface JavaConstant {
                     return INVOKE_SPECIAL;
                 } else if (methodDescription.isConstructor()) {
                     return INVOKE_SPECIAL_CONSTRUCTOR;
-                } else if (methodDescription.getDeclaringType().asErasure().isInterface()) {
+                } else if (methodDescription.getDeclaringType().isInterface()) {
                     return INVOKE_INTERFACE;
                 } else {
                     return INVOKE_VIRTUAL;

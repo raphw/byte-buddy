@@ -1,15 +1,16 @@
 package net.bytebuddy.description;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
- * A type variable source represents a byte code element that can declare type variables.
+ * A type variable source represents a code element that can declare type variables.
  */
-public interface TypeVariableSource extends ByteCodeElement {
+public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
 
     /**
      * Indicates that a type variable source is undefined.
@@ -68,10 +69,10 @@ public interface TypeVariableSource extends ByteCodeElement {
         /**
          * Applies the visitor on a type.
          *
-         * @param typeDescription The type onto which this visitor is applied.
+         * @param typeDefinition The type onto which this visitor is applied.
          * @return The visitor's return value.
          */
-        T onType(TypeDescription typeDescription);
+        T onType(TypeDefinition typeDefinition);
 
         /**
          * Applies the visitor on a method.
@@ -92,8 +93,8 @@ public interface TypeVariableSource extends ByteCodeElement {
             INSTANCE;
 
             @Override
-            public TypeVariableSource onType(TypeDescription typeDescription) {
-                return typeDescription;
+            public TypeVariableSource onType(TypeDefinition typeDefinition) {
+                return typeDefinition;
             }
 
             @Override

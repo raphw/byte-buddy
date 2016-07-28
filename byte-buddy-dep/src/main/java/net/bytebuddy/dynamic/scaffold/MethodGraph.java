@@ -1320,7 +1320,7 @@ public interface MethodGraph {
                              */
                             private static <V> Entry<V> of(Harmonized<V> key, MethodDescription override, MethodDescription original) {
                                 return override.isBridge()
-                                        ? new Resolved<V>(key, original, (original.getDeclaringType().asErasure().getModifiers() & MADE_VISIBLE) == 0)
+                                        ? new Resolved<V>(key, original, (original.getDeclaringType().getModifiers() & MADE_VISIBLE) == 0)
                                         : new Resolved<V>(key, override, false);
                             }
 

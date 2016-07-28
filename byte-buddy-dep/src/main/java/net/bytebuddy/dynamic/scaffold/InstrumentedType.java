@@ -757,7 +757,7 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Illegal type annotations on type variable " + bound + " for " + this);
                     } else if (!bounds.add(bound)) {
                         throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + this);
-                    } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
+                    } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.isInterface())) {
                         throw new IllegalStateException("Illegal interface bound " + bound + " of " + typeVariable + " for " + this);
                     }
                     interfaceBound = true;
@@ -829,7 +829,7 @@ public interface InstrumentedType extends TypeDescription {
                             throw new IllegalStateException("Illegal type annotations on bound " + bound + " of " + typeVariable + " for " + this);
                         } else if (!bounds.add(bound)) {
                             throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + methodDescription);
-                        } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
+                        } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.isInterface())) {
                             throw new IllegalStateException("Illegal interface bound " + bound + " of " + typeVariable + " for " + methodDescription);
                         }
                         interfaceBound = true;

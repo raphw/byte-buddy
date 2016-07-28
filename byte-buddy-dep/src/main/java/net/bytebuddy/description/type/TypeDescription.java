@@ -1,7 +1,7 @@
 package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.description.ModifierReviewable;
+import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -34,7 +34,7 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
  * Implementations of this interface represent a Java type, i.e. a class or interface. Instances of this interface always
  * represent non-generic types of sort {@link Generic.Sort#NON_GENERIC}.
  */
-public interface TypeDescription extends TypeDefinition, TypeVariableSource, ModifierReviewable.ForTypeDescription {
+public interface TypeDescription extends TypeDefinition, ByteCodeElement {
 
     /**
      * A representation of the {@link java.lang.Object} type.
@@ -775,7 +775,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                     }
 
                     @Override
-                    public Generic onType(TypeDescription typeDescription) {
+                    public Generic onType(TypeDefinition typeDefinition) {
                         return new OfNonGenericType.Latent(typeVariable.asErasure(), typeVariable.getDeclaredAnnotations());
                     }
 
@@ -1429,12 +1429,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 SUPER_CLASS(false, false, false, false) {
                     @Override
                     public Boolean onNonGenericType(Generic typeDescription) {
-                        return super.onNonGenericType(typeDescription) && !typeDescription.asErasure().isInterface();
+                        return super.onNonGenericType(typeDescription) && !typeDescription.isInterface();
                     }
 
                     @Override
                     public Boolean onParameterizedType(Generic parameterizedType) {
-                        return !parameterizedType.asErasure().isInterface();
+                        return !parameterizedType.isInterface();
                     }
                 },
 
@@ -1444,12 +1444,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 INTERFACE(false, false, false, false) {
                     @Override
                     public Boolean onNonGenericType(Generic typeDescription) {
-                        return super.onNonGenericType(typeDescription) && typeDescription.asErasure().isInterface();
+                        return super.onNonGenericType(typeDescription) && typeDescription.isInterface();
                     }
 
                     @Override
                     public Boolean onParameterizedType(Generic parameterizedType) {
-                        return parameterizedType.asErasure().isInterface();
+                        return parameterizedType.isInterface();
                     }
                 },
 
@@ -2216,7 +2216,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                         }
 
                         @Override
-                        public Generic onType(TypeDescription typeDescription) {
+                        public Generic onType(TypeDefinition typeDefinition) {
                             Generic substitution = bindings.get(typeVariable);
                             if (substitution == null) {
                                 throw new IllegalStateException("Unknown type variable: " + typeVariable);
@@ -4027,7 +4027,22 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
         /**
          * An abstract base implementation of a generic type description.
          */
-        abstract class AbstractBase implements Generic {
+        abstract class AbstractBase extends TypeVariableSource.AbstractBase implements Generic {
+
+            @Override
+            public TypeVariableSource getEnclosingSource() {
+                return asErasure().getEnclosingSource();
+            }
+
+            @Override
+            public boolean isGenericDeclaration() {
+                return asErasure().isGenericDeclaration();
+            }
+
+            @Override
+            public int getModifiers() {
+                return asErasure().getModifiers();
+            }
 
             @Override
             public Generic asGenericType() {
@@ -4058,31 +4073,41 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
         abstract class OfNonGenericType extends AbstractBase {
 
             @Override
+            public Sort getSort() {
+                return Sort.NON_GENERIC;
+            }
+
+            @Override
+            public TypeList.Generic getTypeVariables() {
+                return asErasure().getTypeVariables();
+            }
+
+            @Override
+            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+                return visitor.onType(this);
+            }
+
+            @Override
             public Generic getSuperClass() {
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
-                        ? UNDEFINED
-                        : superClass.accept(Visitor.TypeVariableErasing.INSTANCE);
+                        ? Generic.UNDEFINED
+                        : superClass.accept(Generic.Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes(asErasure().getInterfaces(), Visitor.TypeVariableErasing.INSTANCE);
+                return new TypeList.Generic.ForDetachedTypes(asErasure().getInterfaces(), Generic.Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
-                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Visitor.TypeVariableErasing.INSTANCE);
+                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Generic.Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
-            }
-
-            @Override
-            public Sort getSort() {
-                return Sort.NON_GENERIC;
+                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Generic.Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
@@ -4091,7 +4116,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             }
 
             @Override
-            public <T> T accept(Visitor<T> visitor) {
+            public <T> T accept(Generic.Visitor<T> visitor) {
                 return visitor.onNonGenericType(this);
             }
 
@@ -4211,7 +4236,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 public Generic getOwnerType() {
                     Class<?> declaringClass = this.type.getDeclaringClass();
                     return declaringClass == null
-                            ? UNDEFINED
+                            ? Generic.UNDEFINED
                             : new ForLoadedType(declaringClass, annotationReader.ofOuterClass());
                 }
 
@@ -4219,7 +4244,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 public Generic getComponentType() {
                     Class<?> componentType = type.getComponentType();
                     return componentType == null
-                            ? UNDEFINED
+                            ? Generic.UNDEFINED
                             : new ForLoadedType(componentType, annotationReader.ofComponentType());
                 }
 
@@ -4269,7 +4294,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 private Latent(TypeDescription typeDescription, TypeDescription declaringType, List<? extends AnnotationDescription> annotationDescriptions) {
                     this(typeDescription,
                             declaringType == null
-                                    ? UNDEFINED
+                                    ? Generic.UNDEFINED
                                     : declaringType.asGenericType(),
                             annotationDescriptions);
                 }
@@ -4296,7 +4321,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
-                            ? UNDEFINED
+                            ? Generic.UNDEFINED
                             : componentType.asGenericType();
                 }
 
@@ -4339,7 +4364,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
-                            ? UNDEFINED
+                            ? Generic.UNDEFINED
                             : declaringType.asGenericType();
                 }
 
@@ -4347,7 +4372,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 public Generic getComponentType() {
                     TypeDescription componentType = typeDescription.getComponentType();
                     return componentType == null
-                            ? UNDEFINED
+                            ? Generic.UNDEFINED
                             : componentType.asGenericType();
                 }
 
@@ -4369,6 +4394,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 return getComponentType().getSort().isNonGeneric()
                         ? Sort.NON_GENERIC
                         : Sort.GENERIC_ARRAY;
+            }
+
+            @Override
+            public TypeList.Generic getTypeVariables() {
+                return new TypeList.Generic.Empty();
+            }
+
+            @Override
+            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+                return visitor.onType(this);
             }
 
             @Override
@@ -4418,7 +4453,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
 
             @Override
             public Generic getOwnerType() {
-                return UNDEFINED;
+                return Generic.UNDEFINED;
             }
 
             @Override
@@ -4456,7 +4491,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             }
 
             @Override
-            public <T> T accept(Visitor<T> visitor) {
+            public <T> T accept(Generic.Visitor<T> visitor) {
                 return getSort().isNonGeneric()
                         ? visitor.onNonGenericType(this)
                         : visitor.onGenericArray(this);
@@ -4592,6 +4627,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             }
 
             @Override
+            public TypeList.Generic getTypeVariables() {
+                throw new IllegalStateException("A wildcard does not imply type variables: " + this);
+            }
+
+            @Override
+            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+                throw new IllegalStateException("A wildcard does not imply a type variable source: " + this);
+            }
+
+            @Override
             public TypeDescription asErasure() {
                 throw new IllegalStateException("A wildcard does not represent an erasable type: " + this);
             }
@@ -4672,7 +4717,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             }
 
             @Override
-            public <T> T accept(Visitor<T> visitor) {
+            public <T> T accept(Generic.Visitor<T> visitor) {
                 return visitor.onWildcard(this);
             }
 
@@ -4936,26 +4981,36 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             }
 
             @Override
+            public TypeList.Generic getTypeVariables() {
+                return new TypeList.Generic.ForDetachedTypes(asErasure().getTypeVariables(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+            }
+
+            @Override
+            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+                return visitor.onType(this);
+            }
+
+            @Override
             public Generic getSuperClass() {
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
-                        ? UNDEFINED
-                        : superClass.accept(Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                        ? Generic.UNDEFINED
+                        : superClass.accept(Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes(asErasure().getInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new TypeList.Generic.ForDetachedTypes(asErasure().getInterfaces(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
-                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
@@ -5014,7 +5069,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             }
 
             @Override
-            public <T> T accept(Visitor<T> visitor) {
+            public <T> T accept(Generic.Visitor<T> visitor) {
                 return visitor.onParameterizedType(this);
             }
 
@@ -5119,7 +5174,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 public Generic getOwnerType() {
                     java.lang.reflect.Type ownerType = parameterizedType.getOwnerType();
                     return ownerType == null
-                            ? UNDEFINED
+                            ? Generic.UNDEFINED
                             : Sort.describe(ownerType, annotationReader.ofOwnerType());
                 }
 
@@ -5278,7 +5333,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 public Generic getOwnerType() {
                     TypeDescription declaringType = typeDescription.getDeclaringType();
                     return declaringType == null
-                            ? UNDEFINED
+                            ? Generic.UNDEFINED
                             : of(declaringType);
                 }
 
@@ -5313,7 +5368,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
 
                     @Override
                     public Generic get(int index) {
-                        return typeVariables.get(index).accept(Visitor.TypeVariableErasing.INSTANCE);
+                        return typeVariables.get(index).accept(Generic.Visitor.TypeVariableErasing.INSTANCE);
                     }
 
                     @Override
@@ -5340,6 +5395,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 return upperBounds.isEmpty()
                         ? TypeDescription.OBJECT
                         : upperBounds.get(0).asErasure();
+            }
+
+            @Override
+            public TypeList.Generic getTypeVariables() {
+                throw new IllegalStateException("A type variable does not imply type variables: " + this);
+            }
+
+            @Override
+            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+                throw new IllegalStateException("A type variable does not imply a type variable source: " + this);
             }
 
             @Override
@@ -5393,7 +5458,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             }
 
             @Override
-            public <T> T accept(Visitor<T> visitor) {
+            public <T> T accept(Generic.Visitor<T> visitor) {
                 return visitor.onTypeVariable(this);
             }
 
@@ -5444,7 +5509,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             /**
              * Implementation of a symbolic type variable.
              */
-            public static class Symbolic extends AbstractBase {
+            public static class Symbolic extends Generic.AbstractBase {
 
                 /**
                  * The symbol of the symbolic type variable.
@@ -5480,6 +5545,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return new AnnotationList.Explicit(declaredAnnotations);
+                }
+
+                @Override
+                public TypeList.Generic getTypeVariables() {
+                    throw new IllegalStateException("A type variable does not imply type variables: " + this);
+                }
+
+                @Override
+                public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+                    throw new IllegalStateException("A type variable does not imply a type variable source: " + this);
                 }
 
                 @Override
@@ -5548,7 +5623,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 }
 
                 @Override
-                public <T> T accept(Visitor<T> visitor) {
+                public <T> T accept(Generic.Visitor<T> visitor) {
                     return visitor.onTypeVariable(this);
                 }
 
@@ -5722,6 +5797,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             }
 
             @Override
+            public TypeList.Generic getTypeVariables() {
+                return resolve().getTypeVariables();
+            }
+
+            @Override
+            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
+                return resolve().accept(visitor);
+            }
+
+            @Override
             public TypeList.Generic getInterfaces() {
                 return resolve().getInterfaces();
             }
@@ -5787,7 +5872,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
             }
 
             @Override
-            public <T> T accept(Visitor<T> visitor) {
+            public <T> T accept(Generic.Visitor<T> visitor) {
                 return resolve().accept(visitor);
             }
 
@@ -5873,7 +5958,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource, Mod
                 protected Generic resolve() {
                     java.lang.reflect.Type superClass = type.getGenericSuperclass();
                     return superClass == null
-                            ? UNDEFINED
+                            ? Generic.UNDEFINED
                             : Sort.describe(superClass, getAnnotationReader());
                 }
 

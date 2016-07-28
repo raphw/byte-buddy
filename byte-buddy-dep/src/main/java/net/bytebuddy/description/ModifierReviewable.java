@@ -112,7 +112,7 @@ public interface ModifierReviewable {
     /**
      * A modifier reviewable for a {@link net.bytebuddy.description.type.TypeDescription}.
      */
-    interface ForTypeDescription extends OfAbstraction, OfEnumeration {
+    interface ForTypeDefinition extends OfAbstraction, OfEnumeration {
 
         /**
          * Specifies if the modifier described by this object represents the interface flag.
@@ -206,7 +206,7 @@ public interface ModifierReviewable {
     /**
      * An abstract base implementation of a {@link ModifierReviewable} class.
      */
-    abstract class AbstractBase implements ForTypeDescription, ForFieldDescription, ForMethodDescription, ForParameterDescription {
+    abstract class AbstractBase implements ForTypeDefinition, ForFieldDescription, ForMethodDescription, ForParameterDescription {
 
         @Override
         public boolean isAbstract() {
