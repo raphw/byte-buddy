@@ -102,10 +102,62 @@ public class ConstructorStrategyDefaultTest {
     }
 
     @Test
+    public void testNoConstructorsStrategyWithAttributeAppender() throws Exception {
+        MethodAttributeAppender.Factory methodAttributeAppenderFactory = mock(MethodAttributeAppender.Factory.class);
+        ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.NO_CONSTRUCTORS.with(methodAttributeAppenderFactory);
+        assertThat(constructorStrategy.extractConstructors(instrumentedType).size(), is(0));
+        assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
+        verifyZeroInteractions(methodRegistry);
+        verifyZeroInteractions(instrumentedType);
+    }
+
+    @Test
+    public void testNoConstructorsStrategyWithInheritedAnnotations() throws Exception {
+        ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.NO_CONSTRUCTORS.withInheritedAnnotations();
+        assertThat(constructorStrategy.extractConstructors(instrumentedType).size(), is(0));
+        assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
+        verifyZeroInteractions(methodRegistry);
+        verifyZeroInteractions(instrumentedType);
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void testImitateSuperClassStrategy() throws Exception {
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS.inject(methodRegistry), is(methodRegistry));
+        verify(methodRegistry).append(any(LatentMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(MethodAttributeAppender.NoOp.INSTANCE),
+                eq(Transformer.NoOp.<MethodDescription>make()));
+        verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType, atLeastOnce()).getSuperClass();
+        verifyNoMoreInteractions(instrumentedType);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testImitateSuperClassStrategyWithAttributeAppender() throws Exception {
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC);
+        MethodAttributeAppender.Factory methodAttributeAppenderFactory = mock(MethodAttributeAppender.Factory.class);
+        ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.IMITATE_SUPER_CLASS.with(methodAttributeAppenderFactory);
+        assertThat(constructorStrategy.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
+        assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
+        verify(methodRegistry).append(any(LatentMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(methodAttributeAppenderFactory),
+                eq(Transformer.NoOp.<MethodDescription>make()));
+        verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType, atLeastOnce()).getSuperClass();
+        verifyNoMoreInteractions(instrumentedType);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testImitateSuperClassStrategyWithInheritedAnnotations() throws Exception {
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC);
+        ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.IMITATE_SUPER_CLASS.withInheritedAnnotations();
+        assertThat(constructorStrategy.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
+        assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER),
@@ -121,6 +173,39 @@ public class ConstructorStrategyDefaultTest {
         when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC);
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.inject(methodRegistry), is(methodRegistry));
+        verify(methodRegistry).append(any(LatentMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(MethodAttributeAppender.NoOp.INSTANCE),
+                eq(Transformer.NoOp.<MethodDescription>make()));
+        verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType, atLeastOnce()).getSuperClass();
+        verifyNoMoreInteractions(instrumentedType);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testImitateSuperClassPublicStrategyWithAttributeAppender() throws Exception {
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC);
+        MethodAttributeAppender.Factory methodAttributeAppenderFactory = mock(MethodAttributeAppender.Factory.class);
+        ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.with(methodAttributeAppenderFactory);
+        assertThat(constructorStrategy.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
+        assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
+        verify(methodRegistry).append(any(LatentMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(methodAttributeAppenderFactory),
+                eq(Transformer.NoOp.<MethodDescription>make()));
+        verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType, atLeastOnce()).getSuperClass();
+        verifyNoMoreInteractions(instrumentedType);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testImitateSuperClassPublicStrategyWithInheritedAnnotations() throws Exception {
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC);
+        ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.withInheritedAnnotations();
+        assertThat(constructorStrategy.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
+        assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER),
@@ -151,6 +236,40 @@ public class ConstructorStrategyDefaultTest {
         verifyNoMoreInteractions(instrumentedType);
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testDefaultConstructorStrategyWithAttributeAppender() throws Exception {
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
+        MethodAttributeAppender.Factory methodAttributeAppenderFactory = mock(MethodAttributeAppender.Factory.class);
+        ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.with(methodAttributeAppenderFactory);
+        assertThat(constructorStrategy.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
+        assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
+        verify(methodRegistry).append(any(LatentMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(methodAttributeAppenderFactory),
+                eq(Transformer.NoOp.<MethodDescription>make()));
+        verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType).getSuperClass();
+        verifyNoMoreInteractions(instrumentedType);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testDefaultConstructorStrategyWithInheritedAnnotations() throws Exception {
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
+        ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.withInheritedAnnotations();
+        assertThat(constructorStrategy.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
+        assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
+        verify(methodRegistry).append(any(LatentMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER),
+                eq(Transformer.NoOp.<MethodDescription>make()));
+        verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType).getSuperClass();
+        verifyNoMoreInteractions(instrumentedType);
+    }
+
+
     @Test(expected = IllegalArgumentException.class)
     @SuppressWarnings("unchecked")
     public void testDefaultConstructorStrategyNoDefault() throws Exception {
@@ -162,5 +281,6 @@ public class ConstructorStrategyDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ConstructorStrategy.Default.class).apply();
+        ObjectPropertyAssertion.of(ConstructorStrategy.Default.WithMethodAttributeAppenderFactory.class).apply();
     }
 }

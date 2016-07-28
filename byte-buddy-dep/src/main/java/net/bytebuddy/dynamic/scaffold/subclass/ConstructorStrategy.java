@@ -44,7 +44,7 @@ public interface ConstructorStrategy {
     MethodRegistry inject(MethodRegistry methodRegistry);
 
     /**
-     * Default implementations of constructor strategies.
+     * Default implementations of constructor strategies. Any such strategy offers to additionally apply an {@link MethodAttributeAppender.Factory}.
      */
     enum Default implements ConstructorStrategy {
 
@@ -60,7 +60,7 @@ public interface ConstructorStrategy {
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry) {
+            protected MethodRegistry doInject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
                 return methodRegistry;
             }
         },
@@ -85,10 +85,10 @@ public interface ConstructorStrategy {
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry) {
+            protected MethodRegistry doInject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        MethodAttributeAppender.NoOp.INSTANCE,
+                        methodAttributeAppenderFactory,
                         Transformer.NoOp.<MethodDescription>make());
             }
         },
@@ -109,10 +109,10 @@ public interface ConstructorStrategy {
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry) {
+            public MethodRegistry doInject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER,
+                        methodAttributeAppenderFactory,
                         Transformer.NoOp.<MethodDescription>make());
             }
         },
@@ -132,10 +132,10 @@ public interface ConstructorStrategy {
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry) {
+            public MethodRegistry doInject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER,
+                        methodAttributeAppenderFactory,
                         Transformer.NoOp.<MethodDescription>make());
             }
         };
@@ -166,8 +166,101 @@ public interface ConstructorStrategy {
         protected abstract List<MethodDescription.Token> doExtractConstructors(TypeDescription instrumentedType);
 
         @Override
+        public MethodRegistry inject(MethodRegistry methodRegistry) {
+            return doInject(methodRegistry, MethodAttributeAppender.NoOp.INSTANCE);
+        }
+
+        /**
+         * Applies the actual injection with a method attribute appender factory supplied.
+         *
+         * @param methodRegistry                 The method registry into which to inject the constructors.
+         * @param methodAttributeAppenderFactory The method attribute appender to use.
+         * @return The resulting method registry.
+         */
+        protected abstract MethodRegistry doInject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory methodAttributeAppenderFactory);
+
+        /**
+         * Returns a constructor strategy that supplies the supplied method attribute appender factory.
+         *
+         * @param methodAttributeAppenderFactory The method attribute appender factory to use.
+         * @return A copy of this constructor strategy with the method attribute appender factory applied.
+         */
+        public ConstructorStrategy with(MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
+            return new WithMethodAttributeAppenderFactory(this, methodAttributeAppenderFactory);
+        }
+
+        /**
+         * Applies this constructor strategy while retaining any of the base constructor's annotations.
+         *
+         * @return A copy of this constructor strategy which retains any of the base constructor's annotations.
+         */
+        public ConstructorStrategy withInheritedAnnotations() {
+            return new WithMethodAttributeAppenderFactory(this, MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER);
+        }
+
+        @Override
         public String toString() {
             return "ConstructorStrategy.Default." + name();
+        }
+
+        /**
+         * A wrapper for a default constructor strategy which additionally applies a method attribute appender factory.
+         */
+        protected static class WithMethodAttributeAppenderFactory implements ConstructorStrategy {
+
+            /**
+             * The delegate default constructor strategy.
+             */
+            private final Default delegate;
+
+            /**
+             * The method attribute appender factory to apply.
+             */
+            private final MethodAttributeAppender.Factory methodAttributeAppenderFactory;
+
+            /**
+             * Creates a new wrapper for a default constructor strategy.
+             *
+             * @param delegate                       The delegate default constructor strategy.
+             * @param methodAttributeAppenderFactory The method attribute appender factory to apply.
+             */
+            protected WithMethodAttributeAppenderFactory(Default delegate, MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
+                this.delegate = delegate;
+                this.methodAttributeAppenderFactory = methodAttributeAppenderFactory;
+            }
+
+            @Override
+            public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
+                return delegate.extractConstructors(instrumentedType);
+            }
+
+            @Override
+            public MethodRegistry inject(MethodRegistry methodRegistry) {
+                return delegate.doInject(methodRegistry, methodAttributeAppenderFactory);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                WithMethodAttributeAppenderFactory that = (WithMethodAttributeAppenderFactory) object;
+                return delegate == that.delegate && methodAttributeAppenderFactory.equals(that.methodAttributeAppenderFactory);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = delegate.hashCode();
+                result = 31 * result + methodAttributeAppenderFactory.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "ConstructorStrategy.Default.WithMethodAttributeAppenderFactory{" +
+                        "delegate=" + delegate +
+                        ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
+                        '}';
+            }
         }
 
     }
