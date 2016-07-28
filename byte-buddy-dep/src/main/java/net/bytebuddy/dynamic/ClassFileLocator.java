@@ -14,6 +14,7 @@ import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.jar.JarFile;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
 /**
@@ -425,6 +426,11 @@ public interface ClassFileLocator {
     class ForJarFile implements ClassFileLocator, Closeable {
 
         /**
+         * A list of potential locations of the runtime jar for different platforms.
+         */
+        private static final List<String> RUNTIME_LOCATIONS = Arrays.asList("../lib/rt.jar", "lib/rt.jar", "../Classes/classes.jar");
+
+        /**
          * The jar file to read from.
          */
         private final JarFile jarFile;
@@ -433,9 +439,61 @@ public interface ClassFileLocator {
          * Creates a new class file locator for the given jar file.
          *
          * @param jarFile The jar file to read from.
+         * @throws IOException If an I/O exception is thrown.
+         */
+        public ForJarFile(File jarFile) throws IOException {
+            this(new JarFile(jarFile));
+        }
+
+        /**
+         * Creates a new class file locator for the given jar file.
+         *
+         * @param jarFile The jar file to read from.
          */
         public ForJarFile(JarFile jarFile) {
             this.jarFile = jarFile;
+        }
+
+        /**
+         * Resolves a class file locator for the class path that reads class files directly from the file system. The resulting
+         * class file locator does not imply classes on the boot path.
+         *
+         * @return A class file locator for the class path.
+         * @throws IOException If an I/O exception occurs.
+         */
+        public static ClassFileLocator ofClassPath() throws IOException {
+            List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
+            for (String element : Pattern.compile(System.getProperty("path.separator"), Pattern.LITERAL).split(System.getProperty("java.class.path"))) {
+                File file = new File(element);
+                if (file.isDirectory()) {
+                    classFileLocators.add(new ForFolder(file));
+                } else if (file.isFile()) {
+                    classFileLocators.add(new ForJarFile(file));
+                }
+            }
+            return new Compound(classFileLocators);
+        }
+
+        /**
+         * Resolves a class file locator for the runtime jar. If such a file does not exist or cannot be located, a runtime exception is thrown.
+         *
+         * @return A class file locator for the runtime jar, if available.
+         * @throws IOException If an I/O exception occurs.
+         */
+        public static ClassFileLocator ofRuntimeJar() throws IOException {
+            String javaHome = System.getProperty("java.home").replace('\\', '/');
+            File runtimeJar = null;
+            for (String location : RUNTIME_LOCATIONS) {
+                File candidate = new File(javaHome + "/" + location);
+                if (candidate.isFile()) {
+                    runtimeJar = candidate;
+                    break;
+                }
+            }
+            if (runtimeJar == null) {
+                throw new IllegalStateException("Runtime jar does not exist in " + javaHome + " for any of " + RUNTIME_LOCATIONS);
+            }
+            return new ForJarFile(runtimeJar);
         }
 
         @Override
@@ -1144,13 +1202,13 @@ public interface ClassFileLocator {
      * Any class file locator is queried in the supplied order until one locator is able to provide an input
      * stream of the class file.
      */
-    class Compound implements ClassFileLocator {
+    class Compound implements ClassFileLocator, Closeable {
 
         /**
          * The {@link ClassFileLocator}s which are represented by this compound
          * class file locator  in the order of their application.
          */
-        private final ClassFileLocator[] classFileLocator;
+        private final List<? extends ClassFileLocator> classFileLocators;
 
         /**
          * Creates a new compound class file locator.
@@ -1159,12 +1217,22 @@ public interface ClassFileLocator {
          *                         represented by this compound class file locator in the order of their application.
          */
         public Compound(ClassFileLocator... classFileLocator) {
-            this.classFileLocator = classFileLocator;
+            this(Arrays.asList(classFileLocator));
+        }
+
+        /**
+         * Creates a new compound class file locator.
+         *
+         * @param classFileLocators The {@link ClassFileLocator}s to be represented by this compound class file locator in
+         *                          the order of their application.
+         */
+        public Compound(List<? extends ClassFileLocator> classFileLocators) {
+            this.classFileLocators = classFileLocators;
         }
 
         @Override
         public Resolution locate(String typeName) throws IOException {
-            for (ClassFileLocator classFileLocator : this.classFileLocator) {
+            for (ClassFileLocator classFileLocator : classFileLocators) {
                 Resolution resolution = classFileLocator.locate(typeName);
                 if (resolution.isResolved()) {
                     return resolution;
@@ -1174,19 +1242,28 @@ public interface ClassFileLocator {
         }
 
         @Override
+        public void close() throws IOException {
+            for (ClassFileLocator classFileLocator : classFileLocators) {
+                if (classFileLocator instanceof Closeable) {
+                    ((Closeable) classFileLocator).close();
+                }
+            }
+        }
+
+        @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(classFileLocator, ((Compound) other).classFileLocator);
+                    && classFileLocators.equals(((Compound) other).classFileLocators);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(classFileLocator);
+            return classFileLocators.hashCode();
         }
 
         @Override
         public String toString() {
-            return "ClassFileLocator.Compound{classFileLocator=" + Arrays.toString(classFileLocator) + '}';
+            return "ClassFileLocator.Compound{classFileLocators=" + classFileLocators + '}';
         }
     }
 }

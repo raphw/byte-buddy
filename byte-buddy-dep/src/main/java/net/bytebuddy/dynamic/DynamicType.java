@@ -137,7 +137,7 @@ public interface DynamicType {
      * @param sourceJar The original jar file.
      * @param targetJar The {@code source} jar file with the injected contents.
      * @return The {@code target} jar file.
-     * @throws IOException If an IO exception occurs while injecting from the source into the target.
+     * @throws IOException If an I/O exception occurs while injecting from the source into the target.
      */
     File inject(File sourceJar, File targetJar) throws IOException;
 
@@ -147,7 +147,7 @@ public interface DynamicType {
      *
      * @param jar The jar file to replace with an injected version.
      * @return The {@code jar} file.
-     * @throws IOException If an IO exception occurs while injecting into the jar.
+     * @throws IOException If an I/O exception occurs while injecting into the jar.
      */
     File inject(File jar) throws IOException;
 
@@ -158,7 +158,7 @@ public interface DynamicType {
      *
      * @param file The target file to which the <i>jar</i> is written to.
      * @return The given {@code file}.
-     * @throws IOException If an IO exception occurs while writing the file.
+     * @throws IOException If an I/O exception occurs while writing the file.
      */
     File toJar(File file) throws IOException;
 
@@ -169,7 +169,7 @@ public interface DynamicType {
      * @param file     The target file to which the <i>jar</i> is written to.
      * @param manifest The manifest of the created <i>jar</i>.
      * @return The given {@code file}.
-     * @throws IOException If an IO exception occurs while writing the file.
+     * @throws IOException If an I/O exception occurs while writing the file.
      */
     File toJar(File file, Manifest manifest) throws IOException;
 

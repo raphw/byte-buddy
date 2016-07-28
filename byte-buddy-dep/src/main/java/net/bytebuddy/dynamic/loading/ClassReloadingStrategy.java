@@ -421,7 +421,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
          * @param instrumentation  The instrumentation instance to use for class redefinition or retransformation.
          * @param classFileLocator The class file locator to use.
          * @param types            The types to reset.
-         * @throws IOException                If an IO exception occurs.
+         * @throws IOException                If an I/O exception occurs.
          * @throws UnmodifiableClassException If a class is not modifiable.
          * @throws ClassNotFoundException     If a class could not be found.
          */

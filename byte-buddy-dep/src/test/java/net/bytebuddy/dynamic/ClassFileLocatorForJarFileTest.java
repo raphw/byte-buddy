@@ -1,10 +1,13 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.objectweb.asm.ClassVisitor;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.jar.JarEntry;
@@ -13,6 +16,8 @@ import java.util.jar.JarOutputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class ClassFileLocatorForJarFileTest {
 
@@ -52,6 +57,35 @@ public class ClassFileLocatorForJarFileTest {
             assertThat(resolution.resolve(), is(new byte[]{VALUE, VALUE * 2}));
         } finally {
             jarFile.close();
+        }
+    }
+
+    @Test
+    public void testJarFileClosable() throws Exception {
+        JarFile jarFile = mock(JarFile.class);
+        Closeable classFileLocator = new ClassFileLocator.ForJarFile(jarFile);
+        classFileLocator.close();
+        verify(jarFile).close();
+    }
+
+    @Test
+    public void testClassPath() throws Exception {
+        ClassFileLocator classFileLocator = ClassFileLocator.ForJarFile.ofClassPath();
+        try {
+            assertThat(classFileLocator.locate(ByteBuddy.class.getName()).isResolved(), is(true)); // As file.
+            assertThat(classFileLocator.locate(ClassVisitor.class.getName()).isResolved(), is(true)); // On path.
+        } finally {
+            ((Closeable) classFileLocator).close();
+        }
+    }
+
+    @Test
+    public void testRuntimeJar() throws Exception {
+        ClassFileLocator classFileLocator = ClassFileLocator.ForJarFile.ofRuntimeJar();
+        try {
+            assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(true));
+        } finally {
+            ((Closeable) classFileLocator).close();
         }
     }
 

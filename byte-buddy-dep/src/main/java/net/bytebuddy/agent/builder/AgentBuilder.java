@@ -2978,7 +2978,7 @@ public interface AgentBuilder {
                      *
                      * @param locationStrategy A strategy for creating a class file locator.
                      * @return A class definition representing the redefined class.
-                     * @throws IOException If an IO exception occurs.
+                     * @throws IOException If an I/O exception occurs.
                      */
                     protected ClassDefinition resolve(LocationStrategy locationStrategy) throws IOException {
                         return new ClassDefinition(type, locationStrategy

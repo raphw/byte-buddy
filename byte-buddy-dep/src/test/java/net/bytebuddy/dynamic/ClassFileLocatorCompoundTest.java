@@ -8,6 +8,8 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.io.Closeable;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -20,7 +22,10 @@ public class ClassFileLocatorCompoundTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private ClassFileLocator classFileLocator, otherClassFileLocator;
+    private ClosableLocator classFileLocator;
+
+    @Mock
+    private ClassFileLocator otherClassFileLocator;
 
     @Mock
     private ClassFileLocator.Resolution legal, illegal;
@@ -51,7 +56,20 @@ public class ClassFileLocatorCompoundTest {
     }
 
     @Test
+    public void testClosable() throws Exception {
+        when(classFileLocator.locate(FOO)).thenReturn(legal);
+        new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).close();
+        verify(classFileLocator).close();
+        verifyNoMoreInteractions(classFileLocator);
+        verifyZeroInteractions(otherClassFileLocator);
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileLocator.Compound.class).apply();
+    }
+
+    private static abstract class ClosableLocator implements ClassFileLocator, Closeable {
+        /* empty */
     }
 }
