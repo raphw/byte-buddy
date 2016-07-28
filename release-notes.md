@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. July 2016: version 1.4.16
+
+- Added `POOL_LAST_DEFERRED` and `POOL_LAST_FALLBACK` description strategy.
+- Fixed resolution of bridge methods for diamond inheritance.
+- Refactored modifier API to only expose named modifier checks for an element that apply to it.
+- Fixed resolution for type variables for transformed methods.
+
 ### 25. July 2016: version 1.4.15
 
 - Fixed frame generation for `void` methods without regular return in `Advice`.
