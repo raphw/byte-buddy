@@ -7938,7 +7938,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
         public <T extends Annotation> WithCustomMapping bindProperty(Class<? extends T> type, String property) {
-            return bind(type, DynamicValue.ForAnnotationProperty.of(type, property));
+            return bind(type, DynamicValue.ForAnnotationProperty.<T>of(type, property));
         }
 
         /**

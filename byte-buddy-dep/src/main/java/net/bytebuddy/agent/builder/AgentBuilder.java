@@ -6146,7 +6146,7 @@ public interface AgentBuilder {
              * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
              * @param transformation             The transformation object for handling type transformations.
              */
-            protected ExecutingTransformer(ByteBuddy byteBuddy,
+            public ExecutingTransformer(ByteBuddy byteBuddy,
                                            TypeLocator typeLocator,
                                            TypeStrategy typeStrategy,
                                            LocationStrategy locationStrategy,
