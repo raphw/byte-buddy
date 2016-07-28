@@ -1,5 +1,8 @@
 package net.bytebuddy.utility;
 
+import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.type.TypeDescription;
+
 import java.util.Arrays;
 
 /**
@@ -225,6 +228,130 @@ public enum PropertyDispatcher {
     },
 
     /**
+     * A property dispatcher for a {@code Class} value. This value requires special handling since Java 9.
+     */
+    TYPE_LOADED {
+        @Override
+        public String toString(Object value) {
+            return TypeRenderer.CURRENT.render((Class<?>) value);
+        }
+
+        @Override
+        public int hashCode(Object value) {
+            return value.hashCode();
+        }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return first.equals(second);
+        }
+
+        @Override
+        public <T> T conditionalClone(T value) {
+            return value;
+        }
+    },
+
+    /**
+     * A property dispatcher for a {@code Class[]} value. This value requires special handling since Java 9.
+     */
+    TYPE_LOADED_ARRAY {
+        @Override
+        public String toString(Object value) {
+            StringBuilder stringBuilder = new StringBuilder().append(TypeRenderer.CURRENT.adjust('['));
+            boolean initial = true;
+            for (Class<?> type : (Class<?>[]) value) {
+                stringBuilder.append(TypeRenderer.CURRENT.render(type));
+                if (initial) {
+                    initial = false;
+                } else {
+                    stringBuilder.append(", ");
+                }
+            }
+            return stringBuilder.append(TypeRenderer.CURRENT.adjust(']')).toString();
+        }
+
+        @Override
+        public int hashCode(Object value) {
+            return Arrays.hashCode((Object[]) value);
+        }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((Object[]) first, (Object[]) second);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            Object[] castValue = (Object[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
+        }
+    },
+
+    /**
+     * A property dispatcher for a {@code TypeDescription} value. This value requires special handling since Java 9.
+     */
+    TYPE_DESCRIBED {
+        @Override
+        public String toString(Object value) {
+            return TypeRenderer.CURRENT.render((TypeDescription) value);
+        }
+
+        @Override
+        public int hashCode(Object value) {
+            return value.hashCode();
+        }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return first.equals(second);
+        }
+
+        @Override
+        public <T> T conditionalClone(T value) {
+            return value;
+        }
+    },
+
+    /**
+     * A property dispatcher for a {@code TypeDescription[]} value. This value requires special handling since Java 9.
+     */
+    TYPE_DESCRIBED_ARRAY {
+        @Override
+        public String toString(Object value) {
+            StringBuilder stringBuilder = new StringBuilder().append(TypeRenderer.CURRENT.adjust('['));
+            boolean initial = true;
+            for (TypeDescription typeDescription : (TypeDescription[]) value) {
+                stringBuilder.append(TypeRenderer.CURRENT.render(typeDescription));
+                if (initial) {
+                    initial = false;
+                } else {
+                    stringBuilder.append(", ");
+                }
+            }
+            return stringBuilder.append(TypeRenderer.CURRENT.adjust(']')).toString();
+        }
+
+        @Override
+        public int hashCode(Object value) {
+            return Arrays.hashCode((Object[]) value);
+        }
+
+        @Override
+        protected boolean doEquals(Object first, Object second) {
+            return Arrays.equals((Object[]) first, (Object[]) second);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T conditionalClone(T value) {
+            Object[] castValue = (Object[]) value;
+            return castValue.length == 0 ? value : (T) castValue.clone();
+        }
+    },
+
+    /**
      * A property dispatcher for any {@code Object[]} array.
      */
     REFERENCE_ARRAY {
@@ -300,6 +427,14 @@ public enum PropertyDispatcher {
             return FLOAT_ARRAY;
         } else if (type == double[].class) {
             return DOUBLE_ARRAY;
+        } else if (type == Class.class) {
+            return TYPE_LOADED;
+        } else if (type == Class[].class) {
+            return TYPE_LOADED_ARRAY;
+        } else if (TypeDescription.class.isAssignableFrom(type)) {
+            return TYPE_DESCRIBED;
+        } else if (TypeDescription[].class.isAssignableFrom(type)) {
+            return TYPE_DESCRIBED_ARRAY;
         } else if (Object[].class.isAssignableFrom(type)) {
             return REFERENCE_ARRAY;
         } else {
@@ -355,5 +490,108 @@ public enum PropertyDispatcher {
     @Override
     public String toString() {
         return "PropertyDispatcher." + name();
+    }
+
+    /**
+     * A delegate for rendering a {@link Class} or {@link TypeDescription}. Starting with Java 9, such values are enclosed
+     * in curly braces and are rendered as class literals to better match the source code.
+     */
+    protected enum TypeRenderer {
+
+        /**
+         * A type renderer for a legacy VM prior to Java 8.
+         */
+        FOR_LEGACY_VM(0) {
+            @Override
+            protected String render(Class<?> type) {
+                return type.toString();
+            }
+
+            @Override
+            protected String render(TypeDescription typeDescription) {
+                return typeDescription.toString();
+            }
+        },
+
+        /**
+         * A type renderer for a VM of at least Java version 9.
+         */
+        FOR_JAVA9_CAPABLE_VM('{' - '[') {
+            @Override
+            protected String render(Class<?> type) {
+                return type.getName() + JAVA9_NAME_SUFFIX;
+            }
+
+            @Override
+            protected String render(TypeDescription typeDescription) {
+                return typeDescription.getName() + JAVA9_NAME_SUFFIX;
+            }
+        };
+
+        /**
+         * The class constant suffix for types from Java 9 and later.
+         */
+        private static final String JAVA9_NAME_SUFFIX = ".class";
+
+        /**
+         * The type renderer to be used on the current VM.
+         */
+        protected static final TypeRenderer CURRENT = make();
+
+        /**
+         * Finds the type renderer for the current VM.
+         *
+         * @return The type renderer to be used on the current VM.
+         */
+        private static TypeRenderer make() {
+            return ClassFileVersion.forCurrentJavaVersion(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+                    ? FOR_JAVA9_CAPABLE_VM
+                    : FOR_LEGACY_VM;
+        }
+
+        /**
+         * The offset to add for braces starting from {@code [} or {@code ]}.
+         */
+        private final int offset;
+
+        /**
+         * Creates a new type renderer.
+         *
+         * @param offset The offset to add for braces.
+         */
+        TypeRenderer(int offset) {
+            this.offset = offset;
+        }
+
+        /**
+         * Adjusts a brace character.
+         *
+         * @param delimiter The delimiter being used.
+         * @return The adjusted delimiter.
+         */
+        protected char adjust(char delimiter) {
+            return (char) (delimiter + offset);
+        }
+
+        /**
+         * Renders a {@link Class} constant.
+         *
+         * @param type The type to be rendered.
+         * @return The rendered string.
+         */
+        protected abstract String render(Class<?> type);
+
+        /**
+         * Renders a {@link TypeDescription} which represents a constant.
+         *
+         * @param typeDescription The type to be rendered.
+         * @return The rendered string.
+         */
+        protected abstract String render(TypeDescription typeDescription);
+
+        @Override
+        public String toString() {
+            return "PropertyDispatcher.TypeRenderer." + name();
+        }
     }
 }

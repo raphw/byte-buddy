@@ -1,18 +1,25 @@
 package net.bytebuddy.description.annotation;
 
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.lang.annotation.*;
 import java.lang.reflect.Method;
@@ -21,6 +28,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static jdk.nashorn.internal.objects.Global.println;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -126,7 +134,9 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     private static final String[] OTHER_STRING_ARRAY = new String[]{BAR};
 
-    private Annotation first, second, defaultFirst, defaultSecond, explicitTarget;
+    private Annotation first, second, defaultFirst, defaultSecond, explicitTarget, broken;
+
+    private Class<?> brokenCarrier;
 
     protected abstract AnnotationDescription describe(Annotation annotation, Class<?> declaringType);
 
@@ -142,6 +152,8 @@ public abstract class AbstractAnnotationDescriptionTest {
             carrier = NonDefaultSample.class;
         } else if (annotation == explicitTarget) {
             carrier = ExplicitTarget.Carrier.class;
+        } else if (annotation == broken) {
+            carrier = brokenCarrier;
         } else {
             throw new AssertionError();
         }
@@ -155,6 +167,13 @@ public abstract class AbstractAnnotationDescriptionTest {
         defaultFirst = DefaultSample.class.getAnnotation(SampleDefault.class);
         defaultSecond = NonDefaultSample.class.getAnnotation(SampleDefault.class);
         explicitTarget = ExplicitTarget.Carrier.class.getAnnotation(ExplicitTarget.class);
+        brokenCarrier = new ByteBuddy()
+                .subclass(Object.class)
+                .visit(new AnnotationValueBreaker())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        broken = brokenCarrier.getAnnotations()[0];
     }
 
     @Test
@@ -178,8 +197,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     private void assertToString(String actual, Annotation loaded) throws Exception {
         assertThat(actual, startsWith("@" + loaded.annotationType().getName()));
         for (Method method : loaded.annotationType().getDeclaredMethods()) {
-            assertThat(actual, containsString(method.getName() + "="
-                    + PropertyDispatcher.of(method.getReturnType()).toString(method.invoke(loaded))));
+            assertThat(actual, containsString(method.getName() + "=" + PropertyDispatcher.of(method.getReturnType()).toString(method.invoke(loaded))));
         }
     }
 
@@ -258,6 +276,18 @@ public abstract class AbstractAnnotationDescriptionTest {
     public void testLoadedToString() throws Exception {
         assertToString(describe(first).prepare(Sample.class).load().toString(), first);
         assertToString(describe(second).prepare(Sample.class).load().toString(), second);
+    }
+
+    @Test
+    public void testToString() throws Exception {
+        assertToString(describe(first).prepare(Sample.class).toString(), first);
+        assertToString(describe(second).prepare(Sample.class).toString(), second);
+    }
+
+    @Test
+    @Ignore("Add better handling for annotations with illegal values")
+    public void testBrokenAnnotation() throws Exception {
+        describe(broken);
     }
 
     @Test
@@ -568,7 +598,7 @@ public abstract class AbstractAnnotationDescriptionTest {
             enumArrayValue = SampleEnumeration.VALUE,
             annotationArrayValue = @Other)
     private static class FooSample {
-
+        /* empty */
     }
 
     @Sample(booleanValue = BOOLEAN,
@@ -597,12 +627,12 @@ public abstract class AbstractAnnotationDescriptionTest {
             enumArrayValue = SampleEnumeration.VALUE,
             annotationArrayValue = @Other)
     private static class BarSample {
-
+        /* empty */
     }
 
     @SampleDefault
     private static class DefaultSample {
-
+        /* empty */
     }
 
     @SampleDefault(booleanValue = !BOOLEAN,
@@ -631,17 +661,17 @@ public abstract class AbstractAnnotationDescriptionTest {
             enumArrayValue = SampleEnumeration.OTHER,
             annotationArrayValue = @Other(BAR))
     private static class NonDefaultSample {
-
+        /* empty */
     }
 
     @Other
     private static class EnumerationCarrier {
-
+        /* empty */
     }
 
     @Other(BAR)
     private static class OtherEnumerationCarrier {
-
+        /* empty */
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -651,6 +681,41 @@ public abstract class AbstractAnnotationDescriptionTest {
         @ExplicitTarget
         class Carrier {
             /* empty */
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface BrokenAnnotation {
+
+        String stringValue();
+
+        SampleEnumeration enumValue();
+
+        Class<?> classValue();
+    }
+
+    private static class AnnotationValueBreaker extends AsmVisitorWrapper.AbstractBase {
+
+        @Override
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+            return new BreakingClassVisitor(classVisitor);
+        }
+
+        private static class BreakingClassVisitor extends ClassVisitor {
+
+            public BreakingClassVisitor(ClassVisitor classVisitor) {
+                super(Opcodes.ASM5, classVisitor);
+            }
+
+            @Override
+            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                super.visit(version, access, name, signature, superName, interfaces);
+                AnnotationVisitor annotationVisitor = visitAnnotation(Type.getDescriptor(BrokenAnnotation.class), true);
+                annotationVisitor.visit("stringValue", INTEGER);
+                annotationVisitor.visitEnum("enumValue", Type.getDescriptor(SampleEnumeration.class), FOO);
+                annotationVisitor.visit("classValue", Type.getType("Lnet/bytebuddy/inexistant/Foo;"));
+                annotationVisitor.visitEnd();
+            }
         }
     }
 }
