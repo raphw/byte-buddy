@@ -1031,9 +1031,19 @@ public interface AnnotationDescription {
 
                 @Override
                 public String toString() {
-                    return componentType == Class.class
-                            ? PropertyDispatcher.TypeRenderer.CURRENT.render(values.toArray(new Object[values.size()]))
-                            : Arrays.toString(values.toArray(new Object[values.size()]));
+                    char open, close;
+                    if (componentType == Class.class) {
+                        open = PropertyDispatcher.TypeRenderer.CURRENT.getOpen();
+                        close = PropertyDispatcher.TypeRenderer.CURRENT.getClose();
+                    } else {
+                        open = '[';
+                        close = ']';
+                    }
+                    StringBuilder stringBuilder = new StringBuilder().append(open);
+                    for (AnnotationValue.Loaded<?> value : values) {
+                        stringBuilder.append(value.toString());
+                    }
+                    return stringBuilder.append(close).toString();
                 }
             }
         }
@@ -1220,7 +1230,9 @@ public interface AnnotationDescription {
                 } else {
                     toString.append(", ");
                 }
-                toString.append(entry.getKey().getName()).append('=').append(entry.getValue().toString());
+                toString.append(entry.getKey().getName())
+                        .append('=')
+                        .append(entry.getValue().toString());
             }
             toString.append(')');
             return toString.toString();

@@ -45,6 +45,18 @@ public class PropertyDispatcherOtherTest {
     }
 
     @Test
+    public void testLegacyVmBrace() throws Exception {
+        assertThat(PropertyDispatcher.TypeRenderer.FOR_LEGACY_VM.getOpen(), is('['));
+        assertThat(PropertyDispatcher.TypeRenderer.FOR_LEGACY_VM.getClose(), is(']'));
+    }
+
+    @Test
+    public void testModernVmBrace() throws Exception {
+        assertThat(PropertyDispatcher.TypeRenderer.FOR_JAVA9_CAPABLE_VM.getOpen(), is('{'));
+        assertThat(PropertyDispatcher.TypeRenderer.FOR_JAVA9_CAPABLE_VM.getClose(), is('}'));
+    }
+
+    @Test
     public void testCurrent() throws Exception {
         assertThat(PropertyDispatcher.TypeRenderer.CURRENT, is(ClassFileVersion.forThisVm().isAtLeast(ClassFileVersion.JAVA_V9)
                 ? PropertyDispatcher.TypeRenderer.FOR_JAVA9_CAPABLE_VM

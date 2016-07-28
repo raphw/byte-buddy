@@ -4,6 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A dispatcher for invoking {@link Object#toString()} and {@link Object#hashCode()} methods that are sensitive to
@@ -481,7 +482,7 @@ public enum PropertyDispatcher {
         /**
          * A type renderer for a legacy VM prior to Java 8.
          */
-        FOR_LEGACY_VM {
+        FOR_LEGACY_VM('[', ']') {
             @Override
             public String render(Object type) {
                 if (!(type instanceof Class || type instanceof TypeDescription)) {
@@ -489,17 +490,12 @@ public enum PropertyDispatcher {
                 }
                 return type.toString();
             }
-
-            @Override
-            public String render(Object[] type) {
-                return Arrays.toString(type);
-            }
         },
 
         /**
          * A type renderer for a VM of at least Java version 9.
          */
-        FOR_JAVA9_CAPABLE_VM {
+        FOR_JAVA9_CAPABLE_VM('{', '}') {
             @Override
             public String render(Object type) {
                 String name;
@@ -511,21 +507,6 @@ public enum PropertyDispatcher {
                     throw new IllegalArgumentException("Unexpected type description: " + type);
                 }
                 return name + JAVA9_NAME_SUFFIX;
-            }
-
-            @Override
-            public String render(Object[] type) {
-                StringBuilder stringBuilder = new StringBuilder().append('{');
-                boolean initial = true;
-                for (Object aType : type) {
-                    stringBuilder.append(render(aType));
-                    if (initial) {
-                        initial = false;
-                    } else {
-                        stringBuilder.append(", ");
-                    }
-                }
-                return stringBuilder.append('}').toString();
             }
         };
 
@@ -551,6 +532,27 @@ public enum PropertyDispatcher {
         }
 
         /**
+         * The opening brace character.
+         */
+        private final char open;
+
+        /**
+         * The closing brace character.
+         */
+        private final char close;
+
+        /**
+         * Creates a new type renderer.
+         *
+         * @param open  The opening brace character.
+         * @param close The closing brace character.
+         */
+        TypeRenderer(char open, char close) {
+            this.open = open;
+            this.close = close;
+        }
+
+        /**
          * Renders a {@link Class} or {@link TypeDescription} constant.
          *
          * @param type The type to be rendered.
@@ -564,7 +566,35 @@ public enum PropertyDispatcher {
          * @param type The types to be rendered.
          * @return The rendered string.
          */
-        public abstract String render(Object[] type);
+        public String render(Object[] type) {
+            StringBuilder stringBuilder = new StringBuilder().append(open);
+            boolean initial = true;
+            for (Object aType : type) {
+                stringBuilder.append(render(aType));
+                if (initial) {
+                    initial = false;
+                } else {
+                    stringBuilder.append(", ");
+                }
+            }
+            return stringBuilder.append(close).toString();
+        }
+
+        /**
+         * Returns the opening brace.
+         * @return The opening brace.
+         */
+        public char getOpen() {
+            return open;
+        }
+
+        /**
+         * Returns the closing brace.
+         * @return The closing brace.
+         */
+        public char getClose() {
+            return close;
+        }
 
         @Override
         public String toString() {
