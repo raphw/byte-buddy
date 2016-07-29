@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.*;
+
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.MethodVisitor}.
  */
@@ -123,8 +125,14 @@ public interface MethodAttributeAppender {
     }
 
     /**
+     * <p>
      * Implementation of a method attribute appender that writes all annotations of the instrumented method to the
      * method that is being created. This includes method and parameter annotations.
+     * </p>
+     * <p>
+     * <b>Important</b>: This attribute appender does not apply for annotation types within the {@code jdk.} namespace
+     * which are silently ignored. If such annotations should be inherited, they need to be added explicitly.
+     * </p>
      */
     enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
 
@@ -178,7 +186,7 @@ public interface MethodAttributeAppender {
                     annotationValueFilter,
                     AnnotationAppender.ForTypeAnnotations.VARIABLE_ON_INVOKEABLE,
                     methodDescription.getTypeVariables());
-            for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
+            for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations().filter(not(annotationType(nameStartsWith("jdk."))))) {
                 annotationAppender = annotationAppender.append(annotation, annotationValueFilter);
             }
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {

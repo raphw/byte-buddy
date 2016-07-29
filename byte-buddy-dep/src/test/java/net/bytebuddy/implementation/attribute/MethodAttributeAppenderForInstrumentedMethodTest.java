@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationDescriptionBuilderTest;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -355,5 +356,23 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
                 Type.getDescriptor(QuxBaz.class),
                 false);
         verifyNoMoreInteractions(methodVisitor);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testJdkTypeIsFiltered() throws Exception {
+        when(annotationValueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
+        AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
+        TypeDescription annotationType = mock(TypeDescription.class);
+        when(annotationType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(Baz.class.getDeclaredAnnotations()));
+        when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
+        when(annotationType.getActualName()).thenReturn("jdk.Sample");
+        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(annotationDescription));
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(methodDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
+        when(methodDescription.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
+        methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
+        verifyZeroInteractions(methodVisitor);
     }
 }
