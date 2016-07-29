@@ -4,6 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationDescriptionBuilderTest;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -15,6 +16,7 @@ import org.junit.runners.Parameterized;
 import org.mockito.asm.Type;
 import org.objectweb.asm.TypeReference;
 
+import java.lang.annotation.RetentionPolicy;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -364,9 +366,10 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(annotationValueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
         TypeDescription annotationType = mock(TypeDescription.class);
-        when(annotationType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(Baz.class.getDeclaredAnnotations()));
+        when(annotationType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+        when(annotationDescription.getRetention()).thenReturn(RetentionPolicy.RUNTIME);
         when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
-        when(annotationType.getActualName()).thenReturn("jdk.Sample");
+        when(annotationType.getActualName()).thenReturn("jdk.internal.Sample");
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(annotationDescription));
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
