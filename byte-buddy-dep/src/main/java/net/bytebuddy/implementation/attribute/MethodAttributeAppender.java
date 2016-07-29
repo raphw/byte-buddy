@@ -130,7 +130,7 @@ public interface MethodAttributeAppender {
      * method that is being created. This includes method and parameter annotations.
      * </p>
      * <p>
-     * <b>Important</b>: This attribute appender does not apply for annotation types within the {@code jdk.} namespace
+     * <b>Important</b>: This attribute appender does not apply for annotation types within the {@code jdk.internal.} namespace
      * which are silently ignored. If such annotations should be inherited, they need to be added explicitly.
      * </p>
      */
@@ -186,7 +186,7 @@ public interface MethodAttributeAppender {
                     annotationValueFilter,
                     AnnotationAppender.ForTypeAnnotations.VARIABLE_ON_INVOKEABLE,
                     methodDescription.getTypeVariables());
-            for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations().filter(not(annotationType(nameStartsWith("jdk."))))) {
+            for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations().filter(not(annotationType(nameStartsWith("jdk.internal."))))) {
                 annotationAppender = annotationAppender.append(annotation, annotationValueFilter);
             }
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
