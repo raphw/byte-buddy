@@ -4,7 +4,6 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * A dispatcher for invoking {@link Object#toString()} and {@link Object#hashCode()} methods that are sensitive to
