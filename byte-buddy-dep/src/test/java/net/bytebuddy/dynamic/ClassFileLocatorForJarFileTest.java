@@ -1,10 +1,13 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.objectweb.asm.ClassVisitor;
 
 import java.io.Closeable;
@@ -24,6 +27,9 @@ public class ClassFileLocatorForJarFileTest {
     private static final String FOO = "foo", BAR = "bar";
 
     private static final int VALUE = 42;
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private File file;
 
@@ -80,6 +86,7 @@ public class ClassFileLocatorForJarFileTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(value = 8, direction = JavaVersionRule.Sort.AT_MOST)
     public void testRuntimeJar() throws Exception {
         ClassFileLocator classFileLocator = ClassFileLocator.ForJarFile.ofRuntimeJar();
         try {

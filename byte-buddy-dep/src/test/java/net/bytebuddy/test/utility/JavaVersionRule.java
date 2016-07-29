@@ -27,7 +27,7 @@ public class JavaVersionRule implements MethodRule {
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
         if (enforce != null) {
-            if (ClassFileVersion.ofJavaVersion(enforce.value()).compareTo(currentVersion) > 0) {
+            if (!enforce.direction().check(currentVersion, ClassFileVersion.ofJavaVersion(enforce.value()))) {
                 return new NoOpStatement(enforce.value());
             } else if (!hotSpot) {
                 for (int javaVersion : enforce.hotSpot()) {
@@ -45,6 +45,8 @@ public class JavaVersionRule implements MethodRule {
     public @interface Enforce {
 
         int value();
+
+        Sort direction() default Sort.AT_LEAST;
 
         int[] hotSpot() default {};
     }
@@ -75,5 +77,24 @@ public class JavaVersionRule implements MethodRule {
         public void evaluate() throws Throwable {
             Logger.getLogger("net.bytebuddy").warning("Ignoring test case: Only works on HotSpot for Java version " + restrictedVersion);
         }
+    }
+
+    public enum Sort {
+
+        AT_LEAST {
+            @Override
+            protected boolean check(ClassFileVersion current, ClassFileVersion enforced) {
+                return current.isAtLeast(enforced);
+            }
+        },
+
+        AT_MOST {
+            @Override
+            protected boolean check(ClassFileVersion current, ClassFileVersion enforced) {
+                return current.isAtLeast(enforced);
+            }
+        };
+
+        protected abstract boolean check(ClassFileVersion current, ClassFileVersion enforced);
     }
 }

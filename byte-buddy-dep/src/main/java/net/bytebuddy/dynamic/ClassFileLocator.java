@@ -439,19 +439,20 @@ public interface ClassFileLocator {
          * Creates a new class file locator for the given jar file.
          *
          * @param jarFile The jar file to read from.
-         * @throws IOException If an I/O exception is thrown.
          */
-        public ForJarFile(File jarFile) throws IOException {
-            this(new JarFile(jarFile));
+        public ForJarFile(JarFile jarFile) {
+            this.jarFile = jarFile;
         }
 
         /**
          * Creates a new class file locator for the given jar file.
          *
-         * @param jarFile The jar file to read from.
+         * @param file The jar file to read from.
+         * @return A class file locator for the jar file.
+         * @throws IOException If an I/O exception is thrown.
          */
-        public ForJarFile(JarFile jarFile) {
-            this.jarFile = jarFile;
+        public static ForJarFile of(File file) throws IOException {
+            return new ForJarFile(new JarFile(file));
         }
 
         /**
@@ -468,7 +469,7 @@ public interface ClassFileLocator {
                 if (file.isDirectory()) {
                     classFileLocators.add(new ForFolder(file));
                 } else if (file.isFile()) {
-                    classFileLocators.add(new ForJarFile(file));
+                    classFileLocators.add(of(file));
                 }
             }
             return new Compound(classFileLocators);
@@ -493,7 +494,7 @@ public interface ClassFileLocator {
             if (runtimeJar == null) {
                 throw new IllegalStateException("Runtime jar does not exist in " + javaHome + " for any of " + RUNTIME_LOCATIONS);
             }
-            return new ForJarFile(runtimeJar);
+            return of(runtimeJar);
         }
 
         @Override
