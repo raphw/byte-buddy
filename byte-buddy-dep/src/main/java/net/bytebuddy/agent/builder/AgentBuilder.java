@@ -1635,8 +1635,10 @@ public interface AgentBuilder {
 
             @Override
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
-                printStream.println(PREFIX + " ERROR " + typeName + "[" + classLoader + ", " + module + "]");
-                throwable.printStackTrace(printStream);
+                synchronized (printStream) {
+                    printStream.println(PREFIX + " ERROR " + typeName + "[" + classLoader + ", " + module + "]");
+                    throwable.printStackTrace(printStream);
+                }
             }
 
             @Override
@@ -6147,16 +6149,16 @@ public interface AgentBuilder {
              * @param transformation             The transformation object for handling type transformations.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
-                                           TypeLocator typeLocator,
-                                           TypeStrategy typeStrategy,
-                                           LocationStrategy locationStrategy,
-                                           Listener listener,
-                                           NativeMethodStrategy nativeMethodStrategy,
-                                           InitializationStrategy initializationStrategy,
-                                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                                           DescriptionStrategy descriptionStrategy,
-                                           RawMatcher ignoredTypeMatcher,
-                                           Transformation transformation) {
+                                        TypeLocator typeLocator,
+                                        TypeStrategy typeStrategy,
+                                        LocationStrategy locationStrategy,
+                                        Listener listener,
+                                        NativeMethodStrategy nativeMethodStrategy,
+                                        InitializationStrategy initializationStrategy,
+                                        BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        DescriptionStrategy descriptionStrategy,
+                                        RawMatcher ignoredTypeMatcher,
+                                        Transformation transformation) {
                 this.byteBuddy = byteBuddy;
                 this.typeLocator = typeLocator;
                 this.locationStrategy = locationStrategy;
