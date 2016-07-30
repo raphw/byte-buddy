@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.StreamDrainer;
@@ -11,6 +12,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.InputStream;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -26,7 +28,7 @@ public class ClassFileLocatorForClassLoaderTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private ClassLoader classLoader;
+    private ClosableClassLoader classLoader;
 
     @Test
     public void testCreation() throws Exception {
@@ -94,11 +96,31 @@ public class ClassFileLocatorForClassLoaderTest {
     }
 
     @Test
+    public void testClose() throws Exception {
+        ClassFileLocator.ForClassLoader.of(classLoader).close();
+        verify(classLoader).close();
+    }
+
+    @Test
+    public void testSystemClassLoader() throws Exception {
+        assertThat(ClassFileLocator.ForClassLoader.ofClassPath(), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
+    }
+
+    @Test
+    public void testBootLoader() throws Exception {
+        assertThat(ClassFileLocator.ForClassLoader.of(null), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileLocator.ForClassLoader.class).apply();
     }
 
     private static class Foo {
+        /* empty */
+    }
+
+    private static abstract class ClosableClassLoader extends ClassLoader implements Closeable {
         /* empty */
     }
 }

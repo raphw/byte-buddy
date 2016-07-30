@@ -22,7 +22,7 @@ public class ClassFileLocatorCompoundTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private ClosableLocator classFileLocator;
+    private ClassFileLocator classFileLocator;
 
     @Mock
     private ClassFileLocator otherClassFileLocator;
@@ -61,15 +61,12 @@ public class ClassFileLocatorCompoundTest {
         new ClassFileLocator.Compound(classFileLocator, otherClassFileLocator).close();
         verify(classFileLocator).close();
         verifyNoMoreInteractions(classFileLocator);
-        verifyZeroInteractions(otherClassFileLocator);
+        verify(otherClassFileLocator).close();
+        verifyNoMoreInteractions(otherClassFileLocator);
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileLocator.Compound.class).apply();
-    }
-
-    private static abstract class ClosableLocator implements ClassFileLocator, Closeable {
-        /* empty */
     }
 }

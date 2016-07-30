@@ -62,6 +62,11 @@ public class ClassFileLocatorForFolderTest {
     }
 
     @Test
+    public void testClose() throws Exception {
+        new ClassFileLocator.ForFolder(folder).close();
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileLocator.ForFolder.class).apply();
     }

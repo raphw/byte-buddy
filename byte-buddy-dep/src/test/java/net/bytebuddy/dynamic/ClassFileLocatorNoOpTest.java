@@ -16,6 +16,11 @@ public class ClassFileLocatorNoOpTest {
     }
 
     @Test
+    public void testClose() throws Exception {
+        ClassFileLocator.NoOp.INSTANCE.close();
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileLocator.NoOp.class).apply();
     }

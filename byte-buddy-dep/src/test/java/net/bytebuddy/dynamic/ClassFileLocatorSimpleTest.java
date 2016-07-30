@@ -26,6 +26,11 @@ public class ClassFileLocatorSimpleTest {
     }
 
     @Test
+    public void testClose() throws Exception {
+        ClassFileLocator.Simple.of(FOO, QUX).close();
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileLocator.Simple.class).apply();
     }

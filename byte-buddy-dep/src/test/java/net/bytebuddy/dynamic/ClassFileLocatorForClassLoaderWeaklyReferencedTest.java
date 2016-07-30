@@ -8,6 +8,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -22,7 +23,7 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private ClassLoader classLoader;
+    private ClosableClassLoader classLoader;
 
     @Test
     public void testCreation() throws Exception {
@@ -59,7 +60,27 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     }
 
     @Test
+    public void testClose() throws Exception {
+        ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader).close();
+        verify(classLoader).close();
+    }
+
+    @Test
+    public void testSystemClassLoader() throws Exception {
+        assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(ClassLoader.getSystemClassLoader()), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
+    }
+
+    @Test
+    public void testBootLoader() throws Exception {
+        assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(null), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileLocator.ForClassLoader.WeaklyReferenced.class).apply();
+    }
+
+    private static abstract class ClosableClassLoader extends ClassLoader implements Closeable {
+        /* empty */
     }
 }

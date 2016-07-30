@@ -19,8 +19,7 @@ import java.util.jar.JarOutputStream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class ClassFileLocatorForJarFileTest {
 
@@ -81,7 +80,7 @@ public class ClassFileLocatorForJarFileTest {
             assertThat(classFileLocator.locate(ByteBuddy.class.getName()).isResolved(), is(true)); // As file.
             assertThat(classFileLocator.locate(ClassVisitor.class.getName()).isResolved(), is(true)); // On path.
         } finally {
-            ((Closeable) classFileLocator).close();
+            classFileLocator.close();
         }
     }
 
@@ -92,7 +91,7 @@ public class ClassFileLocatorForJarFileTest {
         try {
             assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(true));
         } finally {
-            ((Closeable) classFileLocator).close();
+            classFileLocator.close();
         }
     }
 
@@ -115,6 +114,14 @@ public class ClassFileLocatorForJarFileTest {
         } finally {
             jarFile.close();
         }
+    }
+
+    @Test
+    public void testClose() throws Exception {
+        JarFile jarFile = mock(JarFile.class);
+        new ClassFileLocator.ForJarFile(jarFile).close();
+        verify(jarFile).close();
+        verifyNoMoreInteractions(jarFile);
     }
 
     @Test

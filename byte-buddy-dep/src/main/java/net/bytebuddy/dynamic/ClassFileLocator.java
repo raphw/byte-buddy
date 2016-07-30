@@ -16,11 +16,12 @@ import java.util.*;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * Locates a class file or its byte array representation when it is given its type description.
  */
-public interface ClassFileLocator {
+public interface ClassFileLocator extends Closeable {
 
     /**
      * The file extension for a Java class file.
@@ -173,6 +174,11 @@ public interface ClassFileLocator {
         }
 
         @Override
+        public void close() throws IOException {
+            /* do nothing */
+        }
+
+        @Override
         public String toString() {
             return "ClassFileLocator.NoOp." + name();
         }
@@ -226,6 +232,11 @@ public interface ClassFileLocator {
             return binaryRepresentation == null
                     ? new Resolution.Illegal(typeName)
                     : new Resolution.Explicit(binaryRepresentation);
+        }
+
+        @Override
+        public void close() {
+            /* do nothing */
         }
 
         @Override
@@ -310,6 +321,13 @@ public interface ClassFileLocator {
         @Override
         public Resolution locate(String typeName) throws IOException {
             return locate(classLoader, typeName);
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (classLoader instanceof Closeable) {
+                ((Closeable) classLoader).close();
+            }
         }
 
         /**
@@ -397,6 +415,14 @@ public interface ClassFileLocator {
             }
 
             @Override
+            public void close() throws IOException {
+                ClassLoader classLoader = get();
+                if (classLoader instanceof Closeable) {
+                    ((Closeable) classLoader).close();
+                }
+            }
+
+            @Override
             public int hashCode() {
                 return hashCode;
             }
@@ -423,7 +449,7 @@ public interface ClassFileLocator {
     /**
      * A class file locator that locates classes within a Java <i>jar</i> file.
      */
-    class ForJarFile implements ClassFileLocator, Closeable {
+    class ForJarFile implements ClassFileLocator {
 
         /**
          * A list of potential locations of the runtime jar for different platforms.
@@ -451,7 +477,7 @@ public interface ClassFileLocator {
          * @return A class file locator for the jar file.
          * @throws IOException If an I/O exception is thrown.
          */
-        public static ForJarFile of(File file) throws IOException {
+        public static ClassFileLocator of(File file) throws IOException {
             return new ForJarFile(new JarFile(file));
         }
 
@@ -485,7 +511,7 @@ public interface ClassFileLocator {
             String javaHome = System.getProperty("java.home").replace('\\', '/');
             File runtimeJar = null;
             for (String location : RUNTIME_LOCATIONS) {
-                File candidate = new File(javaHome + "/" + location);
+                File candidate = new File(javaHome, location);
                 if (candidate.isFile()) {
                     runtimeJar = candidate;
                     break;
@@ -537,6 +563,114 @@ public interface ClassFileLocator {
     }
 
     /**
+     * A class file locator that locates classes within a Java <i>jmod</i> file.
+     */
+    class ForModuleFile implements ClassFileLocator {
+
+        /**
+         * A list of potential locations of the boot path for different platforms.
+         */
+        private static final List<String> BOOT_LOCATIONS = Arrays.asList("../jmods", "jmods");
+
+        /**
+         * The represented jmod file.
+         */
+        private final ZipFile zipFile;
+
+        /**
+         * Creates a new class file locator for a jmod file.
+         *
+         * @param zipFile The represented jmod file.
+         */
+        public ForModuleFile(ZipFile zipFile) {
+            this.zipFile = zipFile;
+        }
+
+        /**
+         * Creates a new class file locator for this VMs boot module path.
+         *
+         * @return A class file locator for this VMs boot module path.
+         * @throws IOException If an I/O error occurs.
+         */
+        public static ClassFileLocator ofBootPath() throws IOException {
+            String javaHome = System.getProperty("java.home").replace('\\', '/');
+            File bootModules = null;
+            for (String location : BOOT_LOCATIONS) {
+                File candidate = new File(javaHome, location);
+                if (candidate.isDirectory()) {
+                    bootModules = candidate;
+                    break;
+                }
+            }
+            if (bootModules == null) {
+                throw new IllegalStateException("Boot modules do not exist in " + javaHome + " for any of " + BOOT_LOCATIONS);
+            }
+            File[] module = bootModules.listFiles();
+            if (module == null) {
+                return NoOp.INSTANCE;
+            }
+            List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(module.length);
+            for (File aModule : module) {
+                if (aModule.isFile()) {
+                    classFileLocators.add(of(aModule));
+                }
+            }
+            return new Compound(classFileLocators);
+        }
+
+        /**
+         * Returns a class file locator for the given module file.
+         *
+         * @param file The module file.
+         * @return A class file locator for the given module
+         * @throws IOException If an I/O error occurs.
+         */
+        public static ClassFileLocator of(File file) throws IOException {
+            return new ForModuleFile(new ZipFile(file));
+        }
+
+        @Override
+        public Resolution locate(String typeName) throws IOException {
+            ZipEntry zipEntry = zipFile.getEntry("classes/" + typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
+            if (zipEntry == null) {
+                return new Resolution.Illegal(typeName);
+            } else {
+                InputStream inputStream = zipFile.getInputStream(zipEntry);
+                try {
+                    return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
+                } finally {
+                    inputStream.close();
+                }
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            zipFile.close();
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            ForModuleFile that = (ForModuleFile) object;
+            return zipFile.equals(that.zipFile);
+        }
+
+        @Override
+        public int hashCode() {
+            return zipFile.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileLocator.ForModuleFile{" +
+                    "zipFile=" + zipFile +
+                    '}';
+        }
+    }
+
+    /**
      * A class file locator that finds files from a standardized Java folder structure with
      * folders donating packages and class files being saved as {@code <classname>.class} files
      * within their package folder.
@@ -570,6 +704,11 @@ public interface ClassFileLocator {
             } else {
                 return new Resolution.Illegal(typeName);
             }
+        }
+
+        @Override
+        public void close() throws IOException {
+            /* do nothing */
         }
 
         @Override
@@ -701,6 +840,11 @@ public interface ClassFileLocator {
             } catch (Exception ignored) {
                 return new Resolution.Illegal(typeName);
             }
+        }
+
+        @Override
+        public void close() throws IOException {
+            /* do nothing */
         }
 
         @Override
@@ -1245,9 +1389,7 @@ public interface ClassFileLocator {
         @Override
         public void close() throws IOException {
             for (ClassFileLocator classFileLocator : classFileLocators) {
-                if (classFileLocator instanceof Closeable) {
-                    ((Closeable) classFileLocator).close();
-                }
+                classFileLocator.close();
             }
         }
 
