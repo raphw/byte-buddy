@@ -579,9 +579,15 @@ public interface ClassFileLocator extends Closeable {
     }
 
     /**
-     * A class file locator that locates classes within a Java <i>jmod</i> file.
+     * A class file locator that locates classes within a Java <i>jmod</i> file. This class file locator should not be used
+     * for reading modular jar files for which {@link ForJarFile} is appropriate.
      */
     class ForModuleFile implements ClassFileLocator {
+
+        /**
+         * The file extension of a modular Java package.
+         */
+        private static final String JMOD_FILE_EXTENSION = ".jmod";
 
         /**
          * A list of potential locations of the boot path for different platforms.
@@ -703,11 +709,17 @@ public interface ClassFileLocator extends Closeable {
                         for (File aModule : module) {
                             if (aModule.isDirectory()) {
                                 classFileLocators.add(new ForFolder(aModule));
+                            } else if (aModule.isFile()) {
+                                classFileLocators.add(aModule.getName().endsWith(JMOD_FILE_EXTENSION)
+                                        ? of(aModule)
+                                        : ForJarFile.of(aModule));
                             }
                         }
                     }
                 } else if (file.isFile()) {
-                    classFileLocators.add(of(file));
+                    classFileLocators.add(file.getName().endsWith(JMOD_FILE_EXTENSION)
+                            ? of(file)
+                            : ForJarFile.of(file));
                 }
             }
             return new Compound(classFileLocators);
