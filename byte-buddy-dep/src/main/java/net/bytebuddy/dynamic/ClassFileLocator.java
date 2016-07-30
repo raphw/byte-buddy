@@ -489,8 +489,24 @@ public interface ClassFileLocator extends Closeable {
          * @throws IOException If an I/O exception occurs.
          */
         public static ClassFileLocator ofClassPath() throws IOException {
+            return ofClassPath(System.getProperty("java.class.path"));
+        }
+
+        /**
+         * <p>
+         * Resolves a class file locator for the class path that reads class files directly from the file system.
+         * </p>
+         * <p>
+         * <b>Note</b>: The resulting class file locator does not include classes of the bootstrap class loader.
+         * </p>
+         *
+         * @param classPath The class path to scan with the elements separated by {@code path.separator}.
+         * @return A class file locator for the class path.
+         * @throws IOException If an I/O exception occurs.
+         */
+        public static ClassFileLocator ofClassPath(String classPath) throws IOException {
             List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
-            for (String element : Pattern.compile(System.getProperty("path.separator"), Pattern.LITERAL).split(System.getProperty("java.class.path"))) {
+            for (String element : Pattern.compile(System.getProperty("path.separator"), Pattern.LITERAL).split(classPath)) {
                 File file = new File(element);
                 if (file.isDirectory()) {
                     classFileLocators.add(new ForFolder(file));
@@ -587,25 +603,36 @@ public interface ClassFileLocator extends Closeable {
         }
 
         /**
-         * Creates a new class file locator for this VMs boot module path.
+         * Creates a new class file locator for this VM's boot module path.
          *
-         * @return A class file locator for this VMs boot module path.
+         * @return A class file locator for this VM's boot module path.
          * @throws IOException If an I/O error occurs.
          */
         public static ClassFileLocator ofBootPath() throws IOException {
             String javaHome = System.getProperty("java.home").replace('\\', '/');
-            File bootModules = null;
+            File bootPath = null;
             for (String location : BOOT_LOCATIONS) {
                 File candidate = new File(javaHome, location);
                 if (candidate.isDirectory()) {
-                    bootModules = candidate;
+                    bootPath = candidate;
                     break;
                 }
             }
-            if (bootModules == null) {
+            if (bootPath == null) {
                 throw new IllegalStateException("Boot modules do not exist in " + javaHome + " for any of " + BOOT_LOCATIONS);
             }
-            File[] module = bootModules.listFiles();
+            return ofBootPath(bootPath);
+        }
+
+        /**
+         * Creates a new class file locator for a Java boot module path.
+         *
+         * @param bootPath The boot path folder.
+         * @return A class file locator for this VMs boot module path.
+         * @throws IOException If an I/O error occurs.
+         */
+        public static ClassFileLocator ofBootPath(File bootPath) throws IOException {
+            File[] module = bootPath.listFiles();
             if (module == null) {
                 return NoOp.INSTANCE;
             }
@@ -613,6 +640,74 @@ public interface ClassFileLocator extends Closeable {
             for (File aModule : module) {
                 if (aModule.isFile()) {
                     classFileLocators.add(of(aModule));
+                }
+            }
+            return new Compound(classFileLocators);
+        }
+
+        /**
+         * <p>
+         * Resolves a class file locator for this VM's Java module path that reads class files directly from the file system.
+         * </p>
+         * <p>
+         * <b>Note</b>: The resulting class file locator does not include classes of the bootstrap class loader.
+         * </p>
+         *
+         * @return A class file locator for the class path.
+         * @throws IOException If an I/O exception occurs.
+         */
+        public static ClassFileLocator ofModulePath() throws IOException {
+            String modulePath = System.getProperty("jdk.module.path");
+            return modulePath == null
+                    ? NoOp.INSTANCE
+                    : ofModulePath(modulePath);
+        }
+
+        /**
+         * <p>
+         * Resolves a class file locator for a Java module path that reads class files directly from the file system. All
+         * elements of the module path are resolved releatively to this VM's {@code user.dir}.
+         * </p>
+         * <p>
+         * <b>Note</b>: The resulting class file locator does not include classes of the bootstrap class loader.
+         * </p>
+         *
+         * @param modulePath The module path to scan with the elements separated by {@code path.separator}.
+         * @return A class file locator for the class path.
+         * @throws IOException If an I/O exception occurs.
+         */
+        public static ClassFileLocator ofModulePath(String modulePath) throws IOException {
+            return ofModulePath(modulePath, System.getProperty("user.dir"));
+        }
+
+        /**
+         * <p>
+         * Resolves a class file locator for a Java module path that reads class files directly from the file system.
+         * </p>
+         * <p>
+         * <b>Note</b>: The resulting class file locator does not include classes of the bootstrap class loader.
+         * </p>
+         *
+         * @param modulePath The module path to scan with the elements separated by {@code path.separator}.
+         * @param baseFolder The relative location of the elements on the module path.
+         * @return A class file locator for the class path.
+         * @throws IOException If an I/O exception occurs.
+         */
+        public static ClassFileLocator ofModulePath(String modulePath, String baseFolder) throws IOException {
+            List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
+            for (String element : Pattern.compile(System.getProperty("path.separator"), Pattern.LITERAL).split(modulePath)) {
+                File file = new File(baseFolder, element);
+                if (file.isDirectory()) {
+                    File[] module = file.listFiles();
+                    if (module != null) {
+                        for (File aModule : module) {
+                            if (aModule.isDirectory()) {
+                                classFileLocators.add(new ForFolder(aModule));
+                            }
+                        }
+                    }
+                } else if (file.isFile()) {
+                    classFileLocators.add(of(file));
                 }
             }
             return new Compound(classFileLocators);

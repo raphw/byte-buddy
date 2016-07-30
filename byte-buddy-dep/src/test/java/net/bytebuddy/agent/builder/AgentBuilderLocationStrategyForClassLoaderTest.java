@@ -40,9 +40,9 @@ public class AgentBuilderLocationStrategyForClassLoaderTest {
 
     @Test
     public void testFallback() throws Exception {
-        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.STRONG.with(fallback),
+        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.STRONG.withFallbackTo(fallback),
                 is((AgentBuilder.LocationStrategy) new AgentBuilder.LocationStrategy.Compound(AgentBuilder.LocationStrategy.ForClassLoader.STRONG, fallback)));
-        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.WEAK.with(fallback),
+        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.WEAK.withFallbackTo(fallback),
                 is((AgentBuilder.LocationStrategy) new AgentBuilder.LocationStrategy.Compound(AgentBuilder.LocationStrategy.ForClassLoader.WEAK, fallback)));
     }
 

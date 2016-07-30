@@ -2288,7 +2288,7 @@ public interface AgentBuilder {
              * optional dependencies to other classes which are only realized if the optional dependency is present. Such code relies on the
              * Java reflection API not being used for types using optional dependencies.
              *
-             * @see Default#POOL_LAST
+             * @see DescriptionStrategy.Default#POOL_LAST
              */
             HYBRID {
                 @Override
@@ -2367,7 +2367,7 @@ public interface AgentBuilder {
             },
 
             /**
-             * A description strategy that applies the same resolution as {@link Default#POOL_LAST} but only resolves the actual
+             * A description strategy that applies the same resolution as {@link DescriptionStrategy.Default#POOL_LAST} but only resolves the actual
              * {@link TypeDescription} if any property that cannot be derived by the type name is accessed.
              */
             POOL_LAST_DEFERRED {
@@ -2606,12 +2606,12 @@ public interface AgentBuilder {
             /**
              * Adds another location strategy as a fallback to this location strategy.
              *
-             * @param fallback The fallback location strategy.
+             * @param locationStrategy The fallback location strategy.
              * @return A compound location strategy that first applies this location strategy and then the supplied
              * fallback location strategy if unsuccessful.
              */
-            public LocationStrategy with(LocationStrategy fallback) {
-                return new Compound(this, fallback);
+            public LocationStrategy withFallbackTo(LocationStrategy locationStrategy) {
+                return new Compound(this, locationStrategy);
             }
 
             @Override
@@ -4656,7 +4656,7 @@ public interface AgentBuilder {
         /**
          * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for creating classes.
          *
-         * @see Default#Default(ByteBuddy)
+         * @see AgentBuilder.Default#Default(ByteBuddy)
          */
         public Default() {
             this(new ByteBuddy());
