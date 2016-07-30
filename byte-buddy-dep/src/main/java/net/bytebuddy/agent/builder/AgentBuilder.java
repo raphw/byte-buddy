@@ -2604,14 +2604,17 @@ public interface AgentBuilder {
             };
 
             /**
-             * Adds another location strategy as a fallback to this location strategy.
+             * Adds additional location strategies as fallbacks to this location strategy.
              *
-             * @param locationStrategy The fallback location strategy.
-             * @return A compound location strategy that first applies this location strategy and then the supplied
-             * fallback location strategy if unsuccessful.
+             * @param locationStrategy The fallback location strategies to use.
+             * @return A compound location strategy that first applies this location strategy and then the supplied fallback location strategies
+             * in the supplied order.
              */
-            public LocationStrategy withFallbackTo(LocationStrategy locationStrategy) {
-                return new Compound(this, locationStrategy);
+            public LocationStrategy withFallbackTo(LocationStrategy... locationStrategy) {
+                List<LocationStrategy> locationStrategies = new ArrayList<LocationStrategy>(locationStrategy.length + 1);
+                locationStrategies.add(this);
+                locationStrategies.addAll(Arrays.asList(locationStrategy));
+                return new Compound(locationStrategies);
             }
 
             @Override
