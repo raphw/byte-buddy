@@ -454,7 +454,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A list of potential locations of the runtime jar for different platforms.
          */
-        private static final List<String> RUNTIME_LOCATIONS = Arrays.asList("../lib/rt.jar", "lib/rt.jar", "../Classes/classes.jar");
+        private static final List<String> RUNTIME_LOCATIONS = Arrays.asList("lib/rt.jar", "../lib/rt.jar", "../Classes/classes.jar");
 
         /**
          * The jar file to read from.
@@ -570,7 +570,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A list of potential locations of the boot path for different platforms.
          */
-        private static final List<String> BOOT_LOCATIONS = Arrays.asList("../jmods", "jmods");
+        private static final List<String> BOOT_LOCATIONS = Arrays.asList("jmods", "../jmods");
 
         /**
          * The represented jmod file.
