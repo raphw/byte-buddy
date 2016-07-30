@@ -33,8 +33,8 @@ import static net.bytebuddy.dynamic.loading.ClassInjector.DEFAULT_PROTECTION_DOM
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 @RunWith(Parameterized.class)
 public class AgentBuilderDefaultApplicationRedefineTest {

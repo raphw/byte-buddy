@@ -11,7 +11,7 @@ import org.mockito.Mock;
 
 import java.util.Arrays;
 
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 

@@ -2603,9 +2603,78 @@ public interface AgentBuilder {
                 }
             };
 
+            /**
+             * Adds another location strategy as a fallback to this location strategy.
+             *
+             * @param fallback The fallback location strategy.
+             * @return A compound location strategy that first applies this location strategy and then the supplied
+             * fallback location strategy if unsuccessful.
+             */
+            public LocationStrategy with(LocationStrategy fallback) {
+                return new Compound(this, fallback);
+            }
+
             @Override
             public String toString() {
                 return "AgentBuilder.LocationStrategy.ForClassLoader." + name();
+            }
+        }
+
+        /**
+         * A compound location strategy that applies a list of location strategies.
+         */
+        class Compound implements LocationStrategy {
+
+            /**
+             * The location strategies in their application order.
+             */
+            private final List<? extends LocationStrategy> locationStrategies;
+
+            /**
+             * Creates a new compound location strategy.
+             *
+             * @param locationStrategy The location strategies in their application order.
+             */
+            public Compound(LocationStrategy... locationStrategy) {
+                this(Arrays.asList(locationStrategy));
+            }
+
+            /**
+             * Creates a new compound location strategy.
+             *
+             * @param locationStrategies The location strategies in their application order.
+             */
+            public Compound(List<? extends LocationStrategy> locationStrategies) {
+                this.locationStrategies = locationStrategies;
+            }
+
+            @Override
+            public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
+                List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(locationStrategies.size());
+                for (LocationStrategy locationStrategy : locationStrategies) {
+                    classFileLocators.add(locationStrategy.classFileLocator(classLoader, module));
+                }
+                return new ClassFileLocator.Compound(classFileLocators);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Compound compound = (Compound) object;
+                return locationStrategies.equals(compound.locationStrategies);
+            }
+
+            @Override
+            public int hashCode() {
+                return locationStrategies.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.LocationStrategy.Compound{" +
+                        "locationStrategies=" + locationStrategies +
+                        '}';
             }
         }
     }

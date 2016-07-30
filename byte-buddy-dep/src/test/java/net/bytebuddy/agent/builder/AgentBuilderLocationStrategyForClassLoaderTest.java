@@ -23,6 +23,9 @@ public class AgentBuilderLocationStrategyForClassLoaderTest {
     @Mock
     private JavaModule module;
 
+    @Mock
+    private AgentBuilder.LocationStrategy fallback;
+
     @Test
     public void testStrongLocationStrategy() throws Exception {
         assertThat(AgentBuilder.LocationStrategy.ForClassLoader.STRONG.classFileLocator(classLoader, module),
@@ -33,6 +36,14 @@ public class AgentBuilderLocationStrategyForClassLoaderTest {
     public void testWeakLocationStrategy() throws Exception {
         assertThat(AgentBuilder.LocationStrategy.ForClassLoader.WEAK.classFileLocator(classLoader, module),
                 is(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader)));
+    }
+
+    @Test
+    public void testFallback() throws Exception {
+        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.STRONG.with(fallback),
+                is((AgentBuilder.LocationStrategy) new AgentBuilder.LocationStrategy.Compound(AgentBuilder.LocationStrategy.ForClassLoader.STRONG, fallback)));
+        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.WEAK.with(fallback),
+                is((AgentBuilder.LocationStrategy) new AgentBuilder.LocationStrategy.Compound(AgentBuilder.LocationStrategy.ForClassLoader.WEAK, fallback)));
     }
 
     @Test
