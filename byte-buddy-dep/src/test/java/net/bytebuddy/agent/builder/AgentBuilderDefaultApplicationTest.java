@@ -15,6 +15,7 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.packaging.SimpleOptionalType;
 import net.bytebuddy.test.packaging.SimpleType;
@@ -286,81 +287,6 @@ public class AgentBuilderDefaultApplicationTest {
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION_CHUNKED)
                 .installOnByteBuddyAgent());
-    }
-
-    @Test
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
-    @IntegrationRule.Enforce
-    public void testRedefinitionWithPoolOnly() throws Exception {
-        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is why an external class is used.
-        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
-        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
-        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .with(typeLocator)
-                .ignore(none())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY)
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
-                .installOnByteBuddyAgent();
-        try {
-            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
-        } finally {
-            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
-        }
-    }
-
-    @Test
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
-    @IntegrationRule.Enforce
-    public void testRedefinitionWithPoolFirst() throws Exception {
-        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is why an external class is used.
-        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
-        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
-        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .with(typeLocator)
-                .ignore(none())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST)
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
-                .installOnByteBuddyAgent();
-        try {
-            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
-        } finally {
-            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
-        }
-    }
-
-    @Test
-    @AgentAttachmentRule.Enforce(redefinesClasses = true)
-    @IntegrationRule.Enforce
-    public void testRedefinitionWithPoolLastDeferred() throws Exception {
-        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
-        // This causes type equality for outer/inner classes to fail which is why an external class is used.
-        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
-        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
-        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .with(typeLocator)
-                .ignore(none())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(AgentBuilder.DescriptionStrategy.Default.POOL_LAST_DEFERRED)
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
-                .installOnByteBuddyAgent();
-        try {
-            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
-        } finally {
-            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
-        }
     }
 
     @Test
