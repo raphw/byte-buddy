@@ -419,7 +419,10 @@ public interface Transformer<T> {
 
             @Override
             public TypeDescription.Generic getReceiverType() {
-                return methodDescription.getReceiverType();
+                TypeDescription.Generic receiverType = token.getReceiverType();
+                return receiverType == null
+                        ? TypeDescription.Generic.UNDEFINED
+                        : receiverType.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
             }
 
             /**
