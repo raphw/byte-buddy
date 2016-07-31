@@ -4707,7 +4707,8 @@ public interface AgentBuilder {
                     LambdaInstrumentationStrategy.DISABLED,
                     DescriptionStrategy.Default.HYBRID,
                     InstallationStrategy.Default.ESCALATING,
-                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()), new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").<TypeDescription>or(isSynthetic()), any(), any())),
+                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()),
+                            new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()), any(), any())),
                     Transformation.Ignored.INSTANCE);
         }
 
