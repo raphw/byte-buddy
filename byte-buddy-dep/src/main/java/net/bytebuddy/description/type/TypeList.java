@@ -522,7 +522,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A list of attached type variables represented by a list of type variable tokens.
              */
-            protected static class OfTypeVariables extends Generic.AbstractBase {
+            public static class OfTypeVariables extends Generic.AbstractBase {
 
                 /**
                  * The type variable's source.
@@ -546,7 +546,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                  * @param detachedTypeVariables A token representing the type variable in its detached state.
                  * @param visitor               A visitor for attaching the type variable's bounds.
                  */
-                protected OfTypeVariables(TypeVariableSource typeVariableSource,
+                public OfTypeVariables(TypeVariableSource typeVariableSource,
                                           List<? extends TypeVariableToken> detachedTypeVariables,
                                           TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                     this.typeVariableSource = typeVariableSource;

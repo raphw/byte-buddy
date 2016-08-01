@@ -1890,6 +1890,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                  */
                 protected abstract Generic onSimpleType(Generic typeDescription);
 
+                public static abstract class WithoutTypeSubstitution extends Substitutor {
+
+                    @Override
+                    public Generic onNonGenericType(Generic typeDescription) {
+                        return typeDescription;
+                    }
+
+                    @Override
+                    protected Generic onSimpleType(Generic typeDescription) {
+                        return typeDescription;
+                    }
+                }
+
                 /**
                  * A substitutor that attaches type variables to a type variable source and replaces representations of
                  * {@link TargetType} with a given declaring type.
@@ -1973,7 +1986,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                         if (attachedVariable == null) {
                             throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
                         } else {
-                            return new AnnotatedTypeVariable(attachedVariable, typeVariable.getDeclaredAnnotations());
+                            return new OfTypeVariable.WithAnnotationOverlay(attachedVariable, typeVariable.getDeclaredAnnotations());
                         }
                     }
 
@@ -2006,53 +2019,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                                 "declaringType=" + declaringType +
                                 ", typeVariableSource=" + typeVariableSource +
                                 '}';
-                    }
-
-                    /**
-                     * Wraps a formal type variable to allow for representing type annotations.
-                     */
-                    protected static class AnnotatedTypeVariable extends Generic.OfTypeVariable {
-
-                        /**
-                         * The represented type variable.
-                         */
-                        private final Generic typeVariable;
-
-                        /**
-                         * The variable's type annotations.
-                         */
-                        private final List<AnnotationDescription> annotations;
-
-                        /**
-                         * Creates a new annotated type variable.
-                         *
-                         * @param typeVariable The represented type variable.
-                         * @param annotations  The variable's type annotations.
-                         */
-                        protected AnnotatedTypeVariable(Generic typeVariable, List<AnnotationDescription> annotations) {
-                            this.typeVariable = typeVariable;
-                            this.annotations = annotations;
-                        }
-
-                        @Override
-                        public TypeList.Generic getUpperBounds() {
-                            return typeVariable.getUpperBounds();
-                        }
-
-                        @Override
-                        public TypeVariableSource getVariableSource() {
-                            return typeVariable.getVariableSource();
-                        }
-
-                        @Override
-                        public String getSymbol() {
-                            return typeVariable.getSymbol();
-                        }
-
-                        @Override
-                        public AnnotationList getDeclaredAnnotations() {
-                            return new AnnotationList.Explicit(annotations);
-                        }
                     }
                 }
 
@@ -2121,7 +2087,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                 /**
                  * A visitor for binding type variables to their values.
                  */
-                public static class ForTypeVariableBinding extends Substitutor {
+                public static class ForTypeVariableBinding extends WithoutTypeSubstitution {
 
                     /**
                      * Bindings of type variables to their substitution values.
@@ -2163,16 +2129,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                     @Override
                     public Generic onTypeVariable(Generic typeVariable) {
                         return typeVariable.getVariableSource().accept(new TypeVariableSubstitutor(typeVariable));
-                    }
-
-                    @Override
-                    public Generic onNonGenericType(Generic typeDescription) {
-                        return typeDescription;
-                    }
-
-                    @Override
-                    protected Generic onSimpleType(Generic typeDescription) {
-                        throw new UnsupportedOperationException();
                     }
 
                     @Override
@@ -4982,7 +4938,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
 
             @Override
             public TypeList.Generic getTypeVariables() {
-                return new TypeList.Generic.ForDetachedTypes(asErasure().getTypeVariables(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return asErasure().getTypeVariables();
             }
 
             @Override
@@ -5773,6 +5729,38 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                     public int size() {
                         return bound.length;
                     }
+                }
+            }
+
+            public static class WithAnnotationOverlay extends OfTypeVariable {
+
+                private final Generic typeVariable;
+
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
+                public WithAnnotationOverlay(Generic typeVariable, List<? extends AnnotationDescription> declaredAnnotations) {
+                    this.typeVariable = typeVariable;
+                    this.declaredAnnotations = declaredAnnotations;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
+                }
+
+                @Override
+                public TypeList.Generic getUpperBounds() {
+                    return typeVariable.getUpperBounds();
+                }
+
+                @Override
+                public TypeVariableSource getVariableSource() {
+                    return typeVariable.getVariableSource();
+                }
+
+                @Override
+                public String getSymbol() {
+                    return typeVariable.getSymbol();
                 }
             }
         }

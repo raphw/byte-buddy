@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * A transformer is responsible for transforming an object into a compatible instance of the same type.
@@ -260,7 +261,10 @@ public interface Transformer<T> {
 
         @Override
         public MethodDescription transform(TypeDescription instrumentedType, MethodDescription methodDescription) {
-            return new TransformedMethod(methodDescription.getDeclaringType(), transformer.transform(instrumentedType, methodDescription.asToken(is(instrumentedType))), methodDescription.asDefined());
+            return new TransformedMethod(instrumentedType,
+                    methodDescription.getDeclaringType(),
+                    transformer.transform(instrumentedType, methodDescription.asToken(is(instrumentedType))),
+                    methodDescription.asDefined());
         }
 
         @Override
@@ -337,6 +341,8 @@ public interface Transformer<T> {
          */
         protected static class TransformedMethod extends MethodDescription.AbstractBase {
 
+            private final TypeDescription instrumentedType;
+
             /**
              * The method's declaring type.
              */
@@ -355,13 +361,16 @@ public interface Transformer<T> {
             /**
              * Creates a new transformed method.
              *
+             * @param instrumentedType
              * @param declaringType     The method's declaring type.
              * @param token             The method representing the transformed method.
              * @param methodDescription The defined shape of the transformed method.
              */
-            protected TransformedMethod(TypeDefinition declaringType,
-                                        MethodDescription.Token token,
-                                        MethodDescription.InDefinedShape methodDescription) {
+            protected TransformedMethod(TypeDescription instrumentedType,
+                                        TypeDefinition declaringType,
+                                        Token token,
+                                        InDefinedShape methodDescription) {
+                this.instrumentedType = instrumentedType;
                 this.declaringType = declaringType;
                 this.token = token;
                 this.methodDescription = methodDescription;
@@ -369,12 +378,12 @@ public interface Transformer<T> {
 
             @Override
             public TypeList.Generic getTypeVariables() {
-                return TypeList.Generic.ForDetachedTypes.attachVariables(this, token.getTypeVariableTokens());
+                return new TypeList.Generic.ForDetachedTypes.OfTypeVariables(this, token.getTypeVariableTokens(), new AttachmentVisitor());
             }
 
             @Override
             public TypeDescription.Generic getReturnType() {
-                return token.getReturnType().accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
+                return token.getReturnType().accept(new AttachmentVisitor());
             }
 
             @Override
@@ -384,7 +393,7 @@ public interface Transformer<T> {
 
             @Override
             public TypeList.Generic getExceptionTypes() {
-                return TypeList.Generic.ForDetachedTypes.attach(this, token.getExceptionTypes());
+                return new TypeList.Generic.ForDetachedTypes(token.getExceptionTypes(), new AttachmentVisitor());
             }
 
             @Override
@@ -422,7 +431,7 @@ public interface Transformer<T> {
                 TypeDescription.Generic receiverType = token.getReceiverType();
                 return receiverType == null
                         ? TypeDescription.Generic.UNDEFINED
-                        : receiverType.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
+                        : receiverType.accept(new AttachmentVisitor());
             }
 
             /**
@@ -469,7 +478,7 @@ public interface Transformer<T> {
 
                 @Override
                 public TypeDescription.Generic getType() {
-                    return parameterToken.getType().accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
+                    return parameterToken.getType().accept(new AttachmentVisitor());
                 }
 
                 @Override
@@ -514,6 +523,22 @@ public interface Transformer<T> {
                 @Override
                 public InDefinedShape asDefined() {
                     return methodDescription.getParameters().get(index);
+                }
+            }
+
+            protected class AttachmentVisitor extends TypeDescription.Generic.Visitor.Substitutor.WithoutTypeSubstitution {
+
+                @Override
+                public TypeDescription.Generic onTypeVariable(TypeDescription.Generic typeVariable) {
+                    TypeList.Generic candidates = getTypeVariables().filter(named(typeVariable.getSymbol()));
+                    TypeDescription.Generic attached = candidates.isEmpty()
+                            ? instrumentedType.findVariable(typeVariable.getSymbol())
+                            : candidates.getOnly();
+                    if (attached == null) {
+                        throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
+                    } else {
+                        return new TypeDescription.Generic.OfTypeVariable.WithAnnotationOverlay(attached, typeVariable.getDeclaredAnnotations());
+                    }
                 }
             }
         }
