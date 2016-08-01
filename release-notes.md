@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. August 2016: version 1.4.17
+
+- Fixed annotation resolution for Java 9 to exlude the `jdk.internal` namespace by default.
+- Do not copy annotations for default constructor strategies but allow configuring annotation strategy.
+- Added file-system class file locators for modules in Java 9.
+- Added convenience methods to default location strategies.
+- Exclude `sun.reflect` namespace by default from `AgentBuilder` to avoid error messages.
+- Fixed resolution of type varibales for transformed methods and fields.
+- Fixed stack-aware method visitor when encountering exchanging duplication instructions.
+
 ### 28. July 2016: version 1.4.16
 
 - Added `POOL_LAST_DEFERRED` and `POOL_LAST_FALLBACK` description strategy.
