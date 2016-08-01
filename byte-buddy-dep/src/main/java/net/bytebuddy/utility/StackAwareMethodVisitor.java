@@ -84,11 +84,12 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             throw new IllegalStateException("Cannot push multiple values onto the operand stack: " + delta);
         } else if (delta > 0) {
             int position = current.size();
-            while (offset > 0) {
+            // The operand stack can legally underflow while traversing dead code.
+            while (offset > 0 && position > 0) {
                 offset -= current.get(--position).getSize();
             }
-            if (offset != 0) {
-                throw new IllegalStateException("Unexpected offset remainder: " + offset);
+            if (offset < 0) {
+                throw new IllegalStateException("Unexpected offset underflow: " + offset);
             }
             current.add(position, StackSize.of(delta));
         } else if (offset != 0) {

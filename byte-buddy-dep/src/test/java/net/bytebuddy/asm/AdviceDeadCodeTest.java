@@ -89,6 +89,24 @@ public class AdviceDeadCodeTest {
         assertThat(redefined.getDeclaredMethod(FOO).invoke(redefined.getDeclaredConstructor().newInstance()), is((Object) FOO));
     }
 
+    @Test
+    public void testAdviceWithExchangeDuplicationDeadCode() throws Exception {
+        Class<?> type = new ByteBuddy(classFileVersion)
+                .subclass(Object.class)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC)
+                .intercept(new DeadExchangeAppender())
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER_PERSISTENT)
+                .getLoaded();
+        Class<?> redefined = new ByteBuddy()
+                .redefine(type)
+                .visit(Advice.to(ExitAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(redefined.getDeclaredMethod(FOO).invoke(redefined.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
     @SuppressWarnings("all")
     private static class ExitAdvice {
 
@@ -138,6 +156,28 @@ public class AdviceDeadCodeTest {
             methodVisitor.visitInsn(Opcodes.RETURN);
             methodVisitor.visitInsn(Opcodes.POP); // dead code
             methodVisitor.visitInsn(Opcodes.RETURN);
+            return new Size(1, instrumentedMethod.getStackSize());
+        }
+    }
+
+    private static class DeadExchangeAppender implements Implementation, ByteCodeAppender {
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return this;
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitInsn(Opcodes.DUP_X1); // dead code
+            methodVisitor.visitInsn(Opcodes.ARETURN);
             return new Size(1, instrumentedMethod.getStackSize());
         }
     }
