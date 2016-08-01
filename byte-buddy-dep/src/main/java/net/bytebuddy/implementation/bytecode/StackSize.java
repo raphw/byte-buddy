@@ -51,6 +51,25 @@ public enum StackSize {
     }
 
     /**
+     * Represents a numeric size as a {@link StackSize}.
+     *
+     * @param size The size to represent. Must be {@code 0}, {@code 1} or {@code 2}.
+     * @return A stack size representation for the given value.
+     */
+    public static StackSize of(int size) {
+        switch (size) {
+            case 0:
+                return ZERO;
+            case 1:
+                return SINGLE;
+            case 2:
+                return DOUBLE;
+            default:
+                throw new IllegalArgumentException("Unexpected stack size value: " + size);
+        }
+    }
+
+    /**
      * Returns the sum of all operand stack sizes.
      *
      * @param types The types of interest.

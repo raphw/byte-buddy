@@ -66,27 +66,45 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     /**
      * Adjusts the current state of the operand stack.
      *
-     * @param change The change of the current operation of the operand stack. Must not be larger than {@code 2}.
+     * @param delta The change of the current operation of the operand stack. Must not be larger than {@code 2}.
      */
-    private void adjustStack(int change) {
-        if (change == 1) {
-            current.add(StackSize.SINGLE);
-        } else if (change == 2) {
-            current.add(StackSize.DOUBLE);
-        } else if (change > 2) {
-            throw new IllegalStateException("Cannot push multiple values onto the operand stack: " + change);
+    private void adjustStack(int delta) {
+        adjustStack(delta, 0);
+    }
+
+    /**
+     * Adjusts the current state of the operand stack.
+     *
+     * @param delta  The change of the current operation of the operand stack. Must not be larger than {@code 2}.
+     * @param offset The offset of the value within the operand stack. Must be bigger then {@code 0} and smaller than
+     *               the current stack size. Only permitted if the supplied {@code delta} is positive.
+     */
+    private void adjustStack(int delta, int offset) {
+        if (delta > 2) {
+            throw new IllegalStateException("Cannot push multiple values onto the operand stack: " + delta);
+        } else if (delta > 0) {
+            int position = current.size();
+            while (offset > 0) {
+                offset -= current.get(--position).getSize();
+            }
+            if (offset != 0) {
+                throw new IllegalStateException("Unexpected offset remainder: " + offset);
+            }
+            current.add(position, StackSize.of(delta));
+        } else if (offset != 0) {
+            throw new IllegalStateException("Cannot specify non-zero offset " + offset + " for non-incrementing value: " + delta);
         } else {
-            while (change < 0) {
+            while (delta < 0) {
                 // The operand stack can legally underflow while traversing dead code.
                 if (current.isEmpty()) {
                     return;
                 }
-                change += current.remove(current.size() - 1).getSize();
+                delta += current.remove(current.size() - 1).getSize();
             }
-            if (change == 1) {
+            if (delta == 1) {
                 current.add(StackSize.SINGLE);
-            } else if (change != 0) {
-                throw new IllegalStateException("Unexpected remainder on the operand stack: " + change);
+            } else if (delta != 0) {
+                throw new IllegalStateException("Unexpected remainder on the operand stack: " + delta);
             }
         }
     }
@@ -168,6 +186,14 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             case Opcodes.DRETURN:
             case Opcodes.ATHROW:
                 current.clear();
+                break;
+            case Opcodes.DUP_X1:
+            case Opcodes.DUP2_X1:
+                adjustStack(SIZE_CHANGE[opcode], SIZE_CHANGE[opcode] + 1);
+                break;
+            case Opcodes.DUP_X2:
+            case Opcodes.DUP2_X2:
+                adjustStack(SIZE_CHANGE[opcode], SIZE_CHANGE[opcode] + 2);
                 break;
             default:
                 adjustStack(SIZE_CHANGE[opcode]);
