@@ -104,7 +104,7 @@ public class ClassFileVersionKnownVersionsTest {
     @Test
     public void testSimpleClassCreation() throws Exception {
         ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersion(javaVersion);
-        if (ClassFileVersion.forThisVm().compareTo(classFileVersion) >= 0) {
+        if (ClassFileVersion.ofThisVm().compareTo(classFileVersion) >= 0) {
             Class<?> type = new ByteBuddy(classFileVersion)
                     .subclass(Foo.class)
                     .make()

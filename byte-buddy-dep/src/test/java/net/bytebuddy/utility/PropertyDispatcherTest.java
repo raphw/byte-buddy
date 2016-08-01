@@ -50,9 +50,9 @@ public class PropertyDispatcherTest {
                 {new double[]{42d}, new double[]{42d}, PropertyDispatcher.DOUBLE_ARRAY, Arrays.hashCode(new double[]{42d}), Arrays.toString(new double[]{42d})},
                 {new Object[]{FOO}, new Object[]{FOO}, PropertyDispatcher.REFERENCE_ARRAY, Arrays.hashCode(new Object[]{FOO}), Arrays.toString(new Object[]{FOO})},
                 {new Class<?>[]{Object.class}, new Class<?>[]{Object.class}, PropertyDispatcher.TYPE_LOADED_ARRAY, Arrays.hashCode(new Class<?>[]{Object.class}),
-                        ClassFileVersion.forThisVm().isAtLeast(ClassFileVersion.JAVA_V9) ? "{java.lang.Object.class}" : "[class java.lang.Object]"},
+                        ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V9) ? "{java.lang.Object.class}" : "[class java.lang.Object]"},
                 {new TypeDescription[]{TypeDescription.OBJECT}, new TypeDescription[]{TypeDescription.OBJECT}, PropertyDispatcher.TYPE_DESCRIBED_ARRAY, Arrays.hashCode(new TypeDescription[]{TypeDescription.OBJECT}),
-                        ClassFileVersion.forThisVm().isAtLeast(ClassFileVersion.JAVA_V9) ? "{java.lang.Object.class}" : "[class java.lang.Object]"},
+                        ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V9) ? "{java.lang.Object.class}" : "[class java.lang.Object]"},
                 {FOO, FOO, PropertyDispatcher.NON_ARRAY, FOO.hashCode(), FOO}
         });
     }

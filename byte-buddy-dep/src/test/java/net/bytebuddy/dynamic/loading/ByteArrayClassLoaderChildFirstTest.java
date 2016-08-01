@@ -78,7 +78,7 @@ public class ByteArrayClassLoaderChildFirstTest {
         assertThat(type, not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(type.getPackage(), notNullValue(Package.class));
         // Due to change in API in Java 9 where package identity is no longer bound by hierarchy.
-        assertThat(type.getPackage(), ClassFileVersion.forThisVm().isAtLeast(ClassFileVersion.JAVA_V9)
+        assertThat(type.getPackage(), ClassFileVersion.ofThisVm().isAtLeast(ClassFileVersion.JAVA_V9)
                 ? not(is(Foo.class.getPackage()))
                 : is(Foo.class.getPackage()));
     }

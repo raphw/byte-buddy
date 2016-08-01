@@ -525,7 +525,7 @@ public enum PropertyDispatcher {
          * @return The type renderer to be used on the current VM.
          */
         private static TypeRenderer make() {
-            return ClassFileVersion.forThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+            return ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
                     ? FOR_JAVA9_CAPABLE_VM
                     : FOR_LEGACY_VM;
         }

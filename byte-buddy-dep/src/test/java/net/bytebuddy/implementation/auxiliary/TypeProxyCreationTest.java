@@ -88,7 +88,7 @@ public class TypeProxyCreationTest {
                 invocationFactory,
                 true,
                 false)
-                .make(BAR, ClassFileVersion.forThisVm(), methodAccessorFactory)
+                .make(BAR, ClassFileVersion.ofThisVm(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
         assertThat(dynamicType.getSuperClass().asErasure(), is(foo));
@@ -119,7 +119,7 @@ public class TypeProxyCreationTest {
                 invocationFactory,
                 true,
                 false)
-                .make(BAR, ClassFileVersion.forThisVm(), methodAccessorFactory)
+                .make(BAR, ClassFileVersion.ofThisVm(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
         assertThat(dynamicType.getSuperClass().asErasure(), is(foo));
@@ -150,7 +150,7 @@ public class TypeProxyCreationTest {
                 invocationFactory,
                 true,
                 true)
-                .make(BAR, ClassFileVersion.forThisVm(), methodAccessorFactory)
+                .make(BAR, ClassFileVersion.ofThisVm(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
         assertThat(dynamicType.getSuperClass().asErasure(), is(foo));
@@ -181,7 +181,7 @@ public class TypeProxyCreationTest {
                 invocationFactory,
                 false,
                 false)
-                .make(BAR, ClassFileVersion.forThisVm(), methodAccessorFactory)
+                .make(BAR, ClassFileVersion.ofThisVm(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
         assertThat(dynamicType.getSuperClass().asErasure(), is(foo));

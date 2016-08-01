@@ -40,7 +40,7 @@ public class ClassFileVersionTest {
 
     @Test
     public void testVersionOfClass() throws Exception {
-        assertThat(ClassFileVersion.of(Foo.class).compareTo(ClassFileVersion.forThisVm()) < 1, is(true));
+        assertThat(ClassFileVersion.of(Foo.class).compareTo(ClassFileVersion.ofThisVm()) < 1, is(true));
     }
 
     @Test

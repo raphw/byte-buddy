@@ -156,7 +156,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      *
      * @return The currently running Java process's class file version.
      */
-    public static ClassFileVersion forThisVm() {
+    public static ClassFileVersion ofThisVm() {
         return VERSION_LOCATOR.locate();
     }
 
@@ -169,9 +169,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @return The currently running Java process's class file version or the fallback if locating this version is impossible.
      */
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-    public static ClassFileVersion forThisVm(ClassFileVersion fallback) {
+    public static ClassFileVersion ofThisVm(ClassFileVersion fallback) {
         try {
-            return forThisVm();
+            return ofThisVm();
         } catch (Exception ignored) {
             return fallback;
         }
