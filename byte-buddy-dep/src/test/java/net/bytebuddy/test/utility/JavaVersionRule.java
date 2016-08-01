@@ -91,7 +91,7 @@ public class JavaVersionRule implements MethodRule {
         AT_MOST {
             @Override
             protected boolean check(ClassFileVersion current, ClassFileVersion enforced) {
-                return current.isAtLeast(enforced);
+                return current.isLessThan(enforced) || current.equals(enforced);
             }
         };
 
