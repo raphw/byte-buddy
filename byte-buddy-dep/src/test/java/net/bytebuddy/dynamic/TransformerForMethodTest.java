@@ -11,7 +11,6 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -23,6 +22,7 @@ import org.mockito.Mock;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
@@ -77,7 +77,7 @@ public class TransformerForMethodTest {
         when(typeVariableBound.getSymbol()).thenReturn(QUX);
         when(typeVariableBound.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         when(typeVariableBound.asGenericType()).thenReturn(typeVariableBound);
-        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(methodToken);
+        when(methodDescription.asToken(none())).thenReturn(methodToken);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.asDefined()).thenReturn(definedMethod);
         when(methodToken.getName()).thenReturn(FOO);

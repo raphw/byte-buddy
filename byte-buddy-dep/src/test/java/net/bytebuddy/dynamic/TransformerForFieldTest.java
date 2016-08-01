@@ -6,7 +6,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -18,6 +17,7 @@ import org.mockito.Mock;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
@@ -60,7 +60,7 @@ public class TransformerForFieldTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(fieldType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(fieldType);
-        when(fieldDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(fieldToken);
+        when(fieldDescription.asToken(none())).thenReturn(fieldToken);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
         when(fieldDescription.asDefined()).thenReturn(definedField);
         when(fieldToken.getName()).thenReturn(FOO);
