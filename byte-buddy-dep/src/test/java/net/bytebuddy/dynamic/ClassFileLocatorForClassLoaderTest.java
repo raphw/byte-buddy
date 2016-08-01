@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.StreamDrainer;
@@ -98,7 +97,7 @@ public class ClassFileLocatorForClassLoaderTest {
     @Test
     public void testClose() throws Exception {
         ClassFileLocator.ForClassLoader.of(classLoader).close();
-        verify(classLoader).close();
+        verifyZeroInteractions(classLoader);
     }
 
     @Test

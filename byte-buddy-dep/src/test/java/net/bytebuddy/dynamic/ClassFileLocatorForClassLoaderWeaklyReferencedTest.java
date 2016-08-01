@@ -62,7 +62,7 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     @Test
     public void testClose() throws Exception {
         ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader).close();
-        verify(classLoader).close();
+        verifyZeroInteractions(classLoader);
     }
 
     @Test

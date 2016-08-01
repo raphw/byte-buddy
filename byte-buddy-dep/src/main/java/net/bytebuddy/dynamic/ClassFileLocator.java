@@ -259,7 +259,13 @@ public interface ClassFileLocator extends Closeable {
     }
 
     /**
+     * <p>
      * A class file locator that queries a class loader for binary representations of class files.
+     * </p>
+     * <p>
+     * <b>Important</b>: Even when calling {@link Closeable#close()} on this class file locator, no underlying
+     * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
+     * </p>
      */
     class ForClassLoader implements ClassFileLocator {
 
@@ -325,9 +331,7 @@ public interface ClassFileLocator extends Closeable {
 
         @Override
         public void close() throws IOException {
-            if (classLoader instanceof Closeable) {
-                ((Closeable) classLoader).close();
-            }
+            /* do nothing */
         }
 
         /**
@@ -370,8 +374,14 @@ public interface ClassFileLocator extends Closeable {
         }
 
         /**
+         * <p>
          * A class file locator that queries a class loader for binary representations of class files.
          * The class loader is only weakly referenced.
+         * </p>
+         * <p>
+         * <b>Important</b>: Even when calling {@link Closeable#close()} on this class file locator, no underlying
+         * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
+         * </p>
          */
         public static class WeaklyReferenced extends WeakReference<ClassLoader> implements ClassFileLocator {
 
@@ -416,10 +426,7 @@ public interface ClassFileLocator extends Closeable {
 
             @Override
             public void close() throws IOException {
-                ClassLoader classLoader = get();
-                if (classLoader instanceof Closeable) {
-                    ((Closeable) classLoader).close();
-                }
+                /* do nothing */
             }
 
             @Override
