@@ -13,8 +13,8 @@ import net.bytebuddy.description.type.TypeList;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * A transformer is responsible for transforming an object into a compatible instance of the same type.
@@ -95,7 +95,10 @@ public interface Transformer<T> {
 
         @Override
         public FieldDescription transform(TypeDescription instrumentedType, FieldDescription fieldDescription) {
-            return new TransformedField(instrumentedType, fieldDescription.getDeclaringType(), transformer.transform(instrumentedType, fieldDescription.asToken(is(instrumentedType))), fieldDescription.asDefined());
+            return new TransformedField(instrumentedType,
+                    fieldDescription.getDeclaringType(),
+                    transformer.transform(instrumentedType, fieldDescription.asToken(none())),
+                    fieldDescription.asDefined());
         }
 
         @Override
@@ -271,7 +274,7 @@ public interface Transformer<T> {
         public MethodDescription transform(TypeDescription instrumentedType, MethodDescription methodDescription) {
             return new TransformedMethod(instrumentedType,
                     methodDescription.getDeclaringType(),
-                    transformer.transform(instrumentedType, methodDescription.asToken(is(instrumentedType))),
+                    transformer.transform(instrumentedType, methodDescription.asToken(none())),
                     methodDescription.asDefined());
         }
 

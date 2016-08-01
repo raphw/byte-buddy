@@ -153,6 +153,19 @@ public class TransformerForMethodTest {
     }
 
     @Test
+    public void testRetainsInstrumentedType() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Bar.class);
+        MethodDescription methodDescription = typeDescription.getSuperClass().getDeclaredMethods().filter(named(BAR)).getOnly();
+        MethodDescription transformed = Transformer.ForMethod.withModifiers().transform(typeDescription, methodDescription);
+        assertThat(transformed, is(methodDescription));
+        assertThat(transformed.getModifiers(), is(methodDescription.getModifiers()));
+        assertThat(transformed.getReturnType().asErasure(), is(typeDescription));
+        assertThat(transformed.getReturnType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(transformed.getReturnType().getTypeArguments().size(), is(1));
+        assertThat(transformed.getReturnType().getTypeArguments().getOnly(), is(typeDescription.getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly().getReturnType()));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Transformer.ForMethod.class).apply();
         ObjectPropertyAssertion.of(Transformer.ForMethod.MethodModifierTransformer.class).apply();
@@ -162,6 +175,10 @@ public class TransformerForMethodTest {
     private static class Foo<T> {
 
         T foo() {
+            return null;
+        }
+
+        Bar<T> bar() {
             return null;
         }
     }
