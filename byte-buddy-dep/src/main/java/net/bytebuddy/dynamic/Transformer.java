@@ -95,7 +95,7 @@ public interface Transformer<T> {
 
         @Override
         public FieldDescription transform(TypeDescription instrumentedType, FieldDescription fieldDescription) {
-            return new TransformedField(fieldDescription.getDeclaringType(), transformer.transform(instrumentedType, fieldDescription.asToken(is(instrumentedType))), fieldDescription.asDefined());
+            return new TransformedField(instrumentedType, fieldDescription.getDeclaringType(), transformer.transform(instrumentedType, fieldDescription.asToken(is(instrumentedType))), fieldDescription.asDefined());
         }
 
         @Override
@@ -168,6 +168,11 @@ public interface Transformer<T> {
         protected static class TransformedField extends FieldDescription.AbstractBase {
 
             /**
+             * The instrumented type for which this field is transformed.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
              * The field's declaring type.
              */
             private final TypeDefinition declaringType;
@@ -185,13 +190,16 @@ public interface Transformer<T> {
             /**
              * Creates a new transformed field.
              *
+             * @param instrumentedType The instrumented type for which this field is transformed.
              * @param declaringType    The field's declaring type.
              * @param token            A field token representing the transformed field.
              * @param fieldDescription The field's defined shape.
              */
-            protected TransformedField(TypeDefinition declaringType,
-                                       FieldDescription.Token token,
-                                       FieldDescription.InDefinedShape fieldDescription) {
+            protected TransformedField(TypeDescription instrumentedType,
+                                       TypeDefinition declaringType,
+                                       Token token,
+                                       InDefinedShape fieldDescription) {
+                this.instrumentedType = instrumentedType;
                 this.declaringType = declaringType;
                 this.token = token;
                 this.fieldDescription = fieldDescription;
@@ -199,7 +207,7 @@ public interface Transformer<T> {
 
             @Override
             public TypeDescription.Generic getType() {
-                return token.getType().accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
+                return token.getType().accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(instrumentedType));
             }
 
             @Override
@@ -341,6 +349,9 @@ public interface Transformer<T> {
          */
         protected static class TransformedMethod extends MethodDescription.AbstractBase {
 
+            /**
+             * The instrumented type for which this method is transformed.
+             */
             private final TypeDescription instrumentedType;
 
             /**
@@ -361,7 +372,7 @@ public interface Transformer<T> {
             /**
              * Creates a new transformed method.
              *
-             * @param instrumentedType
+             * @param instrumentedType  The instrumented type for which this method is transformed.
              * @param declaringType     The method's declaring type.
              * @param token             The method representing the transformed method.
              * @param methodDescription The defined shape of the transformed method.
@@ -526,6 +537,11 @@ public interface Transformer<T> {
                 }
             }
 
+            /**
+             * A visitor that attaches type variables based on the transformed method's type variables and the instrumented type. Binding type
+             * variables directly for this method is not possible as type variables are already resolved for the instrumented type such
+             * that it is required to bind variables for the instrumented type directly.
+             */
             protected class AttachmentVisitor extends TypeDescription.Generic.Visitor.Substitutor.WithoutTypeSubstitution {
 
                 @Override
@@ -539,6 +555,32 @@ public interface Transformer<T> {
                     } else {
                         return new TypeDescription.Generic.OfTypeVariable.WithAnnotationOverlay(attached, typeVariable.getDeclaredAnnotations());
                     }
+                }
+
+                @Override
+                public int hashCode() {
+                    return TransformedMethod.this.hashCode();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || (other instanceof AttachmentVisitor && ((AttachmentVisitor) other).getOuter().equals(TransformedMethod.this));
+                }
+
+                /**
+                 * Returns the outer instance.
+                 *
+                 * @return The outer instance.
+                 */
+                private TransformedMethod getOuter() {
+                    return TransformedMethod.this;
+                }
+
+                @Override
+                public String toString() {
+                    return "Transformer.ForMethod.TransformedMethod.AttachmentVisitor{" +
+                            "outer=" + TransformedMethod.this +
+                            '}';
                 }
             }
         }

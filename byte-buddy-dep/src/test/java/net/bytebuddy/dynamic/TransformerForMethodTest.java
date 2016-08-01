@@ -156,6 +156,7 @@ public class TransformerForMethodTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Transformer.ForMethod.class).apply();
         ObjectPropertyAssertion.of(Transformer.ForMethod.MethodModifierTransformer.class).apply();
+        ObjectPropertyAssertion.of(Transformer.ForMethod.TransformedMethod.AttachmentVisitor.class).apply();
     }
 
     private static class Foo<T> {

@@ -43,7 +43,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForDetachmentTest {
     public void testDetachedNoSource() throws Exception {
         TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
         TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
-        detached.getTypeArguments().get(0).getVariableSource();
+        detached.getTypeArguments().get(0).getTypeVariableSource();
     }
 
     @Test

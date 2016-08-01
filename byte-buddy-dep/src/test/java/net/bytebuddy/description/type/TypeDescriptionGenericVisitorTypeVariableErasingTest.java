@@ -90,12 +90,12 @@ public class TypeDescriptionGenericVisitorTypeVariableErasingTest {
         MethodDescription.InDefinedShape typeVariableSource = mock(MethodDescription.InDefinedShape.AbstractBase.class);
         when(typeVariableSource.accept(any(TypeVariableSource.Visitor.class))).thenCallRealMethod();
         when(typeVariableSource.asDefined()).thenCallRealMethod();
-        when(typeDescription.getVariableSource()).thenReturn(typeVariableSource);
+        when(typeDescription.getTypeVariableSource()).thenReturn(typeVariableSource);
         when(typeDescription.getSymbol()).thenReturn(FOO);
         TypeDescription.Generic typeVariable = TypeDescription.Generic.Visitor.TypeVariableErasing.INSTANCE.onTypeVariable(typeDescription);
         assertThat(typeVariable.getSymbol(), is(FOO));
         assertThat(typeVariable.getDeclaredAnnotations(), is(Collections.singletonList(annotationDescription)));
-        assertThat(typeVariable.getVariableSource(), is((TypeVariableSource) typeVariableSource));
+        assertThat(typeVariable.getTypeVariableSource(), is((TypeVariableSource) typeVariableSource));
     }
 
     @Test
@@ -105,7 +105,7 @@ public class TypeDescriptionGenericVisitorTypeVariableErasingTest {
         when(typeVariableSource.accept(any(TypeVariableSource.Visitor.class))).thenCallRealMethod();
         TypeDescription typeErasure = mock(TypeDescription.class);
         when(typeDescription.asErasure()).thenReturn(typeErasure);
-        when(typeDescription.getVariableSource()).thenReturn(typeVariableSource);
+        when(typeDescription.getTypeVariableSource()).thenReturn(typeVariableSource);
         TypeDescription.Generic erasure = TypeDescription.Generic.Visitor.TypeVariableErasing.INSTANCE.onTypeVariable(typeDescription);
         assertThat(erasure.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(erasure.asErasure(), is(typeErasure));

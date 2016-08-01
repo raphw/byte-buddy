@@ -1,7 +1,6 @@
 package net.bytebuddy.description;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 
@@ -69,10 +68,10 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
         /**
          * Applies the visitor on a type.
          *
-         * @param typeDefinition The type onto which this visitor is applied.
+         * @param typeDescription The type onto which this visitor is applied.
          * @return The visitor's return value.
          */
-        T onType(TypeDefinition typeDefinition);
+        T onType(TypeDescription typeDescription);
 
         /**
          * Applies the visitor on a method.
@@ -93,8 +92,8 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
             INSTANCE;
 
             @Override
-            public TypeVariableSource onType(TypeDefinition typeDefinition) {
-                return typeDefinition;
+            public TypeVariableSource onType(TypeDescription typeDescription) {
+                return typeDescription;
             }
 
             @Override

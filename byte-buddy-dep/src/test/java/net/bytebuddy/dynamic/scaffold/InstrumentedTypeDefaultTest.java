@@ -88,7 +88,7 @@ public class InstrumentedTypeDefaultTest {
         assertThat(instrumentedType.getTypeVariables().size(), is(1));
         TypeDescription.Generic typeVariable = instrumentedType.getTypeVariables().get(0);
         assertThat(typeVariable.getTypeName(), is(BAR));
-        assertThat(typeVariable.getVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
+        assertThat(typeVariable.getTypeVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
         assertThat(typeVariable.getUpperBounds(), is(Collections.singletonList(boundType)));
     }
 
@@ -100,7 +100,7 @@ public class InstrumentedTypeDefaultTest {
         assertThat(instrumentedType.getTypeVariables().size(), is(1));
         TypeDescription.Generic typeVariable = instrumentedType.getTypeVariables().get(0);
         assertThat(typeVariable.getTypeName(), is(BAR));
-        assertThat(typeVariable.getVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
+        assertThat(typeVariable.getTypeVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
         assertThat(typeVariable.getUpperBounds(), is(Collections.singletonList(instrumentedType.asGenericType())));
     }
 
@@ -128,7 +128,7 @@ public class InstrumentedTypeDefaultTest {
         assertThat(instrumentedType.getTypeVariables().size(), is(1));
         TypeDescription.Generic typeVariable = instrumentedType.getTypeVariables().get(0);
         assertThat(typeVariable.getTypeName(), is(QUX));
-        assertThat(typeVariable.getVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
+        assertThat(typeVariable.getTypeVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
         assertThat(typeVariable.getUpperBounds(), is(Collections.singletonList(otherBoundType)));
     }
 

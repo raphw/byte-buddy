@@ -13,7 +13,7 @@ import java.util.Collections;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
-public class TypeDescriptionGenericOfTypeVariableSymbolic {
+public class TypeDescriptionGenericOfTypeVariableSymbolicTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -76,7 +76,7 @@ public class TypeDescriptionGenericOfTypeVariableSymbolic {
     }
 
     @Test
-    public void testAnnotaitions() throws Exception {
+    public void testAnnotations() throws Exception {
         assertThat(typeVariable.getDeclaredAnnotations().size(), is(1));
         assertThat(typeVariable.getDeclaredAnnotations().contains(annotationDescription), is(true));
     }
@@ -128,7 +128,7 @@ public class TypeDescriptionGenericOfTypeVariableSymbolic {
 
     @Test(expected = IllegalStateException.class)
     public void testVariableSourceThrowsException() throws Exception {
-        typeVariable.getVariableSource();
+        typeVariable.getTypeVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)

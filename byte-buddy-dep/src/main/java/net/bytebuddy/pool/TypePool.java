@@ -4698,8 +4698,8 @@ public interface TypePool {
                         }
 
                         @Override
-                        public TypeVariableSource getVariableSource() {
-                            return typeVariable.getVariableSource();
+                        public TypeVariableSource getTypeVariableSource() {
+                            return typeVariable.getTypeVariableSource();
                         }
 
                         @Override
@@ -4841,7 +4841,7 @@ public interface TypePool {
                             }
 
                             @Override
-                            public TypeVariableSource getVariableSource() {
+                            public TypeVariableSource getTypeVariableSource() {
                                 return typeVariableSource;
                             }
 
@@ -7464,8 +7464,8 @@ public interface TypePool {
                             }
 
                             @Override
-                            public TypeVariableSource getVariableSource() {
-                                return typeVariable.getVariableSource();
+                            public TypeVariableSource getTypeVariableSource() {
+                                return typeVariable.getTypeVariableSource();
                             }
 
                             @Override

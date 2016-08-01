@@ -2,6 +2,7 @@ package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -34,7 +35,7 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
  * Implementations of this interface represent a Java type, i.e. a class or interface. Instances of this interface always
  * represent non-generic types of sort {@link Generic.Sort#NON_GENERIC}.
  */
-public interface TypeDescription extends TypeDefinition, ByteCodeElement {
+public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVariableSource {
 
     /**
      * A representation of the {@link java.lang.Object} type.
@@ -395,7 +396,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
          *
          * @return This type's type variable source.
          */
-        TypeVariableSource getVariableSource();
+        TypeVariableSource getTypeVariableSource();
 
         /**
          * Returns the symbol of this type variable. A symbol is only well-defined for type variables
@@ -628,8 +629,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                     }
 
                     @Override
-                    public TypeVariableSource getVariableSource() {
-                        return typeVariable.getVariableSource();
+                    public TypeVariableSource getTypeVariableSource() {
+                        return typeVariable.getTypeVariableSource();
                     }
 
                     @Override
@@ -696,7 +697,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
 
                 @Override
                 public Generic onTypeVariable(Generic typeVariable) {
-                    return typeVariable.getVariableSource().accept(new TypeVariableReviser(typeVariable));
+                    return typeVariable.getTypeVariableSource().accept(new TypeVariableReviser(typeVariable));
                 }
 
                 @Override
@@ -775,7 +776,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                     }
 
                     @Override
-                    public Generic onType(TypeDefinition typeDefinition) {
+                    public Generic onType(TypeDescription typeDescription) {
                         return new OfNonGenericType.Latent(typeVariable.asErasure(), typeVariable.getDeclaredAnnotations());
                     }
 
@@ -828,8 +829,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                     }
 
                     @Override
-                    public TypeVariableSource getVariableSource() {
-                        return typeVariable.getVariableSource();
+                    public TypeVariableSource getTypeVariableSource() {
+                        return typeVariable.getTypeVariableSource();
                     }
 
                     @Override
@@ -1890,7 +1891,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                  */
                 protected abstract Generic onSimpleType(Generic typeDescription);
 
-                public static abstract class WithoutTypeSubstitution extends Substitutor {
+                /**
+                 * A {@link Substitutor} that only substitutes type variables but fully preserves non-generic type definitions.
+                 */
+                public abstract static class WithoutTypeSubstitution extends Substitutor {
 
                     @Override
                     public Generic onNonGenericType(Generic typeDescription) {
@@ -2128,7 +2132,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
 
                     @Override
                     public Generic onTypeVariable(Generic typeVariable) {
-                        return typeVariable.getVariableSource().accept(new TypeVariableSubstitutor(typeVariable));
+                        return typeVariable.getTypeVariableSource().accept(new TypeVariableSubstitutor(typeVariable));
                     }
 
                     @Override
@@ -2172,7 +2176,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                         }
 
                         @Override
-                        public Generic onType(TypeDefinition typeDefinition) {
+                        public Generic onType(TypeDescription typeDescription) {
                             Generic substitution = bindings.get(typeVariable);
                             if (substitution == null) {
                                 throw new IllegalStateException("Unknown type variable: " + typeVariable);
@@ -2241,8 +2245,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                         }
 
                         @Override
-                        public TypeVariableSource getVariableSource() {
-                            return typeVariable.getVariableSource();
+                        public TypeVariableSource getTypeVariableSource() {
+                            return typeVariable.getTypeVariableSource();
                         }
 
                         @Override
@@ -3983,17 +3987,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
         /**
          * An abstract base implementation of a generic type description.
          */
-        abstract class AbstractBase extends TypeVariableSource.AbstractBase implements Generic {
-
-            @Override
-            public TypeVariableSource getEnclosingSource() {
-                return asErasure().getEnclosingSource();
-            }
-
-            @Override
-            public boolean isGenericDeclaration() {
-                return asErasure().isGenericDeclaration();
-            }
+        abstract class AbstractBase extends ModifierReviewable.AbstractBase implements Generic {
 
             @Override
             public int getModifiers() {
@@ -4031,16 +4025,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             @Override
             public Sort getSort() {
                 return Sort.NON_GENERIC;
-            }
-
-            @Override
-            public TypeList.Generic getTypeVariables() {
-                return asErasure().getTypeVariables();
-            }
-
-            @Override
-            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
-                return visitor.onType(this);
             }
 
             @Override
@@ -4092,7 +4076,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             }
 
             @Override
-            public TypeVariableSource getVariableSource() {
+            public TypeVariableSource getTypeVariableSource() {
                 throw new IllegalStateException("A non-generic type does not imply a type variable source: " + this);
             }
 
@@ -4353,16 +4337,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             }
 
             @Override
-            public TypeList.Generic getTypeVariables() {
-                return new TypeList.Generic.Empty();
-            }
-
-            @Override
-            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
-                return visitor.onType(this);
-            }
-
-            @Override
             public TypeDescription asErasure() {
                 return ArrayProjection.of(getComponentType().asErasure(), 1);
             }
@@ -4398,7 +4372,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             }
 
             @Override
-            public TypeVariableSource getVariableSource() {
+            public TypeVariableSource getTypeVariableSource() {
                 throw new IllegalStateException("A generic array type does not imply a type variable source: " + this);
             }
 
@@ -4583,16 +4557,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             }
 
             @Override
-            public TypeList.Generic getTypeVariables() {
-                throw new IllegalStateException("A wildcard does not imply type variables: " + this);
-            }
-
-            @Override
-            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
-                throw new IllegalStateException("A wildcard does not imply a type variable source: " + this);
-            }
-
-            @Override
             public TypeDescription asErasure() {
                 throw new IllegalStateException("A wildcard does not represent an erasable type: " + this);
             }
@@ -4623,7 +4587,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             }
 
             @Override
-            public TypeVariableSource getVariableSource() {
+            public TypeVariableSource getTypeVariableSource() {
                 throw new IllegalStateException("A wildcard does not imply a type variable source: " + this);
             }
 
@@ -4937,16 +4901,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             }
 
             @Override
-            public TypeList.Generic getTypeVariables() {
-                return asErasure().getTypeVariables();
-            }
-
-            @Override
-            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
-                return visitor.onType(this);
-            }
-
-            @Override
             public Generic getSuperClass() {
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
@@ -4985,7 +4939,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             }
 
             @Override
-            public TypeVariableSource getVariableSource() {
+            public TypeVariableSource getTypeVariableSource() {
                 throw new IllegalStateException("A parameterized type does not imply a type variable source: " + this);
             }
 
@@ -5354,16 +5308,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             }
 
             @Override
-            public TypeList.Generic getTypeVariables() {
-                throw new IllegalStateException("A type variable does not imply type variables: " + this);
-            }
-
-            @Override
-            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
-                throw new IllegalStateException("A type variable does not imply a type variable source: " + this);
-            }
-
-            @Override
             public Generic getSuperClass() {
                 throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
             }
@@ -5445,7 +5389,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
 
             @Override
             public int hashCode() {
-                return getVariableSource().hashCode() ^ getSymbol().hashCode();
+                return getTypeVariableSource().hashCode() ^ getSymbol().hashCode();
             }
 
             @Override
@@ -5454,7 +5398,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                 Generic typeDescription = (Generic) other;
                 return typeDescription.getSort().isTypeVariable()
                         && getSymbol().equals(typeDescription.getSymbol())
-                        && getVariableSource().equals(typeDescription.getVariableSource());
+                        && getTypeVariableSource().equals(typeDescription.getTypeVariableSource());
             }
 
             @Override
@@ -5504,16 +5448,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                 }
 
                 @Override
-                public TypeList.Generic getTypeVariables() {
-                    throw new IllegalStateException("A type variable does not imply type variables: " + this);
-                }
-
-                @Override
-                public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
-                    throw new IllegalStateException("A type variable does not imply a type variable source: " + this);
-                }
-
-                @Override
                 public TypeDescription asErasure() {
                     throw new IllegalStateException("A symbolic type variable does not imply an erasure: " + this);
                 }
@@ -5524,7 +5458,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                 }
 
                 @Override
-                public TypeVariableSource getVariableSource() {
+                public TypeVariableSource getTypeVariableSource() {
                     throw new IllegalStateException("A symbolic type variable does not imply a variable source: " + this);
                 }
 
@@ -5666,7 +5600,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                 }
 
                 @Override
-                public TypeVariableSource getVariableSource() {
+                public TypeVariableSource getTypeVariableSource() {
                     GenericDeclaration genericDeclaration = typeVariable.getGenericDeclaration();
                     if (genericDeclaration instanceof Class) {
                         return new TypeDescription.ForLoadedType((Class<?>) genericDeclaration);
@@ -5732,12 +5666,27 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                 }
             }
 
+            /**
+             * A type variable with explicit annotations that replace the annotations that are declared by the provided type variable.
+             */
             public static class WithAnnotationOverlay extends OfTypeVariable {
 
+                /**
+                 * The type variable to represent.
+                 */
                 private final Generic typeVariable;
 
+                /**
+                 * The type annotations of this type variable.
+                 */
                 private final List<? extends AnnotationDescription> declaredAnnotations;
 
+                /**
+                 * Creates a new type definition for a type variable with explicit annotations.
+                 *
+                 * @param typeVariable        The type variable to represent.
+                 * @param declaredAnnotations The type annotations of this type variable.
+                 */
                 public WithAnnotationOverlay(Generic typeVariable, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.typeVariable = typeVariable;
                     this.declaredAnnotations = declaredAnnotations;
@@ -5754,8 +5703,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
                 }
 
                 @Override
-                public TypeVariableSource getVariableSource() {
-                    return typeVariable.getVariableSource();
+                public TypeVariableSource getTypeVariableSource() {
+                    return typeVariable.getTypeVariableSource();
                 }
 
                 @Override
@@ -5782,16 +5731,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             @Override
             public Sort getSort() {
                 return resolve().getSort();
-            }
-
-            @Override
-            public TypeList.Generic getTypeVariables() {
-                return resolve().getTypeVariables();
-            }
-
-            @Override
-            public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
-                return resolve().accept(visitor);
             }
 
             @Override
@@ -5835,8 +5774,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement {
             }
 
             @Override
-            public TypeVariableSource getVariableSource() {
-                return resolve().getVariableSource();
+            public TypeVariableSource getTypeVariableSource() {
+                return resolve().getTypeVariableSource();
             }
 
             @Override

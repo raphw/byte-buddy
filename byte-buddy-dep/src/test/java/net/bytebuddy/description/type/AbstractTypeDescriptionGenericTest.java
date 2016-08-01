@@ -88,20 +88,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
-    public void testNonGenericTypeTypeVariables() throws Exception {
-        assertThat(describeType(SimpleTypeVariableType.class.getDeclaredField(BAR)).getTypeVariables().size(), is(1));
-        assertThat(describeType(SimpleTypeVariableType.class.getDeclaredField(BAR)).getTypeVariables().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(describeType(SimpleTypeVariableType.class.getDeclaredField(BAR)).getTypeVariables().getOnly().getSymbol(), is(T));
-    }
-
-    @Test
-    public void testNonGenericTypeTypeVariableSourceVisitor() throws Exception {
-        TypeVariableSource typeDescription = describeType(SimpleTypeVariableType.class.getDeclaredField(BAR));
-        assertThat(typeDescription.accept(TypeVariableSource.Visitor.NoOp.INSTANCE), is(typeDescription));
-    }
-
-    @Test
-    public void testParameterizedType() throws Exception {
+    public void testSimpleParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(SimpleParameterizedType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getActualName(), is(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
@@ -136,7 +123,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testParameterizedTypeNoVariableSource() throws Exception {
-        describeType(SimpleParameterizedType.class.getDeclaredField(FOO)).getVariableSource();
+        describeType(SimpleParameterizedType.class.getDeclaredField(FOO)).getTypeVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -152,19 +139,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test(expected = IllegalStateException.class)
     public void testParameterizedTypeNoLowerBounds() throws Exception {
         describeType(SimpleParameterizedType.class.getDeclaredField(FOO)).getLowerBounds();
-    }
-
-    @Test
-    public void testParameterizedTypeTypeVariables() throws Exception {
-        assertThat(describeType(SimpleParameterizedType.class.getDeclaredField(FOO)).getTypeVariables().size(), is(1));
-        assertThat(describeType(SimpleParameterizedType.class.getDeclaredField(FOO)).getTypeVariables().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(describeType(SimpleParameterizedType.class.getDeclaredField(FOO)).getTypeVariables().getOnly().asErasure().represents(String.class), is(true));
-    }
-
-    @Test
-    public void testParameterizedTypeTypeVariableSourceVisitor() throws Exception {
-        TypeVariableSource typeDescription = describeType(SimpleParameterizedType.class.getDeclaredField(FOO));
-        assertThat(typeDescription.accept(TypeVariableSource.Visitor.NoOp.INSTANCE), is(typeDescription));
     }
 
     @Test
@@ -203,7 +177,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoVariableSource() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getVariableSource();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -246,16 +220,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testUpperBoundsWildcardParameterizedTypeTypeVariables() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeVariables();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testUpperBoundsWildcardParameterizedTypeTypeVariableSourceVisitor() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().accept(TypeVariableSource.Visitor.NoOp.INSTANCE);
-    }
-
     @Test
     public void testLowerBoundWildcardParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO));
@@ -293,7 +257,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoVariableSource() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getVariableSource();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -336,16 +300,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testLowerBoundsWildcardParameterizedTypeTypeVariables() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeVariables();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testLowerBoundsWildcardParameterizedTypeTypeVariableSourceVisitor() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().accept(TypeVariableSource.Visitor.NoOp.INSTANCE);
-    }
-
     @Test
     public void testUnboundWildcardParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO));
@@ -382,7 +336,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardParameterizedTypeNoVariableSource() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getVariableSource();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -425,16 +379,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testUnboundBoundsWildcardParameterizedTypeTypeVariables() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeVariables();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testUnboundBoundsWildcardParameterizedTypeTypeVariableSourceVisitor() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().accept(TypeVariableSource.Visitor.NoOp.INSTANCE);
-    }
-
     @Test
     public void testExplicitlyUnboundWildcardParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO));
@@ -474,7 +418,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardParameterizedTypeNoVariableSource() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getVariableSource();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -515,16 +459,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundBoundWildcardParameterizedTypeNoIterator() throws Exception {
         describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testExplicitlyUnboundBoundsWildcardParameterizedTypeTypeVariables() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeVariables();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testExplicitlyUnboundBoundsWildcardParameterizedTypeTypeVariableSourceVisitor() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().accept(TypeVariableSource.Visitor.NoOp.INSTANCE);
     }
 
     @Test
@@ -576,7 +510,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoVariableSource() throws Exception {
-        describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).getVariableSource();
+        describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).getTypeVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -638,7 +572,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayOfGenericComponentTypeNoVariableSource() throws Exception {
-        describeType(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO)).getVariableSource();
+        describeType(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO)).getTypeVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -654,17 +588,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayOfGenericComponentTypeNoLowerBounds() throws Exception {
         describeType(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO)).getLowerBounds();
-    }
-
-    @Test
-    public void testGenericArrayOfGenericComponentTypeNonGenericTypeTypeVariables() throws Exception {
-        assertThat(describeType(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO)).getTypeVariables().size(), is(0));
-    }
-
-    @Test
-    public void testGenericArrayOfGenericComponentTypeTypeVariableSourceVisitor() throws Exception {
-        TypeVariableSource typeDescription = describeType(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO));
-        assertThat(typeDescription.accept(TypeVariableSource.Visitor.NoOp.INSTANCE), is(typeDescription));
     }
 
     @Test
@@ -686,9 +609,9 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getUpperBounds().getOnly(), is(TypeDescription.Generic.OBJECT));
         assertThat(typeDescription.getUpperBounds().getOnly().getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getTypeName(), is(SimpleTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
-        MatcherAssert.assertThat(typeDescription.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(SimpleTypeVariableType.class)));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().size(), is(1));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().getOnly(), is(typeDescription));
+        MatcherAssert.assertThat(typeDescription.getTypeVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(SimpleTypeVariableType.class)));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().size(), is(1));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().getOnly(), is(typeDescription));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -731,16 +654,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(SimpleTypeVariableType.class.getDeclaredField(FOO)).iterator();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testTypeVariableTypeVariables() throws Exception {
-        describeType(SimpleTypeVariableType.class.getDeclaredField(FOO)).getTypeVariables();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testTypeVariableTypeVariableSourceVisitor() throws Exception {
-        describeType(SimpleTypeVariableType.class.getDeclaredField(FOO)).accept(TypeVariableSource.Visitor.NoOp.INSTANCE);
-    }
-
     @Test
     public void testSingleUpperBoundTypeVariableType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(SingleUpperBoundTypeVariableType.class.getDeclaredField(FOO));
@@ -750,9 +663,9 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getUpperBounds().getOnly(), is((TypeDefinition) new TypeDescription.ForLoadedType(String.class)));
         assertThat(typeDescription.getUpperBounds().getOnly().getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getTypeName(), is(SingleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
-        assertThat(typeDescription.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(SingleUpperBoundTypeVariableType.class)));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().size(), is(1));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().getOnly(), is(typeDescription));
+        assertThat(typeDescription.getTypeVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(SingleUpperBoundTypeVariableType.class)));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().size(), is(1));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().getOnly(), is(typeDescription));
     }
 
     @Test
@@ -766,9 +679,9 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getUpperBounds().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(typeDescription.getUpperBounds().get(2), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(typeDescription.getTypeName(), is(MultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
-        assertThat(typeDescription.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(MultipleUpperBoundTypeVariableType.class)));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().size(), is(1));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().getOnly(), is(typeDescription));
+        assertThat(typeDescription.getTypeVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(MultipleUpperBoundTypeVariableType.class)));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().size(), is(1));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().getOnly(), is(typeDescription));
     }
 
     @Test
@@ -781,9 +694,9 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getUpperBounds().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(typeDescription.getUpperBounds().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(typeDescription.getTypeName(), is(InterfaceOnlyMultipleUpperBoundTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
-        assertThat(typeDescription.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(InterfaceOnlyMultipleUpperBoundTypeVariableType.class)));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().size(), is(1));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().getOnly(), is(typeDescription));
+        assertThat(typeDescription.getTypeVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(InterfaceOnlyMultipleUpperBoundTypeVariableType.class)));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().size(), is(1));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().getOnly(), is(typeDescription));
     }
 
     @Test
@@ -795,9 +708,9 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getUpperBounds().size(), is(1));
         assertThat(typeDescription.getUpperBounds().getOnly(), is(TypeDescription.Generic.OBJECT));
         assertThat(typeDescription.getTypeName(), is(ShadowingTypeVariableType.class.getDeclaredMethod(FOO).getGenericReturnType().toString()));
-        assertThat(typeDescription.getVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(ShadowingTypeVariableType.class.getDeclaredMethod(FOO))));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().size(), is(1));
-        assertThat(typeDescription.getVariableSource().getTypeVariables().getOnly(), is(typeDescription));
+        assertThat(typeDescription.getTypeVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(ShadowingTypeVariableType.class.getDeclaredMethod(FOO))));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().size(), is(1));
+        assertThat(typeDescription.getTypeVariableSource().getTypeVariables().getOnly(), is(typeDescription));
     }
 
     @Test
@@ -850,20 +763,20 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(foo.getSymbol(), is(T));
         assertThat(foo.getUpperBounds().size(), is(1));
         assertThat(foo.getUpperBounds().getOnly(), is(TypeDescription.Generic.OBJECT));
-        assertThat(foo.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(NestedInnerType.class)));
+        assertThat(foo.getTypeVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(NestedInnerType.class)));
         TypeDescription.Generic bar = describeReturnType(NestedInnerType.InnerType.class.getDeclaredMethod(BAR));
         assertThat(bar.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(bar.getSymbol(), is(S));
         assertThat(bar.getUpperBounds().size(), is(1));
         assertThat(bar.getUpperBounds().getOnly(), is(foo));
-        assertThat(bar.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(NestedInnerType.InnerType.class)));
+        assertThat(bar.getTypeVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(NestedInnerType.InnerType.class)));
         TypeDescription.Generic qux = describeReturnType(NestedInnerType.InnerType.class.getDeclaredMethod(QUX));
         assertThat(qux.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(qux.getSymbol(), is(U));
         assertThat(qux.getUpperBounds().size(), is(1));
         assertThat(qux.getUpperBounds().getOnly(), is(bar));
         MethodDescription quxMethod = new MethodDescription.ForLoadedMethod(NestedInnerType.InnerType.class.getDeclaredMethod(QUX));
-        assertThat(qux.getVariableSource(), is((TypeVariableSource) quxMethod));
+        assertThat(qux.getTypeVariableSource(), is((TypeVariableSource) quxMethod));
     }
 
     @Test
@@ -874,25 +787,25 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(foo.getSymbol(), is(T));
         assertThat(foo.getUpperBounds().size(), is(1));
         assertThat(foo.getUpperBounds().getOnly(), is(TypeDescription.Generic.OBJECT));
-        assertThat(foo.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(NestedInnerMethod.class)));
+        assertThat(foo.getTypeVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(NestedInnerMethod.class)));
         TypeDescription.Generic bar = describeReturnType(innerType.getDeclaredMethod(BAR));
         assertThat(bar.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(bar.getSymbol(), is(S));
         assertThat(bar.getUpperBounds().size(), is(1));
         assertThat(bar.getUpperBounds().getOnly(), is(foo));
-        assertThat(bar.getVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(NestedInnerMethod.class.getDeclaredMethod(FOO))));
+        assertThat(bar.getTypeVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(NestedInnerMethod.class.getDeclaredMethod(FOO))));
         TypeDescription.Generic qux = describeReturnType(innerType.getDeclaredMethod(QUX));
         assertThat(qux.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(qux.getSymbol(), is(U));
         assertThat(qux.getUpperBounds().size(), is(1));
         assertThat(qux.getUpperBounds().getOnly(), is(bar));
-        assertThat(qux.getVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(innerType)));
+        assertThat(qux.getTypeVariableSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(innerType)));
         TypeDescription.Generic baz = describeReturnType(innerType.getDeclaredMethod(BAZ));
         assertThat(baz.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(baz.getSymbol(), is(V));
         assertThat(baz.getUpperBounds().size(), is(1));
         assertThat(baz.getUpperBounds().getOnly(), is(qux));
-        assertThat(baz.getVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(innerType.getDeclaredMethod(BAZ))));
+        assertThat(baz.getTypeVariableSource(), is((TypeVariableSource) new MethodDescription.ForLoadedMethod(innerType.getDeclaredMethod(BAZ))));
 
     }
 
@@ -1160,7 +1073,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
-        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription.asDefined()));
+        assertThat(methodDescription.getReturnType().getTypeVariableSource(), is((TypeVariableSource) methodDescription.asDefined()));
     }
 
     @Test
@@ -1175,7 +1088,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(BAR)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("T"));
-        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription.asDefined()));
+        assertThat(methodDescription.getReturnType().getTypeVariableSource(), is((TypeVariableSource) methodDescription.asDefined()));
     }
 
     @Test
@@ -1190,7 +1103,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(QUX)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
-        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription.asDefined()));
+        assertThat(methodDescription.getReturnType().getTypeVariableSource(), is((TypeVariableSource) methodDescription.asDefined()));
         assertThat(methodDescription.getReturnType().getUpperBounds().size(), is(1));
         assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().asErasure().represents(Number.class), is(true));
@@ -1203,7 +1116,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
-        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+        assertThat(methodDescription.getReturnType().getTypeVariableSource(), is((TypeVariableSource) methodDescription));
     }
 
     @Test
@@ -1213,7 +1126,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(QUX)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
-        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+        assertThat(methodDescription.getReturnType().getTypeVariableSource(), is((TypeVariableSource) methodDescription));
         assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().asErasure().represents(Object.class), is(true));
     }
@@ -1725,8 +1638,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public static class SimpleTypeVariableType<T> {
 
         T foo;
-
-        SimpleTypeVariableType bar;
     }
 
     @SuppressWarnings("unused")

@@ -44,9 +44,9 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest 
         when(methodDefinition.accept(any(TypeVariableSource.Visitor.class))).thenReturn(substituted);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testSimpleType() throws Exception {
-        new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onSimpleType(source);
+        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onSimpleType(source), is(source));
     }
 
     @Test
@@ -56,25 +56,25 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest 
 
     @Test
     public void testTypeVariableKnownOnType() throws Exception {
-        when(source.getVariableSource()).thenReturn(typeDefinition);
+        when(source.getTypeVariableSource()).thenReturn(typeDefinition);
         assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(source), is(target));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testTypeVariableUnknownOnType() throws Exception {
-        when(unknown.getVariableSource()).thenReturn(typeDefinition);
+        when(unknown.getTypeVariableSource()).thenReturn(typeDefinition);
         new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(unknown);
     }
 
     @Test
     public void testTypeVariableKnownOnMethod() throws Exception {
-        when(source.getVariableSource()).thenReturn(methodDefinition);
+        when(source.getTypeVariableSource()).thenReturn(methodDefinition);
         assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(source), is(substituted));
     }
 
     @Test
     public void testTypeVariableUnknownOnMethod() throws Exception {
-        when(unknown.getVariableSource()).thenReturn(methodDefinition);
+        when(unknown.getTypeVariableSource()).thenReturn(methodDefinition);
         assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(unknown), is(substituted));
     }
 

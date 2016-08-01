@@ -649,7 +649,7 @@ public interface MethodDescription extends TypeVariableSource,
         public TypeVariableSource getEnclosingSource() {
             return isStatic()
                     ? TypeVariableSource.UNDEFINED
-                    : getDeclaringType();
+                    : getDeclaringType().asErasure();
         }
 
         @Override

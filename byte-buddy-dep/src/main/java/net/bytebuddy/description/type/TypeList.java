@@ -605,7 +605,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                     }
 
                     @Override
-                    public TypeVariableSource getVariableSource() {
+                    public TypeVariableSource getTypeVariableSource() {
                         return typeVariableSource;
                     }
 
