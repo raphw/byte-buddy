@@ -150,9 +150,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
-     * Finds the highest class file version that is compatible to the current JVM version by parsing the java.version
-     * property which is provided by {@link java.lang.System#getProperty(String)} or by querying available APIs. If
-     * neither is possible, an {@link IllegalStateException} is thrown.
+     * Finds the highest class file version that is compatible to the current JVM version. Prior to Java 9, this is achieved
+     * by parsing the {@code java.version} property which is provided by {@link java.lang.System#getProperty(String)}. If the system
+     * property is not available, an {@link IllegalStateException} is thrown.
      *
      * @return The currently running Java process's class file version.
      */
@@ -161,9 +161,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
-     * Finds the highest class file version that is compatible to the current JVM version by parsing the java.version
-     * property which is provided by {@link java.lang.System#getProperty(String)} or by querying available APIs. If this
-     * is not possible, the {@code fallback} version is returned.
+     * Finds the highest class file version that is compatible to the current JVM version. Prior to Java 9, this is achieved
+     * by parsing the {@code java.version} property which is provided by {@link java.lang.System#getProperty(String)}. If the system
+     * property is not available, the {@code fallback} version is returned.
      *
      * @param fallback The version to fallback to if locating a class file version is not possible.
      * @return The currently running Java process's class file version or the fallback if locating this version is impossible.
