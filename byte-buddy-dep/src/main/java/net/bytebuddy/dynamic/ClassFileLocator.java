@@ -475,15 +475,17 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A map of all boot layer's packages to a class file locator for this module.
          */
-        private static final Map<String, ClassFileLocator> BOOT_MODULES;
+        private static final Map<String, ClassFileLocator> BOOT_MODULES = bootModules();
 
-        /*
+        /**
          * Extracts the boot layer package's names and maps them to a class file locator for that package's module.
+         *
+         * @return A mapping of package names to class file locators.
          */
-        static {
-            Map<String, ClassFileLocator> bootModules;
+        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+        private static Map<String, ClassFileLocator> bootModules() {
             try {
-                bootModules = new HashMap<String, ClassFileLocator>();
+                Map<String, ClassFileLocator> bootModules = new HashMap<String, ClassFileLocator>();
                 Class<?> layerType = Class.forName("java.lang.reflect.Layer");
                 for (Object rawModule : (Set<?>) layerType.getDeclaredMethod("modules").invoke(layerType.getDeclaredMethod("boot").invoke(null))) {
                     ClassFileLocator classFileLocator = ForModule.of(JavaModule.of(rawModule));
@@ -491,10 +493,10 @@ public interface ClassFileLocator extends Closeable {
                         bootModules.put(packageName, classFileLocator);
                     }
                 }
+                return bootModules;
             } catch (Exception ignored) {
-                bootModules = Collections.emptyMap();
+                return Collections.emptyMap();
             }
-            BOOT_MODULES = bootModules;
         }
 
         /**
