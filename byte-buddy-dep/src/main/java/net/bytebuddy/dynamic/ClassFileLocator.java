@@ -319,7 +319,7 @@ public interface ClassFileLocator extends Closeable {
         public static Resolution read(Class<?> type) {
             try {
                 JavaModule module = JavaModule.ofType(type);
-                if (module == null || !module.isNamed()) {
+                if (module != null && module.isNamed()) {
                     return ForModule.locate(module, TypeDescription.ForLoadedType.getName(type));
                 } else {
                     ClassLoader classLoader = type.getClassLoader();
