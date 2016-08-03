@@ -27,7 +27,6 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
 
     @Test
     public void testCreation() throws Exception {
-        ClassLoader classLoader = mock(ClassLoader.class);
         assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(classLoader),
                 is((ClassFileLocator) new ClassFileLocator.ForClassLoader.WeaklyReferenced(classLoader)));
         assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(null),
@@ -68,6 +67,12 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
     @Test
     public void testSystemClassLoader() throws Exception {
         assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(ClassLoader.getSystemClassLoader()), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
+    }
+
+    @Test
+    public void testPlatformLoader() throws Exception {
+        assertThat(ClassFileLocator.ForClassLoader.WeaklyReferenced.of(ClassLoader.getSystemClassLoader().getParent()),
+                is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader().getParent())));
     }
 
     @Test

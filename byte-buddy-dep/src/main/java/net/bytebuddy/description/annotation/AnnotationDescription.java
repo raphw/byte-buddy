@@ -1033,8 +1033,8 @@ public interface AnnotationDescription {
                 public String toString() {
                     char open, close;
                     if (componentType == Class.class) {
-                        open = PropertyDispatcher.TypeRenderer.CURRENT.getOpen();
-                        close = PropertyDispatcher.TypeRenderer.CURRENT.getClose();
+                        open = PropertyDispatcher.RenderingDispatcher.CURRENT.getOpeningBrace();
+                        close = PropertyDispatcher.RenderingDispatcher.CURRENT.getClosingBrace();
                     } else {
                         open = '[';
                         close = ']';

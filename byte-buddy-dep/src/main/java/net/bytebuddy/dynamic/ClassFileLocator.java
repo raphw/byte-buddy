@@ -1,7 +1,10 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.utility.JavaModule;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.StreamDrainer;
 
 import java.io.*;
@@ -411,7 +414,7 @@ public interface ClassFileLocator extends Closeable {
              * @return A corresponding source locator.
              */
             public static ClassFileLocator of(ClassLoader classLoader) {
-                return classLoader == null || classLoader == ClassLoader.getSystemClassLoader()
+                return classLoader == null || classLoader == ClassLoader.getSystemClassLoader() || classLoader == ClassLoader.getSystemClassLoader().getParent()
                         ? ForClassLoader.of(classLoader)
                         : new WeaklyReferenced(classLoader);
             }
@@ -447,6 +450,226 @@ public interface ClassFileLocator extends Closeable {
             public String toString() {
                 return "ClassFileLocator.ForClassLoader.WeaklyReferenced{" +
                         "classLoader=" + get() +
+                        ", hashCode=" + hashCode +
+                        '}';
+            }
+        }
+    }
+
+    /**
+     * <p>
+     * A class file locator that locates class files by querying a Java module's {@code getResourceAsStream} method.
+     * </p>
+     * <p>
+     * <b>Important</b>: Even when calling {@link Closeable#close()} on this class file locator, no underlying
+     * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
+     * </p>
+     */
+    class ForModule implements ClassFileLocator {
+
+        /**
+         * A map of all boot layer's packages to a class file locator for this module.
+         */
+        private static final Map<String, ClassFileLocator> BOOT_MODULES;
+
+        /*
+         * Extracts the boot layer package's names and maps them to a class file locator for that package's module.
+         */
+        static {
+            Map<String, ClassFileLocator> bootModules;
+            try {
+                bootModules = new HashMap<String, ClassFileLocator>();
+                Class<?> layerType = Class.forName("java.lang.reflect.Layer");
+                for (Object rawModule : (Set<?>) layerType.getDeclaredMethod("modules").invoke(layerType.getDeclaredMethod("boot").invoke(null))) {
+                    ClassFileLocator classFileLocator = ForModule.of(JavaModule.of(rawModule));
+                    for (String packageName : (String[]) JavaType.MODULE.load().getDeclaredMethod("getPackages").invoke(rawModule)) {
+                        bootModules.put(packageName, classFileLocator);
+                    }
+                }
+            } catch (Exception ignored) {
+                bootModules = Collections.emptyMap();
+            }
+            BOOT_MODULES = bootModules;
+        }
+
+        /**
+         * The represented Java module.
+         */
+        private final JavaModule module;
+
+        /**
+         * Creates a new class file locator for a Java module.
+         *
+         * @param module The represented Java module.
+         */
+        protected ForModule(JavaModule module) {
+            this.module = module;
+        }
+
+        /**
+         * Returns a class file locator that exposes all class files of the boot module layer. This class file locator is only available
+         * on virtual machines of version 9 or later. On earlier versions, the returned class file locator does not locate any resources.
+         *
+         * @return A class file locator that locates classes of the boot layer.
+         * @see ForModule#ofClassPath()
+         */
+        public static ClassFileLocator ofBootLayer() {
+            return new Compound(new PackageDiscriminating(BOOT_MODULES), ForClassLoader.ofClassPath());
+        }
+
+        /**
+         * Returns a class file locator that exposes all class files of the class path by querying the boot module layer if it is available.
+         * The boot module layer contains all built-in classes and all user classes on the module path which are available via the system
+         * class loader.
+         *
+         * @return A class file locator that locates classes of the boot layer or the class path respectively.
+         * @see ForModule#ofBootLayer()
+         */
+        public static ClassFileLocator ofClassPath() {
+            return BOOT_MODULES.isEmpty()
+                    ? ForClassLoader.ofClassPath()
+                    : ofBootLayer();
+        }
+
+        /**
+         * Returns a class file locator for the provided module. If the provided module is not named, class files are located via this
+         * unnamed module's class loader.
+         *
+         * @param module The module to create a class file locator for.
+         * @return An appropriate class file locator.
+         */
+        public static ClassFileLocator of(JavaModule module) {
+            return module.isNamed()
+                    ? new ForModule(module)
+                    : ForClassLoader.of(module.getClassLoader());
+        }
+
+        @Override
+        public Resolution locate(String typeName) throws IOException {
+            return locate(module, typeName);
+        }
+
+        /**
+         * Creates a resolution for a Java module's class files.
+         *
+         * @param module   The Java module to query.
+         * @param typeName The name of the type being queried.
+         * @return A resolution for the query.
+         * @throws IOException If an I/O exception was thrown.
+         */
+        protected static Resolution locate(JavaModule module, String typeName) throws IOException {
+            InputStream inputStream = module.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
+            if (inputStream != null) {
+                try {
+                    return new Resolution.Explicit(StreamDrainer.DEFAULT.drain(inputStream));
+                } finally {
+                    inputStream.close();
+                }
+            } else {
+                return new Resolution.Illegal(typeName);
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            /* do nothing */
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            ForModule forModule = (ForModule) object;
+            return module.equals(forModule.module);
+        }
+
+        @Override
+        public int hashCode() {
+            return module.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileLocator.ForModule{" +
+                    "module=" + module +
+                    '}';
+        }
+
+        /**
+         * <p>
+         * A class file locator for a Java module that only references this module weakly. If a module was garbage collected,
+         * this class file locator only returns unresolved resolutions.
+         * </p>
+         * <p>
+         * <b>Important</b>: Even when calling {@link Closeable#close()} on this class file locator, no underlying
+         * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
+         * </p>
+         */
+        public static class WeaklyReferenced extends WeakReference<Object> implements ClassFileLocator {
+
+            /**
+             * The represented module's hash code.
+             */
+            private final int hashCode;
+
+            /**
+             * Creates a class file locator for a Java module that is weakly referenced.
+             *
+             * @param module The raw Java module to represent.
+             */
+            protected WeaklyReferenced(Object module) {
+                super(module);
+                hashCode = System.identityHashCode(module);
+            }
+
+            /**
+             * Creates a class file locator for a Java module where the module is referenced weakly. If the module is not named, the module's class loader
+             * is represented instead. Module's of the boot layer are not referenced weakly.
+             *
+             * @param module The Java module to represent.
+             * @return A suitable class file locator.
+             */
+            public static ClassFileLocator of(JavaModule module) {
+                if (module.isNamed()) {
+                    return module.getClassLoader() == null || module.getClassLoader() == ClassLoader.getSystemClassLoader() || module.getClassLoader() == ClassLoader.getSystemClassLoader().getParent()
+                            ? new ForModule(module)
+                            : new WeaklyReferenced(module.unwrap());
+                } else {
+                    return ForClassLoader.WeaklyReferenced.of(module.getClassLoader());
+                }
+            }
+
+            @Override
+            public Resolution locate(String typeName) throws IOException {
+                Object module = get();
+                return module == null
+                        ? new Resolution.Illegal(typeName)
+                        : ForModule.locate(JavaModule.of(module), typeName);
+            }
+
+            @Override
+            public void close() throws IOException {
+                /* do nothing */
+            }
+
+            @Override
+            public int hashCode() {
+                return hashCode;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                WeaklyReferenced that = (WeaklyReferenced) object;
+                Object module = that.get();
+                return module != null && get() == module;
+            }
+
+            @Override
+            public String toString() {
+                return "ClassFileLocator.ForModule.WeaklyReferenced{" +
+                        "module=" + get() +
                         ", hashCode=" + hashCode +
                         '}';
             }
@@ -1453,6 +1676,64 @@ public interface ClassFileLocator extends Closeable {
                                 : "null") +
                         '}';
             }
+        }
+    }
+
+    /**
+     * A class file locator that discriminates by a type's package.
+     */
+    class PackageDiscriminating implements ClassFileLocator {
+
+        /**
+         * A mapping of package names to class file locators.
+         */
+        private final Map<String, ClassFileLocator> classFileLocators;
+
+        /**
+         * Creates a new package-discriminating class file locator.
+         *
+         * @param classFileLocators A mapping of package names to class file locators where an empty string donates the default package.
+         */
+        public PackageDiscriminating(Map<String, ClassFileLocator> classFileLocators) {
+            this.classFileLocators = classFileLocators;
+        }
+
+        @Override
+        public Resolution locate(String typeName) throws IOException {
+            int packageIndex = typeName.lastIndexOf('.');
+            ClassFileLocator classFileLocator = classFileLocators.get(packageIndex == -1
+                    ? NamedElement.EMPTY_NAME
+                    : typeName.substring(0, packageIndex));
+            return classFileLocator == null
+                    ? new Resolution.Illegal(typeName)
+                    : classFileLocator.locate(typeName);
+        }
+
+        @Override
+        public void close() throws IOException {
+            for (ClassFileLocator classFileLocator : classFileLocators.values()) {
+                classFileLocator.close();
+            }
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            PackageDiscriminating that = (PackageDiscriminating) object;
+            return classFileLocators.equals(that.classFileLocators);
+        }
+
+        @Override
+        public int hashCode() {
+            return classFileLocators.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileLocator.PackageDiscriminating{" +
+                    "classFileLocators=" + classFileLocators +
+                    '}';
         }
     }
 

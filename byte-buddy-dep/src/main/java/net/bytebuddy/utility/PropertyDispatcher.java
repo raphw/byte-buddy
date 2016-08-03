@@ -803,5 +803,10 @@ public enum PropertyDispatcher {
         }
 
         protected abstract String toSourceString(Object[] value);
+
+        @Override
+        public String toString() {
+            return "PropertyDispatcher.RenderingDispatcher." + name();
+        }
     }
 }

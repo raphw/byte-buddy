@@ -31,11 +31,8 @@ public class ClassFileLocatorForClassLoaderTest {
 
     @Test
     public void testCreation() throws Exception {
-        ClassLoader classLoader = mock(ClassLoader.class);
-        assertThat(ClassFileLocator.ForClassLoader.of(classLoader),
-                is((ClassFileLocator) new ClassFileLocator.ForClassLoader(classLoader)));
-        assertThat(ClassFileLocator.ForClassLoader.of(null),
-                is((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
+        assertThat(ClassFileLocator.ForClassLoader.of(classLoader), is((ClassFileLocator) new ClassFileLocator.ForClassLoader(classLoader)));
+        assertThat(ClassFileLocator.ForClassLoader.of(null), is((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
     }
 
     @Test
@@ -103,6 +100,12 @@ public class ClassFileLocatorForClassLoaderTest {
     @Test
     public void testSystemClassLoader() throws Exception {
         assertThat(ClassFileLocator.ForClassLoader.ofClassPath(), is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader())));
+    }
+
+    @Test
+    public void testPlatformLoader() throws Exception {
+        assertThat(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader().getParent()),
+                is(ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader().getParent())));
     }
 
     @Test
