@@ -17,7 +17,7 @@ public enum PropertyDispatcher {
     BOOLEAN_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((boolean[]) value);
+            return Arrays.toString((boolean[]) value);
         }
 
         @Override
@@ -44,7 +44,7 @@ public enum PropertyDispatcher {
     BYTE_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((byte[]) value);
+            return Arrays.toString((byte[]) value);
         }
 
         @Override
@@ -71,7 +71,7 @@ public enum PropertyDispatcher {
     SHORT_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((short[]) value);
+            return Arrays.toString((short[]) value);
         }
 
         @Override
@@ -98,7 +98,7 @@ public enum PropertyDispatcher {
     CHARACTER_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((char[]) value);
+            return Arrays.toString((char[]) value);
         }
 
         @Override
@@ -125,7 +125,7 @@ public enum PropertyDispatcher {
     INTEGER_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((int[]) value);
+            return Arrays.toString((int[]) value);
         }
 
         @Override
@@ -152,7 +152,7 @@ public enum PropertyDispatcher {
     LONG_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((long[]) value);
+            return Arrays.toString((long[]) value);
         }
 
         @Override
@@ -179,7 +179,7 @@ public enum PropertyDispatcher {
     FLOAT_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((float[]) value);
+            return Arrays.toString((float[]) value);
         }
 
         @Override
@@ -206,7 +206,7 @@ public enum PropertyDispatcher {
     DOUBLE_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((double[]) value);
+            return Arrays.toString((double[]) value);
         }
 
         @Override
@@ -233,7 +233,7 @@ public enum PropertyDispatcher {
     TYPE_LOADED {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((Class<?>) value);
+            return TypeRenderer.CURRENT.render(value);
         }
 
         @Override
@@ -258,7 +258,7 @@ public enum PropertyDispatcher {
     TYPE_LOADED_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((Class<?>[]) value);
+            return TypeRenderer.CURRENT.render((Object[]) value);
         }
 
         @Override
@@ -285,7 +285,7 @@ public enum PropertyDispatcher {
     TYPE_DESCRIBED {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((TypeDescription) value);
+            return TypeRenderer.CURRENT.render(value);
         }
 
         @Override
@@ -310,7 +310,7 @@ public enum PropertyDispatcher {
     TYPE_DESCRIBED_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((TypeDescription[]) value);
+            return TypeRenderer.CURRENT.render((Object[]) value);
         }
 
         @Override
@@ -337,7 +337,7 @@ public enum PropertyDispatcher {
     REFERENCE_ARRAY {
         @Override
         public String toString(Object value) {
-            return RenderingDispatcher.CURRENT.toSourceString((Object[]) value);
+            return Arrays.toString((Object[]) value);
         }
 
         @Override
@@ -472,341 +472,132 @@ public enum PropertyDispatcher {
         return "PropertyDispatcher." + name();
     }
 
-    public enum RenderingDispatcher {
+    /**
+     * A delegate for rendering a {@link Class} or {@link TypeDescription}. Starting with Java 9, such values are enclosed
+     * in curly braces and are rendered as class literals to better match the source code.
+     */
+    public enum TypeRenderer {
 
-        FOR_LEGACY_VM ('[', ']'){
+        /**
+         * A type renderer for a legacy VM prior to Java 8.
+         */
+        FOR_LEGACY_VM('[', ']') {
             @Override
-            protected String toSourceString(boolean[] value) {
-                return Arrays.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(byte[] value) {
-                return Arrays.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(char value) {
-                return Character.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(char[] value) {
-                return Arrays.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(short[] value) {
-                return Arrays.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(int[] value) {
-                return Arrays.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(long value) {
-                return Long.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(long[] value) {
-                return Arrays.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(float value) {
-                return Float.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(float[] value) {
-                return Arrays.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(double value) {
-                return Double.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(double[] value) {
-                return Arrays.toString(value);
-            }
-
-            @Override
-            protected String toSourceString(Class<?> type) {
+            public String render(Object type) {
+                if (!(type instanceof Class || type instanceof TypeDescription)) {
+                    throw new IllegalArgumentException("Unexpected type description: " + type);
+                }
                 return type.toString();
-            }
-
-            @Override
-            protected String toSourceString(Class<?>[] type) {
-                return Arrays.toString(type);
-            }
-
-            @Override
-            protected String toSourceString(TypeDescription typeDescription) {
-                return typeDescription.toString();
-            }
-
-            @Override
-            protected String toSourceString(TypeDescription[] typeDescription) {
-                return Arrays.toString(typeDescription);
-            }
-
-            @Override
-            protected String toSourceString(Object[] value) {
-                return Arrays.toString(value);
             }
         },
 
+        /**
+         * A type renderer for a VM of at least Java version 9.
+         */
         FOR_JAVA9_CAPABLE_VM('{', '}') {
             @Override
-            protected String toSourceString(boolean[] value) {
-                String[] rendered = new String[value.length];
-                for (int index = 0; index < value.length; index++) {
-                    rendered[index] = toSourceString(value[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(byte[] value) {
-                String[] rendered = new String[value.length];
-                for (int index = 0; index < value.length; index++) {
-                    rendered[index] = toSourceString(value[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(char value) {
-                StringBuilder stringBuilder = new StringBuilder().append('\'');
-                if (value == '\'') {
-                    stringBuilder.append("\\'");
+            public String render(Object type) {
+                String name;
+                if (type instanceof Class) {
+                    name = ((Class<?>) type).getName();
+                } else if (type instanceof TypeDescription) {
+                    name = ((TypeDescription) type).getName();
                 } else {
-                    stringBuilder.append(value);
+                    throw new IllegalArgumentException("Unexpected type description: " + type);
                 }
-                return stringBuilder.append('\'').toString();
-            }
-
-            @Override
-            protected String toSourceString(char[] value) {
-                String[] rendered = new String[value.length];
-                for (int index = 0; index < value.length; index++) {
-                    rendered[index] = toSourceString(value[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(short[] value) {
-                String[] rendered = new String[value.length];
-                for (int index = 0; index < value.length; index++) {
-                    rendered[index] = toSourceString(value[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(int[] value) {
-                String[] rendered = new String[value.length];
-                for (int index = 0; index < value.length; index++) {
-                    rendered[index] = toSourceString(value[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(long value) {
-                return Math.abs(value) <= Integer.MAX_VALUE
-                        ? Long.toString(value)
-                        : Long.toString(value) + "L";
-            }
-
-            @Override
-            protected String toSourceString(long[] value) {
-                String[] rendered = new String[value.length];
-                for (int index = 0; index < value.length; index++) {
-                    rendered[index] = toSourceString(value[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(float value) {
-                if (Math.abs(value) <= Float.MAX_VALUE /* Float.isFinite(value) */)
-                    return Float.toString(value) + "f";
-                else if (Float.isInfinite(value)) {
-                    return value < 0.0f ? "-1.0f/0.0f" : "1.0f/0.0f";
-                } else {
-                    return "0.0f/0.0f";
-                }
-            }
-
-            @Override
-            protected String toSourceString(float[] value) {
-                String[] rendered = new String[value.length];
-                for (int index = 0; index < value.length; index++) {
-                    rendered[index] = toSourceString(value[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(double value) {
-                if (Math.abs(value) <= Double.MAX_VALUE /* Double.isFinite(value) */)
-                    return Double.toString(value);
-                else if (Double.isInfinite(value)) {
-                    return value < 0.0d ? "-1.0/0.0" : "1.0/0.0";
-                } else {
-                    return "0.0/0.0";
-                }
-            }
-
-            @Override
-            protected String toSourceString(double[] value) {
-                String[] rendered = new String[value.length];
-                for (int index = 0; index < value.length; index++) {
-                    rendered[index] = toSourceString(value[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(Class<?> type) {
-                return toSourceString(new TypeDescription.ForLoadedType(type));
-            }
-
-            @Override
-            protected String toSourceString(Class<?>[] type) {
-                String[] rendered = new String[type.length];
-                for (int index = 0; index < type.length; index++) {
-                    rendered[index] = toSourceString(type[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(TypeDescription typeDescription) {
-                return typeDescription.getActualName() + ".class";
-            }
-
-            @Override
-            protected String toSourceString(TypeDescription[] typeDescription) {
-                String[] rendered = new String[typeDescription.length];
-                for (int index = 0; index < typeDescription.length; index++) {
-                    rendered[index] = toSourceString(typeDescription[index]);
-                }
-                return asString(rendered);
-            }
-
-            @Override
-            protected String toSourceString(Object[] value) {
-                String[] rendered = new String[value.length];
-                for (int index = 0; index < value.length; index++) {
-                    rendered[index] = toSourceString(value[index]);
-                }
-                return asString(rendered);
-            }
-
-            private String asString(String[] rendered) {
-                if (rendered.length == 0) {
-                    return "{}";
-                }
-                StringBuilder stringBuilder = new StringBuilder().append('{');
-                boolean first = true;
-                for (String value : rendered) {
-                    if (first) {
-                        first = false;
-                    } else {
-                        stringBuilder.append(", ");
-                    }
-                    stringBuilder.append(value);
-                }
-                return stringBuilder.append('}').toString();
+                return name + JAVA9_NAME_SUFFIX;
             }
         };
 
-        public static final RenderingDispatcher CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
-                ? FOR_JAVA9_CAPABLE_VM
-                : FOR_LEGACY_VM;
+        /**
+         * The class constant suffix for types from Java 9 and later.
+         */
+        private static final String JAVA9_NAME_SUFFIX = ".class";
 
-        private final char openingBrace;
+        /**
+         * The type renderer to be used on the current VM.
+         */
+        public static final TypeRenderer CURRENT = make();
 
-        private final char closingBrace;
-
-        RenderingDispatcher(char openingBrace, char closingBrace) {
-            this.openingBrace = openingBrace;
-            this.closingBrace = closingBrace;
+        /**
+         * Finds the type renderer for the current VM.
+         *
+         * @return The type renderer to be used on the current VM.
+         */
+        private static TypeRenderer make() {
+            return ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+                    ? FOR_JAVA9_CAPABLE_VM
+                    : FOR_LEGACY_VM;
         }
 
-        public char getOpeningBrace() {
-            return openingBrace;
+        /**
+         * The opening brace character.
+         */
+        private final char open;
+
+        /**
+         * The closing brace character.
+         */
+        private final char close;
+
+        /**
+         * Creates a new type renderer.
+         *
+         * @param open  The opening brace character.
+         * @param close The closing brace character.
+         */
+        TypeRenderer(char open, char close) {
+            this.open = open;
+            this.close = close;
         }
 
-        public char getClosingBrace() {
-            return closingBrace;
+        /**
+         * Renders a {@link Class} or {@link TypeDescription} constant.
+         *
+         * @param type The type to be rendered.
+         * @return The rendered string.
+         */
+        public abstract String render(Object type);
+
+        /**
+         * Renders an array of {@link Class} or {@link TypeDescription} constants.
+         *
+         * @param type The types to be rendered.
+         * @return The rendered string.
+         */
+        public String render(Object[] type) {
+            StringBuilder stringBuilder = new StringBuilder().append(open);
+            boolean initial = true;
+            for (Object aType : type) {
+                stringBuilder.append(render(aType));
+                if (initial) {
+                    initial = false;
+                } else {
+                    stringBuilder.append(", ");
+                }
+            }
+            return stringBuilder.append(close).toString();
         }
 
-        protected String toSourceString(boolean value) {
-            return Boolean.toString(value);
+        /**
+         * Returns the opening brace.
+         * @return The opening brace.
+         */
+        public char getOpen() {
+            return open;
         }
 
-        protected abstract String toSourceString(boolean[] value);
-
-        protected String toSourceString(byte value) {
-            return Byte.toString(value);
+        /**
+         * Returns the closing brace.
+         * @return The closing brace.
+         */
+        public char getClose() {
+            return close;
         }
-
-        protected abstract String toSourceString(byte[] value);
-
-        protected abstract String toSourceString(char value);
-
-        protected abstract String toSourceString(char[] value);
-
-        protected String toSourceString(short value) {
-            return Short.toString(value);
-        }
-
-        protected abstract String toSourceString(short[] value);
-
-        protected String toSourceString(int value) {
-            return Integer.toString(value);
-        }
-
-        protected abstract String toSourceString(int[] value);
-
-        protected abstract String toSourceString(long value);
-
-        protected abstract String toSourceString(long[] value);
-
-        protected abstract String toSourceString(float value);
-
-        protected abstract String toSourceString(float[] value);
-
-        protected abstract String toSourceString(double value);
-
-        protected abstract String toSourceString(double[] value);
-
-        protected abstract String toSourceString(Class<?> type);
-
-        protected abstract String toSourceString(Class<?>[] type);
-
-        protected abstract String toSourceString(TypeDescription typeDescription);
-
-        protected abstract String toSourceString(TypeDescription[] typeDescription);
-
-        protected String toSourceString(Object value) {
-            return value.toString();
-        }
-
-        protected abstract String toSourceString(Object[] value);
 
         @Override
         public String toString() {
-            return "PropertyDispatcher.RenderingDispatcher." + name();
+            return "PropertyDispatcher.TypeRenderer." + name();
         }
     }
 }

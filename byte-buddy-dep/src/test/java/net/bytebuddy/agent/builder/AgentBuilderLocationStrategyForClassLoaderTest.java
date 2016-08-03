@@ -26,6 +26,9 @@ public class AgentBuilderLocationStrategyForClassLoaderTest {
     @Mock
     private AgentBuilder.LocationStrategy fallback;
 
+    @Mock
+    private ClassFileLocator classFileLocator;
+
     @Test
     public void testStrongLocationStrategy() throws Exception {
         assertThat(AgentBuilder.LocationStrategy.ForClassLoader.STRONG.classFileLocator(classLoader, module),
@@ -44,6 +47,14 @@ public class AgentBuilderLocationStrategyForClassLoaderTest {
                 is((AgentBuilder.LocationStrategy) new AgentBuilder.LocationStrategy.Compound(AgentBuilder.LocationStrategy.ForClassLoader.STRONG, fallback)));
         assertThat(AgentBuilder.LocationStrategy.ForClassLoader.WEAK.withFallbackTo(fallback),
                 is((AgentBuilder.LocationStrategy) new AgentBuilder.LocationStrategy.Compound(AgentBuilder.LocationStrategy.ForClassLoader.WEAK, fallback)));
+    }
+
+    @Test
+    public void testFallbackLocator() throws Exception {
+        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.STRONG.withFallbackTo(classFileLocator),
+                is((AgentBuilder.LocationStrategy) new AgentBuilder.LocationStrategy.Compound(AgentBuilder.LocationStrategy.ForClassLoader.STRONG, new AgentBuilder.LocationStrategy.Simple(classFileLocator))));
+        assertThat(AgentBuilder.LocationStrategy.ForClassLoader.WEAK.withFallbackTo(classFileLocator),
+                is((AgentBuilder.LocationStrategy) new AgentBuilder.LocationStrategy.Compound(AgentBuilder.LocationStrategy.ForClassLoader.WEAK, new AgentBuilder.LocationStrategy.Simple(classFileLocator))));
     }
 
     @Test

@@ -2627,20 +2627,100 @@ public interface AgentBuilder {
             /**
              * Adds additional location strategies as fallbacks to this location strategy.
              *
+             * @param classFileLocator The class file locators to query if this location strategy cannot locate a class file.
+             * @return A compound location strategy that first applies this location strategy and then queries the supplied class file locators.
+             */
+            public LocationStrategy withFallbackTo(ClassFileLocator... classFileLocator) {
+                return withFallbackTo(Arrays.asList(classFileLocator));
+            }
+
+            /**
+             * Adds additional location strategies as fallbacks to this location strategy.
+             *
+             * @param classFileLocators The class file locators to query if this location strategy cannot locate a class file.
+             * @return A compound location strategy that first applies this location strategy and then queries the supplied class file locators.
+             */
+            public LocationStrategy withFallbackTo(Collection<? extends ClassFileLocator> classFileLocators) {
+                List<LocationStrategy> locationStrategies = new ArrayList<LocationStrategy>(classFileLocators.size());
+                for (ClassFileLocator classFileLocator : classFileLocators) {
+                    locationStrategies.add(new Simple(classFileLocator));
+                }
+                return withFallbackTo(locationStrategies);
+            }
+
+            /**
+             * Adds additional location strategies as fallbacks to this location strategy.
+             *
              * @param locationStrategy The fallback location strategies to use.
              * @return A compound location strategy that first applies this location strategy and then the supplied fallback location strategies
              * in the supplied order.
              */
             public LocationStrategy withFallbackTo(LocationStrategy... locationStrategy) {
-                List<LocationStrategy> locationStrategies = new ArrayList<LocationStrategy>(locationStrategy.length + 1);
-                locationStrategies.add(this);
-                locationStrategies.addAll(Arrays.asList(locationStrategy));
-                return new Compound(locationStrategies);
+                return withFallbackTo(Arrays.asList(locationStrategy));
+            }
+
+            /**
+             * Adds additional location strategies as fallbacks to this location strategy.
+             *
+             * @param locationStrategies The fallback location strategies to use.
+             * @return A compound location strategy that first applies this location strategy and then the supplied fallback location strategies
+             * in the supplied order.
+             */
+            public LocationStrategy withFallbackTo(List<? extends LocationStrategy> locationStrategies) {
+                List<LocationStrategy> allLocationStrategies = new ArrayList<LocationStrategy>(locationStrategies.size() + 1);
+                allLocationStrategies.add(this);
+                allLocationStrategies.addAll(locationStrategies);
+                return new Compound(allLocationStrategies);
             }
 
             @Override
             public String toString() {
                 return "AgentBuilder.LocationStrategy.ForClassLoader." + name();
+            }
+        }
+
+        /**
+         * A simple location strategy that queries a given class file locator.
+         */
+        class Simple implements LocationStrategy {
+
+            /**
+             * The class file locator to query.
+             */
+            private final ClassFileLocator classFileLocator;
+
+            /**
+             * A simple location strategy that queries a given class file locator.
+             *
+             * @param classFileLocator The class file locator to query.
+             */
+            public Simple(ClassFileLocator classFileLocator) {
+                this.classFileLocator = classFileLocator;
+            }
+
+            @Override
+            public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
+                return classFileLocator;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Simple simple = (Simple) object;
+                return classFileLocator.equals(simple.classFileLocator);
+            }
+
+            @Override
+            public int hashCode() {
+                return classFileLocator.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.LocationStrategy.Simple{" +
+                        "classFileLocator=" + classFileLocator +
+                        '}';
             }
         }
 
