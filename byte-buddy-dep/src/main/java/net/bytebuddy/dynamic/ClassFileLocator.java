@@ -318,10 +318,15 @@ public interface ClassFileLocator extends Closeable {
          */
         public static Resolution read(Class<?> type) {
             try {
-                ClassLoader classLoader = type.getClassLoader();
-                return locate(classLoader == null
-                        ? ClassLoader.getSystemClassLoader()
-                        : classLoader, TypeDescription.ForLoadedType.getName(type));
+                JavaModule module = JavaModule.ofType(type);
+                if (module == null || !module.isNamed()) {
+                    return ForModule.locate(module, TypeDescription.ForLoadedType.getName(type));
+                } else {
+                    ClassLoader classLoader = type.getClassLoader();
+                    return locate(classLoader == null
+                            ? ClassLoader.getSystemClassLoader()
+                            : classLoader, TypeDescription.ForLoadedType.getName(type));
+                }
             } catch (IOException exception) {
                 throw new IllegalStateException("Cannot read class file for " + type, exception);
             }
