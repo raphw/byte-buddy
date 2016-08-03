@@ -521,7 +521,7 @@ public interface ClassFileLocator extends Closeable {
          * @see ForModule#ofClassPath()
          */
         public static ClassFileLocator ofBootLayer() {
-            return new Compound(new PackageDiscriminating(BOOT_MODULES), ForClassLoader.ofClassPath());
+            return new PackageDiscriminating(BOOT_MODULES);
         }
 
         /**
