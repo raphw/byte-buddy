@@ -67,7 +67,7 @@ public class JavaModuleTest {
         Object object = new Object();
         assertThat(new JavaModule(object).hashCode(), is(object.hashCode()));
         assertThat(new JavaModule(object).toString(), is(object.toString()));
-        final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
+        final Iterator<Method> iterator = Arrays.asList(String.class.getDeclaredMethods()).iterator();
         ObjectPropertyAssertion.of(JavaModule.Dispatcher.Enabled.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
