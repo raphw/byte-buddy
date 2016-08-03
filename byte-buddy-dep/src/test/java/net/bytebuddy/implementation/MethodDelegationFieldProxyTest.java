@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.asm.AdviceTest;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.FieldProxy;
@@ -24,6 +25,26 @@ public class MethodDelegationFieldProxyTest extends AbstractImplementationTest {
     public void testExplicitFieldAccess() throws Exception {
         DynamicType.Loaded<Explicit> loaded = implement(Explicit.class, MethodDelegation.to(Swap.class)
                 .appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
+        Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(explicit.foo, is(FOO));
+        explicit.swap();
+        assertThat(explicit.foo, is(FOO + BAR));
+    }
+
+    @Test
+    public void testExplicitFieldAccessDuplex() throws Exception {
+        DynamicType.Loaded<Explicit> loaded = implement(Explicit.class, MethodDelegation.to(SwapGetSet.class)
+                .appendParameterBinder(FieldProxy.Binder.install(GetSet.class)));
+        Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(explicit.foo, is(FOO));
+        explicit.swap();
+        assertThat(explicit.foo, is(FOO + BAR));
+    }
+
+    @Test
+    public void testExplicitFieldAccessDuplexFinal() throws Exception {
+        DynamicType.Loaded<Explicit> loaded = implement(Explicit.class, MethodDelegation.to(SwapGetSet.class)
+                .appendParameterBinder(FieldProxy.Binder.install(GetSet.class)));
         Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(explicit.foo, is(FOO));
         explicit.swap();
@@ -92,6 +113,18 @@ public class MethodDelegationFieldProxyTest extends AbstractImplementationTest {
         explicitInherited.swap();
         assertThat(((Explicit) explicitInherited).foo, is(FOO + BAR));
         assertThat(explicitInherited.foo, is(QUX));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFinalFieldSimplex() throws Exception {
+        implement(FinalField.class, MethodDelegation.to(Swap.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testFinalFieldDuplex() throws Exception {
+        DynamicType.Loaded<FinalField> loaded = implement(FinalField.class, MethodDelegation.to(SwapGetSet.class)
+                .appendParameterBinder(FieldProxy.Binder.install(GetSet.class)));
+        loaded.getLoaded().getDeclaredConstructor().newInstance().method();
     }
 
     @Test(expected = ClassCastException.class)
@@ -198,12 +231,27 @@ public class MethodDelegationFieldProxyTest extends AbstractImplementationTest {
         Object set(T value);
     }
 
+    public interface GetSet<T> {
+
+        T get();
+
+        void set(T value);
+    }
+
     public static class Swap {
 
         public static void swap(@FieldProxy(FOO) Get<String> getter, @FieldProxy(FOO) Set<String> setter) {
             assertThat(getter, not(instanceOf(Serializable.class)));
             assertThat(setter, not(instanceOf(Serializable.class)));
             setter.set(getter.get() + BAR);
+        }
+    }
+
+    public static class SwapGetSet {
+
+        public static void swap(@FieldProxy(FOO) GetSet<String> getset) {
+            assertThat(getset, not(instanceOf(Serializable.class)));
+            getset.set(getset.get() + BAR);
         }
     }
 
@@ -271,8 +319,15 @@ public class MethodDelegationFieldProxyTest extends AbstractImplementationTest {
         public void setFoo(String value) {
             /* do nothing */
         }
+    }
 
+    public static class FinalField {
 
+        protected final String foo = FOO;
+
+        public void method() {
+            /* do nothing */
+        }
     }
 
     public static class SetInterceptor {

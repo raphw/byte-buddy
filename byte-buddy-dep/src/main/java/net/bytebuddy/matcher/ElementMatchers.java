@@ -1549,8 +1549,19 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that matches any setter method.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(Type type) {
-        return isSetter(TypeDefinition.Sort.describe(type));
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(Class<?> type) {
+        return isSetter(new TypeDescription.ForLoadedType(type));
+    }
+
+    /**
+     * Matches any Java bean setter method which takes an argument the given type.
+     *
+     * @param type The required setter type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches any setter method.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGenericSetter(Type type) {
+        return isGenericSetter(TypeDefinition.Sort.describe(type));
     }
 
     /**
@@ -1560,8 +1571,19 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that matches a setter method with the specified argument type.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(TypeDescription.Generic type) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(TypeDescription type) {
         return isSetter(is(type));
+    }
+
+    /**
+     * Matches any Java bean setter method which takes an argument the given type.
+     *
+     * @param type The required setter type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches a setter method with the specified argument type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGenericSetter(TypeDescription.Generic type) {
+        return isGenericSetter(is(type));
     }
 
     /**
@@ -1571,7 +1593,18 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches a setter method with an argument type that matches the supplied matcher.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(ElementMatcher<? super TypeDescription.Generic> matcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(ElementMatcher<? super TypeDescription> matcher) {
+        return isGenericSetter(rawType(matcher));
+    }
+
+    /**
+     * Matches any Java bean setter method which takes an argument that matches the supplied matcher.
+     *
+     * @param matcher A matcher to be allied to a setter method's argument type.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches a setter method with an argument type that matches the supplied matcher.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGenericSetter(ElementMatcher<? super TypeDescription.Generic> matcher) {
         return isSetter().and(takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(Collections.singletonList(matcher))));
     }
 
@@ -1593,8 +1626,8 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that matches a getter method with the given type.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(Type type) {
-        return isGetter(TypeDefinition.Sort.describe(type));
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(Class<?> type) {
+        return isGetter(new TypeDescription.ForLoadedType(type));
     }
 
     /**
@@ -1604,8 +1637,30 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that matches a getter method with the given type.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(TypeDescription.Generic type) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGenericGetter(Type type) {
+        return isGenericGetter(TypeDefinition.Sort.describe(type));
+    }
+
+    /**
+     * Matches any Java bean getter method which returns the given type.
+     *
+     * @param type The required getter type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches a getter method with the given type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(TypeDescription type) {
         return isGetter(is(type));
+    }
+
+    /**
+     * Matches any Java bean getter method which returns the given type.
+     *
+     * @param type The required getter type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches a getter method with the given type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGenericGetter(TypeDescription.Generic type) {
+        return isGenericGetter(is(type));
     }
 
     /**
@@ -1615,7 +1670,18 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches a getter method with a return type that matches the supplied matcher.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(ElementMatcher<? super TypeDescription.Generic> matcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(ElementMatcher<? super TypeDescription> matcher) {
+        return isGenericGetter(rawType(matcher));
+    }
+
+    /**
+     * Matches any Java bean getter method which returns an value with a type matches the supplied matcher.
+     *
+     * @param matcher A matcher to be allied to a getter method's argument type.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches a getter method with a return type that matches the supplied matcher.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGenericGetter(ElementMatcher<? super TypeDescription.Generic> matcher) {
         return isGetter().and(returnsGeneric(matcher));
     }
 
