@@ -222,10 +222,23 @@ public @interface FieldProxy {
          */
         private final FieldResolver.Factory fieldResolverFactory;
 
+        /**
+         * Creates a new binder for a {@link FieldProxy} in simplex mode.
+         *
+         * @param getterMethod The getter method.
+         * @param setterMethod The setter method.
+         */
         protected Binder(MethodDescription.InDefinedShape getterMethod, MethodDescription.InDefinedShape setterMethod) {
             this(new FieldResolver.Factory.Simplex(getterMethod, setterMethod));
         }
 
+        /**
+         * Creates a new binder for a {@link FieldProxy} in duplex mode.
+         *
+         * @param proxyType    The proxy type.
+         * @param getterMethod The getter method.
+         * @param setterMethod The setter method.
+         */
         protected Binder(TypeDescription proxyType, MethodDescription.InDefinedShape getterMethod, MethodDescription.InDefinedShape setterMethod) {
             this(new FieldResolver.Factory.Duplex(proxyType, getterMethod, setterMethod));
         }
