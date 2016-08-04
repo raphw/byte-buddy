@@ -1,11 +1,13 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -16,14 +18,15 @@ import static org.mockito.Mockito.when;
 
 public class ClassFileLocatorForModuleWeaklyReferencedTest {
 
-    private static final String FOOBAR = "foo/bar";
-
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
+
     @Mock
     private JavaModule module;
-    
+
     @Mock
     private ClassLoader classLoader;
 
@@ -91,7 +94,13 @@ public class ClassFileLocatorForModuleWeaklyReferencedTest {
         assertThat(ClassFileLocator.ForModule.of(module), is((ClassFileLocator) new ClassFileLocator.ForClassLoader(ClassLoader.getSystemClassLoader())));
     }
 
-    // TODO: Java 9 specific tests for location
+    @Test
+    @JavaVersionRule.Enforce(9)
+    public void testLocateModules() throws Exception {
+        ClassFileLocator classFileLocator = new ClassFileLocator.ForModule.WeaklyReferenced(JavaModule.ofType(Object.class).unwrap());
+        assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(true));
+        assertThat(classFileLocator.locate(getClass().getName()).isResolved(), is(true));
+    }
 
     @Test
     public void testClose() throws Exception {

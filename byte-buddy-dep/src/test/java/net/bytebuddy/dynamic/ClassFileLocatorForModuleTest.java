@@ -1,11 +1,13 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -22,6 +24,9 @@ public class ClassFileLocatorForModuleTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Mock
     private JavaModule module;
@@ -68,6 +73,29 @@ public class ClassFileLocatorForModuleTest {
         verifyNoMoreInteractions(module);
         resolution.resolve();
         fail();
+    }
+
+    @Test
+    public void testClassPath() throws Exception {
+        ClassFileLocator classFileLocator = ClassFileLocator.ForModule.ofClassPath();
+        assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(true));
+        assertThat(classFileLocator.locate(getClass().getName()).isResolved(), is(true));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(value = 8, sort = JavaVersionRule.Sort.AT_MOST)
+    public void testBootPathLegacy() throws Exception {
+        ClassFileLocator classFileLocator = ClassFileLocator.ForModule.ofBootLayer();
+        assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(false));
+        assertThat(classFileLocator.locate(getClass().getName()).isResolved(), is(false));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(9)
+    public void testBootPath() throws Exception {
+        ClassFileLocator classFileLocator = ClassFileLocator.ForModule.ofBootLayer();
+        assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(true));
+        assertThat(classFileLocator.locate(getClass().getName()).isResolved(), is(true));
     }
 
     @Test

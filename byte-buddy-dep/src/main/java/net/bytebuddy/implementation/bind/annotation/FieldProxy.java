@@ -142,7 +142,7 @@ public @interface FieldProxy {
             if (setterCandidates.size() != 1) {
                 throw new IllegalArgumentException(typeDescription + " does not declare a setter with an Object type");
             }
-            return new Binder(new FieldResolver.Factory.Duplex(typeDescription, getterCandidates.getOnly(), setterCandidates.getOnly()));
+            return new Binder(typeDescription, getterCandidates.getOnly(), setterCandidates.getOnly());
         }
 
         /**
@@ -192,7 +192,7 @@ public @interface FieldProxy {
             } else if (setterMethod.getParameters().size() != 1 || !setterMethod.getParameters().get(0).getType().asErasure().represents(Object.class)) {
                 throw new IllegalArgumentException(setterMethod + " must declare a single Object-typed parameters");
             }
-            return new Binder(new FieldResolver.Factory.Simplex(getterMethod, setterMethod));
+            return new Binder(getterMethod, setterMethod);
         }
 
         /**
@@ -221,6 +221,14 @@ public @interface FieldProxy {
          * The field resolver factory to apply by this binder.
          */
         private final FieldResolver.Factory fieldResolverFactory;
+
+        protected Binder(MethodDescription.InDefinedShape getterMethod, MethodDescription.InDefinedShape setterMethod) {
+            this(new FieldResolver.Factory.Simplex(getterMethod, setterMethod));
+        }
+
+        protected Binder(TypeDescription proxyType, MethodDescription.InDefinedShape getterMethod, MethodDescription.InDefinedShape setterMethod) {
+            this(new FieldResolver.Factory.Duplex(proxyType, getterMethod, setterMethod));
+        }
 
         /**
          * Creates a new binder for a {@link FieldProxy}.
@@ -253,7 +261,7 @@ public @interface FieldProxy {
                                                                   ParameterDescription target,
                                                                   Implementation.Target implementationTarget,
                                                                   Assigner assigner) {
-            FieldResolver fieldResolver = fieldResolverFactory.resolve(target.getType().asErasure(), fieldDescription.isFinal() && source.isMethod());
+            FieldResolver fieldResolver = fieldResolverFactory.resolve(target.getType().asErasure(), fieldDescription);
             if (fieldResolver.isResolved()) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new AccessorProxy(fieldDescription,
                         implementationTarget.getInstrumentedType(),
@@ -302,19 +310,19 @@ public @interface FieldProxy {
              *
              * @return The type of the field access proxy.
              */
-            TypeDescription getType();
+            TypeDescription getProxyType();
 
             /**
              * Applies this field resolver to a dynamic type.
              *
              * @param builder               The dynamic type builder to use.
-             * @param accessedField         The accessed field.
+             * @param fieldDescription      The accessed field.
              * @param assigner              The assigner to use.
              * @param methodAccessorFactory The method accessor factory to use.
              * @return The builder for creating the field accessor proxy type.
              */
             DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
-                                         FieldDescription accessedField,
+                                         FieldDescription fieldDescription,
                                          Assigner assigner,
                                          AuxiliaryType.MethodAccessorFactory methodAccessorFactory);
 
@@ -326,11 +334,11 @@ public @interface FieldProxy {
                 /**
                  * Creates a field resolver.
                  *
-                 * @param parameterType The type of the annotated parameter.
-                 * @param frozen        {@code true} if the field is frozen, i.e {@code final} and not accessed within an initializer or accessor.
+                 * @param parameterType    The type of the annotated parameter.
+                 * @param fieldDescription The field being proxied.
                  * @return An appropriate field resolver.
                  */
-                FieldResolver resolve(TypeDescription parameterType, boolean frozen);
+                FieldResolver resolve(TypeDescription parameterType, FieldDescription fieldDescription);
 
                 /**
                  * A duplex factory for a type that both sets and gets a field value.
@@ -340,7 +348,7 @@ public @interface FieldProxy {
                     /**
                      * The type of the accessor proxy.
                      */
-                    private final TypeDescription accessorType;
+                    private final TypeDescription proxyType;
 
                     /**
                      * The getter method.
@@ -355,22 +363,22 @@ public @interface FieldProxy {
                     /**
                      * Creates a new duplex factory.
                      *
-                     * @param accessorType The type of the accessor proxy.
+                     * @param proxyType    The type of the accessor proxy.
                      * @param getterMethod The getter method.
                      * @param setterMethod The setter method.
                      */
-                    protected Duplex(TypeDescription accessorType,
+                    protected Duplex(TypeDescription proxyType,
                                      MethodDescription.InDefinedShape getterMethod,
                                      MethodDescription.InDefinedShape setterMethod) {
-                        this.accessorType = accessorType;
+                        this.proxyType = proxyType;
                         this.getterMethod = getterMethod;
                         this.setterMethod = setterMethod;
                     }
 
                     @Override
-                    public FieldResolver resolve(TypeDescription parameterType, boolean frozen) {
-                        if (parameterType.equals(accessorType)) {
-                            return new ForGetterSetterPair(accessorType, getterMethod, setterMethod, frozen);
+                    public FieldResolver resolve(TypeDescription parameterType, FieldDescription fieldDescription) {
+                        if (parameterType.equals(proxyType)) {
+                            return new ForGetterSetterPair(proxyType, getterMethod, setterMethod);
                         } else {
                             throw new IllegalStateException("Cannot use @FieldProxy on a non-installed type");
                         }
@@ -381,14 +389,14 @@ public @interface FieldProxy {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
                         Duplex duplex = (Duplex) object;
-                        return accessorType.equals(duplex.accessorType)
+                        return proxyType.equals(duplex.proxyType)
                                 && getterMethod.equals(duplex.getterMethod)
                                 && setterMethod.equals(duplex.setterMethod);
                     }
 
                     @Override
                     public int hashCode() {
-                        int result = accessorType.hashCode();
+                        int result = proxyType.hashCode();
                         result = 31 * result + getterMethod.hashCode();
                         result = 31 * result + setterMethod.hashCode();
                         return result;
@@ -397,7 +405,7 @@ public @interface FieldProxy {
                     @Override
                     public String toString() {
                         return "FieldProxy.Binder.FieldResolver.Factory.Duplex{" +
-                                "accessorType=" + accessorType +
+                                "proxyType=" + proxyType +
                                 ", getterMethod=" + getterMethod +
                                 ", setterMethod=" + setterMethod +
                                 '}';
@@ -431,11 +439,11 @@ public @interface FieldProxy {
                     }
 
                     @Override
-                    public FieldResolver resolve(TypeDescription parameterType, boolean frozen) {
+                    public FieldResolver resolve(TypeDescription parameterType, FieldDescription fieldDescription) {
                         if (parameterType.equals(getterMethod.getDeclaringType())) {
                             return new ForGetter(getterMethod);
                         } else if (parameterType.equals(setterMethod.getDeclaringType())) {
-                            return frozen
+                            return fieldDescription.isFinal()
                                     ? Unresolved.INSTANCE
                                     : new ForSetter(setterMethod);
                         } else {
@@ -484,13 +492,13 @@ public @interface FieldProxy {
                 }
 
                 @Override
-                public TypeDescription getType() {
+                public TypeDescription getProxyType() {
                     throw new IllegalStateException("Cannot read type for unresolved field resolver");
                 }
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
-                                                    FieldDescription accessedField,
+                                                    FieldDescription fieldDescription,
                                                     Assigner assigner,
                                                     AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
                     throw new IllegalStateException("Cannot apply unresolved field resolver");
@@ -527,16 +535,16 @@ public @interface FieldProxy {
                 }
 
                 @Override
-                public TypeDescription getType() {
+                public TypeDescription getProxyType() {
                     return getterMethod.getDeclaringType();
                 }
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
-                                                    FieldDescription accessedField,
+                                                    FieldDescription fieldDescription,
                                                     Assigner assigner,
                                                     AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
-                    return builder.method(is(getterMethod)).intercept(new FieldGetter(accessedField, assigner, methodAccessorFactory));
+                    return builder.method(is(getterMethod)).intercept(new FieldGetter(fieldDescription, assigner, methodAccessorFactory));
                 }
 
                 @Override
@@ -585,16 +593,16 @@ public @interface FieldProxy {
                 }
 
                 @Override
-                public TypeDescription getType() {
+                public TypeDescription getProxyType() {
                     return setterMethod.getDeclaringType();
                 }
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
-                                                    FieldDescription accessedField,
+                                                    FieldDescription fieldDescription,
                                                     Assigner assigner,
                                                     AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
-                    return builder.method(is(setterMethod)).intercept(new FieldSetter(accessedField, assigner, methodAccessorFactory));
+                    return builder.method(is(setterMethod)).intercept(new FieldSetter(fieldDescription, assigner, methodAccessorFactory));
                 }
 
                 @Override
@@ -626,7 +634,7 @@ public @interface FieldProxy {
                 /**
                  * The type of the accessor proxy.
                  */
-                private final TypeDescription accessorType;
+                private final TypeDescription proxyType;
 
                 /**
                  * The getter method.
@@ -639,26 +647,18 @@ public @interface FieldProxy {
                 private final MethodDescription.InDefinedShape setterMethod;
 
                 /**
-                 * {@code true} if the field is frozen, i.e. is {@code final} and accessed outside of a constructor or initializer.
-                 */
-                private final boolean frozen;
-
-                /**
                  * Creates a new field resolver for an accessor that both gets and sets a field value.
                  *
-                 * @param accessorType The type of the accessor proxy.
+                 * @param proxyType    The type of the accessor proxy.
                  * @param getterMethod The getter method.
                  * @param setterMethod The setter method.
-                 * @param frozen       {@code true} if the field is frozen, i.e. is {@code final} and accessed outside of a constructor or initializer.
                  */
-                protected ForGetterSetterPair(TypeDescription accessorType,
+                protected ForGetterSetterPair(TypeDescription proxyType,
                                               MethodDescription.InDefinedShape getterMethod,
-                                              MethodDescription.InDefinedShape setterMethod,
-                                              boolean frozen) {
-                    this.accessorType = accessorType;
+                                              MethodDescription.InDefinedShape setterMethod) {
+                    this.proxyType = proxyType;
                     this.getterMethod = getterMethod;
                     this.setterMethod = setterMethod;
-                    this.frozen = frozen;
                 }
 
                 @Override
@@ -667,20 +667,20 @@ public @interface FieldProxy {
                 }
 
                 @Override
-                public TypeDescription getType() {
-                    return accessorType;
+                public TypeDescription getProxyType() {
+                    return proxyType;
                 }
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
-                                                    FieldDescription accessedField,
+                                                    FieldDescription fieldDescription,
                                                     Assigner assigner,
                                                     AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
                     return builder
-                            .method(is(getterMethod)).intercept(new FieldGetter(accessedField, assigner, methodAccessorFactory))
-                            .method(is(setterMethod)).intercept(frozen
-                                    ? ExceptionMethod.throwing(UnsupportedOperationException.class, "Cannot set final field " + accessedField)
-                                    : new FieldSetter(accessedField, assigner, methodAccessorFactory));
+                            .method(is(getterMethod)).intercept(new FieldGetter(fieldDescription, assigner, methodAccessorFactory))
+                            .method(is(setterMethod)).intercept(fieldDescription.isFinal()
+                                    ? ExceptionMethod.throwing(UnsupportedOperationException.class, "Cannot set final field " + fieldDescription)
+                                    : new FieldSetter(fieldDescription, assigner, methodAccessorFactory));
                 }
 
                 @Override
@@ -688,28 +688,25 @@ public @interface FieldProxy {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     ForGetterSetterPair that = (ForGetterSetterPair) object;
-                    return frozen == that.frozen
-                            && accessorType.equals(that.accessorType)
+                    return proxyType.equals(that.proxyType)
                             && getterMethod.equals(that.getterMethod)
                             && setterMethod.equals(that.setterMethod);
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = accessorType.hashCode();
+                    int result = proxyType.hashCode();
                     result = 31 * result + getterMethod.hashCode();
                     result = 31 * result + setterMethod.hashCode();
-                    result = 31 * result + (frozen ? 1 : 0);
                     return result;
                 }
 
                 @Override
                 public String toString() {
                     return "FieldProxy.Binder.FieldResolver.ForGetterSetterPair{" +
-                            "accessorType=" + accessorType +
+                            "proxyType=" + proxyType +
                             ", getterMethod=" + getterMethod +
                             ", setterMethod=" + setterMethod +
-                            ", frozen=" + frozen +
                             '}';
                 }
             }
@@ -734,9 +731,7 @@ public @interface FieldProxy {
              * Creates the constructor call singleton.
              */
             StaticFieldConstructor() {
-                objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods()
-                        .filter(isConstructor())
-                        .getOnly();
+                objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
             }
 
             @Override
@@ -872,7 +867,7 @@ public @interface FieldProxy {
             /**
              * The field that is being accessed.
              */
-            private final FieldDescription accessedField;
+            private final FieldDescription fieldDescription;
 
             /**
              * The assigner to use.
@@ -887,14 +882,14 @@ public @interface FieldProxy {
             /**
              * Creates a new getter implementation.
              *
-             * @param accessedField         The field that is being accessed.
+             * @param fieldDescription      The field that is being accessed.
              * @param assigner              The assigner to use.
              * @param methodAccessorFactory The accessed type's method accessor factory.
              */
-            protected FieldGetter(FieldDescription accessedField,
+            protected FieldGetter(FieldDescription fieldDescription,
                                   Assigner assigner,
                                   AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
-                this.accessedField = accessedField;
+                this.fieldDescription = fieldDescription;
                 this.assigner = assigner;
                 this.methodAccessorFactory = methodAccessorFactory;
             }
@@ -914,14 +909,14 @@ public @interface FieldProxy {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 FieldGetter that = (FieldGetter) object;
-                return accessedField.equals(that.accessedField)
+                return fieldDescription.equals(that.fieldDescription)
                         && assigner.equals(that.assigner)
                         && methodAccessorFactory.equals(that.methodAccessorFactory);
             }
 
             @Override
             public int hashCode() {
-                int result = accessedField.hashCode();
+                int result = fieldDescription.hashCode();
                 result = 31 * result + assigner.hashCode();
                 result = 31 * result + methodAccessorFactory.hashCode();
                 return result;
@@ -930,7 +925,7 @@ public @interface FieldProxy {
             @Override
             public String toString() {
                 return "FieldProxy.Binder.FieldGetter{" +
-                        "accessedField=" + accessedField +
+                        "fieldDescription=" + fieldDescription +
                         ", assigner=" + assigner +
                         ", methodAccessorFactory=" + methodAccessorFactory +
                         '}';
@@ -959,9 +954,9 @@ public @interface FieldProxy {
                 public Size apply(MethodVisitor methodVisitor,
                                   Context implementationContext,
                                   MethodDescription instrumentedMethod) {
-                    MethodDescription getterMethod = methodAccessorFactory.registerGetterFor(accessedField);
+                    MethodDescription getterMethod = methodAccessorFactory.registerGetterFor(fieldDescription);
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            accessedField.isStatic()
+                            fieldDescription.isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
                                     : new StackManipulation.Compound(
                                     MethodVariableAccess.REFERENCE.loadOffset(0),
@@ -1014,7 +1009,7 @@ public @interface FieldProxy {
             /**
              * The field that is being accessed.
              */
-            private final FieldDescription accessedField;
+            private final FieldDescription fieldDescription;
 
             /**
              * The assigner to use.
@@ -1029,14 +1024,14 @@ public @interface FieldProxy {
             /**
              * Creates a new setter implementation.
              *
-             * @param accessedField         The field that is being accessed.
+             * @param fieldDescription      The field that is being accessed.
              * @param assigner              The assigner to use.
              * @param methodAccessorFactory The accessed type's method accessor factory.
              */
-            protected FieldSetter(FieldDescription accessedField,
+            protected FieldSetter(FieldDescription fieldDescription,
                                   Assigner assigner,
                                   AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
-                this.accessedField = accessedField;
+                this.fieldDescription = fieldDescription;
                 this.assigner = assigner;
                 this.methodAccessorFactory = methodAccessorFactory;
             }
@@ -1056,14 +1051,14 @@ public @interface FieldProxy {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 FieldSetter that = (FieldSetter) object;
-                return accessedField.equals(that.accessedField)
+                return fieldDescription.equals(that.fieldDescription)
                         && assigner.equals(that.assigner)
                         && methodAccessorFactory.equals(that.methodAccessorFactory);
             }
 
             @Override
             public int hashCode() {
-                int result = accessedField.hashCode();
+                int result = fieldDescription.hashCode();
                 result = 31 * result + assigner.hashCode();
                 result = 31 * result + methodAccessorFactory.hashCode();
                 return result;
@@ -1072,7 +1067,7 @@ public @interface FieldProxy {
             @Override
             public String toString() {
                 return "FieldProxy.Binder.FieldSetter{" +
-                        "accessedField=" + accessedField +
+                        "fieldDescription=" + fieldDescription +
                         ", assigner=" + assigner +
                         ", methodAccessorFactory=" + methodAccessorFactory +
                         '}';
@@ -1102,9 +1097,9 @@ public @interface FieldProxy {
                                   Context implementationContext,
                                   MethodDescription instrumentedMethod) {
                     TypeDescription.Generic parameterType = instrumentedMethod.getParameters().get(0).getType();
-                    MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(accessedField);
+                    MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(fieldDescription);
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            accessedField.isStatic()
+                            fieldDescription.isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
                                     : new StackManipulation.Compound(
                                     MethodVariableAccess.REFERENCE.loadOffset(0),
@@ -1163,7 +1158,7 @@ public @interface FieldProxy {
             /**
              * The field that is being accessed.
              */
-            private final FieldDescription accessedField;
+            private final FieldDescription fieldDescription;
 
             /**
              * The type which is accessed.
@@ -1186,18 +1181,18 @@ public @interface FieldProxy {
             private final boolean serializableProxy;
 
             /**
-             * @param accessedField     The field that is being accessed.
+             * @param fieldDescription  The field that is being accessed.
              * @param instrumentedType  The type which is accessed.
              * @param fieldResolver     The field resolver to use.
              * @param assigner          The assigner to use.
              * @param serializableProxy {@code true} if the generated proxy should be serializable.
              */
-            protected AccessorProxy(FieldDescription accessedField,
+            protected AccessorProxy(FieldDescription fieldDescription,
                                     TypeDescription instrumentedType,
                                     FieldResolver fieldResolver,
                                     Assigner assigner,
                                     boolean serializableProxy) {
-                this.accessedField = accessedField;
+                this.fieldDescription = fieldDescription;
                 this.instrumentedType = instrumentedType;
                 this.fieldResolver = fieldResolver;
                 this.assigner = assigner;
@@ -1209,16 +1204,16 @@ public @interface FieldProxy {
                                     ClassFileVersion classFileVersion,
                                     MethodAccessorFactory methodAccessorFactory) {
                 return fieldResolver.apply(new ByteBuddy(classFileVersion)
-                        .subclass(fieldResolver.getType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                        .subclass(fieldResolver.getProxyType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineConstructor().withParameters(accessedField.isStatic()
+                        .defineConstructor().withParameters(fieldDescription.isStatic()
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(instrumentedType))
-                        .intercept(accessedField.isStatic()
+                        .intercept(fieldDescription.isStatic()
                                 ? StaticFieldConstructor.INSTANCE
-                                : new InstanceFieldConstructor(instrumentedType)), accessedField, assigner, methodAccessorFactory).make();
+                                : new InstanceFieldConstructor(instrumentedType)), fieldDescription, assigner, methodAccessorFactory).make();
             }
 
             @Override
@@ -1232,7 +1227,7 @@ public @interface FieldProxy {
                 return new Compound(
                         TypeCreation.of(auxiliaryType),
                         Duplication.SINGLE,
-                        accessedField.isStatic()
+                        fieldDescription.isStatic()
                                 ? Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
@@ -1254,7 +1249,7 @@ public @interface FieldProxy {
                 if (object == null || getClass() != object.getClass()) return false;
                 AccessorProxy that = (AccessorProxy) object;
                 return serializableProxy == that.serializableProxy
-                        && accessedField.equals(that.accessedField)
+                        && fieldDescription.equals(that.fieldDescription)
                         && instrumentedType.equals(that.instrumentedType)
                         && fieldResolver.equals(that.fieldResolver)
                         && assigner.equals(that.assigner)
@@ -1263,7 +1258,7 @@ public @interface FieldProxy {
 
             @Override
             public int hashCode() {
-                int result = accessedField.hashCode();
+                int result = fieldDescription.hashCode();
                 result = 31 * result + Binder.this.hashCode();
                 result = 31 * result + instrumentedType.hashCode();
                 result = 31 * result + fieldResolver.hashCode();
@@ -1276,7 +1271,7 @@ public @interface FieldProxy {
             public String toString() {
                 return "FieldProxy.Binder.AccessorProxy{" +
                         "outer=" + Binder.this +
-                        ", accessedField=" + accessedField +
+                        ", fieldDescription=" + fieldDescription +
                         ", instrumentedType=" + instrumentedType +
                         ", fieldResolver=" + fieldResolver +
                         ", assigner=" + assigner +

@@ -27,7 +27,7 @@ public class JavaVersionRule implements MethodRule {
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
         if (enforce != null) {
-            if (!enforce.direction().check(currentVersion, ClassFileVersion.ofJavaVersion(enforce.value()))) {
+            if (!enforce.sort().check(currentVersion, ClassFileVersion.ofJavaVersion(enforce.value()))) {
                 return new NoOpStatement(enforce.value());
             } else if (!hotSpot) {
                 for (int javaVersion : enforce.hotSpot()) {
@@ -46,7 +46,7 @@ public class JavaVersionRule implements MethodRule {
 
         int value();
 
-        Sort direction() default Sort.AT_LEAST;
+        Sort sort() default Sort.AT_LEAST;
 
         int[] hotSpot() default {};
     }

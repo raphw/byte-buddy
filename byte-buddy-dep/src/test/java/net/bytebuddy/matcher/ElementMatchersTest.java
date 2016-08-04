@@ -41,8 +41,6 @@ import static org.mockito.Mockito.*;
 
 public class ElementMatchersTest {
 
-    // TODO: Generic setters/getter (documentation!)
-
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
@@ -999,10 +997,6 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(true));
         assertThat(ElementMatchers.isGetter()
                 .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz", Void.class))), is(false));
-        assertThat(ElementMatchers.isGetter(String.class)
-                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(true));
-        assertThat(ElementMatchers.isGetter(Void.class)
-                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(false));
     }
 
     @Test
@@ -1017,10 +1011,50 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))), is(true));
         assertThat(ElementMatchers.isSetter()
                 .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class, Void.class))), is(false));
+    }
+
+    @Test
+    public void testIsNonGenericGetter() throws Exception {
+        assertThat(ElementMatchers.isGetter(String.class)
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(true));
+        assertThat(ElementMatchers.isGetter(Void.class)
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(false));
+        assertThat(ElementMatchers.isGetter(Object.class)
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getQuxbaz"))), is(true));
+    }
+
+    @Test
+    public void testIsNonGenericSetter() throws Exception {
         assertThat(ElementMatchers.isSetter(String.class)
                 .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))), is(true));
         assertThat(ElementMatchers.isSetter(Void.class)
                 .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))), is(false));
+        assertThat(ElementMatchers.isSetter(Object.class)
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setQuxbaz", Object.class))), is(true));
+    }
+
+    @Test
+    public void testIsGenericGetter() throws Exception {
+        assertThat(ElementMatchers.isGenericGetter(String.class)
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(true));
+        assertThat(ElementMatchers.isGenericGetter(Void.class)
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(false));
+        assertThat(ElementMatchers.isGenericGetter(Getters.class.getTypeParameters()[0])
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getQuxbaz"))), is(true));
+        assertThat(ElementMatchers.isGenericGetter(Object.class)
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getQuxbaz"))), is(false));
+    }
+
+    @Test
+    public void testIsGenericSetter() throws Exception {
+        assertThat(ElementMatchers.isGenericSetter(String.class)
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))), is(true));
+        assertThat(ElementMatchers.isGenericSetter(Void.class)
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))), is(false));
+        assertThat(ElementMatchers.isGenericSetter(Setters.class.getTypeParameters()[0])
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setQuxbaz", Object.class))), is(true));
+        assertThat(ElementMatchers.isGenericSetter(Object.class)
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setQuxbaz", Object.class))), is(false));
     }
 
     @Test
@@ -1306,7 +1340,7 @@ public class ElementMatchersTest {
     }
 
     @SuppressWarnings("unused")
-    public static class Getters {
+    public static class Getters<T> {
 
         public void getFoo() {
             /* empty */
@@ -1339,10 +1373,14 @@ public class ElementMatchersTest {
         public String getBaz(Void argument) {
             return null;
         }
+
+        public T getQuxbaz() {
+            return null;
+        }
     }
 
     @SuppressWarnings("unused")
-    public static class Setters {
+    public static class Setters<T> {
 
         public void setFoo() {
             /* empty */
@@ -1361,6 +1399,10 @@ public class ElementMatchersTest {
         }
 
         public void setBaz(String argument, Void argument2) {
+            /* empty */
+        }
+
+        public void setQuxbaz(T argument) {
             /* empty */
         }
     }
