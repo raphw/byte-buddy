@@ -544,7 +544,9 @@ public interface ClassFileLocator extends Closeable {
          * @return An appropriate class file locator.
          */
         public static ClassFileLocator of(JavaModule module) {
-            return new ForModule(module);
+            return module.isNamed()
+                    ? new ForModule(module)
+                    : ForClassLoader.of(module.getClassLoader());
         }
 
         @Override
