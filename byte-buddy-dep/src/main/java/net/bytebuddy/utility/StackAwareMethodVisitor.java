@@ -196,6 +196,20 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             case Opcodes.DUP2_X2:
                 adjustStack(SIZE_CHANGE[opcode], SIZE_CHANGE[opcode] + 2);
                 break;
+            case Opcodes.D2I:
+            case Opcodes.D2F:
+            case Opcodes.L2F:
+            case Opcodes.L2I:
+                adjustStack(-2);
+                adjustStack(1);
+                break;
+            case Opcodes.I2D:
+            case Opcodes.I2L:
+            case Opcodes.F2D:
+            case Opcodes.F2L:
+                adjustStack(-1);
+                adjustStack(2);
+                break;
             default:
                 adjustStack(SIZE_CHANGE[opcode]);
         }
