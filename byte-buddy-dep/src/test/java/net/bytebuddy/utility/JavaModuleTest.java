@@ -14,6 +14,8 @@ import static org.mockito.Mockito.mock;
 
 public class JavaModuleTest {
 
+    private static final String FOO = "foo";
+
     @Test
     public void testSupportsDisabledThrowException() throws Exception {
         assertThat(JavaModule.Dispatcher.Disabled.INSTANCE.isAlive(), is(false));
@@ -49,6 +51,11 @@ public class JavaModuleTest {
     @Test(expected = IllegalStateException.class)
     public void testCanReadThrowsException() throws Exception {
         JavaModule.Dispatcher.Disabled.INSTANCE.canRead(mock(Object.class), mock(Object.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGetResourceAsStreamThrowsException() throws Exception {
+        JavaModule.Dispatcher.Disabled.INSTANCE.getResourceAsStream(mock(Object.class), FOO);
     }
 
     @Test(expected = IllegalStateException.class)

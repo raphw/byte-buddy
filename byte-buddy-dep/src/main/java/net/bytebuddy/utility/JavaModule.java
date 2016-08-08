@@ -108,7 +108,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
      * @return An input stream for the resource or {@code null} if it does not exist.
      */
     public InputStream getResourceAsStream(String name) {
-        return null;
+        return DISPATCHER.getResourceAsStream(module, name);
     }
 
     /**

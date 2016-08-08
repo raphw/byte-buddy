@@ -351,6 +351,19 @@ public interface ClassFileLocator extends Closeable {
          * @throws IOException If reading the class file causes an exception.
          */
         protected static Resolution locate(ClassLoader classLoader, String typeName) throws IOException {
+            // Java 9 does not allow for an easy way to locate such resources. For now, the following lookup serves as a work-around.
+            if (JavaModule.isSupported()) {
+                int packageIndex = typeName.lastIndexOf('.');
+                ClassFileLocator classFileLocator = ForModule.BOOT_MODULES.get(packageIndex == -1
+                        ? NamedElement.EMPTY_NAME
+                        : typeName.substring(0, packageIndex));
+                if (classFileLocator != null && !(classFileLocator instanceof ForClassLoader || classFileLocator instanceof WeaklyReferenced)) {
+                    Resolution resolution = classFileLocator.locate(typeName);
+                    if (resolution.isResolved()) {
+                        return resolution;
+                    }
+                }
+            }
             InputStream inputStream = classLoader.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (inputStream != null) {
                 try {
@@ -518,24 +531,9 @@ public interface ClassFileLocator extends Closeable {
          * on virtual machines of version 9 or later. On earlier versions, the returned class file locator does not locate any resources.
          *
          * @return A class file locator that locates classes of the boot layer.
-         * @see ForModule#ofClassPath()
          */
         public static ClassFileLocator ofBootLayer() {
             return new PackageDiscriminating(BOOT_MODULES);
-        }
-
-        /**
-         * Returns a class file locator that exposes all class files of the class path by querying the boot module layer if it is available.
-         * The boot module layer contains all built-in classes and all user classes on the module path which are available via the system
-         * class loader.
-         *
-         * @return A class file locator that locates classes of the boot layer or the class path respectively.
-         * @see ForModule#ofBootLayer()
-         */
-        public static ClassFileLocator ofClassPath() {
-            return BOOT_MODULES.isEmpty()
-                    ? ForClassLoader.ofClassPath()
-                    : ofBootLayer();
         }
 
         /**

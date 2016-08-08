@@ -1079,7 +1079,7 @@ public interface TypePool {
          * @return A type pool that reads its data from the system class path.
          */
         public static TypePool ofClassPath() {
-            return of(ClassFileLocator.ForModule.ofClassPath());
+            return of(ClassFileLocator.ForClassLoader.ofClassPath());
         }
 
         /**
@@ -1247,7 +1247,7 @@ public interface TypePool {
              * @return A type pool that reads its data from the system class path.
              */
             public static TypePool ofClassPath() {
-                return of(ClassFileLocator.ForModule.ofClassPath());
+                return of(ClassFileLocator.ForClassLoader.ofClassPath());
             }
 
             /**
