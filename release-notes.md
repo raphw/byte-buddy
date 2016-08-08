@@ -5,6 +5,7 @@ Byte Buddy release notes
 
 - Added automatic support for Java 9 class file location for boot modules.
 - Improvided `FieldProxy.Binder` to allow for a single accessor interface.
+- Fixed counting problem in `Advice` component.
 
 ### 1. August 2016: version 1.4.17
 
