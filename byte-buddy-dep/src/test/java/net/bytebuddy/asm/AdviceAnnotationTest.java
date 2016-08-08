@@ -22,7 +22,7 @@ public class AdviceAnnotationTest {
                 {Advice.BoxedReturn.class, ElementType.PARAMETER},
                 {Advice.FieldValue.class, ElementType.PARAMETER},
                 {Advice.Enter.class, ElementType.PARAMETER},
-                {Advice.Ignored.class, ElementType.PARAMETER},
+                {Advice.StubValue.class, ElementType.PARAMETER},
                 {Advice.Origin.class, ElementType.PARAMETER},
                 {Advice.Return.class, ElementType.PARAMETER},
                 {Advice.This.class, ElementType.PARAMETER},

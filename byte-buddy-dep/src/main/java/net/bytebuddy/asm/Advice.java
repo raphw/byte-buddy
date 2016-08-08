@@ -104,7 +104,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * @see DynamicValue
  * @see Enter
  * @see FieldValue
- * @see Ignored
+ * @see StubValue
  * @see OnMethodEnter
  * @see OnMethodExit
  * @see Origin
@@ -4204,7 +4204,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
              */
-            enum ForIgnored implements OffsetMapping, Factory {
+            enum ForStubValue implements OffsetMapping, Factory {
 
                 /**
                  * The singleton instance.
@@ -4218,14 +4218,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                    return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Ignored.class)
+                    return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(StubValue.class)
                             ? this
                             : UNDEFINED;
                 }
 
                 @Override
                 public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForIgnored." + name();
+                    return "Advice.Dispatcher.OffsetMapping.ForStubValue." + name();
                 }
             }
 
@@ -5897,7 +5897,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForIgnored.INSTANCE,
+                                        OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
                                 classReader,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
@@ -6051,7 +6051,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForIgnored.INSTANCE,
+                                        OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.ForEnterValue.Factory(enterType, false),
                                         OffsetMapping.ForReturnValue.Factory.READ_WRITE,
                                         OffsetMapping.ForBoxedReturnValue.Factory.READ_WRITE,
@@ -7095,7 +7095,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForIgnored.INSTANCE,
+                                        OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
                         skipDispatcher = SkipDispatcher.of(adviceMethod);
@@ -7179,7 +7179,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForIgnored.INSTANCE,
+                                        OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.ForEnterValue.Factory(enterType, true),
                                         OffsetMapping.ForReturnValue.Factory.READ_ONLY,
                                         OffsetMapping.ForBoxedReturnValue.Factory.READ_ONLY,
@@ -7581,7 +7581,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
-    public @interface Ignored {
+    public @interface StubValue {
         /* empty */
     }
 

@@ -255,7 +255,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static boolean enter(@Advice.Ignored boolean value,
+        public static boolean enter(@Advice.StubValue boolean value,
                                     @Advice.Argument(0) boolean argument,
                                     @Advice.Argument(value = 1, readOnly = false) boolean mutableArgument,
                                     @Advice.BoxedArguments Object[] boxed,
@@ -350,7 +350,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static boolean enter(@Advice.Ignored boolean value,
+        public static boolean enter(@Advice.StubValue boolean value,
                                     @Advice.Argument(0) boolean argument,
                                     @Advice.BoxedArguments Object[] boxed,
                                     @Advice.FieldValue(FIELD) boolean field,
@@ -433,7 +433,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static byte enter(@Advice.Ignored byte value,
+        public static byte enter(@Advice.StubValue byte value,
                                  @Advice.Argument(0) byte argument,
                                  @Advice.Argument(value = 1, readOnly = false) byte mutableArgument,
                                  @Advice.BoxedArguments Object[] boxed,
@@ -528,7 +528,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static byte enter(@Advice.Ignored byte value,
+        public static byte enter(@Advice.StubValue byte value,
                                  @Advice.Argument(0) byte argument,
                                  @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) byte field,
@@ -608,7 +608,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static short enter(@Advice.Ignored short value,
+        public static short enter(@Advice.StubValue short value,
                                   @Advice.Argument(0) short argument,
                                   @Advice.Argument(value = 1, readOnly = false) short mutableArgument,
                                   @Advice.BoxedArguments Object[] boxed,
@@ -703,7 +703,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static short enter(@Advice.Ignored short value,
+        public static short enter(@Advice.StubValue short value,
                                   @Advice.Argument(0) short argument,
                                   @Advice.BoxedArguments Object[] boxed,
                                   @Advice.FieldValue(FIELD) short field,
@@ -780,7 +780,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static char enter(@Advice.Ignored char value,
+        public static char enter(@Advice.StubValue char value,
                                  @Advice.Argument(0) char argument,
                                  @Advice.Argument(value = 1, readOnly = false) char mutableArgument,
                                  @Advice.BoxedArguments Object[] boxed,
@@ -875,7 +875,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static char enter(@Advice.Ignored char value,
+        public static char enter(@Advice.StubValue char value,
                                  @Advice.Argument(0) char argument,
                                  @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) char field,
@@ -955,7 +955,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static int enter(@Advice.Ignored int value,
+        public static int enter(@Advice.StubValue int value,
                                 @Advice.Argument(0) int argument,
                                 @Advice.Argument(value = 1, readOnly = false) int mutableArgument,
                                 @Advice.BoxedArguments Object[] boxed,
@@ -1053,7 +1053,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static int enter(@Advice.Ignored int value,
+        public static int enter(@Advice.StubValue int value,
                                 @Advice.Argument(0) int argument,
                                 @Advice.BoxedArguments Object[] boxed,
                                 @Advice.FieldValue(FIELD) int field,
@@ -1133,7 +1133,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static long enter(@Advice.Ignored long value,
+        public static long enter(@Advice.StubValue long value,
                                  @Advice.Argument(0) long argument,
                                  @Advice.Argument(value = 1, readOnly = false) long mutableArgument,
                                  @Advice.BoxedArguments Object[] boxed,
@@ -1228,7 +1228,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static long enter(@Advice.Ignored long value,
+        public static long enter(@Advice.StubValue long value,
                                  @Advice.Argument(0) long argument,
                                  @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) long field,
@@ -1308,7 +1308,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static float enter(@Advice.Ignored float value,
+        public static float enter(@Advice.StubValue float value,
                                   @Advice.Argument(0) float argument,
                                   @Advice.Argument(value = 1, readOnly = false) float mutableArgument,
                                   @Advice.BoxedArguments Object[] boxed,
@@ -1403,7 +1403,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static float enter(@Advice.Ignored float value,
+        public static float enter(@Advice.StubValue float value,
                                   @Advice.Argument(0) float argument,
                                   @Advice.BoxedArguments Object[] boxed,
                                   @Advice.FieldValue(FIELD) float field,
@@ -1483,7 +1483,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static double enter(@Advice.Ignored double value,
+        public static double enter(@Advice.StubValue double value,
                                    @Advice.Argument(0) double argument,
                                    @Advice.Argument(value = 1, readOnly = false) double mutableArgument,
                                    @Advice.BoxedArguments Object[] boxed,
@@ -1578,7 +1578,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static double enter(@Advice.Ignored double value,
+        public static double enter(@Advice.StubValue double value,
                                    @Advice.Argument(0) double argument,
                                    @Advice.BoxedArguments Object[] boxed,
                                    @Advice.FieldValue(FIELD) double field,
@@ -1652,7 +1652,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static Object enter(@Advice.Ignored Object value,
+        public static Object enter(@Advice.StubValue Object value,
                                    @Advice.Argument(0) Object argument,
                                    @Advice.Argument(value = 1, readOnly = false) Object mutableArgument,
                                    @Advice.BoxedArguments Object[] boxed,
@@ -1747,7 +1747,7 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static Object enter(@Advice.Ignored Object value,
+        public static Object enter(@Advice.StubValue Object value,
                                    @Advice.Argument(0) Object argument,
                                    @Advice.BoxedArguments Object[] boxed,
                                    @Advice.FieldValue(FIELD) Object field,

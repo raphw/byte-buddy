@@ -1684,7 +1684,7 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForJavaSignature.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForIgnored.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForStubValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.class).apply();
         final Iterator<Class<?>> annotationTypes = Arrays.<Class<?>>asList(Object.class, String.class, int.class, float.class).iterator();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.Factory.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
@@ -2133,7 +2133,7 @@ public class AdviceTest {
     public static class IncrementAdvice {
 
         @Advice.OnMethodEnter
-        private static int enter(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.Ignored int ignored) {
+        private static int enter(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.StubValue int ignored) {
             if (++argument != 1) {
                 throw new AssertionError();
             }
@@ -2148,7 +2148,7 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static int exit(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.Ignored int ignored) {
+        private static int exit(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.StubValue int ignored) {
             if (++argument != 3) {
                 throw new AssertionError();
             }
