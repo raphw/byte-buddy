@@ -1624,6 +1624,11 @@ public class AdviceTest {
         Advice.to(EmptyAdvice.class, Object.class);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalBoxedReturn() throws Exception {
+        Advice.to(IllegalBoxedReturnType.class);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
@@ -1646,6 +1651,7 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodExit.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.BoxingDispatcher.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadOnly.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.WithCasting.class).apply();
@@ -1653,10 +1659,10 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedDefaultValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.ReadOnly.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.ReadWrite.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.BoxingDispatcher.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForSerializedObject.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForNullConstant.class).apply();
         final int[] value = new int[1];
@@ -1684,6 +1690,7 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForJavaSignature.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUnusedValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForStubValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.class).apply();
         final Iterator<Class<?>> annotationTypes = Arrays.<Class<?>>asList(Object.class, String.class, int.class, float.class).iterator();
@@ -2133,7 +2140,7 @@ public class AdviceTest {
     public static class IncrementAdvice {
 
         @Advice.OnMethodEnter
-        private static int enter(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.StubValue int ignored) {
+        private static int enter(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.Unused int ignored) {
             if (++argument != 1) {
                 throw new AssertionError();
             }
@@ -2148,7 +2155,7 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static int exit(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.StubValue int ignored) {
+        private static int exit(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.Unused int ignored) {
             if (++argument != 3) {
                 throw new AssertionError();
             }
@@ -3010,6 +3017,14 @@ public class AdviceTest {
 
         @Advice.OnMethodExit(inline = false)
         private static void exit(@Advice.Argument(value = 0, readOnly = false) Object argument) {
+            throw new AssertionError();
+        }
+    }
+
+    public static class IllegalBoxedReturnType {
+
+        @Advice.OnMethodEnter
+        private static void advice(@Advice.StubValue int value) {
             throw new AssertionError();
         }
     }

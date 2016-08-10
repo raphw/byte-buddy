@@ -156,8 +156,16 @@ public class AdviceTypeTest {
 
         @Advice.OnMethodEnter
         public static void enter(@Advice.BoxedArguments Object[] boxed,
+                                 @Advice.StubValue Object stubValue,
                                  @CustomAnnotation Void custom) {
             if (boxed.length != 2 || boxed[0] != null || boxed[1] != null) {
+                throw new AssertionError();
+            }
+            if (stubValue != null) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if (stubValue != null) {
                 throw new AssertionError();
             }
             if (custom != null) {
@@ -204,8 +212,12 @@ public class AdviceTypeTest {
 
         @Advice.OnMethodEnter(inline = false)
         public static void enter(@Advice.BoxedArguments Object[] boxed,
+                                 @Advice.StubValue Object stubValue,
                                  @CustomAnnotation Void custom) {
             if (boxed.length != 2 || boxed[0] != null || boxed[1] != null) {
+                throw new AssertionError();
+            }
+            if (stubValue != null) {
                 throw new AssertionError();
             }
             if (custom != null) {
@@ -255,7 +267,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static boolean enter(@Advice.StubValue boolean value,
+        public static boolean enter(@Advice.Unused boolean value,
+                                    @Advice.StubValue Object stubValue,
                                     @Advice.Argument(0) boolean argument,
                                     @Advice.Argument(value = 1, readOnly = false) boolean mutableArgument,
                                     @Advice.BoxedArguments Object[] boxed,
@@ -269,6 +282,13 @@ public class AdviceTypeTest {
             }
             value = BOOLEAN;
             if (value) {
+                throw new AssertionError();
+            }
+            if ((Boolean) stubValue) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if ((Boolean) stubValue) {
                 throw new AssertionError();
             }
             if (!argument || !mutableArgument) {
@@ -294,6 +314,7 @@ public class AdviceTypeTest {
 
         @Advice.OnMethodExit(onThrowable = Exception.class)
         public static boolean exit(@Advice.Return boolean result,
+                                   @Advice.StubValue Object stubValue,
                                    @Advice.Enter boolean enter,
                                    @Advice.Thrown Throwable throwable,
                                    @Advice.BoxedReturn Object boxedReturn,
@@ -350,13 +371,17 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static boolean enter(@Advice.StubValue boolean value,
+        public static boolean enter(@Advice.Unused boolean value,
+                                    @Advice.StubValue Object stubValue,
                                     @Advice.Argument(0) boolean argument,
                                     @Advice.BoxedArguments Object[] boxed,
                                     @Advice.FieldValue(FIELD) boolean field,
                                     @Advice.FieldValue(STATIC_FIELD) boolean staticField,
                                     @CustomAnnotation boolean custom) {
             if (value) {
+                throw new AssertionError();
+            }
+            if ((Boolean) stubValue) {
                 throw new AssertionError();
             }
             if (!argument) {
@@ -433,7 +458,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static byte enter(@Advice.StubValue byte value,
+        public static byte enter(@Advice.Unused byte value,
+                                 @Advice.StubValue Object stubValue,
                                  @Advice.Argument(0) byte argument,
                                  @Advice.Argument(value = 1, readOnly = false) byte mutableArgument,
                                  @Advice.BoxedArguments Object[] boxed,
@@ -447,6 +473,13 @@ public class AdviceTypeTest {
             }
             value = VALUE;
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Byte) stubValue != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if ((Byte) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE) {
@@ -528,13 +561,17 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static byte enter(@Advice.StubValue byte value,
+        public static byte enter(@Advice.Unused byte value,
+                                 @Advice.StubValue Object stubValue,
                                  @Advice.Argument(0) byte argument,
                                  @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) byte field,
                                  @Advice.FieldValue(STATIC_FIELD) byte staticField,
                                  @CustomAnnotation byte custom) {
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Byte) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE) {
@@ -608,7 +645,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static short enter(@Advice.StubValue short value,
+        public static short enter(@Advice.Unused short value,
+                                  @Advice.StubValue Object stubValue,
                                   @Advice.Argument(0) short argument,
                                   @Advice.Argument(value = 1, readOnly = false) short mutableArgument,
                                   @Advice.BoxedArguments Object[] boxed,
@@ -622,6 +660,13 @@ public class AdviceTypeTest {
             }
             value = VALUE;
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Short) stubValue != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if ((Short) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE) {
@@ -703,13 +748,17 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static short enter(@Advice.StubValue short value,
+        public static short enter(@Advice.Unused short value,
+                                  @Advice.StubValue Object stubValue,
                                   @Advice.Argument(0) short argument,
                                   @Advice.BoxedArguments Object[] boxed,
                                   @Advice.FieldValue(FIELD) short field,
                                   @Advice.FieldValue(STATIC_FIELD) short staticField,
                                   @CustomAnnotation short custom) {
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Short) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE) {
@@ -780,7 +829,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static char enter(@Advice.StubValue char value,
+        public static char enter(@Advice.Unused char value,
+                                 @Advice.StubValue Object stubValue,
                                  @Advice.Argument(0) char argument,
                                  @Advice.Argument(value = 1, readOnly = false) char mutableArgument,
                                  @Advice.BoxedArguments Object[] boxed,
@@ -794,6 +844,13 @@ public class AdviceTypeTest {
             }
             value = VALUE;
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Character) stubValue != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if ((Character) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE) {
@@ -875,13 +932,17 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static char enter(@Advice.StubValue char value,
+        public static char enter(@Advice.Unused char value,
+                                 @Advice.StubValue Object stubValue,
                                  @Advice.Argument(0) char argument,
                                  @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) char field,
                                  @Advice.FieldValue(STATIC_FIELD) char staticField,
                                  @CustomAnnotation char custom) {
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Character) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE) {
@@ -955,7 +1016,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static int enter(@Advice.StubValue int value,
+        public static int enter(@Advice.Unused int value,
+                                @Advice.StubValue Object stubValue,
                                 @Advice.Argument(0) int argument,
                                 @Advice.Argument(value = 1, readOnly = false) int mutableArgument,
                                 @Advice.BoxedArguments Object[] boxed,
@@ -969,6 +1031,13 @@ public class AdviceTypeTest {
             }
             value = VALUE;
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Integer) stubValue != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if ((Integer) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE) {
@@ -1053,13 +1122,17 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static int enter(@Advice.StubValue int value,
+        public static int enter(@Advice.Unused int value,
+                                @Advice.StubValue Object stubValue,
                                 @Advice.Argument(0) int argument,
                                 @Advice.BoxedArguments Object[] boxed,
                                 @Advice.FieldValue(FIELD) int field,
                                 @Advice.FieldValue(STATIC_FIELD) int staticField,
                                 @CustomAnnotation int custom) {
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Integer) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE) {
@@ -1133,7 +1206,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static long enter(@Advice.StubValue long value,
+        public static long enter(@Advice.Unused long value,
+                                 @Advice.StubValue Object stubValue,
                                  @Advice.Argument(0) long argument,
                                  @Advice.Argument(value = 1, readOnly = false) long mutableArgument,
                                  @Advice.BoxedArguments Object[] boxed,
@@ -1147,6 +1221,13 @@ public class AdviceTypeTest {
             }
             value = VALUE;
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Long) stubValue != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if ((Long) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE) {
@@ -1228,13 +1309,17 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static long enter(@Advice.StubValue long value,
+        public static long enter(@Advice.Unused long value,
+                                 @Advice.StubValue Object stubValue,
                                  @Advice.Argument(0) long argument,
                                  @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) long field,
                                  @Advice.FieldValue(STATIC_FIELD) long staticField,
                                  @CustomAnnotation long custom) {
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Long) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE) {
@@ -1308,7 +1393,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static float enter(@Advice.StubValue float value,
+        public static float enter(@Advice.Unused float value,
+                                  @Advice.StubValue Object stubValue,
                                   @Advice.Argument(0) float argument,
                                   @Advice.Argument(value = 1, readOnly = false) float mutableArgument,
                                   @Advice.BoxedArguments Object[] boxed,
@@ -1322,6 +1408,13 @@ public class AdviceTypeTest {
             }
             value = VALUE;
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Float) stubValue != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if ((Float) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE) {
@@ -1403,13 +1496,17 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static float enter(@Advice.StubValue float value,
+        public static float enter(@Advice.Unused float value,
+                                  @Advice.StubValue Object stubValue,
                                   @Advice.Argument(0) float argument,
                                   @Advice.BoxedArguments Object[] boxed,
                                   @Advice.FieldValue(FIELD) float field,
                                   @Advice.FieldValue(STATIC_FIELD) float staticField,
                                   @CustomAnnotation float custom) {
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Float) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE) {
@@ -1483,7 +1580,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static double enter(@Advice.StubValue double value,
+        public static double enter(@Advice.Unused double value,
+                                   @Advice.StubValue Object stubValue,
                                    @Advice.Argument(0) double argument,
                                    @Advice.Argument(value = 1, readOnly = false) double mutableArgument,
                                    @Advice.BoxedArguments Object[] boxed,
@@ -1497,6 +1595,13 @@ public class AdviceTypeTest {
             }
             value = VALUE;
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Double) stubValue != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if ((Double) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE) {
@@ -1578,13 +1683,17 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static double enter(@Advice.StubValue double value,
+        public static double enter(@Advice.Unused double value,
+                                   @Advice.StubValue Object stubValue,
                                    @Advice.Argument(0) double argument,
                                    @Advice.BoxedArguments Object[] boxed,
                                    @Advice.FieldValue(FIELD) double field,
                                    @Advice.FieldValue(STATIC_FIELD) double staticField,
                                    @CustomAnnotation double custom) {
             if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            if ((Double) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
             if (argument != VALUE) {
@@ -1652,7 +1761,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static Object enter(@Advice.StubValue Object value,
+        public static Object enter(@Advice.Unused Object value,
+                                   @Advice.StubValue Object stubValue,
                                    @Advice.Argument(0) Object argument,
                                    @Advice.Argument(value = 1, readOnly = false) Object mutableArgument,
                                    @Advice.BoxedArguments Object[] boxed,
@@ -1666,6 +1776,13 @@ public class AdviceTypeTest {
             }
             value = FOO;
             if (value != null) {
+                throw new AssertionError();
+            }
+            if (stubValue != null) {
+                throw new AssertionError();
+            }
+            stubValue = FOO;
+            if (stubValue != null) {
                 throw new AssertionError();
             }
             if (!argument.equals(FOO) || !mutableArgument.equals(FOO)) {
@@ -1747,13 +1864,17 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter(inline = false)
-        public static Object enter(@Advice.StubValue Object value,
+        public static Object enter(@Advice.Unused Object value,
+                                   @Advice.StubValue Object stubValue,
                                    @Advice.Argument(0) Object argument,
                                    @Advice.BoxedArguments Object[] boxed,
                                    @Advice.FieldValue(FIELD) Object field,
                                    @Advice.FieldValue(STATIC_FIELD) Object staticField,
                                    @CustomAnnotation String custom) {
             if (value != null) {
+                throw new AssertionError();
+            }
+            if (stubValue != null) {
                 throw new AssertionError();
             }
             if (!argument.equals(FOO)) {

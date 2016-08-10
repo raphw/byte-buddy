@@ -207,7 +207,7 @@ public class AdviceFrameTest {
 
         @Advice.OnMethodEnter
         @Advice.OnMethodExit(onThrowable = Exception.class)
-        private static String advice(@Advice.StubValue int ignored, @Advice.Argument(0) String value) {
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
@@ -242,7 +242,7 @@ public class AdviceFrameTest {
 
         @Advice.OnMethodEnter
         @Advice.OnMethodExit
-        private static String advice(@Advice.StubValue int ignored, @Advice.Argument(0) String value) {
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
@@ -277,7 +277,7 @@ public class AdviceFrameTest {
 
         @Advice.OnMethodEnter(suppress = Exception.class)
         @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class)
-        private static String advice(@Advice.StubValue int ignored, @Advice.Argument(0) String value) {
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
@@ -311,7 +311,7 @@ public class AdviceFrameTest {
     public static class FrameAdviceEntryOnly {
 
         @Advice.OnMethodEnter
-        private static String advice(@Advice.StubValue int ignored, @Advice.Argument(0) String value) {
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
@@ -345,7 +345,7 @@ public class AdviceFrameTest {
     public static class FrameAdviceEntryOnlyWithSuppression {
 
         @Advice.OnMethodEnter(suppress = Exception.class)
-        private static String advice(@Advice.StubValue int ignored, @Advice.Argument(0) String value) {
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
@@ -379,7 +379,7 @@ public class AdviceFrameTest {
     public static class FrameAdviceExitOnly {
 
         @Advice.OnMethodExit(onThrowable = Exception.class)
-        private static String advice(@Advice.StubValue int ignored, @Advice.Argument(0) String value) {
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
@@ -413,7 +413,7 @@ public class AdviceFrameTest {
     public static class FrameAdviceExitOnlyWithSuppression {
 
         @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class)
-        private static String advice(@Advice.StubValue int ignored, @Advice.Argument(0) String value) {
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
@@ -447,7 +447,7 @@ public class AdviceFrameTest {
     public static class FrameAdviceExitOnlyWithSuppressionAndNonExceptionHandling {
 
         @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class)
-        private static String advice(@Advice.StubValue int ignored, @Advice.Argument(0) String value) {
+        private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;

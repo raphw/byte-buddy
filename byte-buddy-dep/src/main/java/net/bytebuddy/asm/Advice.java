@@ -2190,6 +2190,192 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 int resolveIncrement(MethodVisitor methodVisitor, int increment);
 
                 /**
+                 * A dispatcher for boxing a primitive value.
+                 */
+                enum BoxingDispatcher {
+
+                    /**
+                     * A boxing dispatcher for the {@code boolean} type.
+                     */
+                    BOOLEAN(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Boolean.class, boolean.class, "booleanValue"),
+
+                    /**
+                     * A boxing dispatcher for the {@code byte} type.
+                     */
+                    BYTE(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Byte.class, byte.class, "byteValue"),
+
+                    /**
+                     * A boxing dispatcher for the {@code short} type.
+                     */
+                    SHORT(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Short.class, short.class, "shortValue"),
+
+                    /**
+                     * A boxing dispatcher for the {@code char} type.
+                     */
+                    CHARACTER(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Character.class, char.class, "charValue"),
+
+                    /**
+                     * A boxing dispatcher for the {@code int} type.
+                     */
+                    INTEGER(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Integer.class, int.class, "intValue"),
+
+                    /**
+                     * A boxing dispatcher for the {@code long} type.
+                     */
+                    LONG(Opcodes.LCONST_0, Opcodes.LLOAD, Opcodes.LSTORE, Long.class, long.class, "longValue"),
+
+                    /**
+                     * A boxing dispatcher for the {@code float} type.
+                     */
+                    FLOAT(Opcodes.FCONST_0, Opcodes.FLOAD, Opcodes.FSTORE, Float.class, float.class, "floatValue"),
+
+                    /**
+                     * A boxing dispatcher for the {@code double} type.
+                     */
+                    DOUBLE(Opcodes.DCONST_0, Opcodes.DLOAD, Opcodes.DSTORE, Double.class, double.class, "doubleValue");
+
+                    /**
+                     * The name of the boxing method of a wrapper type.
+                     */
+                    private static final String VALUE_OF = "valueOf";
+
+                    /**
+                     * The opcode for loading the default value for this type onto the operand stack.
+                     */
+                    private final int defaultValue;
+
+                    /**
+                     * The opcode to use for loading a value of this type.
+                     */
+                    private final int load;
+
+                    /**
+                     * The opcode to use for loading a value of this type.
+                     */
+                    private final int store;
+
+                    /**
+                     * The name of the method used for unboxing a primitive type.
+                     */
+                    private final String unboxingMethod;
+
+                    /**
+                     * The name of the wrapper type.
+                     */
+                    private final String owner;
+
+                    /**
+                     * The descriptor of the boxing method.
+                     */
+                    private final String boxingDescriptor;
+
+                    /**
+                     * The descriptor of the unboxing method.
+                     */
+                    private final String unboxingDescriptor;
+
+                    /**
+                     * The required stack size of the unboxed value.
+                     */
+                    private final StackSize stackSize;
+
+                    /**
+                     * Creates a new boxing dispatcher.
+                     *
+                     * @param defaultValue   The opcode for loading the default value for this type onto the operand stack.
+                     * @param load           The opcode to use for loading a value of this type.
+                     * @param store          The opcode to use for storing a value of this type.
+                     * @param wrapperType    The represented wrapper type.
+                     * @param primitiveType  The represented primitive type.
+                     * @param unboxingMethod The name of the method used for unboxing a primitive type.
+                     */
+                    BoxingDispatcher(int defaultValue, int load, int store, Class<?> wrapperType, Class<?> primitiveType, String unboxingMethod) {
+                        this.defaultValue = defaultValue;
+                        this.load = load;
+                        this.store = store;
+                        this.unboxingMethod = unboxingMethod;
+                        owner = Type.getInternalName(wrapperType);
+                        boxingDescriptor = Type.getMethodDescriptor(Type.getType(wrapperType), Type.getType(primitiveType));
+                        unboxingDescriptor = Type.getMethodDescriptor(Type.getType(primitiveType));
+                        stackSize = StackSize.of(primitiveType);
+                    }
+
+                    /**
+                     * Resolves a boxing dispatcher for the supplied primitive type.
+                     *
+                     * @param typeDefinition A description of a primitive type.
+                     * @return An appropriate boxing dispatcher.
+                     */
+                    protected static BoxingDispatcher of(TypeDefinition typeDefinition) {
+                        if (typeDefinition.represents(boolean.class)) {
+                            return BOOLEAN;
+                        } else if (typeDefinition.represents(byte.class)) {
+                            return BYTE;
+                        } else if (typeDefinition.represents(short.class)) {
+                            return SHORT;
+                        } else if (typeDefinition.represents(char.class)) {
+                            return CHARACTER;
+                        } else if (typeDefinition.represents(int.class)) {
+                            return INTEGER;
+                        } else if (typeDefinition.represents(long.class)) {
+                            return LONG;
+                        } else if (typeDefinition.represents(float.class)) {
+                            return FLOAT;
+                        } else if (typeDefinition.represents(double.class)) {
+                            return DOUBLE;
+                        } else {
+                            throw new IllegalArgumentException("Cannot box: " + typeDefinition);
+                        }
+                    }
+
+                    /**
+                     * Loads the value as a boxed version onto the stack.
+                     *
+                     * @param methodVisitor the method visitor for which to load the value.
+                     * @param offset        The offset of the primitive value.
+                     */
+                    protected void loadBoxed(MethodVisitor methodVisitor, int offset) {
+                        methodVisitor.visitVarInsn(load, offset);
+                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, boxingDescriptor, false);
+                    }
+
+                    /**
+                     * Stores the value as a unboxed version onto the stack.
+                     *
+                     * @param methodVisitor the method visitor for which to store the value.
+                     * @param offset        The offset of the primitive value.
+                     */
+                    protected void storeUnboxed(MethodVisitor methodVisitor, int offset) {
+                        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, owner);
+                        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, unboxingMethod, unboxingDescriptor, false);
+                        methodVisitor.visitVarInsn(store, offset);
+                    }
+
+                    /**
+                     * Pushes the represented default value as a boxed value onto the operand stack.
+                     * @param methodVisitor The method visitor to apply the changes to.
+                     */
+                    protected void pushBoxedDefault(MethodVisitor methodVisitor) {
+                        methodVisitor.visitInsn(defaultValue);
+                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, boxingDescriptor, false);
+                    }
+
+                    /**
+                     * Returns the stack size of the primitive value.
+                     *
+                     * @return The stack size of the primitive value.
+                     */
+                    protected StackSize getStackSize() {
+                        return stackSize;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.BoxingDispatcher." + name();
+                    }
+                }
+
+                /**
                  * Loads a default value onto the stack or pops the accessed value off it.
                  */
                 enum ForDefaultValue implements Target {
@@ -2240,6 +2426,75 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public String toString() {
                         return "Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue." + name();
+                    }
+                }
+
+                /**
+                 * Loads a boxed default value onto the operand stack.
+                 */
+                class ForBoxedDefaultValue implements Target {
+
+                    /**
+                     * The boxing dispatcher to use.
+                     */
+                    private final BoxingDispatcher boxingDispatcher;
+
+                    /**
+                     * Creates a new target for a boxing dispatcher.
+                     *
+                     * @param boxingDispatcher The boxing dispatcher to use.
+                     */
+                    protected ForBoxedDefaultValue(BoxingDispatcher boxingDispatcher) {
+                        this.boxingDispatcher = boxingDispatcher;
+                    }
+
+                    /**
+                     * Creates a new target for loading a value of the given primitve type onto the operand stack.
+                     *
+                     * @param typeDefinition The primitive type to push boxed onto the operand stack.
+                     * @return An appropriate target.
+                     */
+                    protected static Target of(TypeDefinition typeDefinition) {
+                        return new Target.ForBoxedDefaultValue(BoxingDispatcher.of(typeDefinition));
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ALOAD:
+                                boxingDispatcher.pushBoxedDefault(methodVisitor);
+                                return boxingDispatcher.getStackSize().getSize() - 1;
+                            case Opcodes.ASTORE:
+                                methodVisitor.visitInsn(Opcodes.POP);
+                                return NO_PADDING;
+                            default:
+                                throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        }
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException(); // TODO
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForBoxedDefaultValue that = (ForBoxedDefaultValue) object;
+                        return boxingDispatcher == that.boxingDispatcher;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return boxingDispatcher.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedDefaultValue{" +
+                                "boxingDispatcher=" + boxingDispatcher +
+                                '}';
                     }
                 }
 
@@ -2843,176 +3098,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     '}';
                         }
                     }
-
-                    /**
-                     * A dispatcher for boxing a primitive value.
-                     */
-                    protected enum BoxingDispatcher {
-
-                        /**
-                         * A boxing dispatcher for the {@code boolean} type.
-                         */
-                        BOOLEAN(Opcodes.ILOAD, Opcodes.ISTORE, Boolean.class, boolean.class, "booleanValue"),
-
-                        /**
-                         * A boxing dispatcher for the {@code byte} type.
-                         */
-                        BYTE(Opcodes.ILOAD, Opcodes.ISTORE, Byte.class, byte.class, "byteValue"),
-
-                        /**
-                         * A boxing dispatcher for the {@code short} type.
-                         */
-                        SHORT(Opcodes.ILOAD, Opcodes.ISTORE, Short.class, short.class, "shortValue"),
-
-                        /**
-                         * A boxing dispatcher for the {@code char} type.
-                         */
-                        CHARACTER(Opcodes.ILOAD, Opcodes.ISTORE, Character.class, char.class, "charValue"),
-
-                        /**
-                         * A boxing dispatcher for the {@code int} type.
-                         */
-                        INTEGER(Opcodes.ILOAD, Opcodes.ISTORE, Integer.class, int.class, "intValue"),
-
-                        /**
-                         * A boxing dispatcher for the {@code long} type.
-                         */
-                        LONG(Opcodes.LLOAD, Opcodes.LSTORE, Long.class, long.class, "longValue"),
-
-                        /**
-                         * A boxing dispatcher for the {@code float} type.
-                         */
-                        FLOAT(Opcodes.FLOAD, Opcodes.FSTORE, Float.class, float.class, "floatValue"),
-
-                        /**
-                         * A boxing dispatcher for the {@code double} type.
-                         */
-                        DOUBLE(Opcodes.DLOAD, Opcodes.DSTORE, Double.class, double.class, "doubleValue");
-
-                        /**
-                         * The name of the boxing method of a wrapper type.
-                         */
-                        private static final String VALUE_OF = "valueOf";
-
-                        /**
-                         * The opcode to use for loading a value of this type.
-                         */
-                        private final int load;
-
-                        /**
-                         * The opcode to use for loading a value of this type.
-                         */
-                        private final int store;
-
-                        /**
-                         * The name of the method used for unboxing a primitive type.
-                         */
-                        private final String unboxingMethod;
-
-                        /**
-                         * The name of the wrapper type.
-                         */
-                        private final String owner;
-
-                        /**
-                         * The descriptor of the boxing method.
-                         */
-                        private final String boxingDescriptor;
-
-                        /**
-                         * The descriptor of the unboxing method.
-                         */
-                        private final String unboxingDescriptor;
-
-                        /**
-                         * The required stack size of the unboxed value.
-                         */
-                        private final StackSize stackSize;
-
-                        /**
-                         * Creates a new boxing dispatcher.
-                         *
-                         * @param load           The opcode to use for loading a value of this type.
-                         * @param store          The opcode to use for storing a value of this type.
-                         * @param wrapperType    The represented wrapper type.
-                         * @param primitiveType  The represented primitive type.
-                         * @param unboxingMethod The name of the method used for unboxing a primitive type.
-                         */
-                        BoxingDispatcher(int load, int store, Class<?> wrapperType, Class<?> primitiveType, String unboxingMethod) {
-                            this.load = load;
-                            this.store = store;
-                            this.unboxingMethod = unboxingMethod;
-                            owner = Type.getInternalName(wrapperType);
-                            boxingDescriptor = Type.getMethodDescriptor(Type.getType(wrapperType), Type.getType(primitiveType));
-                            unboxingDescriptor = Type.getMethodDescriptor(Type.getType(primitiveType));
-                            stackSize = StackSize.of(primitiveType);
-                        }
-
-                        /**
-                         * Resolves a boxing dispatcher for the supplied primitive type.
-                         *
-                         * @param typeDefinition A description of a primitive type.
-                         * @return An appropriate boxing dispatcher.
-                         */
-                        protected static BoxingDispatcher of(TypeDefinition typeDefinition) {
-                            if (typeDefinition.represents(boolean.class)) {
-                                return BOOLEAN;
-                            } else if (typeDefinition.represents(byte.class)) {
-                                return BYTE;
-                            } else if (typeDefinition.represents(short.class)) {
-                                return SHORT;
-                            } else if (typeDefinition.represents(char.class)) {
-                                return CHARACTER;
-                            } else if (typeDefinition.represents(int.class)) {
-                                return INTEGER;
-                            } else if (typeDefinition.represents(long.class)) {
-                                return LONG;
-                            } else if (typeDefinition.represents(float.class)) {
-                                return FLOAT;
-                            } else if (typeDefinition.represents(double.class)) {
-                                return DOUBLE;
-                            } else {
-                                throw new IllegalArgumentException("Cannot box: " + typeDefinition);
-                            }
-                        }
-
-                        /**
-                         * Loads the value as a boxed version onto the stack.
-                         *
-                         * @param methodVisitor the method visitor for which to load the value.
-                         * @param offset        The offset of the primitive value.
-                         */
-                        protected void loadBoxed(MethodVisitor methodVisitor, int offset) {
-                            methodVisitor.visitVarInsn(load, offset);
-                            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, boxingDescriptor, false);
-                        }
-
-                        /**
-                         * Stores the value as a unboxed version onto the stack.
-                         *
-                         * @param methodVisitor the method visitor for which to store the value.
-                         * @param offset        The offset of the primitive value.
-                         */
-                        protected void storeUnboxed(MethodVisitor methodVisitor, int offset) {
-                            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, owner);
-                            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, unboxingMethod, unboxingDescriptor, false);
-                            methodVisitor.visitVarInsn(store, offset);
-                        }
-
-                        /**
-                         * Returns the stack size of the primitive value.
-                         *
-                         * @return The stack size of the primitive value.
-                         */
-                        protected StackSize getStackSize() {
-                            return stackSize;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.BoxingDispatcher." + name();
-                        }
-                    }
                 }
 
                 /**
@@ -3045,7 +3130,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     methodVisitor.visitInsn(Opcodes.DUP);
                                     loadInteger(methodVisitor, parameter.getIndex());
                                     if (parameter.getType().isPrimitive()) {
-                                        ForBoxedParameter.BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
+                                        BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
                                     } else {
                                         methodVisitor.visitVarInsn(Opcodes.ALOAD, parameter.getOffset());
                                     }
@@ -4204,7 +4289,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
              */
-            enum ForStubValue implements OffsetMapping, Factory {
+            enum ForUnusedValue implements OffsetMapping, Factory {
 
                 /**
                  * The singleton instance.
@@ -4218,9 +4303,44 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                    return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(StubValue.class)
+                    return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Unused.class)
                             ? this
                             : UNDEFINED;
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForUnusedValue." + name();
+                }
+            }
+
+            /**
+             * An offset mapping for a parameter where assignments are fully ignored and that is assigned a boxed version of the instrumented
+             * method's return valueor {@code null} if the return type is not primitive or {@code void}.
+             */
+            enum ForStubValue implements OffsetMapping, Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    return instrumentedMethod.getReturnType().isPrimitive() && !instrumentedMethod.getReturnType().represents(void.class)
+                            ? Target.ForBoxedDefaultValue.of(instrumentedMethod.getReturnType())
+                            : Target.ForNullConstant.READ_WRITE;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                    if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(StubValue.class)) {
+                        return UNDEFINED;
+                    } else if (!parameterDescription.getType().represents(Object.class)) {
+                        throw new IllegalStateException("Cannot use StubValue on non-Object parameter type " + parameterDescription);
+                    } else {
+                        return this;
+                    }
                 }
 
                 @Override
@@ -5897,6 +6017,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForUnusedValue.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
                                 classReader,
@@ -6051,6 +6172,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForUnusedValue.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.ForEnterValue.Factory(enterType, false),
                                         OffsetMapping.ForReturnValue.Factory.READ_WRITE,
@@ -7095,6 +7217,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForUnusedValue.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
@@ -7179,6 +7302,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForUnusedValue.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.ForEnterValue.Factory(enterType, true),
                                         OffsetMapping.ForReturnValue.Factory.READ_ONLY,
@@ -7573,6 +7697,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
      * for {@code boolean} types and {@code null} for reference types).
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface Unused {
+        /* empty */
+    }
+
+    /**
+     *
+     * Indicates that the annotated parameter should always return a default a boxed version of the instrumented methods return value
+     * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
+     * parameter must be of type {@link Object}.
      *
      * @see Advice
      * @see OnMethodEnter
