@@ -1661,7 +1661,7 @@ public interface AnnotationDescription {
                 Method method = methodDescription instanceof MethodDescription.ForLoadedMethod
                         ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
                         : null;
-                if (method == null || (!accessible && !method.isAccessible())) {
+                if (method == null || (method.getDeclaringClass() != annotation.annotationType() || !accessible && !method.isAccessible())) {
                     method = annotation.annotationType().getDeclaredMethod(methodDescription.getName());
                     if (!accessible) {
                         AccessController.doPrivileged(new SetAccessibleAction<Method>(method));
@@ -1676,8 +1676,8 @@ public interface AnnotationDescription {
         @Override
         @SuppressWarnings("unchecked")
         public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
-            if (annotation.annotationType() != annotationType) {
-                throw new IllegalArgumentException(annotation + " type is not of identical to " + annotationType);
+            if (annotation.annotationType() != annotationType && !annotation.annotationType().getName().equals(annotationType.getName())) {
+                throw new IllegalArgumentException(annotation + " does not represent " + annotationType);
             }
             return (Loadable<T>) this;
         }
