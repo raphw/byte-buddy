@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 9. August 2016: version 1.4.18
+
+- Added automatic support for Java 9 class file location for boot modules.
+- Improvided `FieldProxy.Binder` to allow for a single accessor interface.
+- Fixed counting problem in `Advice` component.
+
 ### 1. August 2016: version 1.4.17
 
 - Fixed annotation resolution for Java 9 to exlude the `jdk.internal` namespace by default.
