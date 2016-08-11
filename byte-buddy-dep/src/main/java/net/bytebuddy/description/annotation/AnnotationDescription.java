@@ -1526,17 +1526,12 @@ public interface AnnotationDescription {
          */
         public abstract static class ForPrepared<S extends Annotation> extends AbstractBase implements Loadable<S> {
 
-            /**
-             * The error message to be displayed on a {@link java.lang.ClassNotFoundException}.
-             */
-            public static final String ERROR_MESSAGE = "Could not load a type that is linked by the annotation value";
-
             @Override
             public S loadSilent() {
                 try {
                     return load();
                 } catch (ClassNotFoundException exception) {
-                    throw new IllegalStateException(ERROR_MESSAGE, exception);
+                    throw new IllegalStateException("Could not load annotation type or referenced type", exception);
                 }
             }
         }
