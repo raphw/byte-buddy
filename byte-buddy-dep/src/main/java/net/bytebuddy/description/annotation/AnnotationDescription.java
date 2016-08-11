@@ -1183,7 +1183,7 @@ public interface AnnotationDescription {
                     return equalsRepresentation(proxy, arguments[0]);
                 } else if (method.getName().equals(TO_STRING)) {
                     return toStringRepresentation();
-                } else /* method.getName().equals("annotationType") */ {
+                } else /* if (method.getName().equals("annotationType")) */ {
                     return annotationType;
                 }
             }
@@ -1711,7 +1711,7 @@ public interface AnnotationDescription {
         @SuppressWarnings("unchecked")
         public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
             if (!annotation.annotationType().getName().equals(annotationType.getName())) {
-                throw new IllegalArgumentException(annotation + " does not represent " + annotationType);
+                throw new IllegalArgumentException(annotationType + " does not represent " + annotation.annotationType());
             }
             return annotationType == annotation.annotationType()
                     ? (Loadable<T>) this
@@ -1771,7 +1771,7 @@ public interface AnnotationDescription {
         @Override
         public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
             if (!this.annotationType.represents(annotationType)) {
-                throw new IllegalArgumentException("Not a compatible annotation type: " + annotationType);
+                throw new IllegalArgumentException(annotationType + " does not represent " + this.annotationType);
             }
             return new Loadable<T>(annotationType);
         }
@@ -1809,7 +1809,7 @@ public interface AnnotationDescription {
 
             @Override
             public TypeDescription getAnnotationType() {
-                return Latent.this.getAnnotationType();
+                return new TypeDescription.ForLoadedType(annotationType);
             }
 
             @Override
