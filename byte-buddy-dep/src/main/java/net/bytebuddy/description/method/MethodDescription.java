@@ -6,6 +6,7 @@ import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -55,11 +56,6 @@ public interface MethodDescription extends TypeVariableSource,
      * The type initializer of any representation of a type initializer.
      */
     int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC;
-
-    /**
-     * Represents a non-defined default value of an annotation property.
-     */
-    AnnotationDescription.AnnotationValue<?, ?> NO_DEFAULT_VALUE = null;
 
     /**
      * Represents any undefined property of a type description that is instead represented as {@code null} in order
@@ -174,7 +170,7 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isSpecializableFor(TypeDescription typeDescription);
 
-    AnnotationDescription.AnnotationValue<?, ?> getDefaultValue();
+    AnnotationValue<?, ?> getDefaultValue();
 
     /**
      * Returns the default value but casts it to the given type. If the type differs from the value, a
@@ -852,8 +848,8 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
-            return NO_DEFAULT_VALUE;
+        public AnnotationValue<?, ?> getDefaultValue() {
+            return AnnotationValue.UNDEFINED;
         }
 
         @Override
@@ -979,10 +975,10 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+        public AnnotationValue<?, ?> getDefaultValue() {
             Object value = method.getDefaultValue();
             return value == null
-                    ? NO_DEFAULT_VALUE
+                    ? AnnotationValue.UNDEFINED
                     : AnnotationDescription.ForLoadedAnnotation.asValue(method.getReturnType(), value);
         }
 
@@ -1049,7 +1045,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * The default value of this method or {@code null} if no default annotation value is defined.
          */
-        private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
+        private final AnnotationValue<?, ?> defaultValue;
 
         /**
          * The receiver type of this method or {@code null} if the receiver type is defined implicitly.
@@ -1097,7 +1093,7 @@ public interface MethodDescription extends TypeVariableSource,
                       List<? extends ParameterDescription.Token> parameterTokens,
                       List<? extends TypeDescription.Generic> exceptionTypes,
                       List<? extends AnnotationDescription> declaredAnnotations,
-                      AnnotationDescription.AnnotationValue<?, ?> defaultValue,
+                      AnnotationValue<?, ?> defaultValue,
                       TypeDescription.Generic receiverType) {
             this.declaringType = declaringType;
             this.internalName = internalName;
@@ -1152,7 +1148,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+        public AnnotationValue<?, ?> getDefaultValue() {
             return defaultValue;
         }
 
@@ -1198,8 +1194,8 @@ public interface MethodDescription extends TypeVariableSource,
             }
 
             @Override
-            public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
-                return NO_DEFAULT_VALUE;
+            public AnnotationValue<?, ?> getDefaultValue() {
+                return AnnotationValue.UNDEFINED;
             }
 
             @Override
@@ -1285,7 +1281,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+        public AnnotationValue<?, ?> getDefaultValue() {
             return methodDescription.getDefaultValue();
         }
 
@@ -1366,7 +1362,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * The default value of the represented method or {@code null} if no such value exists.
          */
-        private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
+        private final AnnotationValue<?, ?> defaultValue;
 
         /**
          * The receiver type of the represented method or {@code null} if the receiver type is implicit.
@@ -1411,7 +1407,7 @@ public interface MethodDescription extends TypeVariableSource,
                     new ParameterDescription.Token.TypeList(parameterTypes),
                     Collections.<TypeDescription.Generic>emptyList(),
                     Collections.<AnnotationDescription>emptyList(),
-                    NO_DEFAULT_VALUE,
+                    AnnotationValue.UNDEFINED,
                     TypeDescription.Generic.UNDEFINED);
         }
 
@@ -1435,7 +1431,7 @@ public interface MethodDescription extends TypeVariableSource,
                      List<? extends ParameterDescription.Token> parameterTokens,
                      List<? extends TypeDescription.Generic> exceptionTypes,
                      List<? extends AnnotationDescription> annotations,
-                     AnnotationDescription.AnnotationValue<?, ?> defaultValue,
+                     AnnotationValue<?, ?> defaultValue,
                      TypeDescription.Generic receiverType) {
             this.name = name;
             this.modifiers = modifiers;
@@ -1516,7 +1512,7 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return The default value of the represented method or {@code null} if no such value exists.
          */
-        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+        public AnnotationValue<?, ?> getDefaultValue() {
             return defaultValue;
         }
 

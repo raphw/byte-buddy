@@ -1,8 +1,8 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -1182,8 +1182,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 @Override
-                public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
-                    return NO_DEFAULT_VALUE;
+                public AnnotationValue<?, ?> getDefaultValue() {
+                    return AnnotationValue.UNDEFINED;
                 }
 
                 @Override
@@ -1263,8 +1263,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 @Override
-                public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
-                    return NO_DEFAULT_VALUE;
+                public AnnotationValue<?, ?> getDefaultValue() {
+                    return AnnotationValue.UNDEFINED;
                 }
 
                 @Override
@@ -1344,8 +1344,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 @Override
-                public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
-                    return NO_DEFAULT_VALUE;
+                public AnnotationValue<?, ?> getDefaultValue() {
+                    return AnnotationValue.UNDEFINED;
                 }
 
                 @Override

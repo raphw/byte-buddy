@@ -1,6 +1,7 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -44,7 +45,7 @@ public class MethodDescriptionTokenTest {
     private AnnotationDescription annotation;
 
     @Mock
-    private AnnotationDescription.AnnotationValue<?, ?> defaultValue;
+    private AnnotationValue<?, ?> defaultValue;
 
     @Mock
     private TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
@@ -82,7 +83,7 @@ public class MethodDescriptionTokenTest {
         assertThat(token.getParameterTokens(), is(Collections.singletonList(parameterToken)));
         assertThat(token.getExceptionTypes(), is(Collections.singletonList(exceptionType)));
         assertThat(token.getAnnotations(), is(Collections.singletonList(annotation)));
-        assertThat(token.getDefaultValue(), is((AnnotationDescription.AnnotationValue) defaultValue));
+        assertThat(token.getDefaultValue(), is((AnnotationValue) defaultValue));
         assertThat(token.getReceiverType(), is(receiverType));
     }
 

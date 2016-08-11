@@ -434,8 +434,8 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     private void assertValue(Annotation annotation, String methodName, Object rawValue, Object loadedValue) throws Exception {
-        assertThat(describe(annotation).getValue(new MethodDescription
-                .ForLoadedMethod(annotation.annotationType().getDeclaredMethod(methodName))), is(rawValue));
+        assertThat(describe(annotation).getValue(new MethodDescription.ForLoadedMethod(annotation.annotationType().getDeclaredMethod(methodName))).resolve(),
+                is(rawValue));
         assertThat(describe(annotation).getValue(new MethodDescription.Latent(new TypeDescription.ForLoadedType(annotation.annotationType()),
                 methodName,
                 Opcodes.ACC_PUBLIC,
@@ -444,10 +444,10 @@ public abstract class AbstractAnnotationDescriptionTest {
                 Collections.<ParameterDescription.Token>emptyList(),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
-                MethodDescription.NO_DEFAULT_VALUE,
+                AnnotationValue.UNDEFINED,
                 TypeDescription.Generic.UNDEFINED)), is(rawValue));
-        assertThat(annotation.annotationType().getDeclaredMethod(methodName)
-                .invoke(describe(annotation).prepare(annotation.annotationType()).load()), is(loadedValue));
+        assertThat(annotation.annotationType().getDeclaredMethod(methodName).invoke(describe(annotation).prepare(annotation.annotationType()).load()),
+                is(loadedValue));
     }
 
     public enum SampleEnumeration {

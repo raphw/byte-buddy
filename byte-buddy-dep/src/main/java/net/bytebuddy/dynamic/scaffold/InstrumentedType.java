@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -906,8 +907,8 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + methodDescription);
                     }
                 }
-                Object defaultValue = methodDescription.getDefaultValue();
-                if (defaultValue != null && !methodDescription.isDefaultValue(defaultValue)) {
+                AnnotationValue<?, ?> defaultValue = methodDescription.getDefaultValue();
+                if (defaultValue != null && !methodDescription.isDefaultValue(defaultValue)) { // TODO
                     throw new IllegalStateException("Illegal default value " + defaultValue + "for " + methodDescription);
                 }
                 Generic receiverType = methodDescription.getReceiverType();

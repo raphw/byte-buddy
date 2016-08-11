@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
@@ -199,7 +199,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class));
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
-                new AnnotationDescription.AnnotationValue.Trivial<String>(FOO),
+                new AnnotationValue.Trivial<String>(FOO),
                 methodAttributeAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
         record.apply(classVisitor, implementationContext, annotationValueFilterFactory);
@@ -223,7 +223,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(parameterDescription.isNamed()).thenReturn(true);
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
-                new AnnotationDescription.AnnotationValue.Trivial<String>(FOO),
+                new AnnotationValue.Trivial<String>(FOO),
                 methodAttributeAppender);
         record.applyHead(methodVisitor);
         verify(methodVisitor).visitAnnotationDefault();
@@ -240,7 +240,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
-                new AnnotationDescription.AnnotationValue.Trivial<String>(FOO),
+                new AnnotationValue.Trivial<String>(FOO),
                 methodAttributeAppender);
         record.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
         verifyZeroInteractions(methodVisitor);
@@ -256,7 +256,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class));
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
-                new AnnotationDescription.AnnotationValue.Trivial<String>(FOO),
+                new AnnotationValue.Trivial<String>(FOO),
                 methodAttributeAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
         record.apply(classVisitor, implementationContext, annotationValueFilterFactory);
@@ -276,15 +276,17 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test(expected = IllegalStateException.class)
     public void testDefaultValueMethodPrepended() throws Exception {
-        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription, new AnnotationDescription.AnnotationValue.Trivial<String>(FOO), methodAttributeAppender)
-                .prepend(otherAppender);
+        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
+                new AnnotationValue.Trivial<String>(FOO),
+                methodAttributeAppender).prepend(otherAppender);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNoDefaultValue() throws Exception {
         when(methodDescription.isDefaultValue(FOO)).thenReturn(false);
-        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription, new AnnotationDescription.AnnotationValue.Trivial<String>(FOO), methodAttributeAppender)
-                .apply(classVisitor, implementationContext, annotationValueFilterFactory);
+        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
+                new AnnotationValue.Trivial<String>(FOO),
+                methodAttributeAppender).apply(classVisitor, implementationContext, annotationValueFilterFactory);
     }
 
     @Test
@@ -376,7 +378,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription,valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
         verifyNoMoreInteractions(byteCodeAppender);

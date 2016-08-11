@@ -5,6 +5,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -1479,7 +1480,7 @@ public interface DynamicType {
                  * @param annotationValue The value to be defined as a default value.
                  * @return A builder where the previously defined or matched method is implemented to return an annotation default value.
                  */
-                MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue);
+                MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationValue<?, ?> annotationValue);
 
                 /**
                  * Defines the previously defined or matched method to return the supplied value as an annotation default value. The
@@ -1657,7 +1658,7 @@ public interface DynamicType {
                             }
 
                             @Override
-                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationValue<?, ?> annotationValue) {
                                 return materialize().defaultValue(annotationValue);
                             }
 
@@ -1940,7 +1941,7 @@ public interface DynamicType {
                             }
 
                             @Override
-                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationValue<?, ?> annotationValue) {
                                 return materialize().defaultValue(annotationValue);
                             }
 
@@ -2082,7 +2083,7 @@ public interface DynamicType {
                                 }
 
                                 @Override
-                                public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                                public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationValue<?, ?> annotationValue) {
                                     return materialize().defaultValue(annotationValue);
                                 }
 
@@ -3439,7 +3440,7 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationValue<?, ?> annotationValue) {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
                                 token.getTypeVariableTokens(),
@@ -3867,7 +3868,7 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationValue<?, ?> annotationValue) {
                         return materialize(new MethodRegistry.Handler.ForAnnotationValue(annotationValue));
                     }
 
@@ -4064,7 +4065,7 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationValue<?, ?> annotationValue) {
                         return interfaceType().defaultValue(annotationValue);
                     }
 

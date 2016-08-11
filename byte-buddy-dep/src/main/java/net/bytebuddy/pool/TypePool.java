@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -566,7 +567,7 @@ public interface TypePool {
         /**
          * Represents a nested annotation value.
          */
-        protected static class RawAnnotationValue extends AnnotationDescription.AnnotationValue.AbstractBase<AnnotationDescription, Annotation> {
+        protected static class RawAnnotationValue extends AnnotationValue.AbstractBase<AnnotationDescription, Annotation> {
 
             /**
              * The type pool to use for looking up types.
@@ -629,7 +630,7 @@ public interface TypePool {
         /**
          * Represents an enumeration value of an annotation.
          */
-        protected static class RawEnumerationValue extends AnnotationDescription.AnnotationValue.AbstractBase<EnumerationDescription, Enum<?>> {
+        protected static class RawEnumerationValue extends AnnotationValue.AbstractBase<EnumerationDescription, Enum<?>> {
 
             /**
              * The type pool to use for looking up types.
@@ -722,7 +723,7 @@ public interface TypePool {
         /**
          * Represents a type value of an annotation.
          */
-        protected static class RawTypeValue extends AnnotationDescription.AnnotationValue.AbstractBase<TypeDescription, Class<?>> {
+        protected static class RawTypeValue extends AnnotationValue.AbstractBase<TypeDescription, Class<?>> {
 
             /**
              * A convenience reference indicating that a loaded type should not be initialized.
@@ -758,7 +759,7 @@ public interface TypePool {
             }
 
             @Override
-            public AnnotationDescription.AnnotationValue.Loaded<Class<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
+            public AnnotationValue.Loaded<Class<?>> load(ClassLoader classLoader) throws ClassNotFoundException {
                 return new Loaded(Class.forName(name, NO_INITIALIZATION, classLoader));
             }
 
@@ -783,7 +784,7 @@ public interface TypePool {
             /**
              * Represents a loaded annotation property that represents a type.
              */
-            protected static class Loaded extends AnnotationDescription.AnnotationValue.Loaded.AbstractBase<Class<?>> {
+            protected static class Loaded extends AnnotationValue.Loaded.AbstractBase<Class<?>> {
 
                 /**
                  * The type that is represented by an annotation property.
@@ -812,8 +813,8 @@ public interface TypePool {
                 @Override
                 public boolean equals(Object other) {
                     if (this == other) return true;
-                    if (!(other instanceof AnnotationDescription.AnnotationValue.Loaded<?>)) return false;
-                    AnnotationDescription.AnnotationValue.Loaded<?> loadedOther = (AnnotationDescription.AnnotationValue.Loaded<?>) other;
+                    if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
+                    AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
                     return loadedOther.getState().isResolved() && type.equals(loadedOther.resolve());
                 }
 
@@ -832,7 +833,7 @@ public interface TypePool {
         /**
          * Represents an array that is referenced by an annotation which does not contain primitive values.
          */
-        protected static class RawNonPrimitiveArray extends AnnotationDescription.AnnotationValue.AbstractBase<Object[], Object[]> {
+        protected static class RawNonPrimitiveArray extends AnnotationValue.AbstractBase<Object[], Object[]> {
 
             /**
              * The type pool to use for looking up types.
@@ -847,7 +848,7 @@ public interface TypePool {
             /**
              * A list of all values of this array value in their order.
              */
-            private List<AnnotationDescription.AnnotationValue<?, ?>> value;
+            private List<AnnotationValue<?, ?>> value;
 
             /**
              * Creates a new array value representation of a complex array.
@@ -858,7 +859,7 @@ public interface TypePool {
              */
             public RawNonPrimitiveArray(TypePool typePool,
                                         ComponentTypeReference componentTypeReference,
-                                        List<AnnotationDescription.AnnotationValue<?, ?>> value) {
+                                        List<AnnotationValue<?, ?>> value) {
                 this.typePool = typePool;
                 this.value = value;
                 this.componentTypeReference = componentTypeReference;
@@ -881,16 +882,16 @@ public interface TypePool {
                 }
                 Object[] array = (Object[]) Array.newInstance(componentType, value.size());
                 int index = 0;
-                for (AnnotationDescription.AnnotationValue<?, ?> annotationValue : value) {
+                for (AnnotationValue<?, ?> annotationValue : value) {
                     Array.set(array, index++, annotationValue.resolve());
                 }
                 return array;
             }
 
             @Override
-            public AnnotationDescription.AnnotationValue.Loaded<Object[]> load(ClassLoader classLoader) throws ClassNotFoundException {
-                List<AnnotationDescription.AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationDescription.AnnotationValue.Loaded<?>>(value.size());
-                for (AnnotationDescription.AnnotationValue<?, ?> value : this.value) {
+            public AnnotationValue.Loaded<Object[]> load(ClassLoader classLoader) throws ClassNotFoundException {
+                List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(value.size());
+                for (AnnotationValue<?, ?> value : this.value) {
                     loadedValues.add(value.load(classLoader));
                 }
                 return new Loaded(classLoader.loadClass(componentTypeReference.lookup()), loadedValues);
@@ -932,7 +933,7 @@ public interface TypePool {
             /**
              * Represents a loaded annotation property representing a complex array.
              */
-            protected static class Loaded extends AnnotationDescription.AnnotationValue.Loaded.AbstractBase<Object[]> {
+            protected static class Loaded extends AnnotationValue.Loaded.AbstractBase<Object[]> {
 
                 /**
                  * The array's loaded component type.
@@ -942,7 +943,7 @@ public interface TypePool {
                 /**
                  * A list of loaded values of the represented complex array.
                  */
-                private final List<AnnotationDescription.AnnotationValue.Loaded<?>> values;
+                private final List<AnnotationValue.Loaded<?>> values;
 
                 /**
                  * Creates a new representation of an annotation property representing an array of
@@ -951,14 +952,14 @@ public interface TypePool {
                  * @param componentType The array's loaded component type.
                  * @param values        A list of loaded values of the represented complex array.
                  */
-                public Loaded(Class<?> componentType, List<AnnotationDescription.AnnotationValue.Loaded<?>> values) {
+                public Loaded(Class<?> componentType, List<AnnotationValue.Loaded<?>> values) {
                     this.componentType = componentType;
                     this.values = values;
                 }
 
                 @Override
                 public State getState() {
-                    for (AnnotationDescription.AnnotationValue.Loaded<?> value : values) {
+                    for (AnnotationValue.Loaded<?> value : values) {
                         if (!value.getState().isResolved()) {
                             return State.NON_RESOLVED;
                         }
@@ -970,7 +971,7 @@ public interface TypePool {
                 public Object[] resolve() {
                     Object[] array = (Object[]) Array.newInstance(componentType, values.size());
                     int index = 0;
-                    for (AnnotationDescription.AnnotationValue.Loaded<?> annotationValue : values) {
+                    for (AnnotationValue.Loaded<?> annotationValue : values) {
                         Array.set(array, index++, annotationValue.resolve());
                     }
                     return array;
@@ -979,16 +980,16 @@ public interface TypePool {
                 @Override
                 public boolean equals(Object other) {
                     if (this == other) return true;
-                    if (!(other instanceof AnnotationDescription.AnnotationValue.Loaded<?>)) return false;
-                    AnnotationDescription.AnnotationValue.Loaded<?> loadedOther = (AnnotationDescription.AnnotationValue.Loaded<?>) other;
+                    if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
+                    AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
                     if (!loadedOther.getState().isResolved()) return false;
                     Object otherValue = loadedOther.resolve();
                     if (!(otherValue instanceof Object[])) return false;
                     Object[] otherArrayValue = (Object[]) otherValue;
                     if (values.size() != otherArrayValue.length) return false;
-                    Iterator<AnnotationDescription.AnnotationValue.Loaded<?>> iterator = values.iterator();
+                    Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
                     for (Object value : otherArrayValue) {
-                        AnnotationDescription.AnnotationValue.Loaded<?> self = iterator.next();
+                        AnnotationValue.Loaded<?> self = iterator.next();
                         if (!self.getState().isResolved() || !self.resolve().equals(value)) {
                             return false;
                         }
@@ -999,7 +1000,7 @@ public interface TypePool {
                 @Override
                 public int hashCode() {
                     int result = 1;
-                    for (AnnotationDescription.AnnotationValue.Loaded<?> value : values) {
+                    for (AnnotationValue.Loaded<?> value : values) {
                         result = 31 * result + value.hashCode();
                     }
                     return result;
@@ -1008,7 +1009,7 @@ public interface TypePool {
                 @Override
                 public String toString() {
                     StringBuilder stringBuilder = new StringBuilder("[");
-                    for (AnnotationDescription.AnnotationValue.Loaded<?> value : values) {
+                    for (AnnotationValue.Loaded<?> value : values) {
                         stringBuilder.append(value.toString());
                     }
                     return stringBuilder.append("]").toString();
@@ -1394,7 +1395,7 @@ public interface TypePool {
              * @param name            The name of the annotation value.
              * @param annotationValue The value of the annotation.
              */
-            void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue);
+            void register(String name, AnnotationValue<?, ?> annotationValue);
 
             /**
              * Called once all annotation values are visited.
@@ -1414,7 +1415,7 @@ public interface TypePool {
                 /**
                  * The values that were collected so far.
                  */
-                private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
+                private final Map<String, AnnotationValue<?, ?>> values;
 
                 /**
                  * Creates a new annotation registrant.
@@ -1423,11 +1424,11 @@ public interface TypePool {
                  */
                 protected AbstractBase(String descriptor) {
                     this.descriptor = descriptor;
-                    values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
+                    values = new HashMap<String, AnnotationValue<?, ?>>();
                 }
 
                 @Override
-                public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                public void register(String name, AnnotationValue<?, ?> annotationValue) {
                     values.put(name, annotationValue);
                 }
 
@@ -5726,7 +5727,7 @@ public interface TypePool {
                 /**
                  * A map of annotation value names to their value representations.
                  */
-                private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
+                private final Map<String, AnnotationValue<?, ?>> values;
 
                 /**
                  * Creates a new annotation token.
@@ -5734,7 +5735,7 @@ public interface TypePool {
                  * @param descriptor The descriptor of the represented annotation.
                  * @param values     A map of annotation value names to their value representations.
                  */
-                protected AnnotationToken(String descriptor, Map<String, AnnotationDescription.AnnotationValue<?, ?>> values) {
+                protected AnnotationToken(String descriptor, Map<String, AnnotationValue<?, ?>> values) {
                     this.descriptor = descriptor;
                     this.values = values;
                 }
@@ -5744,7 +5745,7 @@ public interface TypePool {
                  *
                  * @return A map of annotation value names to their value representations.
                  */
-                protected Map<String, AnnotationDescription.AnnotationValue<?, ?>> getValues() {
+                protected Map<String, AnnotationValue<?, ?>> getValues() {
                     return values;
                 }
 
@@ -6102,7 +6103,7 @@ public interface TypePool {
                 /**
                  * The default value of this method or {@code null} if there is no such value.
                  */
-                private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
+                private final AnnotationValue<?, ?> defaultValue;
 
                 /**
                  * Creates a new method token.
@@ -6139,7 +6140,7 @@ public interface TypePool {
                                       List<AnnotationToken> annotationTokens,
                                       Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                       List<ParameterToken> parameterTokens,
-                                      AnnotationDescription.AnnotationValue<?, ?> defaultValue) {
+                                      AnnotationValue<?, ?> defaultValue) {
                     this.modifiers = modifiers;
                     this.name = name;
                     this.descriptor = descriptor;
@@ -7070,7 +7071,7 @@ public interface TypePool {
                 /**
                  * The default value of this method or {@code null} if no such value exists.
                  */
-                private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
+                private final AnnotationValue<?, ?> defaultValue;
 
                 /**
                  * Creates a new lazy method description.
@@ -7111,7 +7112,7 @@ public interface TypePool {
                                               List<AnnotationToken> annotationTokens,
                                               Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                               List<MethodToken.ParameterToken> parameterTokens,
-                                              AnnotationDescription.AnnotationValue<?, ?> defaultValue) {
+                                              AnnotationValue<?, ?> defaultValue) {
                     this.modifiers = modifiers & ~Opcodes.ACC_DEPRECATED;
                     this.internalName = internalName;
                     Type methodType = Type.getMethodType(methodDescriptor);
@@ -7193,7 +7194,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+                public AnnotationValue<?, ?> getDefaultValue() {
                     return defaultValue;
                 }
 
@@ -7807,7 +7808,7 @@ public interface TypePool {
                 public void visit(String name, Object value) {
                     annotationRegistrant.register(name, value instanceof Type
                             ? new RawTypeValue(Default.this, (Type) value)
-                            : new AnnotationDescription.AnnotationValue.Trivial<Object>(value));
+                            : new AnnotationValue.Trivial<Object>(value));
                 }
 
                 @Override
@@ -7858,7 +7859,7 @@ public interface TypePool {
                     /**
                      * A list of all annotation values that are found on this array.
                      */
-                    private final List<AnnotationDescription.AnnotationValue<?, ?>> values;
+                    private final List<AnnotationValue<?, ?>> values;
 
                     /**
                      * Creates a new annotation registrant for an array lookup.
@@ -7869,11 +7870,11 @@ public interface TypePool {
                     protected ArrayLookup(String name, RawNonPrimitiveArray.ComponentTypeReference componentTypeReference) {
                         this.name = name;
                         this.componentTypeReference = componentTypeReference;
-                        values = new ArrayList<AnnotationDescription.AnnotationValue<?, ?>>();
+                        values = new ArrayList<AnnotationValue<?, ?>>();
                     }
 
                     @Override
-                    public void register(String ignored, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                    public void register(String ignored, AnnotationValue<?, ?> annotationValue) {
                         values.add(annotationValue);
                     }
 
@@ -7911,7 +7912,7 @@ public interface TypePool {
                     /**
                      * This annotation's values mapped by their attribute name.
                      */
-                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
+                    private final Map<String, AnnotationValue<?, ?>> values;
 
                     /**
                      * Creates a new annotation registrant for a recursive annotation lookup.
@@ -7922,11 +7923,11 @@ public interface TypePool {
                     protected AnnotationLookup(String descriptor, String name) {
                         this.descriptor = descriptor;
                         this.name = name;
-                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
+                        values = new HashMap<String, AnnotationValue<?, ?>>();
                     }
 
                     @Override
-                    public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                    public void register(String name, AnnotationValue<?, ?> annotationValue) {
                         values.put(name, annotationValue);
                     }
 
@@ -8139,7 +8140,7 @@ public interface TypePool {
                 /**
                  * The default value of the found method or {@code null} if no such value exists.
                  */
-                private AnnotationDescription.AnnotationValue<?, ?> defaultValue;
+                private AnnotationValue<?, ?> defaultValue;
 
                 /**
                  * Creates a method extractor.
@@ -8255,7 +8256,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public void register(String ignored, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                public void register(String ignored, AnnotationValue<?, ?> annotationValue) {
                     defaultValue = annotationValue;
                 }
 

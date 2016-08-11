@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -46,8 +47,8 @@ public class AnnotationValueFilterDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testSkipDefaultsNoEquality() throws Exception {
-        when(methodDescription.getDefaultValue()).thenReturn(mock(AnnotationDescription.AnnotationValue.class));
-        when(annotationDescription.getValue(methodDescription)).thenReturn(mock(AnnotationDescription.AnnotationValue.class));
+        when(methodDescription.getDefaultValue()).thenReturn(mock(AnnotationValue.class));
+        when(annotationDescription.getValue(methodDescription)).thenReturn(mock(AnnotationValue.class));
         assertThat(AnnotationValueFilter.Default.SKIP_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(true));
         verify(annotationDescription).getValue(methodDescription);
         verifyNoMoreInteractions(annotationDescription);
@@ -58,9 +59,9 @@ public class AnnotationValueFilterDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testSkipDefaultsEquality() throws Exception {
-        AnnotationDescription.AnnotationValue<?, ?> annotationValue = mock(AnnotationDescription.AnnotationValue.class);
-        when(methodDescription.getDefaultValue()).thenReturn((AnnotationDescription.AnnotationValue) annotationValue);
-        when(annotationDescription.getValue(methodDescription)).thenReturn((AnnotationDescription.AnnotationValue) annotationValue);
+        AnnotationValue<?, ?> annotationValue = mock(AnnotationValue.class);
+        when(methodDescription.getDefaultValue()).thenReturn((AnnotationValue) annotationValue);
+        when(annotationDescription.getValue(methodDescription)).thenReturn((AnnotationValue) annotationValue);
         assertThat(AnnotationValueFilter.Default.SKIP_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(false));
         verify(annotationDescription).getValue(methodDescription);
         verifyNoMoreInteractions(annotationDescription);

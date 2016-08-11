@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -57,7 +58,7 @@ public class ConstructorStrategyDefaultTest {
     private MethodDescription.Token token;
 
     @Mock
-    private AnnotationDescription.AnnotationValue<?, ?> defaultValue;
+    private AnnotationValue<?, ?> defaultValue;
 
     private MethodDescription.Token stripped;
 
@@ -80,7 +81,7 @@ public class ConstructorStrategyDefaultTest {
         when(token.getParameterTokens()).thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>());
         when(token.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
         when(token.getAnnotations()).thenReturn(new AnnotationList.Empty());
-        when(token.getDefaultValue()).thenReturn((AnnotationDescription.AnnotationValue) defaultValue);
+        when(token.getDefaultValue()).thenReturn((AnnotationValue) defaultValue);
         when(token.getReceiverType()).thenReturn(typeDescription);
         stripped = new MethodDescription.Token(FOO,
                 MODIFIERS,

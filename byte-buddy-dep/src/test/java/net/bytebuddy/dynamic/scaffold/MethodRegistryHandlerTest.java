@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -30,7 +30,7 @@ public class MethodRegistryHandlerTest {
     private Implementation implementation;
 
     @Mock
-    private AnnotationDescription.AnnotationValue<?, ?> annotationValue;
+    private AnnotationValue<?, ?> annotationValue;
 
     @Mock
     private Implementation.Target implementationTarget;

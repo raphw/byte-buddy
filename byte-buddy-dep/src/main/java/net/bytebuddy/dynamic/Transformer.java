@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -432,7 +432,7 @@ public interface Transformer<T> {
             }
 
             @Override
-            public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+            public AnnotationValue<?, ?> getDefaultValue() {
                 return token.getDefaultValue();
             }
 

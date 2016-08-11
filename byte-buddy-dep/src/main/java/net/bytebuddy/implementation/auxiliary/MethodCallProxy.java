@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -204,7 +205,7 @@ public class MethodCallProxy implements AuxiliaryType {
                     Collections.<ParameterDescription.Token>emptyList(),
                     Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
                     Collections.<AnnotationDescription>emptyList(),
-                    MethodDescription.NO_DEFAULT_VALUE,
+                    AnnotationValue.UNDEFINED,
                     TypeDescription.Generic.UNDEFINED);
             nodes.put(callMethod.asSignatureToken(), new MethodGraph.Node.Simple(callMethod));
             MethodDescription runMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Runnable.class),
@@ -215,7 +216,7 @@ public class MethodCallProxy implements AuxiliaryType {
                     Collections.<ParameterDescription.Token>emptyList(),
                     Collections.<TypeDescription.Generic>emptyList(),
                     Collections.<AnnotationDescription>emptyList(),
-                    MethodDescription.NO_DEFAULT_VALUE,
+                    AnnotationValue.UNDEFINED,
                     TypeDescription.Generic.UNDEFINED);
             nodes.put(runMethod.asSignatureToken(), new MethodGraph.Node.Simple(runMethod));
             MethodGraph methodGraph = new MethodGraph.Simple(nodes);

@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -292,14 +292,14 @@ public interface MethodRegistry {
             /**
              * The annotation value to set as a default value.
              */
-            private final AnnotationDescription.AnnotationValue<?, ?> annotationValue;
+            private final AnnotationValue<?, ?> annotationValue;
 
             /**
              * Creates a handler for defining a default annotation value for a method.
              *
              * @param annotationValue The annotation value to set as a default value.
              */
-            public ForAnnotationValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+            public ForAnnotationValue(AnnotationValue<?, ?> annotationValue) {
                 this.annotationValue = annotationValue;
             }
 

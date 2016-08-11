@@ -10,20 +10,20 @@ public class AnnotationDescriptionAnnotationValueLoadedStateTest {
 
     @Test
     public void testIsDefined() throws Exception {
-        assertThat(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED.isResolved(), is(true));
-        assertThat(AnnotationDescription.AnnotationValue.Loaded.State.NON_RESOLVED.isResolved(), is(false));
-        assertThat(AnnotationDescription.AnnotationValue.Loaded.State.NON_DEFINED.isResolved(), is(false));
+        assertThat(AnnotationValue.Loaded.State.RESOLVED.isResolved(), is(true));
+        assertThat(AnnotationValue.Loaded.State.NON_RESOLVED.isResolved(), is(false));
+        assertThat(AnnotationValue.Loaded.State.NON_DEFINED.isResolved(), is(false));
     }
 
     @Test
     public void testIsResolved() throws Exception {
-        assertThat(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED.isDefined(), is(true));
-        assertThat(AnnotationDescription.AnnotationValue.Loaded.State.NON_RESOLVED.isDefined(), is(true));
-        assertThat(AnnotationDescription.AnnotationValue.Loaded.State.NON_DEFINED.isDefined(), is(false));
+        assertThat(AnnotationValue.Loaded.State.RESOLVED.isDefined(), is(true));
+        assertThat(AnnotationValue.Loaded.State.NON_RESOLVED.isDefined(), is(true));
+        assertThat(AnnotationValue.Loaded.State.NON_DEFINED.isDefined(), is(false));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationDescription.AnnotationValue.Loaded.State.class).apply();
+        ObjectPropertyAssertion.of(AnnotationValue.Loaded.State.class).apply();
     }
 }

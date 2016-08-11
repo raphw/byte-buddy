@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -1091,7 +1092,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                             Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, QUX).build()))),
                     Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
                     Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, BAR).build()),
-                    MethodDescription.NO_DEFAULT_VALUE,
+                    AnnotationValue.UNDEFINED,
                     TypeDescription.Generic.UNDEFINED));
         }
 
