@@ -1175,12 +1175,12 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public Object invoke(Object proxy, Method method, Object[] arguments) {
+        public Object invoke(Object proxy, Method method, Object[] argument) {
             if (method.getDeclaringClass() != annotationType) {
                 if (method.getName().equals(HASH_CODE)) {
                     return hashCodeRepresentation();
                 } else if (method.getName().equals(EQUALS) && method.getParameterTypes().length == 1) {
-                    return equalsRepresentation(proxy, arguments[0]);
+                    return equalsRepresentation(proxy, argument[0]);
                 } else if (method.getName().equals(TO_STRING)) {
                     return toStringRepresentation();
                 } else /* if (method.getName().equals("annotationType")) */ {
