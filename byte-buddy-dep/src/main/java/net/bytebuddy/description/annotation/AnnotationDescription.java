@@ -1675,30 +1675,30 @@ public interface AnnotationDescription {
         @SuppressWarnings("unchecked")
         private static AnnotationValue<?, ?> asValue(Class<?> type, Object value) {
             if (Enum.class.isAssignableFrom(type)) {
-                return AnnotationValue.ForEnumeration.of(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
+                return AnnotationValue.ForEnumeration.<Enum>of(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
             } else if (Enum[].class.isAssignableFrom(type)) {
                 Enum<?>[] element = (Enum<?>[]) value;
                 List<AnnotationValue<?, ?>> annotationValues = new ArrayList<AnnotationValue<?, ?>>(element.length);
                 for (Enum<?> anElement : element) {
-                    annotationValues.add(AnnotationValue.ForEnumeration.of(new EnumerationDescription.ForLoadedEnumeration(anElement)));
+                    annotationValues.add(AnnotationValue.ForEnumeration.<Enum>of(new EnumerationDescription.ForLoadedEnumeration(anElement)));
                 }
                 return new AnnotationValue.ForComplexArray<Object, Object>(Enum.class, new TypeDescription.ForLoadedType(type), annotationValues);
             } else if (Annotation.class.isAssignableFrom(type)) {
-                return AnnotationValue.ForAnnotation.of(new TypeDescription.ForLoadedType(type), asValue((Annotation) value));
+                return AnnotationValue.ForAnnotation.<Annotation>of(new TypeDescription.ForLoadedType(type), asValue((Annotation) value));
             } else if (Annotation[].class.isAssignableFrom(type)) {
                 Annotation[] element = (Annotation[]) value;
                 List<AnnotationValue<?, ?>> annotationValues = new ArrayList<AnnotationValue<?, ?>>(element.length);
                 for (Annotation anElement : element) {
-                    annotationValues.add(AnnotationValue.ForAnnotation.of(new TypeDescription.ForLoadedType(type), asValue(anElement)));
+                    annotationValues.add(AnnotationValue.ForAnnotation.<Annotation>of(new TypeDescription.ForLoadedType(type), asValue(anElement)));
                 }
                 return new AnnotationValue.ForComplexArray<Object, Object>(Annotation.class, new TypeDescription.ForLoadedType(type), annotationValues);
             } else if (Class.class.isAssignableFrom(type)) {
-                return AnnotationValue.ForType.of(new TypeDescription.ForLoadedType((Class<?>) value));
+                return AnnotationValue.ForType.<Class>of(new TypeDescription.ForLoadedType((Class<?>) value));
             } else if (Class[].class.isAssignableFrom(type)) {
                 Class<?>[] element = (Class<?>[]) value;
                 List<AnnotationValue<?, ?>> annotationValues = new ArrayList<AnnotationValue<?, ?>>(element.length);
                 for (Class<?> anElement : element) {
-                    annotationValues.add(AnnotationValue.ForType.of(new TypeDescription.ForLoadedType(anElement)));
+                    annotationValues.add(AnnotationValue.ForType.<Class>of(new TypeDescription.ForLoadedType(anElement)));
                 }
                 return new AnnotationValue.ForComplexArray<Object, Object>(Class.class, TypeDescription.CLASS, annotationValues);
             } else {
