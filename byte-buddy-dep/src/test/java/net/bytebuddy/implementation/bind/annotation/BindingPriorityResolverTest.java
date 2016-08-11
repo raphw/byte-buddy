@@ -55,18 +55,20 @@ public class BindingPriorityResolverTest extends AbstractAnnotationTest<BindingP
 
     @Test
     public void testLeftPrioritized() throws Exception {
-        when(leftAnnotations.ofType(BindingPriority.class)).thenReturn(AnnotationDescription.ForLoadedAnnotation.of(highPriority));
-        when(rightAnnotations.ofType(BindingPriority.class)).thenReturn(AnnotationDescription.ForLoadedAnnotation.of(lowPriority));
-        assertThat(BindingPriority.Resolver.INSTANCE.resolve(source, left, right),
-                is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
+        AnnotationDescription.Loadable<BindingPriority> highPriority = AnnotationDescription.ForLoadedAnnotation.of(this.highPriority);
+        when(leftAnnotations.ofType(BindingPriority.class)).thenReturn(highPriority);
+        AnnotationDescription.Loadable<BindingPriority> lowPriority = AnnotationDescription.ForLoadedAnnotation.of(this.lowPriority);
+        when(rightAnnotations.ofType(BindingPriority.class)).thenReturn(lowPriority);
+        assertThat(BindingPriority.Resolver.INSTANCE.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.LEFT));
     }
 
     @Test
     public void testRightPrioritized() throws Exception {
-        when(leftAnnotations.ofType(BindingPriority.class)).thenReturn(AnnotationDescription.ForLoadedAnnotation.of(lowPriority));
-        when(rightAnnotations.ofType(BindingPriority.class)).thenReturn(AnnotationDescription.ForLoadedAnnotation.of(highPriority));
-        assertThat(BindingPriority.Resolver.INSTANCE.resolve(source, left, right),
-                is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
+        AnnotationDescription.Loadable<BindingPriority> lowPriority = AnnotationDescription.ForLoadedAnnotation.of(this.lowPriority);
+        when(leftAnnotations.ofType(BindingPriority.class)).thenReturn(lowPriority);
+        AnnotationDescription.Loadable<BindingPriority> highPriority = AnnotationDescription.ForLoadedAnnotation.of(this.highPriority);
+        when(rightAnnotations.ofType(BindingPriority.class)).thenReturn(highPriority);
+        assertThat(BindingPriority.Resolver.INSTANCE.resolve(source, left, right), is(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT));
     }
 
     @Test
