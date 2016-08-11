@@ -679,7 +679,7 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    private @interface ExplicitTarget {
+    protected @interface ExplicitTarget {
 
         @ExplicitTarget
         class Carrier {

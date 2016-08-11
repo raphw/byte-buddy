@@ -1,7 +1,6 @@
 package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -9,8 +8,6 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,13 +45,7 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
     @Test(expected = IllegalArgumentException.class)
     @Ignore("Rewrite test to consider different class loader.")
     public void testLoadAnnotationWrongClassLoader() throws Exception {
-        describe(Carrier.class.getAnnotation(PrivateAnnotation.class), Carrier.class).prepare(PrivateAnnotation.class).load(ClassLoadingStrategy.BOOTSTRAP_LOADER);
-    }
-
-    @Test
-    public void testLoadAnnotationSubClassLoader() throws Exception {
-        assertThat(describe(Carrier.class.getAnnotation(PrivateAnnotation.class), Carrier.class).prepare(PrivateAnnotation.class)
-                .load(new URLClassLoader(new URL[0], getClass().getClassLoader())), is(Carrier.class.getAnnotation(PrivateAnnotation.class)));
+        describe(Carrier.class.getAnnotation(PrivateAnnotation.class), Carrier.class).prepare(PrivateAnnotation.class).load();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

@@ -373,8 +373,8 @@ public interface AnnotationDescription {
             @Override
             public AnnotationValue.Loaded<U> load(ClassLoader classLoader) throws ClassNotFoundException {
                 @SuppressWarnings("unchecked")
-                Class<U> annotationType = (Class<U>) classLoader.loadClass(annotationDescription.getAnnotationType().getName());
-                return new Loaded<U>(annotationDescription.prepare(annotationType).load(classLoader));
+                Class<U> annotationType = (Class<U>) Class.forName(annotationDescription.getAnnotationType().getName(), false, classLoader);
+                return new Loaded<U>(annotationDescription.prepare(annotationType).load());
             }
 
             @Override
@@ -528,7 +528,7 @@ public interface AnnotationDescription {
             @Override
             public AnnotationValue.Loaded<U> load(ClassLoader classLoader) throws ClassNotFoundException {
                 @SuppressWarnings("unchecked")
-                Class<U> enumerationType = (Class<U>) classLoader.loadClass(enumerationDescription.getEnumerationType().getName());
+                Class<U> enumerationType = (Class<U>) Class.forName(enumerationDescription.getEnumerationType().getName(), false, classLoader);
                 return new Loaded<U>(enumerationDescription.load(enumerationType));
             }
 
@@ -921,7 +921,7 @@ public interface AnnotationDescription {
                 for (AnnotationValue<?, ?> value : annotationValues) {
                     loadedValues.add(value.load(classLoader));
                 }
-                return new Loaded<V>((Class<V>) classLoader.loadClass(componentType.getName()), loadedValues);
+                return new Loaded<V>((Class<V>) Class.forName(componentType.getName(), false, classLoader), loadedValues);
             }
 
             @Override
@@ -1069,30 +1069,12 @@ public interface AnnotationDescription {
 
         /**
          * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
-         *
-         * @param classLoader The class loader to be used for loading the annotation's linked types.
-         * @return A loaded version of this annotation description.
-         * @throws java.lang.ClassNotFoundException If any linked classes of the annotation cannot be loaded.
-         */
-        S load(ClassLoader classLoader) throws ClassNotFoundException;
-
-        /**
-         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
          * Without specifying a class loader, the annotation's class loader which was used to prepare this instance
          * is used. Any {@link java.lang.ClassNotFoundException} is wrapped in an {@link java.lang.IllegalStateException}.
          *
          * @return A loaded version of this annotation description.
          */
         S loadSilent();
-
-        /**
-         * Loads this annotation description. This causes all classes referenced by the annotation value to be loaded.
-         * Any {@link java.lang.ClassNotFoundException} is wrapped in an {@link java.lang.IllegalStateException}.
-         *
-         * @param classLoader The class loader to be used for loading the annotation's linked types.
-         * @return A loaded version of this annotation description.
-         */
-        S loadSilent(ClassLoader classLoader);
     }
 
     /**
@@ -1557,15 +1539,6 @@ public interface AnnotationDescription {
                     throw new IllegalStateException(ERROR_MESSAGE, exception);
                 }
             }
-
-            @Override
-            public S loadSilent(ClassLoader classLoader) {
-                try {
-                    return load(classLoader);
-                } catch (ClassNotFoundException exception) {
-                    throw new IllegalStateException(ERROR_MESSAGE, exception);
-                }
-            }
         }
     }
 
@@ -1581,13 +1554,21 @@ public interface AnnotationDescription {
          */
         private final S annotation;
 
+        private final Class<S> annotationType;
+
         /**
          * Creates a new annotation description for a loaded annotation.
          *
          * @param annotation The annotation to represent.
          */
+        @SuppressWarnings("unchecked")
         protected ForLoadedAnnotation(S annotation) {
+            this(annotation, (Class<S>) annotation.annotationType());
+        }
+
+        protected ForLoadedAnnotation(S annotation, Class<S> annotationType) {
             this.annotation = annotation;
+            this.annotationType = annotationType;
         }
 
         /**
@@ -1632,17 +1613,10 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public S load() {
-            return annotation;
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public S load(ClassLoader classLoader) throws ClassNotFoundException {
-            Class<?> annotationType = Class.forName(TypeDescription.ForLoadedType.getName(annotation.annotationType()), false, classLoader);
+        public S load() throws ClassNotFoundException {
             return annotationType == annotation.annotationType()
                     ? annotation
-                    : AnnotationInvocationHandler.of(classLoader, (Class<S>) annotationType, asValue(annotation));
+                    : AnnotationInvocationHandler.of(annotationType.getClassLoader(), annotationType, asValue(annotation));
         }
 
         /**
@@ -1674,33 +1648,37 @@ public interface AnnotationDescription {
          */
         @SuppressWarnings("unchecked")
         private static AnnotationValue<?, ?> asValue(Class<?> type, Object value) {
+            // Because enums can implement annotation interfaces, the enum property needs to be checked first.
             if (Enum.class.isAssignableFrom(type)) {
                 return AnnotationValue.ForEnumeration.<Enum>of(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
             } else if (Enum[].class.isAssignableFrom(type)) {
                 Enum<?>[] element = (Enum<?>[]) value;
-                List<AnnotationValue<?, ?>> annotationValues = new ArrayList<AnnotationValue<?, ?>>(element.length);
+                EnumerationDescription[] enumerationDescription = new EnumerationDescription[element.length];
+                int index = 0;
                 for (Enum<?> anElement : element) {
-                    annotationValues.add(AnnotationValue.ForEnumeration.<Enum>of(new EnumerationDescription.ForLoadedEnumeration(anElement)));
+                    enumerationDescription[index++] = new EnumerationDescription.ForLoadedEnumeration(anElement);
                 }
-                return new AnnotationValue.ForComplexArray<Object, Object>(Enum.class, new TypeDescription.ForLoadedType(type), annotationValues);
+                return AnnotationValue.ForComplexArray.of(new TypeDescription.ForLoadedType(type.getComponentType()), enumerationDescription);
             } else if (Annotation.class.isAssignableFrom(type)) {
                 return AnnotationValue.ForAnnotation.<Annotation>of(new TypeDescription.ForLoadedType(type), asValue((Annotation) value));
             } else if (Annotation[].class.isAssignableFrom(type)) {
                 Annotation[] element = (Annotation[]) value;
-                List<AnnotationValue<?, ?>> annotationValues = new ArrayList<AnnotationValue<?, ?>>(element.length);
+                AnnotationDescription[] annotationDescription = new AnnotationDescription[element.length];
+                int index = 0;
                 for (Annotation anElement : element) {
-                    annotationValues.add(AnnotationValue.ForAnnotation.<Annotation>of(new TypeDescription.ForLoadedType(type), asValue(anElement)));
+                    annotationDescription[index++] = new AnnotationDescription.Latent(new TypeDescription.ForLoadedType(type.getComponentType()), asValue(anElement));
                 }
-                return new AnnotationValue.ForComplexArray<Object, Object>(Annotation.class, new TypeDescription.ForLoadedType(type), annotationValues);
+                return AnnotationValue.ForComplexArray.of(new TypeDescription.ForLoadedType(type.getComponentType()), annotationDescription);
             } else if (Class.class.isAssignableFrom(type)) {
                 return AnnotationValue.ForType.<Class>of(new TypeDescription.ForLoadedType((Class<?>) value));
             } else if (Class[].class.isAssignableFrom(type)) {
                 Class<?>[] element = (Class<?>[]) value;
-                List<AnnotationValue<?, ?>> annotationValues = new ArrayList<AnnotationValue<?, ?>>(element.length);
+                TypeDescription[] typeDescription = new TypeDescription[element.length];
+                int index = 0;
                 for (Class<?> anElement : element) {
-                    annotationValues.add(AnnotationValue.ForType.<Class>of(new TypeDescription.ForLoadedType(anElement)));
+                    typeDescription[index++] = new TypeDescription.ForLoadedType(anElement);
                 }
-                return new AnnotationValue.ForComplexArray<Object, Object>(Class.class, TypeDescription.CLASS, annotationValues);
+                return AnnotationValue.ForComplexArray.of(typeDescription);
             } else {
                 return new AnnotationValue.Trivial<Object>(value);
             }
@@ -1732,10 +1710,12 @@ public interface AnnotationDescription {
         @Override
         @SuppressWarnings("unchecked")
         public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
-            if (annotation.annotationType() != annotationType && !annotation.annotationType().getName().equals(annotationType.getName())) {
+            if (!annotation.annotationType().getName().equals(annotationType.getName())) {
                 throw new IllegalArgumentException(annotation + " does not represent " + annotationType);
             }
-            return (Loadable<T>) this;
+            return annotationType == annotation.annotationType()
+                    ? (Loadable<T>) this
+                    : new ForLoadedAnnotation<T>((T) annotation, annotationType);
         }
 
         @Override
@@ -1819,12 +1799,7 @@ public interface AnnotationDescription {
 
             @Override
             public S load() throws ClassNotFoundException {
-                return load(annotationType.getClassLoader());
-            }
-
-            @Override
-            public S load(ClassLoader classLoader) throws ClassNotFoundException {
-                return AnnotationDescription.AnnotationInvocationHandler.of(classLoader, annotationType, annotationValues);
+                return AnnotationDescription.AnnotationInvocationHandler.of(annotationType.getClassLoader(), annotationType, annotationValues);
             }
 
             @Override

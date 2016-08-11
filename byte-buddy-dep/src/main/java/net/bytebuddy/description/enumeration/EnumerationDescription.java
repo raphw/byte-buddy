@@ -103,10 +103,9 @@ public interface EnumerationDescription {
         @Override
         @SuppressWarnings("unchecked")
         public <T extends Enum<T>> T load(Class<T> type) {
-            if (value.getDeclaringClass() != type) {
-                throw new IllegalArgumentException(type + " does not represent " + value);
-            }
-            return (T) value;
+            return value.getDeclaringClass() == type
+                    ? (T) value
+                    : Enum.valueOf(type, value.name());
         }
     }
 

@@ -13,20 +13,10 @@ public class AnnotationDescriptionAbstractPreparedExceptionTest {
         new PseudoDescription().loadSilent();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testThrowWithClassLoader() throws Exception {
-        new PseudoDescription().loadSilent(getClass().getClassLoader());
-    }
-
     private static class PseudoDescription extends AnnotationDescription.AbstractBase.ForPrepared<Annotation> {
 
         @Override
         public Annotation load() throws ClassNotFoundException {
-            throw new ClassNotFoundException();
-        }
-
-        @Override
-        public Annotation load(ClassLoader classLoader) throws ClassNotFoundException {
             throw new ClassNotFoundException();
         }
 

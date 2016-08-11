@@ -6462,27 +6462,13 @@ public interface TypePool {
 
                     @Override
                     public S load() throws ClassNotFoundException {
-                        return load(annotationType.getClassLoader());
-                    }
-
-                    @Override
-                    public S load(ClassLoader classLoader) throws ClassNotFoundException {
-                        return AnnotationInvocationHandler.of(classLoader, annotationType, values);
+                        return AnnotationInvocationHandler.of(annotationType.getClassLoader(), annotationType, values);
                     }
 
                     @Override
                     public S loadSilent() {
                         try {
                             return load();
-                        } catch (ClassNotFoundException exception) {
-                            throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, exception);
-                        }
-                    }
-
-                    @Override
-                    public S loadSilent(ClassLoader classLoader) {
-                        try {
-                            return load(classLoader);
                         } catch (ClassNotFoundException exception) {
                             throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, exception);
                         }
