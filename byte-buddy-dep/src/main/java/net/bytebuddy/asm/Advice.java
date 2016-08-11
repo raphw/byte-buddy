@@ -410,7 +410,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               int readerFlags) {
         if (methodDescription.isAbstract() || methodDescription.isNative()) {
             return methodVisitor;
-        } else if (!methodExit.isAlive()) {
+        }
+        methodVisitor = methodEnter.isPrependLineNumber()
+                ? new LineNumberPrependingMethodVisitor(methodVisitor)
+                : methodVisitor;
+        if (!methodExit.isAlive()) {
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
                     methodDescription,
                     methodEnter,
@@ -1461,9 +1465,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ClassFileVersion classFileVersion,
                                 int writerFlags,
                                 int readerFlags) {
-            super(Opcodes.ASM5, methodEnter.isPrependLineNumber()
-                    ? new LineNumberPrependingMethodVisitor(delegate)
-                    : delegate);
+            super(Opcodes.ASM5, delegate);
             this.methodVisitor = methodVisitor;
             this.instrumentedMethod = instrumentedMethod;
             padding = methodEnter.getEnterType().getStackSize().getSize();

@@ -1252,6 +1252,50 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(FOO).get(null), is((Object) 1));
     }
 
+    @Test
+    public void testLineNumberPrepend() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(LineNumberAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testLineNumberNoPrepend() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(NoLineNumberAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testLineNumberPrependDelegation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(LineNumberDelegatingAdvice.class)
+                .visit(Advice.to(LineNumberDelegatingAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testLineNumberNoPrependDelegation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(NoLineNumberDelegatingAdvice.class)
+                .visit(Advice.to(NoLineNumberDelegatingAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
         new ByteBuddy()
@@ -3188,6 +3232,58 @@ public class AdviceTest {
         @Advice.OnMethodEnter(skipIfTrue = true)
         private static void enter() {
             throw new AssertionError();
+        }
+    }
+
+    public static class LineNumberAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter() {
+            StackTraceElement top = new Throwable().getStackTrace()[0];
+            if (top.getLineNumber() < 0) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    public static class NoLineNumberAdvice {
+
+        @Advice.OnMethodEnter(prependLineNumber = false)
+        private static void enter() {
+            StackTraceElement top = new Throwable().getStackTrace()[0];
+            if (top.getLineNumber() >= 0) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    public static class LineNumberDelegatingAdvice {
+
+        public String foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(inline = false)
+        private static void enter() {
+            StackTraceElement top = new Throwable().getStackTrace()[1];
+            if (top.getLineNumber() < 0) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    public static class NoLineNumberDelegatingAdvice {
+
+        public String foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(inline = false, prependLineNumber = false)
+        private static void enter() {
+            StackTraceElement top = new Throwable().getStackTrace()[1];
+            if (top.getLineNumber() >= 0) {
+                throw new AssertionError();
+            }
         }
     }
 }
