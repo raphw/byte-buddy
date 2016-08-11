@@ -130,6 +130,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape SUPPRESS_ENTER;
 
+    /**
+     * A reference to the {@link OnMethodEnter#prependLineNumber()} method.
+     */
     private static final MethodDescription.InDefinedShape PREPEND_LINE_NUMBER;
 
     /**
@@ -5363,6 +5366,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 TypeDescription getEnterType();
 
+                /**
+                 * Returns {@code true} if the first discovered line number information should be prepended to the advice code.
+                 *
+                 * @return {@code true} if the first discovered line number information should be prepended to the advice code.
+                 */
                 boolean isPrependLineNumber();
 
                 @Override
@@ -6014,6 +6022,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final SkipDispatcher skipDispatcher;
 
+                    /**
+                     * {@code true} if the first discovered line number information should be prepended to the advice code.
+                     */
                     private final boolean prependLineNumber;
 
                     /**
@@ -6055,6 +6066,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 classReader,
                                 skipDispatcher);
                     }
+
                     @Override
                     public TypeDescription getEnterType() {
                         return adviceMethod.getReturnType().asErasure();
@@ -7224,6 +7236,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final SkipDispatcher skipDispatcher;
 
+                    /**
+                     * {@code true} if the first discovered line number information should be prepended to the advice code.
+                     */
                     private final boolean prependLineNumber;
 
                     /**
@@ -7520,6 +7535,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         boolean skipIfTrue() default false;
 
+        /**
+         * If set to {@code true}, the instrumented method's line number information is adjusted such that stack traces generated within
+         * this advice method appear as if they were generated within the first line of the instrumented method. If set to {@code false},
+         * no line number information is made available for such stack traces.
+         *
+         * @return {@code true} if this advice code should appear as if it was added within the first line of the instrumented method.
+         */
         boolean prependLineNumber() default true;
     }
 
