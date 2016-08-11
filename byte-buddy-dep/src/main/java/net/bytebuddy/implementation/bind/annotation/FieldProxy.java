@@ -259,12 +259,12 @@ public @interface FieldProxy {
 
         @Override
         protected String fieldName(AnnotationDescription.Loadable<FieldProxy> annotation) {
-            return annotation.getValue(FIELD_NAME, String.class);
+            return annotation.getValue(FIELD_NAME).resolve(String.class);
         }
 
         @Override
         protected TypeDescription declaringType(AnnotationDescription.Loadable<FieldProxy> annotation) {
-            return annotation.getValue(DEFINING_TYPE, TypeDescription.class);
+            return annotation.getValue(DEFINING_TYPE).resolve(TypeDescription.class);
         }
 
         @Override
@@ -280,7 +280,7 @@ public @interface FieldProxy {
                         implementationTarget.getInstrumentedType(),
                         fieldResolver,
                         assigner,
-                        annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)));
+                        annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class)));
             } else {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }

@@ -86,7 +86,7 @@ public @interface Default {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
-            TypeDescription proxyType = TypeLocator.ForType.of(annotation.getValue(PROXY_TYPE, TypeDescription.class)).resolve(target.getType());
+            TypeDescription proxyType = TypeLocator.ForType.of(annotation.getValue(PROXY_TYPE).resolve(TypeDescription.class)).resolve(target.getType());
             if (!proxyType.isInterface()) {
                 throw new IllegalStateException(target + " uses the @Default annotation on an invalid type");
             }
@@ -95,7 +95,7 @@ public @interface Default {
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TypeProxy.ForDefaultMethod(proxyType,
                         implementationTarget,
-                        annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)));
+                        annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class)));
             }
         }
 

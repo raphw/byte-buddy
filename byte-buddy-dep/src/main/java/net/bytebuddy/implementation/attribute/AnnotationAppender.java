@@ -293,7 +293,7 @@ public interface AnnotationAppender {
         private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation, AnnotationValueFilter annotationValueFilter) {
             for (MethodDescription.InDefinedShape methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
                 if (annotationValueFilter.isRelevant(annotation, methodDescription)) {
-                    apply(annotationVisitor, methodDescription.getReturnType().asErasure(), methodDescription.getName(), annotation.getValue(methodDescription));
+                    apply(annotationVisitor, methodDescription.getReturnType().asErasure(), methodDescription.getName(), annotation.getValue(methodDescription).resolve());
                 }
             }
             annotationVisitor.visitEnd();
@@ -305,9 +305,10 @@ public interface AnnotationAppender {
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
          * @param valueType         The type of the annotation value.
          * @param name              The name of the annotation type.
-         * @param value             The annotation's value.
+         * @param annotationValue             The annotation's value.
          */
         public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
+            // TODO: Improve, switch?
             if (valueType.isAnnotation()) {
                 handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, AnnotationValueFilter.Default.APPEND_DEFAULTS);
             } else if (valueType.isEnum()) {

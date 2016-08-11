@@ -59,7 +59,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * Represents a non-defined default value of an annotation property.
      */
-    Object NO_DEFAULT_VALUE = null;
+    AnnotationDescription.AnnotationValue<?, ?> NO_DEFAULT_VALUE = null;
 
     /**
      * Represents any undefined property of a type description that is instead represented as {@code null} in order
@@ -174,22 +174,7 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isSpecializableFor(TypeDescription typeDescription);
 
-    /**
-     * Returns the default value of this method or {@code null} if no such value exists. The returned values might be
-     * of a different type than usual:
-     * <ul>
-     * <li>{@link java.lang.Class} values are represented as
-     * {@link TypeDescription}s.</li>
-     * <li>{@link java.lang.annotation.Annotation} values are represented as
-     * {@link AnnotationDescription}s</li>
-     * <li>{@link java.lang.Enum} values are represented as
-     * {@link net.bytebuddy.description.enumeration.EnumerationDescription}s.</li>
-     * <li>Arrays of the latter types are represented as arrays of the named wrapper types.</li>
-     * </ul>
-     *
-     * @return The default value of this method or {@code null}.
-     */
-    Object getDefaultValue();
+    AnnotationDescription.AnnotationValue<?, ?> getDefaultValue();
 
     /**
      * Returns the default value but casts it to the given type. If the type differs from the value, a
@@ -867,7 +852,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public Object getDefaultValue() {
+        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
             return NO_DEFAULT_VALUE;
         }
 
@@ -994,11 +979,11 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public Object getDefaultValue() {
+        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
             Object value = method.getDefaultValue();
             return value == null
                     ? NO_DEFAULT_VALUE
-                    : AnnotationDescription.ForLoadedAnnotation.describe(value, new TypeDescription.ForLoadedType(method.getReturnType()));
+                    : AnnotationDescription.ForLoadedAnnotation.asValue(method.getReturnType(), value);
         }
 
         @Override
@@ -1064,7 +1049,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * The default value of this method or {@code null} if no default annotation value is defined.
          */
-        private final Object defaultValue;
+        private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
 
         /**
          * The receiver type of this method or {@code null} if the receiver type is defined implicitly.
@@ -1112,7 +1097,7 @@ public interface MethodDescription extends TypeVariableSource,
                       List<? extends ParameterDescription.Token> parameterTokens,
                       List<? extends TypeDescription.Generic> exceptionTypes,
                       List<? extends AnnotationDescription> declaredAnnotations,
-                      Object defaultValue,
+                      AnnotationDescription.AnnotationValue<?, ?> defaultValue,
                       TypeDescription.Generic receiverType) {
             this.declaringType = declaringType;
             this.internalName = internalName;
@@ -1167,7 +1152,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public Object getDefaultValue() {
+        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
             return defaultValue;
         }
 
@@ -1213,7 +1198,7 @@ public interface MethodDescription extends TypeVariableSource,
             }
 
             @Override
-            public Object getDefaultValue() {
+            public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
                 return NO_DEFAULT_VALUE;
             }
 
@@ -1300,7 +1285,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public Object getDefaultValue() {
+        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
             return methodDescription.getDefaultValue();
         }
 
@@ -1381,7 +1366,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * The default value of the represented method or {@code null} if no such value exists.
          */
-        private final Object defaultValue;
+        private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
 
         /**
          * The receiver type of the represented method or {@code null} if the receiver type is implicit.
@@ -1450,7 +1435,7 @@ public interface MethodDescription extends TypeVariableSource,
                      List<? extends ParameterDescription.Token> parameterTokens,
                      List<? extends TypeDescription.Generic> exceptionTypes,
                      List<? extends AnnotationDescription> annotations,
-                     Object defaultValue,
+                     AnnotationDescription.AnnotationValue<?, ?> defaultValue,
                      TypeDescription.Generic receiverType) {
             this.name = name;
             this.modifiers = modifiers;
@@ -1531,7 +1516,7 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return The default value of the represented method or {@code null} if no such value exists.
          */
-        public Object getDefaultValue() {
+        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
             return defaultValue;
         }
 

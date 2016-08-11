@@ -189,8 +189,8 @@ public @interface Morph {
                 throw new IllegalStateException("Illegal use of @Morph for " + target + " which was installed for " + forwardingMethod.getDeclaringType());
             }
             Implementation.SpecialMethodInvocation specialMethodInvocation;
-            TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);
-            if (typeDescription.represents(void.class) && !annotation.getValue(DEFAULT_METHOD, Boolean.class)) {
+            TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET).resolve(TypeDescription.class);
+            if (typeDescription.represents(void.class) && !annotation.getValue(DEFAULT_METHOD).resolve(Boolean.class)) {
                 specialMethodInvocation = implementationTarget.invokeSuper(source.asSignatureToken());
             } else {
                 specialMethodInvocation = (typeDescription.represents(void.class)
@@ -202,7 +202,7 @@ public @interface Morph {
                     implementationTarget.getInstrumentedType(),
                     specialMethodInvocation,
                     assigner,
-                    annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
+                    annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class)))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 

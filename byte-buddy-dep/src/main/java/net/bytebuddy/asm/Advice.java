@@ -375,7 +375,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         } else if (!methodDescription.isStatic()) {
             throw new IllegalStateException("Advice for " + methodDescription + " is not static");
         } else {
-            return annotation.getValue(property, Boolean.class)
+            return annotation.getValue(property).resolve(Boolean.class)
                     ? new Dispatcher.Inlining(methodDescription)
                     : new Dispatcher.Delegating(methodDescription);
         }
@@ -3923,15 +3923,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         AnnotationDescription annotation = parameterDescription.getDeclaredAnnotations().ofType(FieldValue.class);
                         if (annotation == null) {
                             return UNDEFINED;
-                        } else if (readOnly && !annotation.getValue(ForField.READ_ONLY, Boolean.class)) {
+                        } else if (readOnly && !annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class)) {
                             throw new IllegalStateException("Cannot write to field for " + parameterDescription + " in read-only context");
                         } else {
-                            TypeDescription declaringType = annotation.getValue(DECLARING_TYPE, TypeDescription.class);
-                            String name = annotation.getValue(VALUE, String.class);
+                            TypeDescription declaringType = annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
+                            String name = annotation.getValue(VALUE).resolve(String.class);
                             TypeDescription targetType = parameterDescription.getType().asErasure();
                             return declaringType.represents(void.class)
-                                    ? new WithImplicitType(name, targetType, annotation.getValue(ForField.READ_ONLY, Boolean.class))
-                                    : new WithExplicitType(name, targetType, declaringType, annotation.getValue(ForField.READ_ONLY, Boolean.class));
+                                    ? new WithImplicitType(name, targetType, annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class))
+                                    : new WithExplicitType(name, targetType, declaringType, annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class));
                         }
                     }
 
@@ -4830,7 +4830,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected static OffsetMapping.Factory of(MethodDescription.InDefinedShape adviceMethod, boolean readOnly) {
                         TypeDescription triggeringThrowable = adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
-                                .getValue(ON_THROWABLE, TypeDescription.class);
+                                .getValue(ON_THROWABLE).resolve(TypeDescription.class);
                         return triggeringThrowable.represents(NoExceptionHandler.class)
                                 ? new OffsetMapping.Illegal(Thrown.class)
                                 : new Factory(triggeringThrowable, readOnly);
@@ -5425,7 +5425,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return A suitable skip dispatcher for the supplied method.
                      */
                     protected static SkipDispatcher of(MethodDescription.InDefinedShape adviceMethod) {
-                        boolean enabled = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_IF_TRUE, Boolean.class);
+                        boolean enabled = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SKIP_IF_TRUE).resolve(Boolean.class);
                         if (enabled && !adviceMethod.getReturnType().represents(boolean.class)) {
                             throw new IllegalStateException(adviceMethod + " does not return boolean as it is required for enabling 'skipIfTrue'");
                         }
@@ -6050,9 +6050,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
                                 classReader,
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
                         skipDispatcher = SkipDispatcher.of(adviceMethod);
-                        prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER, Boolean.class);
+                        prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
                     @Override
@@ -6217,7 +6217,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod, false)
                                 ), userFactories),
                                 classReader,
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT, TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class));
                         this.enterType = enterType;
                     }
 
@@ -6237,7 +6237,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                TypeDescription enterType) {
                         TypeDescription triggeringThrowable = adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
-                                .getValue(ON_THROWABLE, TypeDescription.class);
+                                .getValue(ON_THROWABLE).resolve(TypeDescription.class);
                         return triggeringThrowable.represents(NoExceptionHandler.class)
                                 ? new WithoutExceptionHandler(adviceMethod, userFactories, classReader, enterType)
                                 : new WithExceptionHandler(adviceMethod, userFactories, classReader, enterType, triggeringThrowable);
@@ -7262,9 +7262,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForUnusedValue.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
                         skipDispatcher = SkipDispatcher.of(adviceMethod);
-                        prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER, Boolean.class);
+                        prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
                     }
 
                     @Override
@@ -7359,7 +7359,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForBoxedReturnValue.Factory.READ_ONLY,
                                         OffsetMapping.ForThrowable.Factory.of(adviceMethod, true)
                                 ), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT, TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT).resolve(TypeDescription.class));
                         this.enterType = enterType;
                     }
 
@@ -7377,7 +7377,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                TypeDescription enterType) {
                         TypeDescription triggeringThrowable = adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
-                                .getValue(ON_THROWABLE, TypeDescription.class);
+                                .getValue(ON_THROWABLE).resolve(TypeDescription.class);
                         return triggeringThrowable.represents(NoExceptionHandler.class)
                                 ? new WithoutExceptionHandler(adviceMethod, userFactories, enterType)
                                 : new WithExceptionHandler(adviceMethod, userFactories, enterType, triggeringThrowable);

@@ -44,9 +44,10 @@ public class AnnotationValueFilterDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testSkipDefaultsNoEquality() throws Exception {
-        when(methodDescription.getDefaultValue()).thenReturn(new Object());
-        when(annotationDescription.getValue(methodDescription)).thenReturn(new Object());
+        when(methodDescription.getDefaultValue()).thenReturn(mock(AnnotationDescription.AnnotationValue.class));
+        when(annotationDescription.getValue(methodDescription)).thenReturn(mock(AnnotationDescription.AnnotationValue.class));
         assertThat(AnnotationValueFilter.Default.SKIP_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(true));
         verify(annotationDescription).getValue(methodDescription);
         verifyNoMoreInteractions(annotationDescription);
@@ -55,10 +56,11 @@ public class AnnotationValueFilterDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testSkipDefaultsEquality() throws Exception {
-        Object value = new Object();
-        when(methodDescription.getDefaultValue()).thenReturn(value);
-        when(annotationDescription.getValue(methodDescription)).thenReturn(value);
+        AnnotationDescription.AnnotationValue<?, ?> annotationValue = mock(AnnotationDescription.AnnotationValue.class);
+        when(methodDescription.getDefaultValue()).thenReturn((AnnotationDescription.AnnotationValue) annotationValue);
+        when(annotationDescription.getValue(methodDescription)).thenReturn((AnnotationDescription.AnnotationValue) annotationValue);
         assertThat(AnnotationValueFilter.Default.SKIP_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(false));
         verify(annotationDescription).getValue(methodDescription);
         verifyNoMoreInteractions(annotationDescription);

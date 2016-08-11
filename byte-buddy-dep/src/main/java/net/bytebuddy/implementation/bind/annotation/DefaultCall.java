@@ -101,13 +101,13 @@ public @interface DefaultCall {
             } else if (source.isConstructor()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            TypeDescription typeDescription = annotation.getValue(TARGET_TYPE, TypeDescription.class);
+            TypeDescription typeDescription = annotation.getValue(TARGET_TYPE).resolve(TypeDescription.class);
             Implementation.SpecialMethodInvocation specialMethodInvocation = (typeDescription.represents(void.class)
                     ? DefaultMethodLocator.Implicit.INSTANCE
                     : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source);
             return specialMethodInvocation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy
-                    .AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
+                    .AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class)))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 

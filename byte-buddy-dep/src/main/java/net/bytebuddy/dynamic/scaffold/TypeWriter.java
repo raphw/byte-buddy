@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -706,7 +707,7 @@ public interface TypeWriter<T> {
                     /**
                      * The annotation value to define.
                      */
-                    private final Object annotationValue;
+                    private final AnnotationDescription.AnnotationValue<?, ?> annotationValue;
 
                     /**
                      * The method attribute appender to apply.
@@ -721,7 +722,7 @@ public interface TypeWriter<T> {
                      * @param methodAttributeAppender The method attribute appender to apply.
                      */
                     public WithAnnotationDefaultValue(MethodDescription methodDescription,
-                                                      Object annotationValue,
+                                                      AnnotationDescription.AnnotationValue<?, ?> annotationValue,
                                                       MethodAttributeAppender methodAttributeAppender) {
                         this.methodDescription = methodDescription;
                         this.annotationValue = annotationValue;
@@ -747,7 +748,7 @@ public interface TypeWriter<T> {
                         AnnotationAppender.Default.apply(annotationVisitor,
                                 methodDescription.getReturnType().asErasure(),
                                 AnnotationAppender.NO_NAME,
-                                annotationValue);
+                                annotationValue.resolve());
                         annotationVisitor.visitEnd();
                     }
 
@@ -961,8 +962,8 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        public Object getDefaultValue() {
-                            return MethodDescription.NO_DEFAULT_VALUE;
+                        public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+                            return NO_DEFAULT_VALUE;
                         }
 
                         @Override
@@ -1203,8 +1204,8 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public Object getDefaultValue() {
-                        return MethodDescription.NO_DEFAULT_VALUE;
+                    public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+                        return NO_DEFAULT_VALUE;
                     }
 
                     @Override
@@ -1275,7 +1276,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public Object getDefaultValue() {
+                    public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
                         return bridgeTarget.getDefaultValue();
                     }
 
@@ -3177,8 +3178,8 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public Object getDefaultValue() {
-                    return MethodDescription.NO_DEFAULT_VALUE;
+                public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+                    return NO_DEFAULT_VALUE;
                 }
 
                 @Override

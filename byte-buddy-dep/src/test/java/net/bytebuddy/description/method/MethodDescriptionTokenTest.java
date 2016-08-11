@@ -44,7 +44,7 @@ public class MethodDescriptionTokenTest {
     private AnnotationDescription annotation;
 
     @Mock
-    private Object defaultValue;
+    private AnnotationDescription.AnnotationValue<?, ?> defaultValue;
 
     @Mock
     private TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
@@ -64,6 +64,7 @@ public class MethodDescriptionTokenTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testProperties() throws Exception {
         MethodDescription.Token token = new MethodDescription.Token(FOO,
                 MODIFIERS,
@@ -81,7 +82,7 @@ public class MethodDescriptionTokenTest {
         assertThat(token.getParameterTokens(), is(Collections.singletonList(parameterToken)));
         assertThat(token.getExceptionTypes(), is(Collections.singletonList(exceptionType)));
         assertThat(token.getAnnotations(), is(Collections.singletonList(annotation)));
-        assertThat(token.getDefaultValue(), is(defaultValue));
+        assertThat(token.getDefaultValue(), is((AnnotationDescription.AnnotationValue) defaultValue));
         assertThat(token.getReceiverType(), is(receiverType));
     }
 

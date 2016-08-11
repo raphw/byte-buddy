@@ -24,8 +24,7 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
     @Test
     public void testAnnotationNonVisible() throws Exception {
         assertThat(describe(Carrier.class.getAnnotation(PrivateAnnotation.class), Carrier.class)
-                .getValue(new MethodDescription.ForLoadedMethod(PrivateAnnotation.class.getDeclaredMethod("value")),
-                        String.class), is(FOO));
+                .getValue(new MethodDescription.ForLoadedMethod(PrivateAnnotation.class.getDeclaredMethod("value"))).resolve(String.class), is(FOO));
     }
 
     @Test
@@ -33,7 +32,7 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
         Method method = PrivateAnnotation.class.getDeclaredMethod("value");
         method.setAccessible(true);
         assertThat(describe(Carrier.class.getAnnotation(PrivateAnnotation.class), Carrier.class)
-                .getValue(new MethodDescription.ForLoadedMethod(method), String.class), is(FOO));
+                .getValue(new MethodDescription.ForLoadedMethod(method)).resolve(String.class), is(FOO));
     }
 
     @Test(expected = IllegalStateException.class)

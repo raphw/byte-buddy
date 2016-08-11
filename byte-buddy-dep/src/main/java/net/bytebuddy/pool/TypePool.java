@@ -16,7 +16,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.utility.PropertyDispatcher;
 import org.objectweb.asm.*;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -567,7 +566,7 @@ public interface TypePool {
         /**
          * Represents a nested annotation value.
          */
-        protected static class RawAnnotationValue implements AnnotationDescription.AnnotationValue<AnnotationDescription, Annotation> {
+        protected static class RawAnnotationValue extends AnnotationDescription.AnnotationValue.AbstractBase<AnnotationDescription, Annotation> {
 
             /**
              * The type pool to use for looking up types.
@@ -630,7 +629,7 @@ public interface TypePool {
         /**
          * Represents an enumeration value of an annotation.
          */
-        protected static class RawEnumerationValue implements AnnotationDescription.AnnotationValue<EnumerationDescription, Enum<?>> {
+        protected static class RawEnumerationValue extends AnnotationDescription.AnnotationValue.AbstractBase<EnumerationDescription, Enum<?>> {
 
             /**
              * The type pool to use for looking up types.
@@ -723,7 +722,7 @@ public interface TypePool {
         /**
          * Represents a type value of an annotation.
          */
-        protected static class RawTypeValue implements AnnotationDescription.AnnotationValue<TypeDescription, Class<?>> {
+        protected static class RawTypeValue extends AnnotationDescription.AnnotationValue.AbstractBase<TypeDescription, Class<?>> {
 
             /**
              * A convenience reference indicating that a loaded type should not be initialized.
@@ -784,7 +783,7 @@ public interface TypePool {
             /**
              * Represents a loaded annotation property that represents a type.
              */
-            protected static class Loaded implements AnnotationDescription.AnnotationValue.Loaded<Class<?>> {
+            protected static class Loaded extends AnnotationDescription.AnnotationValue.Loaded.AbstractBase<Class<?>> {
 
                 /**
                  * The type that is represented by an annotation property.
@@ -833,7 +832,7 @@ public interface TypePool {
         /**
          * Represents an array that is referenced by an annotation which does not contain primitive values.
          */
-        protected static class RawNonPrimitiveArray implements AnnotationDescription.AnnotationValue<Object[], Object[]> {
+        protected static class RawNonPrimitiveArray extends AnnotationDescription.AnnotationValue.AbstractBase<Object[], Object[]> {
 
             /**
              * The type pool to use for looking up types.
@@ -933,7 +932,7 @@ public interface TypePool {
             /**
              * Represents a loaded annotation property representing a complex array.
              */
-            protected static class Loaded implements AnnotationDescription.AnnotationValue.Loaded<Object[]> {
+            protected static class Loaded extends AnnotationDescription.AnnotationValue.Loaded.AbstractBase<Object[]> {
 
                 /**
                  * The array's loaded component type.
@@ -6409,18 +6408,18 @@ public interface TypePool {
                 }
 
                 @Override
-                public Object getValue(MethodDescription.InDefinedShape methodDescription) {
+                public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription) {
                     if (!methodDescription.getDeclaringType().asErasure().equals(annotationType)) {
                         throw new IllegalArgumentException(methodDescription + " is not declared by " + getAnnotationType());
                     }
                     AnnotationValue<?, ?> annotationValue = values.get(methodDescription.getName());
-                    Object value = annotationValue == null
-                            ? getAnnotationType().getDeclaredMethods().filter(is(methodDescription)).getOnly().getDefaultValue()
-                            : annotationValue.resolve();
-                    if (value == null) {
-                        throw new IllegalStateException(methodDescription + " is not defined on annotation");
+                    if (annotationValue == null) {
+                        annotationValue = getAnnotationType().getDeclaredMethods().filter(is(methodDescription)).getOnly().getDefaultValue();
                     }
-                    return PropertyDispatcher.of(value.getClass()).conditionalClone(value);
+                    if (annotationValue != null) { // TODO
+                        return annotationValue;
+                    }
+                    throw new IllegalStateException(methodDescription + " is not defined on annotation");
                 }
 
                 @Override
@@ -6470,7 +6469,7 @@ public interface TypePool {
                         try {
                             return load();
                         } catch (ClassNotFoundException exception) {
-                            throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, exception);
+                            throw new IllegalStateException("Could not load annotation type or referenced type", exception);
                         }
                     }
                 }
@@ -7194,10 +7193,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Object getDefaultValue() {
-                    return defaultValue == null
-                            ? NO_DEFAULT_VALUE
-                            : defaultValue.resolve();
+                public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+                    return defaultValue;
                 }
 
                 @Override

@@ -1179,7 +1179,7 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        FOO,
+                        new AnnotationDescription.AnnotationValue.Trivial<String>(FOO),
                         TypeDescription.Generic.UNDEFINED))
                 .validated();
     }

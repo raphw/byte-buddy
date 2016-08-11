@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -291,29 +292,15 @@ public interface MethodRegistry {
             /**
              * The annotation value to set as a default value.
              */
-            private final Object annotationValue;
+            private final AnnotationDescription.AnnotationValue<?, ?> annotationValue;
 
             /**
              * Creates a handler for defining a default annotation value for a method.
              *
              * @param annotationValue The annotation value to set as a default value.
              */
-            protected ForAnnotationValue(Object annotationValue) {
+            public ForAnnotationValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                 this.annotationValue = annotationValue;
-            }
-
-            /**
-             * Represents the given value as an annotation default value handler after validating its suitability.
-             *
-             * @param annotationValue The annotation value to represent.
-             * @return A handler for setting the given value as a default value for instrumented methods.
-             */
-            public static Handler of(Object annotationValue) {
-                TypeDescription typeDescription = new TypeDescription.ForLoadedType(annotationValue.getClass());
-                if (!typeDescription.isAnnotationValue() && !typeDescription.isPrimitiveWrapper()) {
-                    throw new IllegalArgumentException("Does not describe an annotation value: " + annotationValue);
-                }
-                return new ForAnnotationValue(annotationValue);
             }
 
             @Override

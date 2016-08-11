@@ -30,7 +30,7 @@ public class TypePoolDefaultEnumerationDescriptionTest extends AbstractEnumerati
         TypeDescription typeDescription = typePool.describe(carrierType.getName()).resolve();
         for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
             if (annotationDescription.getAnnotationType().equals(annotationDescription.getAnnotationType())) {
-                return annotationDescription.getValue(annotationMethod, EnumerationDescription.class);
+                return annotationDescription.getValue(annotationMethod).resolve(EnumerationDescription.class);
             }
         }
         throw new AssertionError();

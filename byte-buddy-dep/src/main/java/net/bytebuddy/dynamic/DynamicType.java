@@ -1476,10 +1476,10 @@ public interface DynamicType {
                  * types as {@link TypeDescription} and annotations as {@link AnnotationDescription}. For supplying loaded types, use
                  * {@link ImplementationDefinition#defaultValue(Object, Class)} must be used.
                  *
-                 * @param value The value to be defined as a default value.
+                 * @param annotationValue The value to be defined as a default value.
                  * @return A builder where the previously defined or matched method is implemented to return an annotation default value.
                  */
-                MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value);
+                MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue);
 
                 /**
                  * Defines the previously defined or matched method to return the supplied value as an annotation default value. The
@@ -1489,7 +1489,7 @@ public interface DynamicType {
                  * @param type  The type of the annotation property.
                  * @return A builder where the previously defined or matched method is implemented to return an annotation default value.
                  */
-                MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value, Class<?> type);
+                <W> MethodDefinition.ReceiverTypeDefinition<U> defaultValue(W value, Class<? extends W> type);
 
                 /**
                  * A builder for optionally defining an implementation of a method.
@@ -1508,8 +1508,8 @@ public interface DynamicType {
                 abstract class AbstractBase<V> implements ImplementationDefinition<V> {
 
                     @Override
-                    public MethodDefinition.ReceiverTypeDefinition<V> defaultValue(Object value, Class<?> type) {
-                        return defaultValue(AnnotationDescription.ForLoadedAnnotation.describe(value, new TypeDescription.ForLoadedType(type)));
+                    public <W> MethodDefinition.ReceiverTypeDefinition<V> defaultValue(W value, Class<? extends W> type) {
+                        return defaultValue(AnnotationDescription.ForLoadedAnnotation.asValue(type, value));
                     }
                 }
             }
@@ -1657,12 +1657,12 @@ public interface DynamicType {
                             }
 
                             @Override
-                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value) {
-                                return materialize().defaultValue(value);
+                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                                return materialize().defaultValue(annotationValue);
                             }
 
                             @Override
-                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value, Class<?> type) {
+                            public <V> MethodDefinition.ReceiverTypeDefinition<X> defaultValue(V value, Class<? extends V> type) {
                                 return materialize().defaultValue(value, type);
                             }
 
@@ -1940,12 +1940,12 @@ public interface DynamicType {
                             }
 
                             @Override
-                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value) {
-                                return materialize().defaultValue(value);
+                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                                return materialize().defaultValue(annotationValue);
                             }
 
                             @Override
-                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value, Class<?> type) {
+                            public <V> MethodDefinition.ReceiverTypeDefinition<X> defaultValue(V value, Class<? extends V> type) {
                                 return materialize().defaultValue(value, type);
                             }
 
@@ -2082,12 +2082,12 @@ public interface DynamicType {
                                 }
 
                                 @Override
-                                public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value) {
-                                    return materialize().defaultValue(value);
+                                public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                                    return materialize().defaultValue(annotationValue);
                                 }
 
                                 @Override
-                                public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value, Class<?> type) {
+                                public <V> MethodDefinition.ReceiverTypeDefinition<X> defaultValue(V value, Class<? extends V> type) {
                                     return materialize().defaultValue(value, type);
                                 }
 
@@ -3439,7 +3439,7 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
                                 token.getTypeVariableTokens(),
@@ -3447,8 +3447,8 @@ public interface DynamicType {
                                 token.getParameterTokens(),
                                 token.getExceptionTypes(),
                                 token.getAnnotations(),
-                                value,
-                                token.getReceiverType())).materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
+                                annotationValue,
+                                token.getReceiverType())).materialize(new MethodRegistry.Handler.ForAnnotationValue(annotationValue));
                     }
 
                     /**
@@ -3867,8 +3867,8 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value) {
-                        return materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                        return materialize(new MethodRegistry.Handler.ForAnnotationValue(annotationValue));
                     }
 
                     /**
@@ -4064,12 +4064,12 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value) {
-                        return interfaceType().defaultValue(value);
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                        return interfaceType().defaultValue(annotationValue);
                     }
 
                     @Override
-                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value, Class<?> type) {
+                    public <V> MethodDefinition.ReceiverTypeDefinition<U> defaultValue(V value, Class<? extends V> type) {
                         return interfaceType().defaultValue(value, type);
                     }
 

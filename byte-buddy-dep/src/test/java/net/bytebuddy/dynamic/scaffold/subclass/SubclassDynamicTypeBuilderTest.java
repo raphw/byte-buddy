@@ -154,7 +154,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .defineMethod(FOO, int.class, Visibility.PUBLIC)
                 .withoutCode()
                 .defineMethod(BAR, String.class, Visibility.PUBLIC)
-                .defaultValue(FOO)
+                .defaultValue(FOO, String.class)
                 .defineMethod(QUX, SimpleEnum.class, Visibility.PUBLIC)
                 .defaultValue(SimpleEnum.FIRST, SimpleEnum.class)
                 .make()
@@ -498,7 +498,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(type.getSuperclass(), is((Object) Object.class));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(type).asList().size(), is(1));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClassType(type).asList().ofType(typeAnnotationType)
-                .getValue(value, Integer.class), is(BAZ));
+                .getValue(value).resolve(Integer.class), is(BAZ));
     }
 
     @Test
@@ -519,7 +519,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .getDeclaredMethod(FOO);
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations().size(), is(1));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations()
-                .ofType(typeAnnotationType).getValue(value, Integer.class), is(BAZ));
+                .ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(BAZ));
     }
 
     @Test
@@ -540,7 +540,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .getDeclaredMethod("toString");
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations().size(), is(1));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations()
-                .ofType(typeAnnotationType).getValue(value, Integer.class), is(BAZ));
+                .ofType(typeAnnotationType).getValue(value).resolve(Integer.class), is(BAZ));
     }
 
     @Test

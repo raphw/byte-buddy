@@ -114,9 +114,9 @@ public @interface Super {
                                                  AnnotationDescription.Loadable<Super> annotation) {
                 return new TypeProxy.ForSuperMethodByConstructor(parameterType,
                         implementationTarget,
-                        Arrays.asList(annotation.getValue(CONSTRUCTOR_PARAMETERS, TypeDescription[].class)),
-                        annotation.getValue(IGNORE_FINALIZER, Boolean.class),
-                        annotation.getValue(SERIALIZABLE_PROXY, Boolean.class));
+                        Arrays.asList(annotation.getValue(CONSTRUCTOR_PARAMETERS).resolve(TypeDescription[].class)),
+                        annotation.getValue(IGNORE_FINALIZER).resolve(Boolean.class),
+                        annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
             }
         },
 
@@ -131,8 +131,8 @@ public @interface Super {
                                                  AnnotationDescription.Loadable<Super> annotation) {
                 return new TypeProxy.ForSuperMethodByReflectionFactory(parameterType,
                         implementationTarget,
-                        annotation.getValue(IGNORE_FINALIZER, Boolean.class),
-                        annotation.getValue(SERIALIZABLE_PROXY, Boolean.class));
+                        annotation.getValue(IGNORE_FINALIZER).resolve(Boolean.class),
+                        annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
             }
         };
 
@@ -228,7 +228,7 @@ public @interface Super {
                 throw new IllegalStateException(target + " uses the @Super annotation on an invalid type");
             }
             TypeDescription proxyType = TypeLocator.ForType
-                    .of(annotation.getValue(PROXY_TYPE, TypeDescription.class))
+                    .of(annotation.getValue(PROXY_TYPE).resolve(TypeDescription.class))
                     .resolve(implementationTarget.getInstrumentedType(), target.getType());
             if (proxyType.isFinal()) {
                 throw new IllegalStateException("Cannot extend final type as @Super proxy: " + proxyType);
@@ -236,7 +236,7 @@ public @interface Super {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
-                        .getValue(STRATEGY, EnumerationDescription.class).load(Instantiation.class)
+                        .getValue(STRATEGY).resolve(EnumerationDescription.class).load(Instantiation.class)
                         .proxyFor(proxyType, implementationTarget, annotation));
             }
         }

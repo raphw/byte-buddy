@@ -147,12 +147,12 @@ public @interface FieldValue {
 
             @Override
             protected String fieldName(AnnotationDescription.Loadable<FieldValue> annotation) {
-                return annotation.getValue(FIELD_NAME, String.class);
+                return annotation.getValue(FIELD_NAME).resolve(String.class);
             }
 
             @Override
             protected TypeDescription declaringType(AnnotationDescription.Loadable<FieldValue> annotation) {
-                return annotation.getValue(DEFINING_TYPE, TypeDescription.class);
+                return annotation.getValue(DEFINING_TYPE).resolve(TypeDescription.class);
             }
 
             @Override

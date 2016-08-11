@@ -7,7 +7,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.modifier.ModifierConstributorObjectPropertiesTest;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
@@ -241,7 +240,7 @@ public class TypeWriterDefaultTest {
                 .subclass(Object.class)
                 .merge(TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, String.class)
-                .defaultValue(BAR)
+                .defaultValue(BAR, String.class)
                 .make();
     }
 
@@ -250,7 +249,7 @@ public class TypeWriterDefaultTest {
         new ByteBuddy()
                 .makeInterface()
                 .defineMethod(FOO, String.class)
-                .defaultValue(BAR)
+                .defaultValue(BAR, String.class)
                 .make();
     }
 

@@ -37,26 +37,7 @@ public interface AnnotationDescription {
      */
     AnnotationDescription.Loadable<?> UNDEFINED = null;
 
-    /**
-     * Returns the value of the given method for this annotation value. Note that all return values are wrapped as
-     * described by {@link AnnotationDescription}.
-     *
-     * @param methodDescription The method for the value to be requested.
-     * @return The value for the given method.
-     */
-    Object getValue(MethodDescription.InDefinedShape methodDescription);
-
-    /**
-     * Returns the value of the given method for this annotation value and performs a casting to the given value. Note
-     * that all return values are wrapped described by
-     * {@link AnnotationDescription}.
-     *
-     * @param methodDescription The method for the value to be requested.
-     * @param type              The type to which the returned value should be casted.
-     * @param <T>               The given type of the return value.
-     * @return The value for the given method casted to {@code type}.
-     */
-    <T> T getValue(MethodDescription.InDefinedShape methodDescription, Class<T> type);
+    AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription);
 
     /**
      * Returns a description of the annotation type of this annotation.
@@ -120,6 +101,8 @@ public interface AnnotationDescription {
          */
         T resolve();
 
+        <S> S resolve(Class<? extends S> type);
+
         /**
          * Returns the loaded value of this annotation.
          *
@@ -166,6 +149,8 @@ public interface AnnotationDescription {
              * @return The actual annotation value represented by this instance.
              */
             U resolve();
+
+            <V> V resolve(Class<? extends V> type);
 
             /**
              * Represents the state of a {@link Loaded} annotation property.
@@ -214,6 +199,22 @@ public interface AnnotationDescription {
                     return "AnnotationDescription.AnnotationValue.Loaded.State." + name();
                 }
             }
+
+            abstract class AbstractBase<W> implements Loaded<W> {
+
+                @Override
+                public <S> S resolve(Class<? extends S> type) {
+                    return type.cast(resolve());
+                }
+            }
+        }
+
+        abstract class AbstractBase<U, V> implements AnnotationValue<U, V> {
+
+            @Override
+            public <S> S resolve(Class<? extends S> type) {
+                return type.cast(resolve());
+            }
         }
 
         /**
@@ -221,7 +222,7 @@ public interface AnnotationDescription {
          *
          * @param <U> The type where primitive values are represented by their boxed type.
          */
-        class Trivial<U> implements AnnotationValue<U, U> {
+        class Trivial<U> extends AbstractBase<U, U> {
 
             /**
              * The represented value.
@@ -277,7 +278,7 @@ public interface AnnotationDescription {
              *
              * @param <V> The annotation properties type.
              */
-            public static class Loaded<V> implements AnnotationValue.Loaded<V> {
+            public static class Loaded<V> extends AnnotationValue.Loaded.AbstractBase<V> {
 
                 /**
                  * The represented value.
@@ -336,7 +337,7 @@ public interface AnnotationDescription {
          *
          * @param <U> The type of the annotation.
          */
-        class ForAnnotation<U extends Annotation> implements AnnotationValue<AnnotationDescription, U> {
+        class ForAnnotation<U extends Annotation> extends AbstractBase<AnnotationDescription, U> {
 
             /**
              * The annotation description that this value represents.
@@ -402,7 +403,7 @@ public interface AnnotationDescription {
              *
              * @param <V> The annotation type.
              */
-            public static class Loaded<V extends Annotation> implements AnnotationValue.Loaded<V> {
+            public static class Loaded<V extends Annotation> extends AnnotationValue.Loaded.AbstractBase<V> {
 
                 /**
                  * The loaded version of the represented annotation.
@@ -458,7 +459,7 @@ public interface AnnotationDescription {
              * such exceptional states are represented in the Open JDK's annotation implementations.
              * </p>
              */
-            public static class IncompatibleRuntimeType implements AnnotationValue.Loaded<Annotation> {
+            public static class IncompatibleRuntimeType extends AnnotationValue.Loaded.AbstractBase<Annotation> {
 
                 /**
                  * The incompatible runtime type which is not an annotation type.
@@ -493,7 +494,7 @@ public interface AnnotationDescription {
          *
          * @param <U> The type of the enumeration.
          */
-        class ForEnumeration<U extends Enum<U>> implements AnnotationValue<EnumerationDescription, U> {
+        class ForEnumeration<U extends Enum<U>> extends AbstractBase<EnumerationDescription, U> {
 
             /**
              * The enumeration that is represented.
@@ -557,7 +558,7 @@ public interface AnnotationDescription {
              *
              * @param <V> The type of the represented enumeration.
              */
-            public static class Loaded<V extends Enum<V>> implements AnnotationValue.Loaded<V> {
+            public static class Loaded<V extends Enum<V>> extends AnnotationValue.Loaded.AbstractBase<V> {
 
                 /**
                  * The represented enumeration.
@@ -613,7 +614,7 @@ public interface AnnotationDescription {
              * such exceptional states are represented in the Open JDK's annotation implementations.
              * </p>
              */
-            public static class UnknownRuntimeEnumeration implements AnnotationValue.Loaded<Enum<?>> {
+            public static class UnknownRuntimeEnumeration extends AnnotationValue.Loaded.AbstractBase<Enum<?>> {
 
                 /**
                  * The loaded enumeration type.
@@ -659,7 +660,7 @@ public interface AnnotationDescription {
              * such exceptional states are represented in the Open JDK's annotation implementations.
              * </p>
              */
-            public static class IncompatibleRuntimeType implements AnnotationValue.Loaded<Enum<?>> {
+            public static class IncompatibleRuntimeType extends AnnotationValue.Loaded.AbstractBase<Enum<?>> {
 
                 /**
                  * The runtime type which is not an enumeration type.
@@ -694,7 +695,7 @@ public interface AnnotationDescription {
          *
          * @param <U> The type of the {@link java.lang.Class} that is described.
          */
-        class ForType<U extends Class<U>> implements AnnotationValue<TypeDescription, U> {
+        class ForType<U extends Class<U>> extends AbstractBase<TypeDescription, U> {
 
             /**
              * Indicates to a class loading process that class initializers are not required to be executed when loading a type.
@@ -762,7 +763,7 @@ public interface AnnotationDescription {
              *
              * @param <U> The represented type.
              */
-            protected static class Loaded<U extends Class<U>> implements AnnotationValue.Loaded<U> {
+            protected static class Loaded<U extends Class<U>> extends AnnotationValue.Loaded.AbstractBase<U> {
 
                 /**
                  * The represented type.
@@ -816,7 +817,7 @@ public interface AnnotationDescription {
          * @param <U> The component type of the annotation's value when it is not loaded.
          * @param <V> The component type of the annotation's value when it is loaded.
          */
-        class ForComplexArray<U, V> implements AnnotationValue<U[], V[]> {
+        class ForComplexArray<U, V> extends AbstractBase<U[], V[]> {
 
             /**
              * The component type for arrays containing unloaded versions of the annotation array's values.
@@ -956,7 +957,7 @@ public interface AnnotationDescription {
              *
              * @param <W> The component type of the loaded array.
              */
-            protected static class Loaded<W> implements AnnotationValue.Loaded<W[]> {
+            protected static class Loaded<W> extends AnnotationValue.Loaded.AbstractBase<W[]> {
 
                 /**
                  * The loaded component type of the array.
@@ -1318,7 +1319,7 @@ public interface AnnotationDescription {
          * Represents a default value for an annotation property that is not explicitly defined by
          * an annotation.
          */
-        protected static class DefaultValue implements AnnotationDescription.AnnotationValue.Loaded<Object> {
+        protected static class DefaultValue extends AnnotationValue.Loaded.AbstractBase<Object> {
 
             /**
              * The represented default value.
@@ -1387,7 +1388,7 @@ public interface AnnotationDescription {
         /**
          * Represents a missing annotation property which is not represented by a default value.
          */
-        private static class Missing implements AnnotationDescription.AnnotationValue.Loaded<Void> {
+        private static class Missing extends AnnotationValue.Loaded.AbstractBase<Void> {
 
             /**
              * The annotation type.
@@ -1459,11 +1460,6 @@ public interface AnnotationDescription {
         @Override
         public boolean isDocumented() {
             return getAnnotationType().getDeclaredAnnotations().isAnnotationPresent(Documented.class);
-        }
-
-        @Override
-        public <T> T getValue(MethodDescription.InDefinedShape methodDescription, Class<T> type) {
-            return type.cast(getValue(methodDescription));
         }
 
         @Override
@@ -1577,36 +1573,6 @@ public interface AnnotationDescription {
             return new ForLoadedAnnotation<U>(annotation);
         }
 
-        /**
-         * A helper method for converting a loaded type into a representation that is also capable of representing
-         * unloaded descriptions of annotation values as specified by
-         * {@link AnnotationDescription}.
-         *
-         * @param value           The loaded value.
-         * @param typeDescription The annotation type of the value. This cannot be inferred as enumerations
-         *                        can implement annotation interfaces and because annotations could be implemented as
-         *                        an enumeration what creates an ambiguity.
-         * @return The wrapped representation as specified by
-         * {@link AnnotationDescription}.
-         */
-        public static Object describe(Object value, TypeDescription typeDescription) {
-            // Because enums can implement annotation interfaces, the enum property needs to be checked first.
-            if (typeDescription.represents(Class.class)) {
-                value = new TypeDescription.ForLoadedType((Class<?>) value);
-            } else if (typeDescription.represents(Class[].class)) {
-                value = new TypeList.ForLoadedTypes((Class<?>[]) value).toArray(new TypeDescription[((Class<?>[]) value).length]);
-            } else if (typeDescription.isAssignableTo(Enum.class)) {
-                value = new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value);
-            } else if (typeDescription.isAssignableTo(Enum[].class)) {
-                value = EnumerationDescription.ForLoadedEnumeration.asList((Enum<?>[]) value).toArray(new EnumerationDescription[((Enum<?>[]) value).length]);
-            } else if (typeDescription.isAssignableTo(Annotation.class)) {
-                value = ForLoadedAnnotation.of((Annotation) value);
-            } else if (typeDescription.isAssignableTo(Annotation[].class)) {
-                value = new AnnotationList.ForLoadedAnnotations((Annotation[]) value).toArray(new AnnotationDescription[((Annotation[]) value).length]);
-            }
-            return value;
-        }
-
         @Override
         public S load() throws ClassNotFoundException {
             return annotationType == annotation.annotationType()
@@ -1642,7 +1608,7 @@ public interface AnnotationDescription {
          * @return An annotation value representation.
          */
         @SuppressWarnings("unchecked")
-        private static AnnotationValue<?, ?> asValue(Class<?> type, Object value) {
+        public static AnnotationValue<?, ?> asValue(Class<?> type, Object value) {
             // Because enums can implement annotation interfaces, the enum property needs to be checked first.
             if (Enum.class.isAssignableFrom(type)) {
                 return AnnotationValue.ForEnumeration.<Enum>of(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
@@ -1681,7 +1647,7 @@ public interface AnnotationDescription {
 
         @Override
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
-        public Object getValue(MethodDescription.InDefinedShape methodDescription) {
+        public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription) {
             if (!methodDescription.getDeclaringType().represents(annotation.annotationType())) {
                 throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
             }
@@ -1696,7 +1662,7 @@ public interface AnnotationDescription {
                         AccessController.doPrivileged(new SetAccessibleAction<Method>(method));
                     }
                 }
-                return describe(method.invoke(annotation), methodDescription.getReturnType().asErasure());
+                return asValue(method.getReturnType(), method.invoke(annotation));
             } catch (Exception exception) {
                 throw new IllegalStateException("Cannot access annotation property " + methodDescription, exception.getCause());
             }
@@ -1746,12 +1712,12 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public Object getValue(MethodDescription.InDefinedShape methodDescription) {
+        public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription) {
             AnnotationValue<?, ?> value = annotationValues.get(methodDescription.getName());
             if (value != null) {
-                return value.resolve();
+                return value;
             }
-            Object defaultValue = methodDescription.getDefaultValue();
+            AnnotationValue<?, ?> defaultValue = methodDescription.getDefaultValue();
             if (defaultValue != null) {
                 return defaultValue;
             }
@@ -1798,7 +1764,7 @@ public interface AnnotationDescription {
             }
 
             @Override
-            public Object getValue(MethodDescription.InDefinedShape methodDescription) {
+            public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription) {
                 return Latent.this.getValue(methodDescription);
             }
 

@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -266,8 +267,8 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public Object getDefaultValue() {
-                    return MethodDescription.NO_DEFAULT_VALUE;
+                public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+                    return NO_DEFAULT_VALUE;
                 }
 
                 @Override
@@ -403,8 +404,8 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public Object getDefaultValue() {
-                    return MethodDescription.NO_DEFAULT_VALUE;
+                public AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
+                    return NO_DEFAULT_VALUE;
                 }
 
                 @Override
