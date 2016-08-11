@@ -16,6 +16,7 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.ExceptionTableSensitiveMethodVisitor;
+import net.bytebuddy.utility.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
 
@@ -129,6 +130,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape SUPPRESS_ENTER;
 
+    private static final MethodDescription.InDefinedShape PREPEND_LINE_NUMBER;
+
     /**
      * A reference to the {@link OnMethodEnter#skipIfTrue()} method.
      */
@@ -157,6 +160,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         INLINE_ENTER = enter.filter(named("inline")).getOnly();
         SUPPRESS_ENTER = enter.filter(named("suppress")).getOnly();
         SKIP_IF_TRUE = enter.filter(named("skipIfTrue")).getOnly();
+        PREPEND_LINE_NUMBER = enter.filter(named("prependLineNumber")).getOnly();
         MethodList<MethodDescription.InDefinedShape> exit = new TypeDescription.ForLoadedType(OnMethodExit.class).getDeclaredMethods();
         INLINE_EXIT = exit.filter(named("inline")).getOnly();
         SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
@@ -1454,7 +1458,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ClassFileVersion classFileVersion,
                                 int writerFlags,
                                 int readerFlags) {
-            super(Opcodes.ASM5, delegate);
+            super(Opcodes.ASM5, methodEnter.isPrependLineNumber()
+                    ? new LineNumberPrependingMethodVisitor(delegate)
+                    : delegate);
             this.methodVisitor = methodVisitor;
             this.instrumentedMethod = instrumentedMethod;
             padding = methodEnter.getEnterType().getStackSize().getSize();
@@ -2353,6 +2359,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     /**
                      * Pushes the represented default value as a boxed value onto the operand stack.
+                     *
                      * @param methodVisitor The method visitor to apply the changes to.
                      */
                     protected void pushBoxedDefault(MethodVisitor methodVisitor) {
@@ -5356,6 +5363,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 TypeDescription getEnterType();
 
+                boolean isPrependLineNumber();
+
                 @Override
                 Bound.ForMethodEnter bind(MethodDescription.InDefinedShape instrumentedMethod,
                                           MethodVisitor methodVisitor,
@@ -5533,6 +5542,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public TypeDescription getEnterType() {
                 return TypeDescription.VOID;
+            }
+
+            @Override
+            public boolean isPrependLineNumber() {
+                return false;
             }
 
             @Override
@@ -6000,6 +6014,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final SkipDispatcher skipDispatcher;
 
+                    private final boolean prependLineNumber;
+
                     /**
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
@@ -6023,6 +6039,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 classReader,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
                         skipDispatcher = SkipDispatcher.of(adviceMethod);
+                        prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER, Boolean.class);
                     }
 
                     @Override
@@ -6038,10 +6055,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 classReader,
                                 skipDispatcher);
                     }
-
                     @Override
                     public TypeDescription getEnterType() {
                         return adviceMethod.getReturnType().asErasure();
+                    }
+
+                    @Override
+                    public boolean isPrependLineNumber() {
+                        return prependLineNumber;
                     }
 
                     @Override
@@ -7203,6 +7224,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final SkipDispatcher skipDispatcher;
 
+                    private final boolean prependLineNumber;
+
                     /**
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
@@ -7222,11 +7245,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
                         skipDispatcher = SkipDispatcher.of(adviceMethod);
+                        prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER, Boolean.class);
                     }
 
                     @Override
                     public TypeDescription getEnterType() {
                         return adviceMethod.getReturnType().asErasure();
+                    }
+
+                    @Override
+                    public boolean isPrependLineNumber() {
+                        return prependLineNumber;
                     }
 
                     @Override
@@ -7490,6 +7519,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if the instrumented method should be skipped if this advice method returns {@code true}.
          */
         boolean skipIfTrue() default false;
+
+        boolean prependLineNumber() default true;
     }
 
     /**
@@ -7710,7 +7741,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     *
      * Indicates that the annotated parameter should always return a default a boxed version of the instrumented methods return value
      * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
      * parameter must be of type {@link Object}.
