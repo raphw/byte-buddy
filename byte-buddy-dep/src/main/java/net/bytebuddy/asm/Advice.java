@@ -6104,13 +6104,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (object == null || getClass() != object.getClass()) return false;
                         if (!super.equals(object)) return false;
                         Inlining.Resolved.ForMethodEnter that = (Inlining.Resolved.ForMethodEnter) object;
-                        return skipDispatcher == that.skipDispatcher;
+                        return skipDispatcher == that.skipDispatcher && prependLineNumber == that.prependLineNumber;
                     }
 
                     @Override
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + skipDispatcher.hashCode();
+                        result = 31 * result + (prependLineNumber ? 1 : 0);
                         return result;
                     }
 
@@ -6120,6 +6121,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 "adviceMethod=" + adviceMethod +
                                 ", offsetMappings=" + offsetMappings +
                                 ", skipDispatcher=" + skipDispatcher +
+                                ", prependLineNumber=" + prependLineNumber +
                                 '}';
                     }
 
@@ -7300,13 +7302,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (object == null || getClass() != object.getClass()) return false;
                         if (!super.equals(object)) return false;
                         Delegating.Resolved.ForMethodEnter that = (Delegating.Resolved.ForMethodEnter) object;
-                        return skipDispatcher == that.skipDispatcher;
+                        return skipDispatcher == that.skipDispatcher && prependLineNumber == that.prependLineNumber;
                     }
 
                     @Override
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + skipDispatcher.hashCode();
+                        result = 31 * result + (prependLineNumber ? 1 : 0);
                         return result;
                     }
 
@@ -7316,6 +7319,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 "adviceMethod=" + adviceMethod +
                                 ", offsetMappings=" + offsetMappings +
                                 ", skipDispatcher=" + skipDispatcher +
+                                ", prependLineNumber=" + prependLineNumber +
                                 '}';
                     }
                 }
