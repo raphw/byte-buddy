@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericSignatureFormatError;
-import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -601,11 +600,9 @@ public interface TypePool {
             public Loaded<Annotation> load(ClassLoader classLoader) throws ClassNotFoundException {
                 Class<?> type = classLoader.loadClass(annotationToken.getBinaryName());
                 if (type.isAnnotation()) {
-                    return new ForAnnotation.Loaded<Annotation>((Annotation) Proxy.newProxyInstance(classLoader,
-                            new Class<?>[]{type},
-                            AnnotationDescription.AnnotationInvocationHandler.of(classLoader,
-                                    (Class<? extends Annotation>) type,
-                                    annotationToken.getValues())));
+                    return new ForAnnotation.Loaded<Annotation>(AnnotationDescription.AnnotationInvocationHandler.of(classLoader,
+                            (Class<? extends Annotation>) type,
+                            annotationToken.getValues()));
                 } else {
                     return new ForAnnotation.IncompatibleRuntimeType(type);
                 }
@@ -6469,11 +6466,8 @@ public interface TypePool {
                     }
 
                     @Override
-                    @SuppressWarnings("unchecked")
                     public S load(ClassLoader classLoader) throws ClassNotFoundException {
-                        return (S) Proxy.newProxyInstance(classLoader,
-                                new Class<?>[]{annotationType},
-                                AnnotationInvocationHandler.of(classLoader, annotationType, values));
+                        return AnnotationInvocationHandler.of(classLoader, annotationType, values);
                     }
 
                     @Override

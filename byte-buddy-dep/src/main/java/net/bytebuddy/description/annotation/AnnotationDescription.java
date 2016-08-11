@@ -1139,17 +1139,19 @@ public interface AnnotationDescription {
         }
 
         /**
+         * Creates a proxy instance for the supplied annotation type and values.
+         *
          * @param classLoader    The class loader that should be used for loading the annotation's values.
          * @param annotationType The annotation's type.
          * @param values         The values that the annotation contains.
          * @param <S>            The type of the handled annotation.
-         * @return An appropriate invocation handler.
+         * @return A proxy for the annotation type and values.
          * @throws ClassNotFoundException If the class of an instance that is contained by this annotation could not be found.
          */
-        public static <S extends Annotation> InvocationHandler of(ClassLoader classLoader,
-                                                                  Class<S> annotationType,
-                                                                  Map<String, AnnotationDescription.AnnotationValue<?, ?>> values)
-                throws ClassNotFoundException {
+        @SuppressWarnings("unchecked")
+        public static <S extends Annotation> S of(ClassLoader classLoader,
+                                                  Class<S> annotationType,
+                                                  Map<String, AnnotationDescription.AnnotationValue<?, ?>> values) throws ClassNotFoundException {
             Method[] declaredMethod = annotationType.getDeclaredMethods();
             LinkedHashMap<Method, AnnotationValue.Loaded<?>> loadedValues = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>();
             for (Method method : declaredMethod) {
@@ -1158,7 +1160,7 @@ public interface AnnotationDescription {
                         ? DefaultValue.of(method)
                         : annotationValue.load(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader));
             }
-            return new AnnotationInvocationHandler<S>(annotationType, loadedValues);
+            return (S) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType}, new AnnotationInvocationHandler<S>(annotationType, loadedValues));
         }
 
         /**
@@ -1635,19 +1637,73 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public S load(ClassLoader classLoader) {
-            ClassLoader thisClassLoader = annotation.getClass().getClassLoader();
-            ClassLoader otherClassLoader = classLoader;
-            while (otherClassLoader != null) {
-                if (otherClassLoader == thisClassLoader) {
-                    break;
+        @SuppressWarnings("unchecked")
+        public S load(ClassLoader classLoader) throws ClassNotFoundException {
+            Class<?> annotationType = Class.forName(TypeDescription.ForLoadedType.getName(annotation.annotationType()), false, classLoader);
+            return annotationType == annotation.annotationType()
+                    ? annotation
+                    : AnnotationInvocationHandler.of(classLoader, (Class<S>) annotationType, asValue(annotation));
+        }
+
+        /**
+         * Extracts the annotation values of an annotation into a property map.
+         *
+         * @param annotation The annotation to convert.
+         * @return A mapping of property names to their annotation value.
+         */
+        private static Map<String, AnnotationValue<?, ?>> asValue(Annotation annotation) {
+            Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>();
+            for (Method property : annotation.annotationType().getDeclaredMethods()) {
+                try {
+                    annotationValues.put(property.getName(), asValue(property.getReturnType(), property.invoke(annotation)));
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot read " + property, exception.getCause());
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access " + property, exception);
                 }
-                otherClassLoader = otherClassLoader.getParent();
             }
-            if (otherClassLoader != thisClassLoader) {
-                throw new IllegalArgumentException(annotation + " is not loaded using " + classLoader);
+            return annotationValues;
+        }
+
+        /**
+         * Transforms an annotation property to an annotation value.
+         *
+         * @param type  The annotation's type.
+         * @param value The annotations value.
+         * @return An annotation value representation.
+         */
+        @SuppressWarnings("unchecked")
+        private static AnnotationValue<?, ?> asValue(Class<?> type, Object value) {
+            if (Enum.class.isAssignableFrom(type)) {
+                return AnnotationValue.ForEnumeration.of(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
+            } else if (Enum[].class.isAssignableFrom(type)) {
+                Enum<?>[] element = (Enum<?>[]) value;
+                List<AnnotationValue<?, ?>> annotationValues = new ArrayList<AnnotationValue<?, ?>>(element.length);
+                for (Enum<?> anElement : element) {
+                    annotationValues.add(AnnotationValue.ForEnumeration.of(new EnumerationDescription.ForLoadedEnumeration(anElement)));
+                }
+                return new AnnotationValue.ForComplexArray<Object, Object>(Enum.class, new TypeDescription.ForLoadedType(type), annotationValues);
+            } else if (Annotation.class.isAssignableFrom(type)) {
+                return AnnotationValue.ForAnnotation.of(new TypeDescription.ForLoadedType(type), asValue((Annotation) value));
+            } else if (Annotation[].class.isAssignableFrom(type)) {
+                Annotation[] element = (Annotation[]) value;
+                List<AnnotationValue<?, ?>> annotationValues = new ArrayList<AnnotationValue<?, ?>>(element.length);
+                for (Annotation anElement : element) {
+                    annotationValues.add(AnnotationValue.ForAnnotation.of(new TypeDescription.ForLoadedType(type), asValue(anElement)));
+                }
+                return new AnnotationValue.ForComplexArray<Object, Object>(Annotation.class, new TypeDescription.ForLoadedType(type), annotationValues);
+            } else if (Class.class.isAssignableFrom(type)) {
+                return AnnotationValue.ForType.of(new TypeDescription.ForLoadedType((Class<?>) value));
+            } else if (Class[].class.isAssignableFrom(type)) {
+                Class<?>[] element = (Class<?>[]) value;
+                List<AnnotationValue<?, ?>> annotationValues = new ArrayList<AnnotationValue<?, ?>>(element.length);
+                for (Class<?> anElement : element) {
+                    annotationValues.add(AnnotationValue.ForType.of(new TypeDescription.ForLoadedType(anElement)));
+                }
+                return new AnnotationValue.ForComplexArray<Object, Object>(Class.class, TypeDescription.CLASS, annotationValues);
+            } else {
+                return new AnnotationValue.Trivial<Object>(value);
             }
-            return load();
         }
 
         @Override
@@ -1767,11 +1823,8 @@ public interface AnnotationDescription {
             }
 
             @Override
-            @SuppressWarnings("unchecked")
             public S load(ClassLoader classLoader) throws ClassNotFoundException {
-                return (S) Proxy.newProxyInstance(classLoader,
-                        new Class<?>[]{annotationType},
-                        AnnotationDescription.AnnotationInvocationHandler.of(classLoader, annotationType, annotationValues));
+                return AnnotationDescription.AnnotationInvocationHandler.of(classLoader, annotationType, annotationValues);
             }
 
             @Override

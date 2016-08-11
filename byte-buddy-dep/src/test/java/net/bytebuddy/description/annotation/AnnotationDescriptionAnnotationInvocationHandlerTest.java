@@ -44,9 +44,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     @Test(expected = ClassNotFoundException.class)
     public void testClassNotFoundExceptionIsTransparent() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenThrow(new ClassNotFoundException());
-        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
@@ -54,9 +54,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     @SuppressWarnings("unchecked")
     public void testAnnotationTypeMismatchException() throws Throwable {
         when(loadedAnnotationValue.resolve()).thenReturn(new Object());
-        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
@@ -65,9 +65,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testIncompleteAnnotationException() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationDescription.AnnotationValue.Loaded)
                 AnnotationDescription.AnnotationInvocationHandler.DefaultValue.of(Object.class.getMethod("toString")));
-        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
@@ -76,9 +76,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testEnumConstantNotPresentException() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationDescription.AnnotationValue.Loaded)
                 new AnnotationDescription.AnnotationValue.ForEnumeration.UnknownRuntimeEnumeration(Bar.class, FOO));
-        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
@@ -87,9 +87,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testEnumTypeIncompatible() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationDescription.AnnotationValue.Loaded)
                 new AnnotationDescription.AnnotationValue.ForEnumeration.IncompatibleRuntimeType(Foo.class));
-        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
@@ -98,18 +98,18 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testAnnotationTypeIncompatible() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenReturn((AnnotationDescription.AnnotationValue.Loaded)
                 new AnnotationDescription.AnnotationValue.ForEnumeration.IncompatibleRuntimeType(Foo.class));
-        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
     @Test(expected = RuntimeException.class)
     public void testOtherExceptionIsTransparent() throws Throwable {
         when(freeAnnotationValue.load(getClass().getClassLoader())).thenThrow(new RuntimeException());
-        AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue))
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, freeAnnotationValue)))
                 .invoke(new Object(), Foo.class.getDeclaredMethod("foo"), new Object[0]);
     }
 
@@ -117,9 +117,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testEqualsToDirectIsTrue() throws Throwable {
         when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new ExplicitFoo(FOO)}),
                 is((Object) true));
     }
@@ -127,9 +127,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     @Test
     public void testEqualsToUnresolvedIsFalse() throws Throwable {
         when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.NON_RESOLVED);
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new ExplicitFoo(FOO)}),
                 is((Object) false));
         verify(loadedAnnotationValue, never()).resolve();
@@ -138,9 +138,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     @Test
     public void testEqualsToUndefinedIsFalse() throws Throwable {
         when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.NON_DEFINED);
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new ExplicitFoo(FOO)}),
                 is((Object) false));
         verify(loadedAnnotationValue, never()).resolve();
@@ -150,9 +150,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testEqualsToIndirectIsTrue() throws Throwable {
         when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class),
                                 new Object[]{Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{Foo.class}, new ExplicitFoo(FOO))}),
                 is((Object) true));
@@ -163,12 +163,12 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testEqualsToOtherHandlerIsTrue() throws Throwable {
         when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        InvocationHandler invocationHandler = AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        InvocationHandler invocationHandler = Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue));
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)));
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class),
                                 new Object[]{Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{Foo.class}, invocationHandler)}),
                 is((Object) true));
@@ -179,9 +179,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testEqualsToDirectIsFalse() throws Throwable {
         when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new ExplicitFoo(BAR)}),
                 is((Object) false));
         verify(loadedAnnotationValue).resolve();
@@ -191,9 +191,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testEqualsToIndirectIsFalse() throws Throwable {
         when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class),
                                 new Object[]{Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{Foo.class}, new ExplicitFoo(BAR))}),
                 is((Object) false));
@@ -206,12 +206,12 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
         when(otherLoadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(otherLoadedAnnotationValue.resolve()).thenReturn(BAR);
-        InvocationHandler invocationHandler = AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        InvocationHandler invocationHandler = Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                 Foo.class,
-                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, otherAnnotationValue));
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+                Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, otherAnnotationValue)));
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class),
                                 new Object[]{Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{Foo.class}, invocationHandler)}),
                 is((Object) false));
@@ -223,9 +223,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testEqualsToObjectIsFalse() throws Throwable {
         when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new Other()}),
                 is((Object) false));
         verify(loadedAnnotationValue, never()).resolve();
@@ -235,9 +235,9 @@ public class AnnotationDescriptionAnnotationInvocationHandlerTest {
     public void testEqualsToInvocationExceptionIsFalse() throws Throwable {
         when(loadedAnnotationValue.getState()).thenReturn(AnnotationDescription.AnnotationValue.Loaded.State.RESOLVED);
         when(loadedAnnotationValue.resolve()).thenReturn(FOO);
-        assertThat(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
+        assertThat(Proxy.getInvocationHandler(AnnotationDescription.AnnotationInvocationHandler.of(getClass().getClassLoader(),
                         Foo.class,
-                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue))
+                        Collections.<String, AnnotationDescription.AnnotationValue<?, ?>>singletonMap(FOO, annotationValue)))
                         .invoke(new Object(), Object.class.getDeclaredMethod("equals", Object.class), new Object[]{new FooWithException()}),
                 is((Object) false));
         verify(loadedAnnotationValue).resolve();

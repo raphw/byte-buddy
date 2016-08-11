@@ -2,6 +2,7 @@ package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -45,6 +46,7 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
     }
 
     @Test(expected = IllegalArgumentException.class)
+    @Ignore("Rewrite test to consider different class loader.")
     public void testLoadAnnotationWrongClassLoader() throws Exception {
         describe(Carrier.class.getAnnotation(PrivateAnnotation.class), Carrier.class).prepare(PrivateAnnotation.class).load(ClassLoadingStrategy.BOOTSTRAP_LOADER);
     }
