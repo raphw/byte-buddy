@@ -1510,7 +1510,7 @@ public interface DynamicType {
 
                     @Override
                     public <W> MethodDefinition.ReceiverTypeDefinition<V> defaultValue(W value, Class<? extends W> type) {
-                        return defaultValue(AnnotationDescription.ForLoadedAnnotation.asValue(type, value));
+                        return defaultValue(AnnotationDescription.ForLoadedAnnotation.asValue(value, type));
                     }
                 }
             }

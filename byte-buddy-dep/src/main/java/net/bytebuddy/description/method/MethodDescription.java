@@ -980,7 +980,7 @@ public interface MethodDescription extends TypeVariableSource,
             Object value = method.getDefaultValue();
             return value == null
                     ? AnnotationValue.UNDEFINED
-                    : AnnotationDescription.ForLoadedAnnotation.asValue(method.getReturnType(), value);
+                    : AnnotationDescription.ForLoadedAnnotation.asValue(value, method.getReturnType());
         }
 
         @Override

@@ -89,7 +89,6 @@ public interface AnnotationDescription {
      */
     boolean isDocumented();
 
-
     /**
      * An annotation description that is linked to a given loaded annotation type which allows its representation
      * as a fully loaded instance.
@@ -630,7 +629,7 @@ public interface AnnotationDescription {
             Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>();
             for (Method property : annotation.annotationType().getDeclaredMethods()) {
                 try {
-                    annotationValues.put(property.getName(), asValue(property.getReturnType(), property.invoke(annotation)));
+                    annotationValues.put(property.getName(), asValue(property.invoke(annotation), property.getReturnType()));
                 } catch (InvocationTargetException exception) {
                     throw new IllegalStateException("Cannot read " + property, exception.getCause());
                 } catch (IllegalAccessException exception) {
@@ -648,7 +647,7 @@ public interface AnnotationDescription {
          * @return An annotation value representation.
          */
         @SuppressWarnings("unchecked")
-        public static AnnotationValue<?, ?> asValue(Class<?> type, Object value) {
+        public static AnnotationValue<?, ?> asValue(Object value, Class<?> type) {
             // Because enums can implement annotation interfaces, the enum property needs to be checked first.
             if (Enum.class.isAssignableFrom(type)) {
                 return AnnotationValue.ForEnumeration.<Enum>of(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
@@ -702,7 +701,7 @@ public interface AnnotationDescription {
                         AccessController.doPrivileged(new SetAccessibleAction<Method>(method));
                     }
                 }
-                return asValue(method.getReturnType(), method.invoke(annotation));
+                return asValue(method.invoke(annotation), method.getReturnType());
             } catch (Exception exception) {
                 throw new IllegalStateException("Cannot access annotation property " + methodDescription, exception.getCause());
             }
