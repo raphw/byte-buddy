@@ -197,7 +197,7 @@ public class TypeWriterMethodPoolRecordTest {
     @Test
     public void testDefaultValueMethod() throws Exception {
         when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class));
-        when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
+        when(methodDescription.isDefaultValue(new AnnotationValue.Trivial<String>(FOO))).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 new AnnotationValue.Trivial<String>(FOO),
                 methodAttributeAppender);
@@ -221,7 +221,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class));
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
+        when(methodDescription.isDefaultValue(new AnnotationValue.Trivial<String>(FOO))).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 new AnnotationValue.Trivial<String>(FOO),
                 methodAttributeAppender);
@@ -254,7 +254,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
         when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class));
-        when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
+        when(methodDescription.isDefaultValue(new AnnotationValue.Trivial<String>(FOO))).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 new AnnotationValue.Trivial<String>(FOO),
                 methodAttributeAppender);
@@ -283,7 +283,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test(expected = IllegalStateException.class)
     public void testNoDefaultValue() throws Exception {
-        when(methodDescription.isDefaultValue(FOO)).thenReturn(false);
+        when(methodDescription.isDefaultValue(new AnnotationValue.Trivial<String>(FOO))).thenReturn(false);
         new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 new AnnotationValue.Trivial<String>(FOO),
                 methodAttributeAppender).apply(classVisitor, implementationContext, annotationValueFilterFactory);

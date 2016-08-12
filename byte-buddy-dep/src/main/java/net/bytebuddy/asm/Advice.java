@@ -8051,7 +8051,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   ParameterDescription.InDefinedShape target,
                                   AnnotationDescription.Loadable<T> annotation,
                                   boolean initialized) {
-                return annotation.getValue(annotationProperty);
+                return annotation.getValue(annotationProperty).resolve();
             }
 
             @Override

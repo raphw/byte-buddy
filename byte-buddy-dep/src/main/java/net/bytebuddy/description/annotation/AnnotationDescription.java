@@ -515,8 +515,8 @@ public interface AnnotationDescription {
                 return false;
             }
             for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
-                Object value = getValue(methodDescription);
-                if (!PropertyDispatcher.of(value.getClass()).equals(value, annotationDescription.getValue(methodDescription))) {
+                Object value = getValue(methodDescription).resolve();
+                if (!PropertyDispatcher.of(value.getClass()).equals(value, annotationDescription.getValue(methodDescription).resolve())) {
                     return false;
                 }
             }
@@ -527,7 +527,7 @@ public interface AnnotationDescription {
         public int hashCode() {
             int hashCode = 0;
             for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
-                Object value = getValue(methodDescription);
+                Object value = getValue(methodDescription).resolve();
                 hashCode += 31 * PropertyDispatcher.of(value.getClass()).hashCode(value);
             }
             return hashCode;
@@ -548,7 +548,7 @@ public interface AnnotationDescription {
                 }
                 toString.append(methodDescription.getName());
                 toString.append('=');
-                Object value = getValue(methodDescription);
+                Object value = getValue(methodDescription).resolve();
                 toString.append(PropertyDispatcher.of(value.getClass()).toString(value));
             }
             toString.append(')');

@@ -219,10 +219,10 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * Checks if the given value can describe a default annotation value for this method.
      *
-     * @param value The value that describes the default annotation value for this method.
+     * @param annotationValue The value that describes the default annotation value for this method.
      * @return {@code true} if the given value can describe a default annotation value for this method.
      */
-    boolean isDefaultValue(Object value);
+    boolean isDefaultValue(AnnotationValue<?, ?> annotationValue);
 
     /**
      * Returns this methods receiver type. A receiver type is undefined for {@code static} methods
@@ -563,11 +563,12 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public boolean isDefaultValue(Object value) {
+        public boolean isDefaultValue(AnnotationValue<?, ?> annotationValue) {
             if (!isDefaultValue()) {
                 return false;
             }
             TypeDescription returnType = getReturnType().asErasure();
+            Object value = annotationValue.resolve(); // TODO
             return (returnType.represents(boolean.class) && value instanceof Boolean)
                     || (returnType.represents(byte.class) && value instanceof Byte)
                     || (returnType.represents(char.class) && value instanceof Character)

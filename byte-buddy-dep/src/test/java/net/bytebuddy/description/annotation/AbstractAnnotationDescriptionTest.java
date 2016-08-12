@@ -208,6 +208,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testEquals() throws Exception {
         AnnotationDescription identical = describe(first);
         assertThat(identical, is(identical));
@@ -243,7 +244,9 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(describe(first), not(equalFirstTypeOnly));
         AnnotationDescription equalFirstNameOnly = mock(AnnotationDescription.class);
         when(equalFirstNameOnly.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(first.annotationType()));
-        when(equalFirstNameOnly.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).thenReturn(null);
+        AnnotationValue<?, ?> annotationValue = mock(AnnotationValue.class);
+        when(annotationValue.resolve()).thenReturn(null);
+        when(equalFirstNameOnly.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).thenReturn((AnnotationValue) annotationValue);
         assertThat(describe(first), not(equalFirstNameOnly));
         assertThat(describe(first), not(equalSecond));
         assertThat(describe(first), not(new Object()));
@@ -433,9 +436,9 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(describe(defaultFirst).isDocumented(), is(true));
     }
 
-    private void assertValue(Annotation annotation, String methodName, Object rawValue, Object loadedValue) throws Exception {
+    private void assertValue(Annotation annotation, String methodName, Object unloadedValue, Object loadedValue) throws Exception {
         assertThat(describe(annotation).getValue(new MethodDescription.ForLoadedMethod(annotation.annotationType().getDeclaredMethod(methodName))).resolve(),
-                is(rawValue));
+                is(unloadedValue));
         assertThat(describe(annotation).getValue(new MethodDescription.Latent(new TypeDescription.ForLoadedType(annotation.annotationType()),
                 methodName,
                 Opcodes.ACC_PUBLIC,
@@ -445,7 +448,7 @@ public abstract class AbstractAnnotationDescriptionTest {
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
                 AnnotationValue.UNDEFINED,
-                TypeDescription.Generic.UNDEFINED)), is(rawValue));
+                TypeDescription.Generic.UNDEFINED)).resolve(), is(unloadedValue));
         assertThat(annotation.annotationType().getDeclaredMethod(methodName).invoke(describe(annotation).prepare(annotation.annotationType()).load()),
                 is(loadedValue));
     }
