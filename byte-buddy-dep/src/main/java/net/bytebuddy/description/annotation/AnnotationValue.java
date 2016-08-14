@@ -11,8 +11,25 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Representation of an unloaded annotation value where all values represent either:
+ * <ul>
+ * <li>Primitive values (as their wrappers), {@link String}s or arrays of primitive types or strings.</li>
+ * <li>A {@link TypeDescription} or an array of such a descriptions.</li>
+ * <li>An {@link EnumerationDescription} or an array of such a description.</li>
+ * <li>An {@link AnnotationDescription} or an array of such a description.</li>
+ * </ul>
+ * The represented values are not necessarily resolvable, i.e. can contain non-available types, unknown enumeration
+ * constants or inconsistent annotations.
+ *
+ * @param <T> The represented value's unloaded type.
+ * @param <S> The represented value's  loaded type.
+ */
 public interface AnnotationValue<T, S> {
 
+    /**
+     * An undefined annotation value.
+     */
     AnnotationValue<?, ?> UNDEFINED = null;
 
     /**
@@ -22,6 +39,13 @@ public interface AnnotationValue<T, S> {
      */
     T resolve();
 
+    /**
+     * Resolves the unloaded value of this annotation.
+     *
+     * @param type The annotation value's unloaded type.
+     * @param <S>  The annotation value's unloaded type.
+     * @return The unloaded value of this annotation.
+     */
     <S> S resolve(Class<? extends S> type);
 
     /**
@@ -52,7 +76,7 @@ public interface AnnotationValue<T, S> {
      * {@link java.lang.Object#equals(Object)} to return {@code true} for other instances of
      * this interface that represent the same annotation value.
      *
-     * @param <U> The type of the loaded value of this annotation.
+     * @param <U> The represented value's type.
      */
     interface Loaded<U> {
 
@@ -71,6 +95,14 @@ public interface AnnotationValue<T, S> {
          */
         U resolve();
 
+        /**
+         * Resolves the value to the actual value of an annotation. Calling this method might throw a runtime
+         * exception if this value is either not defined or not resolved.
+         *
+         * @param type The value's loaded type.
+         * @param <V>  The value's loaded type.
+         * @return The actual annotation value represented by this instance.
+         */
         <V> V resolve(Class<? extends V> type);
 
         /**
@@ -121,6 +153,11 @@ public interface AnnotationValue<T, S> {
             }
         }
 
+        /**
+         * An abstract base implementation of a loaded annotation value.
+         *
+         * @param <W> The represented loaded type.
+         */
         abstract class AbstractBase<W> implements Loaded<W> {
 
             @Override
@@ -130,6 +167,12 @@ public interface AnnotationValue<T, S> {
         }
     }
 
+    /**
+     * An abstract base implementation of an unloaded annotation value.
+     *
+     * @param <U> The represented unloaded type.
+     * @param <V> The represented loaded type.
+     */
     abstract class AbstractBase<U, V> implements AnnotationValue<U, V> {
 
         @Override

@@ -40,7 +40,13 @@ public interface AnnotationDescription {
      */
     AnnotationDescription.Loadable<?> UNDEFINED = null;
 
-    AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription);
+    /**
+     * Returns the value of this annotation.
+     *
+     * @param property The property being accessed.
+     * @return The value for the supplied property.
+     */
+    AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property);
 
     /**
      * Returns a description of the annotation type of this annotation.
@@ -584,6 +590,10 @@ public interface AnnotationDescription {
          */
         private final S annotation;
 
+        /**
+         * The annotation's loaded type which might be loaded by a different class loader than the value's
+         * annotation type but must be structually equal to it.
+         */
         private final Class<S> annotationType;
 
         /**
@@ -596,7 +606,14 @@ public interface AnnotationDescription {
             this(annotation, (Class<S>) annotation.annotationType());
         }
 
-        protected ForLoadedAnnotation(S annotation, Class<S> annotationType) {
+        /**
+         * Creates a new annotation description for a loaded annotation.
+         *
+         * @param annotation     The annotation to represent.
+         * @param annotationType The annotation's loaded type which might be loaded by a different class loader than the value's
+         *                       annotation type but must be structually equal to it.
+         */
+        private ForLoadedAnnotation(S annotation, Class<S> annotationType) {
             this.annotation = annotation;
             this.annotationType = annotationType;
         }
@@ -686,24 +703,24 @@ public interface AnnotationDescription {
 
         @Override
         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should always be wrapped for clarity")
-        public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription) {
-            if (!methodDescription.getDeclaringType().represents(annotation.annotationType())) {
-                throw new IllegalArgumentException(methodDescription + " does not represent " + annotation.annotationType());
+        public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
+            if (!property.getDeclaringType().represents(annotation.annotationType())) {
+                throw new IllegalArgumentException(property + " does not represent " + annotation.annotationType());
             }
             try {
-                boolean accessible = methodDescription.getDeclaringType().isPublic(); // method is required to be public
-                Method method = methodDescription instanceof MethodDescription.ForLoadedMethod
-                        ? ((MethodDescription.ForLoadedMethod) methodDescription).getLoadedMethod()
+                boolean accessible = property.getDeclaringType().isPublic(); // method is required to be public
+                Method method = property instanceof MethodDescription.ForLoadedMethod
+                        ? ((MethodDescription.ForLoadedMethod) property).getLoadedMethod()
                         : null;
-                if (method == null || (method.getDeclaringClass() != annotation.annotationType() || !accessible && !method.isAccessible())) {
-                    method = annotation.annotationType().getDeclaredMethod(methodDescription.getName());
+                if (method == null || method.getDeclaringClass() != annotation.annotationType() || (!accessible && !method.isAccessible())) {
+                    method = annotation.annotationType().getDeclaredMethod(property.getName());
                     if (!accessible) {
                         AccessController.doPrivileged(new SetAccessibleAction<Method>(method));
                     }
                 }
                 return asValue(method.invoke(annotation), method.getReturnType());
             } catch (Exception exception) {
-                throw new IllegalStateException("Cannot access annotation property " + methodDescription, exception.getCause());
+                throw new IllegalStateException("Cannot access annotation property " + property, exception.getCause());
             }
         }
 
@@ -751,16 +768,16 @@ public interface AnnotationDescription {
         }
 
         @Override
-        public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription) {
-            AnnotationValue<?, ?> value = annotationValues.get(methodDescription.getName());
+        public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
+            AnnotationValue<?, ?> value = annotationValues.get(property.getName());
             if (value != null) {
                 return value;
             }
-            AnnotationValue<?, ?> defaultValue = methodDescription.getDefaultValue();
+            AnnotationValue<?, ?> defaultValue = property.getDefaultValue();
             if (defaultValue != null) {
                 return defaultValue;
             }
-            throw new IllegalArgumentException("No value defined for: " + methodDescription);
+            throw new IllegalArgumentException("No value defined for: " + property);
         }
 
         @Override
@@ -803,8 +820,8 @@ public interface AnnotationDescription {
             }
 
             @Override
-            public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription) {
-                return Latent.this.getValue(methodDescription);
+            public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
+                return Latent.this.getValue(property);
             }
 
             @Override

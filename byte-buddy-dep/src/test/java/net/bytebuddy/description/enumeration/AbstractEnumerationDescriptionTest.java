@@ -41,32 +41,38 @@ public abstract class AbstractEnumerationDescriptionTest {
     }
 
     @Test
-    public void assertValue() throws Exception {
+    public void testValue() throws Exception {
         assertThat(describe(Sample.FIRST).getValue(), is(Sample.FIRST.name()));
         assertThat(describe(Sample.SECOND).getValue(), is(Sample.SECOND.name()));
     }
 
     @Test
-    public void assertToString() throws Exception {
+    public void testName() throws Exception {
+        assertThat(describe(Sample.FIRST).getActualName(), is(Sample.FIRST.name()));
+        assertThat(describe(Sample.SECOND).getActualName(), is(Sample.SECOND.name()));
+    }
+
+    @Test
+    public void testToString() throws Exception {
         assertThat(describe(Sample.FIRST).toString(), is(Sample.FIRST.toString()));
         assertThat(describe(Sample.SECOND).toString(), is(Sample.SECOND.toString()));
     }
 
     @Test
-    public void assertType() throws Exception {
+    public void testType() throws Exception {
         assertThat(describe(Sample.FIRST).getEnumerationType(), is((TypeDescription) new TypeDescription.ForLoadedType(Sample.class)));
         assertThat(describe(Sample.SECOND).getEnumerationType(), is((TypeDescription) new TypeDescription.ForLoadedType(Sample.class)));
     }
 
     @Test
-    public void assertHashCode() throws Exception {
+    public void testHashCode() throws Exception {
         assertThat(describe(Sample.FIRST).hashCode(), is(Sample.FIRST.name().hashCode() + 31 * new TypeDescription.ForLoadedType(Sample.class).hashCode()));
         assertThat(describe(Sample.SECOND).hashCode(), is(Sample.SECOND.name().hashCode() + 31 * new TypeDescription.ForLoadedType(Sample.class).hashCode()));
         assertThat(describe(Sample.FIRST).hashCode(), not(describe(Sample.SECOND).hashCode()));
     }
 
     @Test
-    public void assertEquals() throws Exception {
+    public void testEquals() throws Exception {
         EnumerationDescription identical = describe(Sample.FIRST);
         assertThat(identical, is(identical));
         EnumerationDescription equalFirst = mock(EnumerationDescription.class);

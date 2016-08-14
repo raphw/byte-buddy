@@ -170,6 +170,11 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isSpecializableFor(TypeDescription typeDescription);
 
+    /**
+     * Returns the method's default annotation value or {@code null} if no default value is defined for this method.
+     *
+     * @return The method's default annotation value or {@code null} if no default value is defined for this method.
+     */
     AnnotationValue<?, ?> getDefaultValue();
 
     /**

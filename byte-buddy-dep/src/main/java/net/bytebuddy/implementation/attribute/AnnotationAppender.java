@@ -305,10 +305,9 @@ public interface AnnotationAppender {
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
          * @param valueType         The type of the annotation value.
          * @param name              The name of the annotation type.
-         * @param annotationValue             The annotation's value.
+         * @param value             The annotation's value.
          */
         public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
-            // TODO: Improve, switch?
             if (valueType.isAnnotation()) {
                 handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, AnnotationValueFilter.Default.APPEND_DEFAULTS);
             } else if (valueType.isEnum()) {

@@ -1,5 +1,6 @@
 package net.bytebuddy.description.enumeration;
 
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.util.ArrayList;
@@ -9,7 +10,7 @@ import java.util.List;
  * Describes an enumeration value. Note that the {@link java.lang.Object#toString} method always returns the
  * value as if the method was not overridden, i.e. the name of the enumeration constant.
  */
-public interface EnumerationDescription {
+public interface EnumerationDescription extends NamedElement {
 
     /**
      * Returns the name of this instance's enumeration value.
@@ -38,6 +39,11 @@ public interface EnumerationDescription {
      * An adapter implementation of an enumeration description.
      */
     abstract class AbstractBase implements EnumerationDescription {
+
+        @Override
+        public String getActualName() {
+            return getValue();
+        }
 
         @Override
         public boolean equals(Object other) {

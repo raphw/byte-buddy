@@ -1488,6 +1488,7 @@ public interface DynamicType {
                  *
                  * @param value The value to be defined as a default value.
                  * @param type  The type of the annotation property.
+                 * @param <W>   The type of the annotation property.
                  * @return A builder where the previously defined or matched method is implemented to return an annotation default value.
                  */
                 <W> MethodDefinition.ReceiverTypeDefinition<U> defaultValue(W value, Class<? extends W> type);

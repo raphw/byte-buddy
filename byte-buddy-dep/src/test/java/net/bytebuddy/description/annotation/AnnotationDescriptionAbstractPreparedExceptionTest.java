@@ -21,7 +21,7 @@ public class AnnotationDescriptionAbstractPreparedExceptionTest {
         }
 
         @Override
-        public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription) {
+        public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
             throw new UnsupportedOperationException();
         }
 

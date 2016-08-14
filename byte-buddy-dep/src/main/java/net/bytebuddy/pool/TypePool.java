@@ -6409,18 +6409,18 @@ public interface TypePool {
                 }
 
                 @Override
-                public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape methodDescription) {
-                    if (!methodDescription.getDeclaringType().asErasure().equals(annotationType)) {
-                        throw new IllegalArgumentException(methodDescription + " is not declared by " + getAnnotationType());
+                public AnnotationValue<?, ?> getValue(MethodDescription.InDefinedShape property) {
+                    if (!property.getDeclaringType().asErasure().equals(annotationType)) {
+                        throw new IllegalArgumentException(property + " is not declared by " + getAnnotationType());
                     }
-                    AnnotationValue<?, ?> annotationValue = values.get(methodDescription.getName());
+                    AnnotationValue<?, ?> annotationValue = values.get(property.getName());
                     if (annotationValue == null) {
-                        annotationValue = getAnnotationType().getDeclaredMethods().filter(is(methodDescription)).getOnly().getDefaultValue();
+                        annotationValue = getAnnotationType().getDeclaredMethods().filter(is(property)).getOnly().getDefaultValue();
                     }
                     if (annotationValue != null) { // TODO
                         return annotationValue;
                     }
-                    throw new IllegalStateException(methodDescription + " is not defined on annotation");
+                    throw new IllegalStateException(property + " is not defined on annotation");
                 }
 
                 @Override
