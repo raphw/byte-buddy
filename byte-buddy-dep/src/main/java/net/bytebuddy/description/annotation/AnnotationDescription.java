@@ -667,7 +667,7 @@ public interface AnnotationDescription {
         public static AnnotationValue<?, ?> asValue(Object value, Class<?> type) {
             // Because enums can implement annotation interfaces, the enum property needs to be checked first.
             if (Enum.class.isAssignableFrom(type)) {
-                return AnnotationValue.ForEnumeration.<Enum>of(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
+                return AnnotationValue.ForEnumeration.<Enum>of(new EnumerationDescription.ForLoadedEnumeration((Enum) value));
             } else if (Enum[].class.isAssignableFrom(type)) {
                 Enum<?>[] element = (Enum<?>[]) value;
                 EnumerationDescription[] enumerationDescription = new EnumerationDescription[element.length];
