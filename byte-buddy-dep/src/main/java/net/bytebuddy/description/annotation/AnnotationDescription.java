@@ -675,7 +675,7 @@ public interface AnnotationDescription {
                 for (Enum<?> anElement : element) {
                     enumerationDescription[index++] = new EnumerationDescription.ForLoadedEnumeration(anElement);
                 }
-                return AnnotationValue.ForComplexArray.of(new TypeDescription.ForLoadedType(type.getComponentType()), enumerationDescription);
+                return AnnotationValue.ForComplexArray.<Enum>of(new TypeDescription.ForLoadedType(type.getComponentType()), enumerationDescription);
             } else if (Annotation.class.isAssignableFrom(type)) {
                 return AnnotationValue.ForAnnotation.<Annotation>of(new TypeDescription.ForLoadedType(type), asValue((Annotation) value));
             } else if (Annotation[].class.isAssignableFrom(type)) {
