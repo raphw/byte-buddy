@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 14. August 2016: version 1.4.19
+
+- Added `@StubValue` and `@Unused` annotations to `Advice` component.
+- Added possibility to retain line number information for entry`Advice`
+- Removed class loader dependency when querying loaded annotation values.
+- Made annotation values more type-safe.
+
 ### 9. August 2016: version 1.4.18
 
 - Added automatic support for Java 9 class file location for boot modules.
