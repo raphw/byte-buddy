@@ -186,7 +186,7 @@ public interface AnnotationValue<T, S> {
      *
      * @param <U> The type where primitive values are represented by their boxed type.
      */
-    class Trivial<U> extends AbstractBase<U, U> {
+    class ForConstant<U> extends AbstractBase<U, U> {
 
         /**
          * The represented value.
@@ -203,7 +203,7 @@ public interface AnnotationValue<T, S> {
          *
          * @param value The value to represent.
          */
-        public Trivial(U value) {
+        public ForConstant(U value) {
             this.value = value;
             propertyDispatcher = PropertyDispatcher.of(value.getClass());
         }
@@ -221,7 +221,7 @@ public interface AnnotationValue<T, S> {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && propertyDispatcher.equals(value, ((Trivial) other).value);
+                    && propertyDispatcher.equals(value, ((ForConstant) other).value);
         }
 
         @Override
@@ -231,7 +231,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public String toString() {
-            return "AnnotationValue.Trivial{" +
+            return "AnnotationValue.ForConstant{" +
                     "value=" + value +
                     ", propertyDispatcher=" + propertyDispatcher +
                     '}';
@@ -347,12 +347,12 @@ public interface AnnotationValue<T, S> {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             ForAnnotation that = (ForAnnotation) other;
-            return equals(that.annotationDescription);
+            return annotationDescription.equals(that.annotationDescription);
         }
 
         @Override
         public int hashCode() {
-            return hashCode();
+            return annotationDescription.hashCode();
         }
 
         @Override

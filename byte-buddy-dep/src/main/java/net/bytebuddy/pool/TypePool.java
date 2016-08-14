@@ -7808,7 +7808,7 @@ public interface TypePool {
                 public void visit(String name, Object value) {
                     annotationRegistrant.register(name, value instanceof Type
                             ? new RawTypeValue(Default.this, (Type) value)
-                            : new AnnotationValue.Trivial<Object>(value));
+                            : new AnnotationValue.ForConstant<Object>(value));
                 }
 
                 @Override

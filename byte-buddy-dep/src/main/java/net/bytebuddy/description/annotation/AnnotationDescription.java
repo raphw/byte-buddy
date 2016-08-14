@@ -697,7 +697,7 @@ public interface AnnotationDescription {
                 }
                 return AnnotationValue.ForComplexArray.of(typeDescription);
             } else {
-                return new AnnotationValue.Trivial<Object>(value);
+                return new AnnotationValue.ForConstant<Object>(value);
             }
         }
 
@@ -1097,7 +1097,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code boolean} property.
          */
         public Builder define(String property, boolean value) {
-            return define(property, new AnnotationValue.Trivial<Boolean>(value));
+            return define(property, new AnnotationValue.ForConstant<Boolean>(value));
         }
 
         /**
@@ -1108,7 +1108,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code byte} property.
          */
         public Builder define(String property, byte value) {
-            return define(property, new AnnotationValue.Trivial<Byte>(value));
+            return define(property, new AnnotationValue.ForConstant<Byte>(value));
         }
 
         /**
@@ -1119,7 +1119,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code char} property.
          */
         public Builder define(String property, char value) {
-            return define(property, new AnnotationValue.Trivial<Character>(value));
+            return define(property, new AnnotationValue.ForConstant<Character>(value));
         }
 
         /**
@@ -1130,7 +1130,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code short} property.
          */
         public Builder define(String property, short value) {
-            return define(property, new AnnotationValue.Trivial<Short>(value));
+            return define(property, new AnnotationValue.ForConstant<Short>(value));
         }
 
         /**
@@ -1141,7 +1141,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code int} property.
          */
         public Builder define(String property, int value) {
-            return define(property, new AnnotationValue.Trivial<Integer>(value));
+            return define(property, new AnnotationValue.ForConstant<Integer>(value));
         }
 
         /**
@@ -1152,7 +1152,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code long} property.
          */
         public Builder define(String property, long value) {
-            return define(property, new AnnotationValue.Trivial<Long>(value));
+            return define(property, new AnnotationValue.ForConstant<Long>(value));
         }
 
         /**
@@ -1163,7 +1163,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code float} property.
          */
         public Builder define(String property, float value) {
-            return define(property, new AnnotationValue.Trivial<Float>(value));
+            return define(property, new AnnotationValue.ForConstant<Float>(value));
         }
 
         /**
@@ -1174,7 +1174,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code double} property.
          */
         public Builder define(String property, double value) {
-            return define(property, new AnnotationValue.Trivial<Double>(value));
+            return define(property, new AnnotationValue.ForConstant<Double>(value));
         }
 
         /**
@@ -1185,7 +1185,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@link java.lang.String} property.
          */
         public Builder define(String property, String value) {
-            return define(property, new AnnotationValue.Trivial<String>(value));
+            return define(property, new AnnotationValue.ForConstant<String>(value));
         }
 
         /**
@@ -1196,7 +1196,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code boolean} array property.
          */
         public Builder defineArray(String property, boolean... value) {
-            return define(property, new AnnotationValue.Trivial<boolean[]>(value));
+            return define(property, new AnnotationValue.ForConstant<boolean[]>(value));
         }
 
         /**
@@ -1207,7 +1207,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code byte} array property.
          */
         public Builder defineArray(String property, byte... value) {
-            return define(property, new AnnotationValue.Trivial<byte[]>(value));
+            return define(property, new AnnotationValue.ForConstant<byte[]>(value));
         }
 
         /**
@@ -1218,7 +1218,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code char} array property.
          */
         public Builder defineArray(String property, char... value) {
-            return define(property, new AnnotationValue.Trivial<char[]>(value));
+            return define(property, new AnnotationValue.ForConstant<char[]>(value));
         }
 
         /**
@@ -1229,7 +1229,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code short} array property.
          */
         public Builder defineArray(String property, short... value) {
-            return define(property, new AnnotationValue.Trivial<short[]>(value));
+            return define(property, new AnnotationValue.ForConstant<short[]>(value));
         }
 
         /**
@@ -1240,7 +1240,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code int} array property.
          */
         public Builder defineArray(String property, int... value) {
-            return define(property, new AnnotationValue.Trivial<int[]>(value));
+            return define(property, new AnnotationValue.ForConstant<int[]>(value));
         }
 
         /**
@@ -1251,7 +1251,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code long} array property.
          */
         public Builder defineArray(String property, long... value) {
-            return define(property, new AnnotationValue.Trivial<long[]>(value));
+            return define(property, new AnnotationValue.ForConstant<long[]>(value));
         }
 
         /**
@@ -1262,7 +1262,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code float} array property.
          */
         public Builder defineArray(String property, float... value) {
-            return define(property, new AnnotationValue.Trivial<float[]>(value));
+            return define(property, new AnnotationValue.ForConstant<float[]>(value));
         }
 
         /**
@@ -1273,7 +1273,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code double} array property.
          */
         public Builder defineArray(String property, double... value) {
-            return define(property, new AnnotationValue.Trivial<double[]>(value));
+            return define(property, new AnnotationValue.ForConstant<double[]>(value));
         }
 
         /**
@@ -1284,7 +1284,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@link java.lang.String} array property.
          */
         public Builder defineArray(String property, String... value) {
-            return define(property, new AnnotationValue.Trivial<String[]>(value));
+            return define(property, new AnnotationValue.ForConstant<String[]>(value));
         }
 
         /**
