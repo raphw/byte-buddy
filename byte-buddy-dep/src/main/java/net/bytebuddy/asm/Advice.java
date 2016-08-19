@@ -5954,7 +5954,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A label substitutor allows to visit an advice method a second time after the exception handlers were already written.
                      * Doing so, this visitor substitutes all labels that were already created during the first visit to keep the mapping
-                     * consistent.
+                     * consistent. It is not required to resolve labels for non-code instructions as meta information is not propagated to
+                     * the target method visitor for advice code.
                      */
                     protected class ExceptionTableSubstitutor extends MethodVisitor {
 
@@ -5988,7 +5989,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                             return IGNORE_ANNOTATION;
                         }
 
@@ -6003,13 +6004,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
-                            super.visitTableSwitchInsn(min, max, dflt, resolve(labels));
+                        public void visitTableSwitchInsn(int minimum, int maximum, Label defaultOption, Label... label) {
+                            super.visitTableSwitchInsn(minimum, maximum, defaultOption, resolve(label));
                         }
 
                         @Override
-                        public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
-                            super.visitLookupSwitchInsn(resolve(dflt), keys, resolve(labels));
+                        public void visitLookupSwitchInsn(Label defaultOption, int[] keys, Label[] label) {
+                            super.visitLookupSwitchInsn(resolve(defaultOption), keys, resolve(label));
                         }
 
                         /**
