@@ -1557,13 +1557,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Resolves the index of a local variable in the context of the instrumentation.
          *
          * @param index The indices to adjust.
-         * @return The same array as supplied with the adjusted indices.
+         * @return An array with adjusted indices.
          */
         private int[] resolve(int[] index) {
+            int[] resolved = new int[index.length];
             for (int anIndex = 0; anIndex < index.length; anIndex++) {
-                index[anIndex] = resolve(index[anIndex]);
+                resolved[anIndex] = resolve(index[anIndex]);
             }
-            return index;
+            return resolved;
         }
 
         /**
