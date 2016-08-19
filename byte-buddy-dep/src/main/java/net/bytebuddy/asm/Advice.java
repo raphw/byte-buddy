@@ -1499,16 +1499,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         protected void onVisitVarInsn(int opcode, int offset) {
-            mv.visitVarInsn(opcode, offset < instrumentedMethod.getStackSize()
-                    ? offset
-                    : padding + offset);
+            mv.visitVarInsn(opcode, resolve(offset));
         }
 
         @Override
         protected void onVisitIincInsn(int offset, int increment) {
-            mv.visitIincInsn(offset < instrumentedMethod.getStackSize()
-                    ? offset
-                    : padding + offset, increment);
+            mv.visitIincInsn(resolve(offset), increment);
         }
 
         /**
@@ -1543,9 +1539,43 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
-            mv.visitLocalVariable(name, descriptor, signature, start, end, index < instrumentedMethod.getStackSize()
+            mv.visitLocalVariable(name, descriptor, signature, start, end, resolve(index));
+        }
+
+        @Override
+        public AnnotationVisitor visitLocalVariableAnnotation(int typeReference,
+                                                              TypePath typePath,
+                                                              Label[] start,
+                                                              Label[] end,
+                                                              int[] index,
+                                                              String descriptor,
+                                                              boolean visible) {
+            return mv.visitLocalVariableAnnotation(typeReference, typePath, start, end, resolve(index), descriptor, visible);
+        }
+
+        /**
+         * Resolves the index of a local variable in the context of the instrumentation.
+         *
+         * @param index The indices to adjust.
+         * @return The same array as supplied with the adjusted indices.
+         */
+        private int[] resolve(int[] index) {
+            for (int anIndex = 0; anIndex < index.length; anIndex++) {
+                index[anIndex] = resolve(index[anIndex]);
+            }
+            return index;
+        }
+
+        /**
+         * Resolves the index of a local variable in the context of the instrumentation.
+         *
+         * @param index The index to adjust.
+         * @return The adjusted index.
+         */
+        private int resolve(int index) {
+            return index < instrumentedMethod.getStackSize()
                     ? index
-                    : padding + index);
+                    : padding + index;
         }
 
         /**
