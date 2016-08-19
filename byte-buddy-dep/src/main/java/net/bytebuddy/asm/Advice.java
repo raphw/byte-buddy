@@ -1541,6 +1541,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             methodVisitor.visitMaxs(methodSizeHandler.compoundStackSize(stackSize), methodSizeHandler.compoundLocalVariableLength(localVariableLength));
         }
 
+        @Override
+        public void visitLocalVariable(String name, String descriptor, String signature, Label start, Label end, int index) {
+            mv.visitLocalVariable(name, descriptor, signature, start, end, index < instrumentedMethod.getStackSize()
+                    ? index
+                    : padding + index);
+        }
+
         /**
          * Writes the advice for completing the instrumented method.
          */
