@@ -15,9 +15,9 @@ import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.ExceptionTableSensitiveMethodVisitor;
-import net.bytebuddy.utility.LineNumberPrependingMethodVisitor;
-import net.bytebuddy.utility.StackAwareMethodVisitor;
+import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
+import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
+import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
 
 import java.io.*;

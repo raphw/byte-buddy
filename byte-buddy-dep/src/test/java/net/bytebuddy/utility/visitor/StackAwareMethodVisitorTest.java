@@ -1,4 +1,4 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.utility.visitor;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;

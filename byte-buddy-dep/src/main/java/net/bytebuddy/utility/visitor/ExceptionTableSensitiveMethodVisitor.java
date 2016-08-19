@@ -1,4 +1,4 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.utility.visitor;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;

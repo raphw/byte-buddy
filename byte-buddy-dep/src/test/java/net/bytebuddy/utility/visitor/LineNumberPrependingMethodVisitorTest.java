@@ -1,4 +1,4 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.utility.visitor;
 
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;

@@ -1,8 +1,9 @@
-package net.bytebuddy.utility;
+package net.bytebuddy.utility.visitor;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.*;
 
 import java.util.*;
@@ -209,6 +210,11 @@ public class StackAwareMethodVisitor extends MethodVisitor {
             case Opcodes.F2L:
                 adjustStack(-1);
                 adjustStack(2);
+                break;
+            case Opcodes.LALOAD:
+            case Opcodes.DALOAD:
+                adjustStack(-2);
+                adjustStack(+2);
                 break;
             default:
                 adjustStack(SIZE_CHANGE[opcode]);
