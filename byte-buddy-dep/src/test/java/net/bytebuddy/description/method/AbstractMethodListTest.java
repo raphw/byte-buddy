@@ -24,7 +24,7 @@ public abstract class AbstractMethodListTest<U, V extends MethodDescription> ext
         assertThat(asList(getFirst()).asDefined(), is(Collections.singletonList(asElement(getFirst()).asDefined())));
     }
 
-    public static abstract class Foo {
+    public abstract static class Foo {
 
         abstract void foo();
 

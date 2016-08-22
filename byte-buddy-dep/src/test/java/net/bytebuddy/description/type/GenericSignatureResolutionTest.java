@@ -197,7 +197,7 @@ public class GenericSignatureResolutionTest {
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
-    public static abstract class GenericType<T extends ArrayList<T> & Callable<T>,
+    public abstract static class GenericType<T extends ArrayList<T> & Callable<T>,
             S extends Callable<?>,
             U extends Callable<? extends Callable<U>>,
             V extends ArrayList<? super ArrayList<V>>,
@@ -226,11 +226,11 @@ public class GenericSignatureResolutionTest {
         /* empty */
     }
 
-    public static abstract class TypeVariableInterfaceBound<T extends Callable<T>> {
+    public abstract static class TypeVariableInterfaceBound<T extends Callable<T>> {
         /* empty */
     }
 
-    public static abstract class TypeVariableClassAndInterfaceBound<T extends ArrayList<T> & Callable<T>> {
+    public abstract static class TypeVariableClassAndInterfaceBound<T extends ArrayList<T> & Callable<T>> {
         /* empty */
     }
 

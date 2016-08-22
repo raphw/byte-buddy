@@ -1248,13 +1248,13 @@ public class ElementMatchersTest {
     }
 
     @SuppressWarnings("unused")
-    private static abstract class IsEqual {
+    private abstract static class IsEqual {
 
         abstract void foo();
     }
 
     @SuppressWarnings("unused")
-    private static abstract class Returns {
+    private abstract static class Returns {
 
         abstract void foo();
 
@@ -1262,14 +1262,14 @@ public class ElementMatchersTest {
     }
 
     @SuppressWarnings("unused")
-    private static abstract class TakesArguments {
+    private abstract static class TakesArguments {
 
         abstract void foo(Void a);
 
         abstract void bar(String a, int b);
     }
 
-    private static abstract class CanThrow {
+    private abstract static class CanThrow {
 
         protected abstract void foo() throws IOException;
 

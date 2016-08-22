@@ -132,7 +132,7 @@ public class MethodDelegationSuperTest extends AbstractImplementationTest {
         }
     }
 
-    public static abstract class FooBarQuxBaz implements Qux {
+    public abstract static class FooBarQuxBaz implements Qux {
 
         @Override
         public abstract Object qux();

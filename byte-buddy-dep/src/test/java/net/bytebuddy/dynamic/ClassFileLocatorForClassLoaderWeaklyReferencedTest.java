@@ -85,7 +85,7 @@ public class ClassFileLocatorForClassLoaderWeaklyReferencedTest {
         ObjectPropertyAssertion.of(ClassFileLocator.ForClassLoader.WeaklyReferenced.class).apply();
     }
 
-    private static abstract class ClosableClassLoader extends ClassLoader implements Closeable {
+    private abstract static class ClosableClassLoader extends ClassLoader implements Closeable {
         /* empty */
     }
 }

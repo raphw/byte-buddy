@@ -122,7 +122,7 @@ public class ClassFileLocatorForClassLoaderTest {
         /* empty */
     }
 
-    private static abstract class ClosableClassLoader extends ClassLoader implements Closeable {
+    private abstract static class ClosableClassLoader extends ClassLoader implements Closeable {
         /* empty */
     }
 }

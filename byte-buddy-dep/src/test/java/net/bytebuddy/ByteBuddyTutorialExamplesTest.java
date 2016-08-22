@@ -758,7 +758,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    public static abstract class SumExample {
+    public abstract static class SumExample {
 
         public abstract int calculate();
     }

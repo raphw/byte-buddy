@@ -676,7 +676,7 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @SuppressWarnings("unused")
-    private static abstract class Sample {
+    private abstract static class Sample {
 
         Sample(final Void argument) {
 
@@ -699,7 +699,7 @@ public abstract class AbstractMethodDescriptionTest {
         }
     }
 
-    private static abstract class SampleSub extends Sample {
+    private abstract static class SampleSub extends Sample {
 
         protected SampleSub(Void argument) {
             super(argument);
@@ -707,7 +707,7 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @SuppressWarnings("unused")
-    public static abstract class PublicType {
+    public abstract static class PublicType {
 
         public PublicType() {
             /* do nothing*/
@@ -737,7 +737,7 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @SuppressWarnings("unused")
-    static abstract class PackagePrivateType {
+    abstract static class PackagePrivateType {
 
         public PackagePrivateType() {
             /* do nothing*/

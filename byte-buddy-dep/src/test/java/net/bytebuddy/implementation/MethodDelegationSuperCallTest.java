@@ -144,7 +144,7 @@ public class MethodDelegationSuperCallTest extends AbstractImplementationTest {
         }
     }
 
-    public static abstract class Qux {
+    public abstract static class Qux {
 
         public abstract String bar();
     }
