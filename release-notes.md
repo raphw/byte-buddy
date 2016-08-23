@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. August 2016: version 1.4.20
+
+- Fixed stack size adjustment for accessing double-sized primitive access array elements.
+- Fixed `Advice` adjustment of local variable index for debugging information (improves Java agent compatibility).
+- Renamed `TypeLocator` to `PoolStrategy` to avoid confusion with the names.
+- Removed `DescriptionStrategy`s that rely on fallback-description as those do not properly fallback for meta data.
+- Added `FallbackStrategy` as a replacement which allows to reattempt a transformation without using loaded type information.
+
 ### 14. August 2016: version 1.4.19
 
 - Added `@StubValue` and `@Unused` annotations to `Advice` component.
