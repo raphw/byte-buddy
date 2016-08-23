@@ -136,17 +136,17 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
     @Test
     public void testLazyResolution() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(TypeDescriptionForLoadedTypeWithEagerPropertiesTest.Foo.class),
+                ClassFileExtraction.of(Foo.class),
                 null,
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
-        new TypeDescription.ForLoadedType(classLoader.loadClass(TypeDescriptionForLoadedTypeWithEagerPropertiesTest.Foo.class.getName()));
+        new TypeDescription.ForLoadedType(classLoader.loadClass(Foo.class.getName()));
     }
 
     public static class Foo {
 
-        public TypeDescriptionForLoadedTypeWithEagerPropertiesTest.Bar bar() {
-            return new TypeDescriptionForLoadedTypeWithEagerPropertiesTest.Bar();
+        public Bar bar() {
+            return new Bar();
         }
     }
 

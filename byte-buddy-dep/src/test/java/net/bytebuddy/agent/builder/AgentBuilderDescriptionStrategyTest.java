@@ -28,9 +28,6 @@ public class AgentBuilderDescriptionStrategyTest {
     private TypePool typePool;
 
     @Mock
-    private AgentBuilder.PoolStrategy poolStrategy;
-
-    @Mock
     private TypeDescription typeDescription;
 
     @Test
@@ -54,20 +51,6 @@ public class AgentBuilderDescriptionStrategyTest {
     public void testDescriptionPoolOnly() throws Exception {
         when(typePool.describe(Object.class.getName())).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.apply(Object.class.getName(), Object.class, typePool), is(typeDescription));
-    }
-
-    @Test
-    public void testLoadedDescriptionHybrid() throws Exception {
-        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, poolStrategy, locationStrategy), is(TypeDescription.OBJECT));
-        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, poolStrategy, locationStrategy), instanceOf(TypeDescription.ForLoadedType.class));
-    }
-
-    @Test
-    public void testLoadedDescriptionPoolOnly() throws Exception {
-        when(poolStrategy.typePool(ClassFileLocator.ForClassLoader.of(Object.class.getClassLoader()), Object.class.getClassLoader())).thenReturn(typePool);
-        when(typePool.describe(Object.class.getName())).thenReturn(new TypePool.Resolution.Simple(typeDescription));
-        when(locationStrategy.classFileLocator(Object.class.getClassLoader(), JavaModule.ofType(Object.class))).thenReturn(ClassFileLocator.ForClassLoader.of(Object.class.getClassLoader()));
-        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.apply(Object.class, poolStrategy, locationStrategy), is(typeDescription));
     }
 
     @Test

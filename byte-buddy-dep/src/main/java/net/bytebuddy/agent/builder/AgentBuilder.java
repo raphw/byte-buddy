@@ -5,13 +5,10 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.NexusAccessor;
@@ -189,6 +186,14 @@ public interface AgentBuilder {
      * @return A new agent builder that applies the supplied installation strategy.
      */
     AgentBuilder with(InstallationStrategy installationStrategy);
+
+    /**
+     * Specifies a fallback strategy to that this agent builder applies upon installing an agent and during class file transformation.
+     *
+     * @param fallbackStrategy The fallback strategy to be used.
+     * @return A new agent builder that applies the supplied fallback strategy.
+     */
+    AgentBuilder with(FallbackStrategy fallbackStrategy);
 
     /**
      * Enables class injection of auxiliary classes into the bootstrap class loader.
@@ -985,6 +990,370 @@ public interface AgentBuilder {
     }
 
     /**
+     * A listener that is informed about events that occur during an instrumentation process.
+     */
+    interface Listener {
+
+        /**
+         * Invoked right before a successful transformation is applied.
+         *
+         * @param typeDescription The type that is being transformed.
+         * @param classLoader     The class loader which is loading this type.
+         * @param module          The transformed type's module or {@code null} if the current VM does not support modules.
+         * @param dynamicType     The dynamic type that was created.
+         */
+        void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType);
+
+        /**
+         * Invoked when a type is not transformed but ignored.
+         *
+         * @param typeDescription The type being ignored for transformation.
+         * @param classLoader     The class loader which is loading this type.
+         * @param module          The ignored type's module or {@code null} if the current VM does not support modules.
+         */
+        void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module);
+
+        /**
+         * Invoked when an error has occurred during transformation.
+         *
+         * @param typeName    The type name of the instrumented type.
+         * @param classLoader The class loader which is loading this type.
+         * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
+         * @param throwable   The occurred error.
+         */
+        void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable);
+
+        /**
+         * Invoked after a class was attempted to be loaded, independently of its treatment.
+         *
+         * @param typeName    The binary name of the instrumented type.
+         * @param classLoader The class loader which is loading this type.
+         * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
+         */
+        void onComplete(String typeName, ClassLoader classLoader, JavaModule module);
+
+        /**
+         * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Listener}.
+         */
+        enum NoOp implements Listener {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
+                /* do nothing */
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Listener.NoOp." + name();
+            }
+        }
+
+        /**
+         * An adapter for a listener wher all methods are implemented as non-operational.
+         */
+        abstract class Adapter implements Listener {
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
+                /* do nothing */
+            }
+        }
+
+        /**
+         * A listener that writes events to a {@link PrintStream}. This listener prints a line per event, including the event type and
+         * the name of the type in question.
+         */
+        class StreamWriting implements Listener {
+
+            /**
+             * The prefix that is appended to all written messages.
+             */
+            protected static final String PREFIX = "[Byte Buddy]";
+
+            /**
+             * The print stream written to.
+             */
+            private final PrintStream printStream;
+
+            /**
+             * Creates a new stream writing listener.
+             *
+             * @param printStream The print stream written to.
+             */
+            public StreamWriting(PrintStream printStream) {
+                this.printStream = printStream;
+            }
+
+            /**
+             * Creates a new stream writing listener that writes to {@link System#out}.
+             *
+             * @return A listener writing events to the standard output stream.
+             */
+            public static Listener toSystemOut() {
+                return new StreamWriting(System.out);
+            }
+
+            /**
+             * Creates a new stream writing listener that writes to {@link System#err}.
+             *
+             * @return A listener writing events to the standad error stream.
+             */
+            public static Listener toSystemError() {
+                return new StreamWriting(System.err);
+            }
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
+                printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName() + "[" + classLoader + ", " + module + "]");
+            }
+
+            @Override
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
+                printStream.println(PREFIX + " IGNORE " + typeDescription.getName() + "[" + classLoader + ", " + module + "]");
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
+                synchronized (printStream) {
+                    printStream.println(PREFIX + " ERROR " + typeName + "[" + classLoader + ", " + module + "]");
+                    throwable.printStackTrace(printStream);
+                }
+            }
+
+            @Override
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
+                printStream.println(PREFIX + " COMPLETE " + typeName + "[" + classLoader + ", " + module + "]");
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && printStream.equals(((StreamWriting) other).printStream);
+            }
+
+            @Override
+            public int hashCode() {
+                return printStream.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Listener.StreamWriting{" +
+                        "printStream=" + printStream +
+                        '}';
+            }
+        }
+
+        /**
+         * A listener that adds read-edges to any module of an instrumented class upon its transformation.
+         */
+        class ModuleReadEdgeCompleting extends Listener.Adapter {
+
+            /**
+             * The instrumentation instance used for adding read edges.
+             */
+            private final Instrumentation instrumentation;
+
+            /**
+             * {@code true} if the listener should also add a read-edge from the supplied modules to the instrumented type's module.
+             */
+            private final boolean addTargetEdge;
+
+            /**
+             * The modules to add as a read edge to any transformed class's module.
+             */
+            private final Set<? extends JavaModule> modules;
+
+            /**
+             * Creates a new module read-edge completing listener.
+             *
+             * @param instrumentation The instrumentation instance used for adding read edges.
+             * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied modules
+             *                        to the instrumented type's module.
+             * @param modules         The modules to add as a read edge to any transformed class's module.
+             */
+            public ModuleReadEdgeCompleting(Instrumentation instrumentation, boolean addTargetEdge, Set<? extends JavaModule> modules) {
+                this.instrumentation = instrumentation;
+                this.addTargetEdge = addTargetEdge;
+                this.modules = modules;
+            }
+
+            /**
+             * Resolves a listener that adds module edges from and to the instrumented type's module.
+             *
+             * @param instrumentation The instrumentation instance used for adding read edges.
+             * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied
+             *                        modules to the instrumented type's module.
+             * @param type            The types for which to extract the modules.
+             * @return An appropriate listener.
+             */
+            protected static Listener of(Instrumentation instrumentation, boolean addTargetEdge, Class<?>... type) {
+                Set<JavaModule> modules = new HashSet<JavaModule>();
+                for (Class<?> aType : type) {
+                    JavaModule module = JavaModule.ofType(aType);
+                    if (module.isNamed()) {
+                        modules.add(module);
+                    }
+                }
+                return modules.isEmpty()
+                        ? Listener.NoOp.INSTANCE
+                        : new Listener.ModuleReadEdgeCompleting(instrumentation, addTargetEdge, modules);
+            }
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
+                if (module != null && module.isNamed()) {
+                    for (JavaModule target : modules) {
+                        if (!module.canRead(target)) {
+                            module.addReads(instrumentation, target);
+                        }
+                        if (addTargetEdge && !target.canRead(module)) {
+                            target.addReads(instrumentation, module);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ModuleReadEdgeCompleting that = (ModuleReadEdgeCompleting) object;
+                return instrumentation.equals(that.instrumentation)
+                        && addTargetEdge == that.addTargetEdge
+                        && modules.equals(that.modules);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentation.hashCode();
+                result = 31 * result + modules.hashCode();
+                result = 31 * result + (addTargetEdge ? 1 : 0);
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Listener.ModuleReadEdgeCompleting{" +
+                        "instrumentation=" + instrumentation +
+                        ", addTargetEdge=" + addTargetEdge +
+                        ", modules=" + modules +
+                        '}';
+            }
+        }
+
+        /**
+         * A compound listener that allows to group several listeners in one instance.
+         */
+        class Compound implements Listener {
+
+            /**
+             * The listeners that are represented by this compound listener in their application order.
+             */
+            private final List<? extends Listener> listeners;
+
+            /**
+             * Creates a new compound listener.
+             *
+             * @param listener The listeners to apply in their application order.
+             */
+            public Compound(Listener... listener) {
+                this(Arrays.asList(listener));
+            }
+
+            /**
+             * Creates a new compound listener.
+             *
+             * @param listeners The listeners to apply in their application order.
+             */
+            public Compound(List<? extends Listener> listeners) {
+                this.listeners = listeners;
+            }
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
+                for (Listener listener : listeners) {
+                    listener.onTransformation(typeDescription, classLoader, module, dynamicType);
+                }
+            }
+
+            @Override
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
+                for (Listener listener : listeners) {
+                    listener.onIgnored(typeDescription, classLoader, module);
+                }
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
+                for (Listener listener : listeners) {
+                    listener.onError(typeName, classLoader, module, throwable);
+                }
+            }
+
+            @Override
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
+                for (Listener listener : listeners) {
+                    listener.onComplete(typeName, classLoader, module);
+                }
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && listeners.equals(((Compound) other).listeners);
+            }
+
+            @Override
+            public int hashCode() {
+                return listeners.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Listener.Compound{" +
+                        "listeners=" + listeners +
+                        '}';
+            }
+        }
+    }
+
+    /**
      * A type strategy is responsible for creating a type builder for a type that is being instrumented.
      */
     interface TypeStrategy {
@@ -1476,370 +1845,6 @@ public interface AgentBuilder {
     }
 
     /**
-     * A listener that is informed about events that occur during an instrumentation process.
-     */
-    interface Listener {
-
-        /**
-         * Invoked right before a successful transformation is applied.
-         *
-         * @param typeDescription The type that is being transformed.
-         * @param classLoader     The class loader which is loading this type.
-         * @param module          The transformed type's module or {@code null} if the current VM does not support modules.
-         * @param dynamicType     The dynamic type that was created.
-         */
-        void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType);
-
-        /**
-         * Invoked when a type is not transformed but ignored.
-         *
-         * @param typeDescription The type being ignored for transformation.
-         * @param classLoader     The class loader which is loading this type.
-         * @param module          The ignored type's module or {@code null} if the current VM does not support modules.
-         */
-        void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module);
-
-        /**
-         * Invoked when an error has occurred during transformation.
-         *
-         * @param typeName    The type name of the instrumented type.
-         * @param classLoader The class loader which is loading this type.
-         * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
-         * @param throwable   The occurred error.
-         */
-        void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable);
-
-        /**
-         * Invoked after a class was attempted to be loaded, independently of its treatment.
-         *
-         * @param typeName    The binary name of the instrumented type.
-         * @param classLoader The class loader which is loading this type.
-         * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
-         */
-        void onComplete(String typeName, ClassLoader classLoader, JavaModule module);
-
-        /**
-         * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Listener}.
-         */
-        enum NoOp implements Listener {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
-                /* do nothing */
-            }
-
-            @Override
-            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-                /* do nothing */
-            }
-
-            @Override
-            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
-                /* do nothing */
-            }
-
-            @Override
-            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-                /* do nothing */
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.NoOp." + name();
-            }
-        }
-
-        /**
-         * An adapter for a listener wher all methods are implemented as non-operational.
-         */
-        abstract class Adapter implements Listener {
-
-            @Override
-            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
-                /* do nothing */
-            }
-
-            @Override
-            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-                /* do nothing */
-            }
-
-            @Override
-            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
-                /* do nothing */
-            }
-
-            @Override
-            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-                /* do nothing */
-            }
-        }
-
-        /**
-         * A listener that writes events to a {@link PrintStream}. This listener prints a line per event, including the event type and
-         * the name of the type in question.
-         */
-        class StreamWriting implements Listener {
-
-            /**
-             * The prefix that is appended to all written messages.
-             */
-            protected static final String PREFIX = "[Byte Buddy]";
-
-            /**
-             * The print stream written to.
-             */
-            private final PrintStream printStream;
-
-            /**
-             * Creates a new stream writing listener.
-             *
-             * @param printStream The print stream written to.
-             */
-            public StreamWriting(PrintStream printStream) {
-                this.printStream = printStream;
-            }
-
-            /**
-             * Creates a new stream writing listener that writes to {@link System#out}.
-             *
-             * @return A listener writing events to the standard output stream.
-             */
-            public static Listener toSystemOut() {
-                return new StreamWriting(System.out);
-            }
-
-            /**
-             * Creates a new stream writing listener that writes to {@link System#err}.
-             *
-             * @return A listener writing events to the standad error stream.
-             */
-            public static Listener toSystemError() {
-                return new StreamWriting(System.err);
-            }
-
-            @Override
-            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
-                printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName() + "[" + classLoader + ", " + module + "]");
-            }
-
-            @Override
-            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-                printStream.println(PREFIX + " IGNORE " + typeDescription.getName() + "[" + classLoader + ", " + module + "]");
-            }
-
-            @Override
-            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
-                synchronized (printStream) {
-                    printStream.println(PREFIX + " ERROR " + typeName + "[" + classLoader + ", " + module + "]");
-                    throwable.printStackTrace(printStream);
-                }
-            }
-
-            @Override
-            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-                printStream.println(PREFIX + " COMPLETE " + typeName + "[" + classLoader + ", " + module + "]");
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && printStream.equals(((StreamWriting) other).printStream);
-            }
-
-            @Override
-            public int hashCode() {
-                return printStream.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.StreamWriting{" +
-                        "printStream=" + printStream +
-                        '}';
-            }
-        }
-
-        /**
-         * A listener that adds read-edges to any module of an instrumented class upon its transformation.
-         */
-        class ModuleReadEdgeCompleting extends Listener.Adapter {
-
-            /**
-             * The instrumentation instance used for adding read edges.
-             */
-            private final Instrumentation instrumentation;
-
-            /**
-             * {@code true} if the listener should also add a read-edge from the supplied modules to the instrumented type's module.
-             */
-            private final boolean addTargetEdge;
-
-            /**
-             * The modules to add as a read edge to any transformed class's module.
-             */
-            private final Set<? extends JavaModule> modules;
-
-            /**
-             * Creates a new module read-edge completing listener.
-             *
-             * @param instrumentation The instrumentation instance used for adding read edges.
-             * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied modules
-             *                        to the instrumented type's module.
-             * @param modules         The modules to add as a read edge to any transformed class's module.
-             */
-            public ModuleReadEdgeCompleting(Instrumentation instrumentation, boolean addTargetEdge, Set<? extends JavaModule> modules) {
-                this.instrumentation = instrumentation;
-                this.addTargetEdge = addTargetEdge;
-                this.modules = modules;
-            }
-
-            /**
-             * Resolves a listener that adds module edges from and to the instrumented type's module.
-             *
-             * @param instrumentation The instrumentation instance used for adding read edges.
-             * @param addTargetEdge   {@code true} if the listener should also add a read-edge from the supplied
-             *                        modules to the instrumented type's module.
-             * @param type            The types for which to extract the modules.
-             * @return An appropriate listener.
-             */
-            protected static Listener of(Instrumentation instrumentation, boolean addTargetEdge, Class<?>... type) {
-                Set<JavaModule> modules = new HashSet<JavaModule>();
-                for (Class<?> aType : type) {
-                    JavaModule module = JavaModule.ofType(aType);
-                    if (module.isNamed()) {
-                        modules.add(module);
-                    }
-                }
-                return modules.isEmpty()
-                        ? Listener.NoOp.INSTANCE
-                        : new Listener.ModuleReadEdgeCompleting(instrumentation, addTargetEdge, modules);
-            }
-
-            @Override
-            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
-                if (module != null && module.isNamed()) {
-                    for (JavaModule target : modules) {
-                        if (!module.canRead(target)) {
-                            module.addReads(instrumentation, target);
-                        }
-                        if (addTargetEdge && !target.canRead(module)) {
-                            target.addReads(instrumentation, module);
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ModuleReadEdgeCompleting that = (ModuleReadEdgeCompleting) object;
-                return instrumentation.equals(that.instrumentation)
-                        && addTargetEdge == that.addTargetEdge
-                        && modules.equals(that.modules);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = instrumentation.hashCode();
-                result = 31 * result + modules.hashCode();
-                result = 31 * result + (addTargetEdge ? 1 : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.ModuleReadEdgeCompleting{" +
-                        "instrumentation=" + instrumentation +
-                        ", addTargetEdge=" + addTargetEdge +
-                        ", modules=" + modules +
-                        '}';
-            }
-        }
-
-        /**
-         * A compound listener that allows to group several listeners in one instance.
-         */
-        class Compound implements Listener {
-
-            /**
-             * The listeners that are represented by this compound listener in their application order.
-             */
-            private final List<? extends Listener> listeners;
-
-            /**
-             * Creates a new compound listener.
-             *
-             * @param listener The listeners to apply in their application order.
-             */
-            public Compound(Listener... listener) {
-                this(Arrays.asList(listener));
-            }
-
-            /**
-             * Creates a new compound listener.
-             *
-             * @param listeners The listeners to apply in their application order.
-             */
-            public Compound(List<? extends Listener> listeners) {
-                this.listeners = listeners;
-            }
-
-            @Override
-            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
-                for (Listener listener : listeners) {
-                    listener.onTransformation(typeDescription, classLoader, module, dynamicType);
-                }
-            }
-
-            @Override
-            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-                for (Listener listener : listeners) {
-                    listener.onIgnored(typeDescription, classLoader, module);
-                }
-            }
-
-            @Override
-            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
-                for (Listener listener : listeners) {
-                    listener.onError(typeName, classLoader, module, throwable);
-                }
-            }
-
-            @Override
-            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-                for (Listener listener : listeners) {
-                    listener.onComplete(typeName, classLoader, module);
-                }
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && listeners.equals(((Compound) other).listeners);
-            }
-
-            @Override
-            public int hashCode() {
-                return listeners.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.Compound{" +
-                        "listeners=" + listeners +
-                        '}';
-            }
-        }
-    }
-
-    /**
      * An initialization strategy which determines the handling of {@link net.bytebuddy.implementation.LoadedTypeInitializer}s
      * and the loading of auxiliary types. The agent builder does not reuse the {@link TypeResolutionStrategy} as Javaagents cannot access
      * a loaded class after a transformation such that different initialization strategies become meaningful.
@@ -2265,14 +2270,12 @@ public interface AgentBuilder {
         TypeDescription apply(String typeName, Class<?> type, TypePool typePool);
 
         /**
-         * Describes the given type.
+         * Indicates if this description strategy makes use of loaded type information and yields a different type description if no loaded type is available.
          *
-         * @param type             The loaded type to be described.
-         * @param poolStrategy      The type locator to use.
-         * @param locationStrategy The location strategy to use.
-         * @return An appropriate type description.
+         * @return {@code true} if this description strategy prefers loaded type information when describing a type and only uses a type pool
+         * if loaded type information is not available.
          */
-        TypeDescription apply(Class<?> type, PoolStrategy poolStrategy, LocationStrategy locationStrategy);
+        boolean isLoadedFirst();
 
         /**
          * Default implementations of a {@link DescriptionStrategy}.
@@ -2288,19 +2291,15 @@ public interface AgentBuilder {
              * optional dependencies to other classes which are only realized if the optional dependency is present. Such code relies on the
              * Java reflection API not being used for types using optional dependencies.
              *
-             * @see DescriptionStrategy.Default#POOL_LAST
+             * @see FallbackStrategy.Default#ENABLED
+             * @see FallbackStrategy.ByThrowableType#ofOptionalTypes()
              */
-            HYBRID {
+            HYBRID(true) {
                 @Override
                 public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
                     return type == null
                             ? typePool.describe(typeName).resolve()
                             : new TypeDescription.ForLoadedType(type);
-                }
-
-                @Override
-                public TypeDescription apply(Class<?> type, PoolStrategy poolStrategy, LocationStrategy locationStrategy) {
-                    return new TypeDescription.ForLoadedType(type);
                 }
             },
 
@@ -2317,7 +2316,7 @@ public interface AgentBuilder {
              * the extraction of such meta data.
              * </p>
              */
-            POOL_ONLY {
+            POOL_ONLY(false) {
                 @Override
                 public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
                     return typePool.describe(typeName).resolve();
@@ -2336,7 +2335,7 @@ public interface AgentBuilder {
              * the extraction of such meta data.
              * </p>
              */
-            POOL_FIRST {
+            POOL_FIRST(false) {
                 @Override
                 public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
                     TypePool.Resolution resolution = typePool.describe(typeName);
@@ -2344,171 +2343,30 @@ public interface AgentBuilder {
                             ? resolution.resolve()
                             : new TypeDescription.ForLoadedType(type);
                 }
-            },
-
-            /**
-             * A description strategy that attempts to describe a type using its loaded {@link Class} representation if available. If such a type
-             * is available, it is attempted to resolve all direct properties of this type what can cause a {@link NoClassDefFoundError} if any
-             * signature contains an optional type. In this case, or if a loaded type is not available, a type description is resolved via the
-             * configured {@link TypePool}.
-             */
-            POOL_LAST {
-                @Override
-                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
-                    if (type != null) {
-                        try {
-                            return new TypeDescription.ForLoadedType.WithEagerProperties(type);
-                        } catch (Throwable ignored) {
-                            /* fall back to type pool */
-                        }
-                    }
-                    return typePool.describe(typeName).resolve();
-                }
-            },
-
-            /**
-             * A description strategy that applies the same resolution as {@link DescriptionStrategy.Default#POOL_LAST} but only resolves the actual
-             * {@link TypeDescription} if any property that cannot be derived by the type name is accessed.
-             */
-            POOL_LAST_DEFERRED {
-                @Override
-                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
-                    return new LazyTypeDescriptionWithEagerProperties(typeName, type, typePool);
-                }
-            },
-
-            /**
-             * A description strategy that falls back to the type pool if a field, method or name cannot be resolved from a loaded type.
-             */
-            POOL_LAST_FALLBACK {
-                @Override
-                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
-                    return type == null
-                            ? typePool.describe(typeName).resolve()
-                            : new TypeDescriptionWithFallbackProperties(typeName, type, typePool);
-                }
             };
 
+            /**
+             * Indicates if loaded type information is preferred over using a type pool for describing a type.
+             */
+            private final boolean loadedFirst;
+
+            /**
+             * Indicates if loaded type information is preferred over using a type pool for describing a type.
+             *
+             * @param loadedFirst {@code true} if loaded type information is preferred over using a type pool for describing a type.
+             */
+            Default(boolean loadedFirst) {
+                this.loadedFirst = loadedFirst;
+            }
+
             @Override
-            public TypeDescription apply(Class<?> type, PoolStrategy poolStrategy, LocationStrategy locationStrategy) {
-                return apply(TypeDescription.ForLoadedType.getName(type),
-                        type,
-                        poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader()));
+            public boolean isLoadedFirst() {
+                return loadedFirst;
             }
 
             @Override
             public String toString() {
                 return "AgentBuilder.DescriptionStrategy.Default." + name();
-            }
-
-            /**
-             * A type description that lazily resolves a instance of {@link LazyTypeDescriptionWithEagerProperties}.
-             */
-            protected static class LazyTypeDescriptionWithEagerProperties extends TypeDescription.AbstractBase.OfSimpleType.WithDelegation {
-
-                /**
-                 * The binary name of the type being described.
-                 */
-                private final String typeName;
-
-                /**
-                 * The loaded version of the type being described or {@code null} if no such type is available.
-                 */
-                private final Class<?> type;
-
-                /**
-                 * The type pool to use.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * A cached version of this delegate. This field is {@code volatile} as a custom {@link TypePool} implementation
-                 * might return non-thread safe instances.
-                 */
-                private volatile TypeDescription delegate;
-
-                /**
-                 * Creates a new lazy type description with eager properties.
-                 *
-                 * @param typeName The binary name of the type being described.
-                 * @param type     The loaded version of the type being described or {@code null} if no such type is available.
-                 * @param typePool The type pool to use.
-                 */
-                protected LazyTypeDescriptionWithEagerProperties(String typeName, Class<?> type, TypePool typePool) {
-                    this.typeName = typeName;
-                    this.type = type;
-                    this.typePool = typePool;
-                }
-
-                @Override
-                public String getName() {
-                    return typeName;
-                }
-
-                @Override
-                protected TypeDescription delegate() {
-                    TypeDescription delegate = this.delegate;
-                    if (delegate == null) {
-                        delegate = POOL_LAST.apply(typeName, type, typePool);
-                        this.delegate = delegate;
-                    }
-                    return delegate;
-                }
-            }
-
-            /**
-             * A type description that falls back to a {@link TypePool} description if the type's declared types,
-             * fields or methods cannot be resolved successfully.
-             */
-            protected static class TypeDescriptionWithFallbackProperties extends TypeDescription.ForLoadedType {
-
-                /**
-                 * The type's binary name.
-                 */
-                private final String typeName;
-
-                /**
-                 * The type pool for resolving the type description.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * @param typeName The type's binary name.
-                 * @param type     The loaded type this instance represents.
-                 * @param typePool The type pool for resolving the type description.
-                 */
-                protected TypeDescriptionWithFallbackProperties(String typeName, Class<?> type, TypePool typePool) {
-                    super(type);
-                    this.typeName = typeName;
-                    this.typePool = typePool;
-                }
-
-                @Override
-                public TypeList getDeclaredTypes() {
-                    try {
-                        return super.getDeclaredTypes();
-                    } catch (Throwable ignored) {
-                        return typePool.describe(typeName).resolve().getDeclaredTypes();
-                    }
-                }
-
-                @Override
-                public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-                    try {
-                        return super.getDeclaredFields();
-                    } catch (Throwable ignored) {
-                        return typePool.describe(typeName).resolve().getDeclaredFields();
-                    }
-                }
-
-                @Override
-                public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
-                    try {
-                        return super.getDeclaredMethods();
-                    } catch (Throwable ignored) {
-                        return typePool.describe(typeName).resolve().getDeclaredMethods();
-                    }
-                }
             }
         }
     }
@@ -2784,6 +2642,135 @@ public interface AgentBuilder {
     }
 
     /**
+     * A fallback strategy allows to reattempt a transformation or a consideration for redefinition/retransformation in case an exception
+     * occurs. Doing so, it is possible to use a {@link TypePool} rather than using a loaded type description backed by a {@link Class}.
+     * Loaded types can raise exceptions and errors if a {@link ClassLoader} cannot resolve all types that this class references. Using
+     * a type pool, such errors can be avoided as type descriptions can be resolved lazily, avoiding such errors.
+     */
+    interface FallbackStrategy {
+
+        /**
+         * Returns {@code true} if the supplied type and throwable combination should result in a reattempt where the
+         * loaded type is not used for querying information.
+         *
+         * @param type      The loaded type that was queried during the transformation attempt.
+         * @param throwable The error or exception that was caused during the transformation.
+         * @return {@code true} if the supplied type and throwable combination should
+         */
+        boolean isFallback(Class<?> type, Throwable throwable);
+
+        /**
+         * A default fallback strategy that either always reattempts a transformation or never does so.
+         */
+        enum Default implements FallbackStrategy {
+
+            /**
+             * An enabled fallback strategy that always attempts a new trial.
+             */
+            ENABLED(true),
+
+            /**
+             * A disabled fallback strategy that never attempts a new trial.
+             */
+            DISABLED(false);
+
+            /**
+             * {@code true} if this fallback strategy is enabled.
+             */
+            private final boolean enabled;
+
+            /**
+             * Creates a new default fallback strategy.
+             *
+             * @param enabled {@code true} if this fallback strategy is enabled.
+             */
+            Default(boolean enabled) {
+                this.enabled = enabled;
+            }
+
+            @Override
+            public boolean isFallback(Class<?> type, Throwable throwable) {
+                return enabled;
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.FallbackStrategy.Default." + name();
+            }
+        }
+
+        /**
+         * A fallback strategy that discriminates by the type of the {@link Throwable} that triggered a request.
+         */
+        class ByThrowableType implements FallbackStrategy {
+
+            /**
+             * A set of throwable types that should trigger a fallback attempt.
+             */
+            private final Set<? extends Class<? extends Throwable>> types;
+
+            /**
+             * Creates a new throwable type-discriminating fallback strategy.
+             *
+             * @param type The throwable types that should trigger a fallback.
+             */
+            @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+            public ByThrowableType(Class<? extends Throwable>... type) {
+                this(new HashSet<Class<? extends Throwable>>(Arrays.asList(type)));
+            }
+
+            /**
+             * Creates a new throwable type-discriminating fallback strategy.
+             *
+             * @param types The throwable types that should trigger a fallback.
+             */
+            public ByThrowableType(Set<? extends Class<? extends Throwable>> types) {
+                this.types = types;
+            }
+
+            /**
+             * Creates a fallback strategy that attempts a fallback if an error indicating a type error is the reason for requesting a reattempt.
+             *
+             * @return A fallback strategy that triggers a reattempt if a {@link LinkageError} or a {@link TypeNotPresentException} is raised.
+             */
+            @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+            public static FallbackStrategy ofOptionalTypes() {
+                return new ByThrowableType(LinkageError.class, TypeNotPresentException.class);
+            }
+
+            @Override
+            public boolean isFallback(Class<?> type, Throwable throwable) {
+                for (Class<? extends Throwable> aType : types) {
+                    if (aType.isInstance(throwable)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ByThrowableType byType = (ByThrowableType) object;
+                return types.equals(byType.types);
+            }
+
+            @Override
+            public int hashCode() {
+                return types.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.FallbackStrategy.ByThrowableType{" +
+                        "types=" + types +
+                        '}';
+            }
+        }
+    }
+
+    /**
      * A redefinition strategy regulates how already loaded classes are modified by a built agent.
      */
     enum RedefinitionStrategy {
@@ -2975,7 +2962,7 @@ public interface AgentBuilder {
              * Applies this collector.
              *
              * @param instrumentation  The instrumentation instance to apply the transformation for.
-             * @param poolStrategy      The type locator to use.
+             * @param poolStrategy     The type locator to use.
              * @param locationStrategy The location strategy to use.
              * @param listener         the listener to notify.
              * @throws UnmodifiableClassException If a class is not modifiable.
@@ -4692,6 +4679,11 @@ public interface AgentBuilder {
         private final ByteBuddy byteBuddy;
 
         /**
+         * The listener to notify on transformations.
+         */
+        private final Listener listener;
+
+        /**
          * The type locator to use.
          */
         private final PoolStrategy poolStrategy;
@@ -4705,11 +4697,6 @@ public interface AgentBuilder {
          * The location strategy to use.
          */
         private final LocationStrategy locationStrategy;
-
-        /**
-         * The listener to notify on transformations.
-         */
-        private final Listener listener;
 
         /**
          * The native method strategy to use.
@@ -4748,6 +4735,11 @@ public interface AgentBuilder {
         private final InstallationStrategy installationStrategy;
 
         /**
+         * The fallback strategy to apply.
+         */
+        private final FallbackStrategy fallbackStrategy;
+
+        /**
          * Identifies types that should not be instrumented.
          */
         private final RawMatcher ignoredTypeMatcher;
@@ -4776,10 +4768,10 @@ public interface AgentBuilder {
          */
         public Default(ByteBuddy byteBuddy) {
             this(byteBuddy,
+                    Listener.NoOp.INSTANCE,
                     PoolStrategy.Default.FAST,
                     TypeStrategy.Default.REBASE,
                     LocationStrategy.ForClassLoader.STRONG,
-                    Listener.NoOp.INSTANCE,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     InitializationStrategy.SelfInjection.SPLIT,
                     RedefinitionStrategy.DISABLED,
@@ -4787,6 +4779,7 @@ public interface AgentBuilder {
                     LambdaInstrumentationStrategy.DISABLED,
                     DescriptionStrategy.Default.HYBRID,
                     InstallationStrategy.Default.ESCALATING,
+                    FallbackStrategy.ByThrowableType.ofOptionalTypes(),
                     new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()),
                             new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()), any(), any())),
                     Transformation.Ignored.INSTANCE);
@@ -4796,10 +4789,10 @@ public interface AgentBuilder {
          * Creates a new default agent builder.
          *
          * @param byteBuddy                     The Byte Buddy instance to be used.
-         * @param poolStrategy                   The type locator to use.
+         * @param listener                      The listener to notify on transformations.
+         * @param poolStrategy                  The type locator to use.
          * @param typeStrategy                  The definition handler to use.
          * @param locationStrategy              The location strategy to use.
-         * @param listener                      The listener to notify on transformations.
          * @param nativeMethodStrategy          The native method strategy to apply.
          * @param initializationStrategy        The initialization strategy to use for transformed types.
          * @param redefinitionStrategy          The redefinition strategy to apply.
@@ -4808,14 +4801,15 @@ public interface AgentBuilder {
          *                                      instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
          * @param installationStrategy          The installation strategy to use.
+         * @param fallbackStrategy              The fallback strategy to apply.
          * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
          * @param transformation                The transformation object for handling type transformations.
          */
         protected Default(ByteBuddy byteBuddy,
+                          Listener listener,
                           PoolStrategy poolStrategy,
                           TypeStrategy typeStrategy,
                           LocationStrategy locationStrategy,
-                          Listener listener,
                           NativeMethodStrategy nativeMethodStrategy,
                           InitializationStrategy initializationStrategy,
                           RedefinitionStrategy redefinitionStrategy,
@@ -4823,6 +4817,7 @@ public interface AgentBuilder {
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           DescriptionStrategy descriptionStrategy,
                           InstallationStrategy installationStrategy,
+                          FallbackStrategy fallbackStrategy,
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
@@ -4837,6 +4832,7 @@ public interface AgentBuilder {
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.descriptionStrategy = descriptionStrategy;
             this.installationStrategy = installationStrategy;
+            this.fallbackStrategy = fallbackStrategy;
             this.ignoredTypeMatcher = ignoredTypeMatcher;
             this.transformation = transformation;
         }
@@ -4844,10 +4840,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(ByteBuddy byteBuddy) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -4855,6 +4851,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4862,10 +4859,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(Listener listener) {
             return new Default(byteBuddy,
+                    new Listener.Compound(this.listener, listener),
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    new Listener.Compound(this.listener, listener),
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -4873,6 +4870,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4880,10 +4878,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(TypeStrategy typeStrategy) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -4891,6 +4889,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4898,10 +4897,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(PoolStrategy poolStrategy) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -4909,6 +4908,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4916,10 +4916,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(LocationStrategy locationStrategy) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -4927,6 +4927,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4934,10 +4935,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder enableNativeMethodPrefix(String prefix) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     NativeMethodStrategy.ForPrefix.of(prefix),
                     initializationStrategy,
                     redefinitionStrategy,
@@ -4945,6 +4946,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4952,10 +4954,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder disableNativeMethodPrefix() {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -4963,6 +4965,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4970,10 +4973,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(RedefinitionStrategy redefinitionStrategy) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -4981,6 +4984,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -4988,10 +4992,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(InitializationStrategy initializationStrategy) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -4999,6 +5003,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -5006,10 +5011,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -5017,6 +5022,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -5024,10 +5030,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(DescriptionStrategy descriptionStrategy) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -5035,6 +5041,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -5042,10 +5049,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(InstallationStrategy installationStrategy) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -5053,6 +5060,26 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder with(FallbackStrategy fallbackStrategy) {
+            return new Default(byteBuddy,
+                    listener,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -5060,10 +5087,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -5071,6 +5098,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -5078,10 +5106,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder disableBootstrapInjection() {
             return new Default(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
@@ -5089,6 +5117,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -5096,10 +5125,10 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder disableClassFormatChanges() {
             return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
+                    listener,
                     poolStrategy,
                     TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
                     locationStrategy,
-                    listener,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     InitializationStrategy.NoOp.INSTANCE,
                     redefinitionStrategy,
@@ -5107,6 +5136,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -5192,14 +5222,15 @@ public interface AgentBuilder {
         @Override
         public ClassFileTransformer makeRaw() {
             return ExecutingTransformer.FACTORY.make(byteBuddy,
+                    listener,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
-                    listener,
                     nativeMethodStrategy,
                     initializationStrategy,
                     bootstrapInjectionStrategy,
                     descriptionStrategy,
+                    fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -5218,16 +5249,14 @@ public interface AgentBuilder {
                     for (Class<?> type : instrumentation.getAllLoadedClasses()) {
                         JavaModule module = JavaModule.ofType(type);
                         try {
-                            TypeDescription typeDescription = descriptionStrategy.apply(type, poolStrategy, locationStrategy);
-                            if (!instrumentation.isModifiableClass(type) || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
-                                try {
-                                    try {
-                                        listener.onIgnored(typeDescription, type.getClassLoader(), module);
-                                    } finally {
-                                        listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
-                                    }
-                                } catch (Throwable ignored) {
-                                    // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                            TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
+                            try {
+                                doConsider(descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool), type, module, collector, !instrumentation.isModifiableClass(type));
+                            } catch (Throwable throwable) {
+                                if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
+                                    doConsider(typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(), type, module, collector, false);
+                                } else {
+                                    throw throwable;
                                 }
                             }
                         } catch (Throwable throwable) {
@@ -5247,6 +5276,29 @@ public interface AgentBuilder {
                 return classFileTransformer;
             } catch (Throwable throwable) {
                 return installationStrategy.onError(instrumentation, classFileTransformer, throwable);
+            }
+        }
+
+        /**
+         * Does consider the retransformation or redefinition of a loaded type.
+         *
+         * @param typeDescription The type description of the type being considered.
+         * @param type            The loaded type being considered.
+         * @param module          The type's Java module or {@code null} if the current VM does not support modules.
+         * @param collector       The collector to apply.
+         * @param unmodifiable    {@code true} if the current type should be considered unmodifiable.
+         */
+        private void doConsider(TypeDescription typeDescription, Class<?> type, JavaModule module, RedefinitionStrategy.Collector collector, boolean unmodifiable) {
+            if (unmodifiable || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
+                try {
+                    try {
+                        listener.onIgnored(typeDescription, type.getClassLoader(), module);
+                    } finally {
+                        listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
+                    }
+                } catch (Throwable ignored) {
+                    // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                }
             }
         }
 
@@ -5273,9 +5325,9 @@ public interface AgentBuilder {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             Default aDefault = (Default) other;
-            return poolStrategy.equals(aDefault.poolStrategy)
-                    && byteBuddy.equals(aDefault.byteBuddy)
+            return byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
+                    && poolStrategy.equals(aDefault.poolStrategy)
                     && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
                     && typeStrategy.equals(aDefault.typeStrategy)
                     && locationStrategy.equals(aDefault.locationStrategy)
@@ -5285,6 +5337,7 @@ public interface AgentBuilder {
                     && lambdaInstrumentationStrategy.equals(aDefault.lambdaInstrumentationStrategy)
                     && descriptionStrategy.equals(aDefault.descriptionStrategy)
                     && installationStrategy.equals(aDefault.installationStrategy)
+                    && fallbackStrategy.equals(aDefault.fallbackStrategy)
                     && ignoredTypeMatcher.equals(aDefault.ignoredTypeMatcher)
                     && transformation.equals(aDefault.transformation);
         }
@@ -5292,8 +5345,8 @@ public interface AgentBuilder {
         @Override
         public int hashCode() {
             int result = byteBuddy.hashCode();
-            result = 31 * result + poolStrategy.hashCode();
             result = 31 * result + listener.hashCode();
+            result = 31 * result + poolStrategy.hashCode();
             result = 31 * result + typeStrategy.hashCode();
             result = 31 * result + locationStrategy.hashCode();
             result = 31 * result + nativeMethodStrategy.hashCode();
@@ -5303,6 +5356,7 @@ public interface AgentBuilder {
             result = 31 * result + lambdaInstrumentationStrategy.hashCode();
             result = 31 * result + descriptionStrategy.hashCode();
             result = 31 * result + installationStrategy.hashCode();
+            result = 31 * result + fallbackStrategy.hashCode();
             result = 31 * result + ignoredTypeMatcher.hashCode();
             result = 31 * result + transformation.hashCode();
             return result;
@@ -5312,10 +5366,10 @@ public interface AgentBuilder {
         public String toString() {
             return "AgentBuilder.Default{" +
                     "byteBuddy=" + byteBuddy +
+                    ", listener=" + listener +
                     ", poolStrategy=" + poolStrategy +
                     ", typeStrategy=" + typeStrategy +
                     ", locationStrategy=" + locationStrategy +
-                    ", listener=" + listener +
                     ", nativeMethodStrategy=" + nativeMethodStrategy +
                     ", initializationStrategy=" + initializationStrategy +
                     ", redefinitionStrategy=" + redefinitionStrategy +
@@ -5323,6 +5377,7 @@ public interface AgentBuilder {
                     ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
                     ", descriptionStrategy=" + descriptionStrategy +
                     ", installationStrategy=" + installationStrategy +
+                    ", fallbackStrategy=" + fallbackStrategy +
                     ", ignoredTypeMatcher=" + ignoredTypeMatcher +
                     ", transformation=" + transformation +
                     '}';
@@ -6248,6 +6303,11 @@ public interface AgentBuilder {
             protected static final Factory FACTORY = AccessController.doPrivileged(FactoryCreationOption.INSTANCE);
 
             /**
+             * Indicates that no loaded type representation is provided.
+             */
+            private static final Class<?> NO_LOADED_TYPE = null;
+
+            /**
              * The Byte Buddy instance to be used.
              */
             private final ByteBuddy byteBuddy;
@@ -6293,6 +6353,11 @@ public interface AgentBuilder {
             private final LocationStrategy locationStrategy;
 
             /**
+             * The fallback strategy to use.
+             */
+            private final FallbackStrategy fallbackStrategy;
+
+            /**
              * Identifies types that should not be instrumented.
              */
             private final RawMatcher ignoredTypeMatcher;
@@ -6311,37 +6376,40 @@ public interface AgentBuilder {
              * Creates a new class file transformer.
              *
              * @param byteBuddy                  The Byte Buddy instance to be used.
-             * @param poolStrategy                The type locator to use.
+             * @param listener                   The listener to notify on transformations.
+             * @param poolStrategy               The type locator to use.
              * @param typeStrategy               The definition handler to use.
              * @param locationStrategy           The location strategy to use.
-             * @param listener                   The listener to notify on transformations.
              * @param nativeMethodStrategy       The native method strategy to apply.
              * @param initializationStrategy     The initialization strategy to use for transformed types.
              * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
              * @param descriptionStrategy        The description strategy for resolving type descriptions for types.
+             * @param fallbackStrategy           The fallback strategy to use.
              * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
              * @param transformation             The transformation object for handling type transformations.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
+                                        Listener listener,
                                         PoolStrategy poolStrategy,
                                         TypeStrategy typeStrategy,
                                         LocationStrategy locationStrategy,
-                                        Listener listener,
                                         NativeMethodStrategy nativeMethodStrategy,
                                         InitializationStrategy initializationStrategy,
                                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                         DescriptionStrategy descriptionStrategy,
+                                        FallbackStrategy fallbackStrategy,
                                         RawMatcher ignoredTypeMatcher,
                                         Transformation transformation) {
                 this.byteBuddy = byteBuddy;
+                this.typeStrategy = typeStrategy;
                 this.poolStrategy = poolStrategy;
                 this.locationStrategy = locationStrategy;
-                this.typeStrategy = typeStrategy;
                 this.listener = listener;
                 this.nativeMethodStrategy = nativeMethodStrategy;
                 this.initializationStrategy = initializationStrategy;
                 this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
                 this.descriptionStrategy = descriptionStrategy;
+                this.fallbackStrategy = fallbackStrategy;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
                 this.transformation = transformation;
                 accessControlContext = AccessController.getContext();
@@ -6409,20 +6477,15 @@ public interface AgentBuilder {
                             binaryRepresentation,
                             locationStrategy.classFileLocator(classLoader, module));
                     TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
-                    return transformation.resolve(descriptionStrategy.apply(typeName, classBeingRedefined, typePool),
-                            classLoader,
-                            module,
-                            classBeingRedefined,
-                            protectionDomain,
-                            typePool,
-                            ignoredTypeMatcher).apply(initializationStrategy,
-                            classFileLocator,
-                            typeStrategy,
-                            byteBuddy,
-                            nativeMethodStrategy,
-                            bootstrapInjectionStrategy,
-                            accessControlContext,
-                            listener);
+                    try {
+                        return doTransform(module, classLoader, typeName, classBeingRedefined, protectionDomain, typePool, classFileLocator);
+                    } catch (Throwable throwable) {
+                        if (classBeingRedefined != null && descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(classBeingRedefined, throwable)) {
+                            return doTransform(module, classLoader, typeName, NO_LOADED_TYPE, protectionDomain, typePool, classFileLocator);
+                        } else {
+                            throw throwable;
+                        }
+                    }
                 } catch (Throwable throwable) {
                     listener.onError(typeName, classLoader, module, throwable);
                     return NO_TRANSFORMATION;
@@ -6431,57 +6494,95 @@ public interface AgentBuilder {
                 }
             }
 
+            /**
+             * Applies a transformation for a class that was captured by this {@link ClassFileTransformer}.
+             *
+             * @param module              The instrumented class's Java module in its wrapped form or {@code null} if the current VM does not support modules.
+             * @param classLoader         The instrumented class's class loader.
+             * @param typeName            The binary name of the instrumented class.
+             * @param classBeingRedefined The loaded {@link Class} being redefined or {@code null} if no such class exists.
+             * @param protectionDomain    The instrumented type's protection domain.
+             * @param typePool            The type pool to use.
+             * @param classFileLocator    The class file locator to use.
+             * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
+             */
+            private byte[] doTransform(JavaModule module,
+                                       ClassLoader classLoader,
+                                       String typeName,
+                                       Class<?> classBeingRedefined,
+                                       ProtectionDomain protectionDomain,
+                                       TypePool typePool,
+                                       ClassFileLocator classFileLocator) {
+                return transformation.resolve(descriptionStrategy.apply(typeName, classBeingRedefined, typePool),
+                        classLoader,
+                        module,
+                        classBeingRedefined,
+                        protectionDomain,
+                        typePool,
+                        ignoredTypeMatcher).apply(initializationStrategy,
+                        classFileLocator,
+                        typeStrategy,
+                        byteBuddy,
+                        nativeMethodStrategy,
+                        bootstrapInjectionStrategy,
+                        accessControlContext,
+                        listener);
+            }
+
             @Override
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
                 ExecutingTransformer that = (ExecutingTransformer) other;
                 return byteBuddy.equals(that.byteBuddy)
+                        && listener.equals(that.listener)
                         && poolStrategy.equals(that.poolStrategy)
                         && typeStrategy.equals(that.typeStrategy)
                         && locationStrategy.equals(that.locationStrategy)
                         && initializationStrategy.equals(that.initializationStrategy)
-                        && listener.equals(that.listener)
                         && nativeMethodStrategy.equals(that.nativeMethodStrategy)
                         && bootstrapInjectionStrategy.equals(that.bootstrapInjectionStrategy)
                         && descriptionStrategy.equals(that.descriptionStrategy)
-                        && accessControlContext.equals(that.accessControlContext)
                         && ignoredTypeMatcher.equals(that.ignoredTypeMatcher)
-                        && transformation.equals(that.transformation);
+                        && fallbackStrategy.equals(that.fallbackStrategy)
+                        && transformation.equals(that.transformation)
+                        && accessControlContext.equals(that.accessControlContext);
             }
 
             @Override
             public int hashCode() {
                 int result = byteBuddy.hashCode();
+                result = 31 * result + listener.hashCode();
                 result = 31 * result + poolStrategy.hashCode();
                 result = 31 * result + typeStrategy.hashCode();
                 result = 31 * result + locationStrategy.hashCode();
                 result = 31 * result + initializationStrategy.hashCode();
-                result = 31 * result + listener.hashCode();
                 result = 31 * result + nativeMethodStrategy.hashCode();
                 result = 31 * result + bootstrapInjectionStrategy.hashCode();
                 result = 31 * result + descriptionStrategy.hashCode();
-                result = 31 * result + accessControlContext.hashCode();
+                result = 31 * result + fallbackStrategy.hashCode();
                 result = 31 * result + ignoredTypeMatcher.hashCode();
                 result = 31 * result + transformation.hashCode();
+                result = 31 * result + accessControlContext.hashCode();
                 return result;
             }
 
             @Override
             public String toString() {
-                return "AgentBuilder.Default.ExecutingTransformer{" +
+                return "AgentBuilder.Default." + getClass().getSimpleName() + "{" +
                         "byteBuddy=" + byteBuddy +
+                        ", listener=" + listener +
                         ", poolStrategy=" + poolStrategy +
                         ", typeStrategy=" + typeStrategy +
                         ", locationStrategy=" + locationStrategy +
                         ", initializationStrategy=" + initializationStrategy +
-                        ", listener=" + listener +
                         ", nativeMethodStrategy=" + nativeMethodStrategy +
                         ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
                         ", descriptionStrategy=" + descriptionStrategy +
-                        ", accessControlContext=" + accessControlContext +
+                        ", fallbackStrategy=" + fallbackStrategy +
                         ", ignoredTypeMatcher=" + ignoredTypeMatcher +
                         ", transformation=" + transformation +
+                        ", accessControlContext=" + accessControlContext +
                         '}';
             }
 
@@ -6494,27 +6595,29 @@ public interface AgentBuilder {
                  * Creates a new class file transformer for the current VM.
                  *
                  * @param byteBuddy                  The Byte Buddy instance to be used.
-                 * @param poolStrategy                The type locator to use.
+                 * @param listener                   The listener to notify on transformations.
+                 * @param poolStrategy               The type locator to use.
                  * @param typeStrategy               The definition handler to use.
                  * @param locationStrategy           The location strategy to use.
-                 * @param listener                   The listener to notify on transformations.
                  * @param nativeMethodStrategy       The native method strategy to apply.
                  * @param initializationStrategy     The initialization strategy to use for transformed types.
                  * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
                  * @param descriptionStrategy        The description strategy for resolving type descriptions for types.
+                 * @param fallbackStrategy           The fallback strategy to use.
                  * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
                  * @param transformation             The transformation object for handling type transformations.
                  * @return A class file transformer for the current VM that supports the API of the current VM.
                  */
                 ClassFileTransformer make(ByteBuddy byteBuddy,
+                                          Listener listener,
                                           PoolStrategy poolStrategy,
                                           TypeStrategy typeStrategy,
                                           LocationStrategy locationStrategy,
-                                          Listener listener,
                                           NativeMethodStrategy nativeMethodStrategy,
                                           InitializationStrategy initializationStrategy,
                                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                           DescriptionStrategy descriptionStrategy,
+                                          FallbackStrategy fallbackStrategy,
                                           RawMatcher ignoredTypeMatcher,
                                           Transformation transformation);
 
@@ -6542,26 +6645,28 @@ public interface AgentBuilder {
 
                     @Override
                     public ClassFileTransformer make(ByteBuddy byteBuddy,
+                                                     Listener listener,
                                                      PoolStrategy poolStrategy,
                                                      TypeStrategy typeStrategy,
                                                      LocationStrategy locationStrategy,
-                                                     Listener listener,
                                                      NativeMethodStrategy nativeMethodStrategy,
                                                      InitializationStrategy initializationStrategy,
                                                      BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                                      DescriptionStrategy descriptionStrategy,
+                                                     FallbackStrategy fallbackStrategy,
                                                      RawMatcher ignoredTypeMatcher,
                                                      Transformation transformation) {
                         try {
                             return executingTransformer.newInstance(byteBuddy,
+                                    listener,
                                     poolStrategy,
                                     typeStrategy,
                                     locationStrategy,
-                                    listener,
                                     nativeMethodStrategy,
                                     initializationStrategy,
                                     bootstrapInjectionStrategy,
                                     descriptionStrategy,
+                                    fallbackStrategy,
                                     ignoredTypeMatcher,
                                     transformation);
                         } catch (IllegalAccessException exception) {
@@ -6606,25 +6711,27 @@ public interface AgentBuilder {
 
                     @Override
                     public ClassFileTransformer make(ByteBuddy byteBuddy,
+                                                     Listener listener,
                                                      PoolStrategy poolStrategy,
                                                      TypeStrategy typeStrategy,
                                                      LocationStrategy locationStrategy,
-                                                     Listener listener,
                                                      NativeMethodStrategy nativeMethodStrategy,
                                                      InitializationStrategy initializationStrategy,
                                                      BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                                      DescriptionStrategy descriptionStrategy,
+                                                     FallbackStrategy fallbackStrategy,
                                                      RawMatcher ignoredTypeMatcher,
                                                      Transformation transformation) {
                         return new ExecutingTransformer(byteBuddy,
+                                listener,
                                 poolStrategy,
                                 typeStrategy,
                                 locationStrategy,
-                                listener,
                                 nativeMethodStrategy,
                                 initializationStrategy,
                                 bootstrapInjectionStrategy,
                                 descriptionStrategy,
+                                fallbackStrategy,
                                 ignoredTypeMatcher,
                                 transformation);
                     }
@@ -6665,14 +6772,15 @@ public interface AgentBuilder {
                                         ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(ExecutingTransformer.class.getProtectionDomain()))
                                 .getLoaded()
                                 .getDeclaredConstructor(ByteBuddy.class,
+                                        Listener.class,
                                         PoolStrategy.class,
                                         TypeStrategy.class,
                                         LocationStrategy.class,
-                                        Listener.class,
                                         NativeMethodStrategy.class,
                                         InitializationStrategy.class,
                                         BootstrapInjectionStrategy.class,
                                         DescriptionStrategy.class,
+                                        FallbackStrategy.class,
                                         RawMatcher.class,
                                         Transformation.class));
                     } catch (Exception ignored) {
@@ -6968,6 +7076,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder with(FallbackStrategy fallbackStrategy) {
+                return materialize().with(fallbackStrategy);
+            }
+
+            @Override
             public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
                 return materialize().enableBootstrapInjection(instrumentation, folder);
             }
@@ -7105,10 +7218,10 @@ public interface AgentBuilder {
             @Override
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
+                        listener,
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
-                        listener,
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
@@ -7116,6 +7229,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
+                        fallbackStrategy,
                         rawMatcher,
                         transformation);
             }
@@ -7200,10 +7314,10 @@ public interface AgentBuilder {
             @Override
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
+                        listener,
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
-                        listener,
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
@@ -7211,6 +7325,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
+                        fallbackStrategy,
                         ignoredTypeMatcher,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
             }

@@ -1193,14 +1193,15 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testExecutingTransformerHandlesNullValue() throws Exception {
         assertThat(new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
+                listener,
                 poolStrategy,
                 typeStrategy,
                 locationStrategy,
-                listener,
                 mock(AgentBuilder.Default.NativeMethodStrategy.class),
                 initializationStrategy,
                 mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
                 AgentBuilder.DescriptionStrategy.Default.HYBRID,
+                mock(AgentBuilder.FallbackStrategy.class),
                 mock(AgentBuilder.RawMatcher.class),
                 mock(AgentBuilder.Default.Transformation.class))
                 .transform(mock(ClassLoader.class),

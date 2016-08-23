@@ -7594,64 +7594,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public AnnotationList getDeclaredAnnotations() {
             return new AnnotationList.ForLoadedAnnotations(type.getDeclaredAnnotations());
         }
-
-        /**
-         * A type description of a loaded type that resolves any field, constructor or method property eagerly, i.e. calls all of
-         * {@link Class#getDeclaredFields()}, {@link Class#getDeclaredMethods()}, {@link Class#getDeclaredConstructors()} and
-         * {@link Class#getDeclaredClasses()}. This might trigger a {@link NoClassDefFoundError} if any such element refers to an
-         * type that is not available to this class loader.
-         */
-        public static class WithEagerProperties extends ForLoadedType {
-
-            /**
-             * The type's declared fields.
-             */
-            private final Field[] field;
-
-            /**
-             * The type's declared constructors.
-             */
-            private final Constructor<?>[] constructor;
-
-            /**
-             * The type's declared methods.
-             */
-            private final Method[] method;
-
-            /**
-             * The type's declared types.
-             */
-            private final Class<?>[] declaredClass;
-
-            /**
-             * Creates a new eagerly resolved loaded type description. Accessing any of these properties can cause an error such as a
-             * {@link IllegalAccessError} or a {@link NoClassDefFoundError} if the class loader is inconsistent.
-             *
-             * @param type The loaded type this instance represents.
-             */
-            public WithEagerProperties(Class<?> type) {
-                super(type);
-                field = type.getDeclaredFields();
-                constructor = type.getDeclaredConstructors();
-                method = type.getDeclaredMethods();
-                declaredClass = type.getDeclaredClasses();
-            }
-
-            @Override
-            public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-                return new FieldList.ForLoadedFields(field);
-            }
-
-            @Override
-            public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
-                return new MethodList.ForLoadedMethods(constructor, method);
-            }
-
-            @Override
-            public TypeList getDeclaredTypes() {
-                return new TypeList.ForLoadedTypes(declaredClass);
-            }
-        }
     }
 
     /**
