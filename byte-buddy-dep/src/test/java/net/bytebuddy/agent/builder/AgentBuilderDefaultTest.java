@@ -71,7 +71,7 @@ public class AgentBuilderDefaultTest {
     private AgentBuilder.Transformer transformer;
 
     @Mock
-    private AgentBuilder.TypeLocator typeLocator;
+    private AgentBuilder.PoolStrategy poolStrategy;
 
     @Mock
     private AgentBuilder.TypeStrategy typeStrategy;
@@ -114,7 +114,7 @@ public class AgentBuilderDefaultTest {
         when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
         when(dynamicType.getBytes()).thenReturn(BAZ);
         when(transformer.transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader())).thenReturn((DynamicType.Builder) builder);
-        when(typeLocator.typePool(any(ClassFileLocator.class), any(ClassLoader.class))).thenReturn(typePool);
+        when(poolStrategy.typePool(any(ClassFileLocator.class), any(ClassLoader.class))).thenReturn(typePool);
         when(typePool.describe(REDEFINED.getName())).thenReturn(resolution);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         when(initializationStrategy.dispatcher()).thenReturn(dispatcher);
@@ -135,7 +135,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -174,7 +174,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -209,7 +209,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -243,7 +243,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -278,7 +278,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -310,7 +310,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -341,7 +341,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -375,7 +375,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -409,7 +409,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -442,7 +442,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION_CHUNKED)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -478,7 +478,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION_CHUNKED)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -508,7 +508,7 @@ public class AgentBuilderDefaultTest {
         new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -526,7 +526,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -558,7 +558,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -590,7 +590,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -624,7 +624,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -662,7 +662,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -699,7 +699,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -734,7 +734,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -769,7 +769,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -803,7 +803,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -836,7 +836,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION_CHUNKED)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -871,7 +871,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION_CHUNKED)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -900,7 +900,7 @@ public class AgentBuilderDefaultTest {
         new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -918,7 +918,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -944,7 +944,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(false);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -981,7 +981,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -1019,7 +1019,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -1045,7 +1045,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -1072,7 +1072,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -1099,7 +1099,7 @@ public class AgentBuilderDefaultTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -1122,7 +1122,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
-                .with(typeLocator)
+                .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
                 .with(listener)
@@ -1193,7 +1193,7 @@ public class AgentBuilderDefaultTest {
     @SuppressWarnings("unchecked")
     public void testExecutingTransformerHandlesNullValue() throws Exception {
         assertThat(new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
-                typeLocator,
+                poolStrategy,
                 typeStrategy,
                 locationStrategy,
                 listener,

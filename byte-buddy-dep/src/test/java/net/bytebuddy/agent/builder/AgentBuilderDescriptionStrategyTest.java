@@ -28,7 +28,7 @@ public class AgentBuilderDescriptionStrategyTest {
     private TypePool typePool;
 
     @Mock
-    private AgentBuilder.TypeLocator typeLocator;
+    private AgentBuilder.PoolStrategy poolStrategy;
 
     @Mock
     private TypeDescription typeDescription;
@@ -58,16 +58,16 @@ public class AgentBuilderDescriptionStrategyTest {
 
     @Test
     public void testLoadedDescriptionHybrid() throws Exception {
-        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, typeLocator, locationStrategy), is(TypeDescription.OBJECT));
-        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, typeLocator, locationStrategy), instanceOf(TypeDescription.ForLoadedType.class));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, poolStrategy, locationStrategy), is(TypeDescription.OBJECT));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class, poolStrategy, locationStrategy), instanceOf(TypeDescription.ForLoadedType.class));
     }
 
     @Test
     public void testLoadedDescriptionPoolOnly() throws Exception {
-        when(typeLocator.typePool(ClassFileLocator.ForClassLoader.of(Object.class.getClassLoader()), Object.class.getClassLoader())).thenReturn(typePool);
+        when(poolStrategy.typePool(ClassFileLocator.ForClassLoader.of(Object.class.getClassLoader()), Object.class.getClassLoader())).thenReturn(typePool);
         when(typePool.describe(Object.class.getName())).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         when(locationStrategy.classFileLocator(Object.class.getClassLoader(), JavaModule.ofType(Object.class))).thenReturn(ClassFileLocator.ForClassLoader.of(Object.class.getClassLoader()));
-        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.apply(Object.class, typeLocator, locationStrategy), is(typeDescription));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.apply(Object.class, poolStrategy, locationStrategy), is(typeDescription));
     }
 
     @Test

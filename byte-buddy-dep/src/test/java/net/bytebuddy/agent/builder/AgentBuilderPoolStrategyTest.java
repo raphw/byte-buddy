@@ -12,7 +12,7 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class AgentBuilderTypeLocatorTest {
+public class AgentBuilderPoolStrategyTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -25,38 +25,38 @@ public class AgentBuilderTypeLocatorTest {
 
     @Test
     public void testFastTypePool() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.Default.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+        assertThat(AgentBuilder.PoolStrategy.Default.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
 
     @Test
     public void testExtendedTypePool() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.Default.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+        assertThat(AgentBuilder.PoolStrategy.Default.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
 
     @Test
     public void testFastEagerTypePool() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.Eager.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+        assertThat(AgentBuilder.PoolStrategy.Eager.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
 
     @Test
     public void testExtendedEagerTypePool() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.Eager.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+        assertThat(AgentBuilder.PoolStrategy.Eager.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
 
     @Test
     public void testFastLoadingTypePool() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.ClassLoading.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+        assertThat(AgentBuilder.PoolStrategy.ClassLoading.FAST.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
 
     @Test
     public void testExtendedLoadingTypePool() throws Exception {
-        assertThat(AgentBuilder.TypeLocator.ClassLoading.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
+        assertThat(AgentBuilder.PoolStrategy.ClassLoading.EXTENDED.typePool(classFileLocator, classLoader), notNullValue(TypePool.class));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.TypeLocator.Default.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.TypeLocator.Eager.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.TypeLocator.ClassLoading.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.PoolStrategy.Default.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.PoolStrategy.Eager.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.PoolStrategy.ClassLoading.class).apply();
     }
 }

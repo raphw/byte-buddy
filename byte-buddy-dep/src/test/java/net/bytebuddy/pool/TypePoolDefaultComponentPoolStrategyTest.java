@@ -12,7 +12,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TypePoolDefaultComponentTypeLocatorTest {
+public class TypePoolDefaultComponentPoolStrategyTest {
 
     private static final String FOO = "foo", BAR = "bar", BAR_DESCRIPTOR = "L" + BAR + ";", QUX = "qux", BAZ = "baz";
 

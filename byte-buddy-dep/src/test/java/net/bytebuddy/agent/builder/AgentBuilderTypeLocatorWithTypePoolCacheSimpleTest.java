@@ -31,21 +31,21 @@ public class AgentBuilderTypeLocatorWithTypePoolCacheSimpleTest {
     @Test
     public void testSimpleImplementation() throws Exception {
         ConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new ConcurrentHashMap<ClassLoader, TypePool.CacheProvider>();
-        AgentBuilder.TypeLocator typeLocator = new AgentBuilder.TypeLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
-        assertThat(typeLocator.typePool(classFileLocator, first), is(typeLocator.typePool(classFileLocator, first)));
-        assertThat(typeLocator.typePool(classFileLocator, first), not(typeLocator.typePool(classFileLocator, second)));
+        AgentBuilder.PoolStrategy poolStrategy = new AgentBuilder.PoolStrategy.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
+        assertThat(poolStrategy.typePool(classFileLocator, first), is(poolStrategy.typePool(classFileLocator, first)));
+        assertThat(poolStrategy.typePool(classFileLocator, first), not(poolStrategy.typePool(classFileLocator, second)));
     }
 
     @Test
     public void testSimpleImplementationBootstrap() throws Exception {
         ConcurrentMap<ClassLoader, TypePool.CacheProvider> cacheProviders = new ConcurrentHashMap<ClassLoader, TypePool.CacheProvider>();
-        AgentBuilder.TypeLocator typeLocator = new AgentBuilder.TypeLocator.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
-        assertThat(typeLocator.typePool(classFileLocator, null), is(typeLocator.typePool(classFileLocator, null)));
-        assertThat(typeLocator.typePool(classFileLocator, null), not(typeLocator.typePool(classFileLocator, second)));
+        AgentBuilder.PoolStrategy poolStrategy = new AgentBuilder.PoolStrategy.WithTypePoolCache.Simple(TypePool.Default.ReaderMode.FAST, cacheProviders);
+        assertThat(poolStrategy.typePool(classFileLocator, null), is(poolStrategy.typePool(classFileLocator, null)));
+        assertThat(poolStrategy.typePool(classFileLocator, null), not(poolStrategy.typePool(classFileLocator, second)));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.TypeLocator.WithTypePoolCache.Simple.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.PoolStrategy.WithTypePoolCache.Simple.class).apply();
     }
 }

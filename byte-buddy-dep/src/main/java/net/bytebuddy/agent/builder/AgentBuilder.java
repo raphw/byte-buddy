@@ -109,10 +109,10 @@ public interface AgentBuilder {
     /**
      * Defines the use of the given type locator for locating a {@link TypeDescription} for an instrumented type.
      *
-     * @param typeLocator The type locator to use.
+     * @param poolStrategy The type locator to use.
      * @return A new instance of this agent builder which uses the given type locator for looking up class files.
      */
-    AgentBuilder with(TypeLocator typeLocator);
+    AgentBuilder with(PoolStrategy poolStrategy);
 
     /**
      * Defines the use of the given location strategy for locating binary data to given class names.
@@ -1164,7 +1164,7 @@ public interface AgentBuilder {
     /**
      * A type locator allows to specify how {@link TypeDescription}s are resolved by an {@link net.bytebuddy.agent.builder.AgentBuilder}.
      */
-    interface TypeLocator {
+    interface PoolStrategy {
 
         /**
          * Creates a type pool for a given class file locator.
@@ -1184,7 +1184,7 @@ public interface AgentBuilder {
          * {@link ClassFileLocator} that is provided by the builder's {@link LocationStrategy}.
          * </p>
          */
-        enum Default implements TypeLocator {
+        enum Default implements PoolStrategy {
 
             /**
              * A type locator that parses the code segment of each method for extracting information about parameter
@@ -1223,7 +1223,7 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.TypeLocator.Default." + name();
+                return "AgentBuilder.PoolStrategy.Default." + name();
             }
         }
 
@@ -1236,7 +1236,7 @@ public interface AgentBuilder {
          * {@link ClassFileLocator} that is provided by the builder's {@link LocationStrategy}.
          * </p>
          */
-        enum Eager implements TypeLocator {
+        enum Eager implements PoolStrategy {
 
             /**
              * A type locator that parses the code segment of each method for extracting information about parameter
@@ -1275,7 +1275,7 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.TypeLocator.Eager." + name();
+                return "AgentBuilder.PoolStrategy.Eager." + name();
             }
         }
 
@@ -1289,7 +1289,7 @@ public interface AgentBuilder {
          * are loaded via the instrumented type's {@link ClassLoader}.
          * </p>
          */
-        enum ClassLoading implements TypeLocator {
+        enum ClassLoading implements PoolStrategy {
 
             /**
              * A type locator that parses the code segment of each method for extracting information about parameter
@@ -1328,7 +1328,7 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.TypeLocator.ClassLoading." + name();
+                return "AgentBuilder.PoolStrategy.ClassLoading." + name();
             }
         }
 
@@ -1343,7 +1343,7 @@ public interface AgentBuilder {
          * All types that are returned by the locator's type pool are resolved lazily.
          * </p>
          */
-        abstract class WithTypePoolCache implements TypeLocator {
+        abstract class WithTypePoolCache implements PoolStrategy {
 
             /**
              * The reader mode to use for parsing a class file.
@@ -1467,7 +1467,7 @@ public interface AgentBuilder {
 
                 @Override
                 public String toString() {
-                    return "AgentBuilder.TypeLocator.WithTypePoolCache.Simple{" +
+                    return "AgentBuilder.PoolStrategy.WithTypePoolCache.Simple{" +
                             "cacheProviders=" + cacheProviders +
                             '}';
                 }
@@ -2268,11 +2268,11 @@ public interface AgentBuilder {
          * Describes the given type.
          *
          * @param type             The loaded type to be described.
-         * @param typeLocator      The type locator to use.
+         * @param poolStrategy      The type locator to use.
          * @param locationStrategy The location strategy to use.
          * @return An appropriate type description.
          */
-        TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy);
+        TypeDescription apply(Class<?> type, PoolStrategy poolStrategy, LocationStrategy locationStrategy);
 
         /**
          * Default implementations of a {@link DescriptionStrategy}.
@@ -2299,7 +2299,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy) {
+                public TypeDescription apply(Class<?> type, PoolStrategy poolStrategy, LocationStrategy locationStrategy) {
                     return new TypeDescription.ForLoadedType(type);
                 }
             },
@@ -2390,10 +2390,10 @@ public interface AgentBuilder {
             };
 
             @Override
-            public TypeDescription apply(Class<?> type, TypeLocator typeLocator, LocationStrategy locationStrategy) {
+            public TypeDescription apply(Class<?> type, PoolStrategy poolStrategy, LocationStrategy locationStrategy) {
                 return apply(TypeDescription.ForLoadedType.getName(type),
                         type,
-                        typeLocator.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader()));
+                        poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader()));
             }
 
             @Override
@@ -2975,14 +2975,14 @@ public interface AgentBuilder {
              * Applies this collector.
              *
              * @param instrumentation  The instrumentation instance to apply the transformation for.
-             * @param typeLocator      The type locator to use.
+             * @param poolStrategy      The type locator to use.
              * @param locationStrategy The location strategy to use.
              * @param listener         the listener to notify.
              * @throws UnmodifiableClassException If a class is not modifiable.
              * @throws ClassNotFoundException     If a class could not be found.
              */
             void apply(Instrumentation instrumentation,
-                       TypeLocator typeLocator,
+                       PoolStrategy poolStrategy,
                        LocationStrategy locationStrategy,
                        Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
 
@@ -3023,7 +3023,7 @@ public interface AgentBuilder {
 
                 @Override
                 public void apply(Instrumentation instrumentation,
-                                  TypeLocator typeLocator,
+                                  PoolStrategy poolStrategy,
                                   LocationStrategy locationStrategy,
                                   Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
@@ -3234,7 +3234,7 @@ public interface AgentBuilder {
 
                     @Override
                     public void apply(Instrumentation instrumentation,
-                                      TypeLocator typeLocator,
+                                      PoolStrategy poolStrategy,
                                       LocationStrategy locationStrategy,
                                       Listener listener) throws UnmodifiableClassException {
                         if (!types.isEmpty()) {
@@ -3267,7 +3267,7 @@ public interface AgentBuilder {
 
                     @Override
                     public void apply(Instrumentation instrumentation,
-                                      TypeLocator typeLocator,
+                                      PoolStrategy poolStrategy,
                                       LocationStrategy locationStrategy,
                                       Listener listener) throws UnmodifiableClassException {
                         Map<Class<?>, Exception> exceptions = new HashMap<Class<?>, Exception>();
@@ -4660,7 +4660,7 @@ public interface AgentBuilder {
      * <p>
      * By default, Byte Buddy ignores any types loaded by the bootstrap class loader and
      * any synthetic type. Self-injection and rebasing is enabled. In order to avoid class format changes, set
-     * {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information ({@link TypeLocator.Default#FAST}).
+     * {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information ({@link PoolStrategy.Default#FAST}).
      * </p>
      */
     class Default implements AgentBuilder {
@@ -4694,7 +4694,7 @@ public interface AgentBuilder {
         /**
          * The type locator to use.
          */
-        private final TypeLocator typeLocator;
+        private final PoolStrategy poolStrategy;
 
         /**
          * The definition handler to use.
@@ -4770,13 +4770,13 @@ public interface AgentBuilder {
          * Creates a new agent builder with default settings. By default, Byte Buddy ignores any types loaded by the bootstrap class loader, any
          * type within a {@code net.bytebuddy} package and any synthetic type. Self-injection and rebasing is enabled. In order to avoid class format
          * changes, set {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information
-         * ({@link TypeLocator.Default#FAST}).
+         * ({@link PoolStrategy.Default#FAST}).
          *
          * @param byteBuddy The Byte Buddy instance to be used.
          */
         public Default(ByteBuddy byteBuddy) {
             this(byteBuddy,
-                    TypeLocator.Default.FAST,
+                    PoolStrategy.Default.FAST,
                     TypeStrategy.Default.REBASE,
                     LocationStrategy.ForClassLoader.STRONG,
                     Listener.NoOp.INSTANCE,
@@ -4796,7 +4796,7 @@ public interface AgentBuilder {
          * Creates a new default agent builder.
          *
          * @param byteBuddy                     The Byte Buddy instance to be used.
-         * @param typeLocator                   The type locator to use.
+         * @param poolStrategy                   The type locator to use.
          * @param typeStrategy                  The definition handler to use.
          * @param locationStrategy              The location strategy to use.
          * @param listener                      The listener to notify on transformations.
@@ -4812,7 +4812,7 @@ public interface AgentBuilder {
          * @param transformation                The transformation object for handling type transformations.
          */
         protected Default(ByteBuddy byteBuddy,
-                          TypeLocator typeLocator,
+                          PoolStrategy poolStrategy,
                           TypeStrategy typeStrategy,
                           LocationStrategy locationStrategy,
                           Listener listener,
@@ -4826,7 +4826,7 @@ public interface AgentBuilder {
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
-            this.typeLocator = typeLocator;
+            this.poolStrategy = poolStrategy;
             this.typeStrategy = typeStrategy;
             this.locationStrategy = locationStrategy;
             this.listener = listener;
@@ -4844,7 +4844,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(ByteBuddy byteBuddy) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -4862,7 +4862,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(Listener listener) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     new Listener.Compound(this.listener, listener),
@@ -4880,7 +4880,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(TypeStrategy typeStrategy) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -4896,9 +4896,9 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder with(TypeLocator typeLocator) {
+        public AgentBuilder with(PoolStrategy poolStrategy) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -4916,7 +4916,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(LocationStrategy locationStrategy) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -4934,7 +4934,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder enableNativeMethodPrefix(String prefix) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -4952,7 +4952,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder disableNativeMethodPrefix() {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -4970,7 +4970,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(RedefinitionStrategy redefinitionStrategy) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -4988,7 +4988,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(InitializationStrategy initializationStrategy) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -5006,7 +5006,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -5024,7 +5024,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(DescriptionStrategy descriptionStrategy) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -5042,7 +5042,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder with(InstallationStrategy installationStrategy) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -5060,7 +5060,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -5078,7 +5078,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder disableBootstrapInjection() {
             return new Default(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -5096,7 +5096,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder disableClassFormatChanges() {
             return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
-                    typeLocator,
+                    poolStrategy,
                     TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
                     locationStrategy,
                     listener,
@@ -5192,7 +5192,7 @@ public interface AgentBuilder {
         @Override
         public ClassFileTransformer makeRaw() {
             return ExecutingTransformer.FACTORY.make(byteBuddy,
-                    typeLocator,
+                    poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     listener,
@@ -5218,7 +5218,7 @@ public interface AgentBuilder {
                     for (Class<?> type : instrumentation.getAllLoadedClasses()) {
                         JavaModule module = JavaModule.ofType(type);
                         try {
-                            TypeDescription typeDescription = descriptionStrategy.apply(type, typeLocator, locationStrategy);
+                            TypeDescription typeDescription = descriptionStrategy.apply(type, poolStrategy, locationStrategy);
                             if (!instrumentation.isModifiableClass(type) || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
                                 try {
                                     try {
@@ -5242,7 +5242,7 @@ public interface AgentBuilder {
                             }
                         }
                     }
-                    collector.apply(instrumentation, typeLocator, locationStrategy, listener);
+                    collector.apply(instrumentation, poolStrategy, locationStrategy, listener);
                 }
                 return classFileTransformer;
             } catch (Throwable throwable) {
@@ -5273,7 +5273,7 @@ public interface AgentBuilder {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             Default aDefault = (Default) other;
-            return typeLocator.equals(aDefault.typeLocator)
+            return poolStrategy.equals(aDefault.poolStrategy)
                     && byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
                     && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
@@ -5292,7 +5292,7 @@ public interface AgentBuilder {
         @Override
         public int hashCode() {
             int result = byteBuddy.hashCode();
-            result = 31 * result + typeLocator.hashCode();
+            result = 31 * result + poolStrategy.hashCode();
             result = 31 * result + listener.hashCode();
             result = 31 * result + typeStrategy.hashCode();
             result = 31 * result + locationStrategy.hashCode();
@@ -5312,7 +5312,7 @@ public interface AgentBuilder {
         public String toString() {
             return "AgentBuilder.Default{" +
                     "byteBuddy=" + byteBuddy +
-                    ", typeLocator=" + typeLocator +
+                    ", poolStrategy=" + poolStrategy +
                     ", typeStrategy=" + typeStrategy +
                     ", locationStrategy=" + locationStrategy +
                     ", listener=" + listener +
@@ -6255,7 +6255,7 @@ public interface AgentBuilder {
             /**
              * The type locator to use.
              */
-            private final TypeLocator typeLocator;
+            private final PoolStrategy poolStrategy;
 
             /**
              * The definition handler to use.
@@ -6311,7 +6311,7 @@ public interface AgentBuilder {
              * Creates a new class file transformer.
              *
              * @param byteBuddy                  The Byte Buddy instance to be used.
-             * @param typeLocator                The type locator to use.
+             * @param poolStrategy                The type locator to use.
              * @param typeStrategy               The definition handler to use.
              * @param locationStrategy           The location strategy to use.
              * @param listener                   The listener to notify on transformations.
@@ -6323,7 +6323,7 @@ public interface AgentBuilder {
              * @param transformation             The transformation object for handling type transformations.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
-                                        TypeLocator typeLocator,
+                                        PoolStrategy poolStrategy,
                                         TypeStrategy typeStrategy,
                                         LocationStrategy locationStrategy,
                                         Listener listener,
@@ -6334,7 +6334,7 @@ public interface AgentBuilder {
                                         RawMatcher ignoredTypeMatcher,
                                         Transformation transformation) {
                 this.byteBuddy = byteBuddy;
-                this.typeLocator = typeLocator;
+                this.poolStrategy = poolStrategy;
                 this.locationStrategy = locationStrategy;
                 this.typeStrategy = typeStrategy;
                 this.listener = listener;
@@ -6408,7 +6408,7 @@ public interface AgentBuilder {
                     ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(typeName,
                             binaryRepresentation,
                             locationStrategy.classFileLocator(classLoader, module));
-                    TypePool typePool = typeLocator.typePool(classFileLocator, classLoader);
+                    TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                     return transformation.resolve(descriptionStrategy.apply(typeName, classBeingRedefined, typePool),
                             classLoader,
                             module,
@@ -6437,7 +6437,7 @@ public interface AgentBuilder {
                 if (other == null || getClass() != other.getClass()) return false;
                 ExecutingTransformer that = (ExecutingTransformer) other;
                 return byteBuddy.equals(that.byteBuddy)
-                        && typeLocator.equals(that.typeLocator)
+                        && poolStrategy.equals(that.poolStrategy)
                         && typeStrategy.equals(that.typeStrategy)
                         && locationStrategy.equals(that.locationStrategy)
                         && initializationStrategy.equals(that.initializationStrategy)
@@ -6453,7 +6453,7 @@ public interface AgentBuilder {
             @Override
             public int hashCode() {
                 int result = byteBuddy.hashCode();
-                result = 31 * result + typeLocator.hashCode();
+                result = 31 * result + poolStrategy.hashCode();
                 result = 31 * result + typeStrategy.hashCode();
                 result = 31 * result + locationStrategy.hashCode();
                 result = 31 * result + initializationStrategy.hashCode();
@@ -6471,7 +6471,7 @@ public interface AgentBuilder {
             public String toString() {
                 return "AgentBuilder.Default.ExecutingTransformer{" +
                         "byteBuddy=" + byteBuddy +
-                        ", typeLocator=" + typeLocator +
+                        ", poolStrategy=" + poolStrategy +
                         ", typeStrategy=" + typeStrategy +
                         ", locationStrategy=" + locationStrategy +
                         ", initializationStrategy=" + initializationStrategy +
@@ -6494,7 +6494,7 @@ public interface AgentBuilder {
                  * Creates a new class file transformer for the current VM.
                  *
                  * @param byteBuddy                  The Byte Buddy instance to be used.
-                 * @param typeLocator                The type locator to use.
+                 * @param poolStrategy                The type locator to use.
                  * @param typeStrategy               The definition handler to use.
                  * @param locationStrategy           The location strategy to use.
                  * @param listener                   The listener to notify on transformations.
@@ -6507,7 +6507,7 @@ public interface AgentBuilder {
                  * @return A class file transformer for the current VM that supports the API of the current VM.
                  */
                 ClassFileTransformer make(ByteBuddy byteBuddy,
-                                          TypeLocator typeLocator,
+                                          PoolStrategy poolStrategy,
                                           TypeStrategy typeStrategy,
                                           LocationStrategy locationStrategy,
                                           Listener listener,
@@ -6542,7 +6542,7 @@ public interface AgentBuilder {
 
                     @Override
                     public ClassFileTransformer make(ByteBuddy byteBuddy,
-                                                     TypeLocator typeLocator,
+                                                     PoolStrategy poolStrategy,
                                                      TypeStrategy typeStrategy,
                                                      LocationStrategy locationStrategy,
                                                      Listener listener,
@@ -6554,7 +6554,7 @@ public interface AgentBuilder {
                                                      Transformation transformation) {
                         try {
                             return executingTransformer.newInstance(byteBuddy,
-                                    typeLocator,
+                                    poolStrategy,
                                     typeStrategy,
                                     locationStrategy,
                                     listener,
@@ -6606,7 +6606,7 @@ public interface AgentBuilder {
 
                     @Override
                     public ClassFileTransformer make(ByteBuddy byteBuddy,
-                                                     TypeLocator typeLocator,
+                                                     PoolStrategy poolStrategy,
                                                      TypeStrategy typeStrategy,
                                                      LocationStrategy locationStrategy,
                                                      Listener listener,
@@ -6617,7 +6617,7 @@ public interface AgentBuilder {
                                                      RawMatcher ignoredTypeMatcher,
                                                      Transformation transformation) {
                         return new ExecutingTransformer(byteBuddy,
-                                typeLocator,
+                                poolStrategy,
                                 typeStrategy,
                                 locationStrategy,
                                 listener,
@@ -6665,7 +6665,7 @@ public interface AgentBuilder {
                                         ClassLoadingStrategy.Default.WRAPPER_PERSISTENT.with(ExecutingTransformer.class.getProtectionDomain()))
                                 .getLoaded()
                                 .getDeclaredConstructor(ByteBuddy.class,
-                                        TypeLocator.class,
+                                        PoolStrategy.class,
                                         TypeStrategy.class,
                                         LocationStrategy.class,
                                         Listener.class,
@@ -6933,8 +6933,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder with(TypeLocator typeLocator) {
-                return materialize().with(typeLocator);
+            public AgentBuilder with(PoolStrategy poolStrategy) {
+                return materialize().with(poolStrategy);
             }
 
             @Override
@@ -7105,7 +7105,7 @@ public interface AgentBuilder {
             @Override
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
-                        typeLocator,
+                        poolStrategy,
                         typeStrategy,
                         locationStrategy,
                         listener,
@@ -7200,7 +7200,7 @@ public interface AgentBuilder {
             @Override
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
-                        typeLocator,
+                        poolStrategy,
                         typeStrategy,
                         locationStrategy,
                         listener,
