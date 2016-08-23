@@ -2951,9 +2951,11 @@ public interface AgentBuilder {
             /**
              * Considers a loaded class for modification.
              *
-             * @param typeDescription    The type description of the type that is to be considered.
-             * @param type               The loaded representation of the type that is to be considered.
-             * @param ignoredTypeMatcher Identifies types that should not be instrumented.
+             * @param typeDescription     The type description of the type that is to be considered.
+             * @param type                The loaded representation of the type that is to be considered.
+             * @param classBeingRedefined The loaded representation of the type that is to be considered or {@code null} if the
+             *                            loaded type representation should not be considered.
+             * @param ignoredTypeMatcher  Identifies types that should not be instrumented.
              * @return {@code true} if the class is considered to be redefined.
              */
             boolean consider(TypeDescription typeDescription, Class<?> type, Class<?> classBeingRedefined, RawMatcher ignoredTypeMatcher);
