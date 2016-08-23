@@ -4758,8 +4758,6 @@ public interface AgentBuilder {
 
         /**
          * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for creating classes.
-         *
-         * @see AgentBuilder.Default#Default(ByteBuddy)
          */
         public Default() {
             this(new ByteBuddy());
