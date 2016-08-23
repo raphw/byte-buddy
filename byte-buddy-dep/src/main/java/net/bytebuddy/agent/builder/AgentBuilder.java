@@ -2956,7 +2956,7 @@ public interface AgentBuilder {
              * @param ignoredTypeMatcher Identifies types that should not be instrumented.
              * @return {@code true} if the class is considered to be redefined.
              */
-            boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher);
+            boolean consider(TypeDescription typeDescription, Class<?> type, Class<?> classBeingRedefined, RawMatcher ignoredTypeMatcher);
 
             /**
              * Applies this collector.
@@ -2999,11 +2999,11 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher) {
+                public boolean consider(TypeDescription typeDescription, Class<?> type, Class<?> classBeingRedefined, RawMatcher ignoredTypeMatcher) {
                     return transformation.isAlive(typeDescription,
                             type.getClassLoader(),
                             JavaModule.ofType(type),
-                            type,
+                            classBeingRedefined,
                             type.getProtectionDomain(),
                             ignoredTypeMatcher) && entries.add(new Entry(type));
                 }
@@ -3196,11 +3196,11 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean consider(TypeDescription typeDescription, Class<?> type, RawMatcher ignoredTypeMatcher) {
+                public boolean consider(TypeDescription typeDescription, Class<?> type, Class<?> classBeingRedefined, RawMatcher ignoredTypeMatcher) {
                     return transformation.isAlive(typeDescription,
                             type.getClassLoader(),
                             JavaModule.ofType(type),
-                            type,
+                            classBeingRedefined,
                             type.getProtectionDomain(),
                             ignoredTypeMatcher) && types.add(type);
                 }
@@ -4674,6 +4674,11 @@ public interface AgentBuilder {
         private static final byte[] NO_TRANSFORMATION = null;
 
         /**
+         * Indicates that a loaded type should be considered as non-available.
+         */
+        private static final Class<?> NO_LOADED_TYPE = null;
+
+        /**
          * The {@link net.bytebuddy.ByteBuddy} instance to be used.
          */
         private final ByteBuddy byteBuddy;
@@ -5251,10 +5256,10 @@ public interface AgentBuilder {
                         try {
                             TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
                             try {
-                                doConsider(descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool), type, module, collector, !instrumentation.isModifiableClass(type));
+                                doConsider(descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool), type, type, module, collector, !instrumentation.isModifiableClass(type));
                             } catch (Throwable throwable) {
                                 if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
-                                    doConsider(typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(), type, module, collector, false);
+                                    doConsider(typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(), type, NO_LOADED_TYPE, module, collector, false);
                                 } else {
                                     throw throwable;
                                 }
@@ -5282,14 +5287,20 @@ public interface AgentBuilder {
         /**
          * Does consider the retransformation or redefinition of a loaded type.
          *
-         * @param typeDescription The type description of the type being considered.
-         * @param type            The loaded type being considered.
-         * @param module          The type's Java module or {@code null} if the current VM does not support modules.
-         * @param collector       The collector to apply.
-         * @param unmodifiable    {@code true} if the current type should be considered unmodifiable.
+         * @param typeDescription     The type description of the type being considered.
+         * @param type                The loaded type being considered.
+         * @param classBeingRedefined The loaded type being considered or {@code null} if it should be considered non-available.
+         * @param module              The type's Java module or {@code null} if the current VM does not support modules.
+         * @param collector           The collector to apply.
+         * @param unmodifiable        {@code true} if the current type should be considered unmodifiable.
          */
-        private void doConsider(TypeDescription typeDescription, Class<?> type, JavaModule module, RedefinitionStrategy.Collector collector, boolean unmodifiable) {
-            if (unmodifiable || !collector.consider(typeDescription, type, ignoredTypeMatcher)) {
+        private void doConsider(TypeDescription typeDescription,
+                                Class<?> type,
+                                Class<?> classBeingRedefined,
+                                JavaModule module,
+                                RedefinitionStrategy.Collector collector,
+                                boolean unmodifiable) {
+            if (unmodifiable || !collector.consider(typeDescription, type, classBeingRedefined, ignoredTypeMatcher)) {
                 try {
                     try {
                         listener.onIgnored(typeDescription, type.getClassLoader(), module);
@@ -6301,11 +6312,6 @@ public interface AgentBuilder {
              * A factory for creating a {@link ClassFileTransformer} that supports the features of the current VM.
              */
             protected static final Factory FACTORY = AccessController.doPrivileged(FactoryCreationOption.INSTANCE);
-
-            /**
-             * Indicates that no loaded type representation is provided.
-             */
-            private static final Class<?> NO_LOADED_TYPE = null;
 
             /**
              * The Byte Buddy instance to be used.
