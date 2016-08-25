@@ -8464,6 +8464,8 @@ public interface TypePool {
      */
     class ClassLoading extends AbstractBase.Hierarchical {
 
+        private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
+
         /**
          * The class loader to query.
          */
@@ -8500,6 +8502,10 @@ public interface TypePool {
          */
         public static TypePool of(ClassLoader classLoader, TypePool parent) {
             return new ClassLoading(CacheProvider.NoOp.INSTANCE, parent, classLoader);
+        }
+
+        public static TypePool ofBootPath() {
+            return of(BOOTSTRAP_CLASS_LOADER);
         }
 
         /**
