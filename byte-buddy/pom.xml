@@ -122,6 +122,7 @@
                                     net.bytebuddy,
                                     net.bytebuddy.agent.builder,
                                     net.bytebuddy.asm,
+                                    net.bytebuddy.build,
                                     net.bytebuddy.description,
                                     net.bytebuddy.description.annotation,
                                     net.bytebuddy.description.enumeration,
