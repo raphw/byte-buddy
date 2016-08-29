@@ -21,5 +21,4 @@ public class AgentBuilderLocationStrategyNoOpTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.LocationStrategy.NoOp.class).apply();
     }
-
 }

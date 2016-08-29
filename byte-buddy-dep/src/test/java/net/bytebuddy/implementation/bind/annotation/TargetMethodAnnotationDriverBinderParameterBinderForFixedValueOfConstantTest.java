@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodDelegation;
 import org.junit.Test;

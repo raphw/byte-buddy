@@ -9,8 +9,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import static org.mockito.Mockito.mock;
-
 public class ParameterDescriptionForLoadedParameterDispatcherTest {
 
     private static final int FOO = 42;
