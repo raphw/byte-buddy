@@ -18,6 +18,11 @@ public class ByteBuddyLogHandler extends Handler {
     private final Log log;
 
     /**
+     * The Byte Buddy logger target.
+     */
+    private final Logger logger;
+
+    /**
      * {@code true} if parent handler delegation was originally enabled.
      */
     private final boolean useParentHandlers;
@@ -26,10 +31,12 @@ public class ByteBuddyLogHandler extends Handler {
      * Creates a new log handler.
      *
      * @param log               The Maven logging target.
+     * @param logger            The Byte Buddy logger target.
      * @param useParentHandlers {@code true} if parent handler delegation was originally enabled.
      */
-    protected ByteBuddyLogHandler(Log log, boolean useParentHandlers) {
+    protected ByteBuddyLogHandler(Log log, Logger logger, boolean useParentHandlers) {
         this.log = log;
+        this.logger = logger;
         this.useParentHandlers = useParentHandlers;
         setFormatter(new SimpleFormatter());
     }
@@ -42,7 +49,7 @@ public class ByteBuddyLogHandler extends Handler {
      */
     public static ByteBuddyLogHandler initialize(Log log) {
         Logger logger = Logger.getLogger("net.bytebuddy");
-        ByteBuddyLogHandler handler = new ByteBuddyLogHandler(log, logger.getUseParentHandlers());
+        ByteBuddyLogHandler handler = new ByteBuddyLogHandler(log, logger, logger.getUseParentHandlers());
         try {
             logger.setUseParentHandlers(false);
             logger.addHandler(handler);
@@ -56,7 +63,6 @@ public class ByteBuddyLogHandler extends Handler {
      * Resets the configuration to its original state.
      */
     public void reset() {
-        Logger logger = Logger.getLogger("net.bytebuddy");
         try {
             logger.setUseParentHandlers(useParentHandlers);
             logger.removeHandler(this);
@@ -87,12 +93,15 @@ public class ByteBuddyLogHandler extends Handler {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         ByteBuddyLogHandler that = (ByteBuddyLogHandler) object;
-        return useParentHandlers == that.useParentHandlers && log.equals(that.log);
+        return useParentHandlers == that.useParentHandlers
+                && logger.equals(that.logger)
+                && log.equals(that.log);
     }
 
     @Override
     public int hashCode() {
         int result = log.hashCode();
+        result = 31 * result + logger.hashCode();
         result = 31 * result + (useParentHandlers ? 1 : 0);
         return result;
     }
@@ -101,6 +110,7 @@ public class ByteBuddyLogHandler extends Handler {
     public String toString() {
         return "ByteBuddyLogHandler{" +
                 "log=" + log +
+                " ,logger=" + logger +
                 " ,useParentHandlers=" + useParentHandlers +
                 '}';
     }

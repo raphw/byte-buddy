@@ -10,6 +10,7 @@ import org.mockito.Mock;
 
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import static org.mockito.Mockito.*;
 
@@ -25,7 +26,7 @@ public class ByteBuddyLogHandlerTest {
 
     @Test
     public void testLogPublishNoDebug() throws Exception {
-        ByteBuddyLogHandler byteBuddyLogHandler = new ByteBuddyLogHandler(log, false);
+        ByteBuddyLogHandler byteBuddyLogHandler = new ByteBuddyLogHandler(log, mock(Logger.class), false);
         LogRecord logRecord = new LogRecord(Level.INFO, FOO);
         byteBuddyLogHandler.publish(logRecord);
         verify(log).isDebugEnabled();
@@ -34,7 +35,7 @@ public class ByteBuddyLogHandlerTest {
 
     @Test
     public void testLogPublishDebug() throws Exception {
-        ByteBuddyLogHandler byteBuddyLogHandler = new ByteBuddyLogHandler(log, false);
+        ByteBuddyLogHandler byteBuddyLogHandler = new ByteBuddyLogHandler(log, mock(Logger.class), false);
         LogRecord logRecord = new LogRecord(Level.INFO, FOO);
         when(log.isDebugEnabled()).thenReturn(true);
         byteBuddyLogHandler.publish(logRecord);
@@ -45,12 +46,12 @@ public class ByteBuddyLogHandlerTest {
 
     @Test
     public void testFlush() throws Exception {
-        new ByteBuddyLogHandler(log, false).flush();
+        new ByteBuddyLogHandler(log, mock(Logger.class), false).flush();
     }
 
     @Test
     public void testClose() throws Exception {
-        new ByteBuddyLogHandler(log, false).close();
+        new ByteBuddyLogHandler(log, mock(Logger.class), false).close();
     }
 
     @Test

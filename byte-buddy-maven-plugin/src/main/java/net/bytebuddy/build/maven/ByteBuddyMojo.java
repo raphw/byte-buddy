@@ -1,5 +1,6 @@
 package net.bytebuddy.build.maven;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
@@ -171,6 +172,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @throws MojoFailureException   If the plugin application raises an error.
      * @throws IOException            If an I/O exception occurs.
      */
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Applies Maven exception wrapper")
     private void processOutputDirectory(File root, List<? extends String> classPath) throws MojoExecutionException, MojoFailureException, IOException {
         if (!root.isDirectory()) {
             throw new MojoExecutionException("Target location does not exist or is no directory: " + root);

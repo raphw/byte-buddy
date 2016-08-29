@@ -1,13 +1,10 @@
 package net.bytebuddy.build.maven;
 
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.eclipse.aether.artifact.Artifact;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.*;
 
 public class TransformationTest {
 

@@ -1,10 +1,12 @@
 package net.bytebuddy.build.maven;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /**
  * A transformation specification to apply during the plugin's execution.
  */
+@SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Written to by Maven")
 public class Transformation extends AbstractUserConfiguration {
 
     /**

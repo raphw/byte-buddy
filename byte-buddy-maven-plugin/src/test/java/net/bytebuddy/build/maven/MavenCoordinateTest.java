@@ -4,8 +4,8 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.eclipse.aether.artifact.Artifact;
 import org.junit.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MavenCoordinateTest {
 

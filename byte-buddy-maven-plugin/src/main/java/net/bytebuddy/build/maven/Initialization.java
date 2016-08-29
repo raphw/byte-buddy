@@ -1,11 +1,13 @@
 package net.bytebuddy.build.maven;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.build.EntryPoint;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /**
  * Defines a configuration for a Maven build's type transformation.
  */
+@SuppressFBWarnings(value = "UWF_UNWRITTEN_PUBLIC_OR_PROTECTED_FIELD", justification = "Written to by Maven")
 public class Initialization extends AbstractUserConfiguration {
 
     /**
@@ -34,6 +36,7 @@ public class Initialization extends AbstractUserConfiguration {
      * @return The resolved entry point.
      * @throws MojoExecutionException If the entry point cannot be created.
      */
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Applies Maven exception wrapper")
     public EntryPoint getEntryPoint(ClassLoaderResolver classLoaderResolver, String groupId, String artifactId, String version) throws MojoExecutionException {
         if (entryPoint == null || entryPoint.isEmpty()) {
             throw new MojoExecutionException("Entry point name is not defined");
