@@ -3290,7 +3290,9 @@ public interface TypeWriter<T> {
                         implementationContext.prohibitTypeInitializer();
                     }
                     super.visit(classFileVersionNumber,
-                            instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),
+                            instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface())
+                                    // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
+                                    | (((modifiers & Opcodes.ACC_FINAL) != 0 && instrumentedType.isAnonymousClass()) ? Opcodes.ACC_FINAL : 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
                             instrumentedType.getSuperClass() == null

@@ -7013,12 +7013,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             } else {
                 actualModifiers = actualModifiers & ~Opcodes.ACC_STATIC;
             }
-            if (isAnonymousClass()) {
-                MethodDescription enclosingMethod = getEnclosingMethod();
-                if (enclosingMethod == null || enclosingMethod.isStatic()) {
-                    actualModifiers |= Opcodes.ACC_FINAL;
-                }
-            }
             return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
         }
 
