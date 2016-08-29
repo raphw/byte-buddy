@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 28. August 2016: version 1.4.21
+
+- Fixed modifier resolution for anonymous classes to preserve a shadowed `final` modifier.
+- Added Byte Buddy plugin for Maven.
+
 ### 21. August 2016: version 1.4.20
 
 - Fixed stack size adjustment for accessing double-sized primitive access array elements.
