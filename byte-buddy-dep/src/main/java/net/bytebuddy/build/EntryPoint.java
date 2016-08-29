@@ -1,5 +1,6 @@
 package net.bytebuddy.build;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -39,6 +40,7 @@ public interface EntryPoint {
     /**
      * Default implementations for an entry point.
      */
+    @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "An enumeration does not serialize fields")
     enum Default implements EntryPoint {
 
         /**
