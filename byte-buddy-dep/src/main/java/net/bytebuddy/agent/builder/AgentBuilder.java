@@ -4,6 +4,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.build.EntryPoint;
+import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -1441,6 +1443,54 @@ public interface AgentBuilder {
                 return "AgentBuilder.TypeStrategy.Default." + name();
             }
         }
+
+        /**
+         * A type strategy that applies a build {@link EntryPoint}.
+         */
+        class ForBuildEntryPoint implements TypeStrategy {
+
+            /**
+             * The entry point to apply.
+             */
+            private final EntryPoint entryPoint;
+
+            /**
+             * Creates a new type strategy for an entry point.
+             *
+             * @param entryPoint The entry point to apply.
+             */
+            public ForBuildEntryPoint(EntryPoint entryPoint) {
+                this.entryPoint = entryPoint;
+            }
+
+            @Override
+            public DynamicType.Builder<?> builder(TypeDescription typeDescription,
+                                                  ByteBuddy byteBuddy,
+                                                  ClassFileLocator classFileLocator,
+                                                  MethodNameTransformer methodNameTransformer) {
+                return entryPoint.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForBuildEntryPoint that = (ForBuildEntryPoint) object;
+                return entryPoint.equals(that.entryPoint);
+            }
+
+            @Override
+            public int hashCode() {
+                return entryPoint.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.TypeStrategy.ForBuildEntryPoint{" +
+                        "entryPoint=" + entryPoint +
+                        '}';
+            }
+        }
     }
 
     /**
@@ -1479,6 +1529,51 @@ public interface AgentBuilder {
             @Override
             public String toString() {
                 return "AgentBuilder.Transformer.NoOp." + name();
+            }
+        }
+
+        /**
+         * A transformer that applies a build {@link Plugin}.
+         */
+        class ForBuildPlugin implements Transformer {
+
+            /**
+             * The plugin to apply.
+             */
+            private final Plugin plugin;
+
+            /**
+             * Creates a new transformer for a build {@link Plugin}.
+             *
+             * @param plugin The plugin to apply.
+             */
+            public ForBuildPlugin(Plugin plugin) {
+                this.plugin = plugin;
+            }
+
+            @Override
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+                return plugin.apply(builder, typeDescription);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForBuildPlugin that = (ForBuildPlugin) object;
+                return plugin.equals(that.plugin);
+            }
+
+            @Override
+            public int hashCode() {
+                return plugin.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Transformer.ForBuildPlugin{" +
+                        "plugin=" + plugin +
+                        '}';
             }
         }
 
@@ -4840,6 +4935,52 @@ public interface AgentBuilder {
             this.fallbackStrategy = fallbackStrategy;
             this.ignoredTypeMatcher = ignoredTypeMatcher;
             this.transformation = transformation;
+        }
+
+        /**
+         * Creates an {@link AgentBuilder} that realizes the provided build plugins. As {@link EntryPoint}, {@link EntryPoint.Default#REBASE} is implied.
+         *
+         * @param plugin The build plugins to apply as a Java agent.
+         * @return An appropriate agent builder.
+         */
+        public static AgentBuilder of(Plugin... plugin) {
+            return of(Arrays.asList(plugin));
+        }
+
+        /**
+         * Creates an {@link AgentBuilder} that realizes the provided build plugins. As {@link EntryPoint}, {@link EntryPoint.Default#REBASE} is implied.
+         *
+         * @param plugins The build plugins to apply as a Java agent.
+         * @return An appropriate agent builder.
+         */
+        public static AgentBuilder of(List<? extends Plugin> plugins) {
+            return of(EntryPoint.Default.REBASE, plugins);
+        }
+
+        /**
+         * Creates an {@link AgentBuilder} that realizes the provided build plugins.
+         *
+         * @param entryPoint The build entry point to use.
+         * @param plugin     The build plugins to apply as a Java agent.
+         * @return An appropriate agent builder.
+         */
+        public static AgentBuilder of(EntryPoint entryPoint, Plugin... plugin) {
+            return of(entryPoint, Arrays.asList(plugin));
+        }
+
+        /**
+         * Creates an {@link AgentBuilder} that realizes the provided build plugins.
+         *
+         * @param entryPoint The build entry point to use.
+         * @param plugins    The build plugins to apply as a Java agent.
+         * @return An appropriate agent builder.
+         */
+        public static AgentBuilder of(EntryPoint entryPoint, List<? extends Plugin> plugins) {
+            AgentBuilder agentBuilder = new AgentBuilder.Default(entryPoint.getByteBuddy()).with(new TypeStrategy.ForBuildEntryPoint(entryPoint));
+            for (Plugin plugin : plugins) {
+                agentBuilder = agentBuilder.type(plugin).transform(new Transformer.ForBuildPlugin(plugin));
+            }
+            return agentBuilder;
         }
 
         @Override

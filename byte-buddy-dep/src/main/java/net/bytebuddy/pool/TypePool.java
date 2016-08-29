@@ -8464,6 +8464,9 @@ public interface TypePool {
      */
     class ClassLoading extends AbstractBase.Hierarchical {
 
+        /**
+         * Type-safe representation of the bootstrap class loader which is {@code null}.
+         */
         private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
         /**
@@ -8504,6 +8507,11 @@ public interface TypePool {
             return new ClassLoading(CacheProvider.NoOp.INSTANCE, parent, classLoader);
         }
 
+        /**
+         * Returns a type pool that attempts type descriptions by loadings types from the bootstrap class loader.
+         *
+         * @return An class loading type pool for the bootstrap class loader.
+         */
         public static TypePool ofBootPath() {
             return of(BOOTSTRAP_CLASS_LOADER);
         }
@@ -8511,7 +8519,7 @@ public interface TypePool {
         /**
          * Returns a type pool that attempts type descriptions by loadings types from the system class loader.
          *
-         * @return An class loading type pool.
+         * @return An class loading type pool for the system class loader.
          */
         public static TypePool ofClassPath() {
             return of(ClassLoader.getSystemClassLoader());

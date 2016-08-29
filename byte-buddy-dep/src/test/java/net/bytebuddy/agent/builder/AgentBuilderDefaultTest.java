@@ -1,6 +1,8 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.build.EntryPoint;
+import net.bytebuddy.build.Plugin;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -1296,6 +1298,27 @@ public class AgentBuilderDefaultTest {
                 .with(Implementation.Context.Disabled.Factory.INSTANCE))
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE_DECLARED_ONLY)));
+    }
+
+    @Test
+    public void testBuildPlugin() throws Exception {
+        Plugin plugin = mock(Plugin.class);
+        assertThat(AgentBuilder.Default.of(plugin), is((AgentBuilder) new AgentBuilder.Default()
+                .with(new AgentBuilder.TypeStrategy.ForBuildEntryPoint(EntryPoint.Default.REBASE))
+                .type(plugin)
+                .transform(new AgentBuilder.Transformer.ForBuildPlugin(plugin))));
+    }
+
+    @Test
+    public void testBuildPluginWithEntryPoint() throws Exception {
+        Plugin plugin = mock(Plugin.class);
+        EntryPoint entryPoint = mock(EntryPoint.class);
+        ByteBuddy byteBuddy = mock(ByteBuddy.class);
+        when(entryPoint.getByteBuddy()).thenReturn(byteBuddy);
+        assertThat(AgentBuilder.Default.of(entryPoint, plugin), is((AgentBuilder) new AgentBuilder.Default(byteBuddy)
+                .with(new AgentBuilder.TypeStrategy.ForBuildEntryPoint(entryPoint))
+                .type(plugin)
+                .transform(new AgentBuilder.Transformer.ForBuildPlugin(plugin))));
     }
 
     @Test
