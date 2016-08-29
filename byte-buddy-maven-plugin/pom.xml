@@ -72,12 +72,6 @@
             <version>${version.maven.test}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.aether</groupId>
-            <artifactId>aether-test-util</artifactId>
-            <version>${version.maven.aether}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
 </project>
