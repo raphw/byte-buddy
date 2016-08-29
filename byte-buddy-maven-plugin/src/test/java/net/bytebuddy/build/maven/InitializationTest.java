@@ -13,8 +13,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -91,6 +90,15 @@ public class InitializationTest {
     @Test(expected = MojoExecutionException.class)
     public void testNull() throws Exception {
         new Initialization().getEntryPoint(classLoaderResolver, BAR, QUX, BAZ);
+    }
+
+    @Test
+    public void testDefault() throws Exception {
+        Initialization initialization = Initialization.makeDefault();
+        assertThat(initialization.entryPoint, is(EntryPoint.Default.REBASE.name()));
+        assertThat(initialization.groupId, nullValue(String.class));
+        assertThat(initialization.artifactId, nullValue(String.class));
+        assertThat(initialization.version, nullValue(String.class));
     }
 
     @Test

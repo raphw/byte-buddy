@@ -19,7 +19,7 @@
                 <configuration>
                     <transformations>
                         <transformation>
-                            <plugin>net.bytebuddy.test.SimplePlugin</plugin>
+                            <plugin>net.bytebuddy.test.IllegalPlugin</plugin>
                         </transformation>
                     </transformations>
                 </configuration>

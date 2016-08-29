@@ -17,6 +17,9 @@
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
                 <configuration>
+                    <initialization>
+                        <entryPoint>net.bytebuddy.test.SimpleEntryPoint</entryPoint>
+                    </initialization>
                     <transformations>
                         <transformation>
                             <plugin>net.bytebuddy.test.SimplePlugin</plugin>

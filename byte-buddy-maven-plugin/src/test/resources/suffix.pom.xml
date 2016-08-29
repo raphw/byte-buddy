@@ -17,6 +17,7 @@
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
                 <configuration>
+                    <suffix>qux</suffix>
                     <transformations>
                         <transformation>
                             <plugin>net.bytebuddy.test.SimplePlugin</plugin>

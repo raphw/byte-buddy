@@ -9,7 +9,6 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.utility.CompoundList;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -230,9 +229,15 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                     TypePool.Default.ReaderMode.FAST,
                     TypePool.ClassLoading.ofBootPath());
             getLog().info("Processing class files located in in: " + root);
+            ByteBuddy byteBuddy;
+            try {
+                byteBuddy = entryPoint.getByteBuddy();
+            } catch (Throwable throwable) {
+                throw new MojoExecutionException("Cannot create Byte Buddy instance", throwable);
+            }
             processDirectory(root,
                     root,
-                    entryPoint.getByteBuddy(),
+                    byteBuddy,
                     entryPoint,
                     suffix == null || suffix.isEmpty()
                             ? MethodNameTransformer.Suffixing.withRandomSuffix()
@@ -257,6 +262,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param typePool              The type pool to query for type descriptions.
      * @param plugins               The plugins to apply.
      * @throws MojoExecutionException If the user configuration results in an error.
+     * @throws MojoFailureException   If the plugin application raises an error.
      */
     private void processDirectory(File root,
                                   File folder,
@@ -265,7 +271,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                   MethodNameTransformer methodNameTransformer,
                                   ClassFileLocator classFileLocator,
                                   TypePool typePool,
-                                  List<Plugin> plugins) throws MojoExecutionException {
+                                  List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
         File[] file = folder.listFiles();
         if (file != null) {
             for (File aFile : file) {
@@ -299,6 +305,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
      * @param typePool              The type pool to query for type descriptions.
      * @param plugins               The plugins to apply.
      * @throws MojoExecutionException If the user configuration results in an error.
+     * @throws MojoFailureException   If the plugin application raises an error.
      */
     private void processClassFile(File root,
                                   String file,
@@ -307,20 +314,25 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                   MethodNameTransformer methodNameTransformer,
                                   ClassFileLocator classFileLocator,
                                   TypePool typePool,
-                                  List<Plugin> plugins) throws MojoExecutionException {
+                                  List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
         String typeName = file.replace('/', '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
         getLog().debug("Processing class file: " + typeName);
         TypeDescription typeDescription = typePool.describe(typeName).resolve();
-        DynamicType.Builder<?> builder = entryPoint.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
+        DynamicType.Builder<?> builder;
+        try {
+            builder = entryPoint.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
+        } catch (Throwable throwable) {
+            throw new MojoExecutionException("Cannot transform type: " + typeName, throwable);
+        }
         boolean transformed = false;
-        for (net.bytebuddy.build.Plugin plugin : plugins) {
-            if (plugin.matches(typeDescription)) {
-                try {
+        for (Plugin plugin : plugins) {
+            try {
+                if (plugin.matches(typeDescription)) {
                     builder = plugin.apply(builder, typeDescription);
-                } catch (Throwable throwable) {
-                    throw new MojoExecutionException("Cannot apply " + plugin + " on " + typeName, throwable);
+                    transformed = true;
                 }
-                transformed = true;
+            } catch (Throwable throwable) {
+                throw new MojoExecutionException("Cannot apply " + plugin + " on " + typeName, throwable);
             }
         }
         if (transformed) {
@@ -334,7 +346,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
             try {
                 dynamicType.saveIn(root);
             } catch (IOException exception) {
-                throw new MojoExecutionException("Cannot save " + typeName, exception);
+                throw new MojoFailureException("Cannot save " + typeName + " in " + root, exception);
             }
         } else {
             getLog().debug("Skipping non-transformed type: " + typeName);
@@ -389,12 +401,6 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         protected String testOutputDirectory;
 
         /**
-         * The production class path.
-         */
-        @Parameter(defaultValue = "${project.compileClasspathElements}", required = true, readonly = true)
-        protected List<String> compileClasspathElements;
-
-        /**
          * The test class path.
          */
         @Parameter(defaultValue = "${project.testClasspathElements}", required = true, readonly = true)
@@ -407,7 +413,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
 
         @Override
         protected List<String> getClassPathElements() {
-            return CompoundList.of(compileClasspathElements, testClasspathElements);
+            return testClasspathElements;
         }
     }
 }

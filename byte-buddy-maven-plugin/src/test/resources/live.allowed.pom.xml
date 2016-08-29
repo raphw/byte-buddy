@@ -17,9 +17,10 @@
                 <groupId>net.bytebuddy</groupId>
                 <artifactId>byte-buddy-maven-plugin</artifactId>
                 <configuration>
+                    <failOnLiveInitializer>false</failOnLiveInitializer>
                     <transformations>
                         <transformation>
-                            <plugin>net.bytebuddy.test.SimplePlugin</plugin>
+                            <plugin>net.bytebuddy.test.LiveInitializerPlugin</plugin>
                         </transformation>
                     </transformations>
                 </configuration>
