@@ -16,7 +16,8 @@
     <description>A plugin for post-processing class files via Byte Buddy.</description>
 
     <properties>
-        <version.maven>3.3.9</version.maven>
+        <!-- Newer Maven versions required Java 1.7 -->
+        <version.maven>3.2.5</version.maven>
         <version.maven.annotation>3.4</version.maven.annotation>
         <version.maven.aether>1.1.0</version.maven.aether>
         <version.maven.test>3.3.0</version.maven.test>

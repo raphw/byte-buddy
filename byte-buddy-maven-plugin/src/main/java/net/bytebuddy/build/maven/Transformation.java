@@ -26,5 +26,4 @@ public class Transformation extends AbstractUserConfiguration {
         }
         return plugin;
     }
-
 }
