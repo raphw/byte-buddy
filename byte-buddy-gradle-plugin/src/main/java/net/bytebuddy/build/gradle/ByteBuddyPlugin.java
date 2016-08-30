@@ -21,9 +21,7 @@ public class ByteBuddyPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getExtensions().add("byteBuddy", ByteBuddyExtension.class);
-        project.getExtensions().add("transformation", Transformation.class);
-        project.getExtensions().add("initialization", Initialization.class);
+        project.getExtensions().create("byteBuddy", ByteBuddyExtension.class, project);
         project.getTasks().create("transform", TransformTask.ForProductionTypes.class);
         project.getTasks().create("test-transform", TransformTask.ForTestTypes.class);
     }

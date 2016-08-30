@@ -188,7 +188,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                             .newInstance());
                     getLog().info("Created plugin: " + plugin);
                 } catch (Exception exception) {
-                    throw new MojoExecutionException("Cannot create plugin: " + transformation, exception);
+                    throw new MojoExecutionException("Cannot create plugin: " + transformation.getRawPlugin(), exception);
                 }
             }
             EntryPoint entryPoint = (initialization == null

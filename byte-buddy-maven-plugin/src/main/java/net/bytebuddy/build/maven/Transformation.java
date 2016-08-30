@@ -26,4 +26,13 @@ public class Transformation extends AbstractUserConfiguration {
         }
         return plugin;
     }
+
+    /**
+     * Returns the plugin name or null if not set.
+     *
+     * @return The configured plugin name.
+     */
+    public String getRawPlugin() {
+        return plugin;
+    }
 }

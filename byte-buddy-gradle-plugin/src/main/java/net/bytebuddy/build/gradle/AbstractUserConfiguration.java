@@ -2,26 +2,26 @@ package net.bytebuddy.build.gradle;
 
 public class AbstractUserConfiguration {
 
-    private String groupId;
+    private String group;
 
-    private String artifactId;
+    private String name;
 
     private String version;
 
-    public String getGroupId() {
-        return groupId;
+    public String getGroup() {
+        return group;
     }
 
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
+    public void setGroup(String group) {
+        this.group = group;
     }
 
-    public String getArtifactId() {
-        return artifactId;
+    public String getName() {
+        return name;
     }
 
-    public void setArtifactId(String artifactId) {
-        this.artifactId = artifactId;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getVersion() {

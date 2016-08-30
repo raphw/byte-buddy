@@ -61,9 +61,7 @@ public abstract class TransformTask extends DefaultTask {
                     throw new GradleException("Cannot create plugin: " + transformation, exception);
                 }
             }
-            EntryPoint entryPoint = (byteBuddyExtension.getInitialization() == null
-                    ? Initialization.makeDefault()
-                    : byteBuddyExtension.getInitialization()).toEntryPoint(classLoaderResolver);
+            EntryPoint entryPoint = byteBuddyExtension.getInitialization().toEntryPoint(classLoaderResolver);
             getLogger().info("Resolved entry point: {}", entryPoint);
             transform(root, entryPoint, classPath, plugins);
         } finally {

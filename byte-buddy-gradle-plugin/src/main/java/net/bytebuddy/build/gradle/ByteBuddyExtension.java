@@ -1,8 +1,15 @@
 package net.bytebuddy.build.gradle;
 
+import groovy.lang.Closure;
+import org.gradle.api.GradleException;
+import org.gradle.api.Project;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class ByteBuddyExtension {
+
+    private final Project project;
 
     private List<Transformation> transformations;
 
@@ -12,20 +19,35 @@ public class ByteBuddyExtension {
 
     private boolean failOnLiveInitializer;
 
-    public ByteBuddyExtension() {
+    public ByteBuddyExtension(Project project) {
+        this.project = project;
+        transformations = new ArrayList<Transformation>();
         failOnLiveInitializer = true;
+    }
+
+    public Transformation transformation(Closure<?> closure) {
+        Transformation transformation = (Transformation) project.configure(new Transformation(), closure);
+        transformations.add(transformation);
+        return transformation;
+    }
+
+    public Initialization initialization(Closure<?> closure) {
+        if (initialization != null) {
+            throw new GradleException("Initialization is already set");
+        }
+        Initialization initialization = (Initialization) project.configure(new Initialization(), closure);
+        this.initialization = initialization;
+        return initialization;
     }
 
     public List<Transformation> getTransformations() {
         return transformations;
     }
 
-    public void setTransformations(List<Transformation> transformations) {
-        this.transformations = transformations;
-    }
-
     public Initialization getInitialization() {
-        return initialization;
+        return initialization == null
+                ? Initialization.makeDefault()
+                : initialization;
     }
 
     public void setInitialization(Initialization initialization) {
