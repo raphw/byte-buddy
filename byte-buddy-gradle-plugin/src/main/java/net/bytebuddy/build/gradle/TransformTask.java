@@ -11,13 +11,12 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.pool.TypePool;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class TransformTask extends DefaultTask {
 
@@ -35,7 +34,7 @@ public abstract class TransformTask extends DefaultTask {
     @TaskAction
     public void doExecute() {
         try {
-            processOutputDirectory(resolve(new File(getProject().getBuildDir(), "classes")), null); // TODO: Dependencies
+            processOutputDirectory(resolve(new File(getProject().getBuildDir(), "classes")), getClassPath());
         } catch (IOException exception) {
             throw new GradleException("Error during writing process", exception);
         }
@@ -43,17 +42,19 @@ public abstract class TransformTask extends DefaultTask {
 
     protected abstract File resolve(File target);
 
-    private void processOutputDirectory(File root, List<String> classPath) throws IOException {
+    protected abstract Iterable<File> getClassPath();
+
+    private void processOutputDirectory(File root, Iterable<File> classPath) throws IOException {
         if (!root.isDirectory()) {
             throw new GradleException("Target location does not exist or is no directory: " + root);
         }
-        ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(); // TODO: Expose repositories.
+        ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getProject());
         try {
             List<Plugin> plugins = new ArrayList<Plugin>(byteBuddyExtension.getTransformations().size());
             for (Transformation transformation : byteBuddyExtension.getTransformations()) {
                 try {
                     String plugin = transformation.getPlugin();
-                    plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation))
+                    plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation.asCoordinate(getProject())))
                             .getDeclaredConstructor()
                             .newInstance());
                     getLogger().info("Created plugin: {}", plugin);
@@ -69,11 +70,10 @@ public abstract class TransformTask extends DefaultTask {
         }
     }
 
-    private void transform(File root, EntryPoint entryPoint, List<? extends String> classPath, List<Plugin> plugins) throws IOException {
-        List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>(classPath.size() + 1);
+    private void transform(File root, EntryPoint entryPoint, Iterable<File> classPath, List<Plugin> plugins) throws IOException {
+        List<ClassFileLocator> classFileLocators = new ArrayList<ClassFileLocator>();
         classFileLocators.add(new ClassFileLocator.ForFolder(root));
-        for (String target : classPath) {
-            File artifact = new File(target);
+        for (File artifact : classPath) {
             classFileLocators.add(artifact.isFile()
                     ? ClassFileLocator.ForJarFile.of(artifact)
                     : new ClassFileLocator.ForFolder(artifact));
@@ -191,6 +191,11 @@ public abstract class TransformTask extends DefaultTask {
         protected File resolve(File target) {
             return new File(target, "main");
         }
+
+        @Override
+        protected Iterable<File> getClassPath() {
+            return getProject().getConfigurations().getByName("compile");
+        }
     }
 
     public static class ForTestTypes extends TransformTask {
@@ -202,6 +207,12 @@ public abstract class TransformTask extends DefaultTask {
         @Override
         protected File resolve(File target) {
             return new File(target, "test");
+        }
+
+        @Override
+        protected Iterable<File> getClassPath() {
+            // TODO: Check if contains non-test classes!
+            return getProject().getConfigurations().getByName("testCompile");
         }
     }
 }

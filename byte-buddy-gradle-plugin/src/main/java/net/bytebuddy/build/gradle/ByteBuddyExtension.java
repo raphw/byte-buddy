@@ -26,7 +26,7 @@ public class ByteBuddyExtension {
     }
 
     public Transformation transformation(Closure<?> closure) {
-        Transformation transformation = (Transformation) project.configure(new Transformation(), closure);
+        Transformation transformation = (Transformation) project.configure(new Transformation(project), closure);
         transformations.add(transformation);
         return transformation;
     }
@@ -35,7 +35,7 @@ public class ByteBuddyExtension {
         if (initialization != null) {
             throw new GradleException("Initialization is already set");
         }
-        Initialization initialization = (Initialization) project.configure(new Initialization(), closure);
+        Initialization initialization = (Initialization) project.configure(new Initialization(project), closure);
         this.initialization = initialization;
         return initialization;
     }
@@ -46,7 +46,7 @@ public class ByteBuddyExtension {
 
     public Initialization getInitialization() {
         return initialization == null
-                ? Initialization.makeDefault()
+                ? Initialization.makeDefault(project)
                 : initialization;
     }
 

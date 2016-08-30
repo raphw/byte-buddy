@@ -2,6 +2,7 @@ package net.bytebuddy.build.gradle;
 
 import net.bytebuddy.build.EntryPoint;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.gradle.api.Project;
 
 /**
  * Defines a configuration for a Maven build's type transformation.
@@ -10,8 +11,12 @@ public class Initialization extends AbstractUserConfiguration {
 
     private String entryPoint;
 
-    public static Initialization makeDefault() {
-        Initialization initialization = new Initialization();
+    public Initialization(Project project) {
+        super(project);
+    }
+
+    public static Initialization makeDefault(Project project) {
+        Initialization initialization = new Initialization(project);
         initialization.setEntryPoint(EntryPoint.Default.REBASE.name());
         return initialization;
     }
