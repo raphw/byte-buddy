@@ -1,0 +1,25 @@
+apply plugin: 'java'
+
+def pom = new XmlSlurper().parse(file('./pom.xml'))
+
+group = pom.parent.groupId
+version = pom.parent.version
+
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    compile group: group, name: 'byte-buddy', version: version
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}

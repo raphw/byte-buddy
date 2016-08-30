@@ -16,8 +16,9 @@ log/
 target/
 site/
 
-# jRebel
-rebel.xml
+# Gradle
+byte-buddy-gradle-plugin/build/
+.gradle/
 
 # Shade plugin
 dependency-reduced-pom.xml

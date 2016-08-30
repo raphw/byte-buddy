@@ -11,7 +11,7 @@
     <packaging>maven-plugin</packaging>
 
     <name>Byte Buddy (Maven plugin)</name>
-    <description>A plugin for post-processing class files via Byte Buddy.</description>
+    <description>A plugin for post-processing class files via Byte Buddy in a Maven build.</description>
 
     <properties>
         <!-- Newer Maven versions require Java 1.7. -->

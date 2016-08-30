@@ -43,6 +43,7 @@
         <module>byte-buddy-agent</module>
         <module>byte-buddy-android</module>
         <module>byte-buddy-maven-plugin</module>
+        <module>byte-buddy-gradle-plugin</module>
     </modules>
 
     <properties>
