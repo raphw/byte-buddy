@@ -74,6 +74,11 @@ public class TransformationAction implements Action<Task> {
         }
     }
 
+    /**
+     * Verifies that the current task is not applying incremental compilation.
+     *
+     * @param task The currently executed task.
+     */
     private void verifyCompilationNotIncremental(Task task) {
         if (task instanceof JavaCompile) {
             JavaCompile javaCompileTask = (JavaCompile) task;

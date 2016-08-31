@@ -90,6 +90,7 @@ public class ByteBuddyPluginTest {
     }
 
     @Test
+    @IntegrationRule.Enforce
     public void testIncrementalCompilationFails() throws IOException {
         createSampleBuildFiles();
         append("compileJava.options.incremental = true", new File(temporaryFolder.getRoot(), "build.gradle"));
@@ -129,13 +130,6 @@ public class ByteBuddyPluginTest {
                 "        System.out.println(\"foo=\" + new Sample().foo());\n" +
                 "    }\n" +
                 "}\n", new File(temporaryFolder.newFolder("src", "main", "java", "net", "bytebuddy", "test"), "Sample.java"));
-        BuildResult result = GradleRunner.create()
-                .withPluginClasspath()
-                .withProjectDir(temporaryFolder.getRoot()).withArguments("-s", "run")
-                .forwardOutput()
-                .build();
-        assertThat(result.task(":classes").getOutcome(), is(TaskOutcome.SUCCESS));
-        assertThat(result.getOutput(), containsString("foo=qux"));
     }
 
     private static void store(String source, File target) throws IOException {
