@@ -19,7 +19,7 @@ import static org.hamcrest.core.Is.is;
 
 public class ByteBuddyPluginTest {
 
-    private static final String BYTE_BUDDY_VERSION = System.getProperty("net.bytebuddy.test.version", "1.4.22-SNAPSHOT"); // TODO: Remove snapshot!
+    private static final String BYTE_BUDDY_VERSION = System.getProperty("net.bytebuddy.test.version", "1.4.22");
 
     @ClassRule
     public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
