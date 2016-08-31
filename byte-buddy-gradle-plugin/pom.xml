@@ -83,6 +83,9 @@
                                 <task>build</task>
                                 <task>javadocJar</task>
                             </tasks>
+                            <jvmArgs>
+                                <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
+                            </jvmArgs>
                         </configuration>
                     </execution>
                 </executions>

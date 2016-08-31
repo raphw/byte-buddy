@@ -61,10 +61,13 @@ public class TransformationAction implements Action<Task> {
 
     @Override
     public void execute(Task task) {
+        ByteBuddyLogHandler byteBuddyLogHandler = ByteBuddyLogHandler.initialize(project);
         try {
             processOutputDirectory(this.task.getDestinationDir(), this.task.getClasspath());
         } catch (IOException exception) {
             throw new GradleException("Error accessing file system", exception);
+        } finally {
+            byteBuddyLogHandler.reset();
         }
     }
 
@@ -83,17 +86,20 @@ public class TransformationAction implements Action<Task> {
         try {
             List<Plugin> plugins = new ArrayList<Plugin>(byteBuddyExtension.getTransformations().size());
             for (Transformation transformation : byteBuddyExtension.getTransformations()) {
+                String plugin = transformation.getPlugin();
                 try {
-                    String plugin = transformation.getPlugin();
                     plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation.getClassPath(root, classPath)))
                             .getDeclaredConstructor()
                             .newInstance());
                     project.getLogger().info("Created plugin: {}", plugin);
                 } catch (Exception exception) {
+                    if (exception instanceof GradleException) {
+                        throw (GradleException) exception;
+                    }
                     throw new GradleException("Cannot create plugin: " + transformation.getRawPlugin(), exception);
                 }
             }
-            EntryPoint entryPoint = byteBuddyExtension.getInitialization().toEntryPoint(classLoaderResolver, root, classPath);
+            EntryPoint entryPoint = byteBuddyExtension.getInitialization().getEntryPoint(classLoaderResolver, root, classPath);
             project.getLogger().info("Resolved entry point: {}", entryPoint);
             transform(root, classPath, entryPoint, plugins);
         } finally {

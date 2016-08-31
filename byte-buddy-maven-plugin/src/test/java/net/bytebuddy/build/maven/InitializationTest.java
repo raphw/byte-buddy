@@ -47,7 +47,7 @@ public class InitializationTest {
     }
 
     @Test
-    public void testRedefined() throws Exception {
+    public void testRedefine() throws Exception {
         Initialization initalization = new Initialization();
         initalization.entryPoint = EntryPoint.Default.REDEFINE.name();
         assertThat(initalization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ), is((EntryPoint) EntryPoint.Default.REDEFINE));
@@ -55,7 +55,7 @@ public class InitializationTest {
     }
 
     @Test
-    public void testRedefinedLocal() throws Exception {
+    public void testRedefineLocal() throws Exception {
         Initialization initalization = new Initialization();
         initalization.entryPoint = EntryPoint.Default.REDEFINE_LOCAL.name();
         assertThat(initalization.getEntryPoint(classLoaderResolver, BAR, QUX, BAZ), is((EntryPoint) EntryPoint.Default.REDEFINE_LOCAL));

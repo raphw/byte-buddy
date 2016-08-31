@@ -1,23 +1,25 @@
 package net.bytebuddy.build.gradle;
 
+import net.bytebuddy.test.utility.IntegrationRule;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.TaskOutcome;
-import org.hamcrest.CoreMatchers;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.*;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 public class ByteBuddyPluginTest {
 
-    private static final String BYTE_BUDDY_VERSION = System.getProperty("net.bytebuddy.test.version", "1.4.22-SNAPSHOT"); // TODO
+    private static final String BYTE_BUDDY_VERSION = System.getProperty("net.bytebuddy.test.version", "1.4.22-SNAPSHOT"); // TODO: Remove snapshot!
 
     @ClassRule
     public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
@@ -25,14 +27,17 @@ public class ByteBuddyPluginTest {
     private static File pluginJar;
 
     @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+    @Rule
+    public MethodRule integrationRule = new IntegrationRule();
 
     @BeforeClass
     public static void createTestPluginJarFile() throws IOException {
-        pluginJar = preparePluginJar();
+        pluginJar = makePluginJar();
     }
 
-    private static File preparePluginJar() throws IOException {
+    private static File makePluginJar() throws IOException {
         File pluginFolder = TEMPORARY_FOLDER.newFolder("test-byte-buddy-plugin");
         store("plugins { id 'java' }\n" +
                 "repositories {\n" +
@@ -72,6 +77,7 @@ public class ByteBuddyPluginTest {
     }
 
     @Test
+    @IntegrationRule.Enforce
     public void testGradlePlugin() throws IOException {
         store("plugins {\n" +
                 "    id 'java'\n" +
@@ -106,7 +112,7 @@ public class ByteBuddyPluginTest {
                 .forwardOutput()
                 .build();
         assertThat(result.task(":classes").getOutcome(), is(TaskOutcome.SUCCESS));
-        assertThat(result.getOutput(), CoreMatchers.containsString("foo=qux"));
+        assertThat(result.getOutput(), containsString("foo=qux"));
     }
 
     private static void store(String source, File target) throws IOException {

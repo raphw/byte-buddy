@@ -181,8 +181,8 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
         try {
             List<Plugin> plugins = new ArrayList<Plugin>(transformations.size());
             for (Transformation transformation : transformations) {
+                String plugin = transformation.getPlugin();
                 try {
-                    String plugin = transformation.getPlugin();
                     plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation.asCoordinate(groupId, artifactId, version)))
                             .getDeclaredConstructor()
                             .newInstance());

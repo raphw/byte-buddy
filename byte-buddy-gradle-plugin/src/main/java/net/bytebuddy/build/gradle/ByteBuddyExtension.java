@@ -8,6 +8,7 @@ import org.gradle.api.Task;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Representation of a Gradle configuration for Byte Buddy.
@@ -39,7 +40,10 @@ public class ByteBuddyExtension {
      */
     private boolean failOnLiveInitializer;
 
-    private List<String> tasks;
+    /**
+     * A list of task names for which to apply a transformation or {@code null} if the task should apply to all tasks.
+     */
+    private Set<String> tasks;
 
     /**
      * Creates a new Byte Buddy extension.
@@ -156,7 +160,7 @@ public class ByteBuddyExtension {
      *
      * @param tasks The tasks to explicitly append a transformation to.
      */
-    public void setTasks(List<String> tasks) {
+    public void setTasks(Set<String> tasks) {
         this.tasks = tasks;
     }
 }

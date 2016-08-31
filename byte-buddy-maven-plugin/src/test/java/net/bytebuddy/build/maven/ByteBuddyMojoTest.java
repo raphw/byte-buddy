@@ -17,6 +17,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -262,7 +263,7 @@ public class ByteBuddyMojoTest {
     }
 
     private void execute(String goal, String target) throws Exception {
-        Mojo mojo = mojoRule.lookupMojo(goal, new File("src/test/resources/" + target + ".pom.xml"));
+        Mojo mojo = mojoRule.lookupMojo(goal, new File("src/test/resources/net/bytebuddy/test/" + target + ".pom.xml"));
         if (goal.equals("transform")) {
             mojoRule.setVariableValueToObject(mojo, "outputDirectory", project.getAbsolutePath());
             mojoRule.setVariableValueToObject(mojo, "compileClasspathElements", Collections.emptyList());

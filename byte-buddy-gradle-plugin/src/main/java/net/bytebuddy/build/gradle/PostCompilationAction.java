@@ -25,7 +25,7 @@ public class PostCompilationAction implements Action<AbstractCompile> {
      * @param project            The current project.
      * @param byteBuddyExtension The Byte Buddy extension of this build.
      */
-    public PostCompilationAction(Project project, ByteBuddyExtension byteBuddyExtension) {
+    protected PostCompilationAction(Project project, ByteBuddyExtension byteBuddyExtension) {
         this.project = project;
         this.byteBuddyExtension = byteBuddyExtension;
     }
@@ -45,7 +45,7 @@ public class PostCompilationAction implements Action<AbstractCompile> {
         if (byteBuddyExtension.implies(task)) {
             task.doLast(new TransformationAction(project, byteBuddyExtension, task));
         } else {
-            project.getLogger().info("Skipping {}", task.getName());
+            project.getLogger().info("Skipping non-specified task {}", task.getName());
         }
     }
 }

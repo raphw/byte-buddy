@@ -43,7 +43,7 @@ public class Initialization extends AbstractUserConfiguration {
      * @param classPath           The class path of the current task.
      * @return A resolved entry point.
      */
-    public EntryPoint toEntryPoint(ClassLoaderResolver classLoaderResolver, File root, Iterable<? extends File> classPath) {
+    public EntryPoint getEntryPoint(ClassLoaderResolver classLoaderResolver, File root, Iterable<? extends File> classPath) {
         if (entryPoint == null || entryPoint.isEmpty()) {
             throw new GradleException("Entry point name is not defined");
         }
