@@ -100,7 +100,6 @@ public class ByteBuddyPluginTest {
                 .forwardOutput()
                 .buildAndFail();
         assertThat(result.getOutput(), containsString("Transformations aren't supported when incremental compilation is enabled."));
-        throw new AssertionError("Property!");
     }
 
     private void createSampleBuildFiles() throws IOException {
