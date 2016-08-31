@@ -93,7 +93,7 @@ public class ByteBuddyPluginTest {
     @IntegrationRule.Enforce
     public void testIncrementalCompilationFails() throws IOException {
         createSampleBuildFiles();
-        append("compileJava.options.incremental = true", new File(temporaryFolder.getRoot(), "build.gradle"));
+        append("compileJava.options.incremental = true\n", new File(temporaryFolder.getRoot(), "build.gradle"));
         BuildResult result = GradleRunner.create()
                 .withPluginClasspath()
                 .withProjectDir(temporaryFolder.getRoot()).withArguments("classes")
