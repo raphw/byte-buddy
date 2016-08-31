@@ -46,7 +46,7 @@ public class TransformationAction implements Action<Task> {
         }
     }
 
-    public void processOutputDirectory(File root, Iterable<? extends File> classPath) throws IOException {
+    private void processOutputDirectory(File root, Iterable<? extends File> classPath) throws IOException {
         if (!root.isDirectory()) {
             throw new GradleException("Target location does not exist or is no directory: " + root);
         }
@@ -61,10 +61,10 @@ public class TransformationAction implements Action<Task> {
                             .newInstance());
                     project.getLogger().info("Created plugin: {}", plugin);
                 } catch (Exception exception) {
-                    throw new GradleException("Cannot create plugin: " + transformation, exception);
+                    throw new GradleException("Cannot create plugin: " + transformation.getRawPlugin(), exception);
                 }
             }
-            EntryPoint entryPoint = byteBuddyExtension.getInitialization().toEntryPoint(classLoaderResolver);
+            EntryPoint entryPoint = byteBuddyExtension.getInitialization().toEntryPoint(classLoaderResolver, root, classPath);
             project.getLogger().info("Resolved entry point: {}", entryPoint);
             transform(root, classPath, entryPoint, plugins);
         } finally {
