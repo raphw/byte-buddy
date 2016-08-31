@@ -9,28 +9,48 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+/**
+ * A class loader resolver for creating class loaders for given class paths.
+ */
 public class ClassLoaderResolver implements Closeable {
 
-    private final Map<List<File>, ClassLoader> classLoaders;
+    /**
+     * A mapping of files collections to previously created class loaders.
+     */
+    private final Map<Set<? extends File>, ClassLoader> classLoaders;
 
-    public ClassLoaderResolver() throws MalformedURLException {
-        this.classLoaders = new HashMap<List<File>, ClassLoader>();
+    /**
+     * Creates a new class loader resolver.
+     */
+    public ClassLoaderResolver() {
+        classLoaders = new HashMap<Set<? extends File>, ClassLoader>();
     }
 
+    /**
+     * Resolves a class path to a class loader. If a class loader for the same file collection was created
+     * previously, the previous class loader is returned.
+     *
+     * @param classPath The class path to consider.
+     * @return A class loader for the supplied class path.
+     */
     public ClassLoader resolve(Iterable<? extends File> classPath) {
-        List<File> classPathList = new ArrayList<File>();
+        Set<File> classPathList = new LinkedHashSet<File>();
         for (File file : classPath) {
             classPathList.add(file);
         }
         return resolve(classPathList);
     }
 
-    protected ClassLoader resolve(List<File> classPath) {
+    /**
+     * Resolves a class path to a class loader. If a class loader for the same file collection was created
+     * previously, the previous class loader is returned.
+     *
+     * @param classPath The class path to consider.
+     * @return A class loader for the supplied class path.
+     */
+    private ClassLoader resolve(Set<? extends File> classPath) {
         ClassLoader classLoader = classLoaders.get(classPath);
         if (classLoader == null) {
             classLoader = doResolve(classPath);
@@ -39,7 +59,13 @@ public class ClassLoaderResolver implements Closeable {
         return classLoader;
     }
 
-    private ClassLoader doResolve(List<File> classPath) {
+    /**
+     * Resolves a class path to a class loader.
+     *
+     * @param classPath The class path to consider.
+     * @return A class loader for the supplied class path.
+     */
+    private ClassLoader doResolve(Set<? extends File> classPath) {
         List<URL> urls = new ArrayList<URL>(classPath.size());
         for (File file : classPath) {
             try {
@@ -58,5 +84,12 @@ public class ClassLoaderResolver implements Closeable {
                 ((Closeable) classLoader).close();
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ClassLoaderResolver{" +
+                "classLoaders=" + classLoaders +
+                '}';
     }
 }

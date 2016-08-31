@@ -28,7 +28,7 @@ public class Transformation extends AbstractUserConfiguration {
     }
 
     /**
-     * Returns the plugin name or null if not set.
+     * Returns the plugin name or {@code null} if it is not set.
      *
      * @return The configured plugin name.
      */
