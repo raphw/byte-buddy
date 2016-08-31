@@ -122,8 +122,7 @@ public class AgentBuilderDefaultApplicationRedefineTest {
         try {
             Class<?> type = optionalTypeLoader.loadClass(SimpleOptionalType.class.getName());
             // The hybrid strategy cannot transform optional types.
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()),
-                    is((Object) (descriptionStrategy == AgentBuilder.DescriptionStrategy.Default.HYBRID ? FOO : BAR)));
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
@@ -170,9 +169,7 @@ public class AgentBuilderDefaultApplicationRedefineTest {
         try {
             Class<?> type = optionalTypeLoader.loadClass(SimpleOptionalType.class.getName());
             // The hybrid strategy cannot transform optional types.
-            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) (descriptionStrategy == AgentBuilder.DescriptionStrategy.Default.HYBRID
-                    ? FOO
-                    : BAR)));
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
