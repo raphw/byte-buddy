@@ -206,8 +206,10 @@
                         <excludes>
                             <exclude>net/bytebuddy/benchmark/generated/**/*.class</exclude>
                             <exclude>org/openjdk/jmh/infra/generated/**/*.class</exclude>
+                            <!-- The following classes are not supposed to be tested within a default build -->
                             <exclude>net/bytebuddy/benchmark/runner/**/*.class</exclude>
                             <exclude>net/bytebuddy/android/test/**/*.class</exclude>
+                            <exclude>net/bytebuddy/build/gradle/**/*.class</exclude>
                         </excludes>
                     </instrumentation>
                     <formats>

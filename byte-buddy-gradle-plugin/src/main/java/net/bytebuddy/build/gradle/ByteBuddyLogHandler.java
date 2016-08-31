@@ -12,6 +12,9 @@ import java.util.logging.SimpleFormatter;
  */
 public class ByteBuddyLogHandler extends Handler {
 
+    /**
+     * The current project.
+     */
     private final Project project;
 
     /**
@@ -27,7 +30,7 @@ public class ByteBuddyLogHandler extends Handler {
     /**
      * Creates a new log handler.
      *
-     * @param log               The Maven logging target.
+     * @param project           The current project.
      * @param logger            The Byte Buddy logger target.
      * @param useParentHandlers {@code true} if parent handler delegation was originally enabled.
      */
@@ -41,7 +44,7 @@ public class ByteBuddyLogHandler extends Handler {
     /**
      * Initializes the Byte Buddy log handler.
      *
-     * @param log The Maven logging target.
+     * @param project The current project.
      * @return The registered log handler.
      */
     public static ByteBuddyLogHandler initialize(Project project) {
