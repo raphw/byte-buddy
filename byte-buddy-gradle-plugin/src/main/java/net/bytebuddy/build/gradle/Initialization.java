@@ -27,9 +27,9 @@ public class Initialization extends AbstractUserConfiguration {
     }
 
     /**
-     * Sets the default entry point or any constant name of {@link EntryPoint.Default}.
+     * Sets the default entry point or any constant name of {@link net.bytebuddy.build.EntryPoint.Default}.
      *
-     * @param entryPoint The default entry point or any constant name of {@link EntryPoint.Default}.
+     * @param entryPoint The default entry point or any constant name of {@link net.bytebuddy.build.EntryPoint.Default}.
      */
     public void setEntryPoint(String entryPoint) {
         this.entryPoint = entryPoint;
