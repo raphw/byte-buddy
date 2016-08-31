@@ -1,0 +1,12 @@
+package net.bytebuddy.test;
+
+public class Sample {
+
+    public String foo() {
+        return "bar";
+    }
+
+    public static void main(String[] args) {
+        System.out.println("foo=" + new Sample().foo());
+    }
+}

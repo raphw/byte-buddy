@@ -1,5 +1,8 @@
 package net.bytebuddy.build.gradle;
 
+import net.bytebuddy.ByteBuddy;
+import org.gradle.api.GradleException;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -11,52 +14,49 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.bytebuddy.ByteBuddy;
-import org.gradle.api.Project;
-import org.gradle.api.logging.Logger;
-
 public class ClassLoaderResolver implements Closeable {
-	private final Logger logger;
-	private final Map<List<File>, ClassLoader> classLoaders;
 
-	public ClassLoaderResolver(Project project) throws MalformedURLException {
-		this.logger = project.getLogger();
-		this.classLoaders = new HashMap<List<File>, ClassLoader>();
-	}
+    private final Map<List<File>, ClassLoader> classLoaders;
 
-	public ClassLoader resolve(Iterable<File> classpathFiles) {
-		List<File> classpathFilesList = new ArrayList<File>();
-		for (File file : classpathFiles) {
-			classpathFilesList.add(file);
-		}
-		ClassLoader classLoader = classLoaders.get(classpathFilesList);
-		if (classLoader == null) {
-			classLoader = createClassLoader(classpathFilesList);
-			classLoaders.put(classpathFilesList, classLoader);
-		}
-		return classLoader;
-	}
+    public ClassLoaderResolver() throws MalformedURLException {
+        this.classLoaders = new HashMap<List<File>, ClassLoader>();
+    }
 
-	private ClassLoader createClassLoader(Iterable<File> classpathFiles) {
-		List<URL> classpathElements = new ArrayList<URL>();
-		for (File file : classpathFiles) {
-			try {
-				classpathElements.add(file.toURI().toURL());
-			}
-			catch (MalformedURLException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return new URLClassLoader(classpathElements.toArray(new URL[0]),
-				ByteBuddy.class.getClassLoader());
-	}
+    public ClassLoader resolve(Iterable<? extends File> classPath) {
+        List<File> classPathList = new ArrayList<File>();
+        for (File file : classPath) {
+            classPathList.add(file);
+        }
+        return resolve(classPathList);
+    }
 
-	@Override
-	public void close() throws IOException {
-		for (ClassLoader classLoader : classLoaders.values()) {
-			if (classLoader instanceof Closeable) { // URLClassLoaders are only closeable since Java 1.7.
-				((Closeable) classLoader).close();
-			}
-		}
-	}
+    protected ClassLoader resolve(List<File> classPath) {
+        ClassLoader classLoader = classLoaders.get(classPath);
+        if (classLoader == null) {
+            classLoader = doResolve(classPath);
+            classLoaders.put(classPath, classLoader);
+        }
+        return classLoader;
+    }
+
+    private ClassLoader doResolve(List<File> classPath) {
+        List<URL> urls = new ArrayList<URL>(classPath.size());
+        for (File file : classPath) {
+            try {
+                urls.add(file.toURI().toURL());
+            } catch (MalformedURLException exception) {
+                throw new GradleException("Cannot resolve " + file + " as URL", exception);
+            }
+        }
+        return new URLClassLoader(urls.toArray(new URL[urls.size()]), ByteBuddy.class.getClassLoader());
+    }
+
+    @Override
+    public void close() throws IOException {
+        for (ClassLoader classLoader : classLoaders.values()) {
+            if (classLoader instanceof Closeable) { // URLClassLoaders are only closeable since Java 1.7.
+                ((Closeable) classLoader).close();
+            }
+        }
+    }
 }

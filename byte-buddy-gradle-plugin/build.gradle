@@ -18,9 +18,8 @@ repositories {
 dependencies {
     compile gradleApi()
     compile group: group, name: 'byte-buddy', version: version
-    testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile gradleTestKit()
-    testCompile 'com.google.guava:guava:19.0'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -29,5 +28,5 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 test {
-    systemProperty('byte_buddy_version', version)
+    systemProperty('net.bytebuddy.test.version', version)
 }
