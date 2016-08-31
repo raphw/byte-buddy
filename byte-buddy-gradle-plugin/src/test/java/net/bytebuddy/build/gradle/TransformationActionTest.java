@@ -86,7 +86,7 @@ public class TransformationActionTest {
         when(byteBuddyExtension.getTransformations()).thenReturn(Collections.singletonList(transformation));
         when(byteBuddyExtension.getInitialization()).thenReturn(initialization);
         when(parent.getDestinationDir()).thenReturn(target);
-        when(transformation.getClassPath(any(File.class), any(Iterable.class))).thenReturn(Collections.<File>emptySet());
+        when(transformation.getClassPath(any(File.class), any(Iterable.class))).thenReturn((Iterable) Collections.emptySet());
         when(parent.getClasspath()).thenReturn(fileCollection);
         when(fileCollection.iterator()).then(new Answer<Iterator<File>>() {
             @Override
