@@ -96,7 +96,7 @@ public class ByteBuddyPluginTest {
                 "        classPath = configurations.sample\n" +
                 "    }\n" +
                 "}\n" +
-                "mainClassName = 'net.bytebuddy.test.Sample'", temporaryFolder.newFile("build.gradle"));
+                "mainClassName = 'net.bytebuddy.test.Sample'\n", temporaryFolder.newFile("build.gradle"));
         store("package net.bytebuddy.test;\n" +
                 "public class Sample {\n" +
                 "    public String foo() {\n" +
