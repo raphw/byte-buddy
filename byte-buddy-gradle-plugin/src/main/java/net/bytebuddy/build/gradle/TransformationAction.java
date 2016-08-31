@@ -14,6 +14,8 @@ import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.compile.AbstractCompile;
+import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.scala.ScalaCompile;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,9 +64,25 @@ public class TransformationAction implements Action<Task> {
     @Override
     public void execute(Task task) {
         try {
+            verifyCompilationNotIncremental(task);
             processOutputDirectory(this.task.getDestinationDir(), this.task.getClasspath());
         } catch (IOException exception) {
             throw new GradleException("Error accessing file system", exception);
+        }
+    }
+
+    private void verifyCompilationNotIncremental(Task task) {
+        if (task instanceof JavaCompile) {
+            JavaCompile javaCompileTask = (JavaCompile) task;
+            if (javaCompileTask.getOptions().isIncremental()) {
+                throw new GradleException("Transformations aren't supported when incremental compilation is enabled. Set " + javaCompileTask.getName() + ".options.incremental=false in the build file.");
+            }
+        }
+        if (task instanceof ScalaCompile) {
+            ScalaCompile scalaCompileTask = (ScalaCompile) task;
+            if (!scalaCompileTask.getScalaCompileOptions().isForce()) {
+                throw new GradleException("Transformations aren't supported when incremental compilation is enabled. Set " + scalaCompileTask.getName() + ".scalaCompileOptions.force=true in the build file.");
+            }
         }
     }
 

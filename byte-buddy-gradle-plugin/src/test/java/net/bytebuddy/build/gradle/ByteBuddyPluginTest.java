@@ -73,6 +73,29 @@ public class ByteBuddyPluginTest {
 
     @Test
     public void testGradlePlugin() throws IOException {
+        createSampleBuildFiles();
+        BuildResult result = GradleRunner.create()
+                .withPluginClasspath()
+                .withProjectDir(temporaryFolder.getRoot()).withArguments("-s", "run")
+                .forwardOutput()
+                .build();
+        assertThat(result.task(":classes").getOutcome(), is(TaskOutcome.SUCCESS));
+        assertThat(result.getOutput(), CoreMatchers.containsString("foo=qux"));
+    }
+
+    @Test
+    public void testIncrementalCompilationFails() throws IOException {
+        createSampleBuildFiles();
+        append("compileJava.options.incremental = true", new File(temporaryFolder.getRoot(), "build.gradle"));
+        BuildResult result = GradleRunner.create()
+                .withPluginClasspath()
+                .withProjectDir(temporaryFolder.getRoot()).withArguments("classes")
+                .forwardOutput()
+                .buildAndFail();
+        assertThat(result.getOutput(), CoreMatchers.containsString("Transformations aren't supported when incremental compilation is enabled."));
+    }
+
+    private void createSampleBuildFiles() throws IOException {
         store("plugins {\n" +
                 "    id 'java'\n" +
                 "    id 'application'\n" +
@@ -90,7 +113,7 @@ public class ByteBuddyPluginTest {
                 "        classPath = configurations.sample\n" +
                 "    }\n" +
                 "}\n" +
-                "mainClassName = 'net.bytebuddy.test.Sample'", temporaryFolder.newFile("build.gradle"));
+                "mainClassName = 'net.bytebuddy.test.Sample'\n", temporaryFolder.newFile("build.gradle"));
         store("package net.bytebuddy.test;\n" +
                 "public class Sample {\n" +
                 "    public String foo() {\n" +
@@ -100,19 +123,20 @@ public class ByteBuddyPluginTest {
                 "        System.out.println(\"foo=\" + new Sample().foo());\n" +
                 "    }\n" +
                 "}\n", new File(temporaryFolder.newFolder("src", "main", "java", "net", "bytebuddy", "test"), "Sample.java"));
-        BuildResult result = GradleRunner.create()
-                .withPluginClasspath()
-                .withProjectDir(temporaryFolder.getRoot()).withArguments("-s", "run")
-                .forwardOutput()
-                .build();
-        assertThat(result.task(":classes").getOutcome(), is(TaskOutcome.SUCCESS));
-        assertThat(result.getOutput(), CoreMatchers.containsString("foo=qux"));
     }
 
     private static void store(String source, File target) throws IOException {
+        store(source, target, false);
+    }
+
+    private static void append(String source, File target) throws IOException {
+        store(source, target, true);
+    }
+
+    private static void store(String source, File target, boolean append) throws IOException {
         InputStream inputStream = new ByteArrayInputStream(source.getBytes("UTF-8"));
         try {
-            OutputStream outputStream = new FileOutputStream(target);
+            OutputStream outputStream = new FileOutputStream(target, append);
             try {
                 byte[] buffer = new byte[1024];
                 int length;
