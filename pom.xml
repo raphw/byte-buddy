@@ -48,6 +48,7 @@
     </modules>
 
     <properties>
+        <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.integration>false</bytebuddy.integration>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <code.level>1.6</code.level>
@@ -355,6 +356,9 @@
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
+            <properties>
+                <bytebuddy.extras>true</bytebuddy.extras>
+            </properties>
             <build>
                 <plugins>
                     <!-- Create source code artifact. -->

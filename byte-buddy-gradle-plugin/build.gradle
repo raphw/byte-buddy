@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'idea'
 apply plugin: 'java-gradle-plugin'
 
 def pom = new XmlSlurper().parse(file('./pom.xml'))
@@ -23,11 +22,20 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.10.19'
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
+if (Boolean.getBoolean('net.bytebuddy.test.extras')) {
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        println 'Bar!'
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+} else {
+    task javadocJar {
+        println 'Foo!'
+        /* extras are not requested*/
+    }
 }
 
 test {
     systemProperty('net.bytebuddy.test.version', version)
+    systemProperty('net.bytebuddy.test.integration', Boolean.getBoolean('net.bytebuddy.test.integration'))
 }
