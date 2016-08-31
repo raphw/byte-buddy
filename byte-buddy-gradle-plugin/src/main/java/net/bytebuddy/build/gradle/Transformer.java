@@ -9,62 +9,50 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.pool.TypePool;
-import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.Project;
+import org.gradle.api.logging.Logger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-public abstract class TransformTask extends DefaultTask {
-
+public class Transformer {
     private static final String CLASS_FILE_EXTENSION = ".class";
 
     private final ByteBuddyExtension byteBuddyExtension;
+    private final Logger logger;
+    private final Project project;
 
-    public TransformTask(String description) {
-        setGroup("byte-buddy");
-        setDescription(description);
-        // TODO: Add run dependency, add auto life-cycle?
-        byteBuddyExtension = getProject().getExtensions().getByType(ByteBuddyExtension.class);
+    public Transformer(Project project, ByteBuddyExtension extension) {
+        this.byteBuddyExtension = extension;
+        this.project = project;
+        this.logger = project.getLogger();
     }
 
-    @TaskAction
-    public void doExecute() {
-        try {
-            processOutputDirectory(resolve(new File(getProject().getBuildDir(), "classes")), getClassPath());
-        } catch (IOException exception) {
-            throw new GradleException("Error during writing process", exception);
+    public void processOutputDirectory(File classesRoot, Iterable<File> compileClasspathFiles) throws IOException {
+        if (!classesRoot.isDirectory()) {
+            throw new GradleException("Target location does not exist or is no directory: " + classesRoot);
         }
-    }
-
-    protected abstract File resolve(File target);
-
-    protected abstract Iterable<File> getClassPath();
-
-    private void processOutputDirectory(File root, Iterable<File> classPath) throws IOException {
-        if (!root.isDirectory()) {
-            throw new GradleException("Target location does not exist or is no directory: " + root);
-        }
-        ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(getProject());
+        ClassLoaderResolver classLoaderResolver = new ClassLoaderResolver(project);
         try {
             List<Plugin> plugins = new ArrayList<Plugin>(byteBuddyExtension.getTransformations().size());
             for (Transformation transformation : byteBuddyExtension.getTransformations()) {
                 try {
                     String plugin = transformation.getPlugin();
-                    plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation.asCoordinate(getProject())))
+                    plugins.add((Plugin) Class.forName(plugin, false, classLoaderResolver.resolve(transformation.getClasspath()))
                             .getDeclaredConstructor()
                             .newInstance());
-                    getLogger().info("Created plugin: {}", plugin);
+                    logger.info("Created plugin: {}", plugin);
                 } catch (Exception exception) {
                     throw new GradleException("Cannot create plugin: " + transformation, exception);
                 }
             }
             EntryPoint entryPoint = byteBuddyExtension.getInitialization().toEntryPoint(classLoaderResolver);
-            getLogger().info("Resolved entry point: {}", entryPoint);
-            transform(root, entryPoint, classPath, plugins);
+            logger.info("Resolved entry point: {}", entryPoint);
+            transform(classesRoot, entryPoint, compileClasspathFiles, plugins);
         } finally {
             classLoaderResolver.close();
         }
@@ -84,7 +72,7 @@ public abstract class TransformTask extends DefaultTask {
                     classFileLocator,
                     TypePool.Default.ReaderMode.FAST,
                     TypePool.ClassLoading.ofBootPath());
-            getLogger().info("Processing class files located in in: {}", root);
+            logger.info("Processing class files located in in: {}", root);
             ByteBuddy byteBuddy;
             try {
                 byteBuddy = entryPoint.getByteBuddy();
@@ -129,7 +117,7 @@ public abstract class TransformTask extends DefaultTask {
                             typePool,
                             plugins);
                 } else {
-                    getLogger().debug("Skipping ignored file: {}", aFile);
+                    logger.debug("Skipping ignored file: {}", aFile);
                 }
             }
         }
@@ -144,7 +132,7 @@ public abstract class TransformTask extends DefaultTask {
                                   TypePool typePool,
                                   List<Plugin> plugins) {
         String typeName = file.replace('/', '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
-        getLogger().debug("Processing class file: {}", typeName);
+        logger.debug("Processing class file: {}", typeName);
         TypeDescription typeDescription = typePool.describe(typeName).resolve();
         DynamicType.Builder<?> builder;
         try {
@@ -164,7 +152,7 @@ public abstract class TransformTask extends DefaultTask {
             }
         }
         if (transformed) {
-            getLogger().info("Transformed type: {}", typeName);
+            logger.info("Transformed type: {}", typeName);
             DynamicType dynamicType = builder.make();
             for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
                 if (byteBuddyExtension.isFailOnLiveInitializer() && entry.getValue().isAlive()) {
@@ -177,42 +165,8 @@ public abstract class TransformTask extends DefaultTask {
                 throw new GradleException("Cannot save " + typeName + " in " + root, exception);
             }
         } else {
-            getLogger().debug("Skipping non-transformed type: {}", typeName);
+            logger.debug("Skipping non-transformed type: {}", typeName);
         }
     }
 
-    public static class ForProductionTypes extends TransformTask {
-
-        public ForProductionTypes() {
-            super("Applies all registered Byte Buddy plugins to this project's production code");
-        }
-
-        @Override
-        protected File resolve(File target) {
-            return new File(target, "main");
-        }
-
-        @Override
-        protected Iterable<File> getClassPath() {
-            return getProject().getConfigurations().getByName("compile");
-        }
-    }
-
-    public static class ForTestTypes extends TransformTask {
-
-        public ForTestTypes() {
-            super("Applies all registered Byte Buddy plugins to this project's test code");
-        }
-
-        @Override
-        protected File resolve(File target) {
-            return new File(target, "test");
-        }
-
-        @Override
-        protected Iterable<File> getClassPath() {
-            // TODO: Check if contains non-test classes!
-            return getProject().getConfigurations().getByName("testCompile");
-        }
-    }
 }
