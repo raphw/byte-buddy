@@ -13,6 +13,9 @@ import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.tasks.compile.AbstractCompile;
+import org.gradle.api.tasks.compile.CompileOptions;
+import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.api.tasks.scala.ScalaCompile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -278,6 +281,24 @@ public class TransformationActionTest {
     public void testNoDirectory() throws Exception {
         when(parent.getDestinationDir()).thenReturn(mock(File.class));
         transformationAction.execute(task);
+    }
+
+    @Test(expected = GradleException.class)
+    public void testIncrementalJavaCompilation() throws Exception {
+        JavaCompile javaCompile = mock(JavaCompile.class);
+        CompileOptions compileOptions = new CompileOptions();
+        compileOptions.setIncremental(true);
+        when(javaCompile.getOptions()).thenReturn(compileOptions);
+        transformationAction.execute(javaCompile);
+    }
+
+    @Test(expected = GradleException.class)
+    public void testIncrementalScalaCompilation() throws Exception {
+        ScalaCompile scalaCompile = mock(ScalaCompile.class);
+        CompileOptions compileOptions = new CompileOptions();
+        compileOptions.setIncremental(true);
+        when(scalaCompile.getOptions()).thenReturn(compileOptions);
+        transformationAction.execute(scalaCompile);
     }
 
     private void assertMethod(Class<?> type, String name, Object expected) throws Exception {
