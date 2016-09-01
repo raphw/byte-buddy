@@ -27,7 +27,7 @@ dependencies {
     } else {
         compile files(location)
     }
-    // When using the non-shaded dependency,
+    // When using the non-shaded dependency, the ASM dependencies are required.
     if (!Boolean.getBoolean('net.bytebuddy.misc.extras')) {
         def asmVersion = new XmlSlurper().parse(file('../pom.xml')).properties.'version.asm'
         compile group: 'org.ow2.asm', name: 'asm', version: asmVersion
