@@ -74,9 +74,13 @@
                                 <task>build</task>
                                 <task>javadocJar</task>
                             </tasks>
+                            <args>
+                                <arg>--info</arg>
+                            </args>
                             <jvmArgs>
                                 <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
                                 <jvmArg>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</jvmArg>
+                                <jvmArg>-Dnet.bytebuddy.misc.release=${bytebuddy.release}</jvmArg>
                             </jvmArgs>
                         </configuration>
                     </execution>

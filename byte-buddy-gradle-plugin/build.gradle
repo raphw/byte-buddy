@@ -18,7 +18,13 @@ repositories {
 
 dependencies {
     compile gradleApi()
-    compile group: group, name: 'byte-buddy', version: version
+    // As this Gradle build is triggered from Maven, the release plugin requires an explicit reference.
+    if (Boolean.getBoolean('net.bytebuddy.misc.release')) {
+        logger.info('Using local Byte Buddy dependency during release build')
+        compile files("../byte-buddy/target/byte-buddy-${version}.jar")
+    } else {
+        compile group: group, name: 'byte-buddy', version: version
+    }
     testCompile gradleTestKit()
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '1.10.19'
