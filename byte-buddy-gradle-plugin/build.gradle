@@ -22,10 +22,10 @@ dependencies {
     def artifact = Boolean.getBoolean('net.bytebuddy.misc.extras') ? 'byte-buddy' : 'byte-buddy-dep'
     def location = "../${artifact}/target/${artifact}-${version}.jar"
     logger.info("Using ${artifact} as Byte Buddy dependency")
-    if (!new File(location).exists()) {
-        compile files(location)
-    } else {
+    if (new File(location).exists()) {
         logger.info('Byte Buddy location does not exist, cannot only clean but not build project')
+    } else {
+        compile files(location)
     }
     // When using the non-shaded dependency,
     if (!Boolean.getBoolean('net.bytebuddy.misc.extras')) {
