@@ -6,6 +6,8 @@ def pom = new XmlSlurper().parse(file('./pom.xml'))
 group = pom.parent.groupId.text().toString()
 version = pom.parent.version.text().toString()
 
+description = pom.description.text().toString()
+
 sourceCompatibility = JavaVersion.VERSION_1_6
 targetCompatibility = JavaVersion.VERSION_1_6
 
