@@ -64,18 +64,6 @@
                 <version>${version.plugin.gradlerun}</version>
                 <executions>
                     <execution>
-                        <id>gradle-clean</id>
-                        <phase>clean</phase>
-                        <goals>
-                            <goal>invoke</goal>
-                        </goals>
-                        <configuration>
-                            <tasks>
-                                <task>clean</task>
-                            </tasks>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>gradle-build</id>
                         <phase>compile</phase>
                         <goals>
