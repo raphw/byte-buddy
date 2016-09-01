@@ -18,12 +18,19 @@ repositories {
 
 dependencies {
     compile gradleApi()
-    // As this Gradle build is triggered from Maven, the release plugin requires an explicit reference.
-    if (Boolean.getBoolean('net.bytebuddy.misc.release')) {
-        logger.info('Using local Byte Buddy dependency during release build')
-        compile files("../byte-buddy/target/byte-buddy-${version}.jar")
-    } else {
-        compile group: group, name: 'byte-buddy', version: version
+    // At this point, it is not given that any artifact from the Maven build can be found in a repository.
+    def artifact = Boolean.getBoolean('net.bytebuddy.misc.extras') ? 'byte-buddy' : 'byte-buddy-dep'
+    def location = "../${artifact}/target/${artifact}-${version}.jar"
+    logger.info("Using ${artifact} as Byte Buddy dependency")
+    if (!new File(location).exists()) {
+        throw new GradleException("Byte Buddy jar does not exist: $location");
+    }
+    compile files(location)
+    // When using the non-shaded dependency,
+    if (!Boolean.getBoolean('net.bytebuddy.misc.extras')) {
+        def asmVersion = new XmlSlurper().parse(file('../pom.xml')).properties.'version.asm'
+        compile group: 'org.ow2.asm', name: 'asm', version: asmVersion
+        compile group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion
     }
     testCompile gradleTestKit()
     testCompile group: 'junit', name: 'junit', version: '4.12'
