@@ -46,7 +46,7 @@ if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
     }
 } else {
     task javadocJar {
-        logger.info('javadoc is only generated if net.bytebuddy.test.extras is set to true')
+        logger.info('javadoc is only generated if net.bytebuddy.misc.extras is set to true')
     }
 }
 
