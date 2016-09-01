@@ -39,6 +39,7 @@
 
     <build>
         <plugins>
+            <!-- The Gradle plugin must be built by Gradle; therefore the compilation is skipped. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -47,6 +48,16 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <!-- Gradle is also responsible for creating javadoc such that this task is skipped here. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${version.plugin.javadoc}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <!-- Tie Maven executions into the Gradle life-cycle. -->
             <plugin>
                 <groupId>org.fortasoft</groupId>
                 <artifactId>gradle-maven-plugin</artifactId>
@@ -76,13 +87,15 @@
                                 <task>javadocJar</task>
                             </tasks>
                             <jvmArgs>
-                                <jvmArg>-Dnet.bytebuddy.test.extras=${bytebuddy.extras}</jvmArg>
                                 <jvmArg>-Dnet.bytebuddy.test.integration=${bytebuddy.integration}</jvmArg>
+                                <jvmArg>-Dnet.bytebuddy.misc.extras=${bytebuddy.extras}</jvmArg>
+                                <jvmArg>-Dnet.bytebuddy.misc.release=${bytebuddy.release}</jvmArg>
                             </jvmArgs>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            <!-- Copies the artifact created by Gradle back to the Maven target folder. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -103,14 +116,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${version.plugin.javadoc}</version>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
@@ -119,6 +124,7 @@
             <id>extras</id>
             <build>
                 <plugins>
+                    <!-- If the javadoc artifact is built by Gradle, we copy it back to the Maven target. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>
@@ -139,6 +145,7 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- As the javadoc artifact is built by Gradle, it needs to be attached to Maven manually. -->
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>

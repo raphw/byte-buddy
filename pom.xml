@@ -50,6 +50,7 @@
     <properties>
         <bytebuddy.extras>false</bytebuddy.extras>
         <bytebuddy.integration>false</bytebuddy.integration>
+        <bytebuddy.release>false</bytebuddy.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <code.level>1.6</code.level>
         <pitest.target>net.bytebuddy</pitest.target>
@@ -177,7 +178,7 @@
                 <version>${version.plugin.release}</version>
                 <configuration>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <releaseProfiles>extras,gpg</releaseProfiles>
+                    <releaseProfiles>extras,gpg,release</releaseProfiles>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>byte-buddy-@{project.version}</tagNameFormat>
                 </configuration>
@@ -348,6 +349,16 @@
             </activation>
             <properties>
                 <code.level>1.8</code.level>
+            </properties>
+        </profile>
+        <!-- The release profile is only used to set the release property to true -->
+        <profile>
+            <id>release</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <bytebuddy.release>true</bytebuddy.release>
             </properties>
         </profile>
         <!-- Creates additional artifacts that are required for deployment. -->

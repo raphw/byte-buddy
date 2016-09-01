@@ -7,13 +7,11 @@ import org.gradle.testkit.runner.TaskOutcome;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.*;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -74,62 +72,6 @@ public class ByteBuddyPluginTest {
                 .build();
         assertThat(result.task(":jar").getOutcome(), is(TaskOutcome.SUCCESS));
         return new File(pluginFolder, "build/libs/test-byte-buddy-plugin.jar");
-    }
-
-    @Test
-    @IntegrationRule.Enforce
-    public void testGradlePlugin() throws IOException {
-        createSampleBuildFiles();
-        BuildResult result = GradleRunner.create()
-                .withPluginClasspath()
-                .withProjectDir(temporaryFolder.getRoot()).withArguments("-s", "run")
-                .forwardOutput()
-                .build();
-        assertThat(result.task(":classes").getOutcome(), is(TaskOutcome.SUCCESS));
-        assertThat(result.getOutput(), containsString("foo=qux"));
-    }
-
-    @Test
-    @IntegrationRule.Enforce
-    public void testIncrementalCompilationFails() throws IOException {
-        createSampleBuildFiles();
-        append("compileJava.options.incremental = true\n", new File(temporaryFolder.getRoot(), "build.gradle"));
-        BuildResult result = GradleRunner.create()
-                .withPluginClasspath()
-                .withProjectDir(temporaryFolder.getRoot()).withArguments("classes")
-                .forwardOutput()
-                .buildAndFail();
-        assertThat(result.getOutput(), containsString("Transformations aren't supported when incremental compilation is enabled."));
-    }
-
-    private void createSampleBuildFiles() throws IOException {
-        store("plugins {\n" +
-                "    id 'java'\n" +
-                "    id 'application'\n" +
-                "    id 'net.bytebuddy.byte-buddy'\n" +
-                "}\n" +
-                "configurations {\n" +
-                "    sample\n" +
-                "}\n" +
-                "dependencies {\n" +
-                "    sample files(\"" + pluginJar.getAbsolutePath() + "\")\n" +
-                "}\n" +
-                "byteBuddy {\n" +
-                "    transformation {\n" +
-                "        plugin = \"net.bytebuddy.test.SimplePlugin\"\n" +
-                "        classPath = configurations.sample\n" +
-                "    }\n" +
-                "}\n" +
-                "mainClassName = 'net.bytebuddy.test.Sample'\n", temporaryFolder.newFile("build.gradle"));
-        store("package net.bytebuddy.test;\n" +
-                "public class Sample {\n" +
-                "    public String foo() {\n" +
-                "        return \"bar\";\n" +
-                "    }\n" +
-                "    public static void main(String[] args) {\n" +
-                "        System.out.println(\"foo=\" + new Sample().foo());\n" +
-                "    }\n" +
-                "}\n", new File(temporaryFolder.newFolder("src", "main", "java", "net", "bytebuddy", "test"), "Sample.java"));
     }
 
     private static void store(String source, File target) throws IOException {
