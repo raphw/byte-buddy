@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 02. September 2016: version 1.4.22
+
+- Added Byte Buddy plugin for Gradle.
+- Improved Byte Buddy plugin for Maven.
+
 ### 28. August 2016: version 1.4.21
 
 - Fixed modifier resolution for anonymous classes to preserve a shadowed `final` modifier.
