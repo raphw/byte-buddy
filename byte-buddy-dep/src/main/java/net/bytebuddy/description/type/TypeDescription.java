@@ -7367,6 +7367,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     class ForLoadedType extends AbstractBase implements Serializable {
 
         /**
+         * The class's serial version UID.
+         */
+        private static final long serialVersionUID = 1L;
+
+        /**
          * The loaded type this instance represents.
          */
         private final Class<?> type;
