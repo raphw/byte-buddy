@@ -7364,7 +7364,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     /**
      * A type description implementation that represents a loaded type.
      */
-    class ForLoadedType extends AbstractBase {
+    class ForLoadedType extends AbstractBase implements Serializable {
 
         /**
          * The loaded type this instance represents.
