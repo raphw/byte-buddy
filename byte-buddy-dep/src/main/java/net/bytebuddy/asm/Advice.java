@@ -3005,7 +3005,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A target for an offset mapping that boxes a primitive parameter value.
                  */
-                abstract class ForBoxedParameter implements Target {
+                abstract class ForBoxedArgument implements Target {
 
                     /**
                      * The parameters offset.
@@ -3023,7 +3023,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param offset           The parameters offset.
                      * @param boxingDispatcher A dispatcher for boxing the primitive value.
                      */
-                    protected ForBoxedParameter(int offset, BoxingDispatcher boxingDispatcher) {
+                    protected ForBoxedArgument(int offset, BoxingDispatcher boxingDispatcher) {
                         this.offset = offset;
                         this.boxingDispatcher = boxingDispatcher;
                     }
@@ -3058,7 +3058,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public boolean equals(Object object) {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
-                        ForBoxedParameter that = (ForBoxedParameter) object;
+                        ForBoxedArgument that = (ForBoxedArgument) object;
                         return offset == that.offset && boxingDispatcher == that.boxingDispatcher;
                     }
 
@@ -3072,7 +3072,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A target mapping for a boxed parameter that only allows reading the boxed value.
                      */
-                    protected static class ReadOnly extends ForBoxedParameter {
+                    protected static class ReadOnly extends ForBoxedArgument {
 
                         /**
                          * Creates a new read-only target offset mapping for a boxed parameter.
@@ -3102,7 +3102,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.ReadOnly{" +
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadOnly{" +
                                     "offset=" + offset +
                                     ", boxingDispatcher=" + boxingDispatcher +
                                     '}';
@@ -3112,7 +3112,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A target mapping for a boxed parameter that allows reading and writing the boxed value.
                      */
-                    protected static class ReadWrite extends ForBoxedParameter {
+                    protected static class ReadWrite extends ForBoxedArgument {
 
                         /**
                          * Creates a new read-write target offset mapping for a boxed parameter.
@@ -3142,7 +3142,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.ReadWrite{" +
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadWrite{" +
                                     "offset=" + offset +
                                     ", boxingDispatcher=" + boxingDispatcher +
                                     '}';
@@ -3153,19 +3153,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A target for an offset mapping of an array containing all (boxed) arguments of the instrumented method.
                  */
-                class ForBoxedArguments implements Target {
+                abstract class ForBoxedArguments implements Target {
 
                     /**
                      * The parameters of the instrumented method.
                      */
-                    private final List<ParameterDescription.InDefinedShape> parameters;
+                    protected final List<? extends ParameterDescription.InDefinedShape> parameters;
 
                     /**
                      * Creates a mapping for a boxed array containing all arguments of the instrumented method.
                      *
                      * @param parameters The parameters of the instrumented method.
                      */
-                    protected ForBoxedArguments(List<ParameterDescription.InDefinedShape> parameters) {
+                    protected ForBoxedArguments(List<? extends ParameterDescription.InDefinedShape> parameters) {
                         this.parameters = parameters;
                     }
 
@@ -3187,7 +3187,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     methodVisitor.visitInsn(Opcodes.AASTORE);
                                     stackSize = stackSize.maximum(parameter.getType().getStackSize());
                                 }
-                                return stackSize.getSize() + 2;
+                                return stackSize.getSize() + (parameters.isEmpty()
+                                        ? 0
+                                        : 2);
+                            case Opcodes.ASTORE:
+                                return onStore(methodVisitor);
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
@@ -3199,7 +3203,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param methodVisitor The method visitor for which the integer is loaded.
                      * @param value         The integer value to load onto the stack.
                      */
-                    private static void loadInteger(MethodVisitor methodVisitor, int value) {
+                    protected static void loadInteger(MethodVisitor methodVisitor, int value) {
                         switch (value) {
                             case 0:
                                 methodVisitor.visitInsn(Opcodes.ICONST_0);
@@ -3230,6 +3234,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
 
+                    /**
+                     * Invoked when the parsed code indicates an attempt to replace the existing parameters.
+                     *
+                     * @param methodVisitor The method visitor to use.
+                     * @return The required padding to the advice's total stack size.
+                     */
+                    protected abstract int onStore(MethodVisitor methodVisitor);
+
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException("Cannot increment a boxed argument");
@@ -3248,11 +3260,76 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return parameters.hashCode();
                     }
 
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments{" +
-                                "parameters=" + parameters +
-                                '}';
+                    /**
+                     * A mapping for a method's arguments which does not allow for replacing the arguments.
+                     */
+                    protected static class ReadOnly extends ForBoxedArguments {
+
+                        /**
+                         * Creates a new mapping for a method's boxed arguments which does not allow for replacing those arguments.
+                         *
+                         * @param parameters The parameters of the instrumented method.
+                         */
+                        protected ReadOnly(List<? extends ParameterDescription.InDefinedShape> parameters) {
+                            super(parameters);
+                        }
+
+                        @Override
+                        protected int onStore(MethodVisitor methodVisitor) {
+                            throw new IllegalStateException("Cannot write to read-only parameter");
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.ReadOnly{" +
+                                    "parameters=" + parameters +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A mapping for a method's arguments which allows for replacing the arguments.
+                     */
+                    protected static class ReadWrite extends ForBoxedArguments {
+
+                        /**
+                         * Creates a new mapping for a method's boxed arguments which allows for replacing those arguments.
+                         *
+                         * @param parameters The parameters of the instrumented method.
+                         */
+                        protected ReadWrite(List<? extends ParameterDescription.InDefinedShape> parameters) {
+                            super(parameters);
+                        }
+
+                        @Override
+                        protected int onStore(MethodVisitor methodVisitor) {
+                            StackSize stackSize = StackSize.ZERO;
+                            for (ParameterDescription parameter : parameters) {
+                                methodVisitor.visitInsn(Opcodes.DUP);
+                                loadInteger(methodVisitor, parameter.getIndex());
+                                methodVisitor.visitInsn(Opcodes.AALOAD);
+                                if (parameter.getType().isPrimitive()) {
+                                    BoxingDispatcher.of(parameter.getType()).storeUnboxed(methodVisitor, parameter.getOffset());
+                                } else {
+                                    if (!parameter.getType().represents(Object.class)) {
+                                        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, parameter.getType().asErasure().getInternalName());
+                                    }
+                                    methodVisitor.visitVarInsn(Opcodes.ASTORE, parameter.getOffset());
+                                }
+                                stackSize = stackSize.maximum(parameter.getType().getStackSize());
+                            }
+                            methodVisitor.visitInsn(Opcodes.POP);
+                            return stackSize.getSize() + (parameters.isEmpty()
+                                    ? 0
+                                    : 2);
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.ReadWrite{" +
+                                    "parameters=" + parameters +
+                                    '}';
+                        }
                     }
                 }
 
@@ -4665,8 +4742,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : Target.ForNullConstant.READ_WRITE;
                     } else if (instrumentedMethod.getReturnType().isPrimitive()) {
                         return readOnly
-                                ? Target.ForBoxedParameter.ReadOnly.of(instrumentedMethod.getStackSize() + context.getPadding(), instrumentedMethod.getReturnType())
-                                : Target.ForBoxedParameter.ReadWrite.of(instrumentedMethod.getStackSize() + context.getPadding(), instrumentedMethod.getReturnType());
+                                ? Target.ForBoxedArgument.ReadOnly.of(instrumentedMethod.getStackSize() + context.getPadding(), instrumentedMethod.getReturnType())
+                                : Target.ForBoxedArgument.ReadWrite.of(instrumentedMethod.getStackSize() + context.getPadding(), instrumentedMethod.getReturnType());
                     } else {
                         return readOnly
                                 ? new Target.ForParameter.ReadOnly(instrumentedMethod.getStackSize() + context.getPadding())
@@ -4734,32 +4811,93 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for an array containing the (boxed) method arguments.
              */
-            enum ForBoxedArguments implements OffsetMapping, Factory {
+            enum ForBoxedArguments implements OffsetMapping {
 
                 /**
-                 * The singleton instance.
+                 * Does not allow writing to the annotated parameter.
                  */
-                INSTANCE;
+                READ_ONLY(true),
 
-                @Override
-                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                    return new Target.ForBoxedArguments(instrumentedMethod.getParameters());
+                /**
+                 * Does allow writing to the annotated parameter.
+                 */
+                READ_WRITE(false);
+
+                /**
+                 * {@code true} if the annotated parameter is read-only.
+                 */
+                private final boolean readOnly;
+
+                /**
+                 * Creates a new offset mapping.
+                 *
+                 * @param readOnly {@code true} if the annotated parameter is read-only.
+                 */
+                ForBoxedArguments(boolean readOnly) {
+                    this.readOnly = readOnly;
                 }
 
                 @Override
-                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                    if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedArguments.class)) {
-                        return UNDEFINED;
-                    } else if (parameterDescription.getType().represents(Object[].class)) {
-                        return this;
-                    } else {
-                        throw new IllegalStateException("Can only assign an array of boxed arguments to an Object[] array");
-                    }
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    return readOnly
+                            ? new Target.ForBoxedArguments.ReadOnly(instrumentedMethod.getParameters())
+                            : new Target.ForBoxedArguments.ReadWrite(instrumentedMethod.getParameters());
                 }
 
                 @Override
                 public String toString() {
                     return "Advice.Dispatcher.OffsetMapping.ForBoxedArguments." + name();
+                }
+
+                /**
+                 * A factory for an offset mapping for boxed method arguments.
+                 */
+                protected enum Factory implements OffsetMapping.Factory {
+
+                    /**
+                     * Does not allow writing to the annotated parameter.
+                     */
+                    READ_ONLY(true),
+
+                    /**
+                     * Does allow writing to the annotated parameter.
+                     */
+                    READ_WRITE(false);
+
+                    /**
+                     * {@code true} if the annotated parameter is read-only.
+                     */
+                    private final boolean readOnly;
+
+                    /**
+                     * Creates a new factory.
+                     *
+                     * @param readOnly {@code true} if the annotated parameter is read-only.
+                     */
+                    Factory(boolean readOnly) {
+                        this.readOnly = readOnly;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        AnnotationDescription.Loadable<BoxedArguments> annotation = parameterDescription.getDeclaredAnnotations().ofType(BoxedArguments.class);
+                        if (annotation == null) {
+                            return UNDEFINED;
+                        } else if (readOnly && !annotation.loadSilent().readOnly()) {
+                            throw new IllegalStateException("Cannot write return value from a non-writable context for " + parameterDescription);
+                        } else if (parameterDescription.getType().represents(Object[].class)) {
+                            return annotation.loadSilent().readOnly()
+                                    ? ForBoxedArguments.READ_ONLY
+                                    : ForBoxedArguments.READ_WRITE;
+                        } else {
+                            throw new IllegalStateException("Can only assign a boxed return value to an Object[] type for " + parameterDescription);
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForBoxedArguments.Factory." + name();
+                    }
                 }
             }
 
@@ -6081,7 +6219,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              ClassReader classReader) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.READ_WRITE,
-                                        OffsetMapping.ForBoxedArguments.INSTANCE,
+                                        OffsetMapping.ForBoxedArguments.Factory.READ_WRITE,
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
@@ -6244,7 +6382,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(
                                         OffsetMapping.ForParameter.Factory.READ_WRITE,
-                                        OffsetMapping.ForBoxedArguments.INSTANCE,
+                                        OffsetMapping.ForBoxedArguments.Factory.READ_WRITE,
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
@@ -7294,7 +7432,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory> userFactories) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.READ_ONLY,
-                                        OffsetMapping.ForBoxedArguments.INSTANCE,
+                                        OffsetMapping.ForBoxedArguments.Factory.READ_ONLY,
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
@@ -7387,7 +7525,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(
                                         OffsetMapping.ForParameter.Factory.READ_ONLY,
-                                        OffsetMapping.ForBoxedArguments.INSTANCE,
+                                        OffsetMapping.ForBoxedArguments.Factory.READ_ONLY,
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
@@ -7933,7 +8071,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public @interface BoxedArguments {
-        /* boxed */
+
+        /**
+         * <p>
+         * Determines if it should be possible to assign an array with boxed argument values of all parameters which replace the original
+         * parameters. If the assigned array has less arguments than the current methods has parameters, an {@link ArrayIndexOutOfBoundsException}
+         * is thrown. It it contains incompatible types, a {@link ClassCastException} is thrown.
+         * </p>
+         * <p>
+         * <b>Important</b>: It is not possible to assign elements of the annotated array. Instead, an array needs to be assigned to
+         * the annotated parameter. This does not necessarily imply allocation overhead as local allocations are typically removed
+         * by the JVM's optimizer. Writing directly to the annotated parameter has no effect.
+         * </p>
+         *
+         * @return {@code true} if it should be possible to assign an array of replacement arguments to the annotated parameter.
+         */
+        boolean readOnly() default true;
     }
 
     /**

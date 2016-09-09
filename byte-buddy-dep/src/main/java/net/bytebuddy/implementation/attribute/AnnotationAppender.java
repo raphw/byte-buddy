@@ -10,6 +10,8 @@ import org.objectweb.asm.*;
 import java.lang.reflect.Array;
 import java.util.List;
 
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 /**
  * Annotation appenders are capable of writing annotations to a specified target.
  */
@@ -308,13 +310,7 @@ public interface AnnotationAppender {
          * @param value             The annotation's value.
          */
         public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
-            if (valueType.isAnnotation()) {
-                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, AnnotationValueFilter.Default.APPEND_DEFAULTS);
-            } else if (valueType.isEnum()) {
-                annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((EnumerationDescription) value).getValue());
-            } else if (valueType.isAssignableFrom(Class.class)) {
-                annotationVisitor.visit(name, Type.getType(((TypeDescription) value).getDescriptor()));
-            } else if (valueType.isArray()) {
+            if (valueType.isArray()) { // The Android emulator reads annotation arrays as annotation types. Therefore, this check needs to come first.
                 AnnotationVisitor arrayVisitor = annotationVisitor.visitArray(name);
                 int length = Array.getLength(value);
                 TypeDescription componentType = valueType.getComponentType();
@@ -322,6 +318,12 @@ public interface AnnotationAppender {
                     apply(arrayVisitor, componentType, NO_NAME, Array.get(value, index));
                 }
                 arrayVisitor.visitEnd();
+            } else if (valueType.isAnnotation()) {
+                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, AnnotationValueFilter.Default.APPEND_DEFAULTS);
+            } else if (valueType.isEnum()) {
+                annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((EnumerationDescription) value).getValue());
+            } else if (valueType.represents(Class.class)) {
+                annotationVisitor.visit(name, Type.getType(((TypeDescription) value).getDescriptor()));
             } else {
                 annotationVisitor.visit(name, value);
             }

@@ -14,7 +14,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
-public class AdviceBoxedAssignmentTest {
+public class AdviceBoxedReturnAssignmentTest {
 
     private static final String FOO = "foo";
 
@@ -40,7 +40,7 @@ public class AdviceBoxedAssignmentTest {
 
     private final Object expected;
 
-    public AdviceBoxedAssignmentTest(Class<?> type, Object expected) {
+    public AdviceBoxedReturnAssignmentTest(Class<?> type, Object expected) {
         this.type = type;
         this.expected = expected;
     }
