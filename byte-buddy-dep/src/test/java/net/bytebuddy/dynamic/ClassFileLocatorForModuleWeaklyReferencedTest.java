@@ -99,7 +99,7 @@ public class ClassFileLocatorForModuleWeaklyReferencedTest {
     public void testLocateModules() throws Exception {
         ClassFileLocator classFileLocator = new ClassFileLocator.ForModule.WeaklyReferenced(JavaModule.ofType(Object.class).unwrap());
         assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(true));
-        assertThat(classFileLocator.locate(getClass().getName()).isResolved(), is(true));
+        assertThat(classFileLocator.locate(getClass().getName()).isResolved(), is(false));
     }
 
     @Test

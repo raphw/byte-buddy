@@ -88,7 +88,7 @@ public class ClassFileLocatorForModuleTest {
     public void testBootPath() throws Exception {
         ClassFileLocator classFileLocator = ClassFileLocator.ForModule.ofBootLayer();
         assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(true));
-        assertThat(classFileLocator.locate(getClass().getName()).isResolved(), is(true));
+        assertThat(classFileLocator.locate(getClass().getName()).isResolved(), is(false));
     }
 
     @Test
