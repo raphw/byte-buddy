@@ -610,20 +610,17 @@ public interface TypePool {
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && annotationToken.equals(((RawAnnotationValue) other).annotationToken);
+                return this == other || (other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve()));
             }
 
             @Override
             public int hashCode() {
-                return annotationToken.hashCode();
+                return resolve().hashCode();
             }
 
             @Override
             public String toString() {
-                return "TypePool.AbstractBase.RawAnnotationValue{" +
-                        "annotationToken=" + annotationToken +
-                        '}';
+                return resolve().toString();
             }
         }
 
@@ -680,22 +677,17 @@ public interface TypePool {
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && descriptor.equals(((RawEnumerationValue) other).descriptor)
-                        && value.equals(((RawEnumerationValue) other).value);
+                return this == other || (other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve()));
             }
 
             @Override
             public int hashCode() {
-                return 31 * descriptor.hashCode() + value.hashCode();
+                return resolve().hashCode();
             }
 
             @Override
             public String toString() {
-                return "TypePool.DefaultLazyTypeDescription.AnnotationValue.ForEnumeration{" +
-                        "descriptor='" + descriptor + '\'' +
-                        ", value='" + value + '\'' +
-                        '}';
+                return resolve().toString();
             }
 
             /**
@@ -746,7 +738,7 @@ public interface TypePool {
              * @param typePool The type pool to use for looking up types.
              * @param type     A type representation of the type that is referenced by the annotation..
              */
-            public RawTypeValue(TypePool typePool, Type type) {
+            protected RawTypeValue(TypePool typePool, Type type) {
                 this.typePool = typePool;
                 name = type.getSort() == Type.ARRAY
                         ? type.getInternalName().replace('/', '.')
@@ -765,20 +757,17 @@ public interface TypePool {
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && name.equals(((RawTypeValue) other).name);
+                return this == other || (other instanceof AnnotationValue<?, ?> && resolve().equals(((AnnotationValue<?, ?>) other).resolve()));
             }
 
             @Override
             public int hashCode() {
-                return name.hashCode();
+                return resolve().hashCode();
             }
 
             @Override
             public String toString() {
-                return "TypePool.DefaultLazyTypeDescription.AnnotationValue.ForType{" +
-                        "name='" + name + '\'' +
-                        '}';
+                return resolve().toString();
             }
 
             /**
@@ -831,9 +820,9 @@ public interface TypePool {
         }
 
         /**
-         * Represents an array that is referenced by an annotation which does not contain primitive values.
+         * Represents an array that is referenced by an annotation which does not contain primitive values or {@link String}s.
          */
-        protected static class RawNonPrimitiveArray extends AnnotationValue.AbstractBase<Object[], Object[]> {
+        protected static class RawComplexArray extends AnnotationValue.AbstractBase<Object[], Object[]> {
 
             /**
              * The type pool to use for looking up types.
@@ -848,20 +837,20 @@ public interface TypePool {
             /**
              * A list of all values of this array value in their order.
              */
-            private List<AnnotationValue<?, ?>> value;
+            private List<AnnotationValue<?, ?>> values;
 
             /**
              * Creates a new array value representation of a complex array.
              *
              * @param typePool               The type pool to use for looking up types.
              * @param componentTypeReference A lazy reference to the component type of this array.
-             * @param value                  A list of all values of this annotation.
+             * @param values                 A list of all values of this annotation.
              */
-            public RawNonPrimitiveArray(TypePool typePool,
-                                        ComponentTypeReference componentTypeReference,
-                                        List<AnnotationValue<?, ?>> value) {
+            public RawComplexArray(TypePool typePool,
+                                   ComponentTypeReference componentTypeReference,
+                                   List<AnnotationValue<?, ?>> values) {
                 this.typePool = typePool;
-                this.value = value;
+                this.values = values;
                 this.componentTypeReference = componentTypeReference;
             }
 
@@ -880,9 +869,9 @@ public interface TypePool {
                 } else {
                     throw new IllegalStateException("Unexpected complex array component type " + componentTypeDescription);
                 }
-                Object[] array = (Object[]) Array.newInstance(componentType, value.size());
+                Object[] array = (Object[]) Array.newInstance(componentType, values.size());
                 int index = 0;
-                for (AnnotationValue<?, ?> annotationValue : value) {
+                for (AnnotationValue<?, ?> annotationValue : values) {
                     Array.set(array, index++, annotationValue.resolve());
                 }
                 return array;
@@ -890,31 +879,29 @@ public interface TypePool {
 
             @Override
             public AnnotationValue.Loaded<Object[]> load(ClassLoader classLoader) throws ClassNotFoundException {
-                List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(value.size());
-                for (AnnotationValue<?, ?> value : this.value) {
+                List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(values.size());
+                for (AnnotationValue<?, ?> value : values) {
                     loadedValues.add(value.load(classLoader));
                 }
-                return new Loaded(classLoader.loadClass(componentTypeReference.lookup()), loadedValues);
+                return new Loaded(Class.forName(componentTypeReference.lookup(), false, classLoader), loadedValues);
             }
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && componentTypeReference.equals(((RawNonPrimitiveArray) other).componentTypeReference)
-                        && value.equals(((RawNonPrimitiveArray) other).value);
+                if (this == other) return true;
+                if (!(other instanceof AnnotationValue<?, ?>)) return false;
+                Object value = ((AnnotationValue<?, ?>) other).resolve();
+                return value instanceof Object[] && Arrays.equals(resolve(), (Object[]) value);
             }
 
             @Override
             public int hashCode() {
-                return 31 * value.hashCode() + componentTypeReference.hashCode();
+                return Arrays.hashCode(resolve());
             }
 
             @Override
             public String toString() {
-                return "TypePool.DefaultLazyTypeDescription.AnnotationValue.ForComplexArray{" +
-                        "value=" + value +
-                        ", componentTypeReference=" + componentTypeReference +
-                        '}';
+                return Arrays.toString(resolve());
             }
 
             /**
@@ -1779,7 +1766,7 @@ public interface TypePool {
              *             query for resolving an array's component type.
              * @return A component type reference to an annotation value's component type.
              */
-            RawNonPrimitiveArray.ComponentTypeReference bind(String name);
+            RawComplexArray.ComponentTypeReference bind(String name);
 
             /**
              * A component type locator which cannot legally resolve an array's component type.
@@ -1792,7 +1779,7 @@ public interface TypePool {
                 INSTANCE;
 
                 @Override
-                public RawNonPrimitiveArray.ComponentTypeReference bind(String name) {
+                public RawComplexArray.ComponentTypeReference bind(String name) {
                     throw new IllegalStateException("Unexpected lookup of component type for " + name);
                 }
 
@@ -1830,7 +1817,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public RawNonPrimitiveArray.ComponentTypeReference bind(String name) {
+                public RawComplexArray.ComponentTypeReference bind(String name) {
                     return new Bound(name);
                 }
 
@@ -1860,7 +1847,7 @@ public interface TypePool {
                  * A bound representation of a
                  * {@link net.bytebuddy.pool.TypePool.Default.ComponentTypeLocator.ForAnnotationProperty}.
                  */
-                protected class Bound implements RawNonPrimitiveArray.ComponentTypeReference {
+                protected class Bound implements RawComplexArray.ComponentTypeReference {
 
                     /**
                      * The name of the annotation property.
@@ -1922,7 +1909,7 @@ public interface TypePool {
             /**
              * A component type locator that locates an array type by a method's return value from its method descriptor.
              */
-            class ForArrayType implements ComponentTypeLocator, RawNonPrimitiveArray.ComponentTypeReference {
+            class ForArrayType implements ComponentTypeLocator, RawComplexArray.ComponentTypeReference {
 
                 /**
                  * The resolved component type's binary name.
@@ -1940,7 +1927,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public RawNonPrimitiveArray.ComponentTypeReference bind(String name) {
+                public RawComplexArray.ComponentTypeReference bind(String name) {
                     return this;
                 }
 
@@ -6417,7 +6404,7 @@ public interface TypePool {
                     if (annotationValue == null) {
                         annotationValue = getAnnotationType().getDeclaredMethods().filter(is(property)).getOnly().getDefaultValue();
                     }
-                    if (annotationValue != null) { // TODO
+                    if (annotationValue != null) {
                         return annotationValue;
                     }
                     throw new IllegalStateException(property + " is not defined on annotation");
@@ -7854,7 +7841,7 @@ public interface TypePool {
                     /**
                      * A lazy reference to resolve the component type of the collected array.
                      */
-                    private final RawNonPrimitiveArray.ComponentTypeReference componentTypeReference;
+                    private final RawComplexArray.ComponentTypeReference componentTypeReference;
 
                     /**
                      * A list of all annotation values that are found on this array.
@@ -7867,7 +7854,7 @@ public interface TypePool {
                      * @param name                   The name of the annotation property the collected array is representing.
                      * @param componentTypeReference A lazy reference to resolve the component type of the collected array.
                      */
-                    protected ArrayLookup(String name, RawNonPrimitiveArray.ComponentTypeReference componentTypeReference) {
+                    protected ArrayLookup(String name, RawComplexArray.ComponentTypeReference componentTypeReference) {
                         this.name = name;
                         this.componentTypeReference = componentTypeReference;
                         values = new ArrayList<AnnotationValue<?, ?>>();
@@ -7880,7 +7867,7 @@ public interface TypePool {
 
                     @Override
                     public void onComplete() {
-                        annotationRegistrant.register(name, new RawNonPrimitiveArray(Default.this, componentTypeReference, values));
+                        annotationRegistrant.register(name, new RawComplexArray(Default.this, componentTypeReference, values));
                     }
 
                     @Override

@@ -220,8 +220,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && propertyDispatcher.equals(value, ((ForConstant) other).value);
+            return other == this || (other instanceof AnnotationValue<?, ?> && propertyDispatcher.equals(value, ((AnnotationValue<?, ?>) other).resolve()));
         }
 
         @Override
@@ -231,10 +230,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public String toString() {
-            return "AnnotationValue.ForConstant{" +
-                    "value=" + value +
-                    ", propertyDispatcher=" + propertyDispatcher +
-                    '}';
+            return propertyDispatcher.toString(value);
         }
 
         /**
@@ -326,7 +322,7 @@ public interface AnnotationValue<T, S> {
          * @return An annotation value representing the given annotation.
          */
         public static <V extends Annotation> AnnotationValue<AnnotationDescription, V> of(TypeDescription annotationType,
-                                                                                          Map<String, AnnotationValue<?, ?>> annotationValues) {
+                                                                                          Map<String, ? extends AnnotationValue<?, ?>> annotationValues) {
             return new ForAnnotation<V>(new AnnotationDescription.Latent(annotationType, annotationValues));
         }
 
@@ -344,10 +340,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ForAnnotation that = (ForAnnotation) other;
-            return annotationDescription.equals(that.annotationDescription);
+            return this == other || (other instanceof AnnotationValue<?, ?> && annotationDescription.equals(((AnnotationValue<?, ?>) other).resolve()));
         }
 
         @Override
@@ -357,9 +350,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public String toString() {
-            return "AnnotationValue.ForAnnotation{" +
-                    "annotationDescription=" + annotationDescription +
-                    '}';
+            return annotationDescription.toString();
         }
 
         /**
@@ -499,10 +490,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ForEnumeration that = (ForEnumeration) other;
-            return enumerationDescription.equals(that.enumerationDescription);
+            return this == other || (other instanceof AnnotationValue<?, ?> && enumerationDescription.equals(((AnnotationValue<?, ?>) other).resolve()));
         }
 
         @Override
@@ -512,9 +500,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public String toString() {
-            return "AnnotationValue.ForEnumeration{" +
-                    "enumerationDescription=" + enumerationDescription +
-                    '}';
+            return enumerationDescription.toString();
         }
 
         /**
@@ -704,10 +690,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ForType forType = (ForType) other;
-            return typeDescription.equals(forType.typeDescription);
+            return this == other || (other instanceof AnnotationValue<?, ?> && typeDescription.equals(((AnnotationValue<?, ?>) other).resolve()));
         }
 
         @Override
@@ -717,9 +700,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public String toString() {
-            return "AnnotationValue.ForType{" +
-                    "typeDescription=" + typeDescription +
-                    '}';
+            return typeDescription.toString();
         }
 
         /**
@@ -892,28 +873,46 @@ public interface AnnotationValue<T, S> {
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ForComplexArray that = (ForComplexArray) other;
-            return annotationValues.equals(that.annotationValues)
-                    && componentType.equals(that.componentType)
-                    && unloadedComponentType.equals(that.unloadedComponentType);
+            if (!(other instanceof AnnotationValue<?, ?>)) return false;
+            AnnotationValue<?, ?> loadedOther = (AnnotationValue<?, ?>) other;
+            Object otherValue = loadedOther.resolve();
+            if (!(otherValue instanceof Object[])) return false;
+            Object[] otherArrayValue = (Object[]) otherValue;
+            if (annotationValues.size() != otherArrayValue.length) return false;
+            Iterator<? extends AnnotationValue<?, ?>> iterator = annotationValues.iterator();
+            for (Object value : otherArrayValue) {
+                AnnotationValue<?, ?> self = iterator.next();
+                if (!self.resolve().equals(value)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         @Override
         public int hashCode() {
-            int result = unloadedComponentType.hashCode();
-            result = 31 * result + componentType.hashCode();
-            result = 31 * result + annotationValues.hashCode();
+            int result = 1;
+            for (AnnotationValue<?, ?> annotationValue : annotationValues) {
+                result = 31 * result + annotationValue.hashCode();
+            }
             return result;
         }
 
         @Override
         public String toString() {
-            return "AnnotationValue.ForComplexArray{" +
-                    "unloadedComponentType=" + unloadedComponentType +
-                    ", componentType=" + componentType +
-                    ", annotationValues=" + annotationValues +
-                    '}';
+            char open, close;
+            if (componentType.represents(TypeDescription.class)) {
+                open = PropertyDispatcher.TypeRenderer.CURRENT.getOpen();
+                close = PropertyDispatcher.TypeRenderer.CURRENT.getClose();
+            } else {
+                open = '[';
+                close = ']';
+            }
+            StringBuilder stringBuilder = new StringBuilder().append(open);
+            for (AnnotationValue<?, ?> annotationValue : annotationValues) {
+                stringBuilder.append(annotationValue.toString());
+            }
+            return stringBuilder.append(close).toString();
         }
 
         /**

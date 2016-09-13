@@ -179,7 +179,7 @@ public interface AnnotationDescription {
         @SuppressWarnings("unchecked")
         public static <S extends Annotation> S of(ClassLoader classLoader,
                                                   Class<S> annotationType,
-                                                  Map<String, AnnotationValue<?, ?>> values) throws ClassNotFoundException {
+                                                  Map<String, ? extends AnnotationValue<?, ?>> values) throws ClassNotFoundException {
             Method[] declaredMethod = annotationType.getDeclaredMethods();
             LinkedHashMap<Method, AnnotationValue.Loaded<?>> loadedValues = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>();
             for (Method method : declaredMethod) {
@@ -516,12 +516,12 @@ public interface AnnotationDescription {
                 return false;
             }
             AnnotationDescription annotationDescription = ((AnnotationDescription) other);
-            if (!annotationDescription.getAnnotationType().equals(getAnnotationType())) {
+            TypeDescription annotationType = getAnnotationType();
+            if (!annotationDescription.getAnnotationType().equals(annotationType)) {
                 return false;
             }
-            for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
-                Object value = getValue(methodDescription).resolve();
-                if (!PropertyDispatcher.of(value.getClass()).equals(value, annotationDescription.getValue(methodDescription).resolve())) {
+            for (MethodDescription.InDefinedShape methodDescription : annotationType.getDeclaredMethods()) {
+                if (!getValue(methodDescription).equals(annotationDescription.getValue(methodDescription))) {
                     return false;
                 }
             }
@@ -532,32 +532,25 @@ public interface AnnotationDescription {
         public int hashCode() {
             int hashCode = 0;
             for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
-                Object value = getValue(methodDescription).resolve();
-                hashCode += 31 * PropertyDispatcher.of(value.getClass()).hashCode(value);
+                hashCode += 31 * getValue(methodDescription).hashCode();
             }
             return hashCode;
         }
 
         @Override
         public String toString() {
-            StringBuilder toString = new StringBuilder();
-            toString.append('@');
-            toString.append(getAnnotationType().getName());
-            toString.append('(');
+            TypeDescription annotationType = getAnnotationType();
+            StringBuilder toString = new StringBuilder().append('@').append(annotationType.getName()).append('(');
             boolean firstMember = true;
-            for (MethodDescription.InDefinedShape methodDescription : getAnnotationType().getDeclaredMethods()) {
+            for (MethodDescription.InDefinedShape methodDescription : annotationType.getDeclaredMethods()) {
                 if (firstMember) {
                     firstMember = false;
                 } else {
                     toString.append(", ");
                 }
-                toString.append(methodDescription.getName());
-                toString.append('=');
-                Object value = getValue(methodDescription).resolve();
-                toString.append(PropertyDispatcher.of(value.getClass()).toString(value));
+                toString.append(methodDescription.getName()).append('=').append(getValue(methodDescription));
             }
-            toString.append(')');
-            return toString.toString();
+            return toString.append(')').toString();
         }
 
         /**
@@ -754,7 +747,7 @@ public interface AnnotationDescription {
         /**
          * The values of the annotation mapped by their property name.
          */
-        private final Map<String, AnnotationValue<?, ?>> annotationValues;
+        private final Map<String, ? extends AnnotationValue<?, ?>> annotationValues;
 
         /**
          * Creates a new latent annotation description.
@@ -762,7 +755,7 @@ public interface AnnotationDescription {
          * @param annotationType   The type of the annotation.
          * @param annotationValues The values of the annotation mapped by their property name.
          */
-        protected Latent(TypeDescription annotationType, Map<String, AnnotationValue<?, ?>> annotationValues) {
+        protected Latent(TypeDescription annotationType, Map<String, ? extends AnnotationValue<?, ?>> annotationValues) {
             this.annotationType = annotationType;
             this.annotationValues = annotationValues;
         }
