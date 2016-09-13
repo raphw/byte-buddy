@@ -21,7 +21,7 @@ public class TypeDescriptionGenericOfParameterizedTypeRenderingDelegateTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription typeDescription, erasure;
+    private TypeDescription typeDescription;
 
     @Mock
     private TypeDescription.Generic ownerType;
@@ -30,8 +30,6 @@ public class TypeDescriptionGenericOfParameterizedTypeRenderingDelegateTest {
     public void setUp() throws Exception {
         when(typeDescription.getName()).thenReturn(FOO + "." + BAR);
         when(typeDescription.getSimpleName()).thenReturn(BAR);
-        when(ownerType.asErasure()).thenReturn(erasure);
-        when(erasure.getName()).thenReturn(FOO);
     }
 
     @Test

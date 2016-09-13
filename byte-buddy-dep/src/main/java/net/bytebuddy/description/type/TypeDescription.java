@@ -5049,9 +5049,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 LEGACY_VM {
                     @Override
                     protected void apply(StringBuilder stringBuilder, TypeDescription typeDescription, Generic ownerType) {
-                        stringBuilder.append('.');
-                        stringBuilder.append(ownerType.getSort().isParameterized()
-                                ? typeDescription.getName().substring(ownerType.asErasure().getName().length() + 1)
+                        stringBuilder.append('.').append(ownerType.getSort().isParameterized()
+                                ? typeDescription.getSimpleName()
                                 : typeDescription.getName());
                     }
                 },
