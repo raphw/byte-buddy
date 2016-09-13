@@ -6580,6 +6580,7 @@ public interface AgentBuilder {
              * allows to process module information which is available since Java 9.
              *
              * @param rawModule            The instrumented class's Java {@code java.lang.reflect.Module}.
+             * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
              * @param internalTypeName     The internal name of the instrumented class.
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
              * @param protectionDomain     The instrumented type's protection domain.
@@ -6587,11 +6588,13 @@ public interface AgentBuilder {
              * @return The transformed class file or an empty byte array if this transformer does not apply an instrumentation.
              */
             protected byte[] transform(Object rawModule,
+                                       ClassLoader classLoader,
                                        String internalTypeName,
                                        Class<?> classBeingRedefined,
                                        ProtectionDomain protectionDomain,
                                        byte[] binaryRepresentation) {
                 return AccessController.doPrivileged(new Java9CapableVmDispatcher(rawModule,
+                        classLoader,
                         internalTypeName,
                         classBeingRedefined,
                         protectionDomain,
@@ -6910,6 +6913,7 @@ public interface AgentBuilder {
                                 .method(named("transform").and(takesArgument(0, JavaType.MODULE.load())))
                                 .intercept(MethodCall.invoke(ExecutingTransformer.class.getDeclaredMethod("transform",
                                         Object.class,
+                                        ClassLoader.class,
                                         String.class,
                                         Class.class,
                                         ProtectionDomain.class,
@@ -7059,6 +7063,11 @@ public interface AgentBuilder {
                 private final Object rawModule;
 
                 /**
+                 * The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+                 */
+                private final ClassLoader classLoader;
+
+                /**
                  * The type's internal name or {@code null} if no such name exists.
                  */
                 private final String internalTypeName;
@@ -7083,17 +7092,20 @@ public interface AgentBuilder {
                  * Creates a new legacy dispatcher.
                  *
                  * @param rawModule            The type's {@code java.lang.reflect.Module}.
+                 * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
                  * @param internalTypeName     The type's internal name or {@code null} if no such name exists.
                  * @param classBeingRedefined  The class being redefined or {@code null} if no such class exists.
                  * @param protectionDomain     The type's protection domain.
                  * @param binaryRepresentation The type's binary representation.
                  */
                 protected Java9CapableVmDispatcher(Object rawModule,
+                                                   ClassLoader classLoader,
                                                    String internalTypeName,
                                                    Class<?> classBeingRedefined,
                                                    ProtectionDomain protectionDomain,
                                                    byte[] binaryRepresentation) {
                     this.rawModule = rawModule;
+                    this.classLoader = classLoader;
                     this.internalTypeName = internalTypeName;
                     this.classBeingRedefined = classBeingRedefined;
                     this.protectionDomain = protectionDomain;
@@ -7102,9 +7114,8 @@ public interface AgentBuilder {
 
                 @Override
                 public byte[] run() {
-                    JavaModule module = JavaModule.of(rawModule);
-                    return transform(module,
-                            module.getClassLoader(),
+                    return transform(JavaModule.of(rawModule),
+                            classLoader,
                             internalTypeName,
                             classBeingRedefined,
                             protectionDomain,
@@ -7126,6 +7137,7 @@ public interface AgentBuilder {
                     if (object == null || getClass() != object.getClass()) return false;
                     Java9CapableVmDispatcher that = (Java9CapableVmDispatcher) object;
                     return rawModule.equals(that.rawModule)
+                            && (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null)
                             && (internalTypeName != null ? internalTypeName.equals(that.internalTypeName) : that.internalTypeName == null)
                             && (classBeingRedefined != null ? classBeingRedefined.equals(that.classBeingRedefined) : that.classBeingRedefined == null)
                             && protectionDomain.equals(that.protectionDomain)
@@ -7136,6 +7148,7 @@ public interface AgentBuilder {
                 @Override
                 public int hashCode() {
                     int result = rawModule.hashCode();
+                    result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
                     result = 31 * result + (internalTypeName != null ? internalTypeName.hashCode() : 0);
                     result = 31 * result + (classBeingRedefined != null ? classBeingRedefined.hashCode() : 0);
                     result = 31 * result + protectionDomain.hashCode();
@@ -7149,6 +7162,7 @@ public interface AgentBuilder {
                     return "AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher{" +
                             "outer=" + ExecutingTransformer.this +
                             ", rawModule=" + rawModule +
+                            ", classLoader=" + classLoader +
                             ", internalTypeName='" + internalTypeName + '\'' +
                             ", classBeingRedefined=" + classBeingRedefined +
                             ", protectionDomain=" + protectionDomain +

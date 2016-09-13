@@ -1,6 +1,7 @@
 package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.TypeVariableSource;
@@ -5016,17 +5017,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 StringBuilder stringBuilder = new StringBuilder();
                 Generic ownerType = getOwnerType();
                 if (ownerType != null) {
-                    stringBuilder.append(ownerType.getTypeName());
-                    stringBuilder.append(".");
-                    stringBuilder.append(ownerType.getSort().isParameterized()
-                            ? asErasure().getName().replace(ownerType.asErasure().getName() + "$", "")
-                            : asErasure().getName());
+                    RenderingDelegate.CURRENT.apply(stringBuilder.append(ownerType.getTypeName()), asErasure(), ownerType);
                 } else {
                     stringBuilder.append(asErasure().getName());
                 }
                 TypeList.Generic actualTypeArguments = getTypeArguments();
                 if (!actualTypeArguments.isEmpty()) {
-                    stringBuilder.append("<");
+                    stringBuilder.append('<');
                     boolean multiple = false;
                     for (Generic typeArgument : actualTypeArguments) {
                         if (multiple) {
@@ -5035,9 +5032,67 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         stringBuilder.append(typeArgument.getTypeName());
                         multiple = true;
                     }
-                    stringBuilder.append(">");
+                    stringBuilder.append('>');
                 }
                 return stringBuilder.toString();
+            }
+
+            /**
+             * A rendering delegate for resolving a parameterized type's {@link Object#toString()} representation.
+             */
+            protected enum RenderingDelegate {
+
+                /**
+                 * A rendering delegate for any VM prior to Java 9 where types are concatenated using a {@code .} character
+                 * and where the fully qualified names are appended to non-parameterized types.
+                 */
+                LEGACY_VM {
+                    @Override
+                    protected void apply(StringBuilder stringBuilder, TypeDescription typeDescription, Generic ownerType) {
+                        stringBuilder.append('.');
+                        stringBuilder.append(ownerType.getSort().isParameterized()
+                                ? typeDescription.getName().substring(ownerType.asErasure().getName().length() + 1) // TODO: Correct?
+                                : typeDescription.getName());
+                    }
+                },
+
+                /**
+                 * A rendering delegate for any VM supporting Java 9 or newer where a type's simple name is appended.
+                 */
+                JAVA_9_CAPABLE_VM {
+                    @Override
+                    protected void apply(StringBuilder stringBuilder, TypeDescription typeDescription, Generic ownerType) {
+                        stringBuilder.append('$').append(typeDescription.getSimpleName());
+                    }
+                };
+
+                /**
+                 * A rendering delegate for the current VM.
+                 */
+                protected static final RenderingDelegate CURRENT;
+
+                /*
+                 * Resolves the current VM's rendering delegate.
+                 */
+                static {
+                    CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+                            ? RenderingDelegate.JAVA_9_CAPABLE_VM
+                            : RenderingDelegate.LEGACY_VM;
+                }
+
+                /**
+                 * Applies this rendering delegate.
+                 *
+                 * @param stringBuilder   The string builder which is used for creating a parameterized type's string representation.
+                 * @param typeDescription The rendered type's erasure.
+                 * @param ownerType       The rendered type's owner type.
+                 */
+                protected abstract void apply(StringBuilder stringBuilder, TypeDescription typeDescription, Generic ownerType);
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.OfParameterizedType.RenderingDelegate." + name();
+                }
             }
 
             /**

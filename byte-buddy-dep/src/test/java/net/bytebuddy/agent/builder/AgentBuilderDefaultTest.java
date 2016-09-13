@@ -1386,8 +1386,8 @@ public class AgentBuilderDefaultTest {
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) throws Exception {
         try {
-            return (byte[]) ClassFileTransformer.class.getDeclaredMethod("transform", Class.forName("java.lang.reflect.Module"), String.class, Class.class, ProtectionDomain.class, byte[].class)
-                    .invoke(classFileTransformer, javaModule.unwrap(), typeName, type, protectionDomain, binaryRepresentation);
+            return (byte[]) ClassFileTransformer.class.getDeclaredMethod("transform", Class.forName("java.lang.reflect.Module"), ClassLoader.class, String.class, Class.class, ProtectionDomain.class, byte[].class)
+                    .invoke(classFileTransformer, javaModule.unwrap(), classLoader, typeName, type, protectionDomain, binaryRepresentation);
         } catch (Exception ignored) {
             return classFileTransformer.transform(classLoader, typeName, type, protectionDomain, binaryRepresentation);
         }

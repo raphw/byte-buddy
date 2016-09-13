@@ -62,7 +62,7 @@ public class ClassFileLocatorForClassLoaderTest {
     public void testReadTypeBootstrapClassLoader() throws Exception {
         ClassFileLocator.Resolution resolution = ClassFileLocator.ForClassLoader.read(Object.class);
         assertThat(resolution.isResolved(), is(true));
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(Object.class.getName().replace('.', '/') + ".class");
+        InputStream inputStream = Object.class.getResourceAsStream(Object.class.getSimpleName() + ".class");
         try {
             assertThat(resolution.resolve(), is(StreamDrainer.DEFAULT.drain(inputStream)));
         } finally {
