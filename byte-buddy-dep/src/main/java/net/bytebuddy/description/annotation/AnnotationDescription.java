@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.utility.PropertyDispatcher;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import java.lang.annotation.*;
@@ -180,15 +179,22 @@ public interface AnnotationDescription {
         public static <S extends Annotation> S of(ClassLoader classLoader,
                                                   Class<S> annotationType,
                                                   Map<String, ? extends AnnotationValue<?, ?>> values) throws ClassNotFoundException {
-            Method[] declaredMethod = annotationType.getDeclaredMethods();
             LinkedHashMap<Method, AnnotationValue.Loaded<?>> loadedValues = new LinkedHashMap<Method, AnnotationValue.Loaded<?>>();
-            for (Method method : declaredMethod) {
+            for (Method method : annotationType.getDeclaredMethods()) {
                 AnnotationValue<?, ?> annotationValue = values.get(method.getName());
-                loadedValues.put(method, annotationValue == null
-                        ? DefaultValue.of(method)
-                        : annotationValue.load(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader));
+                loadedValues.put(method, (annotationValue == null
+                        ? defaultValueOf(method)
+                        : annotationValue).load(classLoader));
             }
             return (S) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType}, new AnnotationInvocationHandler<S>(annotationType, loadedValues));
+        }
+
+        @SuppressWarnings("unchecked")
+        private static AnnotationValue<?, ?> defaultValueOf(Method method) {
+            Object defaultValue = method.getDefaultValue();
+            return defaultValue == null
+                    ? new MissingValue((Class<? extends Annotation>) method.getReturnType(), method.getName())
+                    : AnnotationDescription.ForLoadedAnnotation.asValue(defaultValue, method.getReturnType());
         }
 
         /**
@@ -304,25 +310,20 @@ public interface AnnotationDescription {
             }
             try {
                 for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
-                    if (entry.getValue().getState().isResolved()) {
-                        try {
-                            if (!PropertyDispatcher.of(entry.getKey().getReturnType())
-                                    .equals(entry.getValue().resolve(), entry.getKey().invoke(other))) {
-                                return false;
-                            }
-                        } catch (RuntimeException exception) {
-                            return false; // Incomplete annotations are not equal to one another.
+                    try {
+                        if (!entry.getValue().represents(entry.getKey().invoke(other))) {
+                            return false;
                         }
-                    } else {
-                        return false;
+                    } catch (RuntimeException exception) {
+                        return false; // Incomplete annotations are not equal to one another.
                     }
                 }
+                return true;
             } catch (InvocationTargetException ignored) {
                 return false;
             } catch (IllegalAccessException exception) {
-                throw new AssertionError(exception);
+                throw new IllegalStateException("Could not access annotation property", exception);
             }
-            return true;
         }
 
         @Override
@@ -333,9 +334,8 @@ public interface AnnotationDescription {
             if (!annotationType.equals(that.annotationType)) {
                 return false;
             }
-            for (Map.Entry<Method, ?> entry : values.entrySet()) {
-                Object value = that.values.get(entry.getKey());
-                if (!PropertyDispatcher.of(value.getClass()).equals(value, entry.getValue())) {
+            for (Map.Entry<Method, AnnotationValue.Loaded<?>> entry : values.entrySet()) {
+                if (!entry.getValue().equals(that.values.get(entry.getKey()))) {
                     return false;
                 }
             }
@@ -347,7 +347,7 @@ public interface AnnotationDescription {
             int result = annotationType.hashCode();
             result = 31 * result + values.hashCode();
             for (Map.Entry<Method, ?> entry : values.entrySet()) {
-                result = 31 * result + PropertyDispatcher.of(entry.getValue().getClass()).hashCode(entry.getValue());
+                result = 31 * result + entry.getValue().hashCode();
             }
             return result;
         }
@@ -361,79 +361,9 @@ public interface AnnotationDescription {
         }
 
         /**
-         * Represents a default value for an annotation property that is not explicitly defined by
-         * an annotation.
-         */
-        protected static class DefaultValue extends AnnotationValue.Loaded.AbstractBase<Object> {
-
-            /**
-             * The represented default value.
-             */
-            private final Object defaultValue;
-
-            /**
-             * The property dispatcher for the type of the default value.
-             */
-            private final PropertyDispatcher propertyDispatcher;
-
-            /**
-             * Creates a new representation of an existent default value.
-             *
-             * @param defaultValue The represented, non-{@code null} default value.
-             */
-            private DefaultValue(Object defaultValue) {
-                this.defaultValue = defaultValue;
-                propertyDispatcher = PropertyDispatcher.of(defaultValue.getClass());
-            }
-
-            /**
-             * Creates a default value representation for a given method which might or might not provide such
-             * a default value.
-             *
-             * @param method The method for which a default value is to be extracted.
-             * @return An annotation value representation for the given method.
-             */
-            @SuppressWarnings("unchecked")
-            protected static AnnotationValue.Loaded<?> of(Method method) {
-                Object defaultValue = method.getDefaultValue();
-                return defaultValue == null
-                        ? new Missing((Class<? extends Annotation>) method.getDeclaringClass(), method.getName())
-                        : new DefaultValue(defaultValue);
-            }
-
-            @Override
-            public State getState() {
-                return State.RESOLVED;
-            }
-
-            @Override
-            public Object resolve() {
-                return propertyDispatcher.conditionalClone(defaultValue);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
-                AnnotationValue.Loaded<?> loaded = (AnnotationValue.Loaded<?>) other;
-                return loaded.getState().isResolved() && propertyDispatcher.equals(defaultValue, loaded.resolve());
-            }
-
-            @Override
-            public int hashCode() {
-                return propertyDispatcher.hashCode(defaultValue);
-            }
-
-            @Override
-            public String toString() {
-                return propertyDispatcher.toString(defaultValue);
-            }
-        }
-
-        /**
          * Represents a missing annotation property which is not represented by a default value.
          */
-        private static class Missing extends AnnotationValue.Loaded.AbstractBase<Void> {
+        protected static class MissingValue extends AnnotationValue.Loaded.AbstractBase<Void> implements AnnotationValue<Void, Void> {
 
             /**
              * The annotation type.
@@ -451,20 +381,32 @@ public interface AnnotationDescription {
              * @param annotationType The annotation type.
              * @param property       The name of the property without an annotation value.
              */
-            private Missing(Class<? extends Annotation> annotationType, String property) {
+            protected MissingValue(Class<? extends Annotation> annotationType, String property) {
                 this.annotationType = annotationType;
                 this.property = property;
             }
 
             @Override
             public State getState() {
-                return State.NON_DEFINED;
+                return State.UNDEFINED;
+            }
+
+            @Override
+            public boolean represents(Object value) {
+                return false;
+            }
+
+            @Override
+            public Loaded<Void> load(ClassLoader classLoader) {
+                return this;
             }
 
             @Override
             public Void resolve() {
                 throw new IncompleteAnnotationException(annotationType, property);
             }
+
+            /* TODO: equals/toString statement */
         }
     }
 
@@ -660,7 +602,7 @@ public interface AnnotationDescription {
         public static AnnotationValue<?, ?> asValue(Object value, Class<?> type) {
             // Because enums can implement annotation interfaces, the enum property needs to be checked first.
             if (Enum.class.isAssignableFrom(type)) {
-                return AnnotationValue.ForEnumeration.<Enum>of(new EnumerationDescription.ForLoadedEnumeration((Enum) value));
+                return AnnotationValue.ForEnumerationDescription.<Enum>of(new EnumerationDescription.ForLoadedEnumeration((Enum) value));
             } else if (Enum[].class.isAssignableFrom(type)) {
                 Enum<?>[] element = (Enum<?>[]) value;
                 EnumerationDescription[] enumerationDescription = new EnumerationDescription[element.length];
@@ -668,9 +610,9 @@ public interface AnnotationDescription {
                 for (Enum<?> anElement : element) {
                     enumerationDescription[index++] = new EnumerationDescription.ForLoadedEnumeration(anElement);
                 }
-                return AnnotationValue.ForComplexArray.<Enum>of(new TypeDescription.ForLoadedType(type.getComponentType()), enumerationDescription);
+                return AnnotationValue.ForDescriptionArray.<Enum>of(new TypeDescription.ForLoadedType(type.getComponentType()), enumerationDescription);
             } else if (Annotation.class.isAssignableFrom(type)) {
-                return AnnotationValue.ForAnnotation.<Annotation>of(new TypeDescription.ForLoadedType(type), asValue((Annotation) value));
+                return AnnotationValue.ForAnnotationDescription.<Annotation>of(new TypeDescription.ForLoadedType(type), asValue((Annotation) value));
             } else if (Annotation[].class.isAssignableFrom(type)) {
                 Annotation[] element = (Annotation[]) value;
                 AnnotationDescription[] annotationDescription = new AnnotationDescription[element.length];
@@ -678,9 +620,9 @@ public interface AnnotationDescription {
                 for (Annotation anElement : element) {
                     annotationDescription[index++] = new AnnotationDescription.Latent(new TypeDescription.ForLoadedType(type.getComponentType()), asValue(anElement));
                 }
-                return AnnotationValue.ForComplexArray.of(new TypeDescription.ForLoadedType(type.getComponentType()), annotationDescription);
+                return AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(type.getComponentType()), annotationDescription);
             } else if (Class.class.isAssignableFrom(type)) {
-                return AnnotationValue.ForType.<Class>of(new TypeDescription.ForLoadedType((Class<?>) value));
+                return AnnotationValue.ForTypeDescription.<Class>of(new TypeDescription.ForLoadedType((Class<?>) value));
             } else if (Class[].class.isAssignableFrom(type)) {
                 Class<?>[] element = (Class<?>[]) value;
                 TypeDescription[] typeDescription = new TypeDescription[element.length];
@@ -688,9 +630,9 @@ public interface AnnotationDescription {
                 for (Class<?> anElement : element) {
                     typeDescription[index++] = new TypeDescription.ForLoadedType(anElement);
                 }
-                return AnnotationValue.ForComplexArray.of(typeDescription);
+                return AnnotationValue.ForDescriptionArray.of(typeDescription);
             } else {
-                return new AnnotationValue.ForConstant<Object>(value);
+                return AnnotationValue.ForConstant.of(value);
             }
         }
 
@@ -932,7 +874,7 @@ public interface AnnotationDescription {
          */
         @SuppressWarnings("unchecked")
         public Builder define(String property, EnumerationDescription value) {
-            return define(property, AnnotationValue.ForEnumeration.<Enum>of(value));
+            return define(property, AnnotationValue.ForEnumerationDescription.<Enum>of(value));
         }
 
         /**
@@ -954,7 +896,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional annotation property.
          */
         public Builder define(String property, AnnotationDescription annotationDescription) {
-            return define(property, new AnnotationValue.ForAnnotation<Annotation>(annotationDescription));
+            return define(property, new AnnotationValue.ForAnnotationDescription<Annotation>(annotationDescription));
         }
 
         /**
@@ -977,7 +919,7 @@ public interface AnnotationDescription {
          */
         @SuppressWarnings("unchecked")
         public Builder define(String property, TypeDescription typeDescription) {
-            return define(property, AnnotationValue.ForType.<Class>of(typeDescription));
+            return define(property, AnnotationValue.ForTypeDescription.<Class>of(typeDescription));
         }
 
         /**
@@ -1028,7 +970,7 @@ public interface AnnotationDescription {
          */
         @SuppressWarnings("unchecked")
         public Builder defineEnumerationArray(String property, TypeDescription enumerationType, EnumerationDescription... value) {
-            return define(property, AnnotationValue.ForComplexArray.<Enum>of(enumerationType, value));
+            return define(property, AnnotationValue.ForDescriptionArray.<Enum>of(enumerationType, value));
         }
 
         /**
@@ -1056,7 +998,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional annotation property.
          */
         public Builder defineAnnotationArray(String property, TypeDescription annotationType, AnnotationDescription... annotationDescription) {
-            return define(property, AnnotationValue.ForComplexArray.of(annotationType, annotationDescription));
+            return define(property, AnnotationValue.ForDescriptionArray.of(annotationType, annotationDescription));
         }
 
         /**
@@ -1079,7 +1021,7 @@ public interface AnnotationDescription {
          */
         @SuppressWarnings("unchecked")
         public Builder defineTypeArray(String property, TypeDescription... typeDescription) {
-            return define(property, AnnotationValue.ForComplexArray.of(typeDescription));
+            return define(property, AnnotationValue.ForDescriptionArray.of(typeDescription));
         }
 
         /**
@@ -1090,7 +1032,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code boolean} property.
          */
         public Builder define(String property, boolean value) {
-            return define(property, new AnnotationValue.ForConstant<Boolean>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1101,7 +1043,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code byte} property.
          */
         public Builder define(String property, byte value) {
-            return define(property, new AnnotationValue.ForConstant<Byte>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1112,7 +1054,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code char} property.
          */
         public Builder define(String property, char value) {
-            return define(property, new AnnotationValue.ForConstant<Character>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1123,7 +1065,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code short} property.
          */
         public Builder define(String property, short value) {
-            return define(property, new AnnotationValue.ForConstant<Short>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1134,7 +1076,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code int} property.
          */
         public Builder define(String property, int value) {
-            return define(property, new AnnotationValue.ForConstant<Integer>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1145,7 +1087,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code long} property.
          */
         public Builder define(String property, long value) {
-            return define(property, new AnnotationValue.ForConstant<Long>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1156,7 +1098,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code float} property.
          */
         public Builder define(String property, float value) {
-            return define(property, new AnnotationValue.ForConstant<Float>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1167,7 +1109,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code double} property.
          */
         public Builder define(String property, double value) {
-            return define(property, new AnnotationValue.ForConstant<Double>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1178,7 +1120,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@link java.lang.String} property.
          */
         public Builder define(String property, String value) {
-            return define(property, new AnnotationValue.ForConstant<String>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1189,7 +1131,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code boolean} array property.
          */
         public Builder defineArray(String property, boolean... value) {
-            return define(property, new AnnotationValue.ForConstant<boolean[]>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1200,7 +1142,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code byte} array property.
          */
         public Builder defineArray(String property, byte... value) {
-            return define(property, new AnnotationValue.ForConstant<byte[]>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1211,7 +1153,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code char} array property.
          */
         public Builder defineArray(String property, char... value) {
-            return define(property, new AnnotationValue.ForConstant<char[]>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1222,7 +1164,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code short} array property.
          */
         public Builder defineArray(String property, short... value) {
-            return define(property, new AnnotationValue.ForConstant<short[]>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1233,7 +1175,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code int} array property.
          */
         public Builder defineArray(String property, int... value) {
-            return define(property, new AnnotationValue.ForConstant<int[]>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1244,7 +1186,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code long} array property.
          */
         public Builder defineArray(String property, long... value) {
-            return define(property, new AnnotationValue.ForConstant<long[]>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1255,7 +1197,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code float} array property.
          */
         public Builder defineArray(String property, float... value) {
-            return define(property, new AnnotationValue.ForConstant<float[]>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1266,7 +1208,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@code double} array property.
          */
         public Builder defineArray(String property, double... value) {
-            return define(property, new AnnotationValue.ForConstant<double[]>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**
@@ -1277,7 +1219,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional {@link java.lang.String} array property.
          */
         public Builder defineArray(String property, String... value) {
-            return define(property, new AnnotationValue.ForConstant<String[]>(value));
+            return define(property, AnnotationValue.ForConstant.of(value));
         }
 
         /**

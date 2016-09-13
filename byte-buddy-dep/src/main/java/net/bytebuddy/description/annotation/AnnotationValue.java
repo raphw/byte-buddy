@@ -2,14 +2,10 @@ package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.PropertyDispatcher;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Representation of an unloaded annotation value where all values represent either:
@@ -105,22 +101,24 @@ public interface AnnotationValue<T, S> {
          */
         <V> V resolve(Class<? extends V> type);
 
+        boolean represents(Object value);
+
         /**
          * Represents the state of a {@link Loaded} annotation property.
          */
         enum State {
 
             /**
-             * A non-defined annotation value describes an annotation property which is missing such that
+             * An undefined annotation value describes an annotation property which is missing such that
              * an {@link java.lang.annotation.IncompleteAnnotationException} would be thrown.
              */
-            NON_DEFINED,
+            UNDEFINED,
 
             /**
-             * A non-resolved annotation value describes an annotation property which does not represent a
+             * An unresolved annotation value describes an annotation property which does not represent a
              * valid value but an exceptional state.
              */
-            NON_RESOLVED,
+            UNRESOLVED,
 
             /**
              * A resolved annotation value describes an annotation property with an actual value.
@@ -134,7 +132,7 @@ public interface AnnotationValue<T, S> {
              * @return {@code true} if the related annotation value is defined.
              */
             public boolean isDefined() {
-                return this != NON_DEFINED;
+                return this != UNDEFINED;
             }
 
             /**
@@ -188,24 +186,127 @@ public interface AnnotationValue<T, S> {
      */
     class ForConstant<U> extends AbstractBase<U, U> {
 
-        /**
-         * The represented value.
-         */
         private final U value;
 
-        /**
-         * A property dispatcher for the given value.
-         */
-        private final PropertyDispatcher propertyDispatcher;
+        private final PropertyDelegate propertyDelegate;
 
-        /**
-         * Creates a new representation of a trivial annotation value.
-         *
-         * @param value The value to represent.
-         */
-        public ForConstant(U value) {
+        protected ForConstant(U value, PropertyDelegate propertyDelegate) {
             this.value = value;
-            propertyDispatcher = PropertyDispatcher.of(value.getClass());
+            this.propertyDelegate = propertyDelegate;
+        }
+
+        public static AnnotationValue<Boolean, Boolean> of(boolean value) {
+            return new ForConstant<Boolean>(value, PropertyDelegate.ForNonArrayType.BOOLEAN);
+        }
+
+        public static AnnotationValue<Byte, Byte> of(byte value) {
+            return new ForConstant<Byte>(value, PropertyDelegate.ForNonArrayType.BYTE);
+        }
+
+        public static AnnotationValue<Short, Short> of(short value) {
+            return new ForConstant<Short>(value, PropertyDelegate.ForNonArrayType.SHORT);
+        }
+
+        public static AnnotationValue<Character, Character> of(char value) {
+            return new ForConstant<Character>(value, PropertyDelegate.ForNonArrayType.CHARACTER);
+        }
+
+        public static AnnotationValue<Integer, Integer> of(int value) {
+            return new ForConstant<Integer>(value, PropertyDelegate.ForNonArrayType.INTEGER);
+        }
+
+        public static AnnotationValue<Long, Long> of(long value) {
+            return new ForConstant<Long>(value, PropertyDelegate.ForNonArrayType.LONG);
+        }
+
+        public static AnnotationValue<Float, Float> of(float value) {
+            return new ForConstant<Float>(value, PropertyDelegate.ForNonArrayType.FLOAT);
+        }
+
+        public static AnnotationValue<Double, Double> of(double value) {
+            return new ForConstant<Double>(value, PropertyDelegate.ForNonArrayType.DOUBLE);
+        }
+
+        public static AnnotationValue<String, String> of(String value) {
+            return new ForConstant<String>(value, PropertyDelegate.ForNonArrayType.STRING);
+        }
+
+        public static AnnotationValue<boolean[], boolean[]> of(boolean... value) {
+            return new ForConstant<boolean[]>(value, PropertyDelegate.ForArrayType.BOOLEAN);
+        }
+
+        public static AnnotationValue<byte[], byte[]> of(byte... value) {
+            return new ForConstant<byte[]>(value, PropertyDelegate.ForArrayType.BYTE);
+        }
+
+        public static AnnotationValue<short[], short[]> of(short... value) {
+            return new ForConstant<short[]>(value, PropertyDelegate.ForArrayType.SHORT);
+        }
+
+        public static AnnotationValue<char[], char[]> of(char... value) {
+            return new ForConstant<char[]>(value, PropertyDelegate.ForArrayType.CHARACTER);
+        }
+
+        public static AnnotationValue<int[], int[]> of(int... value) {
+            return new ForConstant<int[]>(value, PropertyDelegate.ForArrayType.INTEGER);
+        }
+
+        public static AnnotationValue<long[], long[]> of(long... value) {
+            return new ForConstant<long[]>(value, PropertyDelegate.ForArrayType.LONG);
+        }
+
+        public static AnnotationValue<float[], float[]> of(float... value) {
+            return new ForConstant<float[]>(value, PropertyDelegate.ForArrayType.FLOAT);
+        }
+
+        public static AnnotationValue<double[], double[]> of(double... value) {
+            return new ForConstant<double[]>(value, PropertyDelegate.ForArrayType.DOUBLE);
+        }
+
+        public static AnnotationValue<String[], String[]> of(String... value) {
+            return new ForConstant<String[]>(value, PropertyDelegate.ForArrayType.STRING);
+        }
+
+        public static AnnotationValue<?, ?> of(Object value) {
+            if (value instanceof Boolean) {
+                return of(((Boolean) value).booleanValue());
+            } else if (value instanceof Byte) {
+                return of(((Byte) value).byteValue());
+            } else if (value instanceof Short) {
+                return of(((Short) value).shortValue());
+            } else if (value instanceof Character) {
+                return of(((Character) value).charValue());
+            } else if (value instanceof Integer) {
+                return of(((Integer) value).intValue());
+            } else if (value instanceof Long) {
+                return of(((Long) value).longValue());
+            } else if (value instanceof Float) {
+                return of(((Float) value).floatValue());
+            } else if (value instanceof Double) {
+                return of(((Double) value).doubleValue());
+            } else if (value instanceof String) {
+                return of((String) value);
+            } else if (value instanceof boolean[]) {
+                return of((boolean[]) value);
+            } else if (value instanceof byte[]) {
+                return of((byte[]) value);
+            } else if (value instanceof short[]) {
+                return of((short[]) value);
+            } else if (value instanceof char[]) {
+                return of((char[]) value);
+            } else if (value instanceof int[]) {
+                return of((int[]) value);
+            } else if (value instanceof long[]) {
+                return of((long[]) value);
+            } else if (value instanceof float[]) {
+                return of((float[]) value);
+            } else if (value instanceof double[]) {
+                return of((double[]) value);
+            } else if (value instanceof String[]) {
+                return of((String[]) value);
+            } else {
+                throw new IllegalArgumentException("Not a constant annotation value: " + value);
+            }
         }
 
         @Override
@@ -215,22 +316,283 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public AnnotationValue.Loaded<U> load(ClassLoader classLoader) {
-            return new Loaded<U>(value, propertyDispatcher);
+            return new Loaded<U>(value, propertyDelegate);
         }
 
         @Override
         public boolean equals(Object other) {
-            return other == this || (other instanceof AnnotationValue<?, ?> && propertyDispatcher.equals(value, ((AnnotationValue<?, ?>) other).resolve()));
+            return other == this || (other instanceof AnnotationValue<?, ?> && propertyDelegate.equals(value, ((AnnotationValue<?, ?>) other).resolve()));
         }
 
         @Override
         public int hashCode() {
-            return propertyDispatcher.hashCode(value);
+            return propertyDelegate.hashCode(value);
         }
 
         @Override
         public String toString() {
-            return propertyDispatcher.toString(value);
+            return propertyDelegate.toString(value);
+        }
+
+        protected interface PropertyDelegate {
+
+            <S> S copy(S value);
+
+            int hashCode(Object value);
+
+            boolean equals(Object self, Object other);
+
+            String toString(Object value);
+
+            enum ForNonArrayType implements PropertyDelegate {
+
+                BOOLEAN,
+
+                BYTE,
+
+                SHORT,
+
+                CHARACTER,
+
+                INTEGER,
+
+                LONG,
+
+                FLOAT,
+
+                DOUBLE,
+
+                STRING;
+
+                @Override
+                public <S> S copy(S value) {
+                    return value;
+                }
+
+                @Override
+                public int hashCode(Object value) {
+                    return value.hashCode();
+                }
+
+                @Override
+                public boolean equals(Object self, Object other) {
+                    return self.equals(other);
+                }
+
+                @Override
+                public String toString(Object value) {
+                    return value.toString();
+                }
+            }
+
+            enum ForArrayType implements PropertyDelegate {
+
+                BOOLEAN {
+                    @Override
+                    protected Object doCopy(Object value) {
+                        return ((boolean[]) value).clone();
+                    }
+
+                    @Override
+                    public int hashCode(Object value) {
+                        return Arrays.hashCode((boolean[]) value);
+                    }
+
+                    @Override
+                    public boolean equals(Object self, Object other) {
+                        return other instanceof boolean[] && Arrays.equals((boolean[]) self, (boolean[]) other);
+                    }
+
+                    @Override
+                    public String toString(Object value) {
+                        return Arrays.toString((boolean[]) value);
+                    }
+                },
+
+                BYTE {
+                    @Override
+                    protected Object doCopy(Object value) {
+                        return ((byte[]) value).clone();
+                    }
+
+                    @Override
+                    public int hashCode(Object value) {
+                        return Arrays.hashCode((byte[]) value);
+                    }
+
+                    @Override
+                    public boolean equals(Object self, Object other) {
+                        return other instanceof byte[] && Arrays.equals((byte[]) self, (byte[]) other);
+                    }
+
+                    @Override
+                    public String toString(Object value) {
+                        return Arrays.toString((byte[]) value);
+                    }
+                },
+
+                SHORT {
+                    @Override
+                    protected Object doCopy(Object value) {
+                        return ((short[]) value).clone();
+                    }
+
+                    @Override
+                    public int hashCode(Object value) {
+                        return Arrays.hashCode((short[]) value);
+                    }
+
+                    @Override
+                    public boolean equals(Object self, Object other) {
+                        return other instanceof short[] && Arrays.equals((short[]) self, (short[]) other);
+                    }
+
+                    @Override
+                    public String toString(Object value) {
+                        return Arrays.toString((short[]) value);
+                    }
+                },
+
+                CHARACTER {
+                    @Override
+                    protected Object doCopy(Object value) {
+                        return ((char[]) value).clone();
+                    }
+
+                    @Override
+                    public int hashCode(Object value) {
+                        return Arrays.hashCode((char[]) value);
+                    }
+
+                    @Override
+                    public boolean equals(Object self, Object other) {
+                        return other instanceof char[] && Arrays.equals((char[]) self, (char[]) other);
+                    }
+
+                    @Override
+                    public String toString(Object value) {
+                        return Arrays.toString((char[]) value);
+                    }
+                },
+
+                INTEGER {
+                    @Override
+                    protected Object doCopy(Object value) {
+                        return ((int[]) value).clone();
+                    }
+
+                    @Override
+                    public int hashCode(Object value) {
+                        return Arrays.hashCode((int[]) value);
+                    }
+
+                    @Override
+                    public boolean equals(Object self, Object other) {
+                        return other instanceof int[] && Arrays.equals((int[]) self, (int[]) other);
+                    }
+
+                    @Override
+                    public String toString(Object value) {
+                        return Arrays.toString((int[]) value);
+                    }
+                },
+
+                LONG {
+                    @Override
+                    protected Object doCopy(Object value) {
+                        return ((long[]) value).clone();
+                    }
+
+                    @Override
+                    public int hashCode(Object value) {
+                        return Arrays.hashCode((long[]) value);
+                    }
+
+                    @Override
+                    public boolean equals(Object self, Object other) {
+                        return other instanceof long[] && Arrays.equals((long[]) self, (long[]) other);
+                    }
+
+                    @Override
+                    public String toString(Object value) {
+                        return Arrays.toString((long[]) value);
+                    }
+                },
+
+                FLOAT {
+                    @Override
+                    protected Object doCopy(Object value) {
+                        return ((float[]) value).clone();
+                    }
+
+                    @Override
+                    public int hashCode(Object value) {
+                        return Arrays.hashCode((float[]) value);
+                    }
+
+                    @Override
+                    public boolean equals(Object self, Object other) {
+                        return other instanceof float[] && Arrays.equals((float[]) self, (float[]) other);
+                    }
+
+                    @Override
+                    public String toString(Object value) {
+                        return Arrays.toString((float[]) value);
+                    }
+                },
+
+                DOUBLE {
+                    @Override
+                    protected Object doCopy(Object value) {
+                        return ((double[]) value).clone();
+                    }
+
+                    @Override
+                    public int hashCode(Object value) {
+                        return Arrays.hashCode((double[]) value);
+                    }
+
+                    @Override
+                    public boolean equals(Object self, Object other) {
+                        return other instanceof double[] && Arrays.equals((double[]) self, (double[]) other);
+                    }
+
+                    @Override
+                    public String toString(Object value) {
+                        return Arrays.toString((double[]) value);
+                    }
+                },
+
+                STRING {
+                    @Override
+                    protected Object doCopy(Object value) {
+                        return ((String[]) value).clone();
+                    }
+
+                    @Override
+                    public int hashCode(Object value) {
+                        return Arrays.hashCode((String[]) value);
+                    }
+
+                    @Override
+                    public boolean equals(Object self, Object other) {
+                        return other instanceof String[] && Arrays.equals((String[]) self, (String[]) other);
+                    }
+
+                    @Override
+                    public String toString(Object value) {
+                        return Arrays.toString((String[]) value);
+                    }
+                };
+
+                @Override
+                @SuppressWarnings("unchecked")
+                public <S> S copy(S value) {
+                    return (S) doCopy(value);
+                }
+
+                protected abstract Object doCopy(Object value);
+            }
         }
 
         /**
@@ -245,21 +607,11 @@ public interface AnnotationValue<T, S> {
              */
             private final V value;
 
-            /**
-             * The property dispatcher for computing this value's hash code, string and equals implementation.
-             */
-            private final PropertyDispatcher propertyDispatcher;
+            private final PropertyDelegate propertyDelegate;
 
-            /**
-             * Creates a new trivial loaded annotation value representation.
-             *
-             * @param value              The represented value.
-             * @param propertyDispatcher The property dispatcher for computing this value's hash
-             *                           code, string and equals implementation.
-             */
-            public Loaded(V value, PropertyDispatcher propertyDispatcher) {
+            public Loaded(V value, PropertyDelegate propertyDelegate) {
                 this.value = value;
-                this.propertyDispatcher = propertyDispatcher;
+                this.propertyDelegate = propertyDelegate;
             }
 
             @Override
@@ -269,12 +621,17 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public V resolve() {
-                return propertyDispatcher.conditionalClone(value);
+                return propertyDelegate.copy(value);
+            }
+
+            @Override
+            public boolean represents(Object value) {
+                return propertyDelegate.equals(this.value, value);
             }
 
             @Override
             public int hashCode() {
-                return propertyDispatcher.hashCode(value);
+                return propertyDelegate.hashCode(value);
             }
 
             @Override
@@ -282,12 +639,12 @@ public interface AnnotationValue<T, S> {
                 if (this == other) return true;
                 if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
                 AnnotationValue.Loaded<?> loadedOther = (AnnotationValue.Loaded<?>) other;
-                return loadedOther.getState().isResolved() && propertyDispatcher.equals(value, loadedOther.resolve());
+                return loadedOther.getState().isResolved() && propertyDelegate.equals(value, loadedOther.resolve());
             }
 
             @Override
             public String toString() {
-                return propertyDispatcher.toString(value);
+                return propertyDelegate.toString(value);
             }
         }
     }
@@ -297,7 +654,7 @@ public interface AnnotationValue<T, S> {
      *
      * @param <U> The type of the annotation.
      */
-    class ForAnnotation<U extends Annotation> extends AbstractBase<AnnotationDescription, U> {
+    class ForAnnotationDescription<U extends Annotation> extends AbstractBase<AnnotationDescription, U> {
 
         /**
          * The annotation description that this value represents.
@@ -309,7 +666,7 @@ public interface AnnotationValue<T, S> {
          *
          * @param annotationDescription The annotation description that this value represents.
          */
-        public ForAnnotation(AnnotationDescription annotationDescription) {
+        public ForAnnotationDescription(AnnotationDescription annotationDescription) {
             this.annotationDescription = annotationDescription;
         }
 
@@ -323,7 +680,7 @@ public interface AnnotationValue<T, S> {
          */
         public static <V extends Annotation> AnnotationValue<AnnotationDescription, V> of(TypeDescription annotationType,
                                                                                           Map<String, ? extends AnnotationValue<?, ?>> annotationValues) {
-            return new ForAnnotation<V>(new AnnotationDescription.Latent(annotationType, annotationValues));
+            return new ForAnnotationDescription<V>(new AnnotationDescription.Latent(annotationType, annotationValues));
         }
 
         @Override
@@ -385,6 +742,11 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
+            public boolean represents(Object value) {
+                return annotation.equals(value);
+            }
+
+            @Override
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
@@ -432,7 +794,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public State getState() {
-                return State.NON_RESOLVED;
+                return State.UNRESOLVED;
             }
 
             @Override
@@ -440,7 +802,12 @@ public interface AnnotationValue<T, S> {
                 throw new IncompatibleClassChangeError("Not an annotation type: " + incompatibleType.toString());
             }
 
-                /* does intentionally not implement hashCode, equals and toString */
+            @Override
+            public boolean represents(Object value) {
+                return false;
+            }
+
+            /* does intentionally not implement hashCode, equals and toString */
         }
     }
 
@@ -449,7 +816,7 @@ public interface AnnotationValue<T, S> {
      *
      * @param <U> The type of the enumeration.
      */
-    class ForEnumeration<U extends Enum<U>> extends AbstractBase<EnumerationDescription, U> {
+    class ForEnumerationDescription<U extends Enum<U>> extends AbstractBase<EnumerationDescription, U> {
 
         /**
          * The enumeration that is represented.
@@ -461,7 +828,7 @@ public interface AnnotationValue<T, S> {
          *
          * @param enumerationDescription The enumeration that is to be represented.
          */
-        public ForEnumeration(EnumerationDescription enumerationDescription) {
+        protected ForEnumerationDescription(EnumerationDescription enumerationDescription) {
             this.enumerationDescription = enumerationDescription;
         }
 
@@ -473,7 +840,7 @@ public interface AnnotationValue<T, S> {
          * @return An annotation value that describes the given enumeration.
          */
         public static <V extends Enum<V>> AnnotationValue<EnumerationDescription, V> of(EnumerationDescription value) {
-            return new ForEnumeration<V>(value);
+            return new ForEnumerationDescription<V>(value);
         }
 
         @Override
@@ -535,6 +902,11 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
+            public boolean represents(Object value) {
+                return enumeration.equals(value);
+            }
+
+            @Override
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
@@ -589,7 +961,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public State getState() {
-                return State.NON_RESOLVED;
+                return State.UNRESOLVED;
             }
 
             @Override
@@ -597,7 +969,12 @@ public interface AnnotationValue<T, S> {
                 throw new EnumConstantNotPresentException(enumType, value);
             }
 
-                /* hashCode, equals and toString are intentionally not implemented */
+            @Override
+            public boolean represents(Object value) {
+                return false;
+            }
+
+            /* hashCode, equals and toString are intentionally not implemented */
         }
 
         /**
@@ -628,7 +1005,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public State getState() {
-                return State.NON_RESOLVED;
+                return State.UNRESOLVED;
             }
 
             @Override
@@ -636,7 +1013,12 @@ public interface AnnotationValue<T, S> {
                 throw new IncompatibleClassChangeError("Not an enumeration type: " + type.toString());
             }
 
-                /* hashCode, equals and toString are intentionally not implemented */
+            @Override
+            public boolean represents(Object value) {
+                return false;
+            }
+
+            /* hashCode, equals and toString are intentionally not implemented */
         }
     }
 
@@ -645,7 +1027,7 @@ public interface AnnotationValue<T, S> {
      *
      * @param <U> The type of the {@link java.lang.Class} that is described.
      */
-    class ForType<U extends Class<U>> extends AbstractBase<TypeDescription, U> {
+    class ForTypeDescription<U extends Class<U>> extends AbstractBase<TypeDescription, U> {
 
         /**
          * Indicates to a class loading process that class initializers are not required to be executed when loading a type.
@@ -662,7 +1044,7 @@ public interface AnnotationValue<T, S> {
          *
          * @param typeDescription The represented type.
          */
-        public ForType(TypeDescription typeDescription) {
+        protected ForTypeDescription(TypeDescription typeDescription) {
             this.typeDescription = typeDescription;
         }
 
@@ -674,7 +1056,7 @@ public interface AnnotationValue<T, S> {
          * @return An annotation value that represents the given type.
          */
         public static <V extends Class<V>> AnnotationValue<TypeDescription, V> of(TypeDescription typeDescription) {
-            return new ForType<V>(typeDescription);
+            return new ForTypeDescription<V>(typeDescription);
         }
 
         @Override
@@ -735,6 +1117,11 @@ public interface AnnotationValue<T, S> {
             }
 
             @Override
+            public boolean represents(Object value) {
+                return type.equals(value);
+            }
+
+            @Override
             public boolean equals(Object other) {
                 if (this == other) return true;
                 if (!(other instanceof AnnotationValue.Loaded<?>)) return false;
@@ -749,7 +1136,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public String toString() {
-                return PropertyDispatcher.TYPE_LOADED.toString(type);
+                return type.toString();
             }
         }
     }
@@ -762,7 +1149,7 @@ public interface AnnotationValue<T, S> {
      * @param <U> The component type of the annotation's value when it is not loaded.
      * @param <V> The component type of the annotation's value when it is loaded.
      */
-    class ForComplexArray<U, V> extends AbstractBase<U[], V[]> {
+    class ForDescriptionArray<U, V> extends AbstractBase<U[], V[]> {
 
         /**
          * The component type for arrays containing unloaded versions of the annotation array's values.
@@ -786,9 +1173,9 @@ public interface AnnotationValue<T, S> {
          * @param componentType         A description of the component type when it is loaded.
          * @param annotationValues      A list of values of the array elements.
          */
-        protected ForComplexArray(Class<?> unloadedComponentType,
-                                  TypeDescription componentType,
-                                  List<? extends AnnotationValue<?, ?>> annotationValues) {
+        protected ForDescriptionArray(Class<?> unloadedComponentType,
+                                      TypeDescription componentType,
+                                      List<? extends AnnotationValue<?, ?>> annotationValues) {
             this.unloadedComponentType = unloadedComponentType;
             this.componentType = componentType;
             this.annotationValues = annotationValues;
@@ -809,9 +1196,9 @@ public interface AnnotationValue<T, S> {
                 if (!value.getEnumerationType().equals(enumerationType)) {
                     throw new IllegalArgumentException(value + " is not of " + enumerationType);
                 }
-                values.add(ForEnumeration.<W>of(value));
+                values.add(ForEnumerationDescription.<W>of(value));
             }
-            return new ForComplexArray<EnumerationDescription, W>(EnumerationDescription.class, enumerationType, values);
+            return new ForDescriptionArray<EnumerationDescription, W>(EnumerationDescription.class, enumerationType, values);
         }
 
         /**
@@ -829,9 +1216,9 @@ public interface AnnotationValue<T, S> {
                 if (!value.getAnnotationType().equals(annotationType)) {
                     throw new IllegalArgumentException(value + " is not of " + annotationType);
                 }
-                values.add(new ForAnnotation<W>(value));
+                values.add(new ForAnnotationDescription<W>(value));
             }
-            return new ForComplexArray<AnnotationDescription, W>(AnnotationDescription.class, annotationType, values);
+            return new ForDescriptionArray<AnnotationDescription, W>(AnnotationDescription.class, annotationType, values);
         }
 
         /**
@@ -844,9 +1231,9 @@ public interface AnnotationValue<T, S> {
         public static AnnotationValue<TypeDescription[], Class<?>[]> of(TypeDescription[] typeDescription) {
             List<AnnotationValue<TypeDescription, Class<?>>> values = new ArrayList<AnnotationValue<TypeDescription, Class<?>>>(typeDescription.length);
             for (TypeDescription value : typeDescription) {
-                values.add((AnnotationValue) ForType.<Class>of(value));
+                values.add((AnnotationValue) ForTypeDescription.<Class>of(value));
             }
-            return new ForComplexArray<TypeDescription, Class<?>>(TypeDescription.class, TypeDescription.CLASS, values);
+            return new ForDescriptionArray<TypeDescription, Class<?>>(TypeDescription.class, TypeDescription.CLASS, values);
         }
 
         @Override
@@ -900,19 +1287,17 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public String toString() {
-            char open, close;
-            if (componentType.represents(TypeDescription.class)) {
-                open = PropertyDispatcher.TypeRenderer.CURRENT.getOpen();
-                close = PropertyDispatcher.TypeRenderer.CURRENT.getClose();
-            } else {
-                open = '[';
-                close = ']';
-            }
-            StringBuilder stringBuilder = new StringBuilder().append(open);
+            StringBuilder stringBuilder = new StringBuilder().append('[');
+            boolean first = true;
             for (AnnotationValue<?, ?> annotationValue : annotationValues) {
+                if (first) {
+                    first = false;
+                } else {
+                    stringBuilder.append(", ");
+                }
                 stringBuilder.append(annotationValue.toString());
             }
-            return stringBuilder.append(close).toString();
+            return stringBuilder.append(']').toString();
         }
 
         /**
@@ -947,7 +1332,7 @@ public interface AnnotationValue<T, S> {
             public State getState() {
                 for (AnnotationValue.Loaded<?> value : values) {
                     if (!value.getState().isResolved()) {
-                        return State.NON_RESOLVED;
+                        return State.UNRESOLVED;
                     }
                 }
                 return State.RESOLVED;
@@ -962,6 +1347,22 @@ public interface AnnotationValue<T, S> {
                     Array.set(array, index++, annotationValue.resolve());
                 }
                 return array;
+            }
+
+            @Override
+            public boolean represents(Object value) {
+                if (!(value instanceof Object[])) return false;
+                if (value.getClass().getComponentType() != componentType) return false;
+                Object[] array = (Object[]) value;
+                if (values.size() != array.length) return false;
+                Iterator<AnnotationValue.Loaded<?>> iterator = values.iterator();
+                for (Object aValue : array) {
+                    AnnotationValue.Loaded<?> self = iterator.next();
+                    if (!self.represents(aValue)) {
+                        return false;
+                    }
+                }
+                return true;
             }
 
             @Override
@@ -995,19 +1396,17 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public String toString() {
-                char open, close;
-                if (componentType == Class.class) {
-                    open = PropertyDispatcher.TypeRenderer.CURRENT.getOpen();
-                    close = PropertyDispatcher.TypeRenderer.CURRENT.getClose();
-                } else {
-                    open = '[';
-                    close = ']';
-                }
-                StringBuilder stringBuilder = new StringBuilder().append(open);
+                StringBuilder stringBuilder = new StringBuilder().append('[');
+                boolean first = true;
                 for (AnnotationValue.Loaded<?> value : values) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        stringBuilder.append(", ");
+                    }
                     stringBuilder.append(value.toString());
                 }
-                return stringBuilder.append(close).toString();
+                return stringBuilder.append(']').toString();
             }
         }
     }

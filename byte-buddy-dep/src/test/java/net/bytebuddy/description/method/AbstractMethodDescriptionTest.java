@@ -629,41 +629,41 @@ public abstract class AbstractMethodDescriptionTest {
     @SuppressWarnings("unchecked")
     public void testIsDefault() throws Exception {
         Map<String, AnnotationValue<?, ?>> properties = new LinkedHashMap<String, AnnotationValue<?, ?>>();
-        properties.put("boolean_property", new AnnotationValue.ForConstant<Boolean>(true));
-        properties.put("boolean_property_array", new AnnotationValue.ForConstant<boolean[]>(new boolean[]{true}));
-        properties.put("byte_property", new AnnotationValue.ForConstant<Byte>((byte) 0));
-        properties.put("byte_property_array", new AnnotationValue.ForConstant<byte[]>(new byte[]{0}));
-        properties.put("short_property", new AnnotationValue.ForConstant<Short>((short) 0));
-        properties.put("short_property_array", new AnnotationValue.ForConstant<short[]>(new short[]{0}));
-        properties.put("int_property", new AnnotationValue.ForConstant<Integer>(0));
-        properties.put("int_property_array", new AnnotationValue.ForConstant<int[]>(new int[]{0}));
-        properties.put("long_property", new AnnotationValue.ForConstant<Long>(0L));
-        properties.put("long_property_array", new AnnotationValue.ForConstant<long[]>(new long[]{0}));
-        properties.put("float_property", new AnnotationValue.ForConstant<Float>(0f));
-        properties.put("float_property_array", new AnnotationValue.ForConstant<float[]>(new float[]{0}));
-        properties.put("double_property", new AnnotationValue.ForConstant<Double>(0d));
-        properties.put("double_property_array", new AnnotationValue.ForConstant<double[]>(new double[]{0d}));
-        properties.put("string_property", new AnnotationValue.ForConstant<String>("foo"));
-        properties.put("string_property_array", new AnnotationValue.ForConstant<String[]>(new String[]{"foo"}));
+        properties.put("boolean_property", AnnotationValue.ForConstant.of(true));
+        properties.put("boolean_property_array", AnnotationValue.ForConstant.of(new boolean[]{true}));
+        properties.put("byte_property", AnnotationValue.ForConstant.of((byte) 0));
+        properties.put("byte_property_array", AnnotationValue.ForConstant.of(new byte[]{0}));
+        properties.put("short_property", AnnotationValue.ForConstant.of((short) 0));
+        properties.put("short_property_array", AnnotationValue.ForConstant.of(new short[]{0}));
+        properties.put("int_property", AnnotationValue.ForConstant.of(0));
+        properties.put("int_property_array", AnnotationValue.ForConstant.of(new int[]{0}));
+        properties.put("long_property", AnnotationValue.ForConstant.of(0L));
+        properties.put("long_property_array", AnnotationValue.ForConstant.of(new long[]{0}));
+        properties.put("float_property", AnnotationValue.ForConstant.of(0f));
+        properties.put("float_property_array", AnnotationValue.ForConstant.of(new float[]{0}));
+        properties.put("double_property", AnnotationValue.ForConstant.of(0d));
+        properties.put("double_property_array", AnnotationValue.ForConstant.of(new double[]{0d}));
+        properties.put("string_property", AnnotationValue.ForConstant.of("foo"));
+        properties.put("string_property_array", AnnotationValue.ForConstant.of(new String[]{"foo"}));
         AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
         when(annotationDescription.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(SampleAnnotation.class));
-        properties.put("annotation_property", new AnnotationValue.ForConstant<AnnotationDescription>(annotationDescription));
-        properties.put("annotation_property_array", new AnnotationValue.ForConstant<AnnotationDescription[]>(new AnnotationDescription[]{annotationDescription}));
+        properties.put("annotation_property", new AnnotationValue.ForAnnotationDescription(annotationDescription));
+        properties.put("annotation_property_array", AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(SampleAnnotation.class), new AnnotationDescription[]{annotationDescription}));
         EnumerationDescription enumerationDescription = mock(EnumerationDescription.class);
         when(enumerationDescription.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(SampleEnumeration.class));
-        properties.put("enum_property", new AnnotationValue.ForConstant<EnumerationDescription>(enumerationDescription));
-        properties.put("enum_property_array", new AnnotationValue.ForConstant<EnumerationDescription[]>(new EnumerationDescription[]{enumerationDescription}));
+        properties.put("enum_property", AnnotationValue.ForEnumerationDescription.of(enumerationDescription));
+        properties.put("enum_property_array", AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(SampleEnumeration.class), new EnumerationDescription[]{enumerationDescription}));
         MethodList<?> methods = new TypeDescription.ForLoadedType(AnnotationValues.class).getDeclaredMethods();
         for (Map.Entry<String, AnnotationValue<?, ?>> entry : properties.entrySet()) {
             assertThat(methods.filter(named(entry.getKey())).getOnly().isDefaultValue(entry.getValue()), is(true));
             assertThat(methods.filter(named(entry.getKey())).getOnly().isDefaultValue(mock(AnnotationValue.class)), is(false));
         }
         when(annotationDescription.getAnnotationType()).thenReturn(TypeDescription.OBJECT);
-        assertThat(methods.filter(named("annotation_property")).getOnly().isDefaultValue(new AnnotationValue.ForConstant<AnnotationDescription>(annotationDescription)), is(false));
-        assertThat(methods.filter(named("annotation_property_array")).getOnly().isDefaultValue(new AnnotationValue.ForConstant<AnnotationDescription[]>(new AnnotationDescription[]{annotationDescription})), is(false));
+        assertThat(methods.filter(named("annotation_property")).getOnly().isDefaultValue(new AnnotationValue.ForAnnotationDescription(annotationDescription)), is(false));
+        assertThat(methods.filter(named("annotation_property_array")).getOnly().isDefaultValue(AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(Object.class), new AnnotationDescription[]{annotationDescription})), is(false));
         when(enumerationDescription.getEnumerationType()).thenReturn(TypeDescription.OBJECT);
-        assertThat(methods.filter(named("enum_property")).getOnly().isDefaultValue(new AnnotationValue.ForConstant<EnumerationDescription>(enumerationDescription)), is(false));
-        assertThat(methods.filter(named("enum_property_array")).getOnly().isDefaultValue(new AnnotationValue.ForConstant<EnumerationDescription[]>(new EnumerationDescription[]{enumerationDescription})), is(false));
+        assertThat(methods.filter(named("enum_property")).getOnly().isDefaultValue(AnnotationValue.ForEnumerationDescription.of(enumerationDescription)), is(false));
+        assertThat(methods.filter(named("enum_property_array")).getOnly().isDefaultValue(AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(Object.class), new EnumerationDescription[]{enumerationDescription})), is(false));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

@@ -1,7 +1,6 @@
 package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -39,12 +38,6 @@ public class AnnotationDescriptionForLoadedAnnotationTest extends AbstractAnnota
     public void testInoperational() throws Exception {
         describe(PrivateAnnotation.Defect.INSTANCE, Carrier.class)
                 .getValue(new MethodDescription.ForLoadedMethod(PrivateAnnotation.class.getDeclaredMethod("value")));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @Ignore("Rewrite test to consider different class loader.")
-    public void testLoadAnnotationWrongClassLoader() throws Exception {
-        describe(Carrier.class.getAnnotation(PrivateAnnotation.class), Carrier.class).prepare(PrivateAnnotation.class).load();
     }
 
     @Retention(RetentionPolicy.RUNTIME)
