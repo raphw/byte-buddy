@@ -5051,7 +5051,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     protected void apply(StringBuilder stringBuilder, TypeDescription typeDescription, Generic ownerType) {
                         stringBuilder.append('.');
                         stringBuilder.append(ownerType.getSort().isParameterized()
-                                ? typeDescription.getName().substring(ownerType.asErasure().getName().length() + 1) // TODO: Correct?
+                                ? typeDescription.getName().substring(ownerType.asErasure().getName().length() + 1)
                                 : typeDescription.getName());
                     }
                 },
