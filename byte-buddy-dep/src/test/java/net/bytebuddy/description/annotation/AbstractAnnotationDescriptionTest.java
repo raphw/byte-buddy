@@ -194,9 +194,14 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     private void assertToString(String actual, Annotation loaded) throws Exception {
         assertThat(actual, startsWith("@" + loaded.annotationType().getName()));
+        String loadedString = loaded.toString();
+        if (loadedString.length() - loadedString.replace(",", "").length() != loaded.annotationType().getDeclaredMethods().length - 1) {
+            throw new AssertionError("Unexpected amount of commas for " + loaded); // Expect tested annotations not to contain commas in values.
+        }
         for (Method method : loaded.annotationType().getDeclaredMethods()) {
-            // TODO: Description!
-//            assertThat(actual, containsString(method.getName() + "=" + PropertyDispatcher.of(method.getReturnType()).toString(method.invoke(loaded))));
+            assertThat(loadedString.split(method.getName() + "=", -1).length - 1, is(1)); // Expect property delimiter not to exist as value.
+            int start = loadedString.indexOf(method.getName() + "="), end = loadedString.indexOf(',', start);
+            assertThat(actual, containsString(loadedString.substring(start, end == -1 ? loadedString.length() - 1 : end)));
         }
     }
 
@@ -287,7 +292,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     }
 
     @Test
-    @Ignore("Add better handling for annotations with illegal values")
+    @Ignore("Add better handling for annotations with inconsistent values")
     public void testBrokenAnnotation() throws Exception {
         describe(broken);
     }
@@ -457,8 +462,10 @@ public abstract class AbstractAnnotationDescriptionTest {
         VALUE,
         OTHER
     }
+
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Sample2 {
+
         Class<?> foo();
     }
 

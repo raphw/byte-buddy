@@ -908,7 +908,7 @@ public interface InstrumentedType extends TypeDescription {
                     }
                 }
                 AnnotationValue<?, ?> defaultValue = methodDescription.getDefaultValue();
-                if (defaultValue != null && !methodDescription.isDefaultValue(defaultValue)) { // TODO
+                if (defaultValue != null && !methodDescription.isDefaultValue(defaultValue)) {
                     throw new IllegalStateException("Illegal default value " + defaultValue + "for " + methodDescription);
                 }
                 Generic receiverType = methodDescription.getReceiverType();

@@ -767,7 +767,7 @@ public interface TypePool {
 
             @Override
             public String toString() {
-                return resolve().toString();
+                return RenderingDispatcher.CURRENT.toSourceString(resolve());
             }
 
             /**
@@ -819,7 +819,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    return type.toString();
+                    return RenderingDispatcher.CURRENT.toSourceString(new TypeDescription.ForLoadedType(type));
                 }
             }
         }
@@ -906,7 +906,7 @@ public interface TypePool {
 
             @Override
             public String toString() {
-                return Arrays.toString(resolve());
+                return RenderingDispatcher.CURRENT.toSourceString(values);
             }
 
             /**
@@ -1016,11 +1016,7 @@ public interface TypePool {
 
                 @Override
                 public String toString() {
-                    StringBuilder stringBuilder = new StringBuilder("[");
-                    for (AnnotationValue.Loaded<?> value : values) {
-                        stringBuilder.append(value.toString());
-                    }
-                    return stringBuilder.append("]").toString();
+                    return RenderingDispatcher.CURRENT.toSourceString(values);
                 }
             }
         }

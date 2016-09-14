@@ -189,11 +189,16 @@ public interface AnnotationDescription {
             return (S) Proxy.newProxyInstance(classLoader, new Class<?>[]{annotationType}, new AnnotationInvocationHandler<S>(annotationType, loadedValues));
         }
 
-        @SuppressWarnings("unchecked")
+        /**
+         * Creates a default value for the given method.
+         *
+         * @param method The method from which to attempt the extraction of a default value.
+         * @return A default value representation.
+         */
         private static AnnotationValue<?, ?> defaultValueOf(Method method) {
             Object defaultValue = method.getDefaultValue();
             return defaultValue == null
-                    ? new MissingValue((Class<? extends Annotation>) method.getReturnType(), method.getName())
+                    ? MissingValue.of(method)
                     : AnnotationDescription.ForLoadedAnnotation.asValue(defaultValue, method.getReturnType());
         }
 
@@ -386,6 +391,16 @@ public interface AnnotationDescription {
                 this.property = property;
             }
 
+            /**
+             * Creates a missing value for the supplied annotation property.
+             * @param method A method representing an annotation property.
+             * @return An annotation value for a missing property.
+             */
+            @SuppressWarnings("unchecked")
+            protected static AnnotationValue<?, ?> of(Method method) {
+                return new MissingValue((Class<? extends Annotation>) method.getDeclaringClass(), method.getName());
+            }
+
             @Override
             public State getState() {
                 return State.UNDEFINED;
@@ -406,7 +421,7 @@ public interface AnnotationDescription {
                 throw new IncompleteAnnotationException(annotationType, property);
             }
 
-            /* TODO: equals/toString statement */
+            /* does intentionally not implement hashCode, equals and toString */
         }
     }
 

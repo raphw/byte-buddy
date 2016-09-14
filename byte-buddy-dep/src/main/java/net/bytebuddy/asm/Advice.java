@@ -2524,7 +2524,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException(); // TODO
+                        throw new IllegalStateException("Unexpected incrementation for boxed default value");
                     }
 
                     @Override

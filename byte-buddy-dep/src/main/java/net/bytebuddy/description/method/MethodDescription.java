@@ -573,7 +573,7 @@ public interface MethodDescription extends TypeVariableSource,
                 return false;
             }
             TypeDescription returnType = getReturnType().asErasure();
-            Object value = annotationValue.resolve(); // TODO
+            Object value = annotationValue.resolve();
             return (returnType.represents(boolean.class) && value instanceof Boolean)
                     || (returnType.represents(byte.class) && value instanceof Byte)
                     || (returnType.represents(char.class) && value instanceof Character)

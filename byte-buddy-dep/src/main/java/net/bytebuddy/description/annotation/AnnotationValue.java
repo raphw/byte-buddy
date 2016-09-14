@@ -1,5 +1,6 @@
 package net.bytebuddy.description.annotation;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 
@@ -39,10 +40,10 @@ public interface AnnotationValue<T, S> {
      * Resolves the unloaded value of this annotation.
      *
      * @param type The annotation value's unloaded type.
-     * @param <S>  The annotation value's unloaded type.
+     * @param <W>  The annotation value's unloaded type.
      * @return The unloaded value of this annotation.
      */
-    <S> S resolve(Class<? extends S> type);
+    <W> W resolve(Class<? extends W> type);
 
     /**
      * Returns the loaded value of this annotation.
@@ -52,6 +53,244 @@ public interface AnnotationValue<T, S> {
      * @throws ClassNotFoundException If a type that represents a loaded value cannot be found.
      */
     Loaded<S> load(ClassLoader classLoader) throws ClassNotFoundException;
+
+    /**
+     * A rendering dispatcher is responsible for resolving annotation values to {@link String} representations.
+     */
+    enum RenderingDispatcher {
+
+        /**
+         * A rendering dispatcher for any VM previous to Java 9.
+         */
+        LEGACY_VM('[', ']') {
+            @Override
+            public String toSourceString(char value) {
+                return Character.toString(value);
+            }
+
+            @Override
+            public String toSourceString(long value) {
+                return Long.toString(value);
+            }
+
+            @Override
+            public String toSourceString(float value) {
+                return Float.toString(value);
+            }
+
+            @Override
+            public String toSourceString(double value) {
+                return Double.toString(value);
+            }
+
+            @Override
+            public String toSourceString(String value) {
+                return value;
+            }
+
+            @Override
+            public String toSourceString(TypeDescription value) {
+                return value.toString();
+            }
+        },
+
+        /**
+         * A rendering dispatcher for Java 9 onward.
+         */
+        JAVA_9_CAPABLE_VM('{', '}') {
+            @Override
+            public String toSourceString(char value) {
+                StringBuilder stringBuilder = new StringBuilder().append('\'');
+                if (value == '\'') {
+                    stringBuilder.append("\\\'");
+                } else {
+                    stringBuilder.append(value);
+                }
+                return stringBuilder.append('\'').toString();
+            }
+
+            @Override
+            public String toSourceString(long value) {
+                return Math.abs(value) <= Integer.MAX_VALUE
+                        ? String.valueOf(value)
+                        : value + "L";
+            }
+
+            @Override
+            public String toSourceString(float value) {
+                return Math.abs(value) <= Float.MAX_VALUE // Float.isFinite(value)
+                        ? Float.toString(value) + "f"
+                        : (Float.isInfinite(value) ? (value < 0.0f ? "-1.0f/0.0f" : "1.0f/0.0f") : "0.0f/0.0f");
+            }
+
+            @Override
+            public String toSourceString(double value) {
+                return Math.abs(value) <= Double.MAX_VALUE // Double.isFinite(value)
+                        ? Double.toString(value)
+                        : (Double.isInfinite(value) ? (value < 0.0d ? "-1.0/0.0" : "1.0/0.0") : "0.0/0.0");
+            }
+
+            @Override
+            public String toSourceString(String value) {
+                return "\"" + (value.indexOf('"') == -1
+                        ? value
+                        : value.replace("\"", "\\\"")) + "\"";
+            }
+
+            @Override
+            public String toSourceString(TypeDescription value) {
+                return value.getActualName() + ".class";
+            }
+        };
+
+        /**
+         * The rendering dispatcher for the current VM.
+         */
+        public static final RenderingDispatcher CURRENT;
+
+        /*
+         * Resolves the rendering dispatcher for the current VM.
+         */
+        static {
+            CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+                    ? JAVA_9_CAPABLE_VM
+                    : LEGACY_VM;
+        }
+
+        /**
+         * The opening brace of an array {@link String} representation.
+         */
+        private final char openingBrace;
+
+        /**
+         * The closing brace of an array {@link String} representation.
+         */
+        private final char closingBrace;
+
+        /**
+         * Creates a new rendering dispatcher.
+         *
+         * @param openingBrace The opening brace of an array {@link String} representation.
+         * @param closingBrace The closing brace of an array {@link String} representation.
+         */
+        RenderingDispatcher(char openingBrace, char closingBrace) {
+            this.openingBrace = openingBrace;
+            this.closingBrace = closingBrace;
+        }
+
+        /**
+         * Represents the supplied {@code boolean} value as a {@link String}.
+         *
+         * @param value The {@code boolean} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public String toSourceString(boolean value) {
+            return Boolean.toString(value);
+        }
+
+        /**
+         * Represents the supplied {@code boolean} value as a {@link String}.
+         *
+         * @param value The {@code boolean} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public String toSourceString(byte value) {
+            return Byte.toString(value);
+        }
+
+        /**
+         * Represents the supplied {@code short} value as a {@link String}.
+         *
+         * @param value The {@code short} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public String toSourceString(short value) {
+            return Short.toString(value);
+        }
+
+        /**
+         * Represents the supplied {@code char} value as a {@link String}.
+         *
+         * @param value The {@code char} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public abstract String toSourceString(char value);
+
+        /**
+         * Represents the supplied {@code int} value as a {@link String}.
+         *
+         * @param value The {@code int} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public String toSourceString(int value) {
+            return Integer.toString(value);
+        }
+
+        /**
+         * Represents the supplied {@code long} value as a {@link String}.
+         *
+         * @param value The {@code long} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public abstract String toSourceString(long value);
+
+        /**
+         * Represents the supplied {@code float} value as a {@link String}.
+         *
+         * @param value The {@code float} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public abstract String toSourceString(float value);
+
+        /**
+         * Represents the supplied {@code double} value as a {@link String}.
+         *
+         * @param value The {@code double} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public abstract String toSourceString(double value);
+
+        /**
+         * Represents the supplied {@link String} value as a {@link String}.
+         *
+         * @param value The {@link String} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public abstract String toSourceString(String value);
+
+        /**
+         * Represents the supplied {@link TypeDescription} value as a {@link String}.
+         *
+         * @param value The {@link TypeDescription} value to render.
+         * @return An appropriate {@link String} representation.
+         */
+        public abstract String toSourceString(TypeDescription value);
+
+        /**
+         * Represents the supplied list elements as a {@link String}.
+         *
+         * @param values The elements to render where each element is represented by its {@link Object#toString()} representation.
+         * @return An appropriate {@link String} representation.
+         */
+        public String toSourceString(List<?> values) {
+            StringBuilder stringBuilder = new StringBuilder().append(openingBrace);
+            boolean first = true;
+            for (Object value : values) {
+                if (first) {
+                    first = false;
+                } else {
+                    stringBuilder.append(", ");
+                }
+                stringBuilder.append(value);
+            }
+            return stringBuilder.append(closingBrace).toString();
+        }
+
+        @Override
+        public String toString() {
+            return "AnnotationValue.RenderingDispatcher." + name();
+        }
+    }
 
     /**
      * A loaded variant of an {@link AnnotationValue}. While
@@ -101,6 +340,12 @@ public interface AnnotationValue<T, S> {
          */
         <V> V resolve(Class<? extends V> type);
 
+        /**
+         * Verifies if this loaded value represents the supplied loaded value.
+         *
+         * @param value A loaded annotation value.
+         * @return {@code true} if the supplied annotation value is represented by this annotation value.
+         */
         boolean represents(Object value);
 
         /**
@@ -159,7 +404,7 @@ public interface AnnotationValue<T, S> {
         abstract class AbstractBase<W> implements Loaded<W> {
 
             @Override
-            public <S> S resolve(Class<? extends S> type) {
+            public <X> X resolve(Class<? extends X> type) {
                 return type.cast(resolve());
             }
         }
@@ -174,7 +419,7 @@ public interface AnnotationValue<T, S> {
     abstract class AbstractBase<U, V> implements AnnotationValue<U, V> {
 
         @Override
-        public <S> S resolve(Class<? extends S> type) {
+        public <W> W resolve(Class<? extends W> type) {
             return type.cast(resolve());
         }
     }
@@ -186,87 +431,215 @@ public interface AnnotationValue<T, S> {
      */
     class ForConstant<U> extends AbstractBase<U, U> {
 
+        /**
+         * The represented value.
+         */
         private final U value;
 
+        /**
+         * The property delegate for the value's type.
+         */
         private final PropertyDelegate propertyDelegate;
 
+        /**
+         * Creates a new constant annotation value.
+         *
+         * @param value            The represented value.
+         * @param propertyDelegate The property delegate for the value's type.
+         */
         protected ForConstant(U value, PropertyDelegate propertyDelegate) {
             this.value = value;
             this.propertyDelegate = propertyDelegate;
         }
 
+        /**
+         * Creates an annotation value for a {@code boolean} value.
+         *
+         * @param value The {@code boolean} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<Boolean, Boolean> of(boolean value) {
             return new ForConstant<Boolean>(value, PropertyDelegate.ForNonArrayType.BOOLEAN);
         }
 
+        /**
+         * Creates an annotation value for a {@code byte} value.
+         *
+         * @param value The {@code byte} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<Byte, Byte> of(byte value) {
             return new ForConstant<Byte>(value, PropertyDelegate.ForNonArrayType.BYTE);
         }
 
+        /**
+         * Creates an annotation value for a {@code short} value.
+         *
+         * @param value The {@code short} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<Short, Short> of(short value) {
             return new ForConstant<Short>(value, PropertyDelegate.ForNonArrayType.SHORT);
         }
 
+        /**
+         * Creates an annotation value for a {@code char} value.
+         *
+         * @param value The {@code char} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<Character, Character> of(char value) {
             return new ForConstant<Character>(value, PropertyDelegate.ForNonArrayType.CHARACTER);
         }
 
+        /**
+         * Creates an annotation value for a {@code int} value.
+         *
+         * @param value The {@code int} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<Integer, Integer> of(int value) {
             return new ForConstant<Integer>(value, PropertyDelegate.ForNonArrayType.INTEGER);
         }
 
+        /**
+         * Creates an annotation value for a {@code long} value.
+         *
+         * @param value The {@code long} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<Long, Long> of(long value) {
             return new ForConstant<Long>(value, PropertyDelegate.ForNonArrayType.LONG);
         }
 
+        /**
+         * Creates an annotation value for a {@code float} value.
+         *
+         * @param value The {@code float} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<Float, Float> of(float value) {
             return new ForConstant<Float>(value, PropertyDelegate.ForNonArrayType.FLOAT);
         }
 
+        /**
+         * Creates an annotation value for a {@code double} value.
+         *
+         * @param value The {@code double} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<Double, Double> of(double value) {
             return new ForConstant<Double>(value, PropertyDelegate.ForNonArrayType.DOUBLE);
         }
 
+        /**
+         * Creates an annotation value for a {@link String} value.
+         *
+         * @param value The {@link String} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<String, String> of(String value) {
             return new ForConstant<String>(value, PropertyDelegate.ForNonArrayType.STRING);
         }
 
+        /**
+         * Creates an annotation value for a {@code boolean[]} value.
+         *
+         * @param value The {@code boolean[]} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<boolean[], boolean[]> of(boolean... value) {
             return new ForConstant<boolean[]>(value, PropertyDelegate.ForArrayType.BOOLEAN);
         }
 
+        /**
+         * Creates an annotation value for a {@code byte[]} value.
+         *
+         * @param value The {@code byte[]} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<byte[], byte[]> of(byte... value) {
             return new ForConstant<byte[]>(value, PropertyDelegate.ForArrayType.BYTE);
         }
 
+        /**
+         * Creates an annotation value for a {@code short[]} value.
+         *
+         * @param value The {@code short[]} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<short[], short[]> of(short... value) {
             return new ForConstant<short[]>(value, PropertyDelegate.ForArrayType.SHORT);
         }
 
+        /**
+         * Creates an annotation value for a {@code char[]} value.
+         *
+         * @param value The {@code char[]} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<char[], char[]> of(char... value) {
             return new ForConstant<char[]>(value, PropertyDelegate.ForArrayType.CHARACTER);
         }
 
+        /**
+         * Creates an annotation value for a {@code int[]} value.
+         *
+         * @param value The {@code int[]} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<int[], int[]> of(int... value) {
             return new ForConstant<int[]>(value, PropertyDelegate.ForArrayType.INTEGER);
         }
 
+        /**
+         * Creates an annotation value for a {@code long[]} value.
+         *
+         * @param value The {@code long[]} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<long[], long[]> of(long... value) {
             return new ForConstant<long[]>(value, PropertyDelegate.ForArrayType.LONG);
         }
 
+        /**
+         * Creates an annotation value for a {@code float[]} value.
+         *
+         * @param value The {@code float[]} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<float[], float[]> of(float... value) {
             return new ForConstant<float[]>(value, PropertyDelegate.ForArrayType.FLOAT);
         }
 
+        /**
+         * Creates an annotation value for a {@code double[]} value.
+         *
+         * @param value The {@code double[]} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<double[], double[]> of(double... value) {
             return new ForConstant<double[]>(value, PropertyDelegate.ForArrayType.DOUBLE);
         }
 
+        /**
+         * Creates an annotation value for a {@code String[]} value.
+         *
+         * @param value The {@code String[]} value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<String[], String[]> of(String... value) {
             return new ForConstant<String[]>(value, PropertyDelegate.ForArrayType.STRING);
         }
 
+        /**
+         * Creates an annotation value for any constant value, i.e any primitive (wrapper) type,
+         * any primitive array type or any {@link String} value or array. If no constant annotation
+         * type is provided, a runtime exception is thrown.
+         *
+         * @param value The value to represent.
+         * @return An appropriate annotation value.
+         */
         public static AnnotationValue<?, ?> of(Object value) {
             if (value instanceof Boolean) {
                 return of(((Boolean) value).booleanValue());
@@ -334,35 +707,139 @@ public interface AnnotationValue<T, S> {
             return propertyDelegate.toString(value);
         }
 
+        /**
+         * A property delegate for a constant annotation value.
+         */
         protected interface PropertyDelegate {
 
+            /**
+             * Copies the provided value, if it is not immutable.
+             *
+             * @param value The value to copy.
+             * @param <S>   The value's type.
+             * @return A copy of the provided instance or the provided value, if it is immutable.
+             */
             <S> S copy(S value);
 
+            /**
+             * Computes the value's hash code.
+             *
+             * @param value The value for which to compute the hash code.
+             * @return The hash code of the provided value.
+             */
             int hashCode(Object value);
 
+            /**
+             * Determines if another value is equal to a constant annotation value.
+             *
+             * @param self  The value that is represented as a constant annotation value.
+             * @param other Any other value for which to determine equality.
+             * @return {@code true} if the provided value is equal to the represented value.
+             */
             boolean equals(Object self, Object other);
 
+            /**
+             * Renders the supplied value as a {@link String}.
+             *
+             * @param value The value to render.
+             * @return An appropriate {@link String} representation of the provided value.
+             */
             String toString(Object value);
 
+            /**
+             * A property delegate for a non-array type.
+             */
             enum ForNonArrayType implements PropertyDelegate {
 
-                BOOLEAN,
+                /**
+                 * A property delegate for a {@code boolean} value.
+                 */
+                BOOLEAN {
+                    @Override
+                    public String toString(Object value) {
+                        return RenderingDispatcher.CURRENT.toSourceString((Boolean) value);
+                    }
+                },
 
-                BYTE,
+                /**
+                 * A property delegate for a {@code byte} value.
+                 */
+                BYTE {
+                    @Override
+                    public String toString(Object value) {
+                        return RenderingDispatcher.CURRENT.toSourceString((Byte) value);
+                    }
+                },
 
-                SHORT,
+                /**
+                 * A property delegate for a {@code short} value.
+                 */
+                SHORT {
+                    @Override
+                    public String toString(Object value) {
+                        return RenderingDispatcher.CURRENT.toSourceString((Short) value);
+                    }
+                },
 
-                CHARACTER,
+                /**
+                 * A property delegate for a {@code char} value.
+                 */
+                CHARACTER {
+                    @Override
+                    public String toString(Object value) {
+                        return RenderingDispatcher.CURRENT.toSourceString((Character) value);
+                    }
+                },
 
-                INTEGER,
+                /**
+                 * A property delegate for a {@code int} value.
+                 */
+                INTEGER {
+                    @Override
+                    public String toString(Object value) {
+                        return RenderingDispatcher.CURRENT.toSourceString((Integer) value);
+                    }
+                },
 
-                LONG,
+                /**
+                 * A property delegate for a {@code long} value.
+                 */
+                LONG {
+                    @Override
+                    public String toString(Object value) {
+                        return RenderingDispatcher.CURRENT.toSourceString((Long) value);
+                    }
+                },
 
-                FLOAT,
+                /**
+                 * A property delegate for a {@code float} value.
+                 */
+                FLOAT {
+                    @Override
+                    public String toString(Object value) {
+                        return RenderingDispatcher.CURRENT.toSourceString((Float) value);
+                    }
+                },
 
-                DOUBLE,
+                /**
+                 * A property delegate for a {@code double} value.
+                 */
+                DOUBLE {
+                    @Override
+                    public String toString(Object value) {
+                        return RenderingDispatcher.CURRENT.toSourceString((Double) value);
+                    }
+                },
 
-                STRING;
+                /**
+                 * A property delegate for a {@link String} value.
+                 */
+                STRING {
+                    @Override
+                    public String toString(Object value) {
+                        return RenderingDispatcher.CURRENT.toSourceString((String) value);
+                    }
+                };
 
                 @Override
                 public <S> S copy(S value) {
@@ -380,13 +857,19 @@ public interface AnnotationValue<T, S> {
                 }
 
                 @Override
-                public String toString(Object value) {
-                    return value.toString();
+                public String toString() {
+                    return "AnnotationValue.ForConstant.PropertyDelegate.ForNonArrayType." + name();
                 }
             }
 
+            /**
+             * A property delegate for an array type of a constant value.
+             */
             enum ForArrayType implements PropertyDelegate {
 
+                /**
+                 * A property delegate for a {@code boolean[]} value.
+                 */
                 BOOLEAN {
                     @Override
                     protected Object doCopy(Object value) {
@@ -404,11 +887,14 @@ public interface AnnotationValue<T, S> {
                     }
 
                     @Override
-                    public String toString(Object value) {
-                        return Arrays.toString((boolean[]) value);
+                    protected String toString(Object array, int index) {
+                        return ForNonArrayType.BOOLEAN.toString(Array.getBoolean(array, index));
                     }
                 },
 
+                /**
+                 * A property delegate for a {@code byte[]} value.
+                 */
                 BYTE {
                     @Override
                     protected Object doCopy(Object value) {
@@ -426,11 +912,14 @@ public interface AnnotationValue<T, S> {
                     }
 
                     @Override
-                    public String toString(Object value) {
-                        return Arrays.toString((byte[]) value);
+                    protected String toString(Object array, int index) {
+                        return ForNonArrayType.BYTE.toString(Array.getByte(array, index));
                     }
                 },
 
+                /**
+                 * A property delegate for a {@code short[]} value.
+                 */
                 SHORT {
                     @Override
                     protected Object doCopy(Object value) {
@@ -448,11 +937,14 @@ public interface AnnotationValue<T, S> {
                     }
 
                     @Override
-                    public String toString(Object value) {
-                        return Arrays.toString((short[]) value);
+                    protected String toString(Object array, int index) {
+                        return ForNonArrayType.SHORT.toString(Array.getShort(array, index));
                     }
                 },
 
+                /**
+                 * A property delegate for a {@code char[]} value.
+                 */
                 CHARACTER {
                     @Override
                     protected Object doCopy(Object value) {
@@ -470,11 +962,14 @@ public interface AnnotationValue<T, S> {
                     }
 
                     @Override
-                    public String toString(Object value) {
-                        return Arrays.toString((char[]) value);
+                    protected String toString(Object array, int index) {
+                        return ForNonArrayType.CHARACTER.toString(Array.getChar(array, index));
                     }
                 },
 
+                /**
+                 * A property delegate for a {@code int[]} value.
+                 */
                 INTEGER {
                     @Override
                     protected Object doCopy(Object value) {
@@ -492,11 +987,14 @@ public interface AnnotationValue<T, S> {
                     }
 
                     @Override
-                    public String toString(Object value) {
-                        return Arrays.toString((int[]) value);
+                    protected String toString(Object array, int index) {
+                        return ForNonArrayType.INTEGER.toString(Array.getInt(array, index));
                     }
                 },
 
+                /**
+                 * A property delegate for a {@code long[]} value.
+                 */
                 LONG {
                     @Override
                     protected Object doCopy(Object value) {
@@ -514,11 +1012,14 @@ public interface AnnotationValue<T, S> {
                     }
 
                     @Override
-                    public String toString(Object value) {
-                        return Arrays.toString((long[]) value);
+                    protected String toString(Object array, int index) {
+                        return ForNonArrayType.LONG.toString(Array.getLong(array, index));
                     }
                 },
 
+                /**
+                 * A property delegate for a {@code float[]} value.
+                 */
                 FLOAT {
                     @Override
                     protected Object doCopy(Object value) {
@@ -536,11 +1037,14 @@ public interface AnnotationValue<T, S> {
                     }
 
                     @Override
-                    public String toString(Object value) {
-                        return Arrays.toString((float[]) value);
+                    protected String toString(Object array, int index) {
+                        return ForNonArrayType.FLOAT.toString(Array.getFloat(array, index));
                     }
                 },
 
+                /**
+                 * A property delegate for a {@code double[]} value.
+                 */
                 DOUBLE {
                     @Override
                     protected Object doCopy(Object value) {
@@ -558,11 +1062,14 @@ public interface AnnotationValue<T, S> {
                     }
 
                     @Override
-                    public String toString(Object value) {
-                        return Arrays.toString((double[]) value);
+                    protected String toString(Object array, int index) {
+                        return ForNonArrayType.DOUBLE.toString(Array.getDouble(array, index));
                     }
                 },
 
+                /**
+                 * A property delegate for a {@code String[]} value.
+                 */
                 STRING {
                     @Override
                     protected Object doCopy(Object value) {
@@ -580,8 +1087,8 @@ public interface AnnotationValue<T, S> {
                     }
 
                     @Override
-                    public String toString(Object value) {
-                        return Arrays.toString((String[]) value);
+                    protected String toString(Object array, int index) {
+                        return ForNonArrayType.STRING.toString(Array.get(array, index));
                     }
                 };
 
@@ -591,7 +1098,36 @@ public interface AnnotationValue<T, S> {
                     return (S) doCopy(value);
                 }
 
+                /**
+                 * Creates a copy of the provided array.
+                 *
+                 * @param value The array to copy.
+                 * @return A shallow copy of the provided array.
+                 */
                 protected abstract Object doCopy(Object value);
+
+                @Override
+                public String toString(Object value) {
+                    List<String> elements = new ArrayList<String>(Array.getLength(value));
+                    for (int index = 0; index < Array.getLength(value); index++) {
+                        elements.add(toString(value, index));
+                    }
+                    return RenderingDispatcher.CURRENT.toSourceString(elements);
+                }
+
+                /**
+                 * Renders the array element at the specified index.
+                 *
+                 * @param array The array for which an element should be rendered.
+                 * @param index The index of the array element to render.
+                 * @return A {@link String} representation of the array element at the supplied index.
+                 */
+                protected abstract String toString(Object array, int index);
+
+                @Override
+                public String toString() {
+                    return "AnnotationValue.ForConstant.PropertyDelegate.ForArrayType." + name();
+                }
             }
         }
 
@@ -600,16 +1136,25 @@ public interface AnnotationValue<T, S> {
          *
          * @param <V> The annotation properties type.
          */
-        public static class Loaded<V> extends AnnotationValue.Loaded.AbstractBase<V> {
+        protected static class Loaded<V> extends AnnotationValue.Loaded.AbstractBase<V> {
 
             /**
              * The represented value.
              */
             private final V value;
 
+            /**
+             * The property delegate for the value's type.
+             */
             private final PropertyDelegate propertyDelegate;
 
-            public Loaded(V value, PropertyDelegate propertyDelegate) {
+            /**
+             * Creates a new loaded representation of a constant value.
+             *
+             * @param value            The represented value.
+             * @param propertyDelegate The property delegate for the value's type.
+             */
+            protected Loaded(V value, PropertyDelegate propertyDelegate) {
                 this.value = value;
                 this.propertyDelegate = propertyDelegate;
             }
@@ -1082,7 +1627,7 @@ public interface AnnotationValue<T, S> {
 
         @Override
         public String toString() {
-            return typeDescription.toString();
+            return RenderingDispatcher.CURRENT.toSourceString(typeDescription);
         }
 
         /**
@@ -1136,7 +1681,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public String toString() {
-                return type.toString();
+                return RenderingDispatcher.CURRENT.toSourceString(new TypeDescription.ForLoadedType(type));
             }
         }
     }
@@ -1164,21 +1709,21 @@ public interface AnnotationValue<T, S> {
         /**
          * A list of values of the array elements.
          */
-        private final List<? extends AnnotationValue<?, ?>> annotationValues;
+        private final List<? extends AnnotationValue<?, ?>> values;
 
         /**
          * Creates a new complex array.
          *
          * @param unloadedComponentType The component type for arrays containing unloaded versions of the annotation array's values.
          * @param componentType         A description of the component type when it is loaded.
-         * @param annotationValues      A list of values of the array elements.
+         * @param values                A list of values of the array elements.
          */
         protected ForDescriptionArray(Class<?> unloadedComponentType,
                                       TypeDescription componentType,
-                                      List<? extends AnnotationValue<?, ?>> annotationValues) {
+                                      List<? extends AnnotationValue<?, ?>> values) {
             this.unloadedComponentType = unloadedComponentType;
             this.componentType = componentType;
-            this.annotationValues = annotationValues;
+            this.values = values;
         }
 
         /**
@@ -1239,22 +1784,22 @@ public interface AnnotationValue<T, S> {
         @Override
         public U[] resolve() {
             @SuppressWarnings("unchecked")
-            U[] value = (U[]) Array.newInstance(unloadedComponentType, annotationValues.size());
+            U[] resolved = (U[]) Array.newInstance(unloadedComponentType, values.size());
             int index = 0;
-            for (AnnotationValue<?, ?> annotationValue : annotationValues) {
-                Array.set(value, index++, annotationValue.resolve());
+            for (AnnotationValue<?, ?> value : values) {
+                Array.set(resolved, index++, value.resolve());
             }
-            return value;
+            return resolved;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public AnnotationValue.Loaded<V[]> load(ClassLoader classLoader) throws ClassNotFoundException {
-            List<AnnotationValue.Loaded<?>> loadedValues = new ArrayList<AnnotationValue.Loaded<?>>(annotationValues.size());
-            for (AnnotationValue<?, ?> value : annotationValues) {
-                loadedValues.add(value.load(classLoader));
+            List<AnnotationValue.Loaded<?>> values = new ArrayList<AnnotationValue.Loaded<?>>(this.values.size());
+            for (AnnotationValue<?, ?> value : this.values) {
+                values.add(value.load(classLoader));
             }
-            return new Loaded<V>((Class<V>) Class.forName(componentType.getName(), false, classLoader), loadedValues);
+            return new Loaded<V>((Class<V>) Class.forName(componentType.getName(), false, classLoader), values);
         }
 
         @Override
@@ -1265,8 +1810,8 @@ public interface AnnotationValue<T, S> {
             Object otherValue = loadedOther.resolve();
             if (!(otherValue instanceof Object[])) return false;
             Object[] otherArrayValue = (Object[]) otherValue;
-            if (annotationValues.size() != otherArrayValue.length) return false;
-            Iterator<? extends AnnotationValue<?, ?>> iterator = annotationValues.iterator();
+            if (values.size() != otherArrayValue.length) return false;
+            Iterator<? extends AnnotationValue<?, ?>> iterator = values.iterator();
             for (Object value : otherArrayValue) {
                 AnnotationValue<?, ?> self = iterator.next();
                 if (!self.resolve().equals(value)) {
@@ -1279,25 +1824,15 @@ public interface AnnotationValue<T, S> {
         @Override
         public int hashCode() {
             int result = 1;
-            for (AnnotationValue<?, ?> annotationValue : annotationValues) {
-                result = 31 * result + annotationValue.hashCode();
+            for (AnnotationValue<?, ?> value : values) {
+                result = 31 * result + value.hashCode();
             }
             return result;
         }
 
         @Override
         public String toString() {
-            StringBuilder stringBuilder = new StringBuilder().append('[');
-            boolean first = true;
-            for (AnnotationValue<?, ?> annotationValue : annotationValues) {
-                if (first) {
-                    first = false;
-                } else {
-                    stringBuilder.append(", ");
-                }
-                stringBuilder.append(annotationValue.toString());
-            }
-            return stringBuilder.append(']').toString();
+            return RenderingDispatcher.CURRENT.toSourceString(values);
         }
 
         /**
@@ -1396,17 +1931,7 @@ public interface AnnotationValue<T, S> {
 
             @Override
             public String toString() {
-                StringBuilder stringBuilder = new StringBuilder().append('[');
-                boolean first = true;
-                for (AnnotationValue.Loaded<?> value : values) {
-                    if (first) {
-                        first = false;
-                    } else {
-                        stringBuilder.append(", ");
-                    }
-                    stringBuilder.append(value.toString());
-                }
-                return stringBuilder.append(']').toString();
+                return RenderingDispatcher.CURRENT.toSourceString(values);
             }
         }
     }
