@@ -651,8 +651,8 @@ public abstract class AbstractMethodDescriptionTest {
         properties.put("annotation_property_array", AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(SampleAnnotation.class), new AnnotationDescription[]{annotationDescription}));
         EnumerationDescription enumerationDescription = mock(EnumerationDescription.class);
         when(enumerationDescription.getEnumerationType()).thenReturn(new TypeDescription.ForLoadedType(SampleEnumeration.class));
-        properties.put("enum_property", AnnotationValue.ForEnumerationDescription.of(enumerationDescription));
-        properties.put("enum_property_array", AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(SampleEnumeration.class), new EnumerationDescription[]{enumerationDescription}));
+        properties.put("enum_property", AnnotationValue.ForEnumerationDescription.<Enum>of(enumerationDescription));
+        properties.put("enum_property_array", AnnotationValue.ForDescriptionArray.<Enum>of(new TypeDescription.ForLoadedType(SampleEnumeration.class), new EnumerationDescription[]{enumerationDescription}));
         MethodList<?> methods = new TypeDescription.ForLoadedType(AnnotationValues.class).getDeclaredMethods();
         for (Map.Entry<String, AnnotationValue<?, ?>> entry : properties.entrySet()) {
             assertThat(methods.filter(named(entry.getKey())).getOnly().isDefaultValue(entry.getValue()), is(true));
@@ -662,8 +662,8 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(methods.filter(named("annotation_property")).getOnly().isDefaultValue(new AnnotationValue.ForAnnotationDescription(annotationDescription)), is(false));
         assertThat(methods.filter(named("annotation_property_array")).getOnly().isDefaultValue(AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(Object.class), new AnnotationDescription[]{annotationDescription})), is(false));
         when(enumerationDescription.getEnumerationType()).thenReturn(TypeDescription.OBJECT);
-        assertThat(methods.filter(named("enum_property")).getOnly().isDefaultValue(AnnotationValue.ForEnumerationDescription.of(enumerationDescription)), is(false));
-        assertThat(methods.filter(named("enum_property_array")).getOnly().isDefaultValue(AnnotationValue.ForDescriptionArray.of(new TypeDescription.ForLoadedType(Object.class), new EnumerationDescription[]{enumerationDescription})), is(false));
+        assertThat(methods.filter(named("enum_property")).getOnly().isDefaultValue(AnnotationValue.ForEnumerationDescription.<Enum>of(enumerationDescription)), is(false));
+        assertThat(methods.filter(named("enum_property_array")).getOnly().isDefaultValue(AnnotationValue.ForDescriptionArray.<Enum>of(new TypeDescription.ForLoadedType(Object.class), new EnumerationDescription[]{enumerationDescription})), is(false));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

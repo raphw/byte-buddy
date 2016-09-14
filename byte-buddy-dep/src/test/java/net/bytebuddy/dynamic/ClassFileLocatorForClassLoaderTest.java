@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.StreamDrainer;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,7 +63,10 @@ public class ClassFileLocatorForClassLoaderTest {
     public void testReadTypeBootstrapClassLoader() throws Exception {
         ClassFileLocator.Resolution resolution = ClassFileLocator.ForClassLoader.read(Object.class);
         assertThat(resolution.isResolved(), is(true));
-        InputStream inputStream = Object.class.getResourceAsStream(Object.class.getSimpleName() + ".class");
+        JavaModule module = JavaModule.ofType(Object.class);
+        InputStream inputStream = module == null
+                ? Object.class.getResourceAsStream(Object.class.getSimpleName() + ".class")
+                : module.getResourceAsStream(Object.class.getName().replace('.', '/') + ".class");
         try {
             assertThat(resolution.resolve(), is(StreamDrainer.DEFAULT.drain(inputStream)));
         } finally {
