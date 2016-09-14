@@ -229,7 +229,7 @@ ASM API to its users. Of course, the direct use of ASM remains fully optional an
 require it. This choice was made such that a user of Byte Buddy is not restrained to its higher-level functionality
 but can implement custom implementations without a fuzz when it is necessary.
 
-ASM has previously changed their API but added a mechanism for API compatibility starting with version 4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the ASM dependency into its own namespace. If you want to use ASM directly, use the `byte-buddy-dep` artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you should then repackage *both* Byte Buddy and ASM into your namespace to avoid version conflicts.
+ASM has previously changed its public API but added a mechanism for API compatibility starting with version 4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the ASM dependency into its own namespace. If you want to use ASM directly, use the `byte-buddy-dep` artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you should then repackage *both* Byte Buddy and ASM into your namespace to avoid version conflicts.
 
 License and development
 -----------------------
