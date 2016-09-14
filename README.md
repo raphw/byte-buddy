@@ -165,6 +165,49 @@ that they are not visible to a class loader. This way, generated code can still 
 find more information on the `MethodDelegation` and on all of its predefined annotations in its *javadoc* and in
 Byte Buddy's tutorial.
 
+Changing existing classes
+----------------------
+
+Byte Buddy is not limited to creating subclasses but is also capable of redefining existing code. To do so, Byte Buddy offers a convenient API for defining so-called [Java agents](https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html). Java agents are plain old Java programs that can be used to alter the code of an existing Java application during its runtime. As an example, we can use Byte Buddy to change methods to print their execution time. For this, we first define an interceptor similar to the interceptors in the previous examples:
+
+```java
+public class TimingInterceptor {
+  @DynamicType
+  public static Object intercept(@Origin Method method, 
+                                 @SuperCall Callable<?> callable) {
+    long start = System.currentTimeMillis();
+    try {
+      return callable.call();
+    } finally {
+      System.out.println(method + " took " + (System.currentTimeMillis() - start));
+    }
+  }
+}
+```
+
+Using a Java agent, we can now apply this interceptor to all types that match an `ElementMatcher` for a `TypeDescription`.  For the example, we choose to add the above interceptor to all types with a name that ends in `Timed`. This is done for the sake of similicity whereas an annotation would probably be a more appropriate alternative to mark such classes for a production agent. Using Byte Buddy's `AgentBuilder` API, creating a Java agent is as easy as defining the following agent class:
+
+```java
+public class TimerAgent {
+  public static void premain(String arguments, 
+                             Instrumentation instrumentation) {
+    new AgentBuilder.Default()
+      .type(ElementMatchers.nameEndsWith("Timed"))
+      .transform((builder, type, classloader) -> 
+          type.method(ElementMatchers.any())
+              .intercept(MethodDelegation.to(TimingInterceptor.class))
+      ).installOn(instrumentation);
+    }
+  }
+}
+```
+
+Similar to Java's `main` method, the `premain` method is the entry point to any Java agent from which we apply the redefinition. As one argument, a Java agent receives an instace of the `Instrumentation` interface which allows Byte Buddy to hook into the JVM's standard API for runtime class redefinition.
+
+This program is packaged together with a manifest file with the [`Premain-Class` attribute](https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html) pointing to the `TimerAgent`. The resulting *jar* file can now be added to any Java application by setting `-javaagent:timingagent.jar` similar to adding a jar to the class path. With the agent active, all classes ending in `Timed` do now print their execution time to the console. 
+
+Byte Buddy is also capable of applying so-called runtime attachments by disabling class file format changes and using the `Advice` instrumentation. Please refer to the *javadoc* of the `Advice` and the `AgentBuilder` class for further information.
+
 Where to go from here?
 ----------------------
 
@@ -186,33 +229,7 @@ ASM API to its users. Of course, the direct use of ASM remains fully optional an
 require it. This choice was made such that a user of Byte Buddy is not restrained to its higher-level functionality
 but can implement custom implementations without a fuzz when it is necessary.
 
-However, this imposes one possible problem when relying onto Byte Buddy as a project dependency and making use of the
-exposed ASM API. The authors of ASM require their users to
-[repackage the ASM dependency into a different name space](http://asm.ow2.org/doc/faq.html#Q15). This is necessary
-because one cannot anticipate changes in the Java class file format what can lead to API incompatibilities of future
-versions of ASM. Because of this, each version of Byte Buddy is distributed in two different packaging formats:
-
-- A no-dependency version that repackages the ASM dependency from its `org.objectweb.asm` into Byte Buddy's own
-namespace `net.bytebuddy.jar.asm`. Doing so, the ASM dependency is also contained within Byte Buddy's *jar* file. By
-using this version, you do not need to worry about possible ASM version clashes which might be caused by the use of
-ASM by both Byte Buddy and other libraries. If you do not plan to use ASM, do not know what ASM is or what this
-is all about, this is the version you want to use. The artifact ID of this packaging format is `byte-buddy`.
-- A version with an explicit dependency on ASM in its original `org.objectweb.asm` namespace. **This version must only
-be used for repackaging Byte Buddy and its ASM dependency into *your own* namespace**. Never distribute your
-application while directly relying on this dependency. Otherwise, your users might experience version conflicts of
-different ASM versions on their class path. The artifact ID of this packaging format is `byte-buddy-dep`.
-
-Normally, you would use the first, no-dependency version. However, if you are using Byte Buddy and making use of the
-exposed ASM API, you **must** use the second version of Byte Buddy **and repackage it** into your own name space as
-suggested. This is in particularly true when you plan to redistribute your code for the use by others. Future versions
-of Byte Buddy will update their ASM dependency to newer version what will then lead to version clashes between
-different ASM versions that were repackaged by Byte Buddy, if you have not follow this recommendation!
-
-There exist several tools that allow for an easy automation of the repacking of dependencies during your build
-processes. You can for example use the
-[Shade plugin](http://maven.apache.org/plugins/maven-shade-plugin/examples/class-relocation.html) for Maven. With
-Gradle, a similar tool is the [Shadow plugin](https://github.com/johnrengelman/shadow). Another alternative is
-<a href="http://code.google.com/p/jarjar/">jarjar</a>, a library that offers integration as an Ant task.
+ASM has previously changed their API but added a mechanism for API compatibility starting with version 4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the ASM dependency into its own namespace. If you want to use ASM directly, use the `byte-buddy-dep` artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you should then repackage *both* Byte Buddy and ASM into your namespace to avoid version conflicts.
 
 License and development
 -----------------------
