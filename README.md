@@ -206,7 +206,7 @@ Similar to Java's `main` method, the `premain` method is the entry point to any 
 
 This program is packaged together with a manifest file with the [`Premain-Class` attribute](https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html) pointing to the `TimerAgent`. The resulting *jar* file can now be added to any Java application by setting `-javaagent:timingagent.jar` similar to adding a jar to the class path. With the agent active, all classes ending in `Timed` do now print their execution time to the console. 
 
-Byte Buddy is also capable of applying so-called runtime attachments by disabling class file format changes and using the `Advice` instrumentation. Please refer to the *javadoc* of the `Advice` and the `AgentBuilder` class for further information.
+Byte Buddy is also capable of applying so-called runtime attachments by disabling class file format changes and using the `Advice` instrumentation. Please refer to the *javadoc* of the `Advice` and the `AgentBuilder` class for further information. Byte Buddy also offers the explicit change of Java classes via a `ByteBuddy` instance or by using the Byte Buddy *Maven* and *Gradle* plugins.
 
 Where to go from here?
 ----------------------
