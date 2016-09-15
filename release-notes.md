@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 14. September 2016: version 1.4.23
+
+- Made `TypeDescription.ForLoadedType` serializable for better alignment with reflection API.
+- Adapted changes in `Instrumentation` API for Java 9.
+- Refactored `AnnotationValue` to apply Java 9 specific string rendering on Java 9 VMs.
+- Adapted new `toString` representation of parameterized types on Java 9 VMs.
+
 ### 02. September 2016: version 1.4.22
 
 - Added Byte Buddy plugin for Gradle.
