@@ -20,7 +20,7 @@ public class AgentBuilderInstallationStrategyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private ClassFileTransformer classFileTransformer;
+    private ResettableClassFileTransformer classFileTransformer;
 
     @Mock
     private Throwable throwable;

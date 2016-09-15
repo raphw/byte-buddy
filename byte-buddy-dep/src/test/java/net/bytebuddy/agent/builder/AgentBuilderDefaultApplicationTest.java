@@ -62,9 +62,9 @@ public class AgentBuilderDefaultApplicationTest {
         if (Boolean.getBoolean("net.bytebuddy.test.travis")) {
             Logger.getLogger("net.bytebuddy").info("Running only a subset of type locator tests on Travis CI.");
             return Arrays.asList(new Object[][]{
-                {AgentBuilder.PoolStrategy.Default.EXTENDED},
-                {AgentBuilder.PoolStrategy.Eager.EXTENDED},
-                {AgentBuilder.PoolStrategy.ClassLoading.EXTENDED}
+                    {AgentBuilder.PoolStrategy.Default.EXTENDED},
+                    {AgentBuilder.PoolStrategy.Eager.EXTENDED},
+                    {AgentBuilder.PoolStrategy.ClassLoading.EXTENDED}
             });
         }
         return Arrays.asList(new Object[][]{
@@ -125,7 +125,7 @@ public class AgentBuilderDefaultApplicationTest {
                 .with(poolStrategy)
                 .ignore(none())
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Foo.class.getName());
@@ -143,7 +143,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new BarTransformer())
+                .type(ElementMatchers.is(Bar.class), ElementMatchers.is(classLoader)).transform(new BarTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Bar.class.getName());
@@ -161,7 +161,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer())
+                .type(ElementMatchers.is(Qux.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Qux.class.getName());
@@ -179,7 +179,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxBazTransformer())
+                .type(ElementMatchers.is(QuxBaz.class), ElementMatchers.is(classLoader)).transform(new QuxBazTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(QuxBaz.class.getName());
@@ -197,9 +197,8 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .enableNativeMethodPrefix(QUX)
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .type(ElementMatchers.is(Baz.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Baz.class.getName());
@@ -221,10 +220,10 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(SimpleType.class.getName());
@@ -237,11 +236,37 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
     @IntegrationRule.Enforce
+    public void testRedefinitionWithReset() throws Exception {
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
+        ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(poolStrategy)
+                .ignore(none())
+                .disableClassFormatChanges()
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+        } finally {
+            assertThat(classFileTransformer.reset(ByteBuddyAgent.getInstrumentation(), AgentBuilder.RedefinitionStrategy.REDEFINITION).isApplied(), is(true));
+        }
+        Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    @IntegrationRule.Enforce
     public void testEmptyRedefinition() throws Exception {
         ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(any())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .installOnByteBuddyAgent());
@@ -258,10 +283,10 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION_CHUNKED)
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(SimpleType.class.getName());
@@ -278,7 +303,7 @@ public class AgentBuilderDefaultApplicationTest {
         ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(any())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION_CHUNKED)
                 .installOnByteBuddyAgent());
@@ -295,10 +320,10 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(SimpleType.class.getName());
@@ -311,11 +336,37 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     @IntegrationRule.Enforce
+    public void testRetransformationWithReset() throws Exception {
+        // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
+        // This causes type equality for outer/inner classes to fail which is why an external class is used.
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
+        ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(poolStrategy)
+                .ignore(none())
+                .disableClassFormatChanges()
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+        } finally {
+            assertThat(classFileTransformer.reset(ByteBuddyAgent.getInstrumentation(), AgentBuilder.RedefinitionStrategy.RETRANSFORMATION).isApplied(), is(true));
+        }
+        Class<?> type = classLoader.loadClass(SimpleType.class.getName());
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
+    @IntegrationRule.Enforce
     public void testEmptyRetransformation() throws Exception {
         ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(any())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .installOnByteBuddyAgent());
@@ -332,10 +383,10 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION_CHUNKED)
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
+                .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(SimpleType.class.getName());
@@ -352,7 +403,7 @@ public class AgentBuilderDefaultApplicationTest {
         ByteBuddyAgent.getInstrumentation().removeTransformer(new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(any())
-                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION_CHUNKED)
                 .installOnByteBuddyAgent());
@@ -366,7 +417,7 @@ public class AgentBuilderDefaultApplicationTest {
         AgentBuilder agentBuilder = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer());
+                .type(ElementMatchers.is(Qux.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer());
         ClassFileTransformer firstTransformer = agentBuilder.installOnByteBuddyAgent();
         ClassFileTransformer secondTransformer = agentBuilder.installOnByteBuddyAgent();
         try {
@@ -386,7 +437,7 @@ public class AgentBuilderDefaultApplicationTest {
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(poolStrategy)
                 .ignore(none())
-                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new ConstructorTransformer())
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new ConstructorTransformer())
                 .installOnByteBuddyAgent();
         try {
             Class<?> type = classLoader.loadClass(Foo.class.getName());
@@ -670,11 +721,6 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface ShouldRebase {
-        /* empty */
-    }
-
     private static class FooTransformer implements AgentBuilder.Transformer {
 
         @Override
@@ -683,7 +729,6 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
-    @ShouldRebase
     public static class Foo {
 
         public String foo() {
@@ -691,7 +736,6 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
-    @ShouldRebase
     public static class Baz {
 
         public String foo() {
@@ -718,7 +762,6 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
-    @ShouldRebase
     public static class Bar {
 
         public String foo() {
@@ -745,7 +788,6 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
-    @ShouldRebase
     public static class Qux {
 
         public String foo() {
@@ -773,7 +815,6 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
-    @ShouldRebase
     public static class QuxBaz {
 
         public String foo() {

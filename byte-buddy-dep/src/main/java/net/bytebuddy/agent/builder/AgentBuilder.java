@@ -141,7 +141,14 @@ public interface AgentBuilder {
     AgentBuilder with(InitializationStrategy initializationStrategy);
 
     /**
+     * <p>
      * Specifies a strategy for modifying types that were already loaded prior to the installation of this transformer.
+     * </p>
+     * <p>
+     * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already
+     * loaded. Therefore, it is typically required that this class file transformer was built while enabling
+     * {@link AgentBuilder#disableClassFormatChanges()}.
+     * </p>
      *
      * @param redefinitionStrategy The redefinition strategy to apply.
      * @return A new instance of this agent builder that applies the given redefinition strategy.
@@ -561,7 +568,7 @@ public interface AgentBuilder {
      *
      * @return A class file transformer that implements the configuration of this agent builder.
      */
-    ClassFileTransformer makeRaw();
+    ResettableClassFileTransformer makeRaw();
 
     /**
      * <p>
@@ -577,7 +584,7 @@ public interface AgentBuilder {
      * @param instrumentation The instrumentation on which this agent builder's configuration is to be installed.
      * @return The installed class file transformer.
      */
-    ClassFileTransformer installOn(Instrumentation instrumentation);
+    ResettableClassFileTransformer installOn(Instrumentation instrumentation);
 
     /**
      * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
@@ -586,7 +593,7 @@ public interface AgentBuilder {
      * @return The installed class file transformer.
      * @see AgentBuilder#installOn(Instrumentation)
      */
-    ClassFileTransformer installOnByteBuddyAgent();
+    ResettableClassFileTransformer installOnByteBuddyAgent();
 
     /**
      * An abstraction for extending a matcher.
@@ -2386,7 +2393,7 @@ public interface AgentBuilder {
              * optional dependencies to other classes which are only realized if the optional dependency is present. Such code relies on the
              * Java reflection API not being used for types using optional dependencies.
              *
-             * @see FallbackStrategy.Default#ENABLED
+             * @see FallbackStrategy.Simple#ENABLED
              * @see FallbackStrategy.ByThrowableType#ofOptionalTypes()
              */
             HYBRID(true) {
@@ -2479,7 +2486,7 @@ public interface AgentBuilder {
          * @param throwable            The error that occurred.
          * @return The class file transformer to return when an error occurred.
          */
-        ClassFileTransformer onError(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, Throwable throwable);
+        ResettableClassFileTransformer onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable);
 
         /**
          * Default implementations of installation strategies.
@@ -2493,7 +2500,7 @@ public interface AgentBuilder {
              */
             ESCALATING {
                 @Override
-                public ClassFileTransformer onError(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, Throwable throwable) {
+                public ResettableClassFileTransformer onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                     instrumentation.removeTransformer(classFileTransformer);
                     throw new IllegalStateException("Could not install class file transformer", throwable);
                 }
@@ -2504,7 +2511,7 @@ public interface AgentBuilder {
              */
             SUPPRESSING {
                 @Override
-                public ClassFileTransformer onError(Instrumentation instrumentation, ClassFileTransformer classFileTransformer, Throwable throwable) {
+                public ResettableClassFileTransformer onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                     return classFileTransformer;
                 }
             };
@@ -2755,9 +2762,9 @@ public interface AgentBuilder {
         boolean isFallback(Class<?> type, Throwable throwable);
 
         /**
-         * A default fallback strategy that either always reattempts a transformation or never does so.
+         * A simple fallback strategy that either always reattempts a transformation or never does so.
          */
-        enum Default implements FallbackStrategy {
+        enum Simple implements FallbackStrategy {
 
             /**
              * An enabled fallback strategy that always attempts a new trial.
@@ -2779,7 +2786,7 @@ public interface AgentBuilder {
              *
              * @param enabled {@code true} if this fallback strategy is enabled.
              */
-            Default(boolean enabled) {
+            Simple(boolean enabled) {
                 this.enabled = enabled;
             }
 
@@ -2790,7 +2797,7 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.FallbackStrategy.Default." + name();
+                return "AgentBuilder.FallbackStrategy.Simple." + name();
             }
         }
 
@@ -2866,7 +2873,14 @@ public interface AgentBuilder {
     }
 
     /**
+     * <p>
      * A redefinition strategy regulates how already loaded classes are modified by a built agent.
+     * </p>
+     * <p>
+     * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already
+     * loaded. Therefore, it is typically required that this class file transformer was built while enabling
+     * {@link AgentBuilder#disableClassFormatChanges()}.
+     * </p>
      */
     enum RedefinitionStrategy {
 
@@ -5366,7 +5380,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public ClassFileTransformer makeRaw() {
+        public ResettableClassFileTransformer makeRaw() {
             return ExecutingTransformer.FACTORY.make(byteBuddy,
                     listener,
                     poolStrategy,
@@ -5382,8 +5396,8 @@ public interface AgentBuilder {
         }
 
         @Override
-        public ClassFileTransformer installOn(Instrumentation instrumentation) {
-            ClassFileTransformer classFileTransformer = makeRaw();
+        public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
+            ResettableClassFileTransformer classFileTransformer = makeRaw();
             instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming(instrumentation));
             try {
                 if (nativeMethodStrategy.isEnabled(instrumentation)) {
@@ -5441,6 +5455,29 @@ public interface AgentBuilder {
                                 JavaModule module,
                                 RedefinitionStrategy.Collector collector,
                                 boolean unmodifiable) {
+            doConsider(ignoredTypeMatcher, listener, typeDescription, type, classBeingRedefined, module, collector, unmodifiable);
+        }
+
+        /**
+         * Does consider the retransformation or redefinition of a loaded type.
+         *
+         * @param ignoredTypeMatcher  The ignored type matcher to apply.
+         * @param listener            The listener to apply during the consideration.
+         * @param typeDescription     The type description of the type being considered.
+         * @param type                The loaded type being considered.
+         * @param classBeingRedefined The loaded type being considered or {@code null} if it should be considered non-available.
+         * @param module              The type's Java module or {@code null} if the current VM does not support modules.
+         * @param collector           The collector to apply.
+         * @param unmodifiable        {@code true} if the current type should be considered unmodifiable.
+         */
+        protected static void doConsider(RawMatcher ignoredTypeMatcher,
+                                         Listener listener,
+                                         TypeDescription typeDescription,
+                                         Class<?> type,
+                                         Class<?> classBeingRedefined,
+                                         JavaModule module,
+                                         RedefinitionStrategy.Collector collector,
+                                         boolean unmodifiable) {
             if (unmodifiable || !collector.consider(typeDescription, type, classBeingRedefined, ignoredTypeMatcher)) {
                 try {
                     try {
@@ -5455,7 +5492,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public ClassFileTransformer installOnByteBuddyAgent() {
+        public ResettableClassFileTransformer installOnByteBuddyAgent() {
             try {
                 Instrumentation instrumentation = (Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
@@ -6447,7 +6484,7 @@ public interface AgentBuilder {
          * A {@link java.lang.instrument.ClassFileTransformer} that implements the enclosing agent builder's
          * configuration.
          */
-        protected static class ExecutingTransformer implements ClassFileTransformer {
+        protected static class ExecutingTransformer implements ResettableClassFileTransformer {
 
             /**
              * A factory for creating a {@link ClassFileTransformer} that supports the features of the current VM.
@@ -6680,42 +6717,61 @@ public interface AgentBuilder {
             }
 
             @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                ExecutingTransformer that = (ExecutingTransformer) other;
-                return byteBuddy.equals(that.byteBuddy)
-                        && listener.equals(that.listener)
-                        && poolStrategy.equals(that.poolStrategy)
-                        && typeStrategy.equals(that.typeStrategy)
-                        && locationStrategy.equals(that.locationStrategy)
-                        && initializationStrategy.equals(that.initializationStrategy)
-                        && nativeMethodStrategy.equals(that.nativeMethodStrategy)
-                        && bootstrapInjectionStrategy.equals(that.bootstrapInjectionStrategy)
-                        && descriptionStrategy.equals(that.descriptionStrategy)
-                        && ignoredTypeMatcher.equals(that.ignoredTypeMatcher)
-                        && fallbackStrategy.equals(that.fallbackStrategy)
-                        && transformation.equals(that.transformation)
-                        && accessControlContext.equals(that.accessControlContext);
+            public synchronized Reset reset(Instrumentation instrumentation, RedefinitionStrategy redefinitionStrategy) {
+                if (instrumentation.removeTransformer(this)) {
+                    if (!redefinitionStrategy.isEnabled()) {
+                        return Reset.Simple.ACTIVE;
+                    }
+                    redefinitionStrategy.isRetransforming(instrumentation);
+                    Map<Class<?>, Throwable> errors = new HashMap<Class<?>, Throwable>();
+                    RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
+                    for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                        try {
+                            doConsider(ignoredTypeMatcher,
+                                    Listener.NoOp.INSTANCE,
+                                    descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type),
+                                            type,
+                                            poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader())),
+                                    type,
+                                    type,
+                                    JavaModule.ofType(type),
+                                    collector,
+                                    !instrumentation.isModifiableClass(type));
+                        } catch (Throwable throwable) {
+                            try {
+                                if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
+                                    doConsider(ignoredTypeMatcher,
+                                            Listener.NoOp.INSTANCE,
+                                            descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type),
+                                                    NO_LOADED_TYPE,
+                                                    poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader())),
+                                            type,
+                                            NO_LOADED_TYPE,
+                                            JavaModule.ofType(type),
+                                            collector,
+                                            false);
+                                } else {
+                                    errors.put(type, throwable);
+                                }
+                            } catch (Throwable fallback) {
+                                errors.put(type, fallback);
+                            }
+                        }
+                    }
+                    try {
+                        collector.apply(instrumentation, poolStrategy, locationStrategy, Listener.NoOp.INSTANCE);
+                    } catch (UnmodifiableClassException exception) {
+                        throw new IllegalStateException("Could not modify classes", exception);
+                    } catch (ClassNotFoundException exception) {
+                        throw new IllegalStateException("Could not find class", exception);
+                    }
+                    return Reset.WithErrors.ofPotentiallyErroneous(errors);
+                } else {
+                    return Reset.Simple.INACTIVE;
+                }
             }
 
-            @Override
-            public int hashCode() {
-                int result = byteBuddy.hashCode();
-                result = 31 * result + listener.hashCode();
-                result = 31 * result + poolStrategy.hashCode();
-                result = 31 * result + typeStrategy.hashCode();
-                result = 31 * result + locationStrategy.hashCode();
-                result = 31 * result + initializationStrategy.hashCode();
-                result = 31 * result + nativeMethodStrategy.hashCode();
-                result = 31 * result + bootstrapInjectionStrategy.hashCode();
-                result = 31 * result + descriptionStrategy.hashCode();
-                result = 31 * result + fallbackStrategy.hashCode();
-                result = 31 * result + ignoredTypeMatcher.hashCode();
-                result = 31 * result + transformation.hashCode();
-                result = 31 * result + accessControlContext.hashCode();
-                return result;
-            }
+            /* does not implement hashCode and equals in order to align with identity treatment of the JVM */
 
             @Override
             public String toString() {
@@ -6758,18 +6814,18 @@ public interface AgentBuilder {
                  * @param transformation             The transformation object for handling type transformations.
                  * @return A class file transformer for the current VM that supports the API of the current VM.
                  */
-                ClassFileTransformer make(ByteBuddy byteBuddy,
-                                          Listener listener,
-                                          PoolStrategy poolStrategy,
-                                          TypeStrategy typeStrategy,
-                                          LocationStrategy locationStrategy,
-                                          NativeMethodStrategy nativeMethodStrategy,
-                                          InitializationStrategy initializationStrategy,
-                                          BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                                          DescriptionStrategy descriptionStrategy,
-                                          FallbackStrategy fallbackStrategy,
-                                          RawMatcher ignoredTypeMatcher,
-                                          Transformation transformation);
+                ResettableClassFileTransformer make(ByteBuddy byteBuddy,
+                                                    Listener listener,
+                                                    PoolStrategy poolStrategy,
+                                                    TypeStrategy typeStrategy,
+                                                    LocationStrategy locationStrategy,
+                                                    NativeMethodStrategy nativeMethodStrategy,
+                                                    InitializationStrategy initializationStrategy,
+                                                    BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                    DescriptionStrategy descriptionStrategy,
+                                                    FallbackStrategy fallbackStrategy,
+                                                    RawMatcher ignoredTypeMatcher,
+                                                    Transformation transformation);
 
                 /**
                  * A factory for a class file transformer on a JVM that supports the {@code java.lang.reflect.Module} API to override
@@ -6781,7 +6837,7 @@ public interface AgentBuilder {
                      * A constructor for creating a {@link ClassFileTransformer} that overrides the newly added method for extracting
                      * the {@code java.lang.reflect.Module} of an instrumented class.
                      */
-                    private final Constructor<? extends ClassFileTransformer> executingTransformer;
+                    private final Constructor<? extends ResettableClassFileTransformer> executingTransformer;
 
                     /**
                      * Creates a class file transformer factory for a Java 9 capable VM.
@@ -6789,23 +6845,23 @@ public interface AgentBuilder {
                      * @param executingTransformer A constructor for creating a {@link ClassFileTransformer} that overrides the newly added
                      *                             method for extracting the {@code java.lang.reflect.Module} of an instrumented class.
                      */
-                    protected ForJava9CapableVm(Constructor<? extends ClassFileTransformer> executingTransformer) {
+                    protected ForJava9CapableVm(Constructor<? extends ResettableClassFileTransformer> executingTransformer) {
                         this.executingTransformer = executingTransformer;
                     }
 
                     @Override
-                    public ClassFileTransformer make(ByteBuddy byteBuddy,
-                                                     Listener listener,
-                                                     PoolStrategy poolStrategy,
-                                                     TypeStrategy typeStrategy,
-                                                     LocationStrategy locationStrategy,
-                                                     NativeMethodStrategy nativeMethodStrategy,
-                                                     InitializationStrategy initializationStrategy,
-                                                     BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                                                     DescriptionStrategy descriptionStrategy,
-                                                     FallbackStrategy fallbackStrategy,
-                                                     RawMatcher ignoredTypeMatcher,
-                                                     Transformation transformation) {
+                    public ResettableClassFileTransformer make(ByteBuddy byteBuddy,
+                                                               Listener listener,
+                                                               PoolStrategy poolStrategy,
+                                                               TypeStrategy typeStrategy,
+                                                               LocationStrategy locationStrategy,
+                                                               NativeMethodStrategy nativeMethodStrategy,
+                                                               InitializationStrategy initializationStrategy,
+                                                               BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                               DescriptionStrategy descriptionStrategy,
+                                                               FallbackStrategy fallbackStrategy,
+                                                               RawMatcher ignoredTypeMatcher,
+                                                               Transformation transformation) {
                         try {
                             return executingTransformer.newInstance(byteBuddy,
                                     listener,
@@ -6860,18 +6916,18 @@ public interface AgentBuilder {
                     INSTANCE;
 
                     @Override
-                    public ClassFileTransformer make(ByteBuddy byteBuddy,
-                                                     Listener listener,
-                                                     PoolStrategy poolStrategy,
-                                                     TypeStrategy typeStrategy,
-                                                     LocationStrategy locationStrategy,
-                                                     NativeMethodStrategy nativeMethodStrategy,
-                                                     InitializationStrategy initializationStrategy,
-                                                     BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                                                     DescriptionStrategy descriptionStrategy,
-                                                     FallbackStrategy fallbackStrategy,
-                                                     RawMatcher ignoredTypeMatcher,
-                                                     Transformation transformation) {
+                    public ResettableClassFileTransformer make(ByteBuddy byteBuddy,
+                                                               Listener listener,
+                                                               PoolStrategy poolStrategy,
+                                                               TypeStrategy typeStrategy,
+                                                               LocationStrategy locationStrategy,
+                                                               NativeMethodStrategy nativeMethodStrategy,
+                                                               InitializationStrategy initializationStrategy,
+                                                               BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                               DescriptionStrategy descriptionStrategy,
+                                                               FallbackStrategy fallbackStrategy,
+                                                               RawMatcher ignoredTypeMatcher,
+                                                               Transformation transformation) {
                         return new ExecutingTransformer(byteBuddy,
                                 listener,
                                 poolStrategy,
@@ -7342,17 +7398,17 @@ public interface AgentBuilder {
             }
 
             @Override
-            public ClassFileTransformer makeRaw() {
+            public ResettableClassFileTransformer makeRaw() {
                 return materialize().makeRaw();
             }
 
             @Override
-            public ClassFileTransformer installOn(Instrumentation instrumentation) {
+            public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
                 return materialize().installOn(instrumentation);
             }
 
             @Override
-            public ClassFileTransformer installOnByteBuddyAgent() {
+            public ResettableClassFileTransformer installOnByteBuddyAgent() {
                 return materialize().installOnByteBuddyAgent();
             }
         }
