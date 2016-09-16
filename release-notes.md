@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 14. September 2016: version 1.4.24
+
+- Make `AgentBuilder` produce `ResettableClassFileTransformer`s which can undo their transformation.
+
 ### 14. September 2016: version 1.4.23
 
 - Made `TypeDescription.ForLoadedType` serializable for better alignment with reflection API.
