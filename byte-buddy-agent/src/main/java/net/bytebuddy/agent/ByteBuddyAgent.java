@@ -286,6 +286,7 @@ public class ByteBuddyAgent {
      *
      * @param attachmentProvider The attachment provider to use.
      * @param processId          The process id of the target JVM process.
+     * @param argument           The argument to provide to the agent.
      * @param agentProvider      The agent provider for the agent jar.
      */
     private static void install(AttachmentProvider attachmentProvider, String processId, String argument, AgentProvider agentProvider) {
