@@ -118,7 +118,7 @@ public class LambdaFactoryTest {
 
     public static class PseudoFactory {
 
-        private Object args[];
+        private Object[] args;
 
         public byte[] make(Object a1, String a2, Object a3, Object a4, Object a5, Object a6, boolean a7, List<?> a8, List<?> a9, Collection<?> a10) {
             args = new Object[]{a1, a2, a3, a4, a5, a6, a7, a8, a9, a10};

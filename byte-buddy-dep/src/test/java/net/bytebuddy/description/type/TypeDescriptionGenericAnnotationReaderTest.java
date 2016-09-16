@@ -64,19 +64,19 @@ public class TypeDescriptionGenericAnnotationReaderTest {
     @Test
     public void testAnnotationReaderNoOpTest() throws Exception {
         assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofComponentType(),
-                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofOuterClass(),
-                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofOwnerType(),
-                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofTypeArgument(0),
-                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofTypeVariableBoundType(0),
-                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofWildcardLowerBoundType(0),
-                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofWildcardUpperBoundType(0),
-                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
     }
 
     @Test

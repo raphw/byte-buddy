@@ -62,7 +62,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private final int QUX = 42;
+    private static final int QUX = 42;
 
     private static final String PARAMETER_NAME_CLASS = "net.bytebuddy.test.precompiled.ParameterNames";
 

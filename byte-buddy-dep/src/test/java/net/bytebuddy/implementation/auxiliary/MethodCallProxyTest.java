@@ -96,7 +96,7 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
     @SuppressWarnings("unused")
     public static class StaticMethod extends CallTraceable {
 
-        public static CallTraceable CALL_TRACEABLE = new CallTraceable();
+        public static final CallTraceable CALL_TRACEABLE = new CallTraceable();
 
         public static void foo() {
             CALL_TRACEABLE.register(FOO);

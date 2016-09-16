@@ -57,7 +57,7 @@ public class AnnotationValueRenderingDispatcherTest {
         assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(42f), is("42.0f"));
         assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(Float.POSITIVE_INFINITY), is("1.0f/0.0f"));
         assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(Float.NEGATIVE_INFINITY), is("-1.0f/0.0f"));
-        assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(0f/0f), is("0.0f/0.0f"));
+        assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(0f / 0f), is("0.0f/0.0f"));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class AnnotationValueRenderingDispatcherTest {
         assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(42d), is("42.0"));
         assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(Double.POSITIVE_INFINITY), is("1.0/0.0"));
         assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(Double.NEGATIVE_INFINITY), is("-1.0/0.0"));
-        assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(0d/0d), is("0.0/0.0"));
+        assertThat(AnnotationValue.RenderingDispatcher.JAVA_9_CAPABLE_VM.toSourceString(0d / 0d), is("0.0/0.0"));
     }
 
     @Test
