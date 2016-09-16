@@ -295,15 +295,18 @@ public class ByteBuddyAgent {
             throw new IllegalStateException();
         }
         try {
-            Object virtualMachineInstance = attachmentAccessor.getVirtualMachineType()
+            Class<?> virtualMachineType = attachmentAccessor.getVirtualMachineType();
+            Object virtualMachineInstance = virtualMachineType
                     .getDeclaredMethod(ATTACH_METHOD_NAME, String.class)
                     .invoke(STATIC_MEMBER, processId);
             try {
-                attachmentAccessor.getVirtualMachineType()
+                virtualMachineType
                         .getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
                         .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), argument);
             } finally {
-                attachmentAccessor.getVirtualMachineType().getDeclaredMethod(DETACH_METHOD_NAME).invoke(virtualMachineInstance);
+                virtualMachineType
+                        .getDeclaredMethod(DETACH_METHOD_NAME)
+                        .invoke(virtualMachineInstance);
             }
         } catch (RuntimeException exception) {
             throw exception;
