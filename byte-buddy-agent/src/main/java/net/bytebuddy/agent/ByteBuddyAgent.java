@@ -92,9 +92,9 @@ public class ByteBuddyAgent {
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
     /**
-     * Empty command line arguments.
+     * An empty command line arguments.
      */
-    private static final String WITHOUT_ARGUMENTS = "";
+    private static final String WITHOUT_ARGUMENT = "";
 
     /**
      * The class file extension.
@@ -158,13 +158,38 @@ public class ByteBuddyAgent {
     /**
      * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
      * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
-     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown. The agent is not provided an argument.
      *
      * @param agentJar  The agent jar file.
      * @param processId The target process id.
      */
     public static void attach(File agentJar, String processId) {
-        attach(agentJar, processId, AttachmentProvider.DEFAULT);
+        attach(agentJar, processId, WITHOUT_ARGUMENT);
+    }
+
+    /**
+     * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
+     * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
+     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     *
+     * @param agentJar  The agent jar file.
+     * @param processId The target process id.
+     * @param argument  The argument to provide to the agent.
+     */
+    public static void attach(File agentJar, String processId, String argument) {
+        attach(agentJar, processId, argument, AttachmentProvider.DEFAULT);
+    }
+
+    /**
+     * Attaches the given agent Jar on the target process which must be a virtual machine process. This operation blocks until the
+     * attachment is complete. The agent is not provided an argument.
+     *
+     * @param agentJar           The agent jar file.
+     * @param processId          The target process id.
+     * @param attachmentProvider The attachment provider to use.
+     */
+    public static void attach(File agentJar, String processId, AttachmentProvider attachmentProvider) {
+        attach(agentJar, processId, WITHOUT_ARGUMENT, attachmentProvider);
     }
 
     /**
@@ -173,10 +198,11 @@ public class ByteBuddyAgent {
      *
      * @param agentJar           The agent jar file.
      * @param processId          The target process id.
+     * @param argument           The argument to provide to the agent.
      * @param attachmentProvider The attachment provider to use.
      */
-    public static void attach(File agentJar, String processId, AttachmentProvider attachmentProvider) {
-        install(attachmentProvider, processId, new AgentProvider.ForExistingAgent(agentJar));
+    public static void attach(File agentJar, String processId, String argument, AttachmentProvider attachmentProvider) {
+        install(attachmentProvider, processId, argument, new AgentProvider.ForExistingAgent(agentJar));
     }
 
     /**
@@ -251,7 +277,7 @@ public class ByteBuddyAgent {
         if (instrumentation != null) {
             return instrumentation;
         }
-        install(attachmentProvider, processProvider.resolve(), AgentProvider.ForByteBuddyAgent.INSTANCE);
+        install(attachmentProvider, processProvider.resolve(), WITHOUT_ARGUMENT, AgentProvider.ForByteBuddyAgent.INSTANCE);
         return doGetInstrumentation();
     }
 
@@ -262,7 +288,7 @@ public class ByteBuddyAgent {
      * @param processId          The process id of the target JVM process.
      * @param agentProvider      The agent provider for the agent jar.
      */
-    private static void install(AttachmentProvider attachmentProvider, String processId, AgentProvider agentProvider) {
+    private static void install(AttachmentProvider attachmentProvider, String processId, String argument, AgentProvider agentProvider) {
         AttachmentProvider.Accessor attachmentAccessor = attachmentProvider.attempt();
         if (!attachmentAccessor.isAvailable()) {
             throw new IllegalStateException();
@@ -274,7 +300,7 @@ public class ByteBuddyAgent {
             try {
                 attachmentAccessor.getVirtualMachineType()
                         .getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
-                        .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), WITHOUT_ARGUMENTS);
+                        .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), argument);
             } finally {
                 attachmentAccessor.getVirtualMachineType().getDeclaredMethod(DETACH_METHOD_NAME).invoke(virtualMachineInstance);
             }
