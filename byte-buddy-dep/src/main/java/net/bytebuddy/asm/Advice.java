@@ -5647,12 +5647,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             @Override
                             protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 methodVisitor.visitInsn(Opcodes.FCONST_0);
-                                methodVisitor.visitInsn(Opcodes.FDIV);
-                                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                        Type.getInternalName(Float.class),
-                                        IS_INFINITE,
-                                        Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.FLOAT_TYPE),
-                                        false);
+                                methodVisitor.visitInsn(Opcodes.FCMPL);
                                 methodSizeHandler.requireStackSize(2);
                             }
                         },
@@ -5664,12 +5659,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             @Override
                             protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 methodVisitor.visitInsn(Opcodes.DCONST_0);
-                                methodVisitor.visitInsn(Opcodes.DDIV);
-                                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                        Type.getInternalName(Double.class),
-                                        IS_INFINITE,
-                                        Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE),
-                                        false);
+                                methodVisitor.visitInsn(Opcodes.DCMPL);
                                 methodSizeHandler.requireStackSize(4);
                             }
                         },
@@ -5683,11 +5673,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 /* do nothing */
                             }
                         };
-
-                        /**
-                         * The name of the utility method for checking a type's infinity.
-                         */
-                        private static final String IS_INFINITE = "isInfinite";
 
                         /**
                          * The load opcode for this skip dispatcher.
