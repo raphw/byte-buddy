@@ -5806,8 +5806,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           MethodDescription.InDefinedShape instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
                             methodVisitor.visitVarInsn(Opcodes.ALOAD, instrumentedMethod.getStackSize());
-                            Label noSkip = new Label();
                             methodVisitor.visitTypeInsn(Opcodes.INSTANCEOF, typeDescription.getInternalName());
+                            Label noSkip = new Label();
                             methodVisitor.visitJumpInsn(Opcodes.IFEQ, noSkip);
                             skipHandler.apply(methodVisitor);
                             methodVisitor.visitLabel(noSkip);
