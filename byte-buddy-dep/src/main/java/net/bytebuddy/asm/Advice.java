@@ -135,6 +135,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape PREPEND_LINE_NUMBER;
 
+    /**
+     * A reference to the {@link OnMethodEnter#skipOn()} method.
+     */
     private static final MethodDescription.InDefinedShape SKIP_ON;
 
     /**
