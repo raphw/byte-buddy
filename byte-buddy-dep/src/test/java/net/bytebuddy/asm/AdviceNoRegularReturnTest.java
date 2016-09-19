@@ -92,7 +92,7 @@ public class AdviceNoRegularReturnTest {
 
     private static class EnterAdviceSkip {
 
-        @Advice.OnMethodEnter(skipIfTrue = true)
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
         private static boolean enter() {
             return false;
         }

@@ -1198,62 +1198,6 @@ public class AdviceTest {
     }
 
     @Test
-    public void testSkipInstrumentedMethod() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(SkipIfTrueAdvice.class)
-                .visit(Advice.to(SkipIfTrueAdvice.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), nullValue(Object.class));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(FOO).get(null), is((Object) 0));
-    }
-
-    @Test
-    public void testSkipInstrumentedMethodNonInlined() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(SkipIfTrueNonInlinedAdvice.class)
-                .visit(Advice.to(SkipIfTrueNonInlinedAdvice.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), nullValue(Object.class));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(FOO).get(null), is((Object) 0));
-    }
-
-    @Test
-    public void testSkipInstrumentedMethodWithSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(SkipIfTrueWithSuppressionAdvice.class)
-                .visit(Advice.to(SkipIfTrueWithSuppressionAdvice.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(FOO).get(null), is((Object) 1));
-    }
-
-    @Test
-    public void testSkipInstrumentedMethodNonInlinedWithSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(SkipIfTrueNonInlinedWithSuppressionAdvice.class)
-                .visit(Advice.to(SkipIfTrueNonInlinedWithSuppressionAdvice.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(FOO).get(null), is((Object) 1));
-    }
-
-    @Test
     public void testLineNumberPrepend() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -1295,6 +1239,43 @@ public class AdviceTest {
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testInstanceOfSkip() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(InstanceOfSkip.class)
+                .visit(Advice.to(InstanceOfSkip.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testInstanceOfNoSkip() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(InstanceOfNoSkip.class)
+                .visit(Advice.to(InstanceOfNoSkip.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInstanceOfPrimitiveSkip() throws Exception {
+        Advice.to(InstanceOfIllegalPrimitiveSkip.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInstanceOfPrimitiveInstanceOfSkip() throws Exception {
+        Advice.to(InstanceOfIllegalPrimitiveInstanceOfSkip.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDefaultValuePrimitiveSkip() throws Exception {
+        Advice.to(DefaultValueIllegalPrimitiveSkip.class);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -1639,11 +1620,6 @@ public class AdviceTest {
         Advice.to(new TypeDescription.ForLoadedType(TrivialAdvice.class));
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testSkipIfTrueNonCompatibleReturnType() throws Exception {
-        Advice.to(SkipIfTrueNonCompatibleReturnType.class);
-    }
-
     @Test
     public void testCannotInstantiateSuppressionMarker() throws Exception {
         Class<?> type = Class.forName(Advice.class.getName() + "$NoExceptionHandler");
@@ -1796,7 +1772,9 @@ public class AdviceTest {
         }).applyBasic();
         ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.class).apply();
         ObjectPropertyAssertion.of(Advice.DynamicValue.ForAnnotationProperty.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForType.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.Disabled.class).apply();
     }
 
     @SuppressWarnings("unused")
@@ -3144,118 +3122,6 @@ public class AdviceTest {
         }
     }
 
-    @SuppressWarnings("unused")
-    public static class SkipIfTrueAdvice {
-
-        public static int enter, exit, foo;
-
-        public String foo() {
-            foo++;
-            return FOO;
-        }
-
-        @Advice.OnMethodEnter(skipIfTrue = true)
-        private static boolean enter() {
-            enter++;
-            return true;
-        }
-
-        @Advice.OnMethodExit
-        private static void exit(@Advice.Enter boolean enter) {
-            if (!enter) {
-                throw new AssertionError();
-            }
-            exit++;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class SkipIfTrueNonInlinedAdvice {
-
-        public static int enter, exit, foo;
-
-        public String foo() {
-            foo++;
-            return FOO;
-        }
-
-        @Advice.OnMethodEnter(skipIfTrue = true, inline = false)
-        private static boolean enter() {
-            enter++;
-            return true;
-        }
-
-        @Advice.OnMethodExit(inline = false)
-        private static void exit(@Advice.Enter boolean enter) {
-            if (!enter) {
-                throw new AssertionError();
-            }
-            exit++;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class SkipIfTrueWithSuppressionAdvice {
-
-        public static int enter, exit, foo;
-
-        public String foo() {
-            foo++;
-            return FOO;
-        }
-
-        @Advice.OnMethodEnter(skipIfTrue = true, suppress = RuntimeException.class)
-        private static boolean enter() {
-            enter++;
-            throw new RuntimeException();
-        }
-
-        @Advice.OnMethodExit
-        private static void exit(@Advice.Enter boolean enter) {
-            if (enter) {
-                throw new AssertionError();
-            }
-            exit++;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class SkipIfTrueNonInlinedWithSuppressionAdvice {
-
-        public static int enter, exit, foo;
-
-        public String foo() {
-            foo++;
-            return FOO;
-        }
-
-        @Advice.OnMethodEnter(skipIfTrue = true, suppress = RuntimeException.class, inline = false)
-        private static boolean enter() {
-            enter++;
-            throw new RuntimeException();
-        }
-
-        @Advice.OnMethodExit(inline = false)
-        private static void exit(@Advice.Enter boolean enter) {
-            if (enter) {
-                throw new AssertionError();
-            }
-            exit++;
-        }
-    }
-
-    public static class SkipIfTrueNonCompatibleReturnType {
-
-        public String foo() {
-            return FOO;
-        }
-
-        @Advice.OnMethodEnter(skipIfTrue = true)
-        private static void enter() {
-            throw new AssertionError();
-        }
-    }
-
     public static class LineNumberAdvice {
 
         @Advice.OnMethodEnter
@@ -3305,6 +3171,54 @@ public class AdviceTest {
             if (top.getLineNumber() >= 0) {
                 throw new AssertionError();
             }
+        }
+    }
+
+    public static class InstanceOfSkip {
+
+        public String foo() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = InstanceOfSkip.class)
+        private static Object enter() {
+            return new InstanceOfSkip();
+        }
+    }
+
+    public static class InstanceOfNoSkip {
+
+        public String foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(skipOn = InstanceOfSkip.class)
+        private static Object enter() {
+            return null;
+        }
+    }
+
+    public static class InstanceOfIllegalPrimitiveSkip {
+
+        @Advice.OnMethodEnter(skipOn = InstanceOfSkip.class)
+        private static void enter() {
+            /* empty */
+        }
+    }
+
+    public static class DefaultValueIllegalPrimitiveSkip {
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static void enter() {
+            /* empty */
+        }
+    }
+
+    public static class InstanceOfIllegalPrimitiveInstanceOfSkip {
+
+        @Advice.OnMethodEnter(skipOn = int.class)
+        private static void enter() {
+            /* empty */
         }
     }
 

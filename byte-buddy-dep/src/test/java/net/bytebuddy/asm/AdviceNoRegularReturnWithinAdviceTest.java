@@ -31,7 +31,6 @@ public class AdviceNoRegularReturnWithinAdviceTest {
         return Arrays.asList(new Object[][]{
                 {VoidEnterAdvice.class},
                 {BooleanEnterAdvice.class},
-                {BooleanEnterSkipAdvice.class},
                 {ByteEnterAdvice.class},
                 {ShortEnterAdvice.class},
                 {CharacterEnterAdvice.class},
@@ -97,14 +96,6 @@ public class AdviceNoRegularReturnWithinAdviceTest {
     private static class BooleanEnterAdvice {
 
         @Advice.OnMethodEnter
-        public static boolean foo() {
-            throw new RuntimeException();
-        }
-    }
-
-    private static class BooleanEnterSkipAdvice {
-
-        @Advice.OnMethodEnter(skipIfTrue = true)
         public static boolean foo() {
             throw new RuntimeException();
         }
