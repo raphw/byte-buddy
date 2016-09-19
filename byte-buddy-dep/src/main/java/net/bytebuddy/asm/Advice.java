@@ -5564,6 +5564,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 interface SkipDispatcher {
 
                     /**
+                     * Applies this skip dispatcher.
+                     *
+                     * @param methodVisitor        The method visitor to write to.
+                     * @param methodSizeHandler    The method size handler of the advice method to use.
+                     * @param stackMapFrameHandler The stack map frame handler of the advice method to use.
+                     * @param instrumentedMethod   The instrumented method.
+                     * @param skipHandler          The skip handler to use.
+                     */
+                    void apply(MethodVisitor methodVisitor,
+                               MethodSizeHandler.ForAdvice methodSizeHandler,
+                               StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                               MethodDescription.InDefinedShape instrumentedMethod,
+                               Bound.SkipHandler skipHandler);
+
+                    /**
                      * A disabled skip dispatcher where the instrumented method is always executed.
                      */
                     enum Disabled implements SkipDispatcher {
@@ -5575,10 +5590,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public void apply(MethodVisitor methodVisitor,
+                                          MethodSizeHandler.ForAdvice methodSizeHandler,
                                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                           MethodDescription.InDefinedShape instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
-                                /* do nothing */
+                            /* do nothing */
                         }
 
                         @Override
@@ -5599,7 +5615,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         FOR_BOOLEAN(Opcodes.ILOAD, Opcodes.IFEQ) {
                             @Override
-                            protected void convertValue(MethodVisitor methodVisitor) {
+                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 /* do nothing */
                             }
                         },
@@ -5609,7 +5625,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         FOR_INTEGER(Opcodes.ILOAD, Opcodes.IFNE) {
                             @Override
-                            protected void convertValue(MethodVisitor methodVisitor) {
+                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 /* do nothing */
                             }
                         },
@@ -5619,7 +5635,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         FOR_LONG(Opcodes.LLOAD, Opcodes.IFNE) {
                             @Override
-                            protected void convertValue(MethodVisitor methodVisitor) {
+                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 methodVisitor.visitInsn(Opcodes.L2I);
                             }
                         },
@@ -5629,8 +5645,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         FOR_FLOAT(Opcodes.FLOAD, Opcodes.IFNE) {
                             @Override
-                            protected void convertValue(MethodVisitor methodVisitor) {
-                                methodVisitor.visitInsn(Opcodes.F2I);
+                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                                methodVisitor.visitInsn(Opcodes.FCONST_0);
+                                methodVisitor.visitInsn(Opcodes.FDIV);
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                                        Type.getInternalName(Float.class),
+                                        IS_INFINITE,
+                                        Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.FLOAT_TYPE),
+                                        false);
+                                methodSizeHandler.requireStackSize(2);
                             }
                         },
 
@@ -5639,8 +5662,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         FOR_DOUBLE(Opcodes.DLOAD, Opcodes.IFNE) {
                             @Override
-                            protected void convertValue(MethodVisitor methodVisitor) {
-                                methodVisitor.visitInsn(Opcodes.D2I);
+                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                                methodVisitor.visitInsn(Opcodes.DCONST_0);
+                                methodVisitor.visitInsn(Opcodes.DDIV);
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                                        Type.getInternalName(Double.class),
+                                        IS_INFINITE,
+                                        Type.getMethodDescriptor(Type.BOOLEAN_TYPE, Type.DOUBLE_TYPE),
+                                        false);
+                                methodSizeHandler.requireStackSize(4);
                             }
                         },
 
@@ -5649,10 +5679,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         FOR_REFERENCE(Opcodes.ALOAD, Opcodes.IFNONNULL) {
                             @Override
-                            protected void convertValue(MethodVisitor methodVisitor) {
+                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 /* do nothing */
                             }
                         };
+
+                        /**
+                         * The name of the utility method for checking a type's infinity.
+                         */
+                        private static final String IS_INFINITE = "isInfinite";
 
                         /**
                          * The load opcode for this skip dispatcher.
@@ -5677,11 +5712,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public void apply(MethodVisitor methodVisitor,
+                                          MethodSizeHandler.ForAdvice methodSizeHandler,
                                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                           MethodDescription.InDefinedShape instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
                             methodVisitor.visitVarInsn(load, instrumentedMethod.getStackSize());
-                            convertValue(methodVisitor);
+                            convertValue(methodVisitor, methodSizeHandler);
                             Label noSkip = new Label();
                             methodVisitor.visitJumpInsn(jump, noSkip);
                             skipHandler.apply(methodVisitor);
@@ -5692,9 +5728,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Converts the return value to an {@code int} value.
                          *
-                         * @param methodVisitor The method visitor to use.
+                         * @param methodVisitor     The method visitor to use.
+                         * @param methodSizeHandler The method size handler of the advice method to use.
                          */
-                        protected abstract void convertValue(MethodVisitor methodVisitor);
+                        protected abstract void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler);
 
                         /**
                          * Creates an appropriate skip dispatcher.
@@ -5779,6 +5816,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public void apply(MethodVisitor methodVisitor,
+                                          MethodSizeHandler.ForAdvice methodSizeHandler,
                                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                           MethodDescription.InDefinedShape instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
@@ -5811,19 +5849,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     '}';
                         }
                     }
-
-                    /**
-                     * Applies this skip dispatcher.
-                     *
-                     * @param methodVisitor        The method visitor to write to.
-                     * @param stackMapFrameHandler The stack map frame handler of the advice method to use.
-                     * @param instrumentedMethod   The instrumented method.
-                     * @param skipHandler          The skip handler to use.
-                     */
-                    void apply(MethodVisitor methodVisitor,
-                               StackMapFrameHandler.ForAdvice stackMapFrameHandler,
-                               MethodDescription.InDefinedShape instrumentedMethod,
-                               Bound.SkipHandler skipHandler);
                 }
             }
 
@@ -6534,7 +6559,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public void apply(SkipHandler skipHandler) {
                             doApply();
-                            skipDispatcher.apply(methodVisitor, stackMapFrameHandler.bindEntry(adviceMethod), instrumentedMethod, skipHandler);
+                            skipDispatcher.apply(methodVisitor,
+                                    methodSizeHandler.bindEntry(adviceMethod),
+                                    stackMapFrameHandler.bindEntry(adviceMethod),
+                                    instrumentedMethod, skipHandler);
                         }
 
                         @Override
@@ -7368,7 +7396,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A handler for computing the method size requirements.
                      */
-                    private final MethodSizeHandler.ForAdvice methodSizeHandler;
+                    protected final MethodSizeHandler.ForAdvice methodSizeHandler;
 
                     /**
                      * A handler for translating and injecting stack map frmes.
@@ -7506,7 +7534,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public void apply(SkipHandler skipHandler) {
                             doApply();
-                            skipDispatcher.apply(methodVisitor, stackMapFrameHandler, instrumentedMethod, skipHandler);
+                            skipDispatcher.apply(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedMethod, skipHandler);
                         }
 
                         @Override
@@ -8685,17 +8713,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * <p>
      * When set as value of {@link OnMethodEnter#skipOn()}, this type indicates that an instrumented method should not
      * be executed if the advice method's default value is returned or if {@code true} is returned on a {@code boolean}
      * method. A default value is {@code null} for reference types and {@code 0} for other primitive types than {@code boolean}.
      * It is illegal to use this value if the advice method returns {@code void}.
-     * </p>
-     * <p>
-     * <b>Warning</b>: For {@code float} and {@code double} values, a check against {@code 0} is applied by casting the
-     * return value to an {@code int} value where post-comma precision is lost. A method is therefore skipped, for all
-     * values less than {@code 1f} or {@code 1d}.
-     * </p>
      */
     public static final class DefaultValueOrTrue {
 
