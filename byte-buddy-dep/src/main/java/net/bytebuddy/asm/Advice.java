@@ -2528,10 +2528,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForBoxedDefaultValue that = (ForBoxedDefaultValue) object;
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ForBoxedDefaultValue that = (ForBoxedDefaultValue) other;
                         return boxingDispatcher == that.boxingDispatcher;
                     }
 
@@ -2599,10 +2599,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected abstract void onWrite(MethodVisitor methodVisitor, int opcode);
 
                     @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForParameter forParameter = (ForParameter) object;
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ForParameter forParameter = (ForParameter) other;
                         return offset == forParameter.offset;
                     }
 
@@ -2715,11 +2715,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
 
                             @Override
-                            public boolean equals(Object object) {
-                                if (this == object) return true;
-                                if (object == null || getClass() != object.getClass()) return false;
-                                if (!super.equals(object)) return false;
-                                WithCasting that = (WithCasting) object;
+                            public boolean equals(Object other) {
+                                if (this == other) return true;
+                                if (other == null || getClass() != other.getClass()) return false;
+                                if (!super.equals(other)) return false;
+                                WithCasting that = (WithCasting) other;
                                 return targetType.equals(that.targetType);
                             }
 
@@ -2817,10 +2817,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForField forField = (ForField) object;
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ForField forField = (ForField) other;
                         return fieldDescription.equals(forField.fieldDescription);
                     }
 
@@ -2982,10 +2982,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForConstantPoolValue that = (ForConstantPoolValue) object;
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ForConstantPoolValue that = (ForConstantPoolValue) other;
                         return value.equals(that.value);
                     }
 
@@ -3055,10 +3055,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForBoxedArgument that = (ForBoxedArgument) object;
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ForBoxedArgument that = (ForBoxedArgument) other;
                         return offset == that.offset && boxingDispatcher == that.boxingDispatcher;
                     }
 
@@ -3248,10 +3248,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForBoxedArguments that = (ForBoxedArguments) object;
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ForBoxedArguments that = (ForBoxedArguments) other;
                         return parameters.equals(that.parameters);
                     }
 
@@ -3487,10 +3487,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForSerializedObject that = (ForSerializedObject) object;
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ForSerializedObject that = (ForSerializedObject) other;
                         return target.equals(that.target) && serialized.equals(that.serialized);
                     }
 
@@ -3589,10 +3589,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForParameter that = (ForParameter) object;
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForParameter that = (ForParameter) other;
                     return index == that.index
                             && readOnly == that.readOnly
                             && targetType.equals(that.targetType);
@@ -3722,10 +3722,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForThisReference that = (ForThisReference) object;
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForThisReference that = (ForThisReference) other;
                     return readOnly == that.readOnly
                             && optional == that.optional
                             && targetType.equals(that.targetType);
@@ -3894,10 +3894,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForField forField = (ForField) object;
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForField forField = (ForField) other;
                     return name.equals(forField.name) && targetType.equals(forField.targetType) && readOnly == forField.readOnly;
                 }
 
@@ -3979,11 +3979,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        if (!super.equals(object)) return false;
-                        WithExplicitType that = (WithExplicitType) object;
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        if (!super.equals(other)) return false;
+                        WithExplicitType that = (WithExplicitType) other;
                         return explicitType.equals(that.explicitType);
                     }
 
@@ -4143,7 +4143,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public boolean equals(Object object) {
+                public boolean equals(Object other) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     ForOrigin forOrigin = (ForOrigin) object;
@@ -4361,7 +4361,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public boolean equals(Object object) {
+                        public boolean equals(Object other) {
                             if (this == object) return true;
                             if (object == null || getClass() != object.getClass()) return false;
                             ForConstantValue that = (ForConstantValue) object;
@@ -4574,7 +4574,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
+                    public boolean equals(Object other) {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
                         Factory factory = (Factory) object;
@@ -4943,7 +4943,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public boolean equals(Object object) {
+                public boolean equals(Object other) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     ForThrowable forThrowable = (ForThrowable) object;
@@ -5027,7 +5027,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
+                    public boolean equals(Object other) {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
                         Factory factory = (Factory) object;
@@ -5120,7 +5120,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public boolean equals(Object object) {
+                public boolean equals(Object other) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     ForUserValue that = (ForUserValue) object;
@@ -5195,7 +5195,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
+                    public boolean equals(Object other) {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
                         Factory factory = (Factory) object;
@@ -5423,7 +5423,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public boolean equals(Object object) {
+                public boolean equals(Object other) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     Suppressing that = (Suppressing) object;
@@ -5815,10 +5815,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public boolean equals(Object object) {
-                            if (this == object) return true;
-                            if (object == null || getClass() != object.getClass()) return false;
-                            ForType forType = (ForType) object;
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (other == null || getClass() != other.getClass()) return false;
+                            ForType forType = (ForType) other;
                             return typeDescription.equals(forType.typeDescription);
                         }
 
@@ -6483,7 +6483,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
+                    public boolean equals(Object other) {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
                         if (!super.equals(object)) return false;
@@ -7684,7 +7684,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object object) {
+                    public boolean equals(Object other) {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
                         if (!super.equals(object)) return false;
@@ -8395,7 +8395,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public boolean equals(Object object) {
+            public boolean equals(Object other) {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 ForFixedValue that = (ForFixedValue) object;
@@ -8461,7 +8461,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public boolean equals(Object object) {
+            public boolean equals(Object other) {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 ForAnnotationProperty<?> that = (ForAnnotationProperty<?>) object;
@@ -8659,10 +8659,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            WithCustomMapping that = (WithCustomMapping) object;
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            WithCustomMapping that = (WithCustomMapping) other;
             return dynamicValues.equals(that.dynamicValues);
         }
 
