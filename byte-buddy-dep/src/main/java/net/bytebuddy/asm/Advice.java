@@ -4627,7 +4627,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                     if (!readOnly && !instrumentedMethod.getReturnType().asErasure().equals(targetType)) {
-                        throw new IllegalStateException("read-only return type of " + instrumentedMethod + " is not equal to " + targetType);
+                        throw new IllegalStateException("Non read-only return type of " + instrumentedMethod + " is not equal to " + targetType);
                     } else if (readOnly && !instrumentedMethod.getReturnType().asErasure().isAssignableTo(targetType)) {
                         throw new IllegalStateException("Cannot assign return type of " + instrumentedMethod + " to " + targetType);
                     }
