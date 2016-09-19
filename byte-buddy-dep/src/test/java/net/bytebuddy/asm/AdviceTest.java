@@ -1635,6 +1635,19 @@ public class AdviceTest {
         }
     }
 
+    @Test
+    public void testCannotInstantiateSkipMarker() throws Exception {
+        try {
+            Constructor<?> constructor = Advice.DefaultValueOrTrue.class.getDeclaredConstructor();
+            assertThat(Modifier.isPrivate(constructor.getModifiers()), is(true));
+            constructor.setAccessible(true);
+            constructor.newInstance();
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(UnsupportedOperationException.class));
+        }
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testDistributedAdviceNoEnterAdvice() throws Exception {
         Advice.to(Object.class, EmptyAdvice.class);

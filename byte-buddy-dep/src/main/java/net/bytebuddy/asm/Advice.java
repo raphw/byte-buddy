@@ -8697,10 +8697,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public static final class DefaultValueOrTrue {
 
         /**
-         * Disallows instantiation and always throws an exception.
+         * A private constructor as this class is not supposed to be invoked.
          */
         private DefaultValueOrTrue() {
-            throw new UnsupportedOperationException("This type is not intended for instantiatiom");
+            throw new UnsupportedOperationException("This marker class is not supposed to be instantiated");
         }
     }
 }
