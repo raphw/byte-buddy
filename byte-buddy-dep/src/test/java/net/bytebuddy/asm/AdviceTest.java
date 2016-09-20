@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -21,12 +22,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
+import static javafx.scene.input.KeyCode.M;
 import static junit.framework.TestCase.fail;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
@@ -1015,6 +1018,48 @@ public class AdviceTest {
     }
 
     @Test
+    public void testOriginMethodAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OriginMethodAdvice.class).on(named(BAR)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testOriginMethodNonAssignableAdvice() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OriginMethodAdvice.class).on(isConstructor()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testOriginConstructorNonAssignableAdvice() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OriginConstructorAdvice.class).on(named(BAR)))
+                .make();
+    }
+
+    @Test
+    public void testOriginConstructorAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OriginConstructorAdvice.class).on(isConstructor()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
     public void testExceptionSuppressionAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -1703,7 +1748,7 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodExit.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.BoxingDispatcher.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.PrimitiveDispatcher.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadOnly.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.WithCasting.class).apply();
@@ -1718,6 +1763,8 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForSerializedObject.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForNullConstant.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForMethod.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForConstructor.class).apply();
         final int[] value = new int[1];
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForParameter.class).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
             @Override
@@ -1755,6 +1802,7 @@ public class AdviceTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForInstrumentedType.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForInstrumentedMethod.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForReturnValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForReturnValue.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThrowable.class).apply();
@@ -2644,6 +2692,46 @@ public class AdviceTest {
                 throw new AssertionError();
             }
             if (type != Sample.class) {
+                throw new AssertionError();
+            }
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class OriginMethodAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Origin Method origin) throws Exception {
+            if (!origin.equals(Sample.class.getDeclaredMethod(BAR, String.class))) {
+                throw new AssertionError();
+            }
+            Sample.enter++;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Origin Method origin) throws Exception {
+            if (!origin.equals(Sample.class.getDeclaredMethod(BAR, String.class))) {
+                throw new AssertionError();
+            }
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class OriginConstructorAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Origin Constructor<?> origin) throws Exception {
+            if (!origin.equals(Sample.class.getDeclaredConstructor())) {
+                throw new AssertionError();
+            }
+            Sample.enter++;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Origin Constructor<?> origin) throws Exception {
+            if (!origin.equals(Sample.class.getDeclaredConstructor())) {
                 throw new AssertionError();
             }
             Sample.exit++;

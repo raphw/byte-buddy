@@ -15,6 +15,7 @@ import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
 import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
@@ -22,6 +23,8 @@ import org.objectweb.asm.*;
 
 import java.io.*;
 import java.lang.annotation.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -2241,7 +2244,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A dispatcher for boxing a primitive value.
                  */
-                enum BoxingDispatcher {
+                enum PrimitiveDispatcher {
 
                     /**
                      * A boxing dispatcher for the {@code boolean} type.
@@ -2338,7 +2341,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param primitiveType  The represented primitive type.
                      * @param unboxingMethod The name of the method used for unboxing a primitive type.
                      */
-                    BoxingDispatcher(int defaultValue, int load, int store, Class<?> wrapperType, Class<?> primitiveType, String unboxingMethod) {
+                    PrimitiveDispatcher(int defaultValue, int load, int store, Class<?> wrapperType, Class<?> primitiveType, String unboxingMethod) {
                         this.defaultValue = defaultValue;
                         this.load = load;
                         this.store = store;
@@ -2355,7 +2358,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param typeDefinition A description of a primitive type.
                      * @return An appropriate boxing dispatcher.
                      */
-                    protected static BoxingDispatcher of(TypeDefinition typeDefinition) {
+                    protected static PrimitiveDispatcher of(TypeDefinition typeDefinition) {
                         if (typeDefinition.represents(boolean.class)) {
                             return BOOLEAN;
                         } else if (typeDefinition.represents(byte.class)) {
@@ -2374,6 +2377,43 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return DOUBLE;
                         } else {
                             throw new IllegalArgumentException("Cannot box: " + typeDefinition);
+                        }
+                    }
+
+                    /**
+                     * Loads a primitive integer value onto the operand stack.
+                     *
+                     * @param methodVisitor The method visitor to use.
+                     * @param value         The value to load onto the operand stack.
+                     */
+                    protected static void loadInteger(MethodVisitor methodVisitor, int value) {
+                        switch (value) {
+                            case 0:
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                break;
+                            case 1:
+                                methodVisitor.visitInsn(Opcodes.ICONST_1);
+                                break;
+                            case 2:
+                                methodVisitor.visitInsn(Opcodes.ICONST_2);
+                                break;
+                            case 3:
+                                methodVisitor.visitInsn(Opcodes.ICONST_3);
+                                break;
+                            case 4:
+                                methodVisitor.visitInsn(Opcodes.ICONST_4);
+                                break;
+                            case 5:
+                                methodVisitor.visitInsn(Opcodes.ICONST_5);
+                                break;
+                            default:
+                                if (value < Byte.MAX_VALUE) {
+                                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
+                                } else if (value < Short.MAX_VALUE) {
+                                    methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
+                                } else {
+                                    methodVisitor.visitLdcInsn(value);
+                                }
                         }
                     }
 
@@ -2411,6 +2451,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     /**
+                     * Loads this instance's type constant onto the operand stack.
+                     *
+                     * @param methodVisitor The method visitor to use.
+                     */
+                    protected void loadType(MethodVisitor methodVisitor) {
+                        methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, owner, "TYPE", Type.getDescriptor(Class.class));
+                    }
+
+                    /**
                      * Returns the stack size of the primitive value.
                      *
                      * @return The stack size of the primitive value.
@@ -2421,7 +2470,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.BoxingDispatcher." + name();
+                        return "Advice.Dispatcher.OffsetMapping.Target.PrimitiveDispatcher." + name();
                     }
                 }
 
@@ -2487,15 +2536,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * The boxing dispatcher to use.
                      */
-                    private final BoxingDispatcher boxingDispatcher;
+                    private final PrimitiveDispatcher primitiveDispatcher;
 
                     /**
                      * Creates a new target for a boxing dispatcher.
                      *
-                     * @param boxingDispatcher The boxing dispatcher to use.
+                     * @param primitiveDispatcher The boxing dispatcher to use.
                      */
-                    protected ForBoxedDefaultValue(BoxingDispatcher boxingDispatcher) {
-                        this.boxingDispatcher = boxingDispatcher;
+                    protected ForBoxedDefaultValue(PrimitiveDispatcher primitiveDispatcher) {
+                        this.primitiveDispatcher = primitiveDispatcher;
                     }
 
                     /**
@@ -2505,15 +2554,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate target.
                      */
                     protected static Target of(TypeDefinition typeDefinition) {
-                        return new Target.ForBoxedDefaultValue(BoxingDispatcher.of(typeDefinition));
+                        return new Target.ForBoxedDefaultValue(PrimitiveDispatcher.of(typeDefinition));
                     }
 
                     @Override
                     public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
-                                boxingDispatcher.pushBoxedDefault(methodVisitor);
-                                return boxingDispatcher.getStackSize().getSize() - 1;
+                                primitiveDispatcher.pushBoxedDefault(methodVisitor);
+                                return primitiveDispatcher.getStackSize().getSize() - 1;
                             case Opcodes.ASTORE:
                                 methodVisitor.visitInsn(Opcodes.POP);
                                 return NO_PADDING;
@@ -2532,18 +2581,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (this == other) return true;
                         if (other == null || getClass() != other.getClass()) return false;
                         ForBoxedDefaultValue that = (ForBoxedDefaultValue) other;
-                        return boxingDispatcher == that.boxingDispatcher;
+                        return primitiveDispatcher == that.primitiveDispatcher;
                     }
 
                     @Override
                     public int hashCode() {
-                        return boxingDispatcher.hashCode();
+                        return primitiveDispatcher.hashCode();
                     }
 
                     @Override
                     public String toString() {
                         return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedDefaultValue{" +
-                                "boxingDispatcher=" + boxingDispatcher +
+                                "primitiveDispatcher=" + primitiveDispatcher +
                                 '}';
                     }
                 }
@@ -3015,25 +3064,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A dispatcher for boxing the primitive value.
                      */
-                    protected final BoxingDispatcher boxingDispatcher;
+                    protected final PrimitiveDispatcher primitiveDispatcher;
 
                     /**
                      * Creates a new offset mapping for boxing a primitive parameter value.
                      *
-                     * @param offset           The parameters offset.
-                     * @param boxingDispatcher A dispatcher for boxing the primitive value.
+                     * @param offset              The parameters offset.
+                     * @param primitiveDispatcher A dispatcher for boxing the primitive value.
                      */
-                    protected ForBoxedArgument(int offset, BoxingDispatcher boxingDispatcher) {
+                    protected ForBoxedArgument(int offset, PrimitiveDispatcher primitiveDispatcher) {
                         this.offset = offset;
-                        this.boxingDispatcher = boxingDispatcher;
+                        this.primitiveDispatcher = primitiveDispatcher;
                     }
 
                     @Override
                     public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
-                                boxingDispatcher.loadBoxed(methodVisitor, offset);
-                                return boxingDispatcher.getStackSize().getSize() - 1;
+                                primitiveDispatcher.loadBoxed(methodVisitor, offset);
+                                return primitiveDispatcher.getStackSize().getSize() - 1;
                             case Opcodes.ASTORE:
                                 onStore(methodVisitor);
                                 return NO_PADDING;
@@ -3059,13 +3108,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (this == other) return true;
                         if (other == null || getClass() != other.getClass()) return false;
                         ForBoxedArgument that = (ForBoxedArgument) other;
-                        return offset == that.offset && boxingDispatcher == that.boxingDispatcher;
+                        return offset == that.offset && primitiveDispatcher == that.primitiveDispatcher;
                     }
 
                     @Override
                     public int hashCode() {
                         int result = offset;
-                        result = 31 * result + boxingDispatcher.hashCode();
+                        result = 31 * result + primitiveDispatcher.hashCode();
                         return result;
                     }
 
@@ -3077,11 +3126,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new read-only target offset mapping for a boxed parameter.
                          *
-                         * @param offset           The parameters offset.
-                         * @param boxingDispatcher A dispatcher for boxing the primitive value.
+                         * @param offset              The parameters offset.
+                         * @param primitiveDispatcher A dispatcher for boxing the primitive value.
                          */
-                        protected ReadOnly(int offset, BoxingDispatcher boxingDispatcher) {
-                            super(offset, boxingDispatcher);
+                        protected ReadOnly(int offset, PrimitiveDispatcher primitiveDispatcher) {
+                            super(offset, primitiveDispatcher);
                         }
 
                         /**
@@ -3092,7 +3141,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @return An appropriate target mapping.
                          */
                         protected static Target of(int offset, TypeDefinition type) {
-                            return new ReadOnly(offset, BoxingDispatcher.of(type));
+                            return new ReadOnly(offset, PrimitiveDispatcher.of(type));
                         }
 
                         @Override
@@ -3104,7 +3153,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public String toString() {
                             return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadOnly{" +
                                     "offset=" + offset +
-                                    ", boxingDispatcher=" + boxingDispatcher +
+                                    ", primitiveDispatcher=" + primitiveDispatcher +
                                     '}';
                         }
                     }
@@ -3117,11 +3166,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new read-write target offset mapping for a boxed parameter.
                          *
-                         * @param offset           The parameters offset.
-                         * @param boxingDispatcher A dispatcher for boxing the primitive value.
+                         * @param offset              The parameters offset.
+                         * @param primitiveDispatcher A dispatcher for boxing the primitive value.
                          */
-                        protected ReadWrite(int offset, BoxingDispatcher boxingDispatcher) {
-                            super(offset, boxingDispatcher);
+                        protected ReadWrite(int offset, PrimitiveDispatcher primitiveDispatcher) {
+                            super(offset, primitiveDispatcher);
                         }
 
                         /**
@@ -3132,19 +3181,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @return An appropriate target mapping.
                          */
                         protected static Target of(int offset, TypeDefinition type) {
-                            return new ReadWrite(offset, BoxingDispatcher.of(type));
+                            return new ReadWrite(offset, PrimitiveDispatcher.of(type));
                         }
 
                         @Override
                         protected void onStore(MethodVisitor methodVisitor) {
-                            boxingDispatcher.storeUnboxed(methodVisitor, offset);
+                            primitiveDispatcher.storeUnboxed(methodVisitor, offset);
                         }
 
                         @Override
                         public String toString() {
                             return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadWrite{" +
                                     "offset=" + offset +
-                                    ", boxingDispatcher=" + boxingDispatcher +
+                                    ", primitiveDispatcher=" + primitiveDispatcher +
                                     '}';
                         }
                     }
@@ -3173,14 +3222,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
-                                loadInteger(methodVisitor, parameters.size());
+                                PrimitiveDispatcher.loadInteger(methodVisitor, parameters.size());
                                 methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.OBJECT.getInternalName());
                                 StackSize stackSize = StackSize.ZERO;
                                 for (ParameterDescription parameter : parameters) {
                                     methodVisitor.visitInsn(Opcodes.DUP);
-                                    loadInteger(methodVisitor, parameter.getIndex());
+                                    PrimitiveDispatcher.loadInteger(methodVisitor, parameter.getIndex());
                                     if (parameter.getType().isPrimitive()) {
-                                        BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
+                                        PrimitiveDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
                                     } else {
                                         methodVisitor.visitVarInsn(Opcodes.ALOAD, parameter.getOffset());
                                     }
@@ -3194,43 +3243,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 return onStore(methodVisitor);
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
-                        }
-                    }
-
-                    /**
-                     * Loads an integer onto the operand stack.
-                     *
-                     * @param methodVisitor The method visitor for which the integer is loaded.
-                     * @param value         The integer value to load onto the stack.
-                     */
-                    protected static void loadInteger(MethodVisitor methodVisitor, int value) {
-                        switch (value) {
-                            case 0:
-                                methodVisitor.visitInsn(Opcodes.ICONST_0);
-                                break;
-                            case 1:
-                                methodVisitor.visitInsn(Opcodes.ICONST_1);
-                                break;
-                            case 2:
-                                methodVisitor.visitInsn(Opcodes.ICONST_2);
-                                break;
-                            case 3:
-                                methodVisitor.visitInsn(Opcodes.ICONST_3);
-                                break;
-                            case 4:
-                                methodVisitor.visitInsn(Opcodes.ICONST_4);
-                                break;
-                            case 5:
-                                methodVisitor.visitInsn(Opcodes.ICONST_5);
-                                break;
-                            default:
-                                if (value < Byte.MAX_VALUE) {
-                                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
-                                } else if (value < Short.MAX_VALUE) {
-                                    methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
-                                } else {
-                                    methodVisitor.visitLdcInsn(value);
-                                }
                         }
                     }
 
@@ -3306,10 +3318,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             StackSize stackSize = StackSize.ZERO;
                             for (ParameterDescription parameter : parameters) {
                                 methodVisitor.visitInsn(Opcodes.DUP);
-                                loadInteger(methodVisitor, parameter.getIndex());
+                                PrimitiveDispatcher.loadInteger(methodVisitor, parameter.getIndex());
                                 methodVisitor.visitInsn(Opcodes.AALOAD);
                                 if (parameter.getType().isPrimitive()) {
-                                    BoxingDispatcher.of(parameter.getType()).storeUnboxed(methodVisitor, parameter.getOffset());
+                                    PrimitiveDispatcher.of(parameter.getType()).storeUnboxed(methodVisitor, parameter.getOffset());
                                 } else {
                                     if (!parameter.getType().represents(Object.class)) {
                                         methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, parameter.getType().asErasure().getInternalName());
@@ -3329,6 +3341,203 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.ReadWrite{" +
                                     "parameters=" + parameters +
                                     '}';
+                        }
+                    }
+                }
+
+                /**
+                 * A target for an offset mapping representing an executable instance.
+                 */
+                abstract class ForExecutable implements Target {
+
+                    /**
+                     * The method to represent as a constant.
+                     */
+                    protected final MethodDescription.InDefinedShape methodDescription;
+
+                    /**
+                     * Creates a new offset mapping for an executable constant.
+                     *
+                     * @param methodDescription The method to represent as a constant.
+                     */
+                    protected ForExecutable(MethodDescription.InDefinedShape methodDescription) {
+                        this.methodDescription = methodDescription;
+                    }
+
+                    /**
+                     * Resolves an appropriate target for an offset mapping that represents a constant for a method or constructor.
+                     *
+                     * @param methodDescription The method description to represent as a constant.
+                     * @return An appropriate target.
+                     */
+                    public static Target of(MethodDescription.InDefinedShape methodDescription) {
+                        if (methodDescription.isMethod()) {
+                            return new ForMethod(methodDescription);
+                        } else if (methodDescription.isConstructor()) {
+                            return new ForConstructor(methodDescription);
+                        } else {
+                            throw new IllegalStateException("Cannot represent type initializer of " + methodDescription.getDeclaringType() + " as constant");
+                        }
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ALOAD:
+                                methodVisitor.visitLdcInsn(Type.getType(methodDescription.getDeclaringType().getDescriptor()));
+                                loadMethodName(methodVisitor);
+                                PrimitiveDispatcher.loadInteger(methodVisitor, methodDescription.getParameters().size());
+                                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.CLASS.getInternalName());
+                                for (ParameterDescription parameter : methodDescription.getParameters()) {
+                                    methodVisitor.visitInsn(Opcodes.DUP);
+                                    PrimitiveDispatcher.loadInteger(methodVisitor, parameter.getIndex());
+                                    if (parameter.getType().isPrimitive()) {
+                                        PrimitiveDispatcher.of(parameter.getType()).loadType(methodVisitor);
+                                    } else {
+                                        methodVisitor.visitLdcInsn(Type.getType(parameter.getType().asErasure().getDescriptor()));
+                                    }
+                                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                                }
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                                        TypeDescription.CLASS.getInternalName(),
+                                        getInvokedMethod(),
+                                        getInvokedSignature(),
+                                        false);
+                                return getAdditionalOffset() + (methodDescription.getParameters().isEmpty()
+                                        ? 0
+                                        : 2);
+                            default:
+                                throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        }
+                    }
+
+                    /**
+                     * Loads the method's name onto the operand stack if required.
+                     *
+                     * @param methodVisitor The method visitor to use.
+                     */
+                    protected abstract void loadMethodName(MethodVisitor methodVisitor);
+
+                    /**
+                     * Returns the invoked method of the {@link Class} API.
+                     *
+                     * @return The invoked method's name.
+                     */
+                    protected abstract String getInvokedMethod();
+
+                    /**
+                     * Returns the signature of the invoked method.
+                     *
+                     * @return The signature of the invoked method.
+                     */
+                    protected abstract String getInvokedSignature();
+
+                    /**
+                     * Adds the additional required offset.
+                     *
+                     * @return The additional required offset.
+                     */
+                    protected abstract int getAdditionalOffset();
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Unexpected increment");
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForExecutable that = (ForExecutable) object;
+                        return methodDescription.equals(that.methodDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return methodDescription.hashCode();
+                    }
+
+                    /**
+                     * A constant for a {@link Method} constant.
+                     */
+                    protected static class ForMethod extends ForExecutable {
+
+                        /**
+                         * Creates a new offset mapping target for a method constant.
+                         *
+                         * @param methodDescription The method to represent.
+                         */
+                        protected ForMethod(MethodDescription.InDefinedShape methodDescription) {
+                            super(methodDescription);
+                        }
+
+                        @Override
+                        protected void loadMethodName(MethodVisitor methodVisitor) {
+                            methodVisitor.visitLdcInsn(methodDescription.getInternalName());
+                        }
+
+                        @Override
+                        protected String getInvokedMethod() {
+                            return "getDeclaredMethod";
+                        }
+
+                        @Override
+                        protected String getInvokedSignature() {
+                            return Type.getMethodDescriptor(Type.getType(Method.class), Type.getType(String.class), Type.getType(Class[].class));
+                        }
+
+                        @Override
+                        protected int getAdditionalOffset() {
+                            return 2;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForMethod{" +
+                                    "methodDescription=" + methodDescription +
+                                    "}";
+                        }
+                    }
+
+                    /**
+                     * A constant for a {@link Constructor} constant.
+                     */
+                    protected static class ForConstructor extends ForExecutable {
+
+                        /**
+                         * Creates a new offset mapping target for a constructor constant.
+                         *
+                         * @param methodDescription The method to represent.
+                         */
+                        protected ForConstructor(MethodDescription.InDefinedShape methodDescription) {
+                            super(methodDescription);
+                        }
+
+                        @Override
+                        protected void loadMethodName(MethodVisitor methodVisitor) {
+                            /* do nothing */
+                        }
+
+                        @Override
+                        protected String getInvokedMethod() {
+                            return "getDeclaredConstructor";
+                        }
+
+                        @Override
+                        protected String getInvokedSignature() {
+                            return Type.getMethodDescriptor(Type.getType(Constructor.class), Type.getType(Class[].class));
+                        }
+
+                        @Override
+                        protected int getAdditionalOffset() {
+                            return 1;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForConstructor{" +
+                                    "methodDescription=" + methodDescription +
+                                    "}";
                         }
                     }
                 }
@@ -3816,6 +4025,63 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public String toString() {
                     return "Advice.Dispatcher.OffsetMapping.ForInstrumentedType." + name();
+                }
+            }
+
+            /**
+             * Maps a constant representing the instrumented method.
+             */
+            enum ForInstrumentedMethod implements OffsetMapping {
+
+                /**
+                 * A constant that must be a {@link Method} instance.
+                 */
+                METHOD {
+                    @Override
+                    protected boolean isRepresentable(MethodDescription.InDefinedShape instrumentedMethod) {
+                        return instrumentedMethod.isMethod();
+                    }
+                },
+
+                /**
+                 * A constant that must be a {@link Constructor} instance.
+                 */
+                CONSTRUCTOR {
+                    @Override
+                    protected boolean isRepresentable(MethodDescription.InDefinedShape instrumentedMethod) {
+                        return instrumentedMethod.isConstructor();
+                    }
+                },
+
+                /**
+                 * A constant that must be a {@code java.lang.reflect.Executable} instance.
+                 */
+                EXECUTABLE {
+                    @Override
+                    protected boolean isRepresentable(MethodDescription.InDefinedShape instrumentedMethod) {
+                        return false;
+                    }
+                };
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    if (!isRepresentable(instrumentedMethod)) {
+                        throw new IllegalStateException("Cannot represent " + instrumentedMethod + " as given method constant");
+                    }
+                    return Target.ForExecutable.of(instrumentedMethod);
+                }
+
+                /**
+                 * Checks if the supplied method is representable for the assigned offset mapping.
+                 *
+                 * @param instrumentedMethod The instrumented method to represent.
+                 * @return {@code true} if this method is representable.
+                 */
+                protected abstract boolean isRepresentable(MethodDescription.InDefinedShape instrumentedMethod);
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForInstrumentedMethod." + name();
                 }
             }
 
@@ -4399,10 +4665,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return UNDEFINED;
                         } else if (parameterDescription.getType().asErasure().represents(Class.class)) {
                             return OffsetMapping.ForInstrumentedType.INSTANCE;
+                        } else if (parameterDescription.getType().asErasure().represents(Method.class)) {
+                            return OffsetMapping.ForInstrumentedMethod.METHOD;
+                        } else if (parameterDescription.getType().asErasure().represents(Constructor.class)) {
+                            return OffsetMapping.ForInstrumentedMethod.CONSTRUCTOR;
+                        } else if (JavaType.EXECUTABLE.getTypeStub().equals(parameterDescription.getType().asErasure())) {
+                            return OffsetMapping.ForInstrumentedMethod.EXECUTABLE;
                         } else if (parameterDescription.getType().asErasure().isAssignableFrom(String.class)) {
                             return ForOrigin.parse(origin.loadSilent().value());
                         } else {
-                            throw new IllegalStateException("Non-String type " + parameterDescription + " for origin annotation");
+                            throw new IllegalStateException("Non-supported type " + parameterDescription.getType() + " for @Origin annotation");
                         }
                     }
 
@@ -8109,8 +8381,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Indicates that the annotated parameter should be mapped to a string representation of the instrumented method or
-     * to a constant representing the {@link Class} declaring the method.
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a string representation of the instrumented method,
+     * a constant representing the {@link Class} declaring the adviced method or a {@link Method}, {@link Constructor}
+     * or {@code java.lang.reflect.Executable} representing this method.
+     * </p>
+     * <p>
+     * <b>Note</b>: A constant representing a {@link Method} or {@link Constructor} is not cached but is recreated for
+     * every read.
+     * </p>
      *
      * @see Advice
      * @see OnMethodEnter
