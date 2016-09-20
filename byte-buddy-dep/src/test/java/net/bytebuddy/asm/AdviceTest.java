@@ -1763,6 +1763,7 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForSerializedObject.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForNullConstant.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForMethod.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForConstructor.class).apply();
         final int[] value = new int[1];

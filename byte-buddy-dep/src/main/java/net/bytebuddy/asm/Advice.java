@@ -3052,6 +3052,77 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
+                 * A target for an offset mapping to load a type constant onto the operand stack.
+                 */
+                class ForType implements Target {
+
+                    /**
+                     * The type to load onto the operand stack.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
+                     * Creates a new target for an offset mapping for a type constant.
+                     *
+                     * @param typeDescription The type to load onto the operand stack.
+                     */
+                    public ForType(TypeDescription typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ALOAD:
+                                load(methodVisitor, typeDescription);
+                                return NO_PADDING;
+                            default:
+                                throw new IllegalStateException("Cannot write to fixed value: " + typeDescription);
+                        }
+                    }
+
+                    /**
+                     * Loads a type constant onto the operand stack.
+                     *
+                     * @param methodVisitor   The method visitor to use.
+                     * @param typeDescription The type to load into the operand stack.
+                     */
+                    protected static void load(MethodVisitor methodVisitor, TypeDescription typeDescription) {
+                        methodVisitor.visitLdcInsn(typeDescription.getName());
+                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                                TypeDescription.CLASS.getInternalName(),
+                                "forName",
+                                Type.getMethodDescriptor(Type.getType(Class.class), Type.getType(String.class)),
+                                false);
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Unexpected increment");
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForType forType = (ForType) object;
+                        return typeDescription.equals(forType.typeDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return typeDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForType{" +
+                                "typeDescription=" + typeDescription +
+                                '}';
+                    }
+                }
+
+                /**
                  * A target for an offset mapping that boxes a primitive parameter value.
                  */
                 abstract class ForBoxedArgument implements Target {
@@ -3384,7 +3455,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
-                                methodVisitor.visitLdcInsn(Type.getType(methodDescription.getDeclaringType().getDescriptor()));
+                                ForType.load(methodVisitor, methodDescription.getDeclaringType());
                                 loadMethodName(methodVisitor);
                                 PrimitiveDispatcher.loadInteger(methodVisitor, methodDescription.getParameters().size());
                                 methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.CLASS.getInternalName());
@@ -3394,7 +3465,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     if (parameter.getType().isPrimitive()) {
                                         PrimitiveDispatcher.of(parameter.getType()).loadType(methodVisitor);
                                     } else {
-                                        methodVisitor.visitLdcInsn(Type.getType(parameter.getType().asErasure().getDescriptor()));
+                                        ForType.load(methodVisitor, parameter.getType().asErasure());
                                     }
                                     methodVisitor.visitInsn(Opcodes.AASTORE);
                                 }
@@ -4019,7 +4090,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                    return new Target.ForConstantPoolValue(Type.getType(instrumentedMethod.getDeclaringType().getDescriptor()));
+                    return new Target.ForType(instrumentedMethod.getDeclaringType());
                 }
 
                 @Override
