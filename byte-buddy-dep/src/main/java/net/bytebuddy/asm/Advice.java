@@ -5667,7 +5667,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * A skip dispatcher for a reference value.
                          */
-                        FOR_REFERENCE(Opcodes.ALOAD, Opcodes.IFNONNULL) {
+                        FOR_REFERENCE(Opcodes.ALOAD, Opcodes.IFNULL) {
                             @Override
                             protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 /* do nothing */

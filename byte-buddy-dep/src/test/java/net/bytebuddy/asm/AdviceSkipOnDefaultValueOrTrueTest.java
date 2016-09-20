@@ -61,7 +61,47 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
                 {FloatDelegateWithOutExitAdvice.class, 0f},
                 {DoubleDelegateWithOutExitAdvice.class, 0d},
                 {ReferenceDelegateWithOutExitAdvice.class, null},
-                {VoidDelegateWithOutExitAdvice.class, null}
+                {VoidDelegateWithOutExitAdvice.class, null},
+                {BooleanNoSkipAdvice.class, true},
+                {ByteNoSkipAdvice.class, (byte) 42},
+                {ShortNoSkipAdvice.class, (short) 42},
+                {CharacterNoSkipAdvice.class, (char) 42},
+                {IntegerNoSkipAdvice.class, 42},
+                {LongNoSkipAdvice.class, 42L},
+                {FloatNoSkipAdvice.class, 42f},
+                {DoubleNoSkipAdvice.class, 42d},
+                {ReferenceNoSkipAdvice.class, FOO},
+                {VoidNoSkipAdvice.class, null},
+                {BooleanDelegateNoSkipAdvice.class, true},
+                {ByteDelegateNoSkipAdvice.class, (byte) 42},
+                {ShortDelegateNoSkipAdvice.class, (short) 42},
+                {CharacterDelegateNoSkipAdvice.class, (char) 42},
+                {IntegerDelegateNoSkipAdvice.class, 42},
+                {LongDelegateNoSkipAdvice.class, 42L},
+                {FloatDelegateNoSkipAdvice.class, 42f},
+                {DoubleDelegateNoSkipAdvice.class, 42d},
+                {ReferenceDelegateNoSkipAdvice.class, FOO},
+                {VoidDelegateNoSkipAdvice.class, null},
+                {BooleanWithOutExitNoSkipAdvice.class, true},
+                {ByteWithOutExitNoSkipAdvice.class, (byte) 42},
+                {ShortWithOutExitNoSkipAdvice.class, (short) 42},
+                {CharacterWithOutExitNoSkipAdvice.class, (char) 42},
+                {IntegerWithOutExitNoSkipAdvice.class, 42},
+                {LongWithOutExitNoSkipAdvice.class, 42L},
+                {FloatWithOutExitNoSkipAdvice.class, 42f},
+                {DoubleWithOutExitNoSkipAdvice.class, 42d},
+                {ReferenceWithOutExitNoSkipAdvice.class, FOO},
+                {VoidWithOutExitNoSkipAdvice.class, null},
+                {BooleanDelegateWithOutExitNoSkipAdvice.class, true},
+                {ByteDelegateWithOutExitNoSkipAdvice.class, (byte) 42},
+                {ShortDelegateWithOutExitNoSkipAdvice.class, (short) 42},
+                {CharacterDelegateWithOutExitNoSkipAdvice.class, (char) 42},
+                {IntegerDelegateWithOutExitNoSkipAdvice.class, 42},
+                {LongDelegateWithOutExitNoSkipAdvice.class, 42L},
+                {FloatDelegateWithOutExitNoSkipAdvice.class, 42f},
+                {DoubleDelegateWithOutExitNoSkipAdvice.class, 42d},
+                {ReferenceDelegateWithOutExitNoSkipAdvice.class, FOO},
+                {VoidDelegateWithOutExitNoSkipAdvice.class, null}
         });
     }
 
@@ -254,13 +294,13 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
 
         @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
         private static Object enter() {
-            return null;
+            return new Object();
         }
 
         @Advice.OnMethodExit
         private static void exit(@Advice.Return Object value) {
             if (value != null) {
-                throw new AssertionError();
+                throw new AssertionError("Equality");
             }
         }
     }
@@ -452,7 +492,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
 
         @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
         private static Object enter() {
-            return null;
+            return new Object();
         }
 
         @Advice.OnMethodExit(inline = false)
@@ -594,7 +634,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
 
         @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
         private static Object enter() {
-            return null;
+            return new Object();
         }
     }
 
@@ -724,7 +764,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
 
         @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
         private static Object enter() {
-            return null;
+            return new Object();
         }
     }
 
@@ -733,6 +773,662 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
 
         public void foo() {
             throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static boolean enter() {
+            return true;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanNoSkipAdvice {
+
+        public boolean foo() {
+            return true;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static boolean enter() {
+            return false;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return boolean value) {
+            if (!value) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteNoSkipAdvice {
+
+        public byte foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static byte enter() {
+            return 42;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return byte value) {
+            if (value != 42) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortNoSkipAdvice {
+
+        public short foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static short enter() {
+            return 42;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return short value) {
+            if (value != 42) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterNoSkipAdvice {
+
+        public char foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static char enter() {
+            return 42;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return char value) {
+            if (value != 42) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerNoSkipAdvice {
+
+        public int foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static int enter() {
+            return 42;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return int value) {
+            if (value != 42) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongNoSkipAdvice {
+
+        public long foo() {
+            return 42L;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static long enter() {
+            return 42L;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return long value) {
+            if (value != 42L) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatNoSkipAdvice {
+
+        public float foo() {
+            return 42f;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static float enter() {
+            return 42f;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return float value) {
+            if (value != 42f) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleNoSkipAdvice {
+
+        public double foo() {
+            return 42d;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static double enter() {
+            return 42d;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return double value) {
+            if (value != 42d) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceNoSkipAdvice {
+
+        public Object foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static Object enter() {
+            return null;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return Object value) {
+            if (!value.equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class VoidNoSkipAdvice {
+
+        public void foo() {
+            /* do nothing */
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static boolean enter() {
+            return true;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit() {
+            /* do nothing */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanDelegateNoSkipAdvice {
+
+        public boolean foo() {
+            return true;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static boolean enter() {
+            return false;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return boolean value) {
+            if (!value) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteDelegateNoSkipAdvice {
+
+        public byte foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static byte enter() {
+            return 42;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return byte value) {
+            if (value != 42) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortDelegateNoSkipAdvice {
+
+        public short foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static short enter() {
+            return 42;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return short value) {
+            if (value != 42) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterDelegateNoSkipAdvice {
+
+        public char foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static char enter() {
+            return 42;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return char value) {
+            if (value != 42) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerDelegateNoSkipAdvice {
+
+        public int foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static int enter() {
+            return 42;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return int value) {
+            if (value != 42) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongDelegateNoSkipAdvice {
+
+        public long foo() {
+            return 42L;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static long enter() {
+            return 42L;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return long value) {
+            if (value != 42L) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatDelegateNoSkipAdvice {
+
+        public float foo() {
+            return 42f;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static float enter() {
+            return 42f;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return float value) {
+            if (value != 42f) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleDelegateNoSkipAdvice {
+
+        public double foo() {
+            return 42d;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static double enter() {
+            return 42d;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return double value) {
+            if (value != 42d) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceDelegateNoSkipAdvice {
+
+        public Object foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static Object enter() {
+            return null;
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return Object value) {
+            if (!value.equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class VoidDelegateNoSkipAdvice {
+
+        public void foo() {
+            /* do nothing */
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static boolean enter() {
+            return true;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit() {
+            /* do nothing */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanWithOutExitNoSkipAdvice {
+
+        public boolean foo() {
+            return true;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static boolean enter() {
+            return false;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteWithOutExitNoSkipAdvice {
+
+        public byte foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static byte enter() {
+            return 42;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortWithOutExitNoSkipAdvice {
+
+        public short foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static short enter() {
+            return 42;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterWithOutExitNoSkipAdvice {
+
+        public char foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static char enter() {
+            return 42;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerWithOutExitNoSkipAdvice {
+
+        public int foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static int enter() {
+            return 42;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongWithOutExitNoSkipAdvice {
+
+        public long foo() {
+            return 42L;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static long enter() {
+            return 42L;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatWithOutExitNoSkipAdvice {
+
+        public float foo() {
+            return 42f;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static float enter() {
+            return 42f;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleWithOutExitNoSkipAdvice {
+
+        public double foo() {
+            return 42d;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static double enter() {
+            return 42d;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceWithOutExitNoSkipAdvice {
+
+        public Object foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static Object enter() {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class VoidWithOutExitNoSkipAdvice {
+
+        public void foo() {
+            /* do nothing */
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        private static boolean enter() {
+            return true;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class BooleanDelegateWithOutExitNoSkipAdvice {
+
+        public boolean foo() {
+            return true;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static boolean enter() {
+            return false;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ByteDelegateWithOutExitNoSkipAdvice {
+
+        public byte foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static byte enter() {
+            return 42;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ShortDelegateWithOutExitNoSkipAdvice {
+
+        public short foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static short enter() {
+            return 42;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CharacterDelegateWithOutExitNoSkipAdvice {
+
+        public char foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static char enter() {
+            return 42;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IntegerDelegateWithOutExitNoSkipAdvice {
+
+        public int foo() {
+            return 42;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static int enter() {
+            return 42;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class LongDelegateWithOutExitNoSkipAdvice {
+
+        public long foo() {
+            return 42L;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static long enter() {
+            return 42L;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class FloatDelegateWithOutExitNoSkipAdvice {
+
+        public float foo() {
+            return 42f;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static float enter() {
+            return 42f;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DoubleDelegateWithOutExitNoSkipAdvice {
+
+        public double foo() {
+            return 42d;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static double enter() {
+            return 42d;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReferenceDelegateWithOutExitNoSkipAdvice {
+
+        public Object foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        private static Object enter() {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class VoidDelegateWithOutExitNoSkipAdvice {
+
+        public void foo() {
+            /* do nothing */
         }
 
         @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
