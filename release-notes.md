@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 20. September 2016: version 1.4.25
+
+- Added overloaded versions for `byte-buddy-agent` to allow agent attachment with explicit argument.
+- Made `Advice` more flexible to allow skipping of instrumented method for complex advice method return types.
+
 ### 14. September 2016: version 1.4.24
 
 - Make `AgentBuilder` produce `ResettableClassFileTransformer`s which can undo their transformation.
