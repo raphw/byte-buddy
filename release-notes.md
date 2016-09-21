@@ -1,7 +1,7 @@
 Byte Buddy release notes
 ------------------------
 
-### 20. September 2016: version 1.4.26
+### 21. September 2016: version 1.4.26
 
 - Refactored `skipOn` property of `Advice` component.
 - Allow reading a `Method`/`Constructor` property from `Advice`.
