@@ -1321,6 +1321,11 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testNonDefaultValuePrimitiveSkip() throws Exception {
+        Advice.to(NonDefaultValueIllegalPrimitiveSkip.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
@@ -1678,9 +1683,22 @@ public class AdviceTest {
     }
 
     @Test
-    public void testCannotInstantiateSkipMarker() throws Exception {
+    public void testCannotInstantiateSkipDefaultValueMarker() throws Exception {
         try {
-            Constructor<?> constructor = Advice.DefaultValueOrTrue.class.getDeclaredConstructor();
+            Constructor<?> constructor = Advice.OnDefaultValue.class.getDeclaredConstructor();
+            assertThat(Modifier.isPrivate(constructor.getModifiers()), is(true));
+            constructor.setAccessible(true);
+            constructor.newInstance();
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(UnsupportedOperationException.class));
+        }
+    }
+
+    @Test
+    public void testCannotInstantiateSkipNonDefaultValueMarker() throws Exception {
+        try {
+            Constructor<?> constructor = Advice.OnNonDefaultValue.class.getDeclaredConstructor();
             assertThat(Modifier.isPrivate(constructor.getModifiers()), is(true));
             constructor.setAccessible(true);
             constructor.newInstance();
@@ -3307,7 +3325,15 @@ public class AdviceTest {
 
     public static class DefaultValueIllegalPrimitiveSkip {
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
+        private static void enter() {
+            /* empty */
+        }
+    }
+
+    public static class NonDefaultValueIllegalPrimitiveSkip {
+
+        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
         private static void enter() {
             /* empty */
         }

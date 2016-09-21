@@ -5954,19 +5954,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     enum ForValue implements SkipDispatcher {
 
                         /**
-                         * A skip dispatcher for a {@code boolean} value.
+                         * A skip dispatcher for a {@code boolean}, {@code  byte}, {@code short}, {@code char} or {@code int} value.
                          */
-                        FOR_BOOLEAN(Opcodes.ILOAD, Opcodes.IFEQ) {
-                            @Override
-                            protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
-                                /* do nothing */
-                            }
-                        },
-
-                        /**
-                         * A skip dispatcher for a {@code  byte}, {@code short}, {@code char} or {@code int} value.
-                         */
-                        FOR_INTEGER(Opcodes.ILOAD, Opcodes.IFNE) {
+                        FOR_INTEGER(Opcodes.ILOAD, Opcodes.IFNE, Opcodes.IFEQ) {
                             @Override
                             protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 /* do nothing */
@@ -5976,7 +5966,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * A skip dispatcher for a {@code long} value.
                          */
-                        FOR_LONG(Opcodes.LLOAD, Opcodes.IFNE) {
+                        FOR_LONG(Opcodes.LLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
                             @Override
                             protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 methodVisitor.visitInsn(Opcodes.L2I);
@@ -5986,7 +5976,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * A skip dispatcher for a {@code float} value.
                          */
-                        FOR_FLOAT(Opcodes.FLOAD, Opcodes.IFNE) {
+                        FOR_FLOAT(Opcodes.FLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
                             @Override
                             protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 methodVisitor.visitInsn(Opcodes.FCONST_0);
@@ -5998,7 +5988,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * A skip dispatcher for a {@code double} value.
                          */
-                        FOR_DOUBLE(Opcodes.DLOAD, Opcodes.IFNE) {
+                        FOR_DOUBLE(Opcodes.DLOAD, Opcodes.IFNE, Opcodes.IFEQ) {
                             @Override
                             protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 methodVisitor.visitInsn(Opcodes.DCONST_0);
@@ -6010,7 +6000,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * A skip dispatcher for a reference value.
                          */
-                        FOR_REFERENCE(Opcodes.ALOAD, Opcodes.IFNULL) {
+                        FOR_REFERENCE(Opcodes.ALOAD, Opcodes.IFNONNULL, Opcodes.IFNULL) {
                             @Override
                             protected void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
                                 /* do nothing */
@@ -6023,19 +6013,53 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         private final int load;
 
                         /**
-                         * The jumping condition opcode for this skip dispatcher.
+                         * The jump instruction that triggers skipping upon observing a value's default value.
                          */
-                        private final int jump;
+                        private final int defaultJump;
+
+                        /**
+                         * The jump instruction that triggers skipping upon observing a value's non-default value.
+                         */
+                        private final int nonDefaultJump;
 
                         /**
                          * Creates a new skip dispatcher.
                          *
-                         * @param load The load opcode for this skip dispatcher.
-                         * @param jump The jumping condition opcode for this skip dispatcher.
+                         * @param load           The load opcode for this skip dispatcher.
+                         * @param defaultJump    The jump instruction that triggers skipping upon observing a value's default value.
+                         * @param nonDefaultJump The jump instruction that triggers skipping upon observing a value's non-default value.
                          */
-                        ForValue(int load, int jump) {
+                        ForValue(int load, int defaultJump, int nonDefaultJump) {
                             this.load = load;
-                            this.jump = jump;
+                            this.defaultJump = defaultJump;
+                            this.nonDefaultJump = nonDefaultJump;
+                        }
+
+                        /**
+                         * Creates an appropriate skip dispatcher.
+                         *
+                         * @param typeDefinition The type for which to skip a value.
+                         * @param inverted       {@code true} if the skip condition should be inverted to trigger upon non-default values.
+                         * @return An appropriate skip dispatcher.
+                         */
+                        protected static SkipDispatcher of(TypeDefinition typeDefinition, boolean inverted) {
+                            ForValue skipDispatcher;
+                            if (typeDefinition.represents(long.class)) {
+                                skipDispatcher = FOR_LONG;
+                            } else if (typeDefinition.represents(float.class)) {
+                                skipDispatcher = FOR_FLOAT;
+                            } else if (typeDefinition.represents(double.class)) {
+                                skipDispatcher = FOR_DOUBLE;
+                            } else if (typeDefinition.represents(void.class)) {
+                                throw new IllegalStateException("Cannot skip on default value for void return type");
+                            } else if (typeDefinition.isPrimitive()) { // anyOf(byte, short, char, int)
+                                skipDispatcher = FOR_INTEGER;
+                            } else {
+                                skipDispatcher = FOR_REFERENCE;
+                            }
+                            return inverted
+                                    ? skipDispatcher.inverted()
+                                    : skipDispatcher;
                         }
 
                         @Override
@@ -6044,10 +6068,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                           MethodDescription.InDefinedShape instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
+                            doApply(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedMethod, skipHandler, false);
+                        }
+
+                        /**
+                         * Applies this skip dispatcher.
+                         *
+                         * @param methodVisitor        The method visitor to write to.
+                         * @param methodSizeHandler    The method size handler of the advice method to use.
+                         * @param stackMapFrameHandler The stack map frame handler of the advice method to use.
+                         * @param instrumentedMethod   The instrumented method.
+                         * @param skipHandler          The skip handler to use.
+                         * @param inverted             {@code true} if the skip condition should be inverted.
+                         */
+                        protected void doApply(MethodVisitor methodVisitor,
+                                               MethodSizeHandler.ForAdvice methodSizeHandler,
+                                               StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                               MethodDescription.InDefinedShape instrumentedMethod,
+                                               Bound.SkipHandler skipHandler,
+                                               boolean inverted) {
                             methodVisitor.visitVarInsn(load, instrumentedMethod.getStackSize());
                             convertValue(methodVisitor, methodSizeHandler);
                             Label noSkip = new Label();
-                            methodVisitor.visitJumpInsn(jump, noSkip);
+                            methodVisitor.visitJumpInsn(inverted
+                                    ? nonDefaultJump
+                                    : defaultJump, noSkip);
                             skipHandler.apply(methodVisitor);
                             methodVisitor.visitLabel(noSkip);
                             stackMapFrameHandler.injectCompletionFrame(methodVisitor, true);
@@ -6062,32 +6107,61 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         protected abstract void convertValue(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler);
 
                         /**
-                         * Creates an appropriate skip dispatcher.
+                         * Returns an inverted version of this skip dispatcher.
                          *
-                         * @param typeDefinition The type for which to skip a value.
-                         * @return An appropriate skip dispatcher.
+                         * @return An inverted version of this skip dispatcher.
                          */
-                        protected static SkipDispatcher of(TypeDefinition typeDefinition) {
-                            if (typeDefinition.represents(boolean.class)) {
-                                return FOR_BOOLEAN;
-                            } else if (typeDefinition.represents(long.class)) {
-                                return FOR_LONG;
-                            } else if (typeDefinition.represents(float.class)) {
-                                return FOR_FLOAT;
-                            } else if (typeDefinition.represents(double.class)) {
-                                return FOR_DOUBLE;
-                            } else if (typeDefinition.represents(void.class)) {
-                                throw new IllegalStateException("Cannot skip on default value for void return type");
-                            } else if (typeDefinition.isPrimitive()) { // anyOf(byte, short, char, int)
-                                return FOR_INTEGER;
-                            } else {
-                                return FOR_REFERENCE;
-                            }
+                        private SkipDispatcher inverted() {
+                            return new Inverted();
                         }
 
                         @Override
                         public String toString() {
                             return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue." + name();
+                        }
+
+                        /**
+                         * An inverted version of a value-based skipped dispatcher that triggers upon observing a non-default value.
+                         */
+                        protected class Inverted implements SkipDispatcher {
+
+                            @Override
+                            public void apply(MethodVisitor methodVisitor,
+                                              MethodSizeHandler.ForAdvice methodSizeHandler,
+                                              StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                              MethodDescription.InDefinedShape instrumentedMethod,
+                                              Bound.SkipHandler skipHandler) {
+                                doApply(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedMethod, skipHandler, true);
+                            }
+
+                            /**
+                             * Returns the outer instance.
+                             *
+                             * @return The outer instance.
+                             */
+                            private SkipDispatcher getOuter() {
+                                return ForValue.this;
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                return ForValue.this.hashCode();
+                            }
+
+                            @Override
+                            public boolean equals(Object other) {
+                                if (other == this) return true;
+                                if (!(other instanceof Inverted)) return false;
+                                Inverted inverted = (Inverted) other;
+                                return inverted.getOuter().equals(ForValue.this);
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue.Inverted{" +
+                                        "outer=" + ForValue.this +
+                                        "}";
+                            }
                         }
                     }
 
@@ -6133,8 +6207,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         protected static SkipDispatcher of(TypeDescription typeDescription, MethodDescription adviceMethod) {
                             if (typeDescription.represents(void.class)) {
                                 return Disabled.INSTANCE;
-                            } else if (typeDescription.represents(DefaultValueOrTrue.class)) {
-                                return ForValue.of(adviceMethod.getReturnType());
+                            } else if (typeDescription.represents(OnDefaultValue.class)) {
+                                return ForValue.of(adviceMethod.getReturnType(), false);
+                            } else if (typeDescription.represents(OnNonDefaultValue.class)) {
+                                return ForValue.of(adviceMethod.getReturnType(), true);
                             } else if (typeDescription.isPrimitive() || adviceMethod.getReturnType().isPrimitive()) {
                                 throw new IllegalStateException("Cannot skip method by instance type for primitive return value on " + adviceMethod);
                             } else {
@@ -8263,15 +8339,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         Class<? extends Throwable> suppress() default NoExceptionHandler.class;
 
         /**
-         * Setting any non-primitive type allows to specify that the instrumented method should not be invoked if a {@code instanceof} check
-         * of the return value of this advice method is returned. It is not allowed to specify a primitive type whereas specifying {@code void}
-         * indicates that the instrumented method should never be skipped. This is the default behavior. Finally, it is possible to set this
-         * property to {@link DefaultValueOrTrue} where the instrumented method is not invoked if this advice method returns the return type's
-         * default value, i.e. {@code 0} for primitive types or {@code null} for reference types. For a {@code boolean} method, a return value of
-         * {@code true} indicates to skip the instrumented method.
+         * When specifying a non-primitive type, this method's return value that is subject to an {@code instanceof} check where
+         * the instrumented method is only executed, if the returned instance is {@code not} an instance of the specified class.
+         * Alternatively, it is possible to specify either {@link OnDefaultValue} or {@link OnNonDefaultValue} where the instrumented
+         * method is only executed if the advice method returns a default or non-default value of the advice method's return type.
+         * It is illegal to specify a primitive type as an argument whereas setting the value to {@code void} indicates that the
+         * instrumented method should never be skipped.
          *
-         * @return {@code void} if the instrumented method should never be skipped, {@link DefaultValueOrTrue} or any non-primitive type
-         * if the instrumented method should be skipped upon returning any instance of the specified type.
+         * @return A value defining what return values of the advice method indicate that the instrumented method
+         * should be skipped or {@code void} if the instrumented method should never be skipped.
          */
         Class<?> skipOn() default void.class;
 
@@ -9048,17 +9124,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * When set as value of {@link OnMethodEnter#skipOn()}, this type indicates that an instrumented method should not
-     * be executed if the advice method's default value is returned or if {@code true} is returned on a {@code boolean}
-     * method. A default value is {@code null} for reference types and {@code 0} for other primitive types than {@code boolean}.
-     * It is illegal to use this value if the advice method returns {@code void}.
+     * A marker type to be used as an argument for {@link OnMethodEnter#skipOn()}. If this value is set, the instrumented method
+     * is not invoked if the annotated advice method <b>returns a default value</b>. A default value is {@code false} for a
+     * {@code boolean} type, {@code 0} for a {@code byte}, {@code short}, {@code char}, {@code int}, {@code long}, {@code float}
+     * or {@code double} type and {@code null} for a reference type. It is illegal to use this value if the advice method
+     * returns {@code void}.
      */
-    public static final class DefaultValueOrTrue {
+    public static final class OnDefaultValue {
 
         /**
          * A private constructor as this class is not supposed to be invoked.
          */
-        private DefaultValueOrTrue() {
+        private OnDefaultValue() {
+            throw new UnsupportedOperationException("This marker class is not supposed to be instantiated");
+        }
+    }
+
+    /**
+     * A marker type to be used as an argument for {@link OnMethodEnter#skipOn()}. If this value is set, the instrumented method
+     * is not invoked if the annotated advice method <b>returns a non-default value</b>. A default value is {@code false} for a
+     * {@code boolean} type, {@code 0} for a {@code byte}, {@code short}, {@code char}, {@code int}, {@code long}, {@code float}
+     * or {@code double} type and {@code null} for a reference type. It is illegal to use this value if the advice method
+     * returns {@code void}.
+     */
+    public static final class OnNonDefaultValue {
+
+        /**
+         * A private constructor as this class is not supposed to be invoked.
+         */
+        private OnNonDefaultValue() {
             throw new UnsupportedOperationException("This marker class is not supposed to be instantiated");
         }
     }

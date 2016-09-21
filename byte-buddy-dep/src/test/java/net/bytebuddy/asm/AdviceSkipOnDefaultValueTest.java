@@ -2,7 +2,6 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -15,7 +14,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
-public class AdviceSkipOnDefaultValueOrTrueTest {
+public class AdviceSkipOnDefaultValueTest {
 
     private static final String FOO = "foo";
 
@@ -109,7 +108,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
 
     private final Object value;
 
-    public AdviceSkipOnDefaultValueOrTrueTest(Class<?> type, Object value) {
+    public AdviceSkipOnDefaultValueTest(Class<?> type, Object value) {
         this.type = type;
         this.value = value;
     }
@@ -132,9 +131,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static boolean enter() {
-            return true;
+            return false;
         }
 
         @Advice.OnMethodExit
@@ -152,7 +151,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static byte enter() {
             return 0;
         }
@@ -172,7 +171,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static short enter() {
             return 0;
         }
@@ -192,7 +191,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static char enter() {
             return 0;
         }
@@ -212,7 +211,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static int enter() {
             return 0;
         }
@@ -232,7 +231,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static long enter() {
             return 0L;
         }
@@ -252,7 +251,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static float enter() {
             return 0f;
         }
@@ -272,7 +271,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static double enter() {
             return 0d;
         }
@@ -292,9 +291,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static Object enter() {
-            return new Object();
+            return null;
         }
 
         @Advice.OnMethodExit
@@ -312,9 +311,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static boolean enter() {
-            return true;
+            return false;
         }
 
         @Advice.OnMethodExit
@@ -330,9 +329,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static boolean enter() {
-            return true;
+            return false;
         }
 
         @Advice.OnMethodExit(inline = false)
@@ -350,7 +349,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static byte enter() {
             return 0;
         }
@@ -370,7 +369,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static short enter() {
             return 0;
         }
@@ -390,7 +389,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static char enter() {
             return 0;
         }
@@ -410,7 +409,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static int enter() {
             return 0;
         }
@@ -430,7 +429,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static long enter() {
             return 0L;
         }
@@ -450,7 +449,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static float enter() {
             return 0f;
         }
@@ -470,7 +469,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static double enter() {
             return 0d;
         }
@@ -490,9 +489,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static Object enter() {
-            return new Object();
+            return null;
         }
 
         @Advice.OnMethodExit(inline = false)
@@ -510,9 +509,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static boolean enter() {
-            return true;
+            return false;
         }
 
         @Advice.OnMethodExit
@@ -528,9 +527,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static boolean enter() {
-            return true;
+            return false;
         }
     }
 
@@ -541,7 +540,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static byte enter() {
             return 0;
         }
@@ -554,7 +553,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static short enter() {
             return 0;
         }
@@ -567,7 +566,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static char enter() {
             return 0;
         }
@@ -580,7 +579,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static int enter() {
             return 0;
         }
@@ -593,7 +592,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static long enter() {
             return 0L;
         }
@@ -606,7 +605,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static float enter() {
             return 0f;
         }
@@ -619,7 +618,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static double enter() {
             return 0d;
         }
@@ -632,9 +631,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static Object enter() {
-            return new Object();
+            return null;
         }
     }
 
@@ -645,9 +644,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static boolean enter() {
-            return true;
+            return false;
         }
     }
 
@@ -658,9 +657,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static boolean enter() {
-            return true;
+            return false;
         }
     }
 
@@ -671,7 +670,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static byte enter() {
             return 0;
         }
@@ -684,7 +683,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static short enter() {
             return 0;
         }
@@ -697,7 +696,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static char enter() {
             return 0;
         }
@@ -710,7 +709,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static int enter() {
             return 0;
         }
@@ -723,7 +722,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static long enter() {
             return 0L;
         }
@@ -736,7 +735,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static float enter() {
             return 0f;
         }
@@ -749,7 +748,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static double enter() {
             return 0d;
         }
@@ -762,9 +761,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static Object enter() {
-            return new Object();
+            return null;
         }
     }
 
@@ -775,9 +774,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             throw new AssertionError();
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static boolean enter() {
-            return true;
+            return false;
         }
     }
 
@@ -788,9 +787,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return true;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static boolean enter() {
-            return false;
+            return true;
         }
 
         @Advice.OnMethodExit
@@ -808,7 +807,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static byte enter() {
             return 42;
         }
@@ -828,7 +827,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static short enter() {
             return 42;
         }
@@ -848,7 +847,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static char enter() {
             return 42;
         }
@@ -868,7 +867,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static int enter() {
             return 42;
         }
@@ -888,7 +887,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42L;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static long enter() {
             return 42L;
         }
@@ -908,7 +907,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42f;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static float enter() {
             return 42f;
         }
@@ -928,7 +927,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42d;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static double enter() {
             return 42d;
         }
@@ -948,9 +947,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return FOO;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static Object enter() {
-            return null;
+            return new Object();
         }
 
         @Advice.OnMethodExit
@@ -968,7 +967,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             /* do nothing */
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static boolean enter() {
             return true;
         }
@@ -986,9 +985,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return true;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static boolean enter() {
-            return false;
+            return true;
         }
 
         @Advice.OnMethodExit(inline = false)
@@ -1006,7 +1005,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static byte enter() {
             return 42;
         }
@@ -1026,7 +1025,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static short enter() {
             return 42;
         }
@@ -1046,7 +1045,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static char enter() {
             return 42;
         }
@@ -1066,7 +1065,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static int enter() {
             return 42;
         }
@@ -1086,7 +1085,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42L;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static long enter() {
             return 42L;
         }
@@ -1106,7 +1105,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42f;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static float enter() {
             return 42f;
         }
@@ -1126,7 +1125,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42d;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static double enter() {
             return 42d;
         }
@@ -1146,9 +1145,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return FOO;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static Object enter() {
-            return null;
+            return new Object();
         }
 
         @Advice.OnMethodExit(inline = false)
@@ -1166,7 +1165,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             /* do nothing */
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static boolean enter() {
             return true;
         }
@@ -1184,9 +1183,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return true;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static boolean enter() {
-            return false;
+            return true;
         }
     }
 
@@ -1197,7 +1196,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static byte enter() {
             return 42;
         }
@@ -1210,7 +1209,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static short enter() {
             return 42;
         }
@@ -1223,7 +1222,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static char enter() {
             return 42;
         }
@@ -1236,7 +1235,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static int enter() {
             return 42;
         }
@@ -1249,7 +1248,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42L;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static long enter() {
             return 42L;
         }
@@ -1262,7 +1261,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42f;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static float enter() {
             return 42f;
         }
@@ -1275,7 +1274,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42d;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static double enter() {
             return 42d;
         }
@@ -1288,9 +1287,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return FOO;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static Object enter() {
-            return null;
+            return new Object();
         }
     }
 
@@ -1301,7 +1300,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             /* do nothing */
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class)
         private static boolean enter() {
             return true;
         }
@@ -1314,9 +1313,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return true;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static boolean enter() {
-            return false;
+            return true;
         }
     }
 
@@ -1327,7 +1326,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static byte enter() {
             return 42;
         }
@@ -1340,7 +1339,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static short enter() {
             return 42;
         }
@@ -1353,7 +1352,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static char enter() {
             return 42;
         }
@@ -1366,7 +1365,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static int enter() {
             return 42;
         }
@@ -1379,7 +1378,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42L;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static long enter() {
             return 42L;
         }
@@ -1392,7 +1391,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42f;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static float enter() {
             return 42f;
         }
@@ -1405,7 +1404,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return 42d;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static double enter() {
             return 42d;
         }
@@ -1418,9 +1417,9 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             return FOO;
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static Object enter() {
-            return null;
+            return new Object();
         }
     }
 
@@ -1431,7 +1430,7 @@ public class AdviceSkipOnDefaultValueOrTrueTest {
             /* do nothing */
         }
 
-        @Advice.OnMethodEnter(skipOn = Advice.DefaultValueOrTrue.class, inline = false)
+        @Advice.OnMethodEnter(skipOn = Advice.OnDefaultValue.class, inline = false)
         private static boolean enter() {
             return true;
         }
