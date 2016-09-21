@@ -3763,7 +3763,7 @@ public interface DynamicType {
                         @Override
                         public MethodDefinition<U> annotateParameter(int index, Collection<? extends AnnotationDescription> annotations) {
                             List<ParameterDescription.Token> parameterTokens = new ArrayList<ParameterDescription.Token>(token.getParameterTokens());
-                            parameterTokens.add(index, new ParameterDescription.Token(token.getParameterTokens().get(index).getType(),
+                            parameterTokens.set(index, new ParameterDescription.Token(token.getParameterTokens().get(index).getType(),
                                     CompoundList.of(token.getParameterTokens().get(index).getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
                                     token.getParameterTokens().get(index).getName(),
                                     token.getParameterTokens().get(index).getModifiers()));
