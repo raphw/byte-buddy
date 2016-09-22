@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. September 2016: version 1.4.26
+
+- Refactored `skipOn` property of `Advice` component.
+- Allow reading a `Method`/`Constructor` property from `Advice`.
+- Fixed bug that duplicated added parameter annotations on a `DynamicType` builder.
+
 ### 20. September 2016: version 1.4.25
 
 - Added overloaded versions for `byte-buddy-agent` to allow agent attachment with explicit argument.
