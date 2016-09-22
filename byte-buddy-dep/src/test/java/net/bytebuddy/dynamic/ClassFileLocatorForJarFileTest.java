@@ -89,7 +89,8 @@ public class ClassFileLocatorForJarFileTest {
     public void testRuntimeJar() throws Exception {
         ClassFileLocator classFileLocator = ClassFileLocator.ForJarFile.ofRuntimeJar();
         try {
-            assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(true));
+            // java.lang.Object is not contained in the rt.jar for some JVMs.
+            assertThat(classFileLocator.locate(Void.class.getName()).isResolved(), is(true));
         } finally {
             classFileLocator.close();
         }

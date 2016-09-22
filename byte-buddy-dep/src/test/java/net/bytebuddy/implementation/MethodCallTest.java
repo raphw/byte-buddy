@@ -139,14 +139,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testInvokeOnArgumentNonAssignable() throws Exception {
-        DynamicType.Loaded<ArgumentCallDynamic> loaded = implement(ArgumentCallDynamic.class,
-                MethodCall.invoke(ArgumentCallDynamic.Target.class.getDeclaredMethod("foo")).onArgument(0));
+        implement(ArgumentCallDynamic.class, MethodCall.invoke(ArgumentCallDynamic.Target.class.getDeclaredMethod("foo")).onArgument(0));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testInvokeOnArgumentNonVirtual() throws Exception {
-        DynamicType.Loaded<ArgumentCallDynamic> loaded = implement(ArgumentCallDynamic.class,
-                MethodCall.invoke(Object.class.getDeclaredMethod("registerNatives")).onArgument(0));
+        implement(ArgumentCallDynamic.class, MethodCall.invoke(NonVirtual.class.getDeclaredMethod("foo")).onArgument(0));
     }
 
     @Test
@@ -889,6 +887,13 @@ public class MethodCallTest extends AbstractImplementationTest {
         @Override
         public void run() {
             register(FOO);
+        }
+    }
+
+    public static class NonVirtual {
+
+        public static void foo() {
+            /* empty */
         }
     }
 }
