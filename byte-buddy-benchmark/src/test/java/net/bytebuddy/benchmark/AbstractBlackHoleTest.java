@@ -17,21 +17,10 @@ import java.lang.reflect.Method;
  */
 public abstract class AbstractBlackHoleTest {
 
-    private static final String BLACK_HOLE_METHOD = "_jmh_tryInit_";
-
     protected Blackhole blackHole;
 
     @Before
     public void setUpBlackHole() throws Exception {
-        Class<?> blackHoleGenerator = new ByteBuddy()
-                .subclass(Object.class)
-                .name(String.format("C%s$generated", RandomString.make()))
-                .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Visibility.PUBLIC)
-                .intercept(MethodDelegation.toConstructor(Blackhole.class))
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        Method method = blackHoleGenerator.getDeclaredMethod(BLACK_HOLE_METHOD);
-        blackHole = (Blackhole) method.invoke(blackHoleGenerator.getDeclaredConstructor().newInstance());
+        blackHole = new Blackhole("Today\'s password is swordfish. I understand instantiating Blackholes directly is dangerous.");
     }
 }
