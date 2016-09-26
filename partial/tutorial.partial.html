@@ -357,39 +357,28 @@ class HardcodedFrameworkImpl implements Framework {
 </div>
 
 <p>
-    As obvious from the table, Byte Buddy generally outperforms its competition. This concerns both the runtime of a
-    class's creation and the runtime of invoking the generated class's methods. The first benchmark measures a library's
-    required time for subclassing <code>Object</code> without implementing or overriding any methods. This gives us an
-    impression of a library's general overhead. In this benchmark, Byte Buddy performs slightly better than Java's
-    built-in proxies and significantly better than cglib and Javassist. However, when additionally implementing an
-    interface with 18 methods by creating method stubs, Byte Buddy performs better than any other benchmarked library.
-    This is especially true for the runtime behavior of the generated class. The good performance of the class
-    generation is partly determined by the manner a method's implementation is described to Byte Buddy. This can be
-    observed in the last benchmark which measures the required time for subclassing a class with 18 methods where all
-    methods should be overridden to merely call their super class's implementation. Using Byte Buddy, this can be
-    achieved immediately by using a <code>SuperMethodCall</code>. Often, this is however insufficient as the super
-    method needs to be accessed from outside a class what prevents hard-coding the invocation. For this purpose, using
-    a <code>MethodDelegation</code> is a feasible way which creates accessor classes for invoking super methods from
-    a user defined Java method. Do not worry about the details for now, we will discuss both of these approaches in a
-    later section. As the benchmark suggests, the latter approach is slower to implement than by using another library.
-    The performance loss is caused by the <code>MethodDelegation</code>'s approach of creating specialized accessor
-    classes for each method. On the other hand, cglib only creates a single multi-purpose accessor class and Javassist does
-    not create any such class. This comes at the cost at runtime performance of each method invocation as obvious from
-    the second measurement.
+    Similarly to static compilers, code generation libraries face a trade-off between generating fast code and generating
+    code fast. When choosing between these conflicting goals, Byte Buddy's primary focus lies on generating code with
+    minimal runtime. Typically, type creation or manipulation is not a common step within any program and does not significantly
+    impact any long-running application; especially since class loading or class instrumentation is the most time-consuming
+    and unavoidable step when running such code.
 </p>
 
 <p>
-    In general, Byte Buddy does not want to be opinionated about this trade-off between the costs of class creation and
-    the costs of using the generated code. If the runtime of class creation is in particular important to you, you
-    should however always consider to implement a specialized method <code>Implementation</code>. This topic is covered
-    in detail in a later section of this tutorial. For most users, Byte Buddy's general purpose implementations should
-    however suffice since generated code is usually only created once during an application's bootstrap. And neither
-    forget that the above measures are scaled in nanoseconds. Only while you were reading this paragraph, a code
-    generator could have created hundreds of thousands of classes. In this context, note that Java classes are not
-    garbage collected as long as their class loader is alive. This often means that classes are never garbage collected.
-    Therefore, be careful when generating code as it
-    <a href="http://www.oracle.com/technetwork/java/javase/memleaks-137499.html#gbyuu">can give you trouble</a> when
-    limited <i>perm gen</i> or <i>meta space</i> is available.
+    The first benchmark in the above table measures a library's runtime for subclassing <code>Object</code> without
+    implementing or overriding any methods. This gives us an impression of a library's general overhead in code generation.
+    In this benchmark, Java proxies perform better than other libraries due to optimizations that are only possible when
+    assuming to always extend an interface. Byte Buddy also checks classes for generic types and annotations what causes
+    additional runtimes. This performance overhead is also visible in the other benchmarks for creating a class. Benchmark
+    (2a) shows the measured runtime for creating (and loading) a class that implements a single interface with 18 methods,
+    (2b) shows the execution time for the methods generated for this class. Similarly, (3a) shows a benchmark for extending a
+    class with the same 18 methods which are implemented. Byte Buddy provides two benchmarks, due to a possible optimization
+    that is possible for an interceptor that always executes the super method. Sacrificing some time during class creation,
+    the execution time of a Byte Buddy-created classes typically reaches the baseline, meaning that the instrumentation creates
+    no overhead at all. It should be noted that Byte Buddy outperforms any other code generation library also during class
+    creation, if the meta data processing was disabled. As the runtime of code generation is however so minimal compared to
+    a program's total runtime, such an opt-out is not available as it would gain very little performance to the sacrifice
+    of complicating the library code.
 </p>
 
 <p>
