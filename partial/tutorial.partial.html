@@ -281,6 +281,7 @@ class HardcodedFrameworkImpl implements Framework {
         <thead>
         <tr>
             <td></td>
+            <td colspan="2">baseline</td>
             <td colspan="2">Byte Buddy</td>
             <td colspan="2">cglib</td>
             <td colspan="2">Javassist</td>
@@ -290,73 +291,66 @@ class HardcodedFrameworkImpl implements Framework {
         <tbody>
         <tr class="table-section section-uneven">
             <td>trivial class creation</td>
-            <td>60.995</td>
-            <td>(0.234)</td>
-            <td>234.488</td>
-            <td>(0.613)</td>
-            <td>145.412</td>
-            <td>(0.391)</td>
-            <td>68.706</td>
-            <td>(0.309)</td>
+            <td>0.003</td>
+            <td>(0.001)</td>
+            <td>142.772</td>
+            <td>(1.390)</td>
+            <td>515.174</td>
+            <td>(26.753)</td>
+            <td>193.733</td>
+            <td>(4.430)</td>
+            <td>70.712</td>
+            <td>(0.645)</td>
         </tr>
         <tr class="table-section section-even">
-            <td>interface (stub methods)</td>
-            <td>153.800</td>
-            <td>153.800</td>
-            <td>(0.394)</td>
-            <td>804.000</td>
-            <td>(1.899)</td>
-            <td>706.878</td>
-            <td>(4.929)</td>
-            <td>973.650</td>
-            <td>(1.624)</td>
+            <td>interface implementation</td>
+            <td>0.004</td>
+            <td>(0.001)</td>
+            <td>1'126.364</td>
+            <td>(10.328)</td>
+            <td>960.527</td>
+            <td>(11.788)</td>
+            <td>1'070.766</td>
+            <td>(59.865)</td>
+            <td>1'060.766</td>
+            <td>(12.231)</td>
         </tr>
         <tr class="table-section section-uneven">
             <td>stub method invocation</td>
-            <td>0.001</td>
-            <td>(0.000)</td>
             <td>0.002</td>
-            <td>(0.000)</td>
-            <td>0.009</td>
-            <td>(0.000)</td>
-            <td>0.005</td>
-            <td>(0.000)</td>
+            <td>(0.001)</td>
+            <td>0.002</td>
+            <td>(0.001)</td>
+            <td>0.003</td>
+            <td>(0.001)</td>
+            <td>0.011</td>
+            <td>(0.001)</td>
+            <td>0.008</td>
+            <td>(0.001)</td>
         </tr>
         <tr class="table-section section-even">
-            <td>class (super method invocation)</td>
-            <td>172.126</td>
-            <td>(0.533)</td>
-            <td>1480.525</td>
-            <td>(2.911)</td>
-            <td>625.778</td>
-            <td>(1.954)</td>
+            <td>class extension</td>
+            <td>0.004</td>
+            <td>(0.001)</td>
+            <td>885.983<br/><i>5'408.329<i></td>
+            <td>(7.901)<br/><i>(52.437)</i></td>
+            <td>1'632.730</td>
+            <td>(52.737)</td>
+            <td>683.478</td>
+            <td>(6.735)</td>
             <td colspan="2">&ndash;</td>
-        </tr>
-        <tr class="table-auxiliary section-even">
-            <td></td>
-            <td><i>1850.567</i></td>
-            <td>(8.314)</td>
-            <td colspan="2"></td>
-            <td colspan="2"></td>
-            <td colspan="2"></td>
         </tr>
         <tr class="table-section section-uneven">
             <td>super method invocation</td>
-            <td>0.002</td>
-            <td>(0.000)</td>
-            <td>0.019</td>
-            <td>(0.000)</td>
-            <td>0.027</td>
-            <td>(0.000)</td>
+            <td>0.004</td>
+            <td>(0.001)</td>
+            <td>0.004<br/><i>0.004</i></td>
+            <td>(0.001)<br/><i>(0.001)</i></td>
+            <td>0.021</td>
+            <td>(0.001)</td>
+            <td>0.025</td>
+            <td>(0.001)</td>
             <td colspan="2">&ndash;</td>
-        </tr>
-        <tr class="table-auxiliary section-uneven">
-            <td></td>
-            <td>0.003</td>
-            <td>(0.000)</td>
-            <td colspan="2"></td>
-            <td colspan="2"></td>
-            <td colspan="2"></td>
         </tr>
         </tbody>
     </table>
