@@ -105,6 +105,7 @@
                 <version>${version.plugin.antrun}</version>
                 <executions>
                     <execution>
+                        <id>copy-jar</id>
                         <phase>package</phase>
                         <goals>
                             <goal>run</goal>
@@ -132,6 +133,7 @@
                         <version>${version.plugin.antrun}</version>
                         <executions>
                             <execution>
+                                <id>copy-javadoc</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>run</goal>
