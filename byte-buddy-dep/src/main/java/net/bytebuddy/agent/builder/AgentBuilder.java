@@ -147,6 +147,10 @@ public interface AgentBuilder {
      * Specifies a strategy for modifying types that were already loaded prior to the installation of this transformer.
      * </p>
      * <p>
+     * <b>Note</b>: Defining a redefinition strategy resets any refinements of a previously set redefinition strategy
+     * via {@link Redefining}.
+     * </p>
+     * <p>
      * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already
      * loaded. Therefore, it is typically required that this class file transformer was built while enabling
      * {@link AgentBuilder#disableClassFormatChanges()}.
