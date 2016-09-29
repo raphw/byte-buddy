@@ -3688,8 +3688,8 @@ public interface AgentBuilder {
                             }
                         }
                     }
-                    redefinitionListener.onBatch(index, batch, types);
                     if (!transformations.isEmpty()) {
+                        redefinitionListener.onBatch(index, batch, types);
                         try {
                             doApply(transformations, instrumentation);
                         } catch (Throwable throwable) {
