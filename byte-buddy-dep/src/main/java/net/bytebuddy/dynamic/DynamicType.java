@@ -2855,7 +2855,7 @@ public interface DynamicType {
                             implementationContextFactory,
                             methodGraphCompiler,
                             typeValidation,
-                            new LatentMatcher.Compound(this.ignoredMethods, ignoredMethods));
+                            new LatentMatcher.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods));
                 }
 
                 @Override
