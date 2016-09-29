@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. September 2016: version 1.4.27
+
+- Refactored `AgentBuilder` retransformation mechanism to allow for custom recovery and batch strategies.
+- Fixed Gradle plugin build which did not contain files.
+- Supply no argument to agent attachment by default instead of empty string argument.
+
+*Note*: Currently, it seems like the new retransformation mechanism introduces a racing condition in class loading resulting in some classes not being instrumented
+
 ### 21. September 2016: version 1.4.26
 
 - Refactored `skipOn` property of `Advice` component.
