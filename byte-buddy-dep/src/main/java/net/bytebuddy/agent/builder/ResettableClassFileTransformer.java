@@ -170,7 +170,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
             /**
              * Creates a new result with errors.
              *
-             * @param errors A map of errors occurred during a class file transformer reset.
+             * @param failures A map of errors occurred during a class file transformer reset.
              */
             protected WithErrors(Map<Class<?>, Throwable> failures) {
                 this.failures = failures;
@@ -179,7 +179,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
             /**
              * Creates a result of a potentially empty error mapping.
              *
-             * @param errors A map of errors that occurred during a reset.
+             * @param failures A map of errors that occurred during a reset.
              * @return An appropriate result.
              */
             public static Reset ofPotentiallyErroneous(Map<Class<?>, Throwable> failures) {
