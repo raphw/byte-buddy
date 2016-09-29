@@ -29,8 +29,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
@@ -285,7 +283,8 @@ public class AgentBuilderDefaultApplicationTest {
                 .ignore(none())
                 .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION_CHUNKED)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.ofSize(1))
                 .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -305,7 +304,8 @@ public class AgentBuilderDefaultApplicationTest {
                 .ignore(any())
                 .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION_CHUNKED)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.ofSize(1))
                 .installOnByteBuddyAgent());
     }
 
@@ -385,7 +385,8 @@ public class AgentBuilderDefaultApplicationTest {
                 .ignore(none())
                 .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION_CHUNKED)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.ofSize(1))
                 .type(ElementMatchers.is(SimpleType.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -405,7 +406,8 @@ public class AgentBuilderDefaultApplicationTest {
                 .ignore(any())
                 .disableClassFormatChanges()
                 .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION_CHUNKED)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.ofSize(1))
                 .installOnByteBuddyAgent());
     }
 
