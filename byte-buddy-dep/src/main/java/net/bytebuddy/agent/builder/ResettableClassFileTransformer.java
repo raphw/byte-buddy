@@ -92,6 +92,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
         }
     }
 
+
     /**
      * A result of a class file transformer reset by a {@link ResettableClassFileTransformer}.
      */

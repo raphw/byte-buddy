@@ -14,6 +14,13 @@ import static org.junit.Assert.assertThat;
 public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
 
     @Test
+    public void testForTotalEmpty() throws Exception {
+        AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE;
+        Iterator<? extends List<Class<?>>> iterator = batchAllocator.batch(Collections.<Class<?>>emptyList()).iterator();
+        assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test
     public void testForTotal() throws Exception {
         AgentBuilder.RedefinitionStrategy.BatchAllocator batchAllocator = AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE;
         Iterator<? extends List<Class<?>>> iterator = batchAllocator.batch(Arrays.<Class<?>>asList(Object.class, Void.class, String.class)).iterator();

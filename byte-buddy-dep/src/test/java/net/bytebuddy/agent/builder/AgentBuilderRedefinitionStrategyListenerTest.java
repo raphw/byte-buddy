@@ -77,6 +77,34 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
         verifyNoMoreInteractions(second);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testErrorFailFast() throws Exception {
+        AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_FAST.onError(0,
+                Collections.<Class<?>>emptyList(),
+                mock(Throwable.class),
+                Collections.<Class<?>>emptyList());
+    }
+
+    @Test
+    public void testFailFastNoOp() throws Exception {
+        AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_FAST.onBatch(0, Collections.<Class<?>>emptyList(), Collections.<Class<?>>emptyList());
+        AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_FAST.onComplete(0, Collections.<Class<?>>emptyList(), Collections.<List<Class<?>>, Throwable>emptyMap());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testErrorFailLast() throws Exception {
+        AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_LAST.onComplete(0,
+                Collections.<Class<?>>emptyList(),
+                Collections.singletonMap(Collections.<Class<?>>emptyList(), mock(Throwable.class)));
+    }
+
+    @Test
+    public void testFailLastNoOp() throws Exception {
+        AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_LAST.onBatch(0, Collections.<Class<?>>emptyList(), Collections.<Class<?>>emptyList());
+        AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_LAST.onError(0, Collections.<Class<?>>emptyList(), mock(Throwable.class), Collections.<Class<?>>emptyList());
+        AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_LAST.onComplete(0, Collections.<Class<?>>emptyList(), Collections.<List<Class<?>>, Throwable>emptyMap());
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.NoOp.class).apply();
@@ -84,5 +112,6 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Pausing.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.StreamWriting.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Yielding.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.class).apply();
     }
 }
