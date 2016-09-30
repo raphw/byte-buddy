@@ -45,7 +45,7 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
         Throwable throwable = mock(Throwable.class);
         listener.onError(0, Collections.<Class<?>>emptyList(), throwable, Collections.<Class<?>>emptyList());
         listener.onComplete(0, Collections.<Class<?>>emptyList(), Collections.<List<Class<?>>, Throwable>emptyMap());
-        verify(printStream, times(3)).println(any(String.class));
+        verify(printStream, times(3)).printf(any(String.class), anyInt(), anyInt(), anyInt());
         verifyNoMoreInteractions(printStream);
         verify(throwable).printStackTrace(printStream);
         verifyNoMoreInteractions(throwable);

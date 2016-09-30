@@ -147,8 +147,7 @@ public interface AgentBuilder {
      * Specifies a strategy for modifying types that were already loaded prior to the installation of this transformer.
      * </p>
      * <p>
-     * <b>Note</b>: Defining a redefinition strategy resets any refinements of a previously set redefinition strategy
-     * via {@link Redefining}.
+     * <b>Note</b>: Defining a redefinition strategy resets any refinements of a previously set redefinition strategy.
      * </p>
      * <p>
      * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already
@@ -159,7 +158,7 @@ public interface AgentBuilder {
      * @param redefinitionStrategy The redefinition strategy to apply.
      * @return A new instance of this agent builder that applies the given redefinition strategy.
      */
-    Redefining with(RedefinitionStrategy redefinitionStrategy);
+    RedefinitionListenable.WithoutBatchStrategy with(RedefinitionStrategy redefinitionStrategy);
 
     /**
      * <p>
@@ -735,6 +734,44 @@ public interface AgentBuilder {
     }
 
     /**
+     * An agent builder configuration that allows the registration of listeners to the redefinition process.
+     */
+    interface RedefinitionListenable extends AgentBuilder {
+
+        /**
+         * <p>
+         * A redefinition listener is invoked before each batch of type redefinitions and on every error as well as
+         * after the redefinition was completed. A redefinition listener can be used for debugging or logging purposes
+         * and to apply actions between each batch, e.g. to pause or wait in order to avoid rendering the current VM
+         * non-responsive if a lot of classes are redefined.
+         * </p>
+         * <p>
+         * Adding several listeners does not replace previous listeners but applies them in the registration order.
+         * </p>
+         *
+         * @param redefinitionListener The listener to register.
+         * @return A new instance of this agent builder which notifies the specified listener upon type redefinitions.
+         */
+        RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener);
+
+        /**
+         * An agent builder configuration that allows the configuration of a batching strategy.
+         */
+        interface WithoutBatchStrategy extends RedefinitionListenable {
+
+            /**
+             * A batch allocator is responsible for diving a redefining of existing types into several chunks. This allows
+             * to narrow down errors for the redefining of specific types or to apply a {@link RedefinitionStrategy.Listener}
+             * action between chunks.
+             *
+             * @param redefinitionBatchAllocator The batch allocator to use.
+             * @return A new instance of this agent builder which makes use of the specified batch allocator.
+             */
+            RedefinitionListenable with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator);
+        }
+    }
+
+    /**
      * Describes an {@link net.bytebuddy.agent.builder.AgentBuilder} which was handed a matcher for identifying
      * types to instrumented in order to supply one or several
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s.
@@ -780,39 +817,6 @@ public interface AgentBuilder {
              */
             AgentBuilder asDecorator();
         }
-    }
-
-    /**
-     * An agent builder that allows the configuration of how to apply a {@link RedefinitionStrategy}. Such a configuration
-     * is only applied if the redefinition strategy is alive.
-     */
-    interface Redefining extends AgentBuilder {
-
-        /**
-         * A batch allocator is responsible for diving a redefining of existing types into several chunks. This allows
-         * to narrow down errors for the redefining of specific types or to apply a {@link RedefinitionStrategy.Listener}
-         * action between chunks.
-         *
-         * @param redefinitionBatchAllocator The batch allocator to use.
-         * @return A new instance of this agent builder which makes use of the specified batch allocator.
-         */
-        Redefining with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator);
-
-        /**
-         * <p>
-         * A redefinition listener is invoked before each batch of type redefinitions and on every error as well as
-         * after the redefinition was completed. A redefinition listener can be used for debugging or logging purposes
-         * and to apply actions between each batch, e.g. to pause or wait in order to avoid rendering the current VM
-         * non-responsive if a lot of classes are redefined.
-         * </p>
-         * <p>
-         * Adding several listeners does not replace previous listeners but applies them in the registration order.
-         * </p>
-         *
-         * @param redefinitionListener The listener to register.
-         * @return A new instance of this agent builder which notifies the specified listener upon type redefinitions.
-         */
-        Redefining with(RedefinitionStrategy.Listener redefinitionListener);
     }
 
     /**
@@ -1187,25 +1191,25 @@ public interface AgentBuilder {
 
             @Override
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
-                printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName() + "[" + classLoader + ", " + module + "]");
+                printStream.printf(PREFIX + " TRANSFORM %s [%s, %s]%n", typeDescription.getName(), classLoader, module);
             }
 
             @Override
             public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-                printStream.println(PREFIX + " IGNORE " + typeDescription.getName() + "[" + classLoader + ", " + module + "]");
+                printStream.printf(PREFIX + " IGNORE %s [%s, %s]%n", typeDescription.getName(), classLoader, module);
             }
 
             @Override
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
                 synchronized (printStream) {
-                    printStream.println(PREFIX + " ERROR " + typeName + "[" + classLoader + ", " + module + "]");
+                    printStream.printf(PREFIX + " ERROR %s [%s, %s]%n", typeName, classLoader, module);
                     throwable.printStackTrace(printStream);
                 }
             }
 
             @Override
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-                printStream.println(PREFIX + " COMPLETE " + typeName + "[" + classLoader + ", " + module + "]");
+                printStream.printf(PREFIX + " COMPLETE %s [%s, %s]%n", typeName, classLoader, module);
             }
 
             @Override
@@ -2931,7 +2935,7 @@ public interface AgentBuilder {
         /**
          * Disables redefinition such that already loaded classes are not affected by the agent.
          */
-        DISABLED {
+        DISABLED(false) {
             @Override
             protected boolean isRetransforming(Instrumentation instrumentation) {
                 return false;
@@ -2959,7 +2963,7 @@ public interface AgentBuilder {
          * the constrains given by this type strategy.
          * </p>
          */
-        REDEFINITION {
+        REDEFINITION(true) {
             @Override
             protected boolean isRetransforming(Instrumentation instrumentation) {
                 if (!instrumentation.isRedefineClassesSupported()) {
@@ -2990,7 +2994,7 @@ public interface AgentBuilder {
          * the constrains given by this type strategy.
          * </p>
          */
-        RETRANSFORMATION {
+        RETRANSFORMATION(true) {
             @Override
             protected boolean isRetransforming(Instrumentation instrumentation) {
                 if (!instrumentation.isRetransformClassesSupported()) {
@@ -3004,6 +3008,20 @@ public interface AgentBuilder {
                 return new Collector.ForRetransformation(transformation);
             }
         };
+
+        /**
+         * Indicates that this redefinition strategy is enabled.
+         */
+        private final boolean enabled;
+
+        /**
+         * Creates a new redefinition strategy.
+         *
+         * @param enabled {@code true} if this strategy is enabled.
+         */
+        RedefinitionStrategy(boolean enabled) {
+            this.enabled = enabled;
+        }
 
         /**
          * Indicates if this strategy requires a class file transformer to be registered with a hint to apply the
@@ -3020,7 +3038,7 @@ public interface AgentBuilder {
          * @return {@code true} if this redefinition strategy applies a modification of already loaded classes.
          */
         protected boolean isEnabled() {
-            return this != DISABLED;
+            return enabled;
         }
 
         /**
@@ -3151,7 +3169,7 @@ public interface AgentBuilder {
              *
              * @param index A running index of the batch starting at {@code 0}.
              * @param batch The types included in this batch.
-             * @param types All types included in the retransformation.
+             * @param types All types included in the redefinition.
              */
             void onBatch(int index, List<Class<?>> batch, List<Class<?>> types);
 
@@ -3161,18 +3179,18 @@ public interface AgentBuilder {
              * @param index     A running index of the batch starting at {@code 0}.
              * @param batch     The types included in this batch.
              * @param throwable The throwable that caused this invocation.
-             * @param types     All types included in the retransformation.
+             * @param types     All types included in the redefinition.
              */
             void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types);
 
             /**
              * Invoked upon completion of all batches.
              *
-             * @param index    A total amount of batches that were executed.
-             * @param types    All types included in the retransformation.
+             * @param amount   The total amount of batches that were executed.
+             * @param types    All types included in the redefinition.
              * @param failures A mapping of batch types to their unhandled failures.
              */
-            void onComplete(int index, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures);
+            void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures);
 
             /**
              * A non-operational listener.
@@ -3195,7 +3213,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onComplete(int index, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
                 }
 
@@ -3228,7 +3246,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onComplete(int index, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
                 }
 
@@ -3253,7 +3271,7 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    public void onComplete(int index, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                    public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                         /* do nothing */
                     }
                 },
@@ -3268,7 +3286,7 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    public void onComplete(int index, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                    public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                         if (!failures.isEmpty()) {
                             throw new IllegalStateException("Could not transform any of " + failures);
                         }
@@ -3302,7 +3320,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onComplete(int index, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
                 }
             }
@@ -3415,20 +3433,20 @@ public interface AgentBuilder {
 
                 @Override
                 public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
-                    printStream.println(AgentBuilder.Listener.StreamWriting.PREFIX + " RETRANSFORM BATCH #" + index + " (" + batch.size() + " types)");
+                    printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE BATCH #%d [%d of %d type(s)]%n", index, batch.size(), types.size());
                 }
 
                 @Override
                 public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                     synchronized (printStream) {
-                        printStream.println(AgentBuilder.Listener.StreamWriting.PREFIX + " RETRANSFORM ERROR #" + index + " (" + batch.size() + " types)");
+                        printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE ERROR #%d [%d of %d type(s)]%n", index, batch.size(), types.size());
                         throwable.printStackTrace(printStream);
                     }
                 }
 
                 @Override
-                public void onComplete(int index, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
-                    printStream.println(AgentBuilder.Listener.StreamWriting.PREFIX + " RETRANSFORM COMPLETE " + index + " batches (" + failures.size() + " errors)");
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                    printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE COMPLETE #%d batch(es) containing %d types [%d failed batch(es)]%n", amount, types.size(), failures.size());
                 }
 
                 @Override
@@ -3495,9 +3513,9 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onComplete(int index, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     for (Listener listener : listeners) {
-                        listener.onComplete(index, types, failures);
+                        listener.onComplete(amount, types, failures);
                     }
                 }
 
@@ -5096,7 +5114,7 @@ public interface AgentBuilder {
      * {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information ({@link PoolStrategy.Default#FAST}).
      * </p>
      */
-    class Default implements AgentBuilder.Redefining {
+    class Default implements AgentBuilder {
 
         /**
          * The name of the Byte Buddy {@code net.bytebuddy.agent.Installer} class.
@@ -5127,88 +5145,88 @@ public interface AgentBuilder {
         /**
          * The {@link net.bytebuddy.ByteBuddy} instance to be used.
          */
-        private final ByteBuddy byteBuddy;
+        protected final ByteBuddy byteBuddy;
 
         /**
          * The listener to notify on transformations.
          */
-        private final Listener listener;
+        protected final Listener listener;
 
         /**
          * The type locator to use.
          */
-        private final PoolStrategy poolStrategy;
+        protected final PoolStrategy poolStrategy;
 
         /**
          * The definition handler to use.
          */
-        private final TypeStrategy typeStrategy;
+        protected final TypeStrategy typeStrategy;
 
         /**
          * The location strategy to use.
          */
-        private final LocationStrategy locationStrategy;
+        protected final LocationStrategy locationStrategy;
 
         /**
          * The native method strategy to use.
          */
-        private final NativeMethodStrategy nativeMethodStrategy;
+        protected final NativeMethodStrategy nativeMethodStrategy;
 
         /**
          * The initialization strategy to use for creating classes.
          */
-        private final InitializationStrategy initializationStrategy;
+        protected final InitializationStrategy initializationStrategy;
 
         /**
          * The redefinition strategy to apply.
          */
-        private final RedefinitionStrategy redefinitionStrategy;
+        protected final RedefinitionStrategy redefinitionStrategy;
 
         /**
          * The batch allocator for the redefinition strategy to apply.
          */
-        private final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
+        protected final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
 
         /**
          * The redefinition listener for the redefinition strategy to apply.
          */
-        private final RedefinitionStrategy.Listener redefinitionListener;
+        protected final RedefinitionStrategy.Listener redefinitionListener;
 
         /**
          * The injection strategy for injecting classes into the bootstrap class loader.
          */
-        private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
+        protected final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
         /**
          * A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the instrumentation
          * of classes that represent lambda expressions.
          */
-        private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
+        protected final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
 
         /**
          * The description strategy for resolving type descriptions for types.
          */
-        private final DescriptionStrategy descriptionStrategy;
+        protected final DescriptionStrategy descriptionStrategy;
 
         /**
          * The installation strategy to use.
          */
-        private final InstallationStrategy installationStrategy;
+        protected final InstallationStrategy installationStrategy;
 
         /**
          * The fallback strategy to apply.
          */
-        private final FallbackStrategy fallbackStrategy;
+        protected final FallbackStrategy fallbackStrategy;
 
         /**
          * Identifies types that should not be instrumented.
          */
-        private final RawMatcher ignoredTypeMatcher;
+        protected final RawMatcher ignoredTypeMatcher;
 
         /**
          * The transformation object for handling type transformations.
          */
-        private final Transformation transformation;
+        protected final Transformation transformation;
 
         /**
          * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for creating classes.
@@ -5498,29 +5516,8 @@ public interface AgentBuilder {
         }
 
         @Override
-        public Redefining with(RedefinitionStrategy redefinitionStrategy) {
-            return new Default(byteBuddy,
-                    listener,
-                    poolStrategy,
-                    typeStrategy,
-                    locationStrategy,
-                    nativeMethodStrategy,
-                    initializationStrategy,
-                    redefinitionStrategy,
-                    RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
-                    RedefinitionStrategy.Listener.NoOp.INSTANCE,
-                    bootstrapInjectionStrategy,
-                    lambdaInstrumentationStrategy,
-                    descriptionStrategy,
-                    installationStrategy,
-                    fallbackStrategy,
-                    ignoredTypeMatcher,
-                    transformation);
-        }
-
-        @Override
-        public Redefining with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
-            return new Default(byteBuddy,
+        public RedefinitionListenable.WithoutBatchStrategy with(RedefinitionStrategy redefinitionStrategy) {
+            return new Redefining(byteBuddy,
                     listener,
                     poolStrategy,
                     typeStrategy,
@@ -5530,27 +5527,6 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
-                    bootstrapInjectionStrategy,
-                    lambdaInstrumentationStrategy,
-                    descriptionStrategy,
-                    installationStrategy,
-                    fallbackStrategy,
-                    ignoredTypeMatcher,
-                    transformation);
-        }
-
-        @Override
-        public Redefining with(RedefinitionStrategy.Listener redefinitionListener) {
-            return new Default(byteBuddy,
-                    listener,
-                    poolStrategy,
-                    typeStrategy,
-                    locationStrategy,
-                    nativeMethodStrategy,
-                    initializationStrategy,
-                    redefinitionStrategy,
-                    redefinitionBatchAllocator,
-                    new RedefinitionStrategy.Listener.Compound(this.redefinitionListener, redefinitionListener),
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -7709,7 +7685,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            public Redefining with(RedefinitionStrategy redefinitionStrategy) {
+            public RedefinitionListenable.WithoutBatchStrategy with(RedefinitionStrategy redefinitionStrategy) {
                 return materialize().with(redefinitionStrategy);
             }
 
@@ -7927,6 +7903,135 @@ public interface AgentBuilder {
                 return "AgentBuilder.Default.Ignoring{" +
                         "rawMatcher=" + rawMatcher +
                         ", agentBuilder=" + Default.this +
+                        '}';
+            }
+        }
+
+        /**
+         * An implementation of a default agent builder that allows for refinement of the redefinition strategy.
+         */
+        protected static class Redefining extends Default implements RedefinitionListenable.WithoutBatchStrategy {
+
+            /**
+             * Creates a new default agent builder that allows for refinement of the redefinition strategy.
+             *
+             * @param byteBuddy                     The Byte Buddy instance to be used.
+             * @param listener                      The listener to notify on transformations.
+             * @param poolStrategy                  The type locator to use.
+             * @param typeStrategy                  The definition handler to use.
+             * @param locationStrategy              The location strategy to use.
+             * @param nativeMethodStrategy          The native method strategy to apply.
+             * @param initializationStrategy        The initialization strategy to use for transformed types.
+             * @param redefinitionStrategy          The redefinition strategy to apply.
+             * @param redefinitionBatchAllocator    The batch allocator for the redefinition strategy to apply.
+             * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
+             * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
+             * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
+             *                                      instrumentation of classes that represent lambda expressions.
+             * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
+             * @param installationStrategy          The installation strategy to use.
+             * @param fallbackStrategy              The fallback strategy to apply.
+             * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
+             * @param transformation                The transformation object for handling type transformations.
+             */
+            protected Redefining(ByteBuddy byteBuddy,
+                                 Listener listener,
+                                 PoolStrategy poolStrategy,
+                                 TypeStrategy typeStrategy,
+                                 LocationStrategy locationStrategy,
+                                 NativeMethodStrategy nativeMethodStrategy,
+                                 InitializationStrategy initializationStrategy,
+                                 RedefinitionStrategy redefinitionStrategy,
+                                 RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                 RedefinitionStrategy.Listener redefinitionListener,
+                                 BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                 LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                                 DescriptionStrategy descriptionStrategy,
+                                 InstallationStrategy installationStrategy,
+                                 FallbackStrategy fallbackStrategy,
+                                 RawMatcher ignoredTypeMatcher,
+                                 Transformation transformation) {
+                super(byteBuddy,
+                        listener,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        installationStrategy,
+                        fallbackStrategy,
+                        ignoredTypeMatcher,
+                        transformation);
+            }
+
+            @Override
+            public RedefinitionListenable with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
+                return new Redefining(byteBuddy,
+                        listener,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        installationStrategy,
+                        fallbackStrategy,
+                        ignoredTypeMatcher,
+                        transformation);
+            }
+
+            @Override
+            public RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener) {
+                return new Redefining(byteBuddy,
+                        listener,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        new RedefinitionStrategy.Listener.Compound(this.redefinitionListener, redefinitionListener),
+                        bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        installationStrategy,
+                        fallbackStrategy,
+                        ignoredTypeMatcher,
+                        transformation);
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Default.Redefining{" +
+                        "byteBuddy=" + byteBuddy +
+                        ", listener=" + listener +
+                        ", poolStrategy=" + poolStrategy +
+                        ", typeStrategy=" + typeStrategy +
+                        ", locationStrategy=" + locationStrategy +
+                        ", nativeMethodStrategy=" + nativeMethodStrategy +
+                        ", initializationStrategy=" + initializationStrategy +
+                        ", redefinitionStrategy=" + redefinitionStrategy +
+                        ", redefinitionBatchAllocator=" + redefinitionBatchAllocator +
+                        ", redefinitionListener=" + redefinitionListener +
+                        ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
+                        ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
+                        ", descriptionStrategy=" + descriptionStrategy +
+                        ", installationStrategy=" + installationStrategy +
+                        ", fallbackStrategy=" + fallbackStrategy +
+                        ", ignoredTypeMatcher=" + ignoredTypeMatcher +
+                        ", transformation=" + transformation +
                         '}';
             }
         }
