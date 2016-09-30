@@ -5,7 +5,7 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
     .constant('repository', {
         groupId: 'net.bytebuddy',
         artifactId: 'byte-buddy',
-        version: '1.4.27'
+        version: '1.4.28'
     })
 
     .config(function ($routeProvider) {
