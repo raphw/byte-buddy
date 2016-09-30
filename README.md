@@ -172,7 +172,7 @@ Byte Buddy is not limited to creating subclasses but is also capable of redefini
 
 ```java
 public class TimingInterceptor {
-  @DynamicType
+  @RuntimeType
   public static Object intercept(@Origin Method method, 
                                  @SuperCall Callable<?> callable) {
     long start = System.currentTimeMillis();
