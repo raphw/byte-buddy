@@ -3799,6 +3799,20 @@ public interface AgentBuilder {
         };
 
         /**
+         * The name of the current VM's {@code Unsafe} class that is visible to the bootstrap loader.
+         */
+        private static final String UNSAFE_CLASS;
+
+        /*
+         * Locates the appropriate {@code Unsafe} class.
+         */
+        static {
+            UNSAFE_CLASS = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+                    ? "jdk/internal/misc/Unsafe"
+                    : "sun/misc/Unsafe";
+        }
+
+        /**
          * Indicates that an original implementation can be ignored when redefining a method.
          */
         protected static final MethodVisitor IGNORE_ORIGINAL = null;
@@ -4662,7 +4676,7 @@ public interface AgentBuilder {
                                       int writerFlags,
                                       int readerFlags) {
                 methodVisitor.visitCode();
-                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "sun/misc/Unsafe", "getUnsafe", "()Lsun/misc/Unsafe;", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, UNSAFE_CLASS, "getUnsafe", "()L" + UNSAFE_CLASS + ";", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -4753,11 +4767,11 @@ public interface AgentBuilder {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
                 methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "parameterCount", "()I", false);
                 Label conditionalDefault = new Label();
@@ -4778,7 +4792,7 @@ public interface AgentBuilder {
                 Label conditionalAlternative = new Label();
                 methodVisitor.visitJumpInsn(Opcodes.GOTO, conditionalAlternative);
                 methodVisitor.visitLabel(conditionalDefault);
-                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"sun/misc/Unsafe", "java/lang/Class"}, 0, null);
+                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{UNSAFE_CLASS, "java/lang/Class"}, 0, null);
                 methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
                 methodVisitor.visitInsn(Opcodes.DUP);
                 methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
@@ -4944,7 +4958,7 @@ public interface AgentBuilder {
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
                 methodVisitor.visitLabel(additionalBridgesExit);
                 methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"[Ljava/lang/invoke/MethodType;"}, 0, null);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "sun/misc/Unsafe", "getUnsafe", "()Lsun/misc/Unsafe;", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, UNSAFE_CLASS, "getUnsafe", "()L" + UNSAFE_CLASS + ";", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 8);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 8);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -5036,10 +5050,10 @@ public interface AgentBuilder {
                 Label callSiteAlternative = new Label();
                 methodVisitor.visitJumpInsn(Opcodes.GOTO, callSiteAlternative);
                 methodVisitor.visitLabel(callSiteConditional);
-                methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", "sun/misc/Unsafe"}, 7, new Object[]{"sun/misc/Unsafe", "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER});
+                methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", UNSAFE_CLASS}, 7, new Object[]{UNSAFE_CLASS, "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER});
                 methodVisitor.visitInsn(Opcodes.ICONST_0);
                 methodVisitor.visitLabel(callSiteAlternative);
-                methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", "sun/misc/Unsafe"}, 8, new Object[]{"sun/misc/Unsafe", "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER});
+                methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", UNSAFE_CLASS}, 8, new Object[]{UNSAFE_CLASS, "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER});
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
                 methodVisitor.visitInsn(Opcodes.AASTORE);
                 methodVisitor.visitInsn(Opcodes.DUP);
@@ -5055,11 +5069,11 @@ public interface AgentBuilder {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
                 methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 9);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 8);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 9);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "parameterCount", "()I", false);
                 Label callSiteJump = new Label();
