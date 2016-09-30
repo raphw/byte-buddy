@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 30. September 2016: version 1.4.28
+
+- Additional refactoring of the `AgentBuilder` to fix a regression of 1.4.27.
+- Unified the error listener and the regular listener that were added in the previous version.
+
 ### 29. September 2016: version 1.4.27
 
 - Refactored `AgentBuilder` retransformation mechanism to allow for custom recovery and batch strategies.
