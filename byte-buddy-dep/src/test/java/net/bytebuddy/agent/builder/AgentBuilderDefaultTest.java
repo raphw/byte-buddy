@@ -14,6 +14,7 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
@@ -22,6 +23,7 @@ import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
@@ -53,6 +55,9 @@ public class AgentBuilderDefaultTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Mock
     private Instrumentation instrumentation;
@@ -1863,43 +1868,41 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(9)
     public void testExecutingTransformerDoesNotRecurseWithModules() throws Exception {
-        if (JavaModule.isSupported()) {
-            final AgentBuilder.Default.ExecutingTransformer executingTransformer = new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
-                    listener,
-                    poolStrategy,
-                    typeStrategy,
-                    locationStrategy,
-                    mock(AgentBuilder.Default.NativeMethodStrategy.class),
-                    initializationStrategy,
-                    mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
-                    AgentBuilder.DescriptionStrategy.Default.HYBRID,
-                    mock(AgentBuilder.FallbackStrategy.class),
-                    mock(AgentBuilder.RawMatcher.class),
-                    mock(AgentBuilder.Default.Transformation.class));
-            final ClassLoader classLoader = mock(ClassLoader.class);
-            final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
-            doAnswer(new Answer() {
-                @Override
-                public Object answer(InvocationOnMock invocation) throws Throwable {
-                    assertThat(executingTransformer.transform(JavaModule.ofType(Object.class).unwrap(),
-                            classLoader,
-                            FOO,
-                            Object.class,
-                            protectionDomain,
-                            new byte[0]), nullValue(byte[].class));
-                    return null;
-                }
-            }).when(listener).onComplete(FOO, classLoader, JavaModule.ofType(Object.class));
-            assertThat(executingTransformer.transform(JavaModule.of(Object.class).unwrap(),
-                    classLoader,
-                    FOO,
-                    Object.class,
-                    protectionDomain,
-                    new byte[0]), nullValue(byte[].class));
-            verify(listener).onComplete(FOO, classLoader, JavaModule.ofType(Object.class));
-        }
+        final AgentBuilder.Default.ExecutingTransformer executingTransformer = new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
+                listener,
+                poolStrategy,
+                typeStrategy,
+                locationStrategy,
+                mock(AgentBuilder.Default.NativeMethodStrategy.class),
+                initializationStrategy,
+                mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
+                AgentBuilder.DescriptionStrategy.Default.HYBRID,
+                mock(AgentBuilder.FallbackStrategy.class),
+                mock(AgentBuilder.RawMatcher.class),
+                mock(AgentBuilder.Default.Transformation.class));
+        final ClassLoader classLoader = mock(ClassLoader.class);
+        final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                assertThat(executingTransformer.transform(JavaModule.ofType(Object.class).unwrap(),
+                        classLoader,
+                        FOO,
+                        Object.class,
+                        protectionDomain,
+                        new byte[0]), nullValue(byte[].class));
+                return null;
+            }
+        }).when(listener).onComplete(FOO, classLoader, JavaModule.ofType(Object.class));
+        assertThat(executingTransformer.transform(JavaModule.of(Object.class).unwrap(),
+                classLoader,
+                FOO,
+                Object.class,
+                protectionDomain,
+                new byte[0]), nullValue(byte[].class));
+        verify(listener).onComplete(FOO, classLoader, JavaModule.ofType(Object.class));
     }
 
     @Test
