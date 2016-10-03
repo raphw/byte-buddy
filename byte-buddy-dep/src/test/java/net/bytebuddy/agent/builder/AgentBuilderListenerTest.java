@@ -2,6 +2,7 @@ package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaModule;
@@ -15,6 +16,7 @@ import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
 import java.util.Collections;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -158,6 +160,32 @@ public class AgentBuilderListenerTest {
     }
 
     @Test
+    public void testFilteringDoesNotMatch() throws Exception {
+        AgentBuilder.Listener delegate = mock(AgentBuilder.Listener.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.Filtering(none(), delegate);
+        listener.onTransformation(typeDescription, classLoader, module, dynamicType);
+        listener.onError(FOO, classLoader, module, throwable);
+        listener.onIgnored(typeDescription, classLoader, module);
+        listener.onComplete(FOO, classLoader, module);
+        verifyZeroInteractions(delegate);
+    }
+
+    @Test
+    public void testFilteringMatch() throws Exception {
+        AgentBuilder.Listener delegate = mock(AgentBuilder.Listener.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.Filtering(ElementMatchers.any(), delegate);
+        listener.onTransformation(typeDescription, classLoader, module, dynamicType);
+        listener.onError(FOO, classLoader, module, throwable);
+        listener.onIgnored(typeDescription, classLoader, module);
+        listener.onComplete(FOO, classLoader, module);
+        verify(delegate).onTransformation(typeDescription, classLoader, module, dynamicType);
+        verify(delegate).onError(FOO, classLoader, module, throwable);
+        verify(delegate).onIgnored(typeDescription, classLoader, module);
+        verify(delegate).onComplete(FOO, classLoader, module);
+        verifyNoMoreInteractions(delegate);
+    }
+
+    @Test
     public void testReadEdgeAddingListenerNotSupported() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.ModuleReadEdgeCompleting(instrumentation, false, Collections.<JavaModule>emptySet());
@@ -260,6 +288,7 @@ public class AgentBuilderListenerTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Listener.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.StreamWriting.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Listener.Filtering.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.Compound.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.ModuleReadEdgeCompleting.class).apply();
     }

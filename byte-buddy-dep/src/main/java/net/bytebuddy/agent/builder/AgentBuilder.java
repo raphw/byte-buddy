@@ -85,6 +85,11 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <p>
  * <b>Note</b>: Any transformation is performed using the {@link AccessControlContext} of an agent's creator.
  * </p>
+ * <p>
+ * <b>Important</b>: Any installed transformer cannot transform classes that are loaded within the transformation process.
+ * Transforming such classes would cause a {@link ClassCircularityError}. To avoid such errors, Byte Buddy silently skips
+ * any classes if a class loading circularity is detected while applying a transformer.
+ * </p>
  */
 public interface AgentBuilder {
 
@@ -1227,6 +1232,84 @@ public interface AgentBuilder {
             public String toString() {
                 return "AgentBuilder.Listener.StreamWriting{" +
                         "printStream=" + printStream +
+                        '}';
+            }
+        }
+
+        /**
+         * A listener that filters types with a given name from being logged.
+         */
+        class Filtering implements Listener {
+
+            /**
+             * The matcher to decide upon a type should be logged.
+             */
+            private final ElementMatcher<? super String> matcher;
+
+            /**
+             * The delegate listener.
+             */
+            private final Listener delegate;
+
+            /**
+             * Creates a new filtering listener.
+             *
+             * @param matcher  The matcher to decide upon a type should be logged.
+             * @param delegate The delegate listener.
+             */
+            public Filtering(ElementMatcher<? super String> matcher, Listener delegate) {
+                this.matcher = matcher;
+                this.delegate = delegate;
+            }
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
+                if (matcher.matches(typeDescription.getName())) {
+                    delegate.onTransformation(typeDescription, classLoader, module, dynamicType);
+                }
+            }
+
+            @Override
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
+                if (matcher.matches(typeDescription.getName())) {
+                    delegate.onIgnored(typeDescription, classLoader, module);
+                }
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
+                if (matcher.matches(typeName)) {
+                    delegate.onError(typeName, classLoader, module, throwable);
+                }
+            }
+
+            @Override
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
+                if (matcher.matches(typeName)) {
+                    delegate.onComplete(typeName, classLoader, module);
+                }
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Filtering filtering = (Filtering) object;
+                return matcher.equals(filtering.matcher) && delegate.equals(filtering.delegate);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = matcher.hashCode();
+                result = 31 * result + delegate.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Listener.Filtering{" +
+                        "matcher=" + matcher +
+                        ", delegate=" + delegate +
                         '}';
             }
         }
@@ -6933,6 +7016,11 @@ public interface AgentBuilder {
             private final Transformation transformation;
 
             /**
+             * A lock that prevents circular class transformations.
+             */
+            private final CircularityLock circularityLock;
+
+            /**
              * The access control context to use for loading classes.
              */
             private final AccessControlContext accessControlContext;
@@ -6977,6 +7065,7 @@ public interface AgentBuilder {
                 this.fallbackStrategy = fallbackStrategy;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
                 this.transformation = transformation;
+                circularityLock = new CircularityLock();
                 accessControlContext = AccessController.getContext();
             }
 
@@ -6986,11 +7075,19 @@ public interface AgentBuilder {
                                     Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
-                return AccessController.doPrivileged(new LegacyVmDispatcher(classLoader,
-                        internalTypeName,
-                        classBeingRedefined,
-                        protectionDomain,
-                        binaryRepresentation), accessControlContext);
+                if (circularityLock.acquire()) {
+                    try {
+                        return AccessController.doPrivileged(new LegacyVmDispatcher(classLoader,
+                                internalTypeName,
+                                classBeingRedefined,
+                                protectionDomain,
+                                binaryRepresentation), accessControlContext);
+                    } finally {
+                        circularityLock.release();
+                    }
+                } else {
+                    return NO_TRANSFORMATION;
+                }
             }
 
             /**
@@ -7011,12 +7108,20 @@ public interface AgentBuilder {
                                        Class<?> classBeingRedefined,
                                        ProtectionDomain protectionDomain,
                                        byte[] binaryRepresentation) {
-                return AccessController.doPrivileged(new Java9CapableVmDispatcher(rawModule,
-                        classLoader,
-                        internalTypeName,
-                        classBeingRedefined,
-                        protectionDomain,
-                        binaryRepresentation), accessControlContext);
+                if (circularityLock.acquire()) {
+                    try {
+                        return AccessController.doPrivileged(new Java9CapableVmDispatcher(rawModule,
+                                classLoader,
+                                internalTypeName,
+                                classBeingRedefined,
+                                protectionDomain,
+                                binaryRepresentation), accessControlContext);
+                    } finally {
+                        circularityLock.release();
+                    }
+                } else {
+                    return NO_TRANSFORMATION;
+                }
             }
 
             /**
@@ -7167,6 +7272,7 @@ public interface AgentBuilder {
                         ", fallbackStrategy=" + fallbackStrategy +
                         ", ignoredTypeMatcher=" + ignoredTypeMatcher +
                         ", transformation=" + transformation +
+                        ", circularityLock=" + circularityLock +
                         ", accessControlContext=" + accessControlContext +
                         '}';
             }
@@ -7650,6 +7756,44 @@ public interface AgentBuilder {
                     return "AgentBuilder.Default.ExecutingTransformer.FailureCollectingListener{" +
                             "failures=" + failures +
                             '}';
+                }
+            }
+
+            /**
+             * A circularity lock is responsible for preventing that a {@link ClassFileLocator} is used recursively.
+             * This can happen when a class file transformation causes another class to be loaded.
+             */
+            protected static class CircularityLock extends ThreadLocal<Boolean> {
+
+                /**
+                 * Indicates that the circularity lock is not currently acquired.
+                 */
+                private static final Boolean NOT_ACQUIRED = null;
+
+                /**
+                 * Attempts to acquire a circularity lock.
+                 *
+                 * @return {@code true} if the lock was acquired successfully, {@code false} if it is already hold.
+                 */
+                protected boolean acquire() {
+                    if (get() == NOT_ACQUIRED) {
+                        set(true);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+
+                /**
+                 * Releases the circularity lock if it is currently acquired.
+                 */
+                protected void release() {
+                    set(NOT_ACQUIRED);
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.ExecutingTransformer.CircularityLock{acquired=" + (get() != NOT_ACQUIRED) + "}";
                 }
             }
         }

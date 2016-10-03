@@ -1806,7 +1806,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testExecutingTransformerHandlesNullValue() throws Exception {
+    public void testExecutingTransformerReturnsNullValue() throws Exception {
         assertThat(new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
                 listener,
                 poolStrategy,
@@ -1824,6 +1824,82 @@ public class AgentBuilderDefaultTest {
                         Object.class,
                         mock(ProtectionDomain.class),
                         new byte[0]), nullValue(byte[].class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testExecutingTransformerDoesNotRecurse() throws Exception {
+        final AgentBuilder.Default.ExecutingTransformer executingTransformer = new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
+                listener,
+                poolStrategy,
+                typeStrategy,
+                locationStrategy,
+                mock(AgentBuilder.Default.NativeMethodStrategy.class),
+                initializationStrategy,
+                mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
+                AgentBuilder.DescriptionStrategy.Default.HYBRID,
+                mock(AgentBuilder.FallbackStrategy.class),
+                mock(AgentBuilder.RawMatcher.class),
+                mock(AgentBuilder.Default.Transformation.class));
+        final ClassLoader classLoader = mock(ClassLoader.class);
+        final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                assertThat(executingTransformer.transform(classLoader,
+                        FOO,
+                        Object.class,
+                        protectionDomain,
+                        new byte[0]), nullValue(byte[].class));
+                return null;
+            }
+        }).when(listener).onComplete(FOO, classLoader, JavaModule.UNSUPPORTED);
+        assertThat(executingTransformer.transform(classLoader,
+                FOO,
+                Object.class,
+                protectionDomain,
+                new byte[0]), nullValue(byte[].class));
+        verify(listener).onComplete(FOO, classLoader, JavaModule.UNSUPPORTED);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testExecutingTransformerDoesNotRecurseWithModules() throws Exception {
+        if (JavaModule.isSupported()) {
+            final AgentBuilder.Default.ExecutingTransformer executingTransformer = new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
+                    listener,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    mock(AgentBuilder.Default.NativeMethodStrategy.class),
+                    initializationStrategy,
+                    mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
+                    AgentBuilder.DescriptionStrategy.Default.HYBRID,
+                    mock(AgentBuilder.FallbackStrategy.class),
+                    mock(AgentBuilder.RawMatcher.class),
+                    mock(AgentBuilder.Default.Transformation.class));
+            final ClassLoader classLoader = mock(ClassLoader.class);
+            final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
+            doAnswer(new Answer() {
+                @Override
+                public Object answer(InvocationOnMock invocation) throws Throwable {
+                    assertThat(executingTransformer.transform(JavaModule.ofType(Object.class).unwrap(),
+                            classLoader,
+                            FOO,
+                            Object.class,
+                            protectionDomain,
+                            new byte[0]), nullValue(byte[].class));
+                    return null;
+                }
+            }).when(listener).onComplete(FOO, classLoader, JavaModule.ofType(Object.class));
+            assertThat(executingTransformer.transform(JavaModule.of(Object.class).unwrap(),
+                    classLoader,
+                    FOO,
+                    Object.class,
+                    protectionDomain,
+                    new byte[0]), nullValue(byte[].class));
+            verify(listener).onComplete(FOO, classLoader, JavaModule.ofType(Object.class));
+        }
     }
 
     @Test
@@ -1868,6 +1944,18 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
+    public void testCircularityLock() throws Exception {
+        AgentBuilder.Default.ExecutingTransformer.CircularityLock circularityLock = new AgentBuilder.Default.ExecutingTransformer.CircularityLock();
+        assertThat(circularityLock.acquire(), is(true));
+        assertThat(circularityLock.acquire(), is(false));
+        circularityLock.release();
+        assertThat(circularityLock.acquire(), is(true));
+        assertThat(circularityLock.acquire(), is(false));
+        circularityLock.release();
+        assertThat(circularityLock.get(), nullValue(Boolean.class));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Ignoring.class).apply();
@@ -1886,6 +1974,7 @@ public class AgentBuilderDefaultTest {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).applyBasic();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.CircularityLock.class).applyBasic();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.FactoryCreationOption.class);
         final Iterator<Class<?>> java9Dispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
