@@ -3,7 +3,7 @@ Byte Buddy release notes
 
 ### 3. October 2016: version 1.4.29
 
-- Avoid recursive transformation causing a `ClassCircularityError` from an `AgentBuilder` by adding a thread-local locking.
+- Explicitly check for recursive transformation of types used during a transformation causing a `ClassCircularityError` from an `AgentBuilder` by adding thread-local locking.
 
 ### 30. September 2016: version 1.4.28
 
