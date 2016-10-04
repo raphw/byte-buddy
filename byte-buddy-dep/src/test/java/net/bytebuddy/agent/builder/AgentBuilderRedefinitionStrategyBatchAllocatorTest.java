@@ -111,11 +111,18 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     @Test(expected = UnsupportedOperationException.class)
     @SuppressWarnings("unchecked")
     public void testCannotRemove() throws Exception {
-        new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping(ElementMatchers.is(Object.class), ElementMatchers.is(Void.class))
+        new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping(ElementMatchers.is(Object.class))
                 .withMinimumBatchSize(2)
                 .batch(Collections.<Class<?>>singletonList(Object.class))
                 .iterator()
                 .remove();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @SuppressWarnings("unchecked")
+    public void testCannotGroupNonPositive() throws Exception {
+        new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping(ElementMatchers.is(Object.class))
+                .withMinimumBatchSize(0);
     }
 
     @Test
