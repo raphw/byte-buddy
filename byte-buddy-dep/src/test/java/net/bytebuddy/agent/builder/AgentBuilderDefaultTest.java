@@ -1823,7 +1823,8 @@ public class AgentBuilderDefaultTest {
                 AgentBuilder.DescriptionStrategy.Default.HYBRID,
                 mock(AgentBuilder.FallbackStrategy.class),
                 mock(AgentBuilder.RawMatcher.class),
-                mock(AgentBuilder.Default.Transformation.class))
+                mock(AgentBuilder.Default.Transformation.class),
+                new AgentBuilder.Default.ExecutingTransformer.CircularityLock.Active(false))
                 .transform(mock(ClassLoader.class),
                         FOO,
                         Object.class,
@@ -1845,7 +1846,8 @@ public class AgentBuilderDefaultTest {
                 AgentBuilder.DescriptionStrategy.Default.HYBRID,
                 mock(AgentBuilder.FallbackStrategy.class),
                 mock(AgentBuilder.RawMatcher.class),
-                mock(AgentBuilder.Default.Transformation.class));
+                mock(AgentBuilder.Default.Transformation.class),
+                new AgentBuilder.Default.ExecutingTransformer.CircularityLock.Active(false));
         final ClassLoader classLoader = mock(ClassLoader.class);
         final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
         doAnswer(new Answer() {
@@ -1881,7 +1883,8 @@ public class AgentBuilderDefaultTest {
                 AgentBuilder.DescriptionStrategy.Default.HYBRID,
                 mock(AgentBuilder.FallbackStrategy.class),
                 mock(AgentBuilder.RawMatcher.class),
-                mock(AgentBuilder.Default.Transformation.class));
+                mock(AgentBuilder.Default.Transformation.class),
+                new AgentBuilder.Default.ExecutingTransformer.CircularityLock.Active(false));
         final ClassLoader classLoader = mock(ClassLoader.class);
         final ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
         doAnswer(new Answer() {
@@ -1947,8 +1950,8 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
-    public void testCircularityLock() throws Exception {
-        AgentBuilder.Default.ExecutingTransformer.CircularityLock circularityLock = new AgentBuilder.Default.ExecutingTransformer.CircularityLock();
+    public void testCircularityLockActive() throws Exception {
+        AgentBuilder.Default.ExecutingTransformer.CircularityLock.Active circularityLock = new AgentBuilder.Default.ExecutingTransformer.CircularityLock.Active(false);
         assertThat(circularityLock.acquire(), is(true));
         assertThat(circularityLock.acquire(), is(false));
         circularityLock.release();
@@ -1956,6 +1959,14 @@ public class AgentBuilderDefaultTest {
         assertThat(circularityLock.acquire(), is(false));
         circularityLock.release();
         assertThat(circularityLock.get(), nullValue(Boolean.class));
+    }
+
+    @Test
+    public void testCircularityLockInactive() throws Exception {
+        AgentBuilder.Default.ExecutingTransformer.CircularityLock circularityLock = AgentBuilder.Default.ExecutingTransformer.CircularityLock.Inactive.INSTANCE;
+        assertThat(circularityLock.acquire(), is(true));
+        assertThat(circularityLock.acquire(), is(true));
+        circularityLock.release();
     }
 
     @Test
@@ -1977,7 +1988,8 @@ public class AgentBuilderDefaultTest {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).applyBasic();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.CircularityLock.class).applyBasic();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.CircularityLock.Active.class).applyBasic();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.CircularityLock.Inactive.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.FactoryCreationOption.class);
         final Iterator<Class<?>> java9Dispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {

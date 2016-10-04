@@ -3966,12 +3966,14 @@ public interface AgentBuilder {
              * Applies all types that this collector collected.
              *
              * @param instrumentation            The instrumentation instance to apply changes to.
+             * @param circularityLock            The circularity lock to use.
              * @param locationStrategy           The location strategy to use.
              * @param listener                   The listener to use.
              * @param redefinitionBatchAllocator The redefinition batch allocator to use.
              * @param redefinitionListener       The redefinition listener to use.
              */
             protected void apply(Instrumentation instrumentation,
+                                 Default.ExecutingTransformer.CircularityLock circularityLock,
                                  LocationStrategy locationStrategy,
                                  AgentBuilder.Listener listener,
                                  BatchAllocator redefinitionBatchAllocator,
@@ -3981,7 +3983,7 @@ public interface AgentBuilder {
                 for (List<Class<?>> types : redefinitionBatchAllocator.batch(this.types)) {
                     redefinitionListener.onBatch(index, types, this.types);
                     try {
-                        doApply(instrumentation, types, locationStrategy, listener);
+                        doApply(instrumentation, circularityLock, types, locationStrategy, listener);
                     } catch (UnmodifiableClassException exception) {
                         redefinitionListener.onError(index, types, exception, this.types);
                         failures.put(types, exception);
@@ -3998,6 +4000,7 @@ public interface AgentBuilder {
              * Applies this collector.
              *
              * @param instrumentation  The instrumentation instance to apply the transformation for.
+             * @param circularityLock  The circularity lock to use.
              * @param types            The types of the current patch to transform.
              * @param locationStrategy The location strategy to use.
              * @param listener         the listener to notify.
@@ -4005,6 +4008,7 @@ public interface AgentBuilder {
              * @throws ClassNotFoundException     If a class could not be found.
              */
             protected abstract void doApply(Instrumentation instrumentation,
+                                            Default.ExecutingTransformer.CircularityLock circularityLock,
                                             List<Class<?>> types,
                                             LocationStrategy locationStrategy,
                                             AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
@@ -4033,6 +4037,7 @@ public interface AgentBuilder {
 
                 @Override
                 protected void doApply(Instrumentation instrumentation,
+                                       Default.ExecutingTransformer.CircularityLock circularityLock,
                                        List<Class<?>> types,
                                        LocationStrategy locationStrategy,
                                        AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
@@ -4052,7 +4057,12 @@ public interface AgentBuilder {
                         }
                     }
                     if (!classDefinitions.isEmpty()) {
-                        instrumentation.redefineClasses(classDefinitions.toArray(new ClassDefinition[classDefinitions.size()]));
+                        circularityLock.release();
+                        try {
+                            instrumentation.redefineClasses(classDefinitions.toArray(new ClassDefinition[classDefinitions.size()]));
+                        } finally {
+                            circularityLock.acquire();
+                        }
                     }
                 }
             }
@@ -4073,11 +4083,17 @@ public interface AgentBuilder {
 
                 @Override
                 protected void doApply(Instrumentation instrumentation,
+                                       Default.ExecutingTransformer.CircularityLock circularityLock,
                                        List<Class<?>> types,
                                        LocationStrategy locationStrategy,
                                        AgentBuilder.Listener listener) throws UnmodifiableClassException {
                     if (!types.isEmpty()) {
-                        instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
+                        circularityLock.release();
+                        try {
+                            instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
+                        } finally {
+                            circularityLock.acquire();
+                        }
                     }
                 }
             }
@@ -6136,6 +6152,16 @@ public interface AgentBuilder {
 
         @Override
         public ResettableClassFileTransformer makeRaw() {
+            return makeRaw(new ExecutingTransformer.CircularityLock.Active(false));
+        }
+
+        /**
+         * Creates a raw class file transformer using the supplied circularity lock.
+         *
+         * @param circularityLock The circularity lock to be used.
+         * @return An appropriate class file transformer.
+         */
+        protected ResettableClassFileTransformer makeRaw(ExecutingTransformer.CircularityLock circularityLock) {
             return ExecutingTransformer.FACTORY.make(byteBuddy,
                     listener,
                     poolStrategy,
@@ -6147,60 +6173,66 @@ public interface AgentBuilder {
                     descriptionStrategy,
                     fallbackStrategy,
                     ignoredTypeMatcher,
-                    transformation);
+                    transformation,
+                    circularityLock);
         }
 
         @Override
         public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
-            ResettableClassFileTransformer classFileTransformer = makeRaw();
-            instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming(instrumentation));
+            ExecutingTransformer.CircularityLock circularityLock = new ExecutingTransformer.CircularityLock.Active(true);
             try {
-                if (nativeMethodStrategy.isEnabled(instrumentation)) {
-                    instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
-                }
-                lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
-                if (redefinitionStrategy.isEnabled()) {
-                    RedefinitionStrategy.Collector collector = redefinitionStrategy.make(transformation);
-                    for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                        JavaModule module = JavaModule.ofType(type);
-                        try {
-                            TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
+                ResettableClassFileTransformer classFileTransformer = makeRaw(circularityLock);
+                instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming(instrumentation));
+                try {
+                    if (nativeMethodStrategy.isEnabled(instrumentation)) {
+                        instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
+                    }
+                    lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
+                    if (redefinitionStrategy.isEnabled()) {
+                        RedefinitionStrategy.Collector collector = redefinitionStrategy.make(transformation);
+                        for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                            JavaModule module = JavaModule.ofType(type);
                             try {
-                                collector.consider(ignoredTypeMatcher,
-                                        listener,
-                                        descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool),
-                                        type,
-                                        type,
-                                        module,
-                                        !instrumentation.isModifiableClass(type));
-                            } catch (Throwable throwable) {
-                                if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
+                                TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
+                                try {
                                     collector.consider(ignoredTypeMatcher,
                                             listener,
-                                            typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
+                                            descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool),
                                             type,
-                                            module);
-                                } else {
-                                    throw throwable;
+                                            type,
+                                            module,
+                                            !instrumentation.isModifiableClass(type));
+                                } catch (Throwable throwable) {
+                                    if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
+                                        collector.consider(ignoredTypeMatcher,
+                                                listener,
+                                                typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
+                                                type,
+                                                module);
+                                    } else {
+                                        throw throwable;
+                                    }
                                 }
-                            }
-                        } catch (Throwable throwable) {
-                            try {
+                            } catch (Throwable throwable) {
                                 try {
-                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, throwable);
-                                } finally {
-                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module);
+                                    try {
+                                        listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, throwable);
+                                    } finally {
+                                        listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module);
+                                    }
+                                } catch (Throwable ignored) {
+                                    // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                                 }
-                            } catch (Throwable ignored) {
-                                // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                             }
                         }
+                        collector.apply(instrumentation, circularityLock, locationStrategy, listener, redefinitionBatchAllocator, redefinitionListener);
                     }
-                    collector.apply(instrumentation, locationStrategy, listener, redefinitionBatchAllocator, redefinitionListener);
+                    return classFileTransformer;
+                } catch (Throwable throwable) {
+                    return installationStrategy.onError(instrumentation, classFileTransformer, throwable);
                 }
-                return classFileTransformer;
-            } catch (Throwable throwable) {
-                return installationStrategy.onError(instrumentation, classFileTransformer, throwable);
+            } finally {
+                circularityLock.release();
             }
         }
 
@@ -7295,6 +7327,7 @@ public interface AgentBuilder {
              * @param fallbackStrategy           The fallback strategy to use.
              * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
              * @param transformation             The transformation object for handling type transformations.
+             * @param circularityLock            The circularity lock to use.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
                                         Listener listener,
@@ -7307,7 +7340,8 @@ public interface AgentBuilder {
                                         DescriptionStrategy descriptionStrategy,
                                         FallbackStrategy fallbackStrategy,
                                         RawMatcher ignoredTypeMatcher,
-                                        Transformation transformation) {
+                                        Transformation transformation,
+                                        CircularityLock circularityLock) {
                 this.byteBuddy = byteBuddy;
                 this.typeStrategy = typeStrategy;
                 this.poolStrategy = poolStrategy;
@@ -7320,7 +7354,7 @@ public interface AgentBuilder {
                 this.fallbackStrategy = fallbackStrategy;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
                 this.transformation = transformation;
-                circularityLock = new CircularityLock();
+                this.circularityLock = circularityLock;
                 accessControlContext = AccessController.getContext();
             }
 
@@ -7500,6 +7534,7 @@ public interface AgentBuilder {
                         }
                     }
                     collector.apply(instrumentation,
+                            CircularityLock.Inactive.INSTANCE,
                             locationStrategy,
                             Listener.NoOp.INSTANCE,
                             RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
@@ -7552,6 +7587,7 @@ public interface AgentBuilder {
                  * @param fallbackStrategy           The fallback strategy to use.
                  * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
                  * @param transformation             The transformation object for handling type transformations.
+                 * @param circularityLock            The circularity lock to use.
                  * @return A class file transformer for the current VM that supports the API of the current VM.
                  */
                 ResettableClassFileTransformer make(ByteBuddy byteBuddy,
@@ -7565,7 +7601,8 @@ public interface AgentBuilder {
                                                     DescriptionStrategy descriptionStrategy,
                                                     FallbackStrategy fallbackStrategy,
                                                     RawMatcher ignoredTypeMatcher,
-                                                    Transformation transformation);
+                                                    Transformation transformation,
+                                                    CircularityLock circularityLock);
 
                 /**
                  * A factory for a class file transformer on a JVM that supports the {@code java.lang.reflect.Module} API to override
@@ -7601,7 +7638,8 @@ public interface AgentBuilder {
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
                                                                RawMatcher ignoredTypeMatcher,
-                                                               Transformation transformation) {
+                                                               Transformation transformation,
+                                                               CircularityLock circularityLock) {
                         try {
                             return executingTransformer.newInstance(byteBuddy,
                                     listener,
@@ -7614,7 +7652,8 @@ public interface AgentBuilder {
                                     descriptionStrategy,
                                     fallbackStrategy,
                                     ignoredTypeMatcher,
-                                    transformation);
+                                    transformation,
+                                    circularityLock);
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot access " + executingTransformer, exception);
                         } catch (InstantiationException exception) {
@@ -7667,7 +7706,8 @@ public interface AgentBuilder {
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
                                                                RawMatcher ignoredTypeMatcher,
-                                                               Transformation transformation) {
+                                                               Transformation transformation,
+                                                               CircularityLock circularityLock) {
                         return new ExecutingTransformer(byteBuddy,
                                 listener,
                                 poolStrategy,
@@ -7679,7 +7719,8 @@ public interface AgentBuilder {
                                 descriptionStrategy,
                                 fallbackStrategy,
                                 ignoredTypeMatcher,
-                                transformation);
+                                transformation,
+                                circularityLock);
                     }
 
                     @Override
@@ -7729,7 +7770,8 @@ public interface AgentBuilder {
                                         DescriptionStrategy.class,
                                         FallbackStrategy.class,
                                         RawMatcher.class,
-                                        Transformation.class));
+                                        Transformation.class,
+                                        CircularityLock.class));
                     } catch (Exception ignored) {
                         return Factory.ForLegacyVm.INSTANCE;
                     }
@@ -8018,37 +8060,86 @@ public interface AgentBuilder {
              * A circularity lock is responsible for preventing that a {@link ClassFileLocator} is used recursively.
              * This can happen when a class file transformation causes another class to be loaded.
              */
-            protected static class CircularityLock extends ThreadLocal<Boolean> {
-
-                /**
-                 * Indicates that the circularity lock is not currently acquired.
-                 */
-                private static final Boolean NOT_ACQUIRED = null;
+            protected interface CircularityLock {
 
                 /**
                  * Attempts to acquire a circularity lock.
                  *
                  * @return {@code true} if the lock was acquired successfully, {@code false} if it is already hold.
                  */
-                protected boolean acquire() {
-                    if (get() == NOT_ACQUIRED) {
-                        set(true);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
+                boolean acquire();
 
                 /**
                  * Releases the circularity lock if it is currently acquired.
                  */
-                protected void release() {
-                    set(NOT_ACQUIRED);
+                void release();
+
+                /**
+                 * An inactive circularity lock which is always acquireable.
+                 */
+                enum Inactive implements CircularityLock {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public boolean acquire() {
+                        return true;
+                    }
+
+                    @Override
+                    public void release() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.ExecutingTransformer.CircularityLock.Inactive." + name();
+                    }
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.CircularityLock{acquired=" + (get() != NOT_ACQUIRED) + "}";
+                /**
+                 * An active circularity lock.
+                 */
+                class Active extends ThreadLocal<Boolean> implements CircularityLock {
+
+                    /**
+                     * Indicates that the circularity lock is not currently acquired.
+                     */
+                    private static final Boolean NOT_ACQUIRED = null;
+
+                    /**
+                     * Creates a new active circularity lock.
+                     *
+                     * @param acquired {@code true} if the lock is acquired upon creation.
+                     */
+                    protected Active(boolean acquired) {
+                        if (acquired) {
+                            set(true);
+                        }
+                    }
+
+                    @Override
+                    public boolean acquire() {
+                        if (get() == NOT_ACQUIRED) {
+                            set(true);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    @Override
+                    public void release() {
+                        set(NOT_ACQUIRED);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.ExecutingTransformer.CircularityLock.Active{acquired=" + (get() != NOT_ACQUIRED) + "}";
+                    }
                 }
             }
         }
