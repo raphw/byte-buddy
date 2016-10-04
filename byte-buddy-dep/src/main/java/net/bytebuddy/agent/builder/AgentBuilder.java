@@ -3274,13 +3274,36 @@ public interface AgentBuilder {
 
                 /**
                  * Assures that any group is at least of a given size. If a group is smaller than a given size, it is merged with its types
-                 * are merged with its subsequent group.
+                 * are merged with its subsequent group(s) as long as such groups exist.
                  *
                  * @param threshold The minimum threshold for any batch.
                  * @return An appropriate batch allocator.
                  */
-                public BatchAllocator withMinimumBatchSize(int threshold) {
-                    return Merging.of(threshold, this);
+                public BatchAllocator withMinimum(int threshold) {
+                    return Slicing.withMinimum(threshold, this);
+                }
+
+                /**
+                 * Assures that any group is at least of a given size. If a group is bigger than a given size, it is split into two several
+                 * batches.
+                 *
+                 * @param threshold The maximum threshold for any batch.
+                 * @return An appropriate batch allocator.
+                 */
+                public BatchAllocator withMaximum(int threshold) {
+                    return Slicing.withMaximum(threshold, this);
+                }
+
+                /**
+                 * Assures that any group is within a size range described by the supplied minimum and maximum. Groups are split and merged
+                 * according to the supplied thresholds. The last group contains might be smaller than the supplied minimum.
+                 *
+                 * @param minimum The minimum threshold for any batch.
+                 * @param maximum The maximum threshold for any batch.
+                 * @return An appropriate batch allocator.
+                 */
+                public BatchAllocator withinRange(int minimum, int maximum) {
+                    return Slicing.withinRange(minimum, maximum, this);
                 }
 
                 @Override
@@ -3334,14 +3357,19 @@ public interface AgentBuilder {
             }
 
             /**
-             * A batch allocator that merges the batches produced by another batch allocator to contain at least a given amount of classes.
+             * A slicing batch allocator that assures that any batch is within a certain size range.
              */
-            class Merging implements BatchAllocator {
+            class Slicing implements BatchAllocator {
 
                 /**
-                 * The threshold value for the minimum amount of classes contained in a class.
+                 * The minimum size of each slice.
                  */
-                private final int threshold;
+                private final int minimum;
+
+                /**
+                 * The maximum size of each slice.
+                 */
+                private final int maximum;
 
                 /**
                  * The delegate batch allocator.
@@ -3349,135 +3377,201 @@ public interface AgentBuilder {
                 private final BatchAllocator batchAllocator;
 
                 /**
-                 * Creates a new merging batch allocator.
+                 * Creates a new slicing batch allocator.
                  *
-                 * @param threshold      The threshold value for the minimum amount of classes contained in a class.
+                 * @param minimum        The minimum size of each slice.
+                 * @param maximum        The maximum size of each slice.
                  * @param batchAllocator The delegate batch allocator.
                  */
-                protected Merging(int threshold, BatchAllocator batchAllocator) {
+                protected Slicing(int minimum, int maximum, BatchAllocator batchAllocator) {
+                    this.minimum = minimum;
+                    this.maximum = maximum;
                     this.batchAllocator = batchAllocator;
-                    this.threshold = threshold;
                 }
 
                 /**
-                 * Creates a new merging batch allocator.
+                 * Creates a new slicing batch allocator.
                  *
-                 * @param threshold      The threshold value for the minimum amount of classes contained in a class.
+                 * @param minimum        The minimum size of each slice.
                  * @param batchAllocator The delegate batch allocator.
-                 * @return A merging batch allocator.
+                 * @return An appropriate slicing batch allocator.
                  */
-                public static BatchAllocator of(int threshold, BatchAllocator batchAllocator) {
-                    if (threshold < 1) {
-                        throw new IllegalArgumentException("Threshold cannot be non-positive: " + threshold);
+                public static BatchAllocator withMinimum(int minimum, BatchAllocator batchAllocator) {
+                    return withinRange(minimum, Integer.MAX_VALUE, batchAllocator);
+                }
+
+                /**
+                 * Creates a new slicing batch allocator.
+                 *
+                 * @param maximum        The maximum size of each slice.
+                 * @param batchAllocator The delegate batch allocator.
+                 * @return An appropriate slicing batch allocator.
+                 */
+                public static BatchAllocator withMaximum(int maximum, BatchAllocator batchAllocator) {
+                    return withinRange(1, maximum, batchAllocator);
+                }
+
+                /**
+                 * Creates a new slicing batch allocator.
+                 *
+                 * @param minimum        The minimum size of each slice.
+                 * @param maximum        The maximum size of each slice.
+                 * @param batchAllocator The delegate batch allocator.
+                 * @return An appropriate slicing batch allocator.
+                 */
+                public static BatchAllocator withinRange(int minimum, int maximum, BatchAllocator batchAllocator) {
+                    if (minimum <= 0) {
+                        throw new IllegalArgumentException("Minimum must be a positive number: " + minimum);
+                    } else if (minimum > maximum) {
+                        throw new IllegalArgumentException("Minimum must not be bigger than maximum: " + minimum + " >" + maximum);
                     }
-                    return new Merging(threshold, batchAllocator);
+                    return new Slicing(minimum, maximum, batchAllocator);
                 }
 
                 @Override
                 public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
-                    return new MergingIterable(threshold, batchAllocator.batch(types));
+                    return new SlicingIterable(minimum, maximum, batchAllocator.batch(types));
                 }
 
                 @Override
                 public boolean equals(Object object) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
-                    Merging merging = (Merging) object;
-                    return threshold == merging.threshold && batchAllocator.equals(merging.batchAllocator);
+                    Slicing slicing = (Slicing) object;
+                    return minimum == slicing.minimum
+                            && maximum == slicing.maximum
+                            && batchAllocator.equals(slicing.batchAllocator);
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = threshold;
+                    int result = minimum;
+                    result = 31 * result + maximum;
                     result = 31 * result + batchAllocator.hashCode();
                     return result;
                 }
 
                 @Override
                 public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Merging{" +
-                            "threshold=" + threshold +
+                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing{" +
+                            "minimum=" + minimum +
+                            ", maximum=" + maximum +
                             ", batchAllocator=" + batchAllocator +
                             '}';
                 }
 
                 /**
-                 * An iterable that merges batches produced by another iterable.
+                 * An iterable that slices batches into parts of a minimum and maximum size.
                  */
-                protected static class MergingIterable implements Iterable<List<Class<?>>> {
+                protected static class SlicingIterable implements Iterable<List<Class<?>>> {
 
                     /**
-                     * The threshold value for the minimum amount of classes contained in a class.
+                     * The minimum size of any slice.
                      */
-                    private final int threshold;
+                    private final int minimum;
 
                     /**
-                     * The delegating iterable.
+                     * The maximum size of any slice.
+                     */
+                    private final int maximum;
+
+                    /**
+                     * The delegate iterable.
                      */
                     private final Iterable<? extends List<Class<?>>> iterable;
 
                     /**
-                     * Creates a new merging iterable.
+                     * Creates a new slicing iterable.
                      *
-                     * @param threshold The threshold value for the minimum amount of classes contained in a class.
-                     * @param iterable  The delegating iterable.
+                     * @param minimum  The minimum size of any slice.
+                     * @param maximum  The maximum size of any slice.
+                     * @param iterable The delegate iterable.
                      */
-                    protected MergingIterable(int threshold, Iterable<? extends List<Class<?>>> iterable) {
-                        this.threshold = threshold;
+                    protected SlicingIterable(int minimum, int maximum, Iterable<? extends List<Class<?>>> iterable) {
+                        this.minimum = minimum;
+                        this.maximum = maximum;
                         this.iterable = iterable;
                     }
 
                     @Override
                     public Iterator<List<Class<?>>> iterator() {
-                        return new MergingIterator(threshold, iterable.iterator());
+                        return new SlicingIterator(minimum, maximum, iterable.iterator());
                     }
 
                     @Override
                     public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Merging.MergingIterable{" +
-                                "threshold=" + threshold +
+                        return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable{" +
+                                "minimum=" + minimum +
+                                ", maximum=" + maximum +
                                 ", iterable=" + iterable +
                                 '}';
                     }
 
                     /**
-                     * An iterable that merges batches produced by another iterable.
+                     * An iterator that slices batches into parts of a minimum and maximum size.
                      */
-                    protected static class MergingIterator implements Iterator<List<Class<?>>> {
+                    protected static class SlicingIterator implements Iterator<List<Class<?>>> {
 
                         /**
-                         * The threshold value for the minimum amount of classes contained in a class.
+                         * The minimum size of any slice.
                          */
-                        private final int threshold;
+                        private final int minimum;
 
                         /**
-                         * The delegating iterator.
+                         * The maximum size of any slice.
+                         */
+                        private final int maximum;
+
+                        /**
+                         * The delegate iterator.
                          */
                         private final Iterator<? extends List<Class<?>>> iterator;
 
                         /**
-                         * Creates a new merging iterator.
-                         *
-                         * @param threshold The threshold value for the minimum amount of classes contained in a class.
-                         * @param iterator  The delegating iterator.
+                         * A buffer containing all types that surpassed the maximum.
                          */
-                        protected MergingIterator(int threshold, Iterator<? extends List<Class<?>>> iterator) {
-                            this.threshold = threshold;
+                        private List<Class<?>> buffer;
+
+                        /**
+                         * Creates a new slicing iterator.
+                         *
+                         * @param minimum  The minimum size of any slice.
+                         * @param maximum  The maximum size of any slice.
+                         * @param iterator The delegate iterator.
+                         */
+                        protected SlicingIterator(int minimum, int maximum, Iterator<? extends List<Class<?>>> iterator) {
+                            this.minimum = minimum;
+                            this.maximum = maximum;
                             this.iterator = iterator;
+                            buffer = Collections.emptyList();
                         }
 
                         @Override
                         public boolean hasNext() {
-                            return iterator.hasNext();
+                            return !buffer.isEmpty() || iterator.hasNext();
                         }
 
                         @Override
                         public List<Class<?>> next() {
-                            List<Class<?>> buffer = new ArrayList<Class<?>>(iterator.next());
-                            while (iterator.hasNext() && buffer.size() < threshold) {
+                            if (buffer.isEmpty()) {
+                                buffer = iterator.next();
+                            }
+                            while (buffer.size() < minimum && iterator.hasNext()) {
                                 buffer.addAll(iterator.next());
                             }
-                            return buffer;
+                            if (buffer.size() > maximum) {
+                                try {
+                                    return buffer.subList(0, maximum);
+                                } finally {
+                                    buffer = buffer.subList(maximum, buffer.size());
+                                }
+                            } else {
+                                try {
+                                    return buffer;
+                                } finally {
+                                    buffer = Collections.emptyList();
+                                }
+                            }
                         }
 
                         @Override
@@ -3487,9 +3581,11 @@ public interface AgentBuilder {
 
                         @Override
                         public String toString() {
-                            return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Merging.MergingIterable.MergingIterator{" +
-                                    "threshold=" + threshold +
+                            return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable.SlicingIterator{" +
+                                    "minimum=" + minimum +
+                                    ", maximum=" + maximum +
                                     ", iterator=" + iterator +
+                                    ", buffer=" + buffer +
                                     '}';
                         }
                     }
@@ -8075,7 +8171,7 @@ public interface AgentBuilder {
                 void release();
 
                 /**
-                 * An inactive circularity lock which is always acquireable.
+                 * An inactive circularity lock which is always acquirable.
                  */
                 enum Inactive implements CircularityLock {
 
