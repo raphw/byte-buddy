@@ -3349,7 +3349,7 @@ public interface AgentBuilder {
                 private final BatchAllocator batchAllocator;
 
                 /**
-                 * Creates a new merging batch allocator
+                 * Creates a new merging batch allocator.
                  *
                  * @param threshold      The threshold value for the minimum amount of classes contained in a class.
                  * @param batchAllocator The delegate batch allocator.
@@ -3360,7 +3360,7 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * Creates a new merging batch allocator
+                 * Creates a new merging batch allocator.
                  *
                  * @param threshold      The threshold value for the minimum amount of classes contained in a class.
                  * @param batchAllocator The delegate batch allocator.
