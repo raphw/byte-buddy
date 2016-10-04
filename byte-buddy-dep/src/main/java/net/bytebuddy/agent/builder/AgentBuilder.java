@@ -3240,6 +3240,87 @@ public interface AgentBuilder {
                             '}';
                 }
             }
+
+            /**
+             * A batch allocator that groups all batches by discriminating types using a type matcher.
+             */
+            class ForMatchedGrouping implements BatchAllocator {
+
+                /**
+                 * The type matchers to apply.
+                 */
+                private final Collection<? extends ElementMatcher<? super TypeDescription>> matchers;
+
+                /**
+                 * Creates a new batch allocator that groups all batches by discriminating types using a type matcher. All batches
+                 * are applied in their application order with any unmatched type being included in the last batch.
+                 *
+                 * @param matcher The type matchers to apply in their application order.
+                 */
+                @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                public ForMatchedGrouping(ElementMatcher<? super TypeDescription>... matcher) {
+                    this(new LinkedHashSet<ElementMatcher<? super TypeDescription>>(Arrays.asList(matcher)));
+                }
+
+                /**
+                 * Creates a new batch allocator that groups all batches by discriminating types using a type matcher. All batches
+                 * are applied in their application order with any unmatched type being included in the last batch.
+                 *
+                 * @param matchers The type matchers to apply in their application order.
+                 */
+                public ForMatchedGrouping(Collection<? extends ElementMatcher<? super TypeDescription>> matchers) {
+                    this.matchers = matchers;
+                }
+
+                @Override
+                public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
+                    Map<ElementMatcher<? super TypeDescription>, List<Class<?>>> matched = new LinkedHashMap<ElementMatcher<? super TypeDescription>, List<Class<?>>>();
+                    List<Class<?>> unmatched = new ArrayList<Class<?>>();
+                    for (ElementMatcher<? super TypeDescription> matcher : matchers) {
+                        matched.put(matcher, new ArrayList<Class<?>>());
+                    }
+                    typeLoop:
+                    for (Class<?> type : types) {
+                        for (ElementMatcher<? super TypeDescription> matcher : matchers) {
+                            if (matcher.matches(new TypeDescription.ForLoadedType(type))) {
+                                matched.get(matcher).add(type);
+                                continue typeLoop;
+                            }
+                        }
+                        unmatched.add(type);
+                    }
+                    List<List<Class<?>>> batches = new ArrayList<List<Class<?>>>(matchers.size() + 1);
+                    for (List<Class<?>> batch : matched.values()) {
+                        if (!batch.isEmpty()) {
+                            batches.add(batch);
+                        }
+                    }
+                    if (!unmatched.isEmpty()) {
+                        batches.add(unmatched);
+                    }
+                    return batches;
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForMatchedGrouping that = (ForMatchedGrouping) object;
+                    return matchers.equals(that.matchers);
+                }
+
+                @Override
+                public int hashCode() {
+                    return matchers.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping{" +
+                            "matchers=" + matchers +
+                            '}';
+                }
+            }
         }
 
         /**

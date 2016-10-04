@@ -1,5 +1,6 @@
 package net.bytebuddy.agent.builder;
 
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
@@ -54,8 +55,31 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void testGrouping() throws Exception {
+        Iterator<? extends List<Class<?>>> batches = new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping(ElementMatchers.is(Object.class),
+                ElementMatchers.is(Void.class)).batch(Arrays.<Class<?>>asList(Object.class, Void.class, String.class)).iterator();
+        assertThat(batches.hasNext(), is(true));
+        assertThat(batches.next(), is(Collections.<Class<?>>singletonList(Object.class)));
+        assertThat(batches.hasNext(), is(true));
+        assertThat(batches.next(), is(Collections.<Class<?>>singletonList(Void.class)));
+        assertThat(batches.hasNext(), is(true));
+        assertThat(batches.next(), is(Collections.<Class<?>>singletonList(String.class)));
+        assertThat(batches.hasNext(), is(false));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testEmptyGrouping() throws Exception {
+        Iterator<? extends List<Class<?>>> batches = new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping(ElementMatchers.is(Object.class))
+                .batch(Collections.<Class<?>>emptyList()).iterator();
+        assertThat(batches.hasNext(), is(false));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping.class).apply();
     }
 }
