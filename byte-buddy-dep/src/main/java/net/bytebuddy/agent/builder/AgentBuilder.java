@@ -3272,6 +3272,13 @@ public interface AgentBuilder {
                     this.matchers = matchers;
                 }
 
+                /**
+                 * Assures that any group is at least of a given size. If a group is smaller than a given size, it is merged with its types
+                 * are merged with its subsequent group.
+                 *
+                 * @param threshold The minimum threshold for any batch.
+                 * @return An appropriate batch allocator.
+                 */
                 public BatchAllocator withMinimumBatchSize(int threshold) {
                     return Merging.of(threshold, this);
                 }
