@@ -88,7 +88,9 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <p>
  * <b>Important</b>: Any installed transformer cannot transform classes that are loaded within the transformation process.
  * Transforming such classes would cause a {@link ClassCircularityError}. To avoid such errors, Byte Buddy silently skips
- * any classes if a class loading circularity is detected while applying a transformer.
+ * any classes if a class loading circularity is detected while applying a transformer. Circularity errors might still
+ * occur if a type that is required by a class file transformer is loaded for the first time outside of a class file
+ * transformer.
  * </p>
  */
 public interface AgentBuilder {
