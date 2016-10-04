@@ -3272,6 +3272,10 @@ public interface AgentBuilder {
                     this.matchers = matchers;
                 }
 
+                public BatchAllocator withMinimumBatchSize(int threshold) {
+                    return Merging.of(threshold, this);
+                }
+
                 @Override
                 public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
                     Map<ElementMatcher<? super TypeDescription>, List<Class<?>>> matched = new LinkedHashMap<ElementMatcher<? super TypeDescription>, List<Class<?>>>();
@@ -3319,6 +3323,169 @@ public interface AgentBuilder {
                     return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping{" +
                             "matchers=" + matchers +
                             '}';
+                }
+            }
+
+            /**
+             * A batch allocator that merges the batches produced by another batch allocator to contain at least a given amount of classes.
+             */
+            class Merging implements BatchAllocator {
+
+                /**
+                 * The threshold value for the minimum amount of classes contained in a class.
+                 */
+                private final int threshold;
+
+                /**
+                 * The delegate batch allocator.
+                 */
+                private final BatchAllocator batchAllocator;
+
+                /**
+                 * Creates a new merging batch allocator
+                 *
+                 * @param threshold      The threshold value for the minimum amount of classes contained in a class.
+                 * @param batchAllocator The delegate batch allocator.
+                 */
+                protected Merging(int threshold, BatchAllocator batchAllocator) {
+                    this.batchAllocator = batchAllocator;
+                    this.threshold = threshold;
+                }
+
+                /**
+                 * Creates a new merging batch allocator
+                 *
+                 * @param threshold      The threshold value for the minimum amount of classes contained in a class.
+                 * @param batchAllocator The delegate batch allocator.
+                 * @return A merging batch allocator.
+                 */
+                public static BatchAllocator of(int threshold, BatchAllocator batchAllocator) {
+                    if (threshold < 1) {
+                        throw new IllegalArgumentException("Threshold cannot be non-positive: " + threshold);
+                    }
+                    return new Merging(threshold, batchAllocator);
+                }
+
+                @Override
+                public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
+                    return new MergingIterable(threshold, batchAllocator.batch(types));
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Merging merging = (Merging) object;
+                    return threshold == merging.threshold && batchAllocator.equals(merging.batchAllocator);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = threshold;
+                    result = 31 * result + batchAllocator.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Merging{" +
+                            "threshold=" + threshold +
+                            ", batchAllocator=" + batchAllocator +
+                            '}';
+                }
+
+                /**
+                 * An iterable that merges batches produced by another iterable.
+                 */
+                protected static class MergingIterable implements Iterable<List<Class<?>>> {
+
+                    /**
+                     * The threshold value for the minimum amount of classes contained in a class.
+                     */
+                    private final int threshold;
+
+                    /**
+                     * The delegating iterable.
+                     */
+                    private final Iterable<? extends List<Class<?>>> iterable;
+
+                    /**
+                     * Creates a new merging iterable.
+                     *
+                     * @param threshold The threshold value for the minimum amount of classes contained in a class.
+                     * @param iterable  The delegating iterable.
+                     */
+                    protected MergingIterable(int threshold, Iterable<? extends List<Class<?>>> iterable) {
+                        this.threshold = threshold;
+                        this.iterable = iterable;
+                    }
+
+                    @Override
+                    public Iterator<List<Class<?>>> iterator() {
+                        return new MergingIterator(threshold, iterable.iterator());
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Merging.MergingIterable{" +
+                                "threshold=" + threshold +
+                                ", iterable=" + iterable +
+                                '}';
+                    }
+
+                    /**
+                     * An iterable that merges batches produced by another iterable.
+                     */
+                    protected static class MergingIterator implements Iterator<List<Class<?>>> {
+
+                        /**
+                         * The threshold value for the minimum amount of classes contained in a class.
+                         */
+                        private final int threshold;
+
+                        /**
+                         * The delegating iterator.
+                         */
+                        private final Iterator<? extends List<Class<?>>> iterator;
+
+                        /**
+                         * Creates a new merging iterator.
+                         *
+                         * @param threshold The threshold value for the minimum amount of classes contained in a class.
+                         * @param iterator  The delegating iterator.
+                         */
+                        protected MergingIterator(int threshold, Iterator<? extends List<Class<?>>> iterator) {
+                            this.threshold = threshold;
+                            this.iterator = iterator;
+                        }
+
+                        @Override
+                        public boolean hasNext() {
+                            return iterator.hasNext();
+                        }
+
+                        @Override
+                        public List<Class<?>> next() {
+                            List<Class<?>> buffer = new ArrayList<Class<?>>(iterator.next());
+                            while (iterator.hasNext() && buffer.size() < threshold) {
+                                buffer.addAll(iterator.next());
+                            }
+                            return buffer;
+                        }
+
+                        @Override
+                        public void remove() {
+                            throw new UnsupportedOperationException("remove");
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Merging.MergingIterable.MergingIterator{" +
+                                    "threshold=" + threshold +
+                                    ", iterator=" + iterator +
+                                    '}';
+                        }
+                    }
                 }
             }
         }

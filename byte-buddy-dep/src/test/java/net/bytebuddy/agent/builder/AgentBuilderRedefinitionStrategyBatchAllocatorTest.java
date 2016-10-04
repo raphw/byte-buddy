@@ -77,9 +77,54 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void testMerging() throws Exception {
+        Iterator<? extends List<Class<?>>> batches = new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping(ElementMatchers.is(Object.class),
+                ElementMatchers.is(Void.class)).withMinimumBatchSize(3).batch(Arrays.<Class<?>>asList(Object.class, Void.class, String.class)).iterator();
+        assertThat(batches.hasNext(), is(true));
+        assertThat(batches.next(), is(Arrays.<Class<?>>asList(Object.class, Void.class, String.class)));
+        assertThat(batches.hasNext(), is(false));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testMergingExcess() throws Exception {
+        Iterator<? extends List<Class<?>>> batches = new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping(ElementMatchers.is(Object.class),
+                ElementMatchers.is(Void.class)).withMinimumBatchSize(10).batch(Arrays.<Class<?>>asList(Object.class, Void.class, String.class)).iterator();
+        assertThat(batches.hasNext(), is(true));
+        assertThat(batches.next(), is(Arrays.<Class<?>>asList(Object.class, Void.class, String.class)));
+        assertThat(batches.hasNext(), is(false));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testMergingChunked() throws Exception {
+        Iterator<? extends List<Class<?>>> batches = new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping(ElementMatchers.is(Object.class),
+                ElementMatchers.is(Void.class)).withMinimumBatchSize(2).batch(Arrays.<Class<?>>asList(Object.class, Void.class, String.class)).iterator();
+        assertThat(batches.hasNext(), is(true));
+        assertThat(batches.next(), is(Arrays.<Class<?>>asList(Object.class, Void.class)));
+        assertThat(batches.hasNext(), is(true));
+        assertThat(batches.next(), is(Collections.<Class<?>>singletonList(String.class)));
+        assertThat(batches.hasNext(), is(false));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    @SuppressWarnings("unchecked")
+    public void testCannotRemove() throws Exception {
+        new AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping(ElementMatchers.is(Object.class), ElementMatchers.is(Void.class))
+                .withMinimumBatchSize(2)
+                .batch(Collections.<Class<?>>singletonList(Object.class))
+                .iterator()
+                .remove();
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Merging.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Merging.MergingIterable.class).applyBasic();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Merging.MergingIterable.MergingIterator.class).applyBasic();
     }
 }
