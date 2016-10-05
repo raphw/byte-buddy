@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 4. October 2016: version 1.4.30
+
+- Also acquire circularity lock during class file retransformation.
+- Added slicing `BatchAllocator`.
+
 ### 3. October 2016: version 1.4.29
 
 - Explicitly check for recursive transformation of types used during a transformation causing a `ClassCircularityError` from an `AgentBuilder` by adding thread-local locking.
