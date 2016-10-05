@@ -85,13 +85,6 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <p>
  * <b>Note</b>: Any transformation is performed using the {@link AccessControlContext} of an agent's creator.
  * </p>
- * <p>
- * <b>Important</b>: Any installed transformer cannot transform classes that are loaded within the transformation process.
- * Transforming such classes would cause a {@link ClassCircularityError}. To avoid such errors, Byte Buddy silently skips
- * any classes if a class loading circularity is detected while applying a transformer. Circularity errors might still
- * occur if a type that is required by a class file transformer is loaded for the first time outside of a class file
- * transformer.
- * </p>
  */
 public interface AgentBuilder {
 
@@ -113,6 +106,17 @@ public interface AgentBuilder {
      * events.
      */
     AgentBuilder with(Listener listener);
+
+    /**
+     * Defines a circularity lock that is acquired upon executing code that potentially loads new classes. While the
+     * lock is acquired, any class file transformer refrains from transforming any classes. By default, all created
+     * agents use a shared {@link CircularityLock} to avoid that any classes that are required to execute an agent
+     * causes a {@link ClassCircularityError}.
+     *
+     * @param circularityLock The circularity lock to use.
+     * @return A new instance of this agent builder which creates an agent that uses the supplied circularity lock.
+     */
+    AgentBuilder with(CircularityLock circularityLock);
 
     /**
      * Defines the use of the given type locator for locating a {@link TypeDescription} for an instrumented type.
@@ -1486,6 +1490,85 @@ public interface AgentBuilder {
                 return "AgentBuilder.Listener.Compound{" +
                         "listeners=" + listeners +
                         '}';
+            }
+        }
+    }
+
+    /**
+     * A circularity lock is responsible for preventing that a {@link ClassFileLocator} is used recursively.
+     * This can happen when a class file transformation causes another class to be loaded. Without avoiding
+     * such circularities, a class loading is aborted by a {@link ClassCircularityError} which causes the
+     * class loading to fail.
+     */
+    interface CircularityLock {
+
+        /**
+         * Attempts to acquire a circularity lock.
+         *
+         * @return {@code true} if the lock was acquired successfully, {@code false} if it is already hold.
+         */
+        boolean acquire();
+
+        /**
+         * Releases the circularity lock if it is currently acquired.
+         */
+        void release();
+
+        /**
+         * An inactive circularity lock which is always acquirable.
+         */
+        enum Inactive implements CircularityLock {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean acquire() {
+                return true;
+            }
+
+            @Override
+            public void release() {
+                        /* do nothing */
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.CircularityLock.Inactive." + name();
+            }
+        }
+
+        /**
+         * A default implementation of a circularity lock. Since class loading already synchronizes on a class loader,
+         * it suffices to apply a thread-local lock.
+         */
+        class Default extends ThreadLocal<Boolean> implements CircularityLock {
+
+            /**
+             * Indicates that the circularity lock is not currently acquired.
+             */
+            private static final Boolean NOT_ACQUIRED = null;
+
+            @Override
+            public boolean acquire() {
+                if (get() == NOT_ACQUIRED) {
+                    set(true);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            @Override
+            public void release() {
+                set(NOT_ACQUIRED);
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.CircularityLock.Default{acquired=" + (get() != NOT_ACQUIRED) + "}";
             }
         }
     }
@@ -4071,7 +4154,7 @@ public interface AgentBuilder {
              * @param redefinitionListener       The redefinition listener to use.
              */
             protected void apply(Instrumentation instrumentation,
-                                 Default.ExecutingTransformer.CircularityLock circularityLock,
+                                 CircularityLock circularityLock,
                                  LocationStrategy locationStrategy,
                                  AgentBuilder.Listener listener,
                                  BatchAllocator redefinitionBatchAllocator,
@@ -4106,7 +4189,7 @@ public interface AgentBuilder {
              * @throws ClassNotFoundException     If a class could not be found.
              */
             protected abstract void doApply(Instrumentation instrumentation,
-                                            Default.ExecutingTransformer.CircularityLock circularityLock,
+                                            CircularityLock circularityLock,
                                             List<Class<?>> types,
                                             LocationStrategy locationStrategy,
                                             AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
@@ -4135,7 +4218,7 @@ public interface AgentBuilder {
 
                 @Override
                 protected void doApply(Instrumentation instrumentation,
-                                       Default.ExecutingTransformer.CircularityLock circularityLock,
+                                       CircularityLock circularityLock,
                                        List<Class<?>> types,
                                        LocationStrategy locationStrategy,
                                        AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
@@ -4181,7 +4264,7 @@ public interface AgentBuilder {
 
                 @Override
                 protected void doApply(Instrumentation instrumentation,
-                                       Default.ExecutingTransformer.CircularityLock circularityLock,
+                                       CircularityLock circularityLock,
                                        List<Class<?>> types,
                                        LocationStrategy locationStrategy,
                                        AgentBuilder.Listener listener) throws UnmodifiableClassException {
@@ -5609,6 +5692,12 @@ public interface AgentBuilder {
         private static final Class<?> NO_LOADED_TYPE = null;
 
         /**
+         * The default circularity lock that assures that no agent created by any agent builder within this
+         * class loader causes a class loading circularity.
+         */
+        private static final CircularityLock DEFAULT_LOCK = new CircularityLock.Default();
+
+        /**
          * The {@link net.bytebuddy.ByteBuddy} instance to be used.
          */
         protected final ByteBuddy byteBuddy;
@@ -5617,6 +5706,11 @@ public interface AgentBuilder {
          * The listener to notify on transformations.
          */
         protected final Listener listener;
+
+        /**
+         * The circularity lock to use.
+         */
+        protected final CircularityLock circularityLock;
 
         /**
          * The type locator to use.
@@ -5712,6 +5806,7 @@ public interface AgentBuilder {
         public Default(ByteBuddy byteBuddy) {
             this(byteBuddy,
                     Listener.NoOp.INSTANCE,
+                    DEFAULT_LOCK,
                     PoolStrategy.Default.FAST,
                     TypeStrategy.Default.REBASE,
                     LocationStrategy.ForClassLoader.STRONG,
@@ -5735,6 +5830,7 @@ public interface AgentBuilder {
          *
          * @param byteBuddy                     The Byte Buddy instance to be used.
          * @param listener                      The listener to notify on transformations.
+         * @param circularityLock               The circularity lock to use.
          * @param poolStrategy                  The type locator to use.
          * @param typeStrategy                  The definition handler to use.
          * @param locationStrategy              The location strategy to use.
@@ -5754,6 +5850,7 @@ public interface AgentBuilder {
          */
         protected Default(ByteBuddy byteBuddy,
                           Listener listener,
+                          CircularityLock circularityLock,
                           PoolStrategy poolStrategy,
                           TypeStrategy typeStrategy,
                           LocationStrategy locationStrategy,
@@ -5770,10 +5867,11 @@ public interface AgentBuilder {
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
+            this.listener = listener;
+            this.circularityLock = circularityLock;
             this.poolStrategy = poolStrategy;
             this.typeStrategy = typeStrategy;
             this.locationStrategy = locationStrategy;
-            this.listener = listener;
             this.nativeMethodStrategy = nativeMethodStrategy;
             this.initializationStrategy = initializationStrategy;
             this.redefinitionStrategy = redefinitionStrategy;
@@ -5838,6 +5936,7 @@ public interface AgentBuilder {
         public AgentBuilder with(ByteBuddy byteBuddy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -5859,6 +5958,29 @@ public interface AgentBuilder {
         public AgentBuilder with(Listener listener) {
             return new Default(byteBuddy,
                     new Listener.Compound(this.listener, listener),
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    installationStrategy,
+                    fallbackStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder with(CircularityLock circularityLock) {
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -5880,6 +6002,7 @@ public interface AgentBuilder {
         public AgentBuilder with(TypeStrategy typeStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -5901,6 +6024,7 @@ public interface AgentBuilder {
         public AgentBuilder with(PoolStrategy poolStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -5922,6 +6046,7 @@ public interface AgentBuilder {
         public AgentBuilder with(LocationStrategy locationStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -5943,6 +6068,7 @@ public interface AgentBuilder {
         public AgentBuilder enableNativeMethodPrefix(String prefix) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -5964,6 +6090,7 @@ public interface AgentBuilder {
         public AgentBuilder disableNativeMethodPrefix() {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -5985,6 +6112,7 @@ public interface AgentBuilder {
         public RedefinitionListenable.WithoutBatchStrategy with(RedefinitionStrategy redefinitionStrategy) {
             return new Redefining(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -6006,6 +6134,7 @@ public interface AgentBuilder {
         public AgentBuilder with(InitializationStrategy initializationStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -6027,6 +6156,7 @@ public interface AgentBuilder {
         public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -6048,6 +6178,7 @@ public interface AgentBuilder {
         public AgentBuilder with(DescriptionStrategy descriptionStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -6069,6 +6200,7 @@ public interface AgentBuilder {
         public AgentBuilder with(InstallationStrategy installationStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -6090,6 +6222,7 @@ public interface AgentBuilder {
         public AgentBuilder with(FallbackStrategy fallbackStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -6111,6 +6244,7 @@ public interface AgentBuilder {
         public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -6132,6 +6266,7 @@ public interface AgentBuilder {
         public AgentBuilder disableBootstrapInjection() {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
@@ -6153,6 +6288,7 @@ public interface AgentBuilder {
         public AgentBuilder disableClassFormatChanges() {
             return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
                     listener,
+                    circularityLock,
                     poolStrategy,
                     TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
                     locationStrategy,
@@ -6250,16 +6386,6 @@ public interface AgentBuilder {
 
         @Override
         public ResettableClassFileTransformer makeRaw() {
-            return makeRaw(new ExecutingTransformer.CircularityLock.Active(false));
-        }
-
-        /**
-         * Creates a raw class file transformer using the supplied circularity lock.
-         *
-         * @param circularityLock The circularity lock to be used.
-         * @return An appropriate class file transformer.
-         */
-        protected ResettableClassFileTransformer makeRaw(ExecutingTransformer.CircularityLock circularityLock) {
             return ExecutingTransformer.FACTORY.make(byteBuddy,
                     listener,
                     poolStrategy,
@@ -6277,9 +6403,11 @@ public interface AgentBuilder {
 
         @Override
         public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
-            ExecutingTransformer.CircularityLock circularityLock = new ExecutingTransformer.CircularityLock.Active(true);
+            if (!circularityLock.acquire()) {
+                throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
+            }
             try {
-                ResettableClassFileTransformer classFileTransformer = makeRaw(circularityLock);
+                ResettableClassFileTransformer classFileTransformer = makeRaw();
                 instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming(instrumentation));
                 try {
                     if (nativeMethodStrategy.isEnabled(instrumentation)) {
@@ -6359,6 +6487,7 @@ public interface AgentBuilder {
             Default aDefault = (Default) other;
             return byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
+                    && circularityLock.equals(aDefault.circularityLock)
                     && poolStrategy.equals(aDefault.poolStrategy)
                     && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
                     && typeStrategy.equals(aDefault.typeStrategy)
@@ -6380,6 +6509,7 @@ public interface AgentBuilder {
         public int hashCode() {
             int result = byteBuddy.hashCode();
             result = 31 * result + listener.hashCode();
+            result = 31 * result + circularityLock.hashCode();
             result = 31 * result + poolStrategy.hashCode();
             result = 31 * result + typeStrategy.hashCode();
             result = 31 * result + locationStrategy.hashCode();
@@ -6403,6 +6533,7 @@ public interface AgentBuilder {
             return "AgentBuilder.Default{" +
                     "byteBuddy=" + byteBuddy +
                     ", listener=" + listener +
+                    ", circularityLock=" + circularityLock +
                     ", poolStrategy=" + poolStrategy +
                     ", typeStrategy=" + typeStrategy +
                     ", locationStrategy=" + locationStrategy +
@@ -8153,93 +8284,6 @@ public interface AgentBuilder {
                             '}';
                 }
             }
-
-            /**
-             * A circularity lock is responsible for preventing that a {@link ClassFileLocator} is used recursively.
-             * This can happen when a class file transformation causes another class to be loaded.
-             */
-            protected interface CircularityLock {
-
-                /**
-                 * Attempts to acquire a circularity lock.
-                 *
-                 * @return {@code true} if the lock was acquired successfully, {@code false} if it is already hold.
-                 */
-                boolean acquire();
-
-                /**
-                 * Releases the circularity lock if it is currently acquired.
-                 */
-                void release();
-
-                /**
-                 * An inactive circularity lock which is always acquirable.
-                 */
-                enum Inactive implements CircularityLock {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public boolean acquire() {
-                        return true;
-                    }
-
-                    @Override
-                    public void release() {
-                        /* do nothing */
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.ExecutingTransformer.CircularityLock.Inactive." + name();
-                    }
-                }
-
-                /**
-                 * An active circularity lock.
-                 */
-                class Active extends ThreadLocal<Boolean> implements CircularityLock {
-
-                    /**
-                     * Indicates that the circularity lock is not currently acquired.
-                     */
-                    private static final Boolean NOT_ACQUIRED = null;
-
-                    /**
-                     * Creates a new active circularity lock.
-                     *
-                     * @param acquired {@code true} if the lock is acquired upon creation.
-                     */
-                    protected Active(boolean acquired) {
-                        if (acquired) {
-                            set(true);
-                        }
-                    }
-
-                    @Override
-                    public boolean acquire() {
-                        if (get() == NOT_ACQUIRED) {
-                            set(true);
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    }
-
-                    @Override
-                    public void release() {
-                        set(NOT_ACQUIRED);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.ExecutingTransformer.CircularityLock.Active{acquired=" + (get() != NOT_ACQUIRED) + "}";
-                    }
-                }
-            }
         }
 
         /**
@@ -8264,6 +8308,11 @@ public interface AgentBuilder {
             @Override
             public AgentBuilder with(Listener listener) {
                 return materialize().with(listener);
+            }
+
+            @Override
+            public AgentBuilder with(CircularityLock circularityLock) {
+                return materialize().with(circularityLock);
             }
 
             @Override
@@ -8450,6 +8499,7 @@ public interface AgentBuilder {
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
                         listener,
+                        circularityLock,
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
@@ -8519,6 +8569,7 @@ public interface AgentBuilder {
              *
              * @param byteBuddy                     The Byte Buddy instance to be used.
              * @param listener                      The listener to notify on transformations.
+             * @param circularityLock               The circularity lock to use.
              * @param poolStrategy                  The type locator to use.
              * @param typeStrategy                  The definition handler to use.
              * @param locationStrategy              The location strategy to use.
@@ -8538,6 +8589,7 @@ public interface AgentBuilder {
              */
             protected Redefining(ByteBuddy byteBuddy,
                                  Listener listener,
+                                 CircularityLock circularityLock,
                                  PoolStrategy poolStrategy,
                                  TypeStrategy typeStrategy,
                                  LocationStrategy locationStrategy,
@@ -8555,6 +8607,7 @@ public interface AgentBuilder {
                                  Transformation transformation) {
                 super(byteBuddy,
                         listener,
+                        circularityLock,
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
@@ -8576,6 +8629,7 @@ public interface AgentBuilder {
             public RedefinitionListenable with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
                 return new Redefining(byteBuddy,
                         listener,
+                        circularityLock,
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
@@ -8597,6 +8651,7 @@ public interface AgentBuilder {
             public RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener) {
                 return new Redefining(byteBuddy,
                         listener,
+                        circularityLock,
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
@@ -8677,6 +8732,7 @@ public interface AgentBuilder {
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
                         listener,
+                        circularityLock,
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
