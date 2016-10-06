@@ -171,6 +171,8 @@ public class FixedValueTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(FixedValue.ForOriginType.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForOriginType.Appender.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForNullValue.class).apply();
+        ObjectPropertyAssertion.of(FixedValue.ForThisValue.class).apply();
+        ObjectPropertyAssertion.of(FixedValue.ForThisValue.Appender.class).apply();
     }
 
     private void assertType(DynamicType.Loaded<Foo> loaded) throws Exception {

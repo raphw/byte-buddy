@@ -462,6 +462,26 @@ public abstract class FixedValue implements Implementation {
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext, instrumentedMethod);
             }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Appender appender = (Appender) object;
+                return instrumentedType.equals(appender.instrumentedType);
+            }
+
+            @Override
+            public int hashCode() {
+                return instrumentedType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FixedValue.ForThisValue.Appender{" +
+                        "instrumentedType=" + instrumentedType +
+                        '}';
+            }
         }
     }
 
