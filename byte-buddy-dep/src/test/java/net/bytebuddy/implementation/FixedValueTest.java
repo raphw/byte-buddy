@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
@@ -13,6 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -120,7 +122,7 @@ public class FixedValueTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testThisValueStatic() throws Exception {
-        implement(FooBarQuxBaz.class, FixedValue.self());
+        new ByteBuddy().redefine(FooBarQuxBaz.class).method(named("bar")).intercept(FixedValue.self()).make();
     }
 
     @Test(expected = IllegalStateException.class)
