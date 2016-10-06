@@ -12,7 +12,7 @@ runtime code generation for the Java virtual machine
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
 [![Download from Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg) ](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
 
-Byte Buddy is a code generation and manipulation library for creating and modifiying Java classes during the 
+Byte Buddy is a code generation and manipulation library for creating and modifying Java classes during the 
 runtime of a Java application and without the help of a compiler. Other than the code generation utilities 
 that [ship with the Java Class Library](http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html), 
 Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for the 
