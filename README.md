@@ -17,7 +17,7 @@ runtime of a Java application and without the help of a compiler. Other than the
 that [ship with the Java Class Library](http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html), 
 Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for the 
 creation of runtime proxies. Furthermore, Byte Buddy offers a convenient API for changing classes either 
-manually, using a Java agent or during a build
+manually, using a Java agent or during a build.
 
 In order to use Byte Buddy, one does not require an understanding of Java byte code or the [class file format](http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html). In contrast, Byte Buddy’s API aims for code 
 that is concise and easy to understand for everybody. Nevertheless, Byte Buddy remains fully customizable down 
