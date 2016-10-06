@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. October 2016: version 1.4.31
+
+- Reuse `CircularityLock` on all `AgentBuilder`s by default to avoid that Byte Buddy agents introduce circularities to different agents.
+- Also allow using `Advice` as `Implementation`.
+- Added `FixedValue.self()` and added `FieldPersistence` for describing `volatile` fields.
+
 ### 4. October 2016: version 1.4.30
 
 - Also acquire circularity lock during class file retransformation.
