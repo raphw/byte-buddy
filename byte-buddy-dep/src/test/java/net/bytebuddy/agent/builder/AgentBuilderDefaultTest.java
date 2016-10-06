@@ -1832,6 +1832,13 @@ public class AgentBuilderDefaultTest {
                         new byte[0]), nullValue(byte[].class));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testExecutingTransformerReturnsRequiresLock() throws Exception {
+        new AgentBuilder.Default()
+                .with(mock(AgentBuilder.CircularityLock.class))
+                .installOn(mock(Instrumentation.class));
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     public void testExecutingTransformerDoesNotRecurse() throws Exception {

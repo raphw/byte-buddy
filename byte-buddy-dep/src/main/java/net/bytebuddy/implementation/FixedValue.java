@@ -10,6 +10,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.MethodVisitor;
@@ -187,12 +188,21 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * Returns a null value from an instrumented method.
+     * Returns a {@code null} value from an instrumented method.
      *
      * @return An implementation that returns {@code null} from a method.
      */
     public static Implementation nullValue() {
         return ForNullValue.INSTANCE;
+    }
+
+    /**
+     * Returns {@code this} from an instrumented method.
+     *
+     * @return An implementation that returns {@code this} from a method.
+     */
+    public static Implementation self() {
+        return ForThisValue.INSTANCE;
     }
 
     /**
@@ -395,6 +405,63 @@ public abstract class FixedValue implements Implementation {
         @Override
         public String toString() {
             return "FixedValue.ForNullValue." + name();
+        }
+    }
+
+    /**
+     * A fixed value of {@code this}.
+     */
+    protected enum ForThisValue implements Implementation {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new Appender(implementationTarget.getInstrumentedType());
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public String toString() {
+            return "FixedValue.ForThisValue." + name();
+        }
+
+        /**
+         * A byte code appender for returning {@code this}.
+         */
+        protected static class Appender implements ByteCodeAppender {
+
+            /**
+             * The instrumented type.
+             */
+            private final TypeDescription instrumentedType;
+
+            /**
+             * Creates a new byte code appender for returning {@code this}.
+             *
+             * @param instrumentedType The instrumented type.
+             */
+            protected Appender(TypeDescription instrumentedType) {
+                this.instrumentedType = instrumentedType;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                if (instrumentedMethod.isStatic() || !instrumentedType.isAssignableTo(instrumentedMethod.getReturnType().asErasure())) {
+                    throw new IllegalStateException("Cannot return 'this' from " + instrumentedMethod);
+                }
+                return new ByteCodeAppender.Simple(
+                        MethodVariableAccess.REFERENCE.loadOffset(0),
+                        MethodReturn.REFERENCE
+                ).apply(methodVisitor, implementationContext, instrumentedMethod);
+            }
         }
     }
 
