@@ -8474,8 +8474,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     implementationContext.getClassFileVersion(),
                     AsmVisitorWrapper.NO_FLAGS,
                     AsmVisitorWrapper.NO_FLAGS);
-            StackManipulation invocation = implementationTarget.invokeDominant(instrumentedMethod.asSignatureToken());
-            return emulatingMethodVisitor.resolve(methodVisitor, implementationContext, new StackManipulation.Compound(invocation.isValid() && !replace
+            StackManipulation invocation = replace
+                    ? StackManipulation.Illegal.INSTANCE
+                    : implementationTarget.invokeDominant(instrumentedMethod.asSignatureToken());
+            return emulatingMethodVisitor.resolve(methodVisitor, implementationContext, new StackManipulation.Compound(invocation.isValid()
                     ? new StackManipulation.Compound(MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(), invocation)
                     : DefaultValue.of(instrumentedMethod.getReturnType()), MethodReturn.of(instrumentedMethod.getReturnType())));
         }
