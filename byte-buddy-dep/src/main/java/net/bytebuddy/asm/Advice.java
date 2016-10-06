@@ -187,8 +187,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private final Dispatcher.Resolved.ForMethodExit methodExit;
 
+    /**
+     * {@code true} if this advice should replace a super method invocation if used as an {@link Implementation}.
+     */
     private final boolean replace;
 
+    /**
+     * Creates a new advice.
+     *
+     * @param methodEnter The dispatcher for instrumenting the instrumented method upon entering.
+     * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
+     */
     protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit) {
         this(methodEnter, methodExit, false);
     }
@@ -198,6 +207,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      *
      * @param methodEnter The dispatcher for instrumenting the instrumented method upon entering.
      * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
+     * @param replace     {@code true} if this advice should replace a super method invocation if used as an {@link Implementation}.
      */
     private Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit, boolean replace) {
         this.methodEnter = methodEnter;
