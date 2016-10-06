@@ -2608,7 +2608,7 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + instrumentedMethod);
                 }
                 return new StackManipulation.Compound(stackManipulation,
-                        MethodReturn.returning(instrumentedMethod.getReturnType().asErasure()));
+                        MethodReturn.of(instrumentedMethod.getReturnType().asErasure()));
             }
 
             @Override

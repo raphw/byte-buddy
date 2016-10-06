@@ -427,7 +427,7 @@ public class MethodCallProxy implements AuxiliaryType {
                         new StackManipulation.Compound(fieldLoading),
                         MethodInvocation.invoke(accessorMethod),
                         assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
-                        MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+                        MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
                 ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }

@@ -169,7 +169,7 @@ public abstract class FieldAccessor implements Implementation {
                         ? StackManipulation.Trivial.INSTANCE
                         : MethodVariableAccess.REFERENCE.loadOffset(0),
                 fieldAccess,
-                MethodReturn.returning(methodDescription.getReturnType().asErasure())
+                MethodReturn.of(methodDescription.getReturnType().asErasure())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), methodDescription.getStackSize());
     }

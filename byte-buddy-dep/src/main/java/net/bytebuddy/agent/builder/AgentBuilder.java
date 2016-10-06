@@ -4877,7 +4877,7 @@ public interface AgentBuilder {
                                 new StackManipulation.Compound(fieldAccess),
                                 new StackManipulation.Compound(parameterAccess),
                                 MethodInvocation.invoke(targetMethod),
-                                MethodReturn.returning(targetMethod.getReturnType().asErasure())
+                                MethodReturn.of(targetMethod.getReturnType().asErasure())
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
 
@@ -5133,7 +5133,7 @@ public interface AgentBuilder {
                                 bridgeTargetInvocation.getMethodDescription().getReturnType().asErasure().isAssignableTo(instrumentedMethod.getReturnType().asErasure())
                                         ? StackManipulation.Trivial.INSTANCE
                                         : TypeCasting.to(instrumentedMethod.getReceiverType().asErasure()),
-                                MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+                                MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
 
                         )).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
@@ -5205,7 +5205,7 @@ public interface AgentBuilder {
 
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,
-                                      MethodDescription.InDefinedShape methodDescription,
+                                      MethodDescription.InDefinedShape instrumentedMethod,
                                       MethodVisitor methodVisitor,
                                       ClassFileVersion classFileVersion,
                                       int writerFlags,
@@ -5415,7 +5415,7 @@ public interface AgentBuilder {
 
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,
-                                      MethodDescription.InDefinedShape methodDescription,
+                                      MethodDescription.InDefinedShape instrumentedMethod,
                                       MethodVisitor methodVisitor,
                                       ClassFileVersion classFileVersion,
                                       int writerFlags,

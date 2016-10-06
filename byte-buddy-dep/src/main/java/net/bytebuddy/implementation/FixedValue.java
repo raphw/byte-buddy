@@ -238,7 +238,7 @@ public abstract class FixedValue implements Implementation {
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 valueLoadingInstruction,
                 assignment,
-                MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+                MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }

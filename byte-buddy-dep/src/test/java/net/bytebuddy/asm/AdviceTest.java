@@ -1188,7 +1188,8 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
                     @Override
-                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                    public Object resolve(TypeDescription instrumentedType,
+                                          MethodDescription instrumentedMethod,
                                           ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Custom> annotation,
                                           boolean initialized) {
@@ -1207,7 +1208,8 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
                     @Override
-                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                    public Object resolve(TypeDescription instrumentedType,
+                                          MethodDescription instrumentedMethod,
                                           ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Custom> annotation,
                                           boolean initialized) {
@@ -1226,7 +1228,8 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
                     @Override
-                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                    public Object resolve(TypeDescription instrumentedType,
+                                          MethodDescription instrumentedMethod,
                                           ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Custom> annotation,
                                           boolean initialized) {
@@ -1331,7 +1334,8 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
                     @Override
-                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                    public Object resolve(TypeDescription instrumentedType,
+                                          MethodDescription instrumentedMethod,
                                           ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Custom> annotation,
                                           boolean initialized) {
@@ -1347,7 +1351,8 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
                     @Override
-                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                    public Object resolve(TypeDescription instrumentedType,
+                                          MethodDescription instrumentedMethod,
                                           ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Custom> annotation,
                                           boolean initialized) {
@@ -1363,7 +1368,8 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
                     @Override
-                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                    public Object resolve(TypeDescription instrumentedType,
+                                          MethodDescription instrumentedMethod,
                                           ParameterDescription.InDefinedShape target,
                                           AnnotationDescription.Loadable<Custom> annotation,
                                           boolean initialized) {
@@ -1615,7 +1621,8 @@ public class AdviceTest {
     public void testDuplicateRegistration() throws Exception {
         Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Annotation>() {
             @Override
-            public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+            public Object resolve(TypeDescription instrumentedType,
+                                  MethodDescription instrumentedMethod,
                                   ParameterDescription.InDefinedShape target,
                                   AnnotationDescription.Loadable<Annotation> annotation,
                                   boolean initialized) {
@@ -1852,6 +1859,8 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.Disabled.class).apply();
+        ObjectPropertyAssertion.of(Advice.Appender.class).apply();
+        ObjectPropertyAssertion.of(Advice.Appender.EmulatingMethodVisitor.class).applyBasic();
     }
 
     @SuppressWarnings("unused")

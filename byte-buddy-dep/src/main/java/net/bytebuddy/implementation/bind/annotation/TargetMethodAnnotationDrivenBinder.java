@@ -567,7 +567,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                 ? target.getDeclaringType().asGenericType()
                                 : target.getReturnType(),
                         source.getReturnType(),
-                        RuntimeType.Verifier.check(target)), MethodReturn.returning(source.getReturnType().asErasure()));
+                        RuntimeType.Verifier.check(target)), MethodReturn.of(source.getReturnType().asErasure()));
             }
 
             @Override
