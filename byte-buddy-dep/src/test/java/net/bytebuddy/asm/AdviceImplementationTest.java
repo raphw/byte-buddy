@@ -26,7 +26,7 @@ public class AdviceImplementationTest {
                 .foo(), is(FOO));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IllegalStateException.class)
     public void testActualMethod() throws Exception {
         new ByteBuddy()
                 .subclass(Bar.class)
@@ -71,10 +71,11 @@ public class AdviceImplementationTest {
         }
 
         @Advice.OnMethodExit(onThrowable = RuntimeException.class)
-        public static void exit(@Advice.Thrown Throwable throwable) {
+        public static void exit(@Advice.Thrown(readOnly = false) Throwable throwable) {
             if (!(throwable instanceof RuntimeException)) {
                 throw new AssertionError();
             }
+            throwable = new IllegalStateException();
         }
     }
 
