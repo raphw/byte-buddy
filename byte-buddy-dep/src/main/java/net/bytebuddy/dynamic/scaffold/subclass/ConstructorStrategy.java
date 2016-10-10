@@ -8,6 +8,7 @@ import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.LatentMatcher;
+import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,8 +68,9 @@ public interface ConstructorStrategy {
 
         /**
          * This strategy is adding a default constructor that calls it's super types default constructor. If no such
-         * constructor is defined, an {@link IllegalArgumentException} is thrown. Note that the default constructor
-         * needs to be visible to its sub type for this strategy to work.
+         * constructor is defined by the super class, an {@link IllegalArgumentException} is thrown. Note that the default
+         * constructor needs to be visible to its sub type for this strategy to work. The declared default constructor of
+         * the created class is declared public and without annotations.
          */
         DEFAULT_CONSTRUCTOR {
             @Override
@@ -78,7 +80,7 @@ public interface ConstructorStrategy {
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
                         : superClass.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
                 if (defaultConstructors.size() == 1) {
-                    return defaultConstructors.asTokenList(is(instrumentedType));
+                    return Collections.singletonList(new MethodDescription.Token(Opcodes.ACC_PUBLIC));
                 } else {
                     throw new IllegalArgumentException(instrumentedType.getSuperClass() + " declares no constructor that is visible to " + instrumentedType);
                 }
