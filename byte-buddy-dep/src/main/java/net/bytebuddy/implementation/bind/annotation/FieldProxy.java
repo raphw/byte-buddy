@@ -977,7 +977,7 @@ public @interface FieldProxy {
                                             .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                             MethodInvocation.invoke(getterMethod),
                             assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
-                            MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+                            MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }

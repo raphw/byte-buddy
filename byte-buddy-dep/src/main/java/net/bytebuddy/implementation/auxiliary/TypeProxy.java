@@ -867,7 +867,7 @@ public class TypeProxy implements AuxiliaryType {
                             fieldLoadingInstruction,
                             MethodVariableAccess.allArgumentsOf(instrumentedMethod).asBridgeOf(proxyMethod),
                             MethodInvocation.invoke(proxyMethod),
-                            MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+                            MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
                     ).apply(methodVisitor, implementationContext);
                 }
 

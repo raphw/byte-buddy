@@ -475,7 +475,7 @@ public interface AsmVisitorWrapper {
              * Wraps a method visitor.
              *
              * @param instrumentedType  The instrumented type.
-             * @param methodDescription The method that is currently being defined.
+             * @param instrumentedMethod The method that is currently being defined.
              * @param methodVisitor     The original field visitor that defines the given method.
              * @param classFileVersion  The class file version of the visited class.
              * @param writerFlags       The ASM {@link org.objectweb.asm.ClassWriter} reader flags to consider.
@@ -483,7 +483,7 @@ public interface AsmVisitorWrapper {
              * @return The wrapped method visitor.
              */
             MethodVisitor wrap(TypeDescription instrumentedType,
-                               MethodDescription.InDefinedShape methodDescription,
+                               MethodDescription.InDefinedShape instrumentedMethod,
                                MethodVisitor methodVisitor,
                                ClassFileVersion classFileVersion,
                                int writerFlags,
@@ -523,13 +523,13 @@ public interface AsmVisitorWrapper {
 
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,
-                                      MethodDescription.InDefinedShape methodDescription,
+                                      MethodDescription.InDefinedShape instrumentedMethod,
                                       MethodVisitor methodVisitor,
                                       ClassFileVersion classFileVersion,
                                       int writerFlags,
                                       int readerFlags) {
                 for (MethodVisitorWrapper methodVisitorWrapper : methodVisitorWrappers) {
-                    methodVisitor = methodVisitorWrapper.wrap(instrumentedType, methodDescription, methodVisitor, classFileVersion, writerFlags, readerFlags);
+                    methodVisitor = methodVisitorWrapper.wrap(instrumentedType, instrumentedMethod, methodVisitor, classFileVersion, writerFlags, readerFlags);
                 }
                 return methodVisitor;
             }

@@ -92,9 +92,9 @@ public class ByteBuddyAgent {
     private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
 
     /**
-     * An empty command line arguments.
+     * Represents a no-op argument for a dynamic agent attachment.
      */
-    private static final String WITHOUT_ARGUMENT = "";
+    private static final String WITHOUT_ARGUMENT = null;
 
     /**
      * The class file extension.
@@ -302,7 +302,7 @@ public class ByteBuddyAgent {
             try {
                 virtualMachineType
                         .getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
-                        .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), argument);
+                        .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), null);
             } finally {
                 virtualMachineType
                         .getDeclaredMethod(DETACH_METHOD_NAME)

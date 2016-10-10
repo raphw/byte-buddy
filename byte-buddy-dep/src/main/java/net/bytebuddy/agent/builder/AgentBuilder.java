@@ -41,6 +41,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaModule;
@@ -64,6 +65,7 @@ import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -106,6 +108,17 @@ public interface AgentBuilder {
     AgentBuilder with(Listener listener);
 
     /**
+     * Defines a circularity lock that is acquired upon executing code that potentially loads new classes. While the
+     * lock is acquired, any class file transformer refrains from transforming any classes. By default, all created
+     * agents use a shared {@link CircularityLock} to avoid that any classes that are required to execute an agent
+     * causes a {@link ClassCircularityError}.
+     *
+     * @param circularityLock The circularity lock to use.
+     * @return A new instance of this agent builder which creates an agent that uses the supplied circularity lock.
+     */
+    AgentBuilder with(CircularityLock circularityLock);
+
+    /**
      * Defines the use of the given type locator for locating a {@link TypeDescription} for an instrumented type.
      *
      * @param poolStrategy The type locator to use.
@@ -145,6 +158,9 @@ public interface AgentBuilder {
      * Specifies a strategy for modifying types that were already loaded prior to the installation of this transformer.
      * </p>
      * <p>
+     * <b>Note</b>: Defining a redefinition strategy resets any refinements of a previously set redefinition strategy.
+     * </p>
+     * <p>
      * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already
      * loaded. Therefore, it is typically required that this class file transformer was built while enabling
      * {@link AgentBuilder#disableClassFormatChanges()}.
@@ -153,7 +169,7 @@ public interface AgentBuilder {
      * @param redefinitionStrategy The redefinition strategy to apply.
      * @return A new instance of this agent builder that applies the given redefinition strategy.
      */
-    AgentBuilder with(RedefinitionStrategy redefinitionStrategy);
+    RedefinitionListenable.WithoutBatchStrategy with(RedefinitionStrategy redefinitionStrategy);
 
     /**
      * <p>
@@ -729,6 +745,44 @@ public interface AgentBuilder {
     }
 
     /**
+     * An agent builder configuration that allows the registration of listeners to the redefinition process.
+     */
+    interface RedefinitionListenable extends AgentBuilder {
+
+        /**
+         * <p>
+         * A redefinition listener is invoked before each batch of type redefinitions and on every error as well as
+         * after the redefinition was completed. A redefinition listener can be used for debugging or logging purposes
+         * and to apply actions between each batch, e.g. to pause or wait in order to avoid rendering the current VM
+         * non-responsive if a lot of classes are redefined.
+         * </p>
+         * <p>
+         * Adding several listeners does not replace previous listeners but applies them in the registration order.
+         * </p>
+         *
+         * @param redefinitionListener The listener to register.
+         * @return A new instance of this agent builder which notifies the specified listener upon type redefinitions.
+         */
+        RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener);
+
+        /**
+         * An agent builder configuration that allows the configuration of a batching strategy.
+         */
+        interface WithoutBatchStrategy extends RedefinitionListenable {
+
+            /**
+             * A batch allocator is responsible for diving a redefining of existing types into several chunks. This allows
+             * to narrow down errors for the redefining of specific types or to apply a {@link RedefinitionStrategy.Listener}
+             * action between chunks.
+             *
+             * @param redefinitionBatchAllocator The batch allocator to use.
+             * @return A new instance of this agent builder which makes use of the specified batch allocator.
+             */
+            RedefinitionListenable with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator);
+        }
+    }
+
+    /**
      * Describes an {@link net.bytebuddy.agent.builder.AgentBuilder} which was handed a matcher for identifying
      * types to instrumented in order to supply one or several
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s.
@@ -1148,25 +1202,25 @@ public interface AgentBuilder {
 
             @Override
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
-                printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName() + "[" + classLoader + ", " + module + "]");
+                printStream.printf(PREFIX + " TRANSFORM %s [%s, %s]%n", typeDescription.getName(), classLoader, module);
             }
 
             @Override
             public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
-                printStream.println(PREFIX + " IGNORE " + typeDescription.getName() + "[" + classLoader + ", " + module + "]");
+                printStream.printf(PREFIX + " IGNORE %s [%s, %s]%n", typeDescription.getName(), classLoader, module);
             }
 
             @Override
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
                 synchronized (printStream) {
-                    printStream.println(PREFIX + " ERROR " + typeName + "[" + classLoader + ", " + module + "]");
+                    printStream.printf(PREFIX + " ERROR %s [%s, %s]%n", typeName, classLoader, module);
                     throwable.printStackTrace(printStream);
                 }
             }
 
             @Override
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
-                printStream.println(PREFIX + " COMPLETE " + typeName + "[" + classLoader + ", " + module + "]");
+                printStream.printf(PREFIX + " COMPLETE %s [%s, %s]%n", typeName, classLoader, module);
             }
 
             @Override
@@ -1184,6 +1238,84 @@ public interface AgentBuilder {
             public String toString() {
                 return "AgentBuilder.Listener.StreamWriting{" +
                         "printStream=" + printStream +
+                        '}';
+            }
+        }
+
+        /**
+         * A listener that filters types with a given name from being logged.
+         */
+        class Filtering implements Listener {
+
+            /**
+             * The matcher to decide upon a type should be logged.
+             */
+            private final ElementMatcher<? super String> matcher;
+
+            /**
+             * The delegate listener.
+             */
+            private final Listener delegate;
+
+            /**
+             * Creates a new filtering listener.
+             *
+             * @param matcher  The matcher to decide upon a type should be logged.
+             * @param delegate The delegate listener.
+             */
+            public Filtering(ElementMatcher<? super String> matcher, Listener delegate) {
+                this.matcher = matcher;
+                this.delegate = delegate;
+            }
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, DynamicType dynamicType) {
+                if (matcher.matches(typeDescription.getName())) {
+                    delegate.onTransformation(typeDescription, classLoader, module, dynamicType);
+                }
+            }
+
+            @Override
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
+                if (matcher.matches(typeDescription.getName())) {
+                    delegate.onIgnored(typeDescription, classLoader, module);
+                }
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, Throwable throwable) {
+                if (matcher.matches(typeName)) {
+                    delegate.onError(typeName, classLoader, module, throwable);
+                }
+            }
+
+            @Override
+            public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
+                if (matcher.matches(typeName)) {
+                    delegate.onComplete(typeName, classLoader, module);
+                }
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Filtering filtering = (Filtering) object;
+                return matcher.equals(filtering.matcher) && delegate.equals(filtering.delegate);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = matcher.hashCode();
+                result = 31 * result + delegate.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Listener.Filtering{" +
+                        "matcher=" + matcher +
+                        ", delegate=" + delegate +
                         '}';
             }
         }
@@ -1363,6 +1495,85 @@ public interface AgentBuilder {
     }
 
     /**
+     * A circularity lock is responsible for preventing that a {@link ClassFileLocator} is used recursively.
+     * This can happen when a class file transformation causes another class to be loaded. Without avoiding
+     * such circularities, a class loading is aborted by a {@link ClassCircularityError} which causes the
+     * class loading to fail.
+     */
+    interface CircularityLock {
+
+        /**
+         * Attempts to acquire a circularity lock.
+         *
+         * @return {@code true} if the lock was acquired successfully, {@code false} if it is already hold.
+         */
+        boolean acquire();
+
+        /**
+         * Releases the circularity lock if it is currently acquired.
+         */
+        void release();
+
+        /**
+         * An inactive circularity lock which is always acquirable.
+         */
+        enum Inactive implements CircularityLock {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean acquire() {
+                return true;
+            }
+
+            @Override
+            public void release() {
+                        /* do nothing */
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.CircularityLock.Inactive." + name();
+            }
+        }
+
+        /**
+         * A default implementation of a circularity lock. Since class loading already synchronizes on a class loader,
+         * it suffices to apply a thread-local lock.
+         */
+        class Default extends ThreadLocal<Boolean> implements CircularityLock {
+
+            /**
+             * Indicates that the circularity lock is not currently acquired.
+             */
+            private static final Boolean NOT_ACQUIRED = null;
+
+            @Override
+            public boolean acquire() {
+                if (get() == NOT_ACQUIRED) {
+                    set(true);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            @Override
+            public void release() {
+                set(NOT_ACQUIRED);
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.CircularityLock.Default{acquired=" + (get() != NOT_ACQUIRED) + "}";
+            }
+        }
+    }
+
+    /**
      * A type strategy is responsible for creating a type builder for a type that is being instrumented.
      */
     interface TypeStrategy {
@@ -1441,7 +1652,7 @@ public interface AgentBuilder {
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
                                                       MethodNameTransformer methodNameTransformer) {
-                    return byteBuddy.redefine(typeDescription, classFileLocator).ignoreAlso(not(isDeclaredBy(typeDescription)));
+                    return byteBuddy.redefine(typeDescription, classFileLocator).ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);
                 }
             };
 
@@ -2494,9 +2705,14 @@ public interface AgentBuilder {
         enum Default implements InstallationStrategy {
 
             /**
+             * <p>
              * An installation strategy that unregisters the transformer and propagates the exception. Using this strategy does not guarantee
              * that the registered transformer was not applied to any class, nor does it attempt to revert previous transformations. It only
              * guarantees that the class file transformer is unregistered and does no longer apply after this method returns.
+             * </p>
+             * <p>
+             * <b>Note</b>: This installation strategy does not undo any applied class redefinitions, if such were applied.
+             * </p>
              */
             ESCALATING {
                 @Override
@@ -2887,14 +3103,14 @@ public interface AgentBuilder {
         /**
          * Disables redefinition such that already loaded classes are not affected by the agent.
          */
-        DISABLED {
+        DISABLED(false) {
             @Override
             protected boolean isRetransforming(Instrumentation instrumentation) {
                 return false;
             }
 
             @Override
-            protected Collector makeCollector(Default.Transformation transformation) {
+            protected Collector make(Default.Transformation transformation) {
                 throw new IllegalStateException("A disabled redefinition strategy cannot create a collector");
             }
         },
@@ -2915,7 +3131,7 @@ public interface AgentBuilder {
          * the constrains given by this type strategy.
          * </p>
          */
-        REDEFINITION {
+        REDEFINITION(true) {
             @Override
             protected boolean isRetransforming(Instrumentation instrumentation) {
                 if (!instrumentation.isRedefineClassesSupported()) {
@@ -2925,38 +3141,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected Collector makeCollector(Default.Transformation transformation) {
-                return new Collector.ForRedefinition.Cumulative(transformation);
-            }
-        },
-
-        /**
-         * <p>
-         * Applies a <b>redefinition</b> to all classes that are already loaded and that would have been transformed if
-         * the built agent was registered before they were loaded. The created {@link ClassFileTransformer} is <b>not</b>
-         * registered for applying retransformations.
-         * </p>
-         * <p>
-         * Using this strategy, a redefinition is applied in single class chunks. This means that a single illegal
-         * redefinition of a class does not cause the failure of any other redefinition. Chunking the redefinition does
-         * however imply a performance penalty. If at least one redefinition has failed, applying this strategy still causes an
-         * exception to be thrown as a result of the application.
-         * </p>
-         * <p>
-         * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
-         * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
-         * the constrains given by this type strategy.
-         * </p>
-         */
-        REDEFINITION_CHUNKED {
-            @Override
-            protected boolean isRetransforming(Instrumentation instrumentation) {
-                return REDEFINITION.isRetransforming(instrumentation);
-            }
-
-            @Override
-            protected Collector makeCollector(Default.Transformation transformation) {
-                return new Collector.ForRedefinition.Chunked(transformation);
+            protected Collector make(Default.Transformation transformation) {
+                return new Collector.ForRedefinition(transformation);
             }
         },
 
@@ -2976,7 +3162,7 @@ public interface AgentBuilder {
          * the constrains given by this type strategy.
          * </p>
          */
-        RETRANSFORMATION {
+        RETRANSFORMATION(true) {
             @Override
             protected boolean isRetransforming(Instrumentation instrumentation) {
                 if (!instrumentation.isRetransformClassesSupported()) {
@@ -2986,40 +3172,24 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected Collector makeCollector(Default.Transformation transformation) {
-                return new Collector.ForRetransformation.Cumulative(transformation);
-            }
-        },
-
-        /**
-         * <p>
-         * Applies a <b>retransformation</b> to all classes that are already loaded and that would have been transformed if
-         * the built agent was registered before they were loaded. The created {@link ClassFileTransformer} is registered
-         * for applying retransformations.
-         * </p>
-         * <p>
-         * Using this strategy, a retransformation is applied in single class chunks. This means that a single illegal
-         * retransformation of a class does not cause the failure of any other redefinition. Chunking the retransformation does
-         * however imply a performance penalty. If at least one retransformation has failed, applying this strategy still causes an
-         * exception to be thrown as a result of the application.
-         * </p>
-         * <p>
-         * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
-         * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
-         * the constrains given by this type strategy.
-         * </p>
-         */
-        RETRANSFORMATION_CHUNKED {
-            @Override
-            protected boolean isRetransforming(Instrumentation instrumentation) {
-                return RETRANSFORMATION.isRetransforming(instrumentation);
-            }
-
-            @Override
-            protected Collector makeCollector(Default.Transformation transformation) {
-                return new Collector.ForRetransformation.Chunked(transformation);
+            protected Collector make(Default.Transformation transformation) {
+                return new Collector.ForRetransformation(transformation);
             }
         };
+
+        /**
+         * Indicates that this redefinition strategy is enabled.
+         */
+        private final boolean enabled;
+
+        /**
+         * Creates a new redefinition strategy.
+         *
+         * @param enabled {@code true} if this strategy is enabled.
+         */
+        RedefinitionStrategy(boolean enabled) {
+            this.enabled = enabled;
+        }
 
         /**
          * Indicates if this strategy requires a class file transformer to be registered with a hint to apply the
@@ -3036,7 +3206,7 @@ public interface AgentBuilder {
          * @return {@code true} if this redefinition strategy applies a modification of already loaded classes.
          */
         protected boolean isEnabled() {
-            return this != DISABLED;
+            return enabled;
         }
 
         /**
@@ -3045,7 +3215,7 @@ public interface AgentBuilder {
          * @param transformation The transformation that is registered for the agent.
          * @return A new collector for collecting already loaded classes for transformation.
          */
-        protected abstract Collector makeCollector(Default.Transformation transformation);
+        protected abstract Collector make(Default.Transformation transformation);
 
         @Override
         public String toString() {
@@ -3053,51 +3223,989 @@ public interface AgentBuilder {
         }
 
         /**
-         * A collector is responsible for collecting classes that are to be considered for modification.
+         * A batch allocator which is responsible for applying a redefinition in a batches. A class redefinition or
+         * retransformation can be a time-consuming operation rendering a JVM non-responsive. In combination with a
+         * a {@link RedefinitionStrategy.Listener}, it is also possible to apply pauses between batches to distribute
+         * the load of a retransformation over time.
          */
-        protected interface Collector {
+        public interface BatchAllocator {
 
             /**
-             * Considers a loaded class for modification.
+             * Splits a list of types to be retransformed into seperate batches.
              *
-             * @param typeDescription     The type description of the type that is to be considered.
-             * @param type                The loaded representation of the type that is to be considered.
-             * @param classBeingRedefined The loaded representation of the type that is to be considered or {@code null} if the
-             *                            loaded type representation should not be considered.
-             * @param ignoredTypeMatcher  Identifies types that should not be instrumented.
-             * @return {@code true} if the class is considered to be redefined.
+             * @param types A list of types which should be retransformed.
+             * @return An iterable of retransformations within a batch.
              */
-            boolean consider(TypeDescription typeDescription, Class<?> type, Class<?> classBeingRedefined, RawMatcher ignoredTypeMatcher);
+            Iterable<? extends List<Class<?>>> batch(List<Class<?>> types);
+
+            /**
+             * A batch allocator that includes all types in a single batch.
+             */
+            enum ForTotal implements BatchAllocator {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
+                    return types.isEmpty()
+                            ? Collections.<List<Class<?>>>emptySet()
+                            : Collections.singleton(types);
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal." + name();
+                }
+            }
+
+            /**
+             * A batch allocator that creates chunks with a fixed size as batch jobs.
+             */
+            class ForFixedSize implements BatchAllocator {
+
+                /**
+                 * The size of each chunk.
+                 */
+                private final int size;
+
+                /**
+                 * Creates a new batch allocator that creates fixed-sized chunks.
+                 *
+                 * @param size The size of each chunk.
+                 */
+                protected ForFixedSize(int size) {
+                    this.size = size;
+                }
+
+                /**
+                 * Creates a new batch allocator that creates chunks of a fixed size.
+                 *
+                 * @param size The size of each chunk or {@code 0} if the batch should be included in a single chunk.
+                 * @return An appropriate batch allocator.
+                 */
+                public static BatchAllocator ofSize(int size) {
+                    if (size > 0) {
+                        return new ForFixedSize(size);
+                    } else if (size == 0) {
+                        return ForTotal.INSTANCE;
+                    } else {
+                        throw new IllegalArgumentException("Cannot define a batch with a negative size: " + size);
+                    }
+                }
+
+                @Override
+                public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
+                    List<List<Class<?>>> batches = new ArrayList<List<Class<?>>>();
+                    for (int index = 0; index < types.size(); index += size) {
+                        batches.add(new ArrayList<Class<?>>(types.subList(index, Math.min(types.size(), index + size))));
+                    }
+                    return batches;
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForFixedSize that = (ForFixedSize) object;
+                    return size == that.size;
+                }
+
+                @Override
+                public int hashCode() {
+                    return size;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize{" +
+                            "size=" + size +
+                            '}';
+                }
+            }
+
+            /**
+             * A batch allocator that groups all batches by discriminating types using a type matcher.
+             */
+            class ForMatchedGrouping implements BatchAllocator {
+
+                /**
+                 * The type matchers to apply.
+                 */
+                private final Collection<? extends ElementMatcher<? super TypeDescription>> matchers;
+
+                /**
+                 * Creates a new batch allocator that groups all batches by discriminating types using a type matcher. All batches
+                 * are applied in their application order with any unmatched type being included in the last batch.
+                 *
+                 * @param matcher The type matchers to apply in their application order.
+                 */
+                @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                public ForMatchedGrouping(ElementMatcher<? super TypeDescription>... matcher) {
+                    this(new LinkedHashSet<ElementMatcher<? super TypeDescription>>(Arrays.asList(matcher)));
+                }
+
+                /**
+                 * Creates a new batch allocator that groups all batches by discriminating types using a type matcher. All batches
+                 * are applied in their application order with any unmatched type being included in the last batch.
+                 *
+                 * @param matchers The type matchers to apply in their application order.
+                 */
+                public ForMatchedGrouping(Collection<? extends ElementMatcher<? super TypeDescription>> matchers) {
+                    this.matchers = matchers;
+                }
+
+                /**
+                 * Assures that any group is at least of a given size. If a group is smaller than a given size, it is merged with its types
+                 * are merged with its subsequent group(s) as long as such groups exist.
+                 *
+                 * @param threshold The minimum threshold for any batch.
+                 * @return An appropriate batch allocator.
+                 */
+                public BatchAllocator withMinimum(int threshold) {
+                    return Slicing.withMinimum(threshold, this);
+                }
+
+                /**
+                 * Assures that any group is at least of a given size. If a group is bigger than a given size, it is split into two several
+                 * batches.
+                 *
+                 * @param threshold The maximum threshold for any batch.
+                 * @return An appropriate batch allocator.
+                 */
+                public BatchAllocator withMaximum(int threshold) {
+                    return Slicing.withMaximum(threshold, this);
+                }
+
+                /**
+                 * Assures that any group is within a size range described by the supplied minimum and maximum. Groups are split and merged
+                 * according to the supplied thresholds. The last group contains might be smaller than the supplied minimum.
+                 *
+                 * @param minimum The minimum threshold for any batch.
+                 * @param maximum The maximum threshold for any batch.
+                 * @return An appropriate batch allocator.
+                 */
+                public BatchAllocator withinRange(int minimum, int maximum) {
+                    return Slicing.withinRange(minimum, maximum, this);
+                }
+
+                @Override
+                public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
+                    Map<ElementMatcher<? super TypeDescription>, List<Class<?>>> matched = new LinkedHashMap<ElementMatcher<? super TypeDescription>, List<Class<?>>>();
+                    List<Class<?>> unmatched = new ArrayList<Class<?>>();
+                    for (ElementMatcher<? super TypeDescription> matcher : matchers) {
+                        matched.put(matcher, new ArrayList<Class<?>>());
+                    }
+                    typeLoop:
+                    for (Class<?> type : types) {
+                        for (ElementMatcher<? super TypeDescription> matcher : matchers) {
+                            if (matcher.matches(new TypeDescription.ForLoadedType(type))) {
+                                matched.get(matcher).add(type);
+                                continue typeLoop;
+                            }
+                        }
+                        unmatched.add(type);
+                    }
+                    List<List<Class<?>>> batches = new ArrayList<List<Class<?>>>(matchers.size() + 1);
+                    for (List<Class<?>> batch : matched.values()) {
+                        if (!batch.isEmpty()) {
+                            batches.add(batch);
+                        }
+                    }
+                    if (!unmatched.isEmpty()) {
+                        batches.add(unmatched);
+                    }
+                    return batches;
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForMatchedGrouping that = (ForMatchedGrouping) object;
+                    return matchers.equals(that.matchers);
+                }
+
+                @Override
+                public int hashCode() {
+                    return matchers.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping{" +
+                            "matchers=" + matchers +
+                            '}';
+                }
+            }
+
+            /**
+             * A slicing batch allocator that assures that any batch is within a certain size range.
+             */
+            class Slicing implements BatchAllocator {
+
+                /**
+                 * The minimum size of each slice.
+                 */
+                private final int minimum;
+
+                /**
+                 * The maximum size of each slice.
+                 */
+                private final int maximum;
+
+                /**
+                 * The delegate batch allocator.
+                 */
+                private final BatchAllocator batchAllocator;
+
+                /**
+                 * Creates a new slicing batch allocator.
+                 *
+                 * @param minimum        The minimum size of each slice.
+                 * @param maximum        The maximum size of each slice.
+                 * @param batchAllocator The delegate batch allocator.
+                 */
+                protected Slicing(int minimum, int maximum, BatchAllocator batchAllocator) {
+                    this.minimum = minimum;
+                    this.maximum = maximum;
+                    this.batchAllocator = batchAllocator;
+                }
+
+                /**
+                 * Creates a new slicing batch allocator.
+                 *
+                 * @param minimum        The minimum size of each slice.
+                 * @param batchAllocator The delegate batch allocator.
+                 * @return An appropriate slicing batch allocator.
+                 */
+                public static BatchAllocator withMinimum(int minimum, BatchAllocator batchAllocator) {
+                    return withinRange(minimum, Integer.MAX_VALUE, batchAllocator);
+                }
+
+                /**
+                 * Creates a new slicing batch allocator.
+                 *
+                 * @param maximum        The maximum size of each slice.
+                 * @param batchAllocator The delegate batch allocator.
+                 * @return An appropriate slicing batch allocator.
+                 */
+                public static BatchAllocator withMaximum(int maximum, BatchAllocator batchAllocator) {
+                    return withinRange(1, maximum, batchAllocator);
+                }
+
+                /**
+                 * Creates a new slicing batch allocator.
+                 *
+                 * @param minimum        The minimum size of each slice.
+                 * @param maximum        The maximum size of each slice.
+                 * @param batchAllocator The delegate batch allocator.
+                 * @return An appropriate slicing batch allocator.
+                 */
+                public static BatchAllocator withinRange(int minimum, int maximum, BatchAllocator batchAllocator) {
+                    if (minimum <= 0) {
+                        throw new IllegalArgumentException("Minimum must be a positive number: " + minimum);
+                    } else if (minimum > maximum) {
+                        throw new IllegalArgumentException("Minimum must not be bigger than maximum: " + minimum + " >" + maximum);
+                    }
+                    return new Slicing(minimum, maximum, batchAllocator);
+                }
+
+                @Override
+                public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
+                    return new SlicingIterable(minimum, maximum, batchAllocator.batch(types));
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Slicing slicing = (Slicing) object;
+                    return minimum == slicing.minimum
+                            && maximum == slicing.maximum
+                            && batchAllocator.equals(slicing.batchAllocator);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = minimum;
+                    result = 31 * result + maximum;
+                    result = 31 * result + batchAllocator.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing{" +
+                            "minimum=" + minimum +
+                            ", maximum=" + maximum +
+                            ", batchAllocator=" + batchAllocator +
+                            '}';
+                }
+
+                /**
+                 * An iterable that slices batches into parts of a minimum and maximum size.
+                 */
+                protected static class SlicingIterable implements Iterable<List<Class<?>>> {
+
+                    /**
+                     * The minimum size of any slice.
+                     */
+                    private final int minimum;
+
+                    /**
+                     * The maximum size of any slice.
+                     */
+                    private final int maximum;
+
+                    /**
+                     * The delegate iterable.
+                     */
+                    private final Iterable<? extends List<Class<?>>> iterable;
+
+                    /**
+                     * Creates a new slicing iterable.
+                     *
+                     * @param minimum  The minimum size of any slice.
+                     * @param maximum  The maximum size of any slice.
+                     * @param iterable The delegate iterable.
+                     */
+                    protected SlicingIterable(int minimum, int maximum, Iterable<? extends List<Class<?>>> iterable) {
+                        this.minimum = minimum;
+                        this.maximum = maximum;
+                        this.iterable = iterable;
+                    }
+
+                    @Override
+                    public Iterator<List<Class<?>>> iterator() {
+                        return new SlicingIterator(minimum, maximum, iterable.iterator());
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable{" +
+                                "minimum=" + minimum +
+                                ", maximum=" + maximum +
+                                ", iterable=" + iterable +
+                                '}';
+                    }
+
+                    /**
+                     * An iterator that slices batches into parts of a minimum and maximum size.
+                     */
+                    protected static class SlicingIterator implements Iterator<List<Class<?>>> {
+
+                        /**
+                         * The minimum size of any slice.
+                         */
+                        private final int minimum;
+
+                        /**
+                         * The maximum size of any slice.
+                         */
+                        private final int maximum;
+
+                        /**
+                         * The delegate iterator.
+                         */
+                        private final Iterator<? extends List<Class<?>>> iterator;
+
+                        /**
+                         * A buffer containing all types that surpassed the maximum.
+                         */
+                        private List<Class<?>> buffer;
+
+                        /**
+                         * Creates a new slicing iterator.
+                         *
+                         * @param minimum  The minimum size of any slice.
+                         * @param maximum  The maximum size of any slice.
+                         * @param iterator The delegate iterator.
+                         */
+                        protected SlicingIterator(int minimum, int maximum, Iterator<? extends List<Class<?>>> iterator) {
+                            this.minimum = minimum;
+                            this.maximum = maximum;
+                            this.iterator = iterator;
+                            buffer = Collections.emptyList();
+                        }
+
+                        @Override
+                        public boolean hasNext() {
+                            return !buffer.isEmpty() || iterator.hasNext();
+                        }
+
+                        @Override
+                        public List<Class<?>> next() {
+                            if (buffer.isEmpty()) {
+                                buffer = iterator.next();
+                            }
+                            while (buffer.size() < minimum && iterator.hasNext()) {
+                                buffer.addAll(iterator.next());
+                            }
+                            if (buffer.size() > maximum) {
+                                try {
+                                    return buffer.subList(0, maximum);
+                                } finally {
+                                    buffer = buffer.subList(maximum, buffer.size());
+                                }
+                            } else {
+                                try {
+                                    return buffer;
+                                } finally {
+                                    buffer = Collections.emptyList();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void remove() {
+                            throw new UnsupportedOperationException("remove");
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable.SlicingIterator{" +
+                                    "minimum=" + minimum +
+                                    ", maximum=" + maximum +
+                                    ", iterator=" + iterator +
+                                    ", buffer=" + buffer +
+                                    '}';
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * A listener to be applied during a redefinition.
+         */
+        public interface Listener {
+
+            /**
+             * Invoked before applying a batch.
+             *
+             * @param index A running index of the batch starting at {@code 0}.
+             * @param batch The types included in this batch.
+             * @param types All types included in the redefinition.
+             */
+            void onBatch(int index, List<Class<?>> batch, List<Class<?>> types);
+
+            /**
+             * Invoked upon an error during a batch. This method is not invoked if the failure handler handled this error.
+             *
+             * @param index     A running index of the batch starting at {@code 0}.
+             * @param batch     The types included in this batch.
+             * @param throwable The throwable that caused this invocation.
+             * @param types     All types included in the redefinition.
+             */
+            void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types);
+
+            /**
+             * Invoked upon completion of all batches.
+             *
+             * @param amount   The total amount of batches that were executed.
+             * @param types    All types included in the redefinition.
+             * @param failures A mapping of batch types to their unhandled failures.
+             */
+            void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures);
+
+            /**
+             * A non-operational listener.
+             */
+            enum NoOp implements Listener {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
+                    /* do nothing */
+                }
+
+                @Override
+                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    /* do nothing */
+                }
+
+                @Override
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                    /* do nothing */
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Listener.NoOp." + name();
+                }
+            }
+
+            /**
+             * A listener that invokes {@link Thread#yield()} prior to every batch but the first batch.
+             */
+            enum Yielding implements Listener {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
+                    if (index > 0) {
+                        Thread.yield();
+                    }
+                }
+
+                @Override
+                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    /* do nothing */
+                }
+
+                @Override
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                    /* do nothing */
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Listener.Yielding." + name();
+                }
+            }
+
+            /**
+             * A listener that halts a retransformation process upon an exception.
+             */
+            enum ErrorEscalating implements Listener {
+
+                /**
+                 * A listener that fails the retransformation upon the first failed retransformation of a batch.
+                 */
+                FAIL_FAST {
+                    @Override
+                    public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                        throw new IllegalStateException("Could not transform any of " + batch, throwable);
+                    }
+
+                    @Override
+                    public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                        /* do nothing */
+                    }
+                },
+
+                /**
+                 * A listener that fails the retransformation after all batches were executed if any error occured.
+                 */
+                FAIL_LAST {
+                    @Override
+                    public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                        if (!failures.isEmpty()) {
+                            throw new IllegalStateException("Could not transform any of " + failures);
+                        }
+                    }
+                };
+
+                @Override
+                public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
+                    /* do nothing */
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating." + name();
+                }
+            }
+
+            /**
+             * A listener adapter that offers non-operational implementations of all listener methods.
+             */
+            abstract class Adapter implements Listener {
+
+                @Override
+                public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
+                    /* do nothing */
+                }
+
+                @Override
+                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    /* do nothing */
+                }
+
+                @Override
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                    /* do nothing */
+                }
+            }
+
+            /**
+             * A listener that invokes {@link Thread#sleep(long)} prior to every batch but the first batch.
+             */
+            class Pausing extends Adapter {
+
+                /**
+                 * The time to sleep in milliseconds between every two batches.
+                 */
+                private final long value;
+
+                /**
+                 * Creates a new pausing listener.
+                 *
+                 * @param value The time to sleep in milliseconds between every two batches.
+                 */
+                protected Pausing(long value) {
+                    this.value = value;
+                }
+
+                /**
+                 * Creates a listener that pauses for the specified amount of time. If the specified value is {@code 0}, a
+                 * non-operational listener is returned.
+                 *
+                 * @param value    The amount of time to pause between redefinition batches.
+                 * @param timeUnit The time unit of {@code value}.
+                 * @return An appropriate listener.
+                 */
+                public static Listener of(long value, TimeUnit timeUnit) {
+                    if (value > 0L) {
+                        return new Pausing(timeUnit.toMillis(value));
+                    } else if (value == 0L) {
+                        return NoOp.INSTANCE;
+                    } else {
+                        throw new IllegalArgumentException("Cannot sleep for a non-positive amount of time: " + value);
+                    }
+                }
+
+                @Override
+                public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
+                    if (index > 0) {
+                        try {
+                            Thread.sleep(value);
+                        } catch (InterruptedException exception) {
+                            throw new RuntimeException("Sleep was interrupted", exception);
+                        }
+                    }
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Pausing pausing = (Pausing) object;
+                    return value == pausing.value;
+                }
+
+                @Override
+                public int hashCode() {
+                    return (int) (value ^ (value >>> 32));
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Listener.Pausing{" +
+                            "value=" + value +
+                            '}';
+                }
+            }
+
+            /**
+             * A listener that writes events to a {@link PrintStream}.
+             */
+            class StreamWriting implements Listener {
+
+                /**
+                 * The print stream to write any events to.
+                 */
+                private final PrintStream printStream;
+
+                /**
+                 * Creates a new stream writing listener.
+                 *
+                 * @param printStream The print stream to write any events to.
+                 */
+                public StreamWriting(PrintStream printStream) {
+                    this.printStream = printStream;
+                }
+
+                /**
+                 * Writes the stream result to {@link System#out}.
+                 *
+                 * @return An appropriate listener.
+                 */
+                public static Listener toSystemOut() {
+                    return new StreamWriting(System.out);
+                }
+
+                /**
+                 * Writes the stream result to {@link System#err}.
+                 *
+                 * @return An appropriate listener.
+                 */
+                public static Listener toSystemError() {
+                    return new StreamWriting(System.err);
+                }
+
+                @Override
+                public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
+                    printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE BATCH #%d [%d of %d type(s)]%n", index, batch.size(), types.size());
+                }
+
+                @Override
+                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    synchronized (printStream) {
+                        printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE ERROR #%d [%d of %d type(s)]%n", index, batch.size(), types.size());
+                        throwable.printStackTrace(printStream);
+                    }
+                }
+
+                @Override
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                    printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE COMPLETE #%d batch(es) containing %d types [%d failed batch(es)]%n", amount, types.size(), failures.size());
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    StreamWriting streamWriting = (StreamWriting) object;
+                    return printStream.equals(streamWriting.printStream);
+                }
+
+                @Override
+                public int hashCode() {
+                    return printStream.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Listener.StreamWriting{" +
+                            "printStream=" + printStream +
+                            '}';
+                }
+            }
+
+            /**
+             * A compound listener that delegates events to several listeners.
+             */
+            class Compound implements Listener {
+
+                /**
+                 * The listeners to invoke.
+                 */
+                private final List<? extends Listener> listeners;
+
+                /**
+                 * Creates a new compound listener.
+                 *
+                 * @param listener The listeners to invoke.
+                 */
+                protected Compound(Listener... listener) {
+                    this(Arrays.asList(listener));
+                }
+
+                /**
+                 * Creates a new compound listener.
+                 *
+                 * @param listeners The listeners to invoke.
+                 */
+                protected Compound(List<? extends Listener> listeners) {
+                    this.listeners = listeners;
+                }
+
+                @Override
+                public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
+                    for (Listener listener : listeners) {
+                        listener.onBatch(index, batch, types);
+                    }
+                }
+
+                @Override
+                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    for (Listener listener : listeners) {
+                        listener.onError(index, batch, throwable, types);
+                    }
+                }
+
+                @Override
+                public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
+                    for (Listener listener : listeners) {
+                        listener.onComplete(amount, types, failures);
+                    }
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Compound compound = (Compound) object;
+                    return listeners.equals(compound.listeners);
+                }
+
+                @Override
+                public int hashCode() {
+                    return listeners.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Listener.Compound{" +
+                            "listeners=" + listeners +
+                            '}';
+                }
+            }
+        }
+
+        /**
+         * A collector is responsible for collecting classes that are to be considered for modification.
+         */
+        protected abstract static class Collector {
+
+            /**
+             * A representation for a non-available loaded type.
+             */
+            private static final Class<?> NO_LOADED_TYPE = null;
+
+            /**
+             * The transformation instance to use for considering types.
+             */
+            private final Default.Transformation transformation;
+
+            /**
+             * All types that were collected for redefinition.
+             */
+            private final List<Class<?>> types;
+
+            /**
+             * Creates a new collector.
+             *
+             * @param transformation The transformation instance to use for considering types.
+             */
+            protected Collector(Default.Transformation transformation) {
+                this.transformation = transformation;
+                types = new ArrayList<Class<?>>();
+            }
+
+            /**
+             * Does consider the retransformation or redefinition of a loaded type without a loaded type representation.
+             *
+             * @param ignoredTypeMatcher The ignored type matcher to apply.
+             * @param listener           The listener to apply during the consideration.
+             * @param typeDescription    The type description of the type being considered.
+             * @param type               The loaded type being considered.
+             * @param module             The type's Java module or {@code null} if the current VM does not support modules.
+             */
+            protected void consider(RawMatcher ignoredTypeMatcher,
+                                    AgentBuilder.Listener listener,
+                                    TypeDescription typeDescription,
+                                    Class<?> type,
+                                    JavaModule module) {
+                consider(ignoredTypeMatcher, listener, typeDescription, type, NO_LOADED_TYPE, module, false);
+            }
+
+            /**
+             * Does consider the retransformation or redefinition of a loaded type.
+             *
+             * @param ignoredTypeMatcher  The ignored type matcher to apply.
+             * @param listener            The listener to apply during the consideration.
+             * @param typeDescription     The type description of the type being considered.
+             * @param type                The loaded type being considered.
+             * @param classBeingRedefined The loaded type being considered or {@code null} if it should be considered non-available.
+             * @param module              The type's Java module or {@code null} if the current VM does not support modules.
+             * @param unmodifiable        {@code true} if the current type should be considered unmodifiable.
+             */
+            protected void consider(RawMatcher ignoredTypeMatcher,
+                                    AgentBuilder.Listener listener,
+                                    TypeDescription typeDescription,
+                                    Class<?> type,
+                                    Class<?> classBeingRedefined,
+                                    JavaModule module,
+                                    boolean unmodifiable) {
+                if (unmodifiable || !(transformation.isAlive(typeDescription,
+                        type.getClassLoader(),
+                        JavaModule.ofType(type),
+                        classBeingRedefined,
+                        type.getProtectionDomain(),
+                        ignoredTypeMatcher) && types.add(type))) {
+                    try {
+                        try {
+                            listener.onIgnored(typeDescription, type.getClassLoader(), module);
+                        } finally {
+                            listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
+                        }
+                    } catch (Throwable ignored) {
+                        // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                    }
+                }
+            }
+
+            /**
+             * Applies all types that this collector collected.
+             *
+             * @param instrumentation            The instrumentation instance to apply changes to.
+             * @param circularityLock            The circularity lock to use.
+             * @param locationStrategy           The location strategy to use.
+             * @param listener                   The listener to use.
+             * @param redefinitionBatchAllocator The redefinition batch allocator to use.
+             * @param redefinitionListener       The redefinition listener to use.
+             */
+            protected void apply(Instrumentation instrumentation,
+                                 CircularityLock circularityLock,
+                                 LocationStrategy locationStrategy,
+                                 AgentBuilder.Listener listener,
+                                 BatchAllocator redefinitionBatchAllocator,
+                                 Listener redefinitionListener) {
+                int index = 0;
+                Map<List<Class<?>>, Throwable> failures = new HashMap<List<Class<?>>, Throwable>();
+                for (List<Class<?>> types : redefinitionBatchAllocator.batch(this.types)) {
+                    redefinitionListener.onBatch(index, types, this.types);
+                    try {
+                        doApply(instrumentation, circularityLock, types, locationStrategy, listener);
+                    } catch (UnmodifiableClassException exception) {
+                        redefinitionListener.onError(index, types, exception, this.types);
+                        failures.put(types, exception);
+                    } catch (ClassNotFoundException exception) {
+                        redefinitionListener.onError(index, types, exception, this.types);
+                        failures.put(types, exception);
+                    }
+                    index += 1;
+                }
+                redefinitionListener.onComplete(index, types, failures);
+            }
 
             /**
              * Applies this collector.
              *
              * @param instrumentation  The instrumentation instance to apply the transformation for.
-             * @param poolStrategy     The type locator to use.
+             * @param circularityLock  The circularity lock to use.
+             * @param types            The types of the current patch to transform.
              * @param locationStrategy The location strategy to use.
              * @param listener         the listener to notify.
              * @throws UnmodifiableClassException If a class is not modifiable.
              * @throws ClassNotFoundException     If a class could not be found.
              */
-            void apply(Instrumentation instrumentation,
-                       PoolStrategy poolStrategy,
-                       LocationStrategy locationStrategy,
-                       Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
+            protected abstract void doApply(Instrumentation instrumentation,
+                                            CircularityLock circularityLock,
+                                            List<Class<?>> types,
+                                            LocationStrategy locationStrategy,
+                                            AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
+
+            @Override
+            public String toString() {
+                return " AgentBuilder.RedefinitionStrategy.Collector." + getClass().getSimpleName() + "{" +
+                        "transformation=" + transformation +
+                        ", types=" + types +
+                        '}';
+            }
 
             /**
              * A collector that applies a <b>redefinition</b> of already loaded classes.
              */
-            abstract class ForRedefinition implements Collector {
-
-                /**
-                 * The transformation of the built agent.
-                 */
-                protected final Default.Transformation transformation;
-
-                /**
-                 * A list of already collected redefinitions.
-                 */
-                protected final List<Entry> entries;
+            protected static class ForRedefinition extends Collector {
 
                 /**
                  * Creates a new collector for a redefinition.
@@ -3105,178 +4213,37 @@ public interface AgentBuilder {
                  * @param transformation The transformation of the built agent.
                  */
                 protected ForRedefinition(Default.Transformation transformation) {
-                    this.transformation = transformation;
-                    entries = new ArrayList<Entry>();
+                    super(transformation);
                 }
 
                 @Override
-                public boolean consider(TypeDescription typeDescription, Class<?> type, Class<?> classBeingRedefined, RawMatcher ignoredTypeMatcher) {
-                    return transformation.isAlive(typeDescription,
-                            type.getClassLoader(),
-                            JavaModule.ofType(type),
-                            classBeingRedefined,
-                            type.getProtectionDomain(),
-                            ignoredTypeMatcher) && entries.add(new Entry(type));
-                }
-
-                @Override
-                public void apply(Instrumentation instrumentation,
-                                  PoolStrategy poolStrategy,
-                                  LocationStrategy locationStrategy,
-                                  Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
-                    List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
-                    for (Entry entry : entries) {
+                protected void doApply(Instrumentation instrumentation,
+                                       CircularityLock circularityLock,
+                                       List<Class<?>> types,
+                                       LocationStrategy locationStrategy,
+                                       AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
+                    List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(types.size());
+                    for (Class<?> type : types) {
                         try {
-                            classDefinitions.add(entry.resolve(locationStrategy));
+                            classDefinitions.add(new ClassDefinition(type, locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type))
+                                    .locate(TypeDescription.ForLoadedType.getName(type))
+                                    .resolve()));
                         } catch (Throwable throwable) {
-                            JavaModule module = JavaModule.ofType(entry.getType());
+                            JavaModule module = JavaModule.ofType(type);
                             try {
-                                listener.onError(TypeDescription.ForLoadedType.getName(entry.getType()), entry.getType().getClassLoader(), module, throwable);
+                                listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, throwable);
                             } finally {
-                                listener.onComplete(TypeDescription.ForLoadedType.getName(entry.getType()), entry.getType().getClassLoader(), module);
+                                listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module);
                             }
                         }
                     }
-                    doApply(instrumentation, classDefinitions);
-                }
-
-                /**
-                 * Applies a redefinition.
-                 *
-                 * @param instrumentation  The instrumentation instance to use.
-                 * @param classDefinitions The class definitions to apply.
-                 * @throws UnmodifiableClassException If a class is not modifiable.
-                 * @throws ClassNotFoundException     If a class could not be found.
-                 */
-                protected abstract void doApply(Instrumentation instrumentation, List<ClassDefinition> classDefinitions) throws UnmodifiableClassException, ClassNotFoundException;
-
-                /**
-                 * A collector that applies a redefinition and applies all redefinitions as a single transformation request.
-                 */
-                protected static class Cumulative extends ForRedefinition {
-
-                    /**
-                     * Creates a new cumulative redefinition collector.
-                     *
-                     * @param transformation The transformation of the built agent.
-                     */
-                    protected Cumulative(Default.Transformation transformation) {
-                        super(transformation);
-                    }
-
-                    @Override
-                    protected void doApply(Instrumentation instrumentation, List<ClassDefinition> classDefinitions) throws UnmodifiableClassException, ClassNotFoundException {
-                        if (!classDefinitions.isEmpty()) {
+                    if (!classDefinitions.isEmpty()) {
+                        circularityLock.release();
+                        try {
                             instrumentation.redefineClasses(classDefinitions.toArray(new ClassDefinition[classDefinitions.size()]));
+                        } finally {
+                            circularityLock.acquire();
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition.Cumulative{" +
-                                "transformation=" + transformation +
-                                ", entries=" + entries +
-                                '}';
-                    }
-                }
-
-                /**
-                 * A collector that applies a redefinition and applies all redefinitions as a separate transformation request per class.
-                 */
-                protected static class Chunked extends ForRedefinition {
-
-                    /**
-                     * Creates a new chunked redefinition collector.
-                     *
-                     * @param transformation The transformation of the built agent.
-                     */
-                    protected Chunked(Default.Transformation transformation) {
-                        super(transformation);
-                    }
-
-                    @Override
-                    protected void doApply(Instrumentation instrumentation, List<ClassDefinition> classDefinitions) throws UnmodifiableClassException, ClassNotFoundException {
-                        Map<Class<?>, Exception> exceptions = new HashMap<Class<?>, Exception>();
-                        for (ClassDefinition classDefinition : classDefinitions) {
-                            try {
-                                instrumentation.redefineClasses(classDefinition);
-                            } catch (Exception exception) {
-                                exceptions.put(classDefinition.getDefinitionClass(), exception);
-                            }
-                        }
-                        if (!exceptions.isEmpty()) {
-                            throw new IllegalStateException("Could not retransform at least one class: " + exceptions);
-                        }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition.Chunked{" +
-                                "transformation=" + transformation +
-                                ", entries=" + entries +
-                                '}';
-                    }
-                }
-
-                /**
-                 * An entry describing a type redefinition.
-                 */
-                protected static class Entry {
-
-                    /**
-                     * The type to be redefined.
-                     */
-                    private final Class<?> type;
-
-                    /**
-                     * Creates a new entry for a given type.
-                     *
-                     * @param type The type to be redefined.
-                     */
-                    protected Entry(Class<?> type) {
-                        this.type = type;
-                    }
-
-                    /**
-                     * Returns the type that is being redefined.
-                     *
-                     * @return The type that is being redefined.
-                     */
-                    public Class<?> getType() {
-                        return type;
-                    }
-
-                    /**
-                     * Resolves the entry to a class definition.
-                     *
-                     * @param locationStrategy A strategy for creating a class file locator.
-                     * @return A class definition representing the redefined class.
-                     * @throws IOException If an I/O exception occurs.
-                     */
-                    protected ClassDefinition resolve(LocationStrategy locationStrategy) throws IOException {
-                        return new ClassDefinition(type, locationStrategy
-                                .classFileLocator(type.getClassLoader(), JavaModule.ofType(type))
-                                .locate(TypeDescription.ForLoadedType.getName(type)).resolve());
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        Entry entry = (Entry) other;
-                        return type.equals(entry.type);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return type.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition.Entry{" +
-                                "type=" + type +
-                                '}';
                     }
                 }
             }
@@ -3284,17 +4251,7 @@ public interface AgentBuilder {
             /**
              * A collector that applies a <b>retransformation</b> of already loaded classes.
              */
-            abstract class ForRetransformation implements Collector {
-
-                /**
-                 * The transformation defined by the built agent.
-                 */
-                protected final Default.Transformation transformation;
-
-                /**
-                 * The types that were collected for retransformation.
-                 */
-                protected final List<Class<?>> types;
+            protected static class ForRetransformation extends Collector {
 
                 /**
                  * Creates a new collector for a retransformation.
@@ -3302,91 +4259,22 @@ public interface AgentBuilder {
                  * @param transformation The transformation defined by the built agent.
                  */
                 protected ForRetransformation(Default.Transformation transformation) {
-                    this.transformation = transformation;
-                    types = new ArrayList<Class<?>>();
+                    super(transformation);
                 }
 
                 @Override
-                public boolean consider(TypeDescription typeDescription, Class<?> type, Class<?> classBeingRedefined, RawMatcher ignoredTypeMatcher) {
-                    return transformation.isAlive(typeDescription,
-                            type.getClassLoader(),
-                            JavaModule.ofType(type),
-                            classBeingRedefined,
-                            type.getProtectionDomain(),
-                            ignoredTypeMatcher) && types.add(type);
-                }
-
-                /**
-                 * A collector that applies a retransformation and applies all redefinitions as a single transformation request.
-                 */
-                protected static class Cumulative extends ForRetransformation {
-
-                    /**
-                     * Creates a new cumulative retransformation collector.
-                     *
-                     * @param transformation The transformation of the built agent.
-                     */
-                    protected Cumulative(Default.Transformation transformation) {
-                        super(transformation);
-                    }
-
-                    @Override
-                    public void apply(Instrumentation instrumentation,
-                                      PoolStrategy poolStrategy,
-                                      LocationStrategy locationStrategy,
-                                      Listener listener) throws UnmodifiableClassException {
-                        if (!types.isEmpty()) {
+                protected void doApply(Instrumentation instrumentation,
+                                       CircularityLock circularityLock,
+                                       List<Class<?>> types,
+                                       LocationStrategy locationStrategy,
+                                       AgentBuilder.Listener listener) throws UnmodifiableClassException {
+                    if (!types.isEmpty()) {
+                        circularityLock.release();
+                        try {
                             instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
+                        } finally {
+                            circularityLock.acquire();
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.Collector.ForRetransformation.Cumulative{" +
-                                "transformation=" + transformation +
-                                ", types=" + types +
-                                '}';
-                    }
-                }
-
-                /**
-                 * A collector that applies a retransformation and applies all redefinitions as a chunked transformation request.
-                 */
-                protected static class Chunked extends ForRetransformation {
-
-                    /**
-                     * Creates a new chunked retransformation collector.
-                     *
-                     * @param transformation The transformation of the built agent.
-                     */
-                    protected Chunked(Default.Transformation transformation) {
-                        super(transformation);
-                    }
-
-                    @Override
-                    public void apply(Instrumentation instrumentation,
-                                      PoolStrategy poolStrategy,
-                                      LocationStrategy locationStrategy,
-                                      Listener listener) throws UnmodifiableClassException {
-                        Map<Class<?>, Exception> exceptions = new HashMap<Class<?>, Exception>();
-                        for (Class<?> type : types) {
-                            try {
-                                instrumentation.retransformClasses(type);
-                            } catch (Exception exception) {
-                                exceptions.put(type, exception);
-                            }
-                        }
-                        if (!exceptions.isEmpty()) {
-                            throw new IllegalStateException("Could not retransform at least one class: " + exceptions);
-                        }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.Collector.ForRetransformation.Chunked{" +
-                                "transformation=" + transformation +
-                                ", types=" + types +
-                                '}';
                     }
                 }
             }
@@ -3444,6 +4332,20 @@ public interface AgentBuilder {
                     /* do nothing */
             }
         };
+
+        /**
+         * The name of the current VM's {@code Unsafe} class that is visible to the bootstrap loader.
+         */
+        private static final String UNSAFE_CLASS;
+
+        /*
+         * Locates the appropriate {@code Unsafe} class.
+         */
+        static {
+            UNSAFE_CLASS = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+                    ? "jdk/internal/misc/Unsafe"
+                    : "sun/misc/Unsafe";
+        }
 
         /**
          * Indicates that an original implementation can be ignored when redefining a method.
@@ -3975,7 +4877,7 @@ public interface AgentBuilder {
                                 new StackManipulation.Compound(fieldAccess),
                                 new StackManipulation.Compound(parameterAccess),
                                 MethodInvocation.invoke(targetMethod),
-                                MethodReturn.returning(targetMethod.getReturnType().asErasure())
+                                MethodReturn.of(targetMethod.getReturnType().asErasure())
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
 
@@ -4231,7 +5133,7 @@ public interface AgentBuilder {
                                 bridgeTargetInvocation.getMethodDescription().getReturnType().asErasure().isAssignableTo(instrumentedMethod.getReturnType().asErasure())
                                         ? StackManipulation.Trivial.INSTANCE
                                         : TypeCasting.to(instrumentedMethod.getReceiverType().asErasure()),
-                                MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+                                MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
 
                         )).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
@@ -4303,13 +5205,13 @@ public interface AgentBuilder {
 
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,
-                                      MethodDescription.InDefinedShape methodDescription,
+                                      MethodDescription.InDefinedShape instrumentedMethod,
                                       MethodVisitor methodVisitor,
                                       ClassFileVersion classFileVersion,
                                       int writerFlags,
                                       int readerFlags) {
                 methodVisitor.visitCode();
-                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "sun/misc/Unsafe", "getUnsafe", "()Lsun/misc/Unsafe;", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, UNSAFE_CLASS, "getUnsafe", "()L" + UNSAFE_CLASS + ";", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -4400,11 +5302,11 @@ public interface AgentBuilder {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
                 methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "parameterCount", "()I", false);
                 Label conditionalDefault = new Label();
@@ -4425,7 +5327,7 @@ public interface AgentBuilder {
                 Label conditionalAlternative = new Label();
                 methodVisitor.visitJumpInsn(Opcodes.GOTO, conditionalAlternative);
                 methodVisitor.visitLabel(conditionalDefault);
-                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"sun/misc/Unsafe", "java/lang/Class"}, 0, null);
+                methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{UNSAFE_CLASS, "java/lang/Class"}, 0, null);
                 methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
                 methodVisitor.visitInsn(Opcodes.DUP);
                 methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
@@ -4513,7 +5415,7 @@ public interface AgentBuilder {
 
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,
-                                      MethodDescription.InDefinedShape methodDescription,
+                                      MethodDescription.InDefinedShape instrumentedMethod,
                                       MethodVisitor methodVisitor,
                                       ClassFileVersion classFileVersion,
                                       int writerFlags,
@@ -4591,7 +5493,7 @@ public interface AgentBuilder {
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
                 methodVisitor.visitLabel(additionalBridgesExit);
                 methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"[Ljava/lang/invoke/MethodType;"}, 0, null);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "sun/misc/Unsafe", "getUnsafe", "()Lsun/misc/Unsafe;", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, UNSAFE_CLASS, "getUnsafe", "()L" + UNSAFE_CLASS + ";", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 8);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 8);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
@@ -4683,10 +5585,10 @@ public interface AgentBuilder {
                 Label callSiteAlternative = new Label();
                 methodVisitor.visitJumpInsn(Opcodes.GOTO, callSiteAlternative);
                 methodVisitor.visitLabel(callSiteConditional);
-                methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", "sun/misc/Unsafe"}, 7, new Object[]{"sun/misc/Unsafe", "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER});
+                methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", UNSAFE_CLASS}, 7, new Object[]{UNSAFE_CLASS, "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER});
                 methodVisitor.visitInsn(Opcodes.ICONST_0);
                 methodVisitor.visitLabel(callSiteAlternative);
-                methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", "sun/misc/Unsafe"}, 8, new Object[]{"sun/misc/Unsafe", "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER});
+                methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", UNSAFE_CLASS}, 8, new Object[]{UNSAFE_CLASS, "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER});
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
                 methodVisitor.visitInsn(Opcodes.AASTORE);
                 methodVisitor.visitInsn(Opcodes.DUP);
@@ -4702,11 +5604,11 @@ public interface AgentBuilder {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
                 methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 9);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 8);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 9);
-                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, UNSAFE_CLASS, "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "parameterCount", "()I", false);
                 Label callSiteJump = new Label();
@@ -4790,80 +5692,101 @@ public interface AgentBuilder {
         private static final Class<?> NO_LOADED_TYPE = null;
 
         /**
+         * The default circularity lock that assures that no agent created by any agent builder within this
+         * class loader causes a class loading circularity.
+         */
+        private static final CircularityLock DEFAULT_LOCK = new CircularityLock.Default();
+
+        /**
          * The {@link net.bytebuddy.ByteBuddy} instance to be used.
          */
-        private final ByteBuddy byteBuddy;
+        protected final ByteBuddy byteBuddy;
 
         /**
          * The listener to notify on transformations.
          */
-        private final Listener listener;
+        protected final Listener listener;
+
+        /**
+         * The circularity lock to use.
+         */
+        protected final CircularityLock circularityLock;
 
         /**
          * The type locator to use.
          */
-        private final PoolStrategy poolStrategy;
+        protected final PoolStrategy poolStrategy;
 
         /**
          * The definition handler to use.
          */
-        private final TypeStrategy typeStrategy;
+        protected final TypeStrategy typeStrategy;
 
         /**
          * The location strategy to use.
          */
-        private final LocationStrategy locationStrategy;
+        protected final LocationStrategy locationStrategy;
 
         /**
          * The native method strategy to use.
          */
-        private final NativeMethodStrategy nativeMethodStrategy;
+        protected final NativeMethodStrategy nativeMethodStrategy;
 
         /**
          * The initialization strategy to use for creating classes.
          */
-        private final InitializationStrategy initializationStrategy;
+        protected final InitializationStrategy initializationStrategy;
 
         /**
          * The redefinition strategy to apply.
          */
-        private final RedefinitionStrategy redefinitionStrategy;
+        protected final RedefinitionStrategy redefinitionStrategy;
+
+        /**
+         * The batch allocator for the redefinition strategy to apply.
+         */
+        protected final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
+
+        /**
+         * The redefinition listener for the redefinition strategy to apply.
+         */
+        protected final RedefinitionStrategy.Listener redefinitionListener;
 
         /**
          * The injection strategy for injecting classes into the bootstrap class loader.
          */
-        private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
+        protected final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
         /**
          * A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the instrumentation
          * of classes that represent lambda expressions.
          */
-        private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
+        protected final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
 
         /**
          * The description strategy for resolving type descriptions for types.
          */
-        private final DescriptionStrategy descriptionStrategy;
+        protected final DescriptionStrategy descriptionStrategy;
 
         /**
          * The installation strategy to use.
          */
-        private final InstallationStrategy installationStrategy;
+        protected final InstallationStrategy installationStrategy;
 
         /**
          * The fallback strategy to apply.
          */
-        private final FallbackStrategy fallbackStrategy;
+        protected final FallbackStrategy fallbackStrategy;
 
         /**
          * Identifies types that should not be instrumented.
          */
-        private final RawMatcher ignoredTypeMatcher;
+        protected final RawMatcher ignoredTypeMatcher;
 
         /**
          * The transformation object for handling type transformations.
          */
-        private final Transformation transformation;
+        protected final Transformation transformation;
 
         /**
          * Creates a new default agent builder that uses a default {@link net.bytebuddy.ByteBuddy} instance for creating classes.
@@ -4883,12 +5806,15 @@ public interface AgentBuilder {
         public Default(ByteBuddy byteBuddy) {
             this(byteBuddy,
                     Listener.NoOp.INSTANCE,
+                    DEFAULT_LOCK,
                     PoolStrategy.Default.FAST,
                     TypeStrategy.Default.REBASE,
                     LocationStrategy.ForClassLoader.STRONG,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     InitializationStrategy.SelfInjection.SPLIT,
                     RedefinitionStrategy.DISABLED,
+                    RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
+                    RedefinitionStrategy.Listener.NoOp.INSTANCE,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
                     DescriptionStrategy.Default.HYBRID,
@@ -4904,12 +5830,15 @@ public interface AgentBuilder {
          *
          * @param byteBuddy                     The Byte Buddy instance to be used.
          * @param listener                      The listener to notify on transformations.
+         * @param circularityLock               The circularity lock to use.
          * @param poolStrategy                  The type locator to use.
          * @param typeStrategy                  The definition handler to use.
          * @param locationStrategy              The location strategy to use.
          * @param nativeMethodStrategy          The native method strategy to apply.
          * @param initializationStrategy        The initialization strategy to use for transformed types.
          * @param redefinitionStrategy          The redefinition strategy to apply.
+         * @param redefinitionBatchAllocator    The batch allocator for the redefinition strategy to apply.
+         * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
          * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
          * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
          *                                      instrumentation of classes that represent lambda expressions.
@@ -4921,12 +5850,15 @@ public interface AgentBuilder {
          */
         protected Default(ByteBuddy byteBuddy,
                           Listener listener,
+                          CircularityLock circularityLock,
                           PoolStrategy poolStrategy,
                           TypeStrategy typeStrategy,
                           LocationStrategy locationStrategy,
                           NativeMethodStrategy nativeMethodStrategy,
                           InitializationStrategy initializationStrategy,
                           RedefinitionStrategy redefinitionStrategy,
+                          RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                          RedefinitionStrategy.Listener redefinitionListener,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           DescriptionStrategy descriptionStrategy,
@@ -4935,13 +5867,16 @@ public interface AgentBuilder {
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
+            this.listener = listener;
+            this.circularityLock = circularityLock;
             this.poolStrategy = poolStrategy;
             this.typeStrategy = typeStrategy;
             this.locationStrategy = locationStrategy;
-            this.listener = listener;
             this.nativeMethodStrategy = nativeMethodStrategy;
             this.initializationStrategy = initializationStrategy;
             this.redefinitionStrategy = redefinitionStrategy;
+            this.redefinitionBatchAllocator = redefinitionBatchAllocator;
+            this.redefinitionListener = redefinitionListener;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.descriptionStrategy = descriptionStrategy;
@@ -5001,12 +5936,15 @@ public interface AgentBuilder {
         public AgentBuilder with(ByteBuddy byteBuddy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5020,12 +5958,37 @@ public interface AgentBuilder {
         public AgentBuilder with(Listener listener) {
             return new Default(byteBuddy,
                     new Listener.Compound(this.listener, listener),
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    installationStrategy,
+                    fallbackStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder with(CircularityLock circularityLock) {
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5039,12 +6002,15 @@ public interface AgentBuilder {
         public AgentBuilder with(TypeStrategy typeStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5058,12 +6024,15 @@ public interface AgentBuilder {
         public AgentBuilder with(PoolStrategy poolStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5077,12 +6046,15 @@ public interface AgentBuilder {
         public AgentBuilder with(LocationStrategy locationStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5096,12 +6068,15 @@ public interface AgentBuilder {
         public AgentBuilder enableNativeMethodPrefix(String prefix) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     NativeMethodStrategy.ForPrefix.of(prefix),
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5115,12 +6090,15 @@ public interface AgentBuilder {
         public AgentBuilder disableNativeMethodPrefix() {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5131,15 +6109,18 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder with(RedefinitionStrategy redefinitionStrategy) {
-            return new Default(byteBuddy,
+        public RedefinitionListenable.WithoutBatchStrategy with(RedefinitionStrategy redefinitionStrategy) {
+            return new Redefining(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5153,12 +6134,15 @@ public interface AgentBuilder {
         public AgentBuilder with(InitializationStrategy initializationStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5172,12 +6156,15 @@ public interface AgentBuilder {
         public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5191,12 +6178,15 @@ public interface AgentBuilder {
         public AgentBuilder with(DescriptionStrategy descriptionStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5210,12 +6200,15 @@ public interface AgentBuilder {
         public AgentBuilder with(InstallationStrategy installationStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5229,12 +6222,15 @@ public interface AgentBuilder {
         public AgentBuilder with(FallbackStrategy fallbackStrategy) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5248,12 +6244,15 @@ public interface AgentBuilder {
         public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5267,12 +6266,15 @@ public interface AgentBuilder {
         public AgentBuilder disableBootstrapInjection() {
             return new Default(byteBuddy,
                     listener,
+                    circularityLock,
                     poolStrategy,
                     typeStrategy,
                     locationStrategy,
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5286,12 +6288,15 @@ public interface AgentBuilder {
         public AgentBuilder disableClassFormatChanges() {
             return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
                     listener,
+                    circularityLock,
                     poolStrategy,
                     TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     InitializationStrategy.NoOp.INSTANCE,
                     redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
@@ -5392,102 +6397,68 @@ public interface AgentBuilder {
                     descriptionStrategy,
                     fallbackStrategy,
                     ignoredTypeMatcher,
-                    transformation);
+                    transformation,
+                    circularityLock);
         }
 
         @Override
         public ResettableClassFileTransformer installOn(Instrumentation instrumentation) {
-            ResettableClassFileTransformer classFileTransformer = makeRaw();
-            instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming(instrumentation));
+            if (!circularityLock.acquire()) {
+                throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
+            }
             try {
-                if (nativeMethodStrategy.isEnabled(instrumentation)) {
-                    instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
-                }
-                lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
-                if (redefinitionStrategy.isEnabled()) {
-                    RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
-                    for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                        JavaModule module = JavaModule.ofType(type);
-                        try {
-                            TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
+                ResettableClassFileTransformer classFileTransformer = makeRaw();
+                instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming(instrumentation));
+                try {
+                    if (nativeMethodStrategy.isEnabled(instrumentation)) {
+                        instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
+                    }
+                    lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
+                    if (redefinitionStrategy.isEnabled()) {
+                        RedefinitionStrategy.Collector collector = redefinitionStrategy.make(transformation);
+                        for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                            JavaModule module = JavaModule.ofType(type);
                             try {
-                                doConsider(descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool), type, type, module, collector, !instrumentation.isModifiableClass(type));
-                            } catch (Throwable throwable) {
-                                if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
-                                    doConsider(typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(), type, NO_LOADED_TYPE, module, collector, false);
-                                } else {
-                                    throw throwable;
-                                }
-                            }
-                        } catch (Throwable throwable) {
-                            try {
+                                TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
                                 try {
-                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, throwable);
-                                } finally {
-                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module);
+                                    collector.consider(ignoredTypeMatcher,
+                                            listener,
+                                            descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool),
+                                            type,
+                                            type,
+                                            module,
+                                            !instrumentation.isModifiableClass(type));
+                                } catch (Throwable throwable) {
+                                    if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
+                                        collector.consider(ignoredTypeMatcher,
+                                                listener,
+                                                typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
+                                                type,
+                                                module);
+                                    } else {
+                                        throw throwable;
+                                    }
                                 }
-                            } catch (Throwable ignored) {
-                                // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                            } catch (Throwable throwable) {
+                                try {
+                                    try {
+                                        listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, throwable);
+                                    } finally {
+                                        listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module);
+                                    }
+                                } catch (Throwable ignored) {
+                                    // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                                }
                             }
                         }
+                        collector.apply(instrumentation, circularityLock, locationStrategy, listener, redefinitionBatchAllocator, redefinitionListener);
                     }
-                    collector.apply(instrumentation, poolStrategy, locationStrategy, listener);
+                    return classFileTransformer;
+                } catch (Throwable throwable) {
+                    return installationStrategy.onError(instrumentation, classFileTransformer, throwable);
                 }
-                return classFileTransformer;
-            } catch (Throwable throwable) {
-                return installationStrategy.onError(instrumentation, classFileTransformer, throwable);
-            }
-        }
-
-        /**
-         * Does consider the retransformation or redefinition of a loaded type.
-         *
-         * @param typeDescription     The type description of the type being considered.
-         * @param type                The loaded type being considered.
-         * @param classBeingRedefined The loaded type being considered or {@code null} if it should be considered non-available.
-         * @param module              The type's Java module or {@code null} if the current VM does not support modules.
-         * @param collector           The collector to apply.
-         * @param unmodifiable        {@code true} if the current type should be considered unmodifiable.
-         */
-        private void doConsider(TypeDescription typeDescription,
-                                Class<?> type,
-                                Class<?> classBeingRedefined,
-                                JavaModule module,
-                                RedefinitionStrategy.Collector collector,
-                                boolean unmodifiable) {
-            doConsider(ignoredTypeMatcher, listener, typeDescription, type, classBeingRedefined, module, collector, unmodifiable);
-        }
-
-        /**
-         * Does consider the retransformation or redefinition of a loaded type.
-         *
-         * @param ignoredTypeMatcher  The ignored type matcher to apply.
-         * @param listener            The listener to apply during the consideration.
-         * @param typeDescription     The type description of the type being considered.
-         * @param type                The loaded type being considered.
-         * @param classBeingRedefined The loaded type being considered or {@code null} if it should be considered non-available.
-         * @param module              The type's Java module or {@code null} if the current VM does not support modules.
-         * @param collector           The collector to apply.
-         * @param unmodifiable        {@code true} if the current type should be considered unmodifiable.
-         */
-        protected static void doConsider(RawMatcher ignoredTypeMatcher,
-                                         Listener listener,
-                                         TypeDescription typeDescription,
-                                         Class<?> type,
-                                         Class<?> classBeingRedefined,
-                                         JavaModule module,
-                                         RedefinitionStrategy.Collector collector,
-                                         boolean unmodifiable) {
-            if (unmodifiable || !collector.consider(typeDescription, type, classBeingRedefined, ignoredTypeMatcher)) {
-                try {
-                    try {
-                        listener.onIgnored(typeDescription, type.getClassLoader(), module);
-                    } finally {
-                        listener.onComplete(typeDescription.getName(), type.getClassLoader(), module);
-                    }
-                } catch (Throwable ignored) {
-                    // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
-                }
+            } finally {
+                circularityLock.release();
             }
         }
 
@@ -5516,12 +6487,15 @@ public interface AgentBuilder {
             Default aDefault = (Default) other;
             return byteBuddy.equals(aDefault.byteBuddy)
                     && listener.equals(aDefault.listener)
+                    && circularityLock.equals(aDefault.circularityLock)
                     && poolStrategy.equals(aDefault.poolStrategy)
                     && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
                     && typeStrategy.equals(aDefault.typeStrategy)
                     && locationStrategy.equals(aDefault.locationStrategy)
                     && initializationStrategy == aDefault.initializationStrategy
                     && redefinitionStrategy == aDefault.redefinitionStrategy
+                    && redefinitionBatchAllocator.equals(aDefault.redefinitionBatchAllocator)
+                    && redefinitionListener.equals(aDefault.redefinitionListener)
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
                     && lambdaInstrumentationStrategy.equals(aDefault.lambdaInstrumentationStrategy)
                     && descriptionStrategy.equals(aDefault.descriptionStrategy)
@@ -5535,12 +6509,15 @@ public interface AgentBuilder {
         public int hashCode() {
             int result = byteBuddy.hashCode();
             result = 31 * result + listener.hashCode();
+            result = 31 * result + circularityLock.hashCode();
             result = 31 * result + poolStrategy.hashCode();
             result = 31 * result + typeStrategy.hashCode();
             result = 31 * result + locationStrategy.hashCode();
             result = 31 * result + nativeMethodStrategy.hashCode();
             result = 31 * result + initializationStrategy.hashCode();
             result = 31 * result + redefinitionStrategy.hashCode();
+            result = 31 * result + redefinitionBatchAllocator.hashCode();
+            result = 31 * result + redefinitionListener.hashCode();
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
             result = 31 * result + lambdaInstrumentationStrategy.hashCode();
             result = 31 * result + descriptionStrategy.hashCode();
@@ -5556,12 +6533,15 @@ public interface AgentBuilder {
             return "AgentBuilder.Default{" +
                     "byteBuddy=" + byteBuddy +
                     ", listener=" + listener +
+                    ", circularityLock=" + circularityLock +
                     ", poolStrategy=" + poolStrategy +
                     ", typeStrategy=" + typeStrategy +
                     ", locationStrategy=" + locationStrategy +
                     ", nativeMethodStrategy=" + nativeMethodStrategy +
                     ", initializationStrategy=" + initializationStrategy +
                     ", redefinitionStrategy=" + redefinitionStrategy +
+                    ", redefinitionBatchAllocator=" + redefinitionBatchAllocator +
+                    ", redefinitionListener=" + redefinitionListener +
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
                     ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
                     ", descriptionStrategy=" + descriptionStrategy +
@@ -6484,7 +7464,7 @@ public interface AgentBuilder {
          * A {@link java.lang.instrument.ClassFileTransformer} that implements the enclosing agent builder's
          * configuration.
          */
-        protected static class ExecutingTransformer implements ResettableClassFileTransformer {
+        protected static class ExecutingTransformer extends ResettableClassFileTransformer.AbstractBase {
 
             /**
              * A factory for creating a {@link ClassFileTransformer} that supports the features of the current VM.
@@ -6552,6 +7532,11 @@ public interface AgentBuilder {
             private final Transformation transformation;
 
             /**
+             * A lock that prevents circular class transformations.
+             */
+            private final CircularityLock circularityLock;
+
+            /**
              * The access control context to use for loading classes.
              */
             private final AccessControlContext accessControlContext;
@@ -6571,6 +7556,7 @@ public interface AgentBuilder {
              * @param fallbackStrategy           The fallback strategy to use.
              * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
              * @param transformation             The transformation object for handling type transformations.
+             * @param circularityLock            The circularity lock to use.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
                                         Listener listener,
@@ -6583,7 +7569,8 @@ public interface AgentBuilder {
                                         DescriptionStrategy descriptionStrategy,
                                         FallbackStrategy fallbackStrategy,
                                         RawMatcher ignoredTypeMatcher,
-                                        Transformation transformation) {
+                                        Transformation transformation,
+                                        CircularityLock circularityLock) {
                 this.byteBuddy = byteBuddy;
                 this.typeStrategy = typeStrategy;
                 this.poolStrategy = poolStrategy;
@@ -6596,6 +7583,7 @@ public interface AgentBuilder {
                 this.fallbackStrategy = fallbackStrategy;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
                 this.transformation = transformation;
+                this.circularityLock = circularityLock;
                 accessControlContext = AccessController.getContext();
             }
 
@@ -6605,11 +7593,19 @@ public interface AgentBuilder {
                                     Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
-                return AccessController.doPrivileged(new LegacyVmDispatcher(classLoader,
-                        internalTypeName,
-                        classBeingRedefined,
-                        protectionDomain,
-                        binaryRepresentation), accessControlContext);
+                if (circularityLock.acquire()) {
+                    try {
+                        return AccessController.doPrivileged(new LegacyVmDispatcher(classLoader,
+                                internalTypeName,
+                                classBeingRedefined,
+                                protectionDomain,
+                                binaryRepresentation), accessControlContext);
+                    } finally {
+                        circularityLock.release();
+                    }
+                } else {
+                    return NO_TRANSFORMATION;
+                }
             }
 
             /**
@@ -6630,12 +7626,20 @@ public interface AgentBuilder {
                                        Class<?> classBeingRedefined,
                                        ProtectionDomain protectionDomain,
                                        byte[] binaryRepresentation) {
-                return AccessController.doPrivileged(new Java9CapableVmDispatcher(rawModule,
-                        classLoader,
-                        internalTypeName,
-                        classBeingRedefined,
-                        protectionDomain,
-                        binaryRepresentation), accessControlContext);
+                if (circularityLock.acquire()) {
+                    try {
+                        return AccessController.doPrivileged(new Java9CapableVmDispatcher(rawModule,
+                                classLoader,
+                                internalTypeName,
+                                classBeingRedefined,
+                                protectionDomain,
+                                binaryRepresentation), accessControlContext);
+                    } finally {
+                        circularityLock.release();
+                    }
+                } else {
+                    return NO_TRANSFORMATION;
+                }
             }
 
             /**
@@ -6717,55 +7721,54 @@ public interface AgentBuilder {
             }
 
             @Override
-            public synchronized Reset reset(Instrumentation instrumentation, RedefinitionStrategy redefinitionStrategy) {
+            public synchronized Reset reset(Instrumentation instrumentation,
+                                            RedefinitionStrategy redefinitionStrategy,
+                                            RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                            RedefinitionStrategy.Listener redefinitionListener) {
                 if (instrumentation.removeTransformer(this)) {
                     if (!redefinitionStrategy.isEnabled()) {
                         return Reset.Simple.ACTIVE;
                     }
                     redefinitionStrategy.isRetransforming(instrumentation);
-                    Map<Class<?>, Throwable> errors = new HashMap<Class<?>, Throwable>();
-                    RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
+                    Map<Class<?>, Throwable> failures = new HashMap<Class<?>, Throwable>();
+                    RedefinitionStrategy.Collector collector = redefinitionStrategy.make(transformation);
                     for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                        JavaModule module = JavaModule.ofType(type);
                         try {
-                            doConsider(ignoredTypeMatcher,
+                            collector.consider(ignoredTypeMatcher,
                                     Listener.NoOp.INSTANCE,
                                     descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type),
                                             type,
-                                            poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader())),
+                                            poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader())),
                                     type,
                                     type,
-                                    JavaModule.ofType(type),
-                                    collector,
+                                    module,
                                     !instrumentation.isModifiableClass(type));
                         } catch (Throwable throwable) {
                             try {
                                 if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
-                                    doConsider(ignoredTypeMatcher,
+                                    collector.consider(ignoredTypeMatcher,
                                             Listener.NoOp.INSTANCE,
                                             descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type),
                                                     NO_LOADED_TYPE,
-                                                    poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type)), type.getClassLoader())),
+                                                    poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader())),
                                             type,
-                                            NO_LOADED_TYPE,
-                                            JavaModule.ofType(type),
-                                            collector,
-                                            false);
+                                            module);
                                 } else {
-                                    errors.put(type, throwable);
+                                    failures.put(type, throwable);
                                 }
                             } catch (Throwable fallback) {
-                                errors.put(type, fallback);
+                                failures.put(type, fallback);
                             }
                         }
                     }
-                    try {
-                        collector.apply(instrumentation, poolStrategy, locationStrategy, Listener.NoOp.INSTANCE);
-                    } catch (UnmodifiableClassException exception) {
-                        throw new IllegalStateException("Could not modify classes", exception);
-                    } catch (ClassNotFoundException exception) {
-                        throw new IllegalStateException("Could not find class", exception);
-                    }
-                    return Reset.WithErrors.ofPotentiallyErroneous(errors);
+                    collector.apply(instrumentation,
+                            CircularityLock.Inactive.INSTANCE,
+                            locationStrategy,
+                            Listener.NoOp.INSTANCE,
+                            RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
+                            new RedefinitionStrategy.Listener.Compound(new FailureCollectingListener(failures), redefinitionListener));
+                    return Reset.WithErrors.ofPotentiallyErroneous(failures);
                 } else {
                     return Reset.Simple.INACTIVE;
                 }
@@ -6788,6 +7791,7 @@ public interface AgentBuilder {
                         ", fallbackStrategy=" + fallbackStrategy +
                         ", ignoredTypeMatcher=" + ignoredTypeMatcher +
                         ", transformation=" + transformation +
+                        ", circularityLock=" + circularityLock +
                         ", accessControlContext=" + accessControlContext +
                         '}';
             }
@@ -6812,6 +7816,7 @@ public interface AgentBuilder {
                  * @param fallbackStrategy           The fallback strategy to use.
                  * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
                  * @param transformation             The transformation object for handling type transformations.
+                 * @param circularityLock            The circularity lock to use.
                  * @return A class file transformer for the current VM that supports the API of the current VM.
                  */
                 ResettableClassFileTransformer make(ByteBuddy byteBuddy,
@@ -6825,7 +7830,8 @@ public interface AgentBuilder {
                                                     DescriptionStrategy descriptionStrategy,
                                                     FallbackStrategy fallbackStrategy,
                                                     RawMatcher ignoredTypeMatcher,
-                                                    Transformation transformation);
+                                                    Transformation transformation,
+                                                    CircularityLock circularityLock);
 
                 /**
                  * A factory for a class file transformer on a JVM that supports the {@code java.lang.reflect.Module} API to override
@@ -6861,7 +7867,8 @@ public interface AgentBuilder {
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
                                                                RawMatcher ignoredTypeMatcher,
-                                                               Transformation transformation) {
+                                                               Transformation transformation,
+                                                               CircularityLock circularityLock) {
                         try {
                             return executingTransformer.newInstance(byteBuddy,
                                     listener,
@@ -6874,7 +7881,8 @@ public interface AgentBuilder {
                                     descriptionStrategy,
                                     fallbackStrategy,
                                     ignoredTypeMatcher,
-                                    transformation);
+                                    transformation,
+                                    circularityLock);
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot access " + executingTransformer, exception);
                         } catch (InstantiationException exception) {
@@ -6927,7 +7935,8 @@ public interface AgentBuilder {
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
                                                                RawMatcher ignoredTypeMatcher,
-                                                               Transformation transformation) {
+                                                               Transformation transformation,
+                                                               CircularityLock circularityLock) {
                         return new ExecutingTransformer(byteBuddy,
                                 listener,
                                 poolStrategy,
@@ -6939,7 +7948,8 @@ public interface AgentBuilder {
                                 descriptionStrategy,
                                 fallbackStrategy,
                                 ignoredTypeMatcher,
-                                transformation);
+                                transformation,
+                                circularityLock);
                     }
 
                     @Override
@@ -6989,7 +7999,8 @@ public interface AgentBuilder {
                                         DescriptionStrategy.class,
                                         FallbackStrategy.class,
                                         RawMatcher.class,
-                                        Transformation.class));
+                                        Transformation.class,
+                                        CircularityLock.class));
                     } catch (Exception ignored) {
                         return Factory.ForLegacyVm.INSTANCE;
                     }
@@ -7226,6 +8237,53 @@ public interface AgentBuilder {
                             '}';
                 }
             }
+
+            /**
+             * A listener that adds all discovered errors to a map.
+             */
+            protected static class FailureCollectingListener extends RedefinitionStrategy.Listener.Adapter {
+
+                /**
+                 * A mapping of failures by the class that causes this failure.
+                 */
+                private final Map<Class<?>, Throwable> failures;
+
+                /**
+                 * Creates a new failure collecting listener.
+                 *
+                 * @param failures A mapping of failures by the class that causes this failure.
+                 */
+                protected FailureCollectingListener(Map<Class<?>, Throwable> failures) {
+                    this.failures = failures;
+                }
+
+                @Override
+                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    for (Class<?> type : batch) {
+                        failures.put(type, throwable);
+                    }
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    FailureCollectingListener that = (FailureCollectingListener) object;
+                    return failures.equals(that.failures);
+                }
+
+                @Override
+                public int hashCode() {
+                    return failures.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.ExecutingTransformer.FailureCollectingListener{" +
+                            "failures=" + failures +
+                            '}';
+                }
+            }
         }
 
         /**
@@ -7253,6 +8311,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder with(CircularityLock circularityLock) {
+                return materialize().with(circularityLock);
+            }
+
+            @Override
             public AgentBuilder with(TypeStrategy typeStrategy) {
                 return materialize().with(typeStrategy);
             }
@@ -7273,7 +8336,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder with(RedefinitionStrategy redefinitionStrategy) {
+            public RedefinitionListenable.WithoutBatchStrategy with(RedefinitionStrategy redefinitionStrategy) {
                 return materialize().with(redefinitionStrategy);
             }
 
@@ -7436,12 +8499,15 @@ public interface AgentBuilder {
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
                         listener,
+                        circularityLock,
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
@@ -7494,6 +8560,140 @@ public interface AgentBuilder {
         }
 
         /**
+         * An implementation of a default agent builder that allows for refinement of the redefinition strategy.
+         */
+        protected static class Redefining extends Default implements RedefinitionListenable.WithoutBatchStrategy {
+
+            /**
+             * Creates a new default agent builder that allows for refinement of the redefinition strategy.
+             *
+             * @param byteBuddy                     The Byte Buddy instance to be used.
+             * @param listener                      The listener to notify on transformations.
+             * @param circularityLock               The circularity lock to use.
+             * @param poolStrategy                  The type locator to use.
+             * @param typeStrategy                  The definition handler to use.
+             * @param locationStrategy              The location strategy to use.
+             * @param nativeMethodStrategy          The native method strategy to apply.
+             * @param initializationStrategy        The initialization strategy to use for transformed types.
+             * @param redefinitionStrategy          The redefinition strategy to apply.
+             * @param redefinitionBatchAllocator    The batch allocator for the redefinition strategy to apply.
+             * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
+             * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
+             * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
+             *                                      instrumentation of classes that represent lambda expressions.
+             * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
+             * @param installationStrategy          The installation strategy to use.
+             * @param fallbackStrategy              The fallback strategy to apply.
+             * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
+             * @param transformation                The transformation object for handling type transformations.
+             */
+            protected Redefining(ByteBuddy byteBuddy,
+                                 Listener listener,
+                                 CircularityLock circularityLock,
+                                 PoolStrategy poolStrategy,
+                                 TypeStrategy typeStrategy,
+                                 LocationStrategy locationStrategy,
+                                 NativeMethodStrategy nativeMethodStrategy,
+                                 InitializationStrategy initializationStrategy,
+                                 RedefinitionStrategy redefinitionStrategy,
+                                 RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                 RedefinitionStrategy.Listener redefinitionListener,
+                                 BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                 LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                                 DescriptionStrategy descriptionStrategy,
+                                 InstallationStrategy installationStrategy,
+                                 FallbackStrategy fallbackStrategy,
+                                 RawMatcher ignoredTypeMatcher,
+                                 Transformation transformation) {
+                super(byteBuddy,
+                        listener,
+                        circularityLock,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        installationStrategy,
+                        fallbackStrategy,
+                        ignoredTypeMatcher,
+                        transformation);
+            }
+
+            @Override
+            public RedefinitionListenable with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
+                return new Redefining(byteBuddy,
+                        listener,
+                        circularityLock,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        installationStrategy,
+                        fallbackStrategy,
+                        ignoredTypeMatcher,
+                        transformation);
+            }
+
+            @Override
+            public RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener) {
+                return new Redefining(byteBuddy,
+                        listener,
+                        circularityLock,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        new RedefinitionStrategy.Listener.Compound(this.redefinitionListener, redefinitionListener),
+                        bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        installationStrategy,
+                        fallbackStrategy,
+                        ignoredTypeMatcher,
+                        transformation);
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Default.Redefining{" +
+                        "byteBuddy=" + byteBuddy +
+                        ", listener=" + listener +
+                        ", poolStrategy=" + poolStrategy +
+                        ", typeStrategy=" + typeStrategy +
+                        ", locationStrategy=" + locationStrategy +
+                        ", nativeMethodStrategy=" + nativeMethodStrategy +
+                        ", initializationStrategy=" + initializationStrategy +
+                        ", redefinitionStrategy=" + redefinitionStrategy +
+                        ", redefinitionBatchAllocator=" + redefinitionBatchAllocator +
+                        ", redefinitionListener=" + redefinitionListener +
+                        ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
+                        ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
+                        ", descriptionStrategy=" + descriptionStrategy +
+                        ", installationStrategy=" + installationStrategy +
+                        ", fallbackStrategy=" + fallbackStrategy +
+                        ", ignoredTypeMatcher=" + ignoredTypeMatcher +
+                        ", transformation=" + transformation +
+                        '}';
+            }
+        }
+
+        /**
          * A helper class that describes a {@link net.bytebuddy.agent.builder.AgentBuilder.Default} after supplying
          * a {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} such that one or several
          * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s can be supplied.
@@ -7532,12 +8732,15 @@ public interface AgentBuilder {
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
                         listener,
+                        circularityLock,
                         poolStrategy,
                         typeStrategy,
                         locationStrategy,
                         nativeMethodStrategy,
                         initializationStrategy,
                         redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,

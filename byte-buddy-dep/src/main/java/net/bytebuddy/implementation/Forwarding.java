@@ -338,7 +338,7 @@ public class Forwarding implements Implementation {
                     delegateLoadingInstruction,
                     MethodVariableAccess.allArgumentsOf(instrumentedMethod),
                     MethodInvocation.invoke(instrumentedMethod).virtual(fieldType.asErasure()),
-                    MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+                    MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }

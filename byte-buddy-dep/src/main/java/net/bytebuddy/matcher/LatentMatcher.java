@@ -7,7 +7,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.none;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A latent matcher that resolves an {@link ElementMatcher} after supplying a type description.
@@ -23,6 +23,48 @@ public interface LatentMatcher<T> {
      * @return An {@link ElementMatcher} that represents this matcher's resolved form.
      */
     ElementMatcher<? super T> resolve(TypeDescription typeDescription);
+
+    /**
+     * A latent matching methods that are declared by the resolved type.
+     */
+    enum ForSelfDeclaredMethod implements LatentMatcher<MethodDescription> {
+
+        /**
+         * Matches any method declared by the resolved type.
+         */
+        DECLARED(false),
+
+        /**
+         * Matches any method not declared by the resolved type.
+         */
+        NOT_DECLARED(true);
+
+        /**
+         * {@code true} if the matcher is inverted.
+         */
+        private final boolean inverted;
+
+        /**
+         * Creates a new latent matcher for a self-declared method.
+         *
+         * @param inverted {@code true} if the matcher is inverted.
+         */
+        ForSelfDeclaredMethod(boolean inverted) {
+            this.inverted = inverted;
+        }
+
+        @Override
+        public ElementMatcher<? super MethodDescription> resolve(TypeDescription typeDescription) {
+            return inverted
+                    ? not(isDeclaredBy(typeDescription))
+                    : isDeclaredBy(typeDescription);
+        }
+
+        @Override
+        public String toString() {
+            return "LatentMatcher.ForSelfDeclaredMethod." + name();
+        }
+    }
 
     /**
      * A latent matcher representing an already resolved {@link ElementMatcher}.
@@ -242,34 +284,92 @@ public interface LatentMatcher<T> {
     }
 
     /**
-     * A compound implementation of a latent matcher. A compound matcher matches a method if at least one of the resolved matchers
-     * matches the target element.
+     * A matcher that computes the conjunction of all supplied latent matchers.
      *
      * @param <S> The type of the matched element.
      */
-    class Compound<S> implements LatentMatcher<S> {
+    class Conjunction<S> implements LatentMatcher<S> {
 
         /**
-         * The matchers this compound matcher represents.
+         * The matchers this conjunction represents.
          */
         private final List<? extends LatentMatcher<? super S>> matchers;
 
         /**
-         * Creates a new compound latent matcher.
+         * Creates a new conjunction of latent matchers.
          *
-         * @param matcher The matchers this compound matcher represents.
+         * @param matcher The matchers this conjunction represents.
          */
         @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
-        public Compound(LatentMatcher<? super S>... matcher) {
+        public Conjunction(LatentMatcher<? super S>... matcher) {
             this(Arrays.asList(matcher));
         }
 
         /**
-         * Creates a new compound latent matcher.
+         * Creates a new conjunction of latent matchers.
          *
-         * @param matchers The matchers this compound matcher represents.
+         * @param matchers The matchers this conjunction represents.
          */
-        public Compound(List<? extends LatentMatcher<? super S>> matchers) {
+        public Conjunction(List<? extends LatentMatcher<? super S>> matchers) {
+            this.matchers = matchers;
+        }
+
+        @Override
+        public ElementMatcher<? super S> resolve(TypeDescription typeDescription) {
+            ElementMatcher.Junction<S> matcher = any();
+            for (LatentMatcher<? super S> latentMatcher : matchers) {
+                matcher = matcher.and(latentMatcher.resolve(typeDescription));
+            }
+            return matcher;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && matchers.equals(((Conjunction) other).matchers);
+        }
+
+        @Override
+        public int hashCode() {
+            return matchers.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "LatentMatcher.Conjunction{" +
+                    "matchers=" + matchers +
+                    '}';
+        }
+    }
+
+    /**
+     * A matcher that computes the disjunction of all supplied latent matchers.
+     *
+     * @param <S> The type of the matched element.
+     */
+    class Disjunction<S> implements LatentMatcher<S> {
+
+        /**
+         * The matchers this disjunction represents.
+         */
+        private final List<? extends LatentMatcher<? super S>> matchers;
+
+        /**
+         * Creates a new disjunction of latent matchers.
+         *
+         * @param matcher The matchers this disjunction represents.
+         */
+        @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+        public Disjunction(LatentMatcher<? super S>... matcher) {
+            this(Arrays.asList(matcher));
+        }
+
+        /**
+         * Creates a new disjunction of latent matchers.
+         *
+         * @param matchers The matchers this disjunction represents.
+         */
+        public Disjunction(List<? extends LatentMatcher<? super S>> matchers) {
             this.matchers = matchers;
         }
 
@@ -285,7 +385,7 @@ public interface LatentMatcher<T> {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && matchers.equals(((Compound) other).matchers);
+                    && matchers.equals(((Disjunction) other).matchers);
         }
 
         @Override
@@ -295,7 +395,7 @@ public interface LatentMatcher<T> {
 
         @Override
         public String toString() {
-            return "LatentMatcher.Compound{" +
+            return "LatentMatcher.Disjunction{" +
                     "matchers=" + matchers +
                     '}';
         }

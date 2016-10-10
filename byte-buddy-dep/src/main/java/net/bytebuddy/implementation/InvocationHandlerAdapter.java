@@ -177,7 +177,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().getOnly()),
                 assigner.assign(TypeDescription.Generic.OBJECT, instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
-                MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+                MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }

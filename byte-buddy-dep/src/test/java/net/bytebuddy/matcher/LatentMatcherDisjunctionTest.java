@@ -14,7 +14,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class LatentMatcherCompoundTest {
+public class LatentMatcherDisjunctionTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -38,12 +38,12 @@ public class LatentMatcherCompoundTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testManifestation() throws Exception {
-        assertThat(new LatentMatcher.Compound(left, right).resolve(typeDescription),
+        assertThat(new LatentMatcher.Disjunction(left, right).resolve(typeDescription),
                 is((ElementMatcher) none().or((ElementMatcher) leftMatcher).or((ElementMatcher) rightMatcher)));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(LatentMatcher.Compound.class).apply();
+        ObjectPropertyAssertion.of(LatentMatcher.Disjunction.class).apply();
     }
 }

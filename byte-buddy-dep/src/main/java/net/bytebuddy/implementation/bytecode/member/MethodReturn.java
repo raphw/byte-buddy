@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -66,18 +66,18 @@ public enum MethodReturn implements StackManipulation {
     /**
      * Returns a method return corresponding to a given type.
      *
-     * @param typeDescription The type to be returned.
+     * @param typeDefinition The type to be returned.
      * @return The stack manipulation representing the method return.
      */
-    public static StackManipulation returning(TypeDescription typeDescription) {
-        if (typeDescription.isPrimitive()) {
-            if (typeDescription.represents(long.class)) {
+    public static StackManipulation of(TypeDefinition typeDefinition) {
+        if (typeDefinition.isPrimitive()) {
+            if (typeDefinition.represents(long.class)) {
                 return LONG;
-            } else if (typeDescription.represents(double.class)) {
+            } else if (typeDefinition.represents(double.class)) {
                 return DOUBLE;
-            } else if (typeDescription.represents(float.class)) {
+            } else if (typeDefinition.represents(float.class)) {
                 return FLOAT;
-            } else if (typeDescription.represents(void.class)) {
+            } else if (typeDefinition.represents(void.class)) {
                 return VOID;
             } else {
                 return INTEGER;

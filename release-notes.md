@@ -1,6 +1,34 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. October 2016: version 1.4.31
+
+- Reuse `CircularityLock` on all `AgentBuilder`s by default to avoid that Byte Buddy agents introduce circularities to different agents.
+- Also allow using `Advice` as `Implementation`.
+- Added `FixedValue.self()` and added `FieldPersistence` for describing `volatile` fields.
+
+### 4. October 2016: version 1.4.30
+
+- Also acquire circularity lock during class file retransformation.
+- Added slicing `BatchAllocator`.
+
+### 3. October 2016: version 1.4.29
+
+- Explicitly check for recursive transformation of types used during a transformation causing a `ClassCircularityError` from an `AgentBuilder` by adding thread-local locking.
+
+### 30. September 2016: version 1.4.28
+
+- Additional refactoring of the `AgentBuilder` to fix a regression of 1.4.27.
+- Unified the error listener and the regular listener that were added in the previous version.
+
+### 29. September 2016: version 1.4.27
+
+- Refactored `AgentBuilder` retransformation mechanism to allow for custom recovery and batch strategies.
+- Fixed Gradle plugin build which did not contain files.
+- Supply no argument to agent attachment by default instead of empty string argument.
+
+*Note*: Currently, it seems like the new retransformation mechanism introduces a racing condition in class loading resulting in some classes not being instrumented
+
 ### 21. September 2016: version 1.4.26
 
 - Refactored `skipOn` property of `Advice` component.

@@ -2894,7 +2894,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
                 }
-                return new StackManipulation.Compound(stackManipulation, MethodReturn.returning(interceptedMethod.getReturnType().asErasure()));
+                return new StackManipulation.Compound(stackManipulation, MethodReturn.of(interceptedMethod.getReturnType().asErasure()));
             }
 
             @Override

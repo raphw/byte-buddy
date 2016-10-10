@@ -12,19 +12,19 @@ runtime code generation for the Java virtual machine
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.bytebuddy/byte-buddy-parent)
 [![Download from Bintray](https://api.bintray.com/packages/raphw/maven/ByteBuddy/images/download.svg) ](https://bintray.com/raphw/maven/ByteBuddy/_latestVersion)
 
-Byte Buddy is a code generation library for creating Java classes during the runtime of a Java application and without
-the help of a compiler. Other than the code generation utilities that
-[ship with the Java Class Library](http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html),
-Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for the creation of
-runtime proxies.
+Byte Buddy is a code generation and manipulation library for creating and modifying Java classes during the 
+runtime of a Java application and without the help of a compiler. Other than the code generation utilities 
+that [ship with the Java Class Library](http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html), 
+Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for the 
+creation of runtime proxies. Furthermore, Byte Buddy offers a convenient API for changing classes either 
+manually, using a Java agent or during a build.
 
-In order to use Byte Buddy, one does not require an understanding of Java byte code or the
-[class file format](http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html). In contrast, Byte Buddy’s API aims
-for code that is concise and easy to understand for everybody. Nevertheless, Byte Buddy remains fully customizable
-down to the possibility of defining custom byte code. Furthermore, the API was designed to be as non-intrusive as
-possible and as a result, Byte Buddy does not leave any trace in the classes that were created by it. For this reason,
-the generated classes can exist without requiring Byte Buddy on the class path. Because of this feature, Byte Buddy’s
-mascot was chosen to be a ghost.
+In order to use Byte Buddy, one does not require an understanding of Java byte code or the [class file format](http://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html). In contrast, Byte Buddy’s API aims for code 
+that is concise and easy to understand for everybody. Nevertheless, Byte Buddy remains fully customizable down 
+to the possibility of defining custom byte code. Furthermore, the API was designed to be as non-intrusive as 
+possible and as a result, Byte Buddy does not leave any trace in the classes that were created by it. For this 
+reason, the generated classes can exist without requiring Byte Buddy on the class path. Because of this feature, 
+Byte Buddy’s mascot was chosen to be a ghost.
 
 Byte Buddy is written in Java 6 but supports the generation of classes for any Java version. Byte Buddy is a
 light-weight library and only depends on the visitor API of the Java byte code parser library 
@@ -172,7 +172,7 @@ Byte Buddy is not limited to creating subclasses but is also capable of redefini
 
 ```java
 public class TimingInterceptor {
-  @DynamicType
+  @RuntimeType
   public static Object intercept(@Origin Method method, 
                                  @SuperCall Callable<?> callable) {
     long start = System.currentTimeMillis();
@@ -194,8 +194,8 @@ public class TimerAgent {
     new AgentBuilder.Default()
       .type(ElementMatchers.nameEndsWith("Timed"))
       .transform((builder, type, classLoader) -> 
-          type.method(ElementMatchers.any())
-              .intercept(MethodDelegation.to(TimingInterceptor.class))
+          builder.method(ElementMatchers.any())
+                 .intercept(MethodDelegation.to(TimingInterceptor.class))
       ).installOn(instrumentation);
     }
   }

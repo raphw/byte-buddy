@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
@@ -13,6 +14,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -104,6 +106,30 @@ public class FixedValueTest extends AbstractImplementationTest {
         assertThat(type.getDeclaredMethod(BAR).invoke(type.getDeclaredConstructor().newInstance()), nullValue(Object.class));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testNullValueNonAssignable() throws Exception {
+        implement(FooBar.class, FixedValue.nullValue());
+    }
+
+    @Test
+    public void testThisValue() throws Exception {
+        Class<? extends QuxBaz> type = implement(QuxBaz.class, FixedValue.self()).getLoaded();
+        assertThat(type.getDeclaredFields().length, is(0));
+        assertThat(type.getDeclaredMethods().length, is(1));
+        QuxBaz self = type.getDeclaredConstructor().newInstance();
+        assertThat(self.bar(), sameInstance((Object) self));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testThisValueStatic() throws Exception {
+        new ByteBuddy().redefine(FooBarQuxBaz.class).method(named("bar")).intercept(FixedValue.self()).make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testThisValueNonAssignable() throws Exception {
+        implement(Foo.class, FixedValue.self());
+    }
+
     @Test
     public void testOriginType() throws Exception {
         Class<?> type = implement(Baz.class, FixedValue.originType()).getLoaded();
@@ -147,6 +173,8 @@ public class FixedValueTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(FixedValue.ForOriginType.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForOriginType.Appender.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForNullValue.class).apply();
+        ObjectPropertyAssertion.of(FixedValue.ForThisValue.class).apply();
+        ObjectPropertyAssertion.of(FixedValue.ForThisValue.Appender.class).apply();
     }
 
     private void assertType(DynamicType.Loaded<Foo> loaded) throws Exception {
@@ -183,6 +211,27 @@ public class FixedValueTest extends AbstractImplementationTest {
     public static class Baz {
 
         public Class<?> bar() {
+            return null;
+        }
+    }
+
+    public static class FooBar {
+
+        public void bar() {
+            /* empty */
+        }
+    }
+
+    public static class QuxBaz {
+
+        public Object bar() {
+            return null;
+        }
+    }
+
+    public static class FooBarQuxBaz {
+
+        public static Object bar() {
             return null;
         }
     }

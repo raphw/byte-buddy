@@ -79,7 +79,7 @@ public class MethodReturnTest {
 
     @Test
     public void testVoidReturn() throws Exception {
-        StackManipulation stackManipulation = MethodReturn.returning(typeDescription);
+        StackManipulation stackManipulation = MethodReturn.of(typeDescription);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(-1 * sizeChange));
