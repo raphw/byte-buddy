@@ -8,6 +8,7 @@ import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.LatentMatcher;
+import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -138,6 +139,34 @@ public interface ConstructorStrategy {
                         methodAttributeAppenderFactory,
                         Transformer.NoOp.<MethodDescription>make());
             }
+        },
+
+        /**
+         * This strategy is adding all constructors of the instrumented type's super class where each constructor is
+         * directly invoking its signature-equivalent super class constructor. A constructor is added for any constructor
+         * of the super class that is invokable and is declared as {@code public}.
+         */
+        IMITATE_SUPER_CLASS_OPENING {
+            @Override
+            protected List<MethodDescription.Token> doExtractConstructors(TypeDescription instrumentedType) {
+                TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+                return (superClass == null
+                        ? new MethodList.Empty<MethodDescription.InGenericShape>()
+                        : superClass.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)))).asTokenList(is(instrumentedType));
+            }
+
+            @Override
+            public MethodRegistry doInject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
+                return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
+                        new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
+                        methodAttributeAppenderFactory,
+                        Transformer.NoOp.<MethodDescription>make());
+            }
+
+            @Override
+            protected int resolveModifier(int modifiers) {
+                return Opcodes.ACC_PUBLIC;
+            }
         };
 
         @Override
@@ -145,7 +174,7 @@ public interface ConstructorStrategy {
             List<MethodDescription.Token> tokens = doExtractConstructors(instrumentedType), stripped = new ArrayList<MethodDescription.Token>(tokens.size());
             for (MethodDescription.Token token : tokens) {
                 stripped.add(new MethodDescription.Token(token.getName(),
-                        token.getModifiers(),
+                        resolveModifier(token.getModifiers()),
                         token.getTypeVariableTokens(),
                         token.getReturnType(),
                         token.getParameterTokens(),
@@ -155,6 +184,16 @@ public interface ConstructorStrategy {
                         TypeDescription.Generic.UNDEFINED));
             }
             return stripped;
+        }
+
+        /**
+         * Resolves a constructor's modifiers.
+         *
+         * @param modifiers The actual constructor's modifiers.
+         * @return The resolved modifiers.
+         */
+        protected int resolveModifier(int modifiers) {
+            return modifiers;
         }
 
         /**

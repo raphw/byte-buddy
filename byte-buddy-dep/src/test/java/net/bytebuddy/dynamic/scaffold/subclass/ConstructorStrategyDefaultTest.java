@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
 
 public class ConstructorStrategyDefaultTest {
 
-    private static final String FOO  = "foo";
+    private static final String FOO = "foo";
 
     private static final int MODIFIERS = 42;
 
@@ -277,6 +277,35 @@ public class ConstructorStrategyDefaultTest {
         when(methodDescription.getParameters())
                 .thenReturn(new ParameterList.Explicit<ParameterDescription.InGenericShape>(mock(ParameterDescription.InGenericShape.class)));
         ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testImitateSuperClassOpeningStrategyNonVisible() throws Exception {
+        when(methodDescription.isVisibleTo(instrumentedType)).thenReturn(false);
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING.extractConstructors(instrumentedType).isEmpty(), is(true));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testImitateSuperClassOpeningStrategy() throws Exception {
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING.extractConstructors(instrumentedType), is(Collections.singletonList(new MethodDescription.Token(FOO,
+                Opcodes.ACC_PUBLIC,
+                Collections.<TypeVariableToken>emptyList(),
+                typeDescription,
+                Collections.<ParameterDescription.Token>emptyList(),
+                Collections.<TypeDescription.Generic>emptyList(),
+                Collections.<AnnotationDescription>emptyList(),
+                defaultValue,
+                TypeDescription.Generic.UNDEFINED))));
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING.inject(methodRegistry), is(methodRegistry));
+        verify(methodRegistry).append(any(LatentMatcher.class),
+                any(MethodRegistry.Handler.class),
+                eq(MethodAttributeAppender.NoOp.INSTANCE),
+                eq(Transformer.NoOp.<MethodDescription>make()));
+        verifyNoMoreInteractions(methodRegistry);
+        verify(instrumentedType, atLeastOnce()).getSuperClass();
+        verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test
