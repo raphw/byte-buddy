@@ -85,6 +85,10 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * <p>
  * <b>Note</b>: Any transformation is performed using the {@link AccessControlContext} of an agent's creator.
  * </p>
+ * <p>
+ * <b>Important</b>: Types that implement lambda expressions (functional interfaces) are not instrumented by default but
+ * only when enabling the builder's {@link LambdaInstrumentationStrategy}.
+ * </p>
  */
 public interface AgentBuilder {
 
@@ -4319,6 +4323,11 @@ public interface AgentBuilder {
                             .load(lambdaMetaFactory.getClassLoader(), ClassReloadingStrategy.of(instrumentation));
                 }
             }
+
+            @Override
+            protected boolean isInstrumented(Class<?> type) {
+                return true;
+            }
         },
 
         /**
@@ -4330,6 +4339,11 @@ public interface AgentBuilder {
                                  Instrumentation instrumentation,
                                  ClassFileTransformer classFileTransformer) {
                     /* do nothing */
+            }
+
+            @Override
+            protected boolean isInstrumented(Class<?> type) {
+                return type == null || !type.getName().contains("/");
             }
         };
 
@@ -4398,6 +4412,15 @@ public interface AgentBuilder {
         public boolean isEnabled() {
             return this == ENABLED;
         }
+
+        /**
+         * Validates if the supplied class is instrumented. For lambda types (which are loaded by anonymous class loader), this method
+         * should return false if lambda instrumentation is disabled.
+         *
+         * @param type The redefined type or {@code null} if no such type exists.
+         * @return {@code true} if the supplied type should be instrumented according to this strategy.
+         */
+        protected abstract boolean isInstrumented(Class<?> type);
 
         @Override
         public String toString() {
@@ -6394,6 +6417,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
                     ignoredTypeMatcher,
@@ -7506,6 +7530,8 @@ public interface AgentBuilder {
              */
             private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
+            private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
+
             /**
              * The description strategy for resolving type descriptions for types.
              */
@@ -7566,6 +7592,7 @@ public interface AgentBuilder {
                                         NativeMethodStrategy nativeMethodStrategy,
                                         InitializationStrategy initializationStrategy,
                                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                         DescriptionStrategy descriptionStrategy,
                                         FallbackStrategy fallbackStrategy,
                                         RawMatcher ignoredTypeMatcher,
@@ -7579,6 +7606,7 @@ public interface AgentBuilder {
                 this.nativeMethodStrategy = nativeMethodStrategy;
                 this.initializationStrategy = initializationStrategy;
                 this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
+                this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
                 this.descriptionStrategy = descriptionStrategy;
                 this.fallbackStrategy = fallbackStrategy;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
@@ -7659,7 +7687,7 @@ public interface AgentBuilder {
                                      Class<?> classBeingRedefined,
                                      ProtectionDomain protectionDomain,
                                      byte[] binaryRepresentation) {
-                if (internalTypeName == null) {
+                if (internalTypeName == null || !lambdaInstrumentationStrategy.isInstrumented(classBeingRedefined)) {
                     return NO_TRANSFORMATION;
                 }
                 String typeName = internalTypeName.replace('/', '.');
@@ -7787,6 +7815,7 @@ public interface AgentBuilder {
                         ", initializationStrategy=" + initializationStrategy +
                         ", nativeMethodStrategy=" + nativeMethodStrategy +
                         ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
+                        ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
                         ", descriptionStrategy=" + descriptionStrategy +
                         ", fallbackStrategy=" + fallbackStrategy +
                         ", ignoredTypeMatcher=" + ignoredTypeMatcher +
@@ -7827,6 +7856,7 @@ public interface AgentBuilder {
                                                     NativeMethodStrategy nativeMethodStrategy,
                                                     InitializationStrategy initializationStrategy,
                                                     BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                    LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                     DescriptionStrategy descriptionStrategy,
                                                     FallbackStrategy fallbackStrategy,
                                                     RawMatcher ignoredTypeMatcher,
@@ -7864,6 +7894,7 @@ public interface AgentBuilder {
                                                                NativeMethodStrategy nativeMethodStrategy,
                                                                InitializationStrategy initializationStrategy,
                                                                BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                               LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
                                                                RawMatcher ignoredTypeMatcher,
@@ -7878,6 +7909,7 @@ public interface AgentBuilder {
                                     nativeMethodStrategy,
                                     initializationStrategy,
                                     bootstrapInjectionStrategy,
+                                    lambdaInstrumentationStrategy,
                                     descriptionStrategy,
                                     fallbackStrategy,
                                     ignoredTypeMatcher,
@@ -7932,6 +7964,7 @@ public interface AgentBuilder {
                                                                NativeMethodStrategy nativeMethodStrategy,
                                                                InitializationStrategy initializationStrategy,
                                                                BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                               LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
                                                                RawMatcher ignoredTypeMatcher,
@@ -7945,6 +7978,7 @@ public interface AgentBuilder {
                                 nativeMethodStrategy,
                                 initializationStrategy,
                                 bootstrapInjectionStrategy,
+                                lambdaInstrumentationStrategy,
                                 descriptionStrategy,
                                 fallbackStrategy,
                                 ignoredTypeMatcher,
@@ -7996,6 +8030,7 @@ public interface AgentBuilder {
                                         NativeMethodStrategy.class,
                                         InitializationStrategy.class,
                                         BootstrapInjectionStrategy.class,
+                                        LambdaInstrumentationStrategy.class,
                                         DescriptionStrategy.class,
                                         FallbackStrategy.class,
                                         RawMatcher.class,

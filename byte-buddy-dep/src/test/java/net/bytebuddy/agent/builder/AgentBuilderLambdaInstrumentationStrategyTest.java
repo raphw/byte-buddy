@@ -6,9 +6,6 @@ import org.junit.Test;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.ProtectionDomain;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -52,6 +49,18 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
         verifyZeroInteractions(byteBuddy);
         verifyZeroInteractions(instrumentation);
         verifyZeroInteractions(classFileTransformer);
+    }
+
+    @Test
+    public void testEnabledIsInstrumented() throws Exception {
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.ENABLED.isInstrumented(Object.class), is(true));
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.ENABLED.isInstrumented(null), is(true));
+    }
+
+    @Test
+    public void testDisabledIsInstrumented() throws Exception {
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.DISABLED.isInstrumented(Object.class), is(true));
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.DISABLED.isInstrumented(null), is(true));
     }
 
     @Test
