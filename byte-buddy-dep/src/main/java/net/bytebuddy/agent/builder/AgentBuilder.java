@@ -6441,6 +6441,9 @@ public interface AgentBuilder {
                     if (redefinitionStrategy.isEnabled()) {
                         RedefinitionStrategy.Collector collector = redefinitionStrategy.make(transformation);
                         for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                            if (!lambdaInstrumentationStrategy.isInstrumented(type)) {
+                                continue;
+                            }
                             JavaModule module = JavaModule.ofType(type);
                             try {
                                 TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
@@ -7530,6 +7533,9 @@ public interface AgentBuilder {
              */
             private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
+            /**
+             * The lambda instrumentation strategy to use.
+             */
             private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
 
             /**
@@ -7570,19 +7576,20 @@ public interface AgentBuilder {
             /**
              * Creates a new class file transformer.
              *
-             * @param byteBuddy                  The Byte Buddy instance to be used.
-             * @param listener                   The listener to notify on transformations.
-             * @param poolStrategy               The type locator to use.
-             * @param typeStrategy               The definition handler to use.
-             * @param locationStrategy           The location strategy to use.
-             * @param nativeMethodStrategy       The native method strategy to apply.
-             * @param initializationStrategy     The initialization strategy to use for transformed types.
-             * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
-             * @param descriptionStrategy        The description strategy for resolving type descriptions for types.
-             * @param fallbackStrategy           The fallback strategy to use.
-             * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
-             * @param transformation             The transformation object for handling type transformations.
-             * @param circularityLock            The circularity lock to use.
+             * @param byteBuddy                     The Byte Buddy instance to be used.
+             * @param listener                      The listener to notify on transformations.
+             * @param poolStrategy                  The type locator to use.
+             * @param typeStrategy                  The definition handler to use.
+             * @param locationStrategy              The location strategy to use.
+             * @param nativeMethodStrategy          The native method strategy to apply.
+             * @param initializationStrategy        The initialization strategy to use for transformed types.
+             * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
+             * @param lambdaInstrumentationStrategy The lambda instrumentation strategy to use.
+             * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
+             * @param fallbackStrategy              The fallback strategy to use.
+             * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
+             * @param transformation                The transformation object for handling type transformations.
+             * @param circularityLock               The circularity lock to use.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
                                         Listener listener,
@@ -7761,6 +7768,9 @@ public interface AgentBuilder {
                     Map<Class<?>, Throwable> failures = new HashMap<Class<?>, Throwable>();
                     RedefinitionStrategy.Collector collector = redefinitionStrategy.make(transformation);
                     for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                        if (!lambdaInstrumentationStrategy.isInstrumented(type)) {
+                            continue;
+                        }
                         JavaModule module = JavaModule.ofType(type);
                         try {
                             collector.consider(ignoredTypeMatcher,
@@ -7833,19 +7843,20 @@ public interface AgentBuilder {
                 /**
                  * Creates a new class file transformer for the current VM.
                  *
-                 * @param byteBuddy                  The Byte Buddy instance to be used.
-                 * @param listener                   The listener to notify on transformations.
-                 * @param poolStrategy               The type locator to use.
-                 * @param typeStrategy               The definition handler to use.
-                 * @param locationStrategy           The location strategy to use.
-                 * @param nativeMethodStrategy       The native method strategy to apply.
-                 * @param initializationStrategy     The initialization strategy to use for transformed types.
-                 * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
-                 * @param descriptionStrategy        The description strategy for resolving type descriptions for types.
-                 * @param fallbackStrategy           The fallback strategy to use.
-                 * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
-                 * @param transformation             The transformation object for handling type transformations.
-                 * @param circularityLock            The circularity lock to use.
+                 * @param byteBuddy                     The Byte Buddy instance to be used.
+                 * @param listener                      The listener to notify on transformations.
+                 * @param poolStrategy                  The type locator to use.
+                 * @param typeStrategy                  The definition handler to use.
+                 * @param locationStrategy              The location strategy to use.
+                 * @param nativeMethodStrategy          The native method strategy to apply.
+                 * @param initializationStrategy        The initialization strategy to use for transformed types.
+                 * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
+                 * @param lambdaInstrumentationStrategy The lambda instrumentation strategy to use.
+                 * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
+                 * @param fallbackStrategy              The fallback strategy to use.
+                 * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
+                 * @param transformation                The transformation object for handling type transformations.
+                 * @param circularityLock               The circularity lock to use.
                  * @return A class file transformer for the current VM that supports the API of the current VM.
                  */
                 ResettableClassFileTransformer make(ByteBuddy byteBuddy,
