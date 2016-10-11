@@ -151,7 +151,8 @@
                                     net.bytebuddy.pool,
                                     net.bytebuddy.utility,
                                     net.bytebuddy.utility.privilege,
-                                    net.bytebuddy.utility.visitor
+                                    net.bytebuddy.utility.visitor,
+                                    ${shade.target}
                                 </Export-Package>
                             </instructions>
                         </configuration>

@@ -226,7 +226,8 @@ public class ConstructorStrategyDefaultTest {
     @SuppressWarnings("unchecked")
     public void testDefaultConstructorStrategy() throws Exception {
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
-        assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
+        assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType),
+                is(Collections.singletonList(new MethodDescription.Token(Opcodes.ACC_PUBLIC))));
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
@@ -243,7 +244,8 @@ public class ConstructorStrategyDefaultTest {
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
         MethodAttributeAppender.Factory methodAttributeAppenderFactory = mock(MethodAttributeAppender.Factory.class);
         ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.with(methodAttributeAppenderFactory);
-        assertThat(constructorStrategy.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
+        assertThat(constructorStrategy.extractConstructors(instrumentedType),
+                is(Collections.singletonList(new MethodDescription.Token(Opcodes.ACC_PUBLIC))));
         assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
@@ -259,7 +261,8 @@ public class ConstructorStrategyDefaultTest {
     public void testDefaultConstructorStrategyWithInheritedAnnotations() throws Exception {
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
         ConstructorStrategy constructorStrategy = ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.withInheritedAnnotations();
-        assertThat(constructorStrategy.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
+        assertThat(constructorStrategy.extractConstructors(instrumentedType),
+                is(Collections.singletonList(new MethodDescription.Token(Opcodes.ACC_PUBLIC))));
         assertThat(constructorStrategy.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
