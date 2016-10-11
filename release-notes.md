@@ -1,7 +1,7 @@
 Byte Buddy release notes
 ------------------------
 
-### 6. October 2016: version 1.4.32
+### 11. October 2016: version 1.4.32
 
 - Added `ConstructorStrategy` for inheriting constructors but make them `public`.
 - Do not instrument anonymously loaded types during redefinition unless the lambda strategy is enabled.
