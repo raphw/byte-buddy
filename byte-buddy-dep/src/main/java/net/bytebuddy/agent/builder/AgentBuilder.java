@@ -4131,7 +4131,7 @@ public interface AgentBuilder {
                                     boolean unmodifiable) {
                 if (unmodifiable
                         || ignoredTypeMatcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
-                        || !transformation.isAlive(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
+                        || !transformation.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
                         || !types.add(type)) {
                     try {
                         try {
@@ -6800,23 +6800,7 @@ public interface AgentBuilder {
         /**
          * A transformation serves as a handler for modifying a class.
          */
-        protected interface Transformation {
-
-            /**
-             * Checks if this transformation is alive.
-             *
-             * @param typeDescription     A description of the type that is to be transformed.
-             * @param classLoader         The class loader of the type being transformed.
-             * @param module              The transformed type's module or {@code null} if the current VM does not support modules.
-             * @param classBeingRedefined In case of a type redefinition, the loaded type being transformed or {@code null} if that is not the case.
-             * @param protectionDomain    The protection domain of the type being transformed.
-             * @return {@code true} if this transformation is alive.
-             */
-            boolean isAlive(TypeDescription typeDescription,
-                            ClassLoader classLoader,
-                            JavaModule module,
-                            Class<?> classBeingRedefined,
-                            ProtectionDomain protectionDomain);
+        protected interface Transformation extends RawMatcher {
 
             /**
              * Resolves an attempted transformation to a specific transformation.
@@ -7051,7 +7035,7 @@ public interface AgentBuilder {
                 INSTANCE;
 
                 @Override
-                public boolean isAlive(TypeDescription typeDescription,
+                public boolean matches(TypeDescription typeDescription,
                                        ClassLoader classLoader,
                                        JavaModule module,
                                        Class<?> classBeingRedefined,
@@ -7109,7 +7093,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean isAlive(TypeDescription typeDescription,
+                public boolean matches(TypeDescription typeDescription,
                                        ClassLoader classLoader,
                                        JavaModule module,
                                        Class<?> classBeingRedefined,
@@ -7124,7 +7108,7 @@ public interface AgentBuilder {
                                                          Class<?> classBeingRedefined,
                                                          ProtectionDomain protectionDomain,
                                                          TypePool typePool) {
-                    return isAlive(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
+                    return matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                             ? new Resolution(typeDescription, classLoader, module, protectionDomain, typePool, transformer, decorator)
                             : new Transformation.Resolution.Unresolved(typeDescription, classLoader, module);
                 }
@@ -7410,13 +7394,13 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean isAlive(TypeDescription typeDescription,
+                public boolean matches(TypeDescription typeDescription,
                                        ClassLoader classLoader,
                                        JavaModule module,
                                        Class<?> classBeingRedefined,
                                        ProtectionDomain protectionDomain) {
                     for (Transformation transformation : transformations) {
-                        if (transformation.isAlive(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
+                        if (transformation.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
                             return true;
                         }
                     }
