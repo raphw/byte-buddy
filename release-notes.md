@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. October 2016: version 1.4.32
+
+- Added `ConstructorStrategy` for inheriting constructors but make them `public`.
+- Do not instrument anonymously loaded types during redefinition unless the lambda strategy is enabled.
+
 ### 6. October 2016: version 1.4.31
 
 - Reuse `CircularityLock` on all `AgentBuilder`s by default to avoid that Byte Buddy agents introduce circularities to different agents.
