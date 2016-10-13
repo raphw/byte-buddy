@@ -126,7 +126,20 @@ public interface NamingStrategy {
          * @param suffix The suffix for the generated class.
          */
         public SuffixingRandom(String suffix) {
-            this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE, BYTE_BUDDY_RENAME_PACKAGE);
+            this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE);
+        }
+
+        /**
+         * Creates an immutable naming strategy with a given suffix but moves types that subclass types within
+         * the {@code java.lang} package into Byte Buddy's package namespace.
+         *
+         * @param suffix                The suffix for the generated class.
+         * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
+         *                              {@code java.*} namespace. If The prefix is set to the empty string,
+         *                              no prefix is added.
+         */
+        public SuffixingRandom(String suffix, String javaLangPackagePrefix) {
+            this(suffix, BaseNameResolver.ForUnnamedType.INSTANCE, javaLangPackagePrefix);
         }
 
         /**
