@@ -1919,6 +1919,28 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
+    public void testIgnoredTypeMatcherOnlyAppliedOnceWithMultipleTransformations() throws Exception {
+        AgentBuilder.RawMatcher ignored = mock(AgentBuilder.RawMatcher.class);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(ignored)
+                .type(typeMatcher).transform(transformer)
+                .type(typeMatcher).transform(transformer)
+                .installOn(instrumentation);
+        assertThat(transform(classFileTransformer, JavaModule.ofType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), nullValue(byte[].class));
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
+        verifyNoMoreInteractions(listener);
+        verify(ignored).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verifyNoMoreInteractions(ignored);
+    }
+
+    @Test
     public void testDisableClassFormatChanges() throws Exception {
         assertThat(new AgentBuilder.Default().disableClassFormatChanges(), is(new AgentBuilder.Default(new ByteBuddy()
                 .with(Implementation.Context.Disabled.Factory.INSTANCE))

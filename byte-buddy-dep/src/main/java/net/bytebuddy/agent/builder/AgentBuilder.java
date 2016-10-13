@@ -4129,12 +4129,10 @@ public interface AgentBuilder {
                                     Class<?> classBeingRedefined,
                                     JavaModule module,
                                     boolean unmodifiable) {
-                if (unmodifiable || !(transformation.isAlive(typeDescription,
-                        type.getClassLoader(),
-                        JavaModule.ofType(type),
-                        classBeingRedefined,
-                        type.getProtectionDomain(),
-                        ignoredTypeMatcher) && types.add(type))) {
+                if (unmodifiable
+                        || ignoredTypeMatcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
+                        || !transformation.isAlive(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
+                        || !types.add(type)) {
                     try {
                         try {
                             listener.onIgnored(typeDescription, type.getClassLoader(), module);
@@ -6812,15 +6810,13 @@ public interface AgentBuilder {
              * @param module              The transformed type's module or {@code null} if the current VM does not support modules.
              * @param classBeingRedefined In case of a type redefinition, the loaded type being transformed or {@code null} if that is not the case.
              * @param protectionDomain    The protection domain of the type being transformed.
-             * @param ignoredTypeMatcher  Identifies types that should not be instrumented.
              * @return {@code true} if this transformation is alive.
              */
             boolean isAlive(TypeDescription typeDescription,
                             ClassLoader classLoader,
                             JavaModule module,
                             Class<?> classBeingRedefined,
-                            ProtectionDomain protectionDomain,
-                            RawMatcher ignoredTypeMatcher);
+                            ProtectionDomain protectionDomain);
 
             /**
              * Resolves an attempted transformation to a specific transformation.
@@ -6831,7 +6827,6 @@ public interface AgentBuilder {
              * @param classBeingRedefined In case of a type redefinition, the loaded type being transformed or {@code null} if that is not the case.
              * @param protectionDomain    The protection domain of the type being transformed.
              * @param typePool            The type pool to apply during type creation.
-             * @param ignoredTypeMatcher  Identifies types that should not be instrumented.
              * @return A resolution for the given type.
              */
             Resolution resolve(TypeDescription typeDescription,
@@ -6839,8 +6834,7 @@ public interface AgentBuilder {
                                JavaModule module,
                                Class<?> classBeingRedefined,
                                ProtectionDomain protectionDomain,
-                               TypePool typePool,
-                               RawMatcher ignoredTypeMatcher);
+                               TypePool typePool);
 
             /**
              * A resolution to a transformation.
@@ -7061,8 +7055,7 @@ public interface AgentBuilder {
                                        ClassLoader classLoader,
                                        JavaModule module,
                                        Class<?> classBeingRedefined,
-                                       ProtectionDomain protectionDomain,
-                                       RawMatcher ignoredTypeMatcher) {
+                                       ProtectionDomain protectionDomain) {
                     return false;
                 }
 
@@ -7072,8 +7065,7 @@ public interface AgentBuilder {
                                           JavaModule module,
                                           Class<?> classBeingRedefined,
                                           ProtectionDomain protectionDomain,
-                                          TypePool typePool,
-                                          RawMatcher ignoredTypeMatcher) {
+                                          TypePool typePool) {
                     return new Resolution.Unresolved(typeDescription, classLoader, module);
                 }
 
@@ -7121,10 +7113,8 @@ public interface AgentBuilder {
                                        ClassLoader classLoader,
                                        JavaModule module,
                                        Class<?> classBeingRedefined,
-                                       ProtectionDomain protectionDomain,
-                                       RawMatcher ignoredTypeMatcher) {
-                    return !ignoredTypeMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
-                            && rawMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+                                       ProtectionDomain protectionDomain) {
+                    return rawMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
                 }
 
                 @Override
@@ -7133,9 +7123,8 @@ public interface AgentBuilder {
                                                          JavaModule module,
                                                          Class<?> classBeingRedefined,
                                                          ProtectionDomain protectionDomain,
-                                                         TypePool typePool,
-                                                         RawMatcher ignoredTypeMatcher) {
-                    return isAlive(typeDescription, classLoader, module, classBeingRedefined, protectionDomain, ignoredTypeMatcher)
+                                                         TypePool typePool) {
+                    return isAlive(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                             ? new Resolution(typeDescription, classLoader, module, protectionDomain, typePool, transformer, decorator)
                             : new Transformation.Resolution.Unresolved(typeDescription, classLoader, module);
                 }
@@ -7425,10 +7414,9 @@ public interface AgentBuilder {
                                        ClassLoader classLoader,
                                        JavaModule module,
                                        Class<?> classBeingRedefined,
-                                       ProtectionDomain protectionDomain,
-                                       RawMatcher ignoredTypeMatcher) {
+                                       ProtectionDomain protectionDomain) {
                     for (Transformation transformation : transformations) {
-                        if (transformation.isAlive(typeDescription, classLoader, module, classBeingRedefined, protectionDomain, ignoredTypeMatcher)) {
+                        if (transformation.isAlive(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)) {
                             return true;
                         }
                     }
@@ -7441,8 +7429,7 @@ public interface AgentBuilder {
                                           JavaModule module,
                                           Class<?> classBeingRedefined,
                                           ProtectionDomain protectionDomain,
-                                          TypePool typePool,
-                                          RawMatcher ignoredTypeMatcher) {
+                                          TypePool typePool) {
                     Resolution current = new Resolution.Unresolved(typeDescription, classLoader, module);
                     for (Transformation transformation : transformations) {
                         Resolution resolution = transformation.resolve(typeDescription,
@@ -7450,8 +7437,7 @@ public interface AgentBuilder {
                                 module,
                                 classBeingRedefined,
                                 protectionDomain,
-                                typePool,
-                                ignoredTypeMatcher);
+                                typePool);
                         switch (resolution.getSort()) {
                             case TERMINAL:
                                 return current.asDecoratorOf(resolution);
@@ -7739,13 +7725,7 @@ public interface AgentBuilder {
                                        ProtectionDomain protectionDomain,
                                        TypePool typePool,
                                        ClassFileLocator classFileLocator) {
-                return transformation.resolve(descriptionStrategy.apply(typeName, classBeingRedefined, typePool),
-                        classLoader,
-                        module,
-                        classBeingRedefined,
-                        protectionDomain,
-                        typePool,
-                        ignoredTypeMatcher).apply(initializationStrategy,
+                return resolve(module, classLoader, typeName, classBeingRedefined, protectionDomain, typePool).apply(initializationStrategy,
                         classFileLocator,
                         typeStrategy,
                         byteBuddy,
@@ -7753,6 +7733,30 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         accessControlContext,
                         listener);
+            }
+
+
+            /**
+             * Resolves the transformation and assures it is not ignored.
+             *
+             * @param module              The instrumented class's Java module in its wrapped form or {@code null} if the current VM does not support modules.
+             * @param classLoader         The instrumented class's class loader.
+             * @param typeName            The binary name of the instrumented class.
+             * @param classBeingRedefined The loaded {@link Class} being redefined or {@code null} if no such class exists.
+             * @param protectionDomain    The instrumented type's protection domain.
+             * @param typePool            The type pool to use.
+             * @return The resolution for the transformation.
+             */
+            private Transformation.Resolution resolve(JavaModule module,
+                                                      ClassLoader classLoader,
+                                                      String typeName,
+                                                      Class<?> classBeingRedefined,
+                                                      ProtectionDomain protectionDomain,
+                                                      TypePool typePool) {
+                TypeDescription typeDescription = descriptionStrategy.apply(typeName, classBeingRedefined, typePool);
+                return ignoredTypeMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
+                        ? new Transformation.Resolution.Unresolved(typeDescription, classLoader, module)
+                        : transformation.resolve(typeDescription, classLoader, module, classBeingRedefined, protectionDomain, typePool);
             }
 
             @Override
