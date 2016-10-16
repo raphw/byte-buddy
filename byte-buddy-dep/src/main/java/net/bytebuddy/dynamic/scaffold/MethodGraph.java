@@ -989,11 +989,6 @@ public interface MethodGraph {
                 protected static class Store<V> {
 
                     /**
-                     * Size of an empty map to improve code readability.
-                     */
-                    private static final int EMPTY = 0;
-
-                    /**
                      * A mapping of harmonized keys to their represented entry.
                      */
                     private final LinkedHashMap<Harmonized<V>, Entry<V>> entries;
@@ -1002,7 +997,7 @@ public interface MethodGraph {
                      * Creates an empty store.
                      */
                     protected Store() {
-                        this(new LinkedHashMap<Harmonized<V>, Entry<V>>(EMPTY));
+                        this(new LinkedHashMap<Harmonized<V>, Entry<V>>());
                     }
 
                     /**
@@ -1282,6 +1277,11 @@ public interface MethodGraph {
                             private static final int MADE_VISIBLE = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED;
 
                             /**
+                             * Indicates that the entry was not made visible.
+                             */
+                            private static final boolean NOT_MADE_VISIBLE = false;
+
+                            /**
                              * The harmonized key this entry represents.
                              */
                             private final Harmonized<U> key;
@@ -1321,7 +1321,7 @@ public interface MethodGraph {
                             private static <V> Entry<V> of(Harmonized<V> key, MethodDescription override, MethodDescription original) {
                                 return override.isBridge()
                                         ? new Resolved<V>(key, original, (original.getDeclaringType().getModifiers() & MADE_VISIBLE) == 0)
-                                        : new Resolved<V>(key, override, false);
+                                        : new Resolved<V>(key, override, NOT_MADE_VISIBLE);
                             }
 
                             @Override
