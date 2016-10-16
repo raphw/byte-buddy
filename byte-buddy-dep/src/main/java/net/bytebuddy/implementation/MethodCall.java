@@ -731,6 +731,9 @@ public class MethodCall implements Implementation.Composable {
              */
             private final Object target;
 
+            /**
+             * The type of the field.
+             */
             private final TypeDescription.Generic fieldType;
 
             /**
@@ -741,7 +744,8 @@ public class MethodCall implements Implementation.Composable {
             /**
              * Creates a new target handler for a static field.
              *
-             * @param target The target on which the method is to be invoked.
+             * @param target    The target on which the method is to be invoked.
+             * @param fieldType The type of the field.
              */
             public ForStaticField(Object target, TypeDescription.Generic fieldType) {
                 this.target = target;
@@ -770,18 +774,20 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && target.equals(((ForStaticField) other).target);
+                        && target.equals(((ForStaticField) other).target)
+                        && fieldType.equals(((ForStaticField) other).fieldType);
             }
 
             @Override
             public int hashCode() {
-                return target.hashCode();
+                return target.hashCode() + 31 * fieldType.hashCode();
             }
 
             @Override
             public String toString() {
                 return "MethodCall.TargetHandler.ForStaticField{" +
                         "target=" + target +
+                        ", fieldType=" + fieldType +
                         ", fieldName='" + fieldName + '\'' +
                         '}';
             }
