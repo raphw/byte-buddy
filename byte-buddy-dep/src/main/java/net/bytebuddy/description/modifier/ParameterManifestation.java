@@ -31,16 +31,6 @@ public enum ParameterManifestation implements ModifierContributor.ForParameter {
         this.mask = mask;
     }
 
-    /**
-     * Creates a new parameter manifestation from a boolean value which indicates if the returned state should represent a final modifier.
-     *
-     * @param finalState {@code true} if the returned state should indicate a final parameter.
-     * @return A corresponding parameter manifestation.
-     */
-    public static ParameterManifestation is(boolean finalState) {
-        return finalState ? FINAL : PLAIN;
-    }
-
     @Override
     public int getMask() {
         return mask;

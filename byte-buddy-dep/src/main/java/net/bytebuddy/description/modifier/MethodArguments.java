@@ -31,16 +31,6 @@ public enum MethodArguments implements ModifierContributor.ForMethod {
         this.mask = mask;
     }
 
-    /**
-     * Creates a method argument state from a {@code boolean} value indicating if a method should support varargs.
-     *
-     * @param varargs {@code true} if the method is supposed to support varargs.
-     * @return The corresponding method argument state.
-     */
-    public static MethodArguments isVarArgs(boolean varargs) {
-        return varargs ? VARARGS : PLAIN;
-    }
-
     @Override
     public int getMask() {
         return mask;

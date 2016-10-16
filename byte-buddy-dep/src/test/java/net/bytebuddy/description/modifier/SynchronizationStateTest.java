@@ -21,9 +21,7 @@ public class SynchronizationStateTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {SynchronizationState.is(false), 0, true},
                 {SynchronizationState.PLAIN, 0, true},
-                {SynchronizationState.is(true), Opcodes.ACC_SYNCHRONIZED, false},
                 {SynchronizationState.SYNCHRONIZED, Opcodes.ACC_SYNCHRONIZED, false}
         });
     }

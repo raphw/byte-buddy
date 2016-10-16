@@ -56,8 +56,7 @@ import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -1021,6 +1020,19 @@ public abstract class AbstractDynamicTypeBuilderTest {
         }
     }
 
+    @Test
+    @Ignore() // TODO: Fix!
+    public void testInterfaceMakesClassMethodPublic() throws Exception {
+        Class<?> type = createPlain()
+                .implement(Cloneable.class)
+                .intercept(FixedValue.self())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        Cloneable cloneable = (Cloneable) type.newInstance();
+        assertThat(cloneable.clone(), sameInstance((Object) cloneable));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     public @interface SampleAnnotation {
 
@@ -1131,5 +1143,10 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public class Inner {
             /* empty */
         }
+    }
+
+    public interface Cloneable {
+
+        Object clone();
     }
 }

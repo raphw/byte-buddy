@@ -22,9 +22,7 @@ public class OwnershipTest extends AbstractModifierContributorTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Ownership.MEMBER, 0, true},
-                {Ownership.isStatic(false), 0, true},
-                {Ownership.STATIC, Opcodes.ACC_STATIC, false},
-                {Ownership.isStatic(true), Opcodes.ACC_STATIC, false},
+                {Ownership.STATIC, Opcodes.ACC_STATIC, false}
         });
     }
 

@@ -32,17 +32,6 @@ public enum Ownership implements ModifierContributor.ForField, ModifierContribut
         this.mask = mask;
     }
 
-    /**
-     * Creates a member ownership state from a {@code boolean} value indicating if a member is supposed to be
-     * {@code static}.
-     *
-     * @param isStatic {@code true} if the member is {@code static}.
-     * @return The corresponding member ownership.
-     */
-    public static Ownership isStatic(boolean isStatic) {
-        return isStatic ? STATIC : MEMBER;
-    }
-
     @Override
     public int getMask() {
         return mask;

@@ -34,16 +34,6 @@ public enum SyntheticState implements ModifierContributor.ForType,
         this.mask = mask;
     }
 
-    /**
-     * Creates a synthetic state from a boolean value indicating if a type or member is supposed to be synthetic.
-     *
-     * @param synthetic {@code true} if the state is supposed to be synthetic.
-     * @return The corresponding synthetic state.
-     */
-    public static SyntheticState is(boolean synthetic) {
-        return synthetic ? SYNTHETIC : PLAIN;
-    }
-
     @Override
     public int getMask() {
         return mask;

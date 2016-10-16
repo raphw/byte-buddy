@@ -21,9 +21,7 @@ public class ProvisioningStateTest extends AbstractModifierContributorTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {ProvisioningState.is(false), 0, true},
                 {ProvisioningState.PLAIN, 0, true},
-                {ProvisioningState.is(true), Opcodes.ACC_MANDATED, false},
                 {ProvisioningState.MANDATED, Opcodes.ACC_MANDATED, false}
         });
     }

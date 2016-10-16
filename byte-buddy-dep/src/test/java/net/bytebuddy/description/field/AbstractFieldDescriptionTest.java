@@ -12,6 +12,7 @@ import org.objectweb.asm.Opcodes;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -117,6 +118,13 @@ public abstract class AbstractFieldDescriptionTest {
     public void testSynthetic() throws Exception {
         assertThat(describe(first).isSynthetic(), is(first.isSynthetic()));
         assertThat(describe(second).isSynthetic(), is(second.isSynthetic()));
+    }
+
+    @Test
+    public void testTransient() throws Exception {
+        assertThat(describe(first).isTransient(), is(Modifier.isTransient(first.getModifiers())));
+        assertThat(describe(TransientSample.class.getDeclaredField("foo")).isTransient(),
+                is(Modifier.isTransient(TransientSample.class.getDeclaredField("foo").getModifiers())));
     }
 
     @Test
@@ -258,5 +266,10 @@ public abstract class AbstractFieldDescriptionTest {
 
     private class SyntheticField {
         /* empty */
+    }
+
+    private static class TransientSample {
+
+        public transient Void foo;
     }
 }

@@ -31,16 +31,6 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
         this.mask = mask;
     }
 
-    /**
-     * Creates a synchronization state from a boolean value indicating if a method is supposed to be synchronized.
-     *
-     * @param isSynchronized {@code true} if the state is supposed to be synchronized.
-     * @return The corresponding synthetic state.
-     */
-    public static SynchronizationState is(boolean isSynchronized) {
-        return isSynchronized ? SYNCHRONIZED : PLAIN;
-    }
-
     @Override
     public int getMask() {
         return mask;

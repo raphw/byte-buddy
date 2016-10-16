@@ -92,6 +92,31 @@ public enum Visibility implements ModifierContributor.ForType, ModifierContribut
         return (mask & Opcodes.ACC_PRIVATE) != 0;
     }
 
+    /**
+     * Expands the visibility to be at least as high as this visibility and the provided visibility.
+     *
+     * @param visibility A visibility to compare against.
+     * @return A visibility that is as least as high as this and the supplied visibility.
+     */
+    public Visibility expandTo(Visibility visibility) {
+        switch (visibility) {
+            case PUBLIC:
+                return PUBLIC;
+            case PROTECTED:
+                return this == PUBLIC
+                        ? PUBLIC
+                        : visibility;
+            case PACKAGE_PRIVATE:
+                return this == PRIVATE
+                        ? PACKAGE_PRIVATE
+                        : this;
+            case PRIVATE:
+                return this;
+            default:
+                throw new IllegalStateException("Unexpected visibility: " + visibility);
+        }
+    }
+
     @Override
     public String toString() {
         return "Visibility." + name();

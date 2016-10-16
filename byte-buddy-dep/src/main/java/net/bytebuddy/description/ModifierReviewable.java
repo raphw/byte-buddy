@@ -1,5 +1,6 @@
 package net.bytebuddy.description;
 
+import net.bytebuddy.description.modifier.*;
 import org.objectweb.asm.Opcodes;
 
 /**
@@ -32,6 +33,13 @@ public interface ModifierReviewable {
      * @return {@code true} if the modifier described by this object is synthetic.
      */
     boolean isSynthetic();
+
+    /**
+     * Returns this objects synthetic state.
+     *
+     * @return This objects synthetic state.
+     */
+    SyntheticState getSyntheticState();
 
     /**
      * A modifier reviewable for a {@link ByteCodeElement}, i.e. a type, a field or a method.
@@ -79,6 +87,20 @@ public interface ModifierReviewable {
          * @return {@code true} if the modifier described by this object represents the deprecated flag.
          */
         boolean isDeprecated();
+
+        /**
+         * Return's this byte code element's ownership.
+         *
+         * @return This byte code element's ownership.
+         */
+        Ownership getOwnership();
+
+        /**
+         * Returns this byte code element's visibility.
+         *
+         * @return This byte code element's visibility.
+         */
+        Visibility getVisibility();
     }
 
     /**
@@ -107,6 +129,13 @@ public interface ModifierReviewable {
          * @return {@code true} if the modifier described by this object represents the enum flag.
          */
         boolean isEnum();
+
+        /**
+         * Returns this byte code element's enumeration state.
+         *
+         * @return This byte code element's enumeration state.
+         */
+        EnumerationState getEnumerationState();
     }
 
     /**
@@ -127,6 +156,13 @@ public interface ModifierReviewable {
          * @return {@code true} if the modifier described by this object represents the annotation flag.
          */
         boolean isAnnotation();
+
+        /**
+         * Returns this type's manifestation.
+         *
+         * @return This type's manifestation.
+         */
+        TypeManifestation getTypeManifestation();
     }
 
     /**
@@ -147,6 +183,13 @@ public interface ModifierReviewable {
          * @return {@code true} if the modifier described by this object represents the transient flag.
          */
         boolean isTransient();
+
+        /**
+         * Returns this field's manifestation.
+         *
+         * @return This field's manifestation.
+         */
+        FieldManifestation getFieldManifestation();
     }
 
     /**
@@ -162,18 +205,18 @@ public interface ModifierReviewable {
         boolean isSynchronized();
 
         /**
-         * Specifies if the modifier described by this object is {@code native}.
-         *
-         * @return {@code true} if the modifier described by this object is {@code native}.
-         */
-        boolean isNative();
-
-        /**
          * Specifies if the modifier described by this object represents the var args flag.
          *
          * @return {@code true} if the modifier described by this object represents the var args flag.
          */
         boolean isVarArgs();
+
+        /**
+         * Specifies if the modifier described by this object is {@code native}.
+         *
+         * @return {@code true} if the modifier described by this object is {@code native}.
+         */
+        boolean isNative();
 
         /**
          * Specifies if the modifier described by this object represents the bridge flag.
@@ -188,6 +231,27 @@ public interface ModifierReviewable {
          * @return {@code true} if the modifier described by this object is {@code strictfp}.
          */
         boolean isStrict();
+
+        /**
+         * Returns this method's synchronization state.
+         *
+         * @return This method's synchronization state.
+         */
+        SynchronizationState getSynchronizationState();
+
+        /**
+         * Returns this method's strictness in floating-point computation.
+         *
+         * @return This method's strictness in floating-point computation.
+         */
+        MethodStrictness getMethodStrictness();
+
+        /**
+         * Returns this method's manifestation.
+         *
+         * @return This method's manifestation.
+         */
+        MethodManifestation getMethodManifestation();
     }
 
     /**
@@ -201,6 +265,20 @@ public interface ModifierReviewable {
          * @return {@code true} if the modifier described by this object is mandated.
          */
         boolean isMandated();
+
+        /**
+         * Returns this parameter's manifestation.
+         *
+         * @return This parameter's manifestation.
+         */
+        ParameterManifestation getParameterManifestation();
+
+        /**
+         * Returns this parameter's provisioning state.
+         *
+         * @return This parameter's provisioning state.
+         */
+        ProvisioningState getProvisioningState();
     }
 
     /**
@@ -306,6 +384,133 @@ public interface ModifierReviewable {
         @Override
         public boolean isVarArgs() {
             return matchesMask(Opcodes.ACC_VARARGS);
+        }
+
+        @Override
+        public SyntheticState getSyntheticState() {
+            return isSynthetic()
+                    ? SyntheticState.SYNTHETIC
+                    : SyntheticState.PLAIN;
+        }
+
+        @Override
+        public Visibility getVisibility() {
+            int modifiers = getModifiers();
+            switch (modifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE)) {
+                case Opcodes.ACC_PUBLIC:
+                    return Visibility.PUBLIC;
+                case Opcodes.ACC_PROTECTED:
+                    return Visibility.PROTECTED;
+                case EMPTY_MASK:
+                    return Visibility.PACKAGE_PRIVATE;
+                case Opcodes.ACC_PRIVATE:
+                    return Visibility.PRIVATE;
+                default:
+                    throw new IllegalStateException("Unexpected modifiers: " + modifiers);
+            }
+        }
+
+        @Override
+        public Ownership getOwnership() {
+            return isStatic()
+                    ? Ownership.STATIC
+                    : Ownership.MEMBER;
+        }
+
+        @Override
+        public EnumerationState getEnumerationState() {
+            return isEnum()
+                    ? EnumerationState.ENUMERATION
+                    : EnumerationState.PLAIN;
+        }
+
+        @Override
+        public TypeManifestation getTypeManifestation() {
+            int modifiers = getModifiers();
+            switch (modifiers & (Opcodes.ACC_ANNOTATION | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_FINAL)) {
+                case Opcodes.ACC_FINAL:
+                    return TypeManifestation.FINAL;
+                case Opcodes.ACC_ABSTRACT:
+                    return TypeManifestation.ABSTRACT;
+                case Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE:
+                    return TypeManifestation.INTERFACE;
+                case Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE | Opcodes.ACC_ANNOTATION:
+                    return TypeManifestation.ANNOTATION;
+                case EMPTY_MASK:
+                    return TypeManifestation.PLAIN;
+                default:
+                    throw new IllegalStateException("Unexpected modifiers: " + modifiers);
+            }
+        }
+
+        @Override
+        public FieldManifestation getFieldManifestation() {
+            int modifiers = getModifiers();
+            switch (modifiers & (Opcodes.ACC_VOLATILE | Opcodes.ACC_FINAL | Opcodes.ACC_TRANSIENT)) {
+                case Opcodes.ACC_FINAL:
+                    return FieldManifestation.FINAL;
+                case Opcodes.ACC_VOLATILE:
+                    return FieldManifestation.VOLATILE;
+                case Opcodes.ACC_TRANSIENT:
+                    return FieldManifestation.TRANSIENT;
+                case Opcodes.ACC_TRANSIENT | Opcodes.ACC_VOLATILE:
+                    return FieldManifestation.VOLATILE_TRANSIENT;
+                case EMPTY_MASK:
+                    return FieldManifestation.PLAIN;
+                default:
+                    throw new IllegalStateException("Unexpected modifiers: " + modifiers);
+            }
+        }
+
+        @Override
+        public SynchronizationState getSynchronizationState() {
+            return isSynchronized()
+                    ? SynchronizationState.SYNCHRONIZED
+                    : SynchronizationState.PLAIN;
+        }
+
+        @Override
+        public MethodManifestation getMethodManifestation() {
+            int modifiers = getModifiers();
+            switch (modifiers & (Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_FINAL | Opcodes.ACC_BRIDGE)) {
+                case Opcodes.ACC_NATIVE | Opcodes.ACC_FINAL:
+                    return MethodManifestation.FINAL_NATIVE;
+                case Opcodes.ACC_NATIVE:
+                    return MethodManifestation.NATIVE;
+                case Opcodes.ACC_FINAL:
+                    return MethodManifestation.FINAL;
+                case Opcodes.ACC_BRIDGE:
+                    return MethodManifestation.BRIDGE;
+                case Opcodes.ACC_BRIDGE | Opcodes.ACC_FINAL:
+                    return MethodManifestation.FINAL_BRIDGE;
+                case Opcodes.ACC_ABSTRACT:
+                    return MethodManifestation.ABSTRACT;
+                case EMPTY_MASK:
+                    return MethodManifestation.PLAIN;
+                default:
+                    throw new IllegalStateException("Unexpected modifiers: " + modifiers);
+            }
+        }
+
+        @Override
+        public MethodStrictness getMethodStrictness() {
+            return isStrict()
+                    ? MethodStrictness.STRICT
+                    : MethodStrictness.PLAIN;
+        }
+
+        @Override
+        public ParameterManifestation getParameterManifestation() {
+            return isFinal()
+                    ? ParameterManifestation.FINAL
+                    : ParameterManifestation.PLAIN;
+        }
+
+        @Override
+        public ProvisioningState getProvisioningState() {
+            return isMandated()
+                    ? ProvisioningState.MANDATED
+                    : ProvisioningState.PLAIN;
         }
 
         /**

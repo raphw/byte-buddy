@@ -31,16 +31,6 @@ public enum ProvisioningState implements ModifierContributor.ForParameter {
         this.mask = mask;
     }
 
-    /**
-     * Creates a new provisioning state from a boolean value which indicates if the returned state should represent a final modifier.
-     *
-     * @param mandated {@code true} if the returned state should indicate a mandated parameter.
-     * @return A corresponding provisioning state.
-     */
-    public static ProvisioningState is(boolean mandated) {
-        return mandated ? MANDATED : PLAIN;
-    }
-
     @Override
     public int getMask() {
         return mask;

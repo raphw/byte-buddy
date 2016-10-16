@@ -21,9 +21,7 @@ public class ParameterManifestationTest extends AbstractModifierContributorTest 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {ParameterManifestation.is(false), 0, true},
                 {ParameterManifestation.PLAIN, 0, true},
-                {ParameterManifestation.is(true), Opcodes.ACC_FINAL, false},
                 {ParameterManifestation.FINAL, Opcodes.ACC_FINAL, false}
         });
     }

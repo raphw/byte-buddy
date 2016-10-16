@@ -22,9 +22,7 @@ public class MethodArgumentsTest extends AbstractModifierContributorTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {MethodArguments.PLAIN, 0, true},
-                {MethodArguments.isVarArgs(false), 0, true},
-                {MethodArguments.VARARGS, Opcodes.ACC_VARARGS, false},
-                {MethodArguments.isVarArgs(true), Opcodes.ACC_VARARGS, false},
+                {MethodArguments.VARARGS, Opcodes.ACC_VARARGS, false}
         });
     }
 

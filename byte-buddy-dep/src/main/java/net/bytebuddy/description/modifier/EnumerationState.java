@@ -31,16 +31,6 @@ public enum EnumerationState implements ModifierContributor.ForType, ModifierCon
         this.mask = mask;
     }
 
-    /**
-     * Creates an enumeration state from a boolean value indicating if a type or member is supposed to be synthetic.
-     *
-     * @param enumeration {@code true} if the state is supposed to describe an enumeration.
-     * @return The corresponding synthetic state.
-     */
-    public static EnumerationState is(boolean enumeration) {
-        return enumeration ? ENUMERATION : PLAIN;
-    }
-
     @Override
     public int getMask() {
         return mask;
