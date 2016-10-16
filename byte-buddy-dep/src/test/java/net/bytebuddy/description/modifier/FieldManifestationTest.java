@@ -36,7 +36,7 @@ public class FieldManifestationTest extends AbstractModifierContributorTest {
                 {FieldManifestation.PLAIN, 0, true, false, false, false, true},
                 {FieldManifestation.FINAL, Opcodes.ACC_FINAL, false, true, false, false, false},
                 {FieldManifestation.VOLATILE, Opcodes.ACC_VOLATILE, false, false, true, false, false},
-                {FieldManifestation.TRANSIENT, Opcodes.ACC_TRANSIENT, false, false, true, true, false},
+                {FieldManifestation.TRANSIENT, Opcodes.ACC_TRANSIENT, false, false, false, true, false},
                 {FieldManifestation.VOLATILE_TRANSIENT, Opcodes.ACC_VOLATILE | Opcodes.ACC_TRANSIENT, false, false, true, true, false},
         });
     }
