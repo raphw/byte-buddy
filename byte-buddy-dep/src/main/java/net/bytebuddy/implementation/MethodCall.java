@@ -179,7 +179,7 @@ public class MethodCall implements Implementation.Composable {
      * @return A composable method implementation that invokes the given callable.
      */
     public static Composable call(Callable<?> callable) {
-        return invoke(CALL).on(callable).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
+        return invoke(CALL).on(callable, Callable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
     }
 
     /**
@@ -189,7 +189,7 @@ public class MethodCall implements Implementation.Composable {
      * @return A composable method implementation that invokes the given runnable.
      */
     public static Composable run(Runnable runnable) {
-        return invoke(RUN).on(runnable).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
+        return invoke(RUN).on(runnable, Runnable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
     }
 
     /**
@@ -731,6 +731,8 @@ public class MethodCall implements Implementation.Composable {
              */
             private final Object target;
 
+            private final TypeDescription.Generic fieldType;
+
             /**
              * The name of the field to store the target.
              */
@@ -741,13 +743,18 @@ public class MethodCall implements Implementation.Composable {
              *
              * @param target The target on which the method is to be invoked.
              */
-            public ForStaticField(Object target) {
+            public ForStaticField(Object target, TypeDescription.Generic fieldType) {
                 this.target = target;
+                this.fieldType = fieldType;
                 fieldName = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
+            public StackManipulation resolve(MethodDescription invokedMethod,
+                                             MethodDescription instrumentedMethod,
+                                             TypeDescription instrumentedType,
+                                             Assigner assigner,
+                                             Assigner.Typing typing) {
                 return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter();
             }
 
@@ -756,7 +763,7 @@ public class MethodCall implements Implementation.Composable {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(target.getClass())))
+                                fieldType))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
             }
 
@@ -2672,11 +2679,24 @@ public class MethodCall implements Implementation.Composable {
          * @param target The object on which the method is to be invoked upon.
          * @return A method call that invokes the provided method on the given object.
          */
+        @SuppressWarnings("unchecked")
         public MethodCall on(Object target) {
+            return on(target, (Class) target.getClass());
+        }
+
+        /**
+         * Invokes the specified method on the given instance.
+         *
+         * @param target The object on which the method is to be invoked upon.
+         * @param type   The object's type.
+         * @param <T>    The type of the object.
+         * @return A method call that invokes the provided method on the given object.
+         */
+        public <T> MethodCall on(T target, Class<? super T> type) {
             return new MethodCall(methodLocator,
-                    new TargetHandler.ForStaticField(target),
+                    new TargetHandler.ForStaticField(target, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(type)),
                     argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation(target.getClass()),
+                    new MethodInvoker.ForVirtualInvocation(type),
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);
