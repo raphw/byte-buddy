@@ -276,9 +276,9 @@ public class ByteBuddy {
      * this interface type is created.
      * </p>
      * <p>
-     * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type. Any constructor is implemented
-     * to only invoke its super type constructor of equal signature. Another behavior can be specified by supplying an explicit
-     * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(TypeDefinition, ConstructorStrategy)}.
+     * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type and sets them to be {@code public}.
+     * Any constructor is implemented to only invoke its super type constructor of equal signature. Another behavior can be specified by
+     * supplying an explicit {@link ConstructorStrategy} by {@link ByteBuddy#subclass(TypeDefinition, ConstructorStrategy)}.
      * </p>
      *
      * @param superType The super class or interface type to extend. The type must be a raw type or parameterized type. All type
@@ -288,7 +288,7 @@ public class ByteBuddy {
      * @return A type builder for creating a new class extending the provided class or interface.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDefinition superType) {
-        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_CLASS);
+        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING);
     }
 
     /**
