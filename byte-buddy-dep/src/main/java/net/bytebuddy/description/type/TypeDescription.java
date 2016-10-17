@@ -2178,12 +2178,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                         @Override
                         public Generic onType(TypeDescription typeDescription) {
+                            // A type variable might be undeclared due to breaking inner class semantics or due to incorrect scoping by a compiler.
                             Generic substitution = bindings.get(typeVariable);
-                            if (substitution == null) {
-                                throw new IllegalStateException("Unknown type variable: " + typeVariable);
-                            } else {
-                                return substitution;
-                            }
+                            return substitution == null
+                                    ? typeVariable.asRawType()
+                                    : substitution;
                         }
 
                         @Override

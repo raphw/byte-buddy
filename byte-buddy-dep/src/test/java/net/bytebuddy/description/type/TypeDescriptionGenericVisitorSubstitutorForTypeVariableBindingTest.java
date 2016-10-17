@@ -60,10 +60,13 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest 
         assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(source), is(target));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testTypeVariableUnknownOnType() throws Exception {
         when(unknown.getTypeVariableSource()).thenReturn(typeDefinition);
-        new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(unknown);
+        TypeDescription.Generic rawType = mock(TypeDescription.Generic.class);
+        when(unknown.asRawType()).thenReturn(rawType);
+        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(unknown),
+                is(rawType));
     }
 
     @Test
