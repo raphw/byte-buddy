@@ -1,0 +1,26 @@
+-classpath
+'/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-agent/target/classes:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-dep/target/classes:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy/target/classes:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-benchmark/target/classes:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-android/target/classes:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-maven-plugin/target/classes:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-gradle-plugin/target/classes:/home/rafael/.m2/repository/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar:/home/rafael/.m2/repository/com/google/code/findbugs/jsr305/3.0.1/jsr305-3.0.1.jar:/home/rafael/.m2/repository/com/google/code/findbugs/annotations/3.0.1u2/annotations-3.0.1u2.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-agent/src/main/java:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-dep/src/main/java:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-benchmark/src/main/java:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-android/src/main/java:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-maven-plugin/src/main/java:/home/rafael/workspace/oss/byte-buddy/target/checkout/byte-buddy-gradle-plugin/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2014&#x2013;2016. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/home/rafael/workspace/oss/byte-buddy/target/checkout/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Byte Buddy (full API), version 1.4.33'
+-link
+'http://asm.ow2.org/asm50/javadoc/user'
+-linkoffline
+'http://docs.oracle.com/javase/6/docs/api' '/home/rafael/workspace/oss/byte-buddy/target/checkout/target/javadoc-bundle-options'
+-use
+-version
+-windowtitle
+'Byte Buddy (parent) 1.4.33 API'
