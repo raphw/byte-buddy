@@ -197,16 +197,6 @@ public class GenericSignatureResolutionTest {
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 
-    @Test
-    public void testNestedTypeVariable() throws Exception {
-        // Requires erasure of out-of-scope variables.
-        TypeDescription typeDescription = new ByteBuddy()
-                .redefine(AbstractOuter.ExtendedInner.class)
-                .make()
-                .getTypeDescription();
-        assertThat(typeDescription.getTypeVariables().isEmpty(), is(true));
-    }
-
     public abstract static class GenericType<T extends ArrayList<T> & Callable<T>,
             S extends Callable<?>,
             U extends Callable<? extends Callable<U>>,
@@ -266,17 +256,5 @@ public class GenericSignatureResolutionTest {
 
     public interface InterfaceType<T> extends Callable<T> {
         /* empty */
-    }
-
-    public static abstract class AbstractOuter<T> {
-
-        public abstract class Inner {
-
-            public abstract T foo();
-        }
-
-        public abstract class ExtendedInner extends Inner {
-            /* empty */
-        }
     }
 }

@@ -1245,6 +1245,33 @@ public class InstrumentedTypeDefaultTest {
                 .validated();
     }
 
+    @Test
+    public void testTypeVariableOutOfScopeIsErased() throws Exception {
+        TypeDescription typeDescription = new InstrumentedType.Default("foo",
+                Opcodes.ACC_PUBLIC,
+                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(AbstractOuter.ExtendedInner.class),
+                Collections.<TypeVariableToken>emptyList(),
+                Collections.<TypeDescription.Generic>emptyList(),
+                Collections.<FieldDescription.Token>emptyList(),
+                Collections.singletonList(new MethodDescription.Token("foo",
+                        Opcodes.ACC_BRIDGE,
+                        TypeDescription.Generic.VOID,
+                        Collections.<TypeDescription.Generic>emptyList())),
+                Collections.<AnnotationDescription>emptyList(),
+                TypeInitializer.None.INSTANCE,
+                LoadedTypeInitializer.NoOp.INSTANCE,
+                TypeDescription.UNDEFINED,
+                MethodDescription.UNDEFINED,
+                TypeDescription.UNDEFINED,
+                Collections.<TypeDescription>emptyList(),
+                false,
+                false,
+                false);
+        MethodDescription methodDescription = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly();
+        assertThat(methodDescription.getReturnType(), is(TypeDescription.Generic.OBJECT));
+
+    }
+
     public @interface SampleAnnotation {
         /* empty */
     }
@@ -1256,5 +1283,17 @@ public class InstrumentedTypeDefaultTest {
 
     private class Foo {
         /* empty */
+    }
+
+    public static abstract class AbstractOuter<T> {
+
+        public abstract class Inner {
+
+            public abstract T foo();
+        }
+
+        public abstract class ExtendedInner extends Inner {
+            /* empty */
+        }
     }
 }
