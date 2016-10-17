@@ -216,6 +216,13 @@ public interface MethodGraph {
         Set<MethodDescription.TypeToken> getMethodTypes();
 
         /**
+         * Returns the minimal method visibility of all methods that are represented by this node.
+         *
+         * @return The minimal method visibility of all methods that are represented by this node.
+         */
+        Visibility getVisibility();
+
+        /**
          * Represents a {@link net.bytebuddy.dynamic.scaffold.MethodGraph.Node}'s state.
          */
         enum Sort {
@@ -327,6 +334,12 @@ public interface MethodGraph {
             }
 
             @Override
+            public Visibility getVisibility() {
+                throw new IllegalStateException("Cannot resolve visibility of an illegal node");
+            }
+
+
+            @Override
             public String toString() {
                 return "MethodGraph.Node.Unresolved." + name();
             }
@@ -364,6 +377,11 @@ public interface MethodGraph {
             @Override
             public Set<MethodDescription.TypeToken> getMethodTypes() {
                 return Collections.emptySet();
+            }
+
+            @Override
+            public Visibility getVisibility() {
+                return methodDescription.getVisibility();
             }
 
             @Override
@@ -1177,6 +1195,11 @@ public interface MethodGraph {
                          */
                         Set<MethodDescription> getCandidates();
 
+                        /**
+                         * Returns the minimal visibility of this entry.
+                         *
+                         * @return The minimal visibility of this entry.
+                         */
                         Visibility getVisibility();
 
                         /**
@@ -1191,7 +1214,8 @@ public interface MethodGraph {
                         /**
                          * Injects the given key into this entry.
                          *
-                         * @param key The key to inject into this entry.
+                         * @param key        The key to inject into this entry.
+                         * @param visibility The entry's minimal visibility.
                          * @return This entry extended with the given key.
                          */
                         Entry<W> inject(Harmonized<W> key, Visibility visibility);
@@ -1376,7 +1400,7 @@ public interface MethodGraph {
 
                             @Override
                             public MethodGraph.Node asNode(Merger merger) {
-                                return new Node(key.detach(methodDescription.asTypeToken()), methodDescription, madeVisible);
+                                return new Node(key.detach(methodDescription.asTypeToken()), methodDescription, visibility, madeVisible);
                             }
 
                             @Override
@@ -1425,6 +1449,11 @@ public interface MethodGraph {
                                 private final MethodDescription methodDescription;
 
                                 /**
+                                 * The node's minimal visibility.
+                                 */
+                                private final Visibility visibility;
+
+                                /**
                                  * {@code true} if the represented method was made explicitly visible by a visibility bridge.
                                  */
                                 private final boolean visible;
@@ -1434,11 +1463,13 @@ public interface MethodGraph {
                                  *
                                  * @param key               The detached key representing this node.
                                  * @param methodDescription The representative method of this node.
+                                 * @param visibility        The node's minimal visibility.
                                  * @param visible           {@code true} if the represented method was made explicitly visible by a visibility bridge.
                                  */
-                                protected Node(Detached key, MethodDescription methodDescription, boolean visible) {
+                                protected Node(Detached key, MethodDescription methodDescription, Visibility visibility, boolean visible) {
                                     this.key = key;
                                     this.methodDescription = methodDescription;
+                                    this.visibility = visibility;
                                     this.visible = visible;
                                 }
 
@@ -1460,12 +1491,18 @@ public interface MethodGraph {
                                 }
 
                                 @Override
+                                public Visibility getVisibility() {
+                                    return visibility;
+                                }
+
+                                @Override
                                 public boolean equals(Object other) {
                                     if (this == other) return true;
                                     if (other == null || getClass() != other.getClass()) return false;
                                     Node node = (Node) other;
                                     return visible == node.visible
                                             && key.equals(node.key)
+                                            && visibility.equals(node.visibility)
                                             && methodDescription.equals(node.methodDescription);
                                 }
 
@@ -1473,6 +1510,7 @@ public interface MethodGraph {
                                 public int hashCode() {
                                     int result = key.hashCode();
                                     result = 31 * result + methodDescription.hashCode();
+                                    result = 31 * result + visibility.hashCode();
                                     result = 31 * result + (visible ? 1 : 0);
                                     return result;
                                 }
@@ -1482,6 +1520,7 @@ public interface MethodGraph {
                                     return "MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.Node{" +
                                             "key=" + key +
                                             ", methodDescription=" + methodDescription +
+                                            ", visibility=" + visibility +
                                             ", visible=" + visible +
                                             '}';
                                 }
@@ -1526,10 +1565,11 @@ public interface MethodGraph {
                             /**
                              * Creates a new ambiguous entry if both provided entries are not considered to be a bridge of one another.
                              *
-                             * @param key   The key of the entry to be created.
-                             * @param left  The left method to be considered.
-                             * @param right The right method to be considered.
-                             * @param <Q>   The type of the token of the harmonized key to determine method equality.
+                             * @param key        The key of the entry to be created.
+                             * @param left       The left method to be considered.
+                             * @param right      The right method to be considered.
+                             * @param visibility The entry's minimal visibility.
+                             * @param <Q>        The type of the token of the harmonized key to determine method equality.
                              * @return The entry representing both methods.
                              */
                             protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right, Visibility visibility) {
@@ -1593,7 +1633,7 @@ public interface MethodGraph {
                                 while (iterator.hasNext()) {
                                     methodDescription = merger.merge(methodDescription, iterator.next());
                                 }
-                                return new Node(key.detach(methodDescription.asTypeToken()), methodDescription);
+                                return new Node(key.detach(methodDescription.asTypeToken()), methodDescription, visibility);
                             }
 
                             @Override
@@ -1639,12 +1679,19 @@ public interface MethodGraph {
                                 private final MethodDescription methodDescription;
 
                                 /**
+                                 * The node's minimal visibility.
+                                 */
+                                private final Visibility visibility;
+
+                                /**
                                  * @param key               The detached key representing this node.
                                  * @param methodDescription The representative method of this node.
+                                 * @param visibility        The node's minimal visibility.
                                  */
-                                protected Node(Detached key, MethodDescription methodDescription) {
+                                protected Node(Detached key, MethodDescription methodDescription, Visibility visibility) {
                                     this.key = key;
                                     this.methodDescription = methodDescription;
+                                    this.visibility = visibility;
                                 }
 
                                 @Override
@@ -1663,17 +1710,25 @@ public interface MethodGraph {
                                 }
 
                                 @Override
+                                public Visibility getVisibility() {
+                                    return visibility;
+                                }
+
+                                @Override
                                 public boolean equals(Object other) {
                                     if (this == other) return true;
                                     if (other == null || getClass() != other.getClass()) return false;
                                     Node node = (Node) other;
-                                    return key.equals(node.key) && methodDescription.equals(node.methodDescription);
+                                    return key.equals(node.key)
+                                            && visibility.equals(node.visibility)
+                                            && methodDescription.equals(node.methodDescription);
                                 }
 
                                 @Override
                                 public int hashCode() {
                                     int result = key.hashCode();
                                     result = 31 * result + methodDescription.hashCode();
+                                    result = 31 * result + visibility.hashCode();
                                     return result;
                                 }
 
@@ -1681,6 +1736,7 @@ public interface MethodGraph {
                                 public String toString() {
                                     return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.Node{" +
                                             "key=" + key +
+                                            ", visibility=" + visibility +
                                             ", methodDescription=" + methodDescription +
                                             '}';
                                 }

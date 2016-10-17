@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -44,6 +45,7 @@ public class MethodGraphCompilerDefaultTest {
             assertThat(node.getMethodTypes().size(), is(1));
             assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
             assertThat(node.getRepresentative(), is(methodDescription));
+            assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
             assertThat(methodGraph.listNodes().contains(node), is(true));
         }
     }
@@ -60,6 +62,7 @@ public class MethodGraphCompilerDefaultTest {
             assertThat(node.getMethodTypes().size(), is(1));
             assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
             assertThat(node.getRepresentative(), is(methodDescription));
+            assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
             assertThat(methodGraph.listNodes().contains(node), is(true));
         }
     }
@@ -77,6 +80,7 @@ public class MethodGraphCompilerDefaultTest {
             assertThat(node.getMethodTypes().size(), is(1));
             assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
             assertThat(node.getRepresentative(), is(methodDescription));
+            assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
             assertThat(methodGraph.listNodes().contains(node), is(true));
         }
     }
@@ -94,14 +98,15 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getDeclaredMethods().filter(isMethod()).getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(method.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(method.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(method));
-        assertThat(methodGraph.listNodes().contains(methodNode), is(true));
+        MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(method.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(method));
+        assertThat(node.getVisibility(), is(method.getVisibility()));
+        assertThat(methodGraph.listNodes().contains(node), is(true));
         MethodGraph.Node baseNode = methodGraph.getSuperClassGraph().locate(method.asSignatureToken());
-        assertThat(methodNode, not(baseNode));
+        assertThat(node, not(baseNode));
         assertThat(typeDescription.getSuperClass().getDeclaredMethods().filter(ElementMatchers.is(baseNode.getRepresentative())).getOnly(),
                 is(baseNode.getRepresentative()));
     }
@@ -112,12 +117,13 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(method.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(method.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(method));
-        assertThat(methodGraph.listNodes().contains(methodNode), is(true));
+        MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(method.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(method));
+        assertThat(node.getVisibility(), is(method.getVisibility()));
+        assertThat(methodGraph.listNodes().contains(node), is(true));
     }
 
     @Test
@@ -126,12 +132,13 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription method = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(method.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(method.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(method));
-        assertThat(methodGraph.listNodes().contains(methodNode), is(true));
+        MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(method.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(method));
+        assertThat(node.getVisibility(), is(method.getVisibility()));
+        assertThat(methodGraph.listNodes().contains(node), is(true));
     }
 
     @Test
@@ -140,12 +147,13 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription method = typeDescription.getInterfaces().filter(ElementMatchers.is(InterfaceBase.class)).getOnly().getDeclaredMethods().getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(method.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(method.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(method));
-        assertThat(methodGraph.listNodes().contains(methodNode), is(true));
+        MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(method.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(method));
+        assertThat(node.getVisibility(), is(method.getVisibility()));
+        assertThat(methodGraph.listNodes().contains(node), is(true));
     }
 
     @Test
@@ -154,13 +162,14 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription method = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(method.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(method.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(method));
+        MethodGraph.Node node = methodGraph.locate(method.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(method.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(method));
+        assertThat(node.getVisibility(), is(method.getVisibility()));
         MethodGraph.Node baseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(method.asSignatureToken());
-        assertThat(methodNode, not(baseNode));
+        assertThat(node, not(baseNode));
         assertThat(baseNode.getRepresentative(),
                 is((MethodDescription) typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly()));
     }
@@ -174,19 +183,20 @@ public class MethodGraphCompilerDefaultTest {
                 .getDeclaredMethods().filter(isMethod()).getOnly();
         MethodDescription second = typeDescription.getInterfaces().filter(rawType(AmbiguousInterfaceBase.class)).getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(first.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(first.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(second.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(first));
-        assertThat(methodNode.getRepresentative(), not(second));
-        assertThat(methodNode, is(methodGraph.locate(second.asSignatureToken())));
+        MethodGraph.Node node = methodGraph.locate(first.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(first.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(second.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(first));
+        assertThat(node.getRepresentative(), not(second));
+        assertThat(node.getVisibility(), is(first.getVisibility()));
+        assertThat(node, is(methodGraph.locate(second.asSignatureToken())));
         MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(first.asSignatureToken());
-        assertThat(methodNode, not(firstBaseNode));
+        assertThat(node, not(firstBaseNode));
         assertThat(firstBaseNode.getRepresentative(), is(first));
         MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(second.asSignatureToken());
-        assertThat(methodNode, not(secondBaseNode));
+        assertThat(node, not(secondBaseNode));
         assertThat(secondBaseNode.getRepresentative(), is(first));
     }
 
@@ -199,19 +209,20 @@ public class MethodGraphCompilerDefaultTest {
                 .getDeclaredMethods().filter(isMethod()).getOnly();
         MethodDescription second = typeDescription.getInterfaces().filter(rawType(AmbiguousInterfaceBase.class)).getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(first.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(first.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(second.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(first));
-        assertThat(methodNode.getRepresentative(), not(second));
-        assertThat(methodNode, is(methodGraph.locate(second.asSignatureToken())));
+        MethodGraph.Node node = methodGraph.locate(first.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(first.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(second.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(first));
+        assertThat(node.getRepresentative(), not(second));
+        assertThat(node.getVisibility(), is(first.getVisibility()));
+        assertThat(node, is(methodGraph.locate(second.asSignatureToken())));
         MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(first.asSignatureToken());
-        assertThat(methodNode, not(firstBaseNode));
+        assertThat(node, not(firstBaseNode));
         assertThat(firstBaseNode.getRepresentative(), is(first));
         MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(second.asSignatureToken());
-        assertThat(methodNode, not(secondBaseNode));
+        assertThat(node, not(secondBaseNode));
         assertThat(secondBaseNode.getRepresentative(), is(first));
     }
 
@@ -222,11 +233,12 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(methodDescription));
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
     }
 
     @Test
@@ -236,11 +248,12 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(methodDescription));
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
     }
 
     @Test
@@ -250,11 +263,12 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(methodDescription));
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
     }
 
     @Test
@@ -264,11 +278,12 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(methodDescription));
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
     }
 
     @Test
@@ -278,11 +293,12 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription methodDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.DominantIntermediate.class)
                 .getDeclaredMethods().getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(methodDescription));
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
     }
 
     @Test
@@ -291,13 +307,14 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(bridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -306,18 +323,19 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getSuperClass().getDeclaredMethods()
                 .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asDefined().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods()
                 .filter(isMethod()).getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
-        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(3));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(node, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(3));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -326,13 +344,14 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(bridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -341,18 +360,19 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getSuperClass().getDeclaredMethods()
                 .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asDefined().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods()
                 .filter(isMethod()).getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
-        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(3));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(node, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(3));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -361,13 +381,14 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(bridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -376,18 +397,19 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getSuperClass().getDeclaredMethods()
                 .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asDefined().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods()
                 .filter(isMethod()).getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
-        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(3));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(node, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(3));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -396,14 +418,15 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getInterfaces().getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(bridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -412,18 +435,19 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getInterfaces().getOnly()
                 .getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asDefined().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getInterfaces().getOnly().getInterfaces().getOnly()
                 .getDeclaredMethods().getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
-        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(3));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(node, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(3));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -432,13 +456,14 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(bridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -447,17 +472,18 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getInterfaces().getOnly()
                 .getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getInterfaces().getOnly().getInterfaces().getOnly()
                 .getDeclaredMethods().getOnly().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(3));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(3));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -466,13 +492,14 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(bridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -481,18 +508,19 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getSuperClass().getDeclaredMethods()
                 .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asDefined().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods()
                 .filter(isMethod()).getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
-        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(3));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(node, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(3));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -501,14 +529,15 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getInterfaces().getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(bridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(bridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -517,18 +546,19 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(token);
+        MethodGraph.Node node = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getInterfaces().getOnly()
                 .getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asDefined().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getInterfaces().getOnly().getInterfaces().getOnly()
                 .getDeclaredMethods().getOnly().asDefined().asSignatureToken();
-        assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
-        assertThat(methodNode, is(methodGraph.locate(secondBridgeToken)));
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode.getMethodTypes().size(), is(3));
-        assertThat(methodNode.getMethodTypes().contains(token.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node, is(methodGraph.locate(firstBridgeToken)));
+        assertThat(node, is(methodGraph.locate(secondBridgeToken)));
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getMethodTypes().size(), is(3));
+        assertThat(node.getMethodTypes().contains(token.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(firstBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(secondBridgeToken.asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -544,6 +574,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
         assertThat(node, is(methodGraph.getSuperClassGraph().locate(methodDescription.asSignatureToken())));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -560,6 +591,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
         assertThat(node, is(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
                 .locate(methodDescription.asSignatureToken())));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -576,6 +608,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
         assertThat(node, is(methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(GenericNonOverriddenInterfaceBase.class))
                 .locate(methodDescription.asSignatureToken())));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -591,6 +624,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().size(), is(2));
         assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(typeDescription.getDeclaredMethods().filter(takesArguments(Object.class)).getOnly().asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -606,6 +640,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getMethodTypes().size(), is(2));
         assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
         assertThat(node.getMethodTypes().contains(typeDescription.getDeclaredMethods().filter(returns(Object.class)).getOnly().asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -619,12 +654,14 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getRepresentative(), is(objectMethod));
         assertThat(objectNode.getMethodTypes().size(), is(1));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asSignatureToken());
         assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -638,18 +675,21 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getRepresentative(), is(objectMethod));
         assertThat(objectNode.getMethodTypes().size(), is(1));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription integerMethod = typeDescription.getSuperClass().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asSignatureToken());
         assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(integerNode.getRepresentative(), is(integerMethod));
         assertThat(integerNode.getMethodTypes().size(), is(1));
         assertThat(integerNode.getMethodTypes().contains(integerMethod.asTypeToken()), is(true));
+        assertThat(integerNode.getVisibility(), is(integerMethod.getVisibility()));
         MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
         MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asSignatureToken());
         assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -663,12 +703,14 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getRepresentative(), is(objectMethod));
         assertThat(objectNode.getMethodTypes().size(), is(1));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asSignatureToken());
         assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -682,18 +724,21 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getRepresentative(), is(objectMethod));
         assertThat(objectNode.getMethodTypes().size(), is(1));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
+        assertThat(objectMethod.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription integerMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asSignatureToken());
         assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(integerNode.getRepresentative(), is(integerMethod));
         assertThat(integerNode.getMethodTypes().size(), is(1));
         assertThat(integerNode.getMethodTypes().contains(integerMethod.asTypeToken()), is(true));
+        assertThat(integerNode.getVisibility(), is(integerMethod.getVisibility()));
         MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
         MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asSignatureToken());
         assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -707,18 +752,21 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getRepresentative(), is(objectMethod));
         assertThat(objectNode.getMethodTypes().size(), is(1));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription integerMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asSignatureToken());
         assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(integerNode.getRepresentative(), is(integerMethod));
         assertThat(integerNode.getMethodTypes().size(), is(1));
         assertThat(integerNode.getMethodTypes().contains(integerMethod.asTypeToken()), is(true));
+        assertThat(integerMethod.getVisibility(), is(integerNode.getVisibility()));
         MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
         MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asSignatureToken());
         assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -732,12 +780,14 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getRepresentative(), is(objectMethod));
         assertThat(objectNode.getMethodTypes().size(), is(1));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asSignatureToken());
         assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -752,6 +802,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getMethodTypes().size(), is(2));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asDefined().asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription integerMethod = typeDescription.getSuperClass().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asSignatureToken());
         assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
@@ -764,6 +815,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -777,12 +829,14 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getRepresentative(), is(objectMethod));
         assertThat(objectNode.getMethodTypes().size(), is(1));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asSignatureToken());
         assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -797,19 +851,22 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getMethodTypes().size(), is(2));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asDefined().asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription integerMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asSignatureToken());
         assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(integerNode.getRepresentative(), is(integerMethod));
-        assertThat(objectNode.getMethodTypes().size(), is(2));
-        assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
-        assertThat(objectNode.getMethodTypes().contains(objectMethod.asDefined().asTypeToken()), is(true));
+        assertThat(integerNode.getMethodTypes().size(), is(1));
+        assertThat(integerNode.getMethodTypes().contains(integerMethod.asTypeToken()), is(true));
+        assertThat(integerNode.getMethodTypes().contains(integerMethod.asDefined().asTypeToken()), is(true));
+        assertThat(integerNode.getVisibility(), is(integerMethod.getVisibility()));
         MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
         MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asSignatureToken());
         assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -824,19 +881,22 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(objectNode.getMethodTypes().size(), is(2));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
         assertThat(objectNode.getMethodTypes().contains(objectMethod.asDefined().asTypeToken()), is(true));
+        assertThat(objectNode.getVisibility(), is(objectMethod.getVisibility()));
         MethodDescription integerMethod = typeDescription.getInterfaces().getOnly().getDeclaredMethods().filter(takesArguments(Integer.class)).getOnly();
         MethodGraph.Node integerNode = methodGraph.locate(integerMethod.asSignatureToken());
         assertThat(integerNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(integerNode.getRepresentative(), is(integerMethod));
-        assertThat(objectNode.getMethodTypes().size(), is(2));
-        assertThat(objectNode.getMethodTypes().contains(objectMethod.asTypeToken()), is(true));
-        assertThat(objectNode.getMethodTypes().contains(objectMethod.asDefined().asTypeToken()), is(true));
+        assertThat(integerNode.getMethodTypes().size(), is(1));
+        assertThat(integerNode.getMethodTypes().contains(integerMethod.asTypeToken()), is(true));
+        assertThat(integerNode.getMethodTypes().contains(integerMethod.asDefined().asTypeToken()), is(true));
+        assertThat(integerNode.getVisibility(), is(integerMethod.getVisibility()));
         MethodDescription voidMethod = typeDescription.getDeclaredMethods().filter(takesArguments(Void.class)).getOnly();
         MethodGraph.Node voidNode = methodGraph.locate(voidMethod.asSignatureToken());
         assertThat(voidNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
         assertThat(voidNode.getRepresentative(), is(voidMethod));
         assertThat(voidNode.getMethodTypes().size(), is(1));
         assertThat(voidNode.getMethodTypes().contains(voidMethod.asTypeToken()), is(true));
+        assertThat(voidNode.getVisibility(), is(voidMethod.getVisibility()));
     }
 
     @Test
@@ -845,11 +905,12 @@ public class MethodGraphCompilerDefaultTest {
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription methodDescription = typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod()).getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.VISIBLE));
-        assertThat(methodNode.getMethodTypes().size(), is(1));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(methodDescription));
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.VISIBLE));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
     }
 
     @Test
@@ -861,13 +922,14 @@ public class MethodGraphCompilerDefaultTest {
                 .getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly();
         MethodDescription.SignatureToken bridgeToken = typeDescription.getSuperClass().getSuperClass()
                 .getDeclaredMethods().filter(isMethod()).getOnly().asSignatureToken();
-        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.VISIBLE));
-        assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(methodDescription));
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.VISIBLE));
+        assertThat(node, is(methodGraph.locate(bridgeToken)));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
     }
 
     @Test
@@ -880,14 +942,15 @@ public class MethodGraphCompilerDefaultTest {
                 .filter(isMethod().and(definedMethod(takesArguments(Object.class)))).getOnly();
         MethodDescription nonGenericMethod = typeDescription.getSuperClass().getDeclaredMethods()
                 .filter(isMethod().and(definedMethod(takesArguments(Void.class)))).getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(methodDescription.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodNode, is(methodGraph.locate(genericMethod.asDefined().asSignatureToken())));
-        assertThat(methodNode, is(methodGraph.locate(nonGenericMethod.asDefined().asSignatureToken())));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(methodDescription));
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node, is(methodGraph.locate(genericMethod.asDefined().asSignatureToken())));
+        assertThat(node, is(methodGraph.locate(nonGenericMethod.asDefined().asSignatureToken())));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(methodDescription));
+        assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
         MethodGraph superGraph = methodGraph.getSuperClassGraph();
         MethodGraph.Node superNode = superGraph.locate(methodDescription.asSignatureToken());
         assertThat(superNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
@@ -896,6 +959,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(superNode.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
         assertThat(superNode.getRepresentative(), is(nonGenericMethod));
         assertThat(superNode.getRepresentative(), is(genericMethod));
+        assertThat(superNode.getVisibility(), is(methodDescription.getVisibility()));
     }
 
     @Test
@@ -909,15 +973,16 @@ public class MethodGraphCompilerDefaultTest {
                 .getDeclaredMethods().filter(isMethod()).getOnly();
         assertThat(methodGraph.getSuperClassGraph().locate(genericMethod.asSignatureToken()).getSort(), is(MethodGraph.Node.Sort.UNRESOLVED));
         assertThat(methodGraph.getSuperClassGraph().locate(nonGenericMethod.asSignatureToken()).getSort(), is(MethodGraph.Node.Sort.UNRESOLVED));
-        MethodGraph.Node methodNode = methodGraph.locate(genericMethod.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
-        assertThat(methodNode, is(methodGraph.locate(genericMethod.asDefined().asSignatureToken())));
-        assertThat(methodNode, is(methodGraph.locate(nonGenericMethod.asDefined().asSignatureToken())));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(genericMethod.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(genericMethod.asDefined().asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(genericMethod));
-        assertThat(methodNode.getRepresentative(), not(nonGenericMethod));
+        MethodGraph.Node node = methodGraph.locate(genericMethod.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(node, is(methodGraph.locate(genericMethod.asDefined().asSignatureToken())));
+        assertThat(node, is(methodGraph.locate(nonGenericMethod.asDefined().asSignatureToken())));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(genericMethod.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(genericMethod.asDefined().asTypeToken()), is(true));
+        assertThat(node.getRepresentative(), is(genericMethod));
+        assertThat(node.getRepresentative(), not(nonGenericMethod));
+        assertThat(node.getVisibility(), is(genericMethod.getVisibility()));
     }
 
     @Test
@@ -929,14 +994,15 @@ public class MethodGraphCompilerDefaultTest {
                 .getDeclaredMethods().filter(isMethod().and(definedMethod(takesArguments(Object.class)))).getOnly();
         MethodDescription nonGenericMethod = typeDescription.getSuperClass().getSuperClass()
                 .getDeclaredMethods().filter(isMethod().and(definedMethod(takesArguments(Void.class)))).getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(genericMethod.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.VISIBLE));
-        assertThat(methodNode, is(methodGraph.locate(nonGenericMethod.asSignatureToken())));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(genericMethod.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(genericMethod.asDefined().asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(),
+        MethodGraph.Node node = methodGraph.locate(genericMethod.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.VISIBLE));
+        assertThat(node, is(methodGraph.locate(nonGenericMethod.asSignatureToken())));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(genericMethod.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(genericMethod.asDefined().asTypeToken()), is(true));
+        assertThat(node.getRepresentative(),
                 is((MethodDescription) typeDescription.getSuperClass().getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly()));
+        assertThat(node.getVisibility(), is(genericMethod.getVisibility()));
     }
 
     @Test
@@ -946,12 +1012,13 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
         MethodDescription diamondOverride = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly();
         MethodDescription explicitOverride = typeDescription.getSuperClass().getDeclaredMethods().filter(isVirtual()).getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(diamondOverride.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
-        assertThat(methodGraph.locate(explicitOverride.asDefined().asSignatureToken()), is(methodNode));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(diamondOverride.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(explicitOverride.asDefined().asTypeToken()), is(true));
+        MethodGraph.Node node = methodGraph.locate(diamondOverride.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodGraph.locate(explicitOverride.asDefined().asSignatureToken()), is(node));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(diamondOverride.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(explicitOverride.asDefined().asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(explicitOverride.getVisibility()));
     }
 
     @Test
@@ -961,12 +1028,45 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().size(), is(1));
         MethodDescription diamondOverride = typeDescription.getInterfaces().get(0).getDeclaredMethods().getOnly();
         MethodDescription explicitOverride = typeDescription.getInterfaces().get(1).getDeclaredMethods().getOnly();
-        MethodGraph.Node methodNode = methodGraph.locate(diamondOverride.asSignatureToken());
-        assertThat(methodNode.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
-        assertThat(methodGraph.locate(explicitOverride.asDefined().asSignatureToken()), is(methodNode));
-        assertThat(methodNode.getMethodTypes().size(), is(2));
-        assertThat(methodNode.getMethodTypes().contains(diamondOverride.asTypeToken()), is(true));
-        assertThat(methodNode.getMethodTypes().contains(explicitOverride.asDefined().asTypeToken()), is(true));
+        MethodGraph.Node node = methodGraph.locate(diamondOverride.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
+        assertThat(methodGraph.locate(explicitOverride.asDefined().asSignatureToken()), is(node));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(diamondOverride.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(explicitOverride.asDefined().asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(explicitOverride.getVisibility()));
+    }
+
+    @Test
+    public void testVisibilityExtension() throws Exception {
+        TypeDescription typeDescription = new InstrumentedType.Default("foo",
+                Opcodes.ACC_PUBLIC,
+                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(VisibilityExtension.Base.class),
+                Collections.<TypeVariableToken>emptyList(),
+                Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(VisibilityExtension.class)),
+                Collections.<FieldDescription.Token>emptyList(),
+                Collections.<MethodDescription.Token>emptyList(),
+                Collections.<AnnotationDescription>emptyList(),
+                TypeInitializer.None.INSTANCE,
+                LoadedTypeInitializer.NoOp.INSTANCE,
+                TypeDescription.UNDEFINED,
+                MethodDescription.UNDEFINED,
+                TypeDescription.UNDEFINED,
+                Collections.<TypeDescription>emptyList(),
+                false,
+                false,
+                false);
+        MethodDescription.SignatureToken signatureToken = new MethodDescription.SignatureToken("foo",
+                new TypeDescription.ForLoadedType(void.class),
+                Collections.<TypeDescription>emptyList());
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.OBJECT.getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
+        MethodGraph.Node node = methodGraph.locate(signatureToken);
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(node.getRepresentative().asSignatureToken(), is(signatureToken));
+        assertThat(node.getMethodTypes().size(), is(1));
+        assertThat(node.getMethodTypes(), hasItem(signatureToken.asTypeToken()));
+        assertThat(node.getVisibility(), is(Visibility.PUBLIC));
     }
 
     @Test
@@ -1001,6 +1101,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(node.getRepresentative().asSignatureToken(), is(bridgeMethod));
         assertThat(node.getMethodTypes().size(), is(1));
         assertThat(node.getMethodTypes(), hasItem(bridgeMethod.asTypeToken()));
+        assertThat(node.getVisibility(), is(Visibility.PACKAGE_PRIVATE));
     }
 
     @Test
@@ -1401,6 +1502,18 @@ public class MethodGraphCompilerDefaultTest {
 
         interface Inner extends GenericDiamondInterfaceBase<Void>, DiamondInterface {
             /* empty */
+        }
+    }
+
+    public interface VisibilityExtension {
+
+        void foo();
+
+        class Base {
+
+            protected void foo() {
+                /* do nothing */
+            }
         }
     }
 
