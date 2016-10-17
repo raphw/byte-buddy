@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.Transformer;
@@ -118,8 +119,8 @@ public class MethodRegistryDefaultTest {
         when(firstFactory.make(typeDescription)).thenReturn(firstAppender);
         when(secondFactory.make(typeDescription)).thenReturn(secondAppender);
         when(implementationTargetFactory.make(typeDescription, methodGraph, classFileVersion)).thenReturn(implementationTarget);
-        when(firstCompiledHandler.assemble(instrumentedMethod, firstAppender)).thenReturn(firstRecord);
-        when(secondCompiledHandler.assemble(instrumentedMethod, secondAppender)).thenReturn(secondRecord);
+        when(firstCompiledHandler.assemble(instrumentedMethod, firstAppender, Visibility.PUBLIC)).thenReturn(firstRecord);
+        when(secondCompiledHandler.assemble(instrumentedMethod, secondAppender, Visibility.PUBLIC)).thenReturn(secondRecord);
         when(transformer.transform(thirdType, instrumentedMethod)).thenReturn(instrumentedMethod);
         when(thirdType.validated()).thenReturn(typeDescription);
         when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
@@ -132,6 +133,7 @@ public class MethodRegistryDefaultTest {
         when(instrumentedMethod.getReturnType()).thenReturn(genericReturnType);
         when(instrumentedMethod.getParameters()).thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(parameterDescription));
         when(parameterDescription.getType()).thenReturn(genericParameterType);
+        when(instrumentedMethod.getVisibility()).thenReturn(Visibility.PUBLIC);
     }
 
     @Test

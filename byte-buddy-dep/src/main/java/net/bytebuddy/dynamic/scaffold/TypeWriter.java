@@ -10,6 +10,8 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -351,6 +353,13 @@ public interface TypeWriter<T> {
             MethodDescription getMethod();
 
             /**
+             * The visibility to enforce for this method.
+             *
+             * @return The visibility to enforce for this method.
+             */
+            Visibility getVisibility();
+
+            /**
              * Prepends the given method appender to this entry.
              *
              * @param byteCodeAppender The byte code appender to prepend.
@@ -481,6 +490,12 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public Visibility getVisibility() {
+                    throw new IllegalStateException("A method that is not defined does not require a specific visibility");
+                }
+
+
+                @Override
                 public Sort getSort() {
                     return Sort.SKIPPED;
                 }
@@ -503,7 +518,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(getMethod().getActualModifiers(getSort().isImplemented()),
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(getMethod().getActualModifiers(getSort().isImplemented(), getVisibility()),
                             getMethod().getInternalName(),
                             getMethod().getDescriptor(),
                             getMethod().getGenericSignature(),
@@ -540,13 +555,18 @@ public interface TypeWriter<T> {
                     private final MethodAttributeAppender methodAttributeAppender;
 
                     /**
+                     * The represented method's minimum visibility.
+                     */
+                    private final Visibility visibility;
+
+                    /**
                      * Creates a new record for an implemented method without attributes or a modifier resolver.
                      *
                      * @param methodDescription The implemented method.
                      * @param byteCodeAppender  The byte code appender to apply.
                      */
                     public WithBody(MethodDescription methodDescription, ByteCodeAppender byteCodeAppender) {
-                        this(methodDescription, byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE);
+                        this(methodDescription, byteCodeAppender, MethodAttributeAppender.NoOp.INSTANCE, methodDescription.getVisibility());
                     }
 
                     /**
@@ -555,11 +575,16 @@ public interface TypeWriter<T> {
                      * @param methodDescription       The implemented method.
                      * @param byteCodeAppender        The byte code appender to apply.
                      * @param methodAttributeAppender The method attribute appender to apply.
+                     * @param visibility              The represented method's minimum visibility.
                      */
-                    public WithBody(MethodDescription methodDescription, ByteCodeAppender byteCodeAppender, MethodAttributeAppender methodAttributeAppender) {
+                    public WithBody(MethodDescription methodDescription,
+                                    ByteCodeAppender byteCodeAppender,
+                                    MethodAttributeAppender methodAttributeAppender,
+                                    Visibility visibility) {
                         this.methodDescription = methodDescription;
                         this.byteCodeAppender = byteCodeAppender;
                         this.methodAttributeAppender = methodAttributeAppender;
+                        this.visibility = visibility;
                     }
 
                     @Override
@@ -570,6 +595,11 @@ public interface TypeWriter<T> {
                     @Override
                     public Sort getSort() {
                         return Sort.IMPLEMENTED;
+                    }
+
+                    @Override
+                    public Visibility getVisibility() {
+                        return visibility;
                     }
 
                     @Override
@@ -587,7 +617,10 @@ public interface TypeWriter<T> {
 
                     @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
-                        return new WithBody(methodDescription, new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender), methodAttributeAppender);
+                        return new WithBody(methodDescription,
+                                new ByteCodeAppender.Compound(byteCodeAppender, this.byteCodeAppender),
+                                methodAttributeAppender,
+                                visibility);
                     }
 
                     @Override
@@ -597,7 +630,8 @@ public interface TypeWriter<T> {
                         WithBody withBody = (WithBody) other;
                         return methodDescription.equals(withBody.methodDescription)
                                 && byteCodeAppender.equals(withBody.byteCodeAppender)
-                                && methodAttributeAppender.equals(withBody.methodAttributeAppender);
+                                && methodAttributeAppender.equals(withBody.methodAttributeAppender)
+                                && visibility.equals(withBody.visibility);
                     }
 
                     @Override
@@ -605,6 +639,7 @@ public interface TypeWriter<T> {
                         int result = methodDescription.hashCode();
                         result = 31 * result + byteCodeAppender.hashCode();
                         result = 31 * result + methodAttributeAppender.hashCode();
+                        result = 31 * result + visibility.hashCode();
                         return result;
                     }
 
@@ -614,6 +649,7 @@ public interface TypeWriter<T> {
                                 "methodDescription=" + methodDescription +
                                 ", byteCodeAppender=" + byteCodeAppender +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
+                                ", visibility=" + visibility +
                                 '}';
                     }
                 }
@@ -634,14 +670,21 @@ public interface TypeWriter<T> {
                     private final MethodAttributeAppender methodAttributeAppender;
 
                     /**
+                     * The represented method's minimum visibility.
+                     */
+                    private final Visibility visibility;
+
+                    /**
                      * Creates a new entry for a method that is defines but does not append byte code, i.e. is native or abstract.
                      *
                      * @param methodDescription       The implemented method.
                      * @param methodAttributeAppender The method attribute appender to apply.
+                     * @param visibility              The represented method's minimum visibility.
                      */
-                    public WithoutBody(MethodDescription methodDescription, MethodAttributeAppender methodAttributeAppender) {
+                    public WithoutBody(MethodDescription methodDescription, MethodAttributeAppender methodAttributeAppender, Visibility visibility) {
                         this.methodDescription = methodDescription;
                         this.methodAttributeAppender = methodAttributeAppender;
+                        this.visibility = visibility;
                     }
 
                     @Override
@@ -652,6 +695,11 @@ public interface TypeWriter<T> {
                     @Override
                     public Sort getSort() {
                         return Sort.DEFINED;
+                    }
+
+                    @Override
+                    public Visibility getVisibility() {
+                        return visibility;
                     }
 
                     @Override
@@ -675,13 +723,15 @@ public interface TypeWriter<T> {
                         if (other == null || getClass() != other.getClass()) return false;
                         WithoutBody that = (WithoutBody) other;
                         return methodDescription.equals(that.methodDescription)
-                                && methodAttributeAppender.equals(that.methodAttributeAppender);
+                                && methodAttributeAppender.equals(that.methodAttributeAppender)
+                                && visibility.equals(that.visibility);
                     }
 
                     @Override
                     public int hashCode() {
                         int result = methodDescription.hashCode();
                         result = 31 * result + methodAttributeAppender.hashCode();
+                        result = 31 * result + visibility.hashCode();
                         return result;
                     }
 
@@ -690,6 +740,7 @@ public interface TypeWriter<T> {
                         return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody{" +
                                 "methodDescription=" + methodDescription +
                                 ", methodAttributeAppender=" + methodAttributeAppender +
+                                ", visibility=" + visibility +
                                 '}';
                     }
                 }
@@ -737,6 +788,11 @@ public interface TypeWriter<T> {
                     @Override
                     public Sort getSort() {
                         return Sort.DEFINED;
+                    }
+
+                    @Override
+                    public Visibility getVisibility() {
+                        return methodDescription.getVisibility();
                     }
 
                     @Override
@@ -859,8 +915,16 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public Visibility getVisibility() {
+                        return bridgeTarget.getVisibility();
+                    }
+
+                    @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
-                        return new ForDefinedMethod.WithBody(visibilityBridge, new ByteCodeAppender.Compound(this, byteCodeAppender), attributeAppender);
+                        return new ForDefinedMethod.WithBody(visibilityBridge,
+                                new ByteCodeAppender.Compound(this, byteCodeAppender),
+                                attributeAppender,
+                                bridgeTarget.getVisibility());
                     }
 
                     @Override
@@ -1070,6 +1134,11 @@ public interface TypeWriter<T> {
                 @Override
                 public MethodDescription getMethod() {
                     return bridgeTarget;
+                }
+
+                @Override
+                public Visibility getVisibility() {
+                    return bridgeTarget.getVisibility();
                 }
 
                 @Override
@@ -3400,7 +3469,8 @@ public interface TypeWriter<T> {
                                 methodDescription.getExceptionTypes().asErasures().toInternalNames());
                     }
                     MethodDescription implementedMethod = record.getMethod();
-                    MethodVisitor methodVisitor = super.visitMethod(implementedMethod.getActualModifiers(record.getSort().isImplemented()),
+                    MethodVisitor methodVisitor = super.visitMethod(ModifierContributor.Resolver.of(Collections.singleton(record.getVisibility()))
+                                    .resolve(implementedMethod.getActualModifiers(record.getSort().isImplemented())),
                             implementedMethod.getInternalName(),
                             implementedMethod.getDescriptor(),
                             implementedMethod.getGenericSignature(),

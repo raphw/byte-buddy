@@ -1021,10 +1021,11 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
-    @Ignore() // TODO: Fix!
+//    @Ignore() // TODO: Fix!
     public void testInterfaceMakesClassMethodPublic() throws Exception {
         Class<?> type = createPlain()
                 .implement(Cloneable.class)
+                .method(named("clone"))
                 .intercept(FixedValue.self())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)

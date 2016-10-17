@@ -8,6 +8,8 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
+import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -100,6 +102,17 @@ public interface MethodDescription extends TypeVariableSource,
      * @return The method's actual modifiers.
      */
     int getActualModifiers(boolean nonAbstract);
+
+    /**
+     * Returns this method's actual modifiers as it is present in a class file, i.e. includes a flag if this method
+     * is marked {@link Deprecated} and adjusts the modifiers for being abstract or not. Additionally, this method
+     * resolves a required minimal visibility.
+     *
+     * @param nonAbstract {@code true} if the method should be treated as non-abstract.
+     * @param visibility  The minimal visibility to enforce for this method.
+     * @return The method's actual modifiers.
+     */
+    int getActualModifiers(boolean nonAbstract, Visibility visibility);
 
     /**
      * Checks if this method description represents a constructor.
@@ -427,6 +440,11 @@ public interface MethodDescription extends TypeVariableSource,
             return nonAbstract
                     ? actualModifiers & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)
                     : actualModifiers & ~Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT;
+        }
+
+        @Override
+        public int getActualModifiers(boolean nonAbstract, Visibility visibility) {
+            return ModifierContributor.Resolver.of(Collections.singleton(getVisibility().expandTo(visibility))).resolve(getActualModifiers(nonAbstract));
         }
 
         @Override

@@ -5,6 +5,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -623,6 +624,8 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstMethod).getActualModifiers(true), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC));
         assertThat(describe(firstMethod).getActualModifiers(false), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_ABSTRACT));
         assertThat(describe(DeprecationSample.class.getDeclaredMethod("foo")).getActualModifiers(), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_DEPRECATED));
+        assertThat(describe(firstMethod).getActualModifiers(true, Visibility.PUBLIC), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC));
+        assertThat(describe(secondMethod).getActualModifiers(false, Visibility.PRIVATE), is(Opcodes.ACC_PROTECTED | Opcodes.ACC_ABSTRACT));
     }
 
     @Test

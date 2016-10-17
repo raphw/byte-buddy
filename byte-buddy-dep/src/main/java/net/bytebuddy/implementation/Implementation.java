@@ -7,6 +7,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -1403,6 +1404,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 @Override
                 public Sort getSort() {
                     return Sort.IMPLEMENTED;
+                }
+
+                @Override
+                public Visibility getVisibility() {
+                    return methodDescription.getVisibility();
                 }
 
                 @Override

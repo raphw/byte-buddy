@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -56,7 +57,9 @@ public class MethodRegistryHandlerTest {
     public void testHandlerForAbstractMethod() throws Exception {
         MethodRegistry.Handler handler = MethodRegistry.Handler.ForAbstractMethod.INSTANCE;
         assertThat(handler.prepare(instrumentedType), is(instrumentedType));
-        TypeWriter.MethodPool.Record record = handler.compile(implementationTarget).assemble(methodDescription, attributeAppender);
+        TypeWriter.MethodPool.Record record = handler.compile(implementationTarget).assemble(methodDescription,
+                attributeAppender,
+                Visibility.PUBLIC);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
     }
 
@@ -64,7 +67,9 @@ public class MethodRegistryHandlerTest {
     public void testHandlerForImplementation() throws Exception {
         MethodRegistry.Handler handler = new MethodRegistry.Handler.ForImplementation(implementation);
         assertThat(handler.prepare(instrumentedType), is(preparedInstrumentedType));
-        TypeWriter.MethodPool.Record record = handler.compile(implementationTarget).assemble(methodDescription, attributeAppender);
+        TypeWriter.MethodPool.Record record = handler.compile(implementationTarget).assemble(methodDescription,
+                attributeAppender,
+                Visibility.PUBLIC);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
     }
 
@@ -72,7 +77,9 @@ public class MethodRegistryHandlerTest {
     public void testHandlerForAnnotationValue() throws Exception {
         MethodRegistry.Handler handler = new MethodRegistry.Handler.ForAnnotationValue(annotationValue);
         assertThat(handler.prepare(instrumentedType), is(instrumentedType));
-        TypeWriter.MethodPool.Record record = handler.compile(implementationTarget).assemble(methodDescription, attributeAppender);
+        TypeWriter.MethodPool.Record record = handler.compile(implementationTarget).assemble(methodDescription,
+                attributeAppender,
+                Visibility.PUBLIC);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.DEFINED));
     }
 

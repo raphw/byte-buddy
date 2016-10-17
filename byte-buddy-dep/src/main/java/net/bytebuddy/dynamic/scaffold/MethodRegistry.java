@@ -4,6 +4,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.Transformer;
 import net.bytebuddy.implementation.Implementation;
@@ -99,8 +100,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
-                return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, attributeAppender);
+            public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
+                return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, attributeAppender, visibility);
             }
 
             @Override
@@ -154,7 +155,7 @@ public interface MethodRegistry {
                 }
 
                 @Override
-                public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
+                public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                     return TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
                 }
 
@@ -188,9 +189,10 @@ public interface MethodRegistry {
              *
              * @param methodDescription The method description to apply with this handler.
              * @param attributeAppender The method attribute appender to apply together with this handler.
+             * @param visibility        The represented method's minimum visibility.
              * @return A method pool entry representing this handler and the given attribute appender.
              */
-            TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender);
+            TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility);
         }
 
         /**
@@ -260,8 +262,8 @@ public interface MethodRegistry {
                 }
 
                 @Override
-                public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
-                    return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription, byteCodeAppender, attributeAppender);
+                public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
+                    return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription, byteCodeAppender, attributeAppender, visibility);
                 }
 
                 @Override
@@ -314,7 +316,7 @@ public interface MethodRegistry {
             }
 
             @Override
-            public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender) {
+            public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                 return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription, annotationValue, attributeAppender);
             }
 
@@ -487,7 +489,10 @@ public interface MethodRegistry {
                 if (relevanceMatcher.matches(methodDescription)) {
                     for (Entry entry : entries) {
                         if (entry.resolve(instrumentedType).matches(methodDescription)) {
-                            implementations.put(methodDescription, entry.asPreparedEntry(instrumentedType, methodDescription, node.getMethodTypes()));
+                            implementations.put(methodDescription, entry.asPreparedEntry(instrumentedType,
+                                    methodDescription,
+                                    node.getMethodTypes(),
+                                    node.getVisibility()));
                             visibilityBridge = false;
                             break;
                         }
@@ -499,7 +504,7 @@ public interface MethodRegistry {
                         && !node.getSort().isMadeVisible()
                         && methodDescription.getDeclaringType().isPackagePrivate()) {
                     // Visibility bridges are required for public classes that inherit a public method from a package-private class.
-                    implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription));
+                    implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription, node.getVisibility()));
                 }
             }
             for (MethodDescription methodDescription : CompoundList.of(
@@ -507,7 +512,7 @@ public interface MethodRegistry {
                     new MethodDescription.Latent.TypeInitializer(instrumentedType))) {
                 for (Entry entry : entries) {
                     if (entry.resolve(instrumentedType).matches(methodDescription)) {
-                        implementations.put(methodDescription, entry.asPreparedEntry(instrumentedType, methodDescription));
+                        implementations.put(methodDescription, entry.asPreparedEntry(instrumentedType, methodDescription, methodDescription.getVisibility()));
                         break;
                     }
                 }
@@ -588,10 +593,11 @@ public interface MethodRegistry {
              *
              * @param instrumentedType  The instrumented type.
              * @param methodDescription The non-transformed method to be implemented.
+             * @param visibility        The represented method's minimum visibility.
              * @return A prepared version of this entry.
              */
-            protected Prepared.Entry asPreparedEntry(TypeDescription instrumentedType, MethodDescription methodDescription) {
-                return asPreparedEntry(instrumentedType, methodDescription, Collections.<MethodDescription.TypeToken>emptySet());
+            protected Prepared.Entry asPreparedEntry(TypeDescription instrumentedType, MethodDescription methodDescription, Visibility visibility) {
+                return asPreparedEntry(instrumentedType, methodDescription, Collections.<MethodDescription.TypeToken>emptySet(), visibility);
             }
 
             /**
@@ -600,15 +606,18 @@ public interface MethodRegistry {
              * @param instrumentedType  The instrumented type.
              * @param methodDescription The non-transformed method to be implemented.
              * @param methodTypes       The method types this method represents.
+             * @param visibility        The represented method's minimum visibility.
              * @return A prepared version of this entry.
              */
             protected Prepared.Entry asPreparedEntry(TypeDescription instrumentedType,
                                                      MethodDescription methodDescription,
-                                                     Set<MethodDescription.TypeToken> methodTypes) {
+                                                     Set<MethodDescription.TypeToken> methodTypes,
+                                                     Visibility visibility) {
                 return new Prepared.Entry(handler,
                         attributeAppenderFactory,
                         transformer.transform(instrumentedType, methodDescription),
                         methodTypes,
+                        visibility,
                         false);
             }
 
@@ -623,6 +632,7 @@ public interface MethodRegistry {
                         MethodAttributeAppender.Explicit.of(methodDescription),
                         methodDescription,
                         Collections.<MethodDescription.TypeToken>emptySet(),
+                        methodDescription.getVisibility(),
                         false);
             }
 
@@ -763,6 +773,7 @@ public interface MethodRegistry {
                             cachedAttributeAppender,
                             entry.getValue().getMethodDescription(),
                             entry.getValue().resolveBridgeTypes(),
+                            entry.getValue().getVisibility(),
                             entry.getValue().isBridgeMethod()));
                 }
                 return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries, classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5));
@@ -827,6 +838,11 @@ public interface MethodRegistry {
                 private final Set<MethodDescription.TypeToken> typeTokens;
 
                 /**
+                 * The minimum required visibility of this method.
+                 */
+                private Visibility visibility;
+
+                /**
                  * Is {@code true} if this entry represents a bridge method.
                  */
                 private final boolean bridgeMethod;
@@ -838,17 +854,20 @@ public interface MethodRegistry {
                  * @param attributeAppenderFactory A attribute appender factory for appending attributes for any implemented method.
                  * @param methodDescription        The method this entry represents.
                  * @param typeTokens               A set of bridges representing the bridge methods of this method.
+                 * @param visibility               The minimum required visibility of this method.
                  * @param bridgeMethod             {@code true} if this entry represents a bridge method.
                  */
                 protected Entry(Handler handler,
                                 MethodAttributeAppender.Factory attributeAppenderFactory,
                                 MethodDescription methodDescription,
                                 Set<MethodDescription.TypeToken> typeTokens,
+                                Visibility visibility,
                                 boolean bridgeMethod) {
                     this.handler = handler;
                     this.attributeAppenderFactory = attributeAppenderFactory;
                     this.methodDescription = methodDescription;
                     this.typeTokens = typeTokens;
+                    this.visibility = visibility;
                     this.bridgeMethod = bridgeMethod;
                 }
 
@@ -856,13 +875,15 @@ public interface MethodRegistry {
                  * Creates an entry for a visibility bridge.
                  *
                  * @param bridgeTarget The bridge method's target.
+                 * @param visibility   The represented method's minimum visibility.
                  * @return An entry representing a visibility bridge.
                  */
-                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget) {
+                protected static Entry forVisibilityBridge(MethodDescription bridgeTarget, Visibility visibility) {
                     return new Entry(Handler.ForVisibilityBridge.INSTANCE,
                             MethodAttributeAppender.Explicit.of(bridgeTarget),
                             bridgeTarget,
                             Collections.<MethodDescription.TypeToken>emptySet(),
+                            visibility,
                             true);
                 }
 
@@ -905,6 +926,15 @@ public interface MethodRegistry {
                 }
 
                 /**
+                 * Returns the represented method's minimum visibility.
+                 *
+                 * @return The represented method's minimum visibility.
+                 */
+                protected Visibility getVisibility() {
+                    return visibility;
+                }
+
+                /**
                  * Returns {@code true} if this entry represents a bridge method.
                  *
                  * @return {@code true} if this entry represents a bridge method.
@@ -922,7 +952,8 @@ public interface MethodRegistry {
                             && bridgeMethod == entry.bridgeMethod
                             && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
                             && methodDescription.equals(entry.methodDescription)
-                            && typeTokens.equals(entry.typeTokens);
+                            && typeTokens.equals(entry.typeTokens)
+                            && visibility.equals(entry.visibility);
                 }
 
                 @Override
@@ -932,6 +963,7 @@ public interface MethodRegistry {
                     result = 31 * result + attributeAppenderFactory.hashCode();
                     result = 31 * result + methodDescription.hashCode();
                     result = 31 * result + typeTokens.hashCode();
+                    result = 31 * result + visibility.hashCode();
                     return result;
                 }
 
@@ -942,6 +974,7 @@ public interface MethodRegistry {
                             ", attributeAppenderFactory=" + attributeAppenderFactory +
                             ", methodDescription=" + methodDescription +
                             ", typeTokens=" + typeTokens +
+                            ", visibility=" + visibility +
                             ", bridgeMethod=" + bridgeMethod +
                             '}';
                 }
@@ -1086,6 +1119,11 @@ public interface MethodRegistry {
                 private final Set<MethodDescription.TypeToken> bridgeTypes;
 
                 /**
+                 * The represented method's minimum visibility.
+                 */
+                private final Visibility visibility;
+
+                /**
                  * {@code true} if this entry represents a bridge method.
                  */
                 private final boolean bridgeMethod;
@@ -1097,17 +1135,20 @@ public interface MethodRegistry {
                  * @param attributeAppender The attribute appender of a compiled method.
                  * @param methodDescription The method to be implemented including potential transformations.
                  * @param bridgeTypes       The type tokens representing all bridge methods for the method.
+                 * @param visibility        The represented method's minimum visibility.
                  * @param bridgeMethod      {@code true} if this entry represents a bridge method.
                  */
                 protected Entry(Handler.Compiled handler,
                                 MethodAttributeAppender attributeAppender,
                                 MethodDescription methodDescription,
                                 Set<MethodDescription.TypeToken> bridgeTypes,
+                                Visibility visibility,
                                 boolean bridgeMethod) {
                     this.handler = handler;
                     this.attributeAppender = attributeAppender;
                     this.methodDescription = methodDescription;
                     this.bridgeTypes = bridgeTypes;
+                    this.visibility = visibility;
                     this.bridgeMethod = bridgeMethod;
                 }
 
@@ -1122,7 +1163,7 @@ public interface MethodRegistry {
                     if (bridgeMethod && !supportsBridges) {
                         return Record.ForNonDefinedMethod.INSTANCE;
                     }
-                    Record record = handler.assemble(methodDescription, attributeAppender);
+                    Record record = handler.assemble(methodDescription, attributeAppender, visibility);
                     return supportsBridges
                             ? TypeWriter.MethodPool.Record.AccessBridgeWrapper.of(record, instrumentedType, methodDescription, bridgeTypes, attributeAppender)
                             : record;
@@ -1137,7 +1178,8 @@ public interface MethodRegistry {
                             && bridgeMethod == entry.bridgeMethod
                             && attributeAppender.equals(entry.attributeAppender)
                             && methodDescription.equals(entry.methodDescription)
-                            && bridgeTypes.equals(entry.bridgeTypes);
+                            && bridgeTypes.equals(entry.bridgeTypes)
+                            && visibility.equals(entry.visibility);
                 }
 
                 @Override
@@ -1147,6 +1189,7 @@ public interface MethodRegistry {
                     result = 31 * result + attributeAppender.hashCode();
                     result = 31 * result + methodDescription.hashCode();
                     result = 31 * result + bridgeTypes.hashCode();
+                    result = 31 * result + visibility.hashCode();
                     return result;
                 }
 
@@ -1158,6 +1201,7 @@ public interface MethodRegistry {
                             ", methodDescription=" + methodDescription +
                             ", bridgeTypes=" + bridgeTypes +
                             ", bridgeMethod=" + bridgeMethod +
+                            ", visibility=" + visibility +
                             '}';
                 }
             }
