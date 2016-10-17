@@ -27,6 +27,7 @@ public class ModifierContributorTest {
                 {FieldManifestation.class},
                 {MethodArguments.class},
                 {MethodManifestation.class},
+                {MethodStrictness.class},
                 {Ownership.class},
                 {ParameterManifestation.class},
                 {ProvisioningState.class},

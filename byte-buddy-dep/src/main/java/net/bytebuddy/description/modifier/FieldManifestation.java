@@ -53,7 +53,7 @@ public enum FieldManifestation implements ModifierContributor.ForField {
 
     @Override
     public int getRange() {
-        return Opcodes.ACC_FINAL | Opcodes.ACC_VOLATILE;
+        return Opcodes.ACC_FINAL | Opcodes.ACC_VOLATILE | Opcodes.ACC_TRANSIENT;
     }
 
     @Override
