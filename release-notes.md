@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. October 2016: version 1.4.33
+
+- Use `IMITATE_SUPER_CLASS_OPENING` as a default constructor strategy.
+- Extract method visibility during method graph compilation.
+- Apply a type variable's erasure if a type variable is out of scope instead of throwing an exception. This can happen when subclassing an inner type outside of its outer type or when a compiler such as *scalac* adds inconsistent generic type information.
+- Optimize the application of the ignore matcher within an agent builder to only be applied once.
+
 ### 11. October 2016: version 1.4.32
 
 - Added `ConstructorStrategy` for inheriting constructors but make them `public`.
