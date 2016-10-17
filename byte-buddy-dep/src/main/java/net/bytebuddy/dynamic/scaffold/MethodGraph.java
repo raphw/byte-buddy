@@ -1039,7 +1039,7 @@ public interface MethodGraph {
                         }
                         Key.Harmonized<W> key = left.getKey().combineWith(right.getKey());
                         return combined.size() == 1
-                                ? new Entry.Resolved<W>(key, combined.iterator().next(), false)
+                                ? new Entry.Resolved<W>(key, combined.iterator().next(), Entry.Resolved.NOT_MADE_VISIBLE)
                                 : new Entry.Ambiguous<W>(key, combined);
                     }
 
@@ -1233,7 +1233,7 @@ public interface MethodGraph {
 
                             @Override
                             public Entry<U> extendBy(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
-                                return new Resolved<U>(key.extend(methodDescription.asDefined(), harmonizer), methodDescription, false);
+                                return new Resolved<U>(key.extend(methodDescription.asDefined(), harmonizer), methodDescription, Resolved.NOT_MADE_VISIBLE);
                             }
 
                             @Override
@@ -1497,7 +1497,7 @@ public interface MethodGraph {
                              */
                             protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right) {
                                 return left.isBridge() ^ right.isBridge()
-                                        ? new Resolved<Q>(key, left.isBridge() ? right : left, false)
+                                        ? new Resolved<Q>(key, left.isBridge() ? right : left, Resolved.NOT_MADE_VISIBLE)
                                         : new Ambiguous<Q>(key, new LinkedHashSet<MethodDescription>(Arrays.asList(left, right)));
                             }
 
@@ -1530,7 +1530,7 @@ public interface MethodGraph {
                                 if (methodDescriptions.isEmpty()) {
                                     return new Resolved<U>(key, methodDescription, bridge);
                                 } else if (methodDescriptions.size() == 1) {
-                                    return new Resolved<U>(key, methodDescriptions.iterator().next(), false);
+                                    return new Resolved<U>(key, methodDescriptions.iterator().next(), Resolved.NOT_MADE_VISIBLE);
                                 } else {
                                     return new Ambiguous<U>(key, methodDescriptions);
                                 }
