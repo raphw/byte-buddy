@@ -1021,7 +1021,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
-//    @Ignore() // TODO: Fix!
     public void testInterfaceMakesClassMethodPublic() throws Exception {
         Class<?> type = createPlain()
                 .implement(Cloneable.class)
