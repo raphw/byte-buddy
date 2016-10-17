@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -1038,9 +1039,10 @@ public interface MethodGraph {
                             }
                         }
                         Key.Harmonized<W> key = left.getKey().combineWith(right.getKey());
+                        Visibility visibility = left.getVisibility().expandTo(right.getVisibility());
                         return combined.size() == 1
-                                ? new Entry.Resolved<W>(key, combined.iterator().next(), Entry.Resolved.NOT_MADE_VISIBLE)
-                                : new Entry.Ambiguous<W>(key, combined);
+                                ? new Entry.Resolved<W>(key, combined.iterator().next(), visibility, Entry.Resolved.NOT_MADE_VISIBLE)
+                                : new Entry.Ambiguous<W>(key, combined, visibility);
                     }
 
                     /**
@@ -1116,7 +1118,7 @@ public interface MethodGraph {
                         Entry<V> dominantEntry = entries.remove(entry.getKey());
                         Entry<V> injectedEntry = dominantEntry == null
                                 ? entry
-                                : dominantEntry.inject(entry.getKey());
+                                : dominantEntry.inject(entry.getKey(), entry.getVisibility());
                         entries.put(injectedEntry.getKey(), injectedEntry);
                         return new Store<V>(entries);
                     }
@@ -1175,6 +1177,8 @@ public interface MethodGraph {
                          */
                         Set<MethodDescription> getCandidates();
 
+                        Visibility getVisibility();
+
                         /**
                          * Extends this entry by the given method.
                          *
@@ -1190,7 +1194,7 @@ public interface MethodGraph {
                          * @param key The key to inject into this entry.
                          * @return This entry extended with the given key.
                          */
-                        Entry<W> inject(Harmonized<W> key);
+                        Entry<W> inject(Harmonized<W> key, Visibility visibility);
 
                         /**
                          * Transforms this entry into a node.
@@ -1232,12 +1236,20 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> extendBy(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
-                                return new Resolved<U>(key.extend(methodDescription.asDefined(), harmonizer), methodDescription, Resolved.NOT_MADE_VISIBLE);
+                            public Visibility getVisibility() {
+                                throw new IllegalStateException("Cannot extract visibility from initial entry:" + this);
                             }
 
                             @Override
-                            public Entry<U> inject(Harmonized<U> key) {
+                            public Entry<U> extendBy(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
+                                return new Resolved<U>(key.extend(methodDescription.asDefined(), harmonizer),
+                                        methodDescription,
+                                        methodDescription.getVisibility(),
+                                        Resolved.NOT_MADE_VISIBLE);
+                            }
+
+                            @Override
+                            public Entry<U> inject(Harmonized<U> key, Visibility visibility) {
                                 throw new IllegalStateException("Cannot inject into initial entry without a registered method: " + this);
                             }
 
@@ -1292,6 +1304,11 @@ public interface MethodGraph {
                             private final MethodDescription methodDescription;
 
                             /**
+                             * The minimal required visibility for this method.
+                             */
+                            private final Visibility visibility;
+
+                            /**
                              * {@code true} if this entry's representative was made visible by a visibility bridge.
                              */
                             private final boolean madeVisible;
@@ -1301,27 +1318,31 @@ public interface MethodGraph {
                              *
                              * @param key               The harmonized key this entry represents.
                              * @param methodDescription The non-ambiguous, representative method of this entry.
+                             * @param visibility        The minimal required visibility for this method.
                              * @param madeVisible       {@code true} if this entry's representative was made visible by a visibility bridge.
                              */
-                            protected Resolved(Harmonized<U> key, MethodDescription methodDescription, boolean madeVisible) {
+                            protected Resolved(Harmonized<U> key, MethodDescription methodDescription, Visibility visibility, boolean madeVisible) {
                                 this.key = key;
                                 this.methodDescription = methodDescription;
+                                this.visibility = visibility;
                                 this.madeVisible = madeVisible;
                             }
 
                             /**
                              * Creates an entry for an override where a method overrides another method within a super class.
                              *
-                             * @param key      The merged key for both methods.
-                             * @param override The method declared by the extending type, potentially a bridge method.
-                             * @param original The method that is overridden by the extending type.
-                             * @param <V>      The type of the harmonized key to determine method equality.
+                             * @param key        The merged key for both methods.
+                             * @param override   The method declared by the extending type, potentially a bridge method.
+                             * @param original   The method that is overridden by the extending type.
+                             * @param visibility The minimal required visibility for this entry.
+                             * @param <V>        The type of the harmonized key to determine method equality.
                              * @return An entry representing the merger of both methods.
                              */
-                            private static <V> Entry<V> of(Harmonized<V> key, MethodDescription override, MethodDescription original) {
+                            private static <V> Entry<V> of(Harmonized<V> key, MethodDescription override, MethodDescription original, Visibility visibility) {
+                                visibility = visibility.expandTo(original.getVisibility()).expandTo(override.getVisibility());
                                 return override.isBridge()
-                                        ? new Resolved<V>(key, original, (original.getDeclaringType().getModifiers() & MADE_VISIBLE) == 0)
-                                        : new Resolved<V>(key, override, NOT_MADE_VISIBLE);
+                                        ? new Resolved<V>(key, original, visibility, (original.getDeclaringType().getModifiers() & MADE_VISIBLE) == 0)
+                                        : new Resolved<V>(key, override, visibility, NOT_MADE_VISIBLE);
                             }
 
                             @Override
@@ -1335,16 +1356,22 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public Entry<U> extendBy(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
-                                Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
-                                return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
-                                        ? Ambiguous.of(key, methodDescription, this.methodDescription)
-                                        : Resolved.of(key, methodDescription, this.methodDescription);
+                            public Visibility getVisibility() {
+                                return visibility;
                             }
 
                             @Override
-                            public Entry<U> inject(Harmonized<U> key) {
-                                return new Resolved<U>(this.key.combineWith(key), methodDescription, madeVisible);
+                            public Entry<U> extendBy(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
+                                Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
+                                Visibility visibility = this.visibility.expandTo(methodDescription.getVisibility());
+                                return methodDescription.getDeclaringType().equals(this.methodDescription.getDeclaringType())
+                                        ? Ambiguous.of(key, methodDescription, this.methodDescription, visibility)
+                                        : Resolved.of(key, methodDescription, this.methodDescription, visibility);
+                            }
+
+                            @Override
+                            public Entry<U> inject(Harmonized<U> key, Visibility visibility) {
+                                return new Resolved<U>(this.key.combineWith(key), methodDescription, this.visibility.expandTo(visibility), madeVisible);
                             }
 
                             @Override
@@ -1359,13 +1386,15 @@ public interface MethodGraph {
                                 Resolved<?> resolved = (Resolved<?>) other;
                                 return madeVisible == resolved.madeVisible
                                         && key.equals(resolved.key)
-                                        && methodDescription.equals(resolved.methodDescription);
+                                        && methodDescription.equals(resolved.methodDescription)
+                                        && visibility.equals(resolved.visibility);
                             }
 
                             @Override
                             public int hashCode() {
                                 int result = key.hashCode();
                                 result = 31 * result + methodDescription.hashCode();
+                                result = 31 * result + visibility.hashCode();
                                 result = 31 * result + (madeVisible ? 1 : 0);
                                 return result;
                             }
@@ -1375,6 +1404,7 @@ public interface MethodGraph {
                                 return "MethodGraph.Compiler.Default.Key.Store.Entry.Resolved{" +
                                         "key=" + key +
                                         ", methodDescription=" + methodDescription +
+                                        ", visibility=" + visibility +
                                         ", madeVisible=" + madeVisible +
                                         '}';
                             }
@@ -1476,14 +1506,21 @@ public interface MethodGraph {
                             private final LinkedHashSet<MethodDescription> methodDescriptions;
 
                             /**
+                             * The minimal required visibility for this method.
+                             */
+                            private final Visibility visibility;
+
+                            /**
                              * Creates a new ambiguous entry.
                              *
                              * @param key                The harmonized key this entry represents.
                              * @param methodDescriptions A set of ambiguous methods that this entry represents.
+                             * @param visibility         The minimal required visibility for this method.
                              */
-                            protected Ambiguous(Harmonized<U> key, LinkedHashSet<MethodDescription> methodDescriptions) {
+                            protected Ambiguous(Harmonized<U> key, LinkedHashSet<MethodDescription> methodDescriptions, Visibility visibility) {
                                 this.key = key;
                                 this.methodDescriptions = methodDescriptions;
+                                this.visibility = visibility;
                             }
 
                             /**
@@ -1495,10 +1532,11 @@ public interface MethodGraph {
                              * @param <Q>   The type of the token of the harmonized key to determine method equality.
                              * @return The entry representing both methods.
                              */
-                            protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right) {
+                            protected static <Q> Entry<Q> of(Harmonized<Q> key, MethodDescription left, MethodDescription right, Visibility visibility) {
+                                visibility = visibility.expandTo(left.getVisibility()).expandTo(right.getVisibility());
                                 return left.isBridge() ^ right.isBridge()
-                                        ? new Resolved<Q>(key, left.isBridge() ? right : left, Resolved.NOT_MADE_VISIBLE)
-                                        : new Ambiguous<Q>(key, new LinkedHashSet<MethodDescription>(Arrays.asList(left, right)));
+                                        ? new Resolved<Q>(key, left.isBridge() ? right : left, visibility, Resolved.NOT_MADE_VISIBLE)
+                                        : new Ambiguous<Q>(key, new LinkedHashSet<MethodDescription>(Arrays.asList(left, right)), visibility);
                             }
 
                             @Override
@@ -1512,11 +1550,17 @@ public interface MethodGraph {
                             }
 
                             @Override
+                            public Visibility getVisibility() {
+                                return visibility;
+                            }
+
+                            @Override
                             public Entry<U> extendBy(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
                                 Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
                                 LinkedHashSet<MethodDescription> methodDescriptions = new LinkedHashSet<MethodDescription>(this.methodDescriptions.size() + 1);
                                 TypeDescription declaringType = methodDescription.getDeclaringType().asErasure();
                                 boolean bridge = methodDescription.isBridge();
+                                Visibility visibility = this.visibility;
                                 for (MethodDescription extendedMethod : this.methodDescriptions) {
                                     if (extendedMethod.getDeclaringType().asErasure().equals(declaringType)) {
                                         if (extendedMethod.isBridge() ^ bridge) {
@@ -1526,19 +1570,20 @@ public interface MethodGraph {
                                             methodDescriptions.add(extendedMethod);
                                         }
                                     }
+                                    visibility = visibility.expandTo(extendedMethod.getVisibility());
                                 }
                                 if (methodDescriptions.isEmpty()) {
-                                    return new Resolved<U>(key, methodDescription, bridge);
+                                    return new Resolved<U>(key, methodDescription, visibility, bridge);
                                 } else if (methodDescriptions.size() == 1) {
-                                    return new Resolved<U>(key, methodDescriptions.iterator().next(), Resolved.NOT_MADE_VISIBLE);
+                                    return new Resolved<U>(key, methodDescriptions.iterator().next(), visibility, Resolved.NOT_MADE_VISIBLE);
                                 } else {
-                                    return new Ambiguous<U>(key, methodDescriptions);
+                                    return new Ambiguous<U>(key, methodDescriptions, visibility);
                                 }
                             }
 
                             @Override
-                            public Entry<U> inject(Harmonized<U> key) {
-                                return new Ambiguous<U>(this.key.combineWith(key), methodDescriptions);
+                            public Entry<U> inject(Harmonized<U> key, Visibility visibility) {
+                                return new Ambiguous<U>(this.key.combineWith(key), methodDescriptions, this.visibility.expandTo(visibility));
                             }
 
                             @Override
@@ -1556,13 +1601,16 @@ public interface MethodGraph {
                                 if (this == other) return true;
                                 if (other == null || getClass() != other.getClass()) return false;
                                 Ambiguous<?> ambiguous = (Ambiguous<?>) other;
-                                return key.equals(ambiguous.key) && methodDescriptions.equals(ambiguous.methodDescriptions);
+                                return key.equals(ambiguous.key)
+                                        && methodDescriptions.equals(ambiguous.methodDescriptions)
+                                        && visibility.equals(ambiguous.visibility);
                             }
 
                             @Override
                             public int hashCode() {
                                 int result = key.hashCode();
                                 result = 31 * result + methodDescriptions.hashCode();
+                                result = 31 * result + visibility.hashCode();
                                 return result;
                             }
 
@@ -1571,6 +1619,7 @@ public interface MethodGraph {
                                 return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous{" +
                                         "key=" + key +
                                         ", methodDescriptions=" + methodDescriptions +
+                                        ", visibility=" + visibility +
                                         '}';
                             }
 

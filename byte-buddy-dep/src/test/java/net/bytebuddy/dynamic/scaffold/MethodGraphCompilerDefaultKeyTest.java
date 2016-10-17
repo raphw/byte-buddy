@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -79,7 +80,7 @@ public class MethodGraphCompilerDefaultKeyTest {
     @SuppressWarnings("unchecked")
     public void testInitialEntryCannotInject() throws Exception {
         new MethodGraph.Compiler.Default.Key.Store.Entry.Initial(new MethodGraph.Compiler.Default.Key.Harmonized(FOO, Collections.emptyMap()))
-                .inject(mock(MethodGraph.Compiler.Default.Key.Harmonized.class));
+                .inject(mock(MethodGraph.Compiler.Default.Key.Harmonized.class), Visibility.PUBLIC);
     }
 
     @Test(expected = IllegalStateException.class)
