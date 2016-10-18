@@ -1121,9 +1121,15 @@ public interface TypeWriter<T> {
                                         MethodDescription bridgeTarget,
                                         Set<MethodDescription.TypeToken> bridgeTypes,
                                         MethodAttributeAppender attributeAppender) {
-                    return bridgeTypes.isEmpty() || (instrumentedType.isInterface() && !delegate.getSort().isImplemented())
+                    Set<MethodDescription.TypeToken> compatibleBridgeTypes = new HashSet<MethodDescription.TypeToken>();
+                    for (MethodDescription.TypeToken bridgeType : bridgeTypes) {
+                        if (bridgeTarget.isBridgeCompatible(bridgeType)) {
+                            compatibleBridgeTypes.add(bridgeType);
+                        }
+                    }
+                    return compatibleBridgeTypes.isEmpty() || (instrumentedType.isInterface() && !delegate.getSort().isImplemented())
                             ? delegate
-                            : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, bridgeTypes, attributeAppender);
+                            : new AccessBridgeWrapper(delegate, instrumentedType, bridgeTarget, compatibleBridgeTypes, attributeAppender);
                 }
 
                 @Override

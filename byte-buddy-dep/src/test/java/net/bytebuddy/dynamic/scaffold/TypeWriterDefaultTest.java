@@ -7,6 +7,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.modifier.MethodManifestation;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
@@ -489,22 +490,43 @@ public class TypeWriterDefaultTest {
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .modifiers(Visibility.PACKAGE_PRIVATE)
                 .defineConstructor(Visibility.PUBLIC).intercept(SuperMethodCall.INSTANCE)
-                .defineMethod("foo", void.class, Visibility.PUBLIC).intercept(StubMethod.INSTANCE)
-                .defineMethod("bar", Object.class).intercept(StubMethod.INSTANCE)
-                .defineMethod("bar", String.class).intercept(StubMethod.INSTANCE)
+                .defineMethod(FOO, void.class, Visibility.PUBLIC).intercept(StubMethod.INSTANCE)
+                .defineMethod(BAR, Object.class).intercept(StubMethod.INSTANCE)
+                .defineMethod(BAR, String.class).intercept(StubMethod.INSTANCE)
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Class<?> subclass = new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(base)
                 .modifiers(Visibility.PUBLIC)
-                .method(named("bar")).intercept(StubMethod.INSTANCE)
+                .method(named(BAR)).intercept(StubMethod.INSTANCE)
                 .make()
                 .load(base.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded();
         assertThat(subclass.getDeclaredMethods().length, is(1));
-        assertThat(subclass.getDeclaredMethod("bar").isBridge(), is(false));
-        assertThat(subclass.getDeclaredMethod("bar").getReturnType(), is((Object) String.class));
+        assertThat(subclass.getDeclaredMethod(BAR).isBridge(), is(false));
+        assertThat(subclass.getDeclaredMethod(BAR).getReturnType(), is((Object) String.class));
+    }
+
+    @Test
+    public void testIncompatibleBridgeMethodIsFiltered() throws Exception {
+        Class<?> base = new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC).intercept(StubMethod.INSTANCE)
+                .defineMethod(FOO, void.class, Visibility.PUBLIC, MethodManifestation.BRIDGE).intercept(StubMethod.INSTANCE)
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Class<?> subclass = new ByteBuddy()
+                .subclass(base)
+                .method(named(FOO)).intercept(StubMethod.INSTANCE)
+                .make()
+                .load(base.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(subclass.getDeclaredMethods().length, is(1));
+        assertThat(subclass.getDeclaredMethod(FOO).isBridge(), is(false));
+        assertThat(subclass.getDeclaredMethod(FOO).getReturnType(), is((Object) Object.class));
+
     }
 
     @Test

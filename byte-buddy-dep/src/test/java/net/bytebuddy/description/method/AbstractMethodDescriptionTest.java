@@ -23,6 +23,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -626,6 +628,28 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(DeprecationSample.class.getDeclaredMethod("foo")).getActualModifiers(), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_DEPRECATED));
         assertThat(describe(firstMethod).getActualModifiers(true, Visibility.PUBLIC), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC));
         assertThat(describe(secondMethod).getActualModifiers(false, Visibility.PRIVATE), is(Opcodes.ACC_PROTECTED | Opcodes.ACC_ABSTRACT));
+    }
+
+    @Test
+    public void testBridgeCompatible() throws Exception {
+        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.VOID, Collections.<TypeDescription>emptyList())), is(true));
+        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.VOID, Collections.singletonList(TypeDescription.OBJECT))), is(false));
+        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT, Collections.<TypeDescription>emptyList())), is(false));
+        assertThat(describe(firstMethod).isBridgeCompatible(new MethodDescription.TypeToken(new TypeDescription.ForLoadedType(int.class), Collections.<TypeDescription>emptyList())), is(false));
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+                Arrays.asList(new TypeDescription.ForLoadedType(String.class), new TypeDescription.ForLoadedType(long.class)))), is(true));
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+                Arrays.asList(new TypeDescription.ForLoadedType(Object.class), new TypeDescription.ForLoadedType(long.class)))), is(true));
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(new TypeDescription.ForLoadedType(String.class),
+                Arrays.asList(new TypeDescription.ForLoadedType(Object.class), new TypeDescription.ForLoadedType(long.class)))), is(true));
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.VOID,
+                Arrays.asList(new TypeDescription.ForLoadedType(String.class), new TypeDescription.ForLoadedType(long.class)))), is(false));
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+                Arrays.asList(new TypeDescription.ForLoadedType(int.class), new TypeDescription.ForLoadedType(long.class)))), is(false));
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+                Arrays.asList(new TypeDescription.ForLoadedType(String.class), new TypeDescription.ForLoadedType(Object.class)))), is(false));
+        assertThat(describe(secondMethod).isBridgeCompatible(new MethodDescription.TypeToken(TypeDescription.OBJECT,
+                Arrays.asList(new TypeDescription.ForLoadedType(String.class), new TypeDescription.ForLoadedType(int.class)))), is(false));
     }
 
     @Test

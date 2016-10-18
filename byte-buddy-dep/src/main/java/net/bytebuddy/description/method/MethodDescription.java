@@ -267,6 +267,14 @@ public interface MethodDescription extends TypeVariableSource,
     TypeToken asTypeToken();
 
     /**
+     * Validates that the supplied type token can implement a bridge method to this method.
+     *
+     * @param typeToken A type token representing a potential bridge method to this method.
+     * @return {@code true} if the supplied type token can represent a bridge method to this method.
+     */
+    boolean isBridgeCompatible(TypeToken typeToken);
+
+    /**
      * Represents a method description in its generic shape, i.e. in the shape it is defined by a generic or raw type.
      */
     interface InGenericShape extends MethodDescription {
@@ -691,6 +699,21 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public TypeToken asTypeToken() {
             return new TypeToken(getReturnType().asErasure(), getParameters().asTypeList().asErasures());
+        }
+
+        @Override
+        public boolean isBridgeCompatible(TypeToken typeToken) {
+            List<TypeDescription> types = getParameters().asTypeList().asErasures(), bridgeTypes = typeToken.getParameterTypes();
+            if (types.size() != bridgeTypes.size()) {
+                return false;
+            }
+            for (int index = 0; index < types.size(); index++) {
+                if (!types.get(index).equals(bridgeTypes.get(index)) && (types.get(index).isPrimitive() || bridgeTypes.get(index).isPrimitive())) {
+                    return false;
+                }
+            }
+            TypeDescription returnType = getReturnType().asErasure(), bridgeReturnType = typeToken.getReturnType();
+            return returnType.equals(bridgeReturnType) || (!returnType.isPrimitive() && !bridgeReturnType.isPrimitive());
         }
 
         @Override
