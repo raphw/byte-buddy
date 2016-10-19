@@ -5130,7 +5130,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeList.Generic getTypeArguments() {
-                    return new ParameterArgumentTypeList(parameterizedType.getActualTypeArguments(), annotationReader);
+                    return new ParameterArgumentTypeList(asErasure(), parameterizedType.getActualTypeArguments(), annotationReader);
                 }
 
                 @Override
@@ -5157,6 +5157,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected static class ParameterArgumentTypeList extends TypeList.Generic.AbstractBase {
 
                     /**
+                     * A description of the type that declares the parameter types.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
                      * The represented argument types.
                      */
                     private final java.lang.reflect.Type[] argumentType;
@@ -5169,17 +5174,24 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * Creates a list representing a parameterized type's type arguments.
                      *
+                     * @param typeDescription  A description of the type that declares the parameter types.
                      * @param argumentType     The represented argument types.
                      * @param annotationReader The annotation reader to query for type annotations.
                      */
-                    protected ParameterArgumentTypeList(java.lang.reflect.Type[] argumentType, AnnotationReader annotationReader) {
+                    protected ParameterArgumentTypeList(TypeDescription typeDescription,
+                                                        java.lang.reflect.Type[] argumentType,
+                                                        AnnotationReader annotationReader) {
+                        this.typeDescription = typeDescription;
                         this.argumentType = argumentType;
                         this.annotationReader = annotationReader;
                     }
 
                     @Override
                     public Generic get(int index) {
-                        return Sort.describe(argumentType[index], annotationReader.ofTypeArgument(index));
+                        // Onfuscators sometimes render parameterized type arguments as null values.
+                        return argumentType[index] == null
+                                ? typeDescription.getTypeVariables().get(index).asRawType()
+                                : Sort.describe(argumentType[index], annotationReader.ofTypeArgument(index));
                     }
 
                     @Override
