@@ -16,10 +16,10 @@
                 <h2>Welcome, <br/>I'm your Byte Buddy!</h2>
 
                 <p class="lead">
-                    Byte Buddy is a code generation and manipulation library for creating and modifying Java classes during 
-                    the runtime of a Java application and without the help of a compiler. Other than the code generation 
-                    utilities that <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">ship with the Java Class Library</a>, 
-                    Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for 
+                    Byte Buddy is a code generation and manipulation library for creating and modifying Java classes during
+                    the runtime of a Java application and without the help of a compiler. Other than the code generation
+                    utilities that <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html">ship with the Java Class Library</a>,
+                    Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for
                     the creation of runtime proxies. Furthermore, Byte Buddy offers a convenient API for changing classes
                     either manually, using a Java agent or during a build.
                 </p>
@@ -69,9 +69,9 @@
 
             <p style="margin: 3px 10px;">
                 In October 2015, Byte Buddy was distinguished with a
-                <a href="https://www.oracle.com/corporate/pressrelease/dukes-award-102815.html"><i>Duke's Choice award</i></a> 
-                by Oracle. The award appreciates Byte Buddy for its &quot;<i>tremendous amount of innovation in Java 
-                Technology</i>&quot;. We feel very honored for having received this award and want to thank all users 
+                <a href="https://www.oracle.com/corporate/pressrelease/dukes-award-102815.html"><i>Duke's Choice award</i></a>
+                by Oracle. The award appreciates Byte Buddy for its &quot;<i>tremendous amount of innovation in Java
+                Technology</i>&quot;. We feel very honored for having received this award and want to thank all users
                 and everybody else who helped making Byte Buddy the success it has become. We really appreciate it!
             </p>
 
@@ -81,12 +81,12 @@
         <hr style="border: 1px dotted rgba(255, 153, 0, 1)"/>
 
         <p>
-                Byte Buddy offers excellent performance at production quality. It is stable and in use by distiguished 
-                frameworks and tools such as <a href="http://mockito.io">Mockito</a>, 
-                <a href="http://bazel.io">Google's Bazel build system</a> and 
-                <a href="https://github.com/raphw/byte-buddy/wiki/Projects-using-Byte-Buddy">many others</a>. Byte Buddy 
-                is also used by a large number of commercial products to great result. It is currently downloaded over a 
-                million times a year.
+            Byte Buddy offers excellent performance at production quality. It is stable and in use by distiguished
+            frameworks and tools such as <a href="http://mockito.io">Mockito</a>,
+            <a href="http://bazel.io">Google's Bazel build system</a> and
+            <a href="https://github.com/raphw/byte-buddy/wiki/Projects-using-Byte-Buddy">many others</a>. Byte Buddy
+            is also used by a large number of commercial products to great result. It is currently downloaded over a
+            million times a year.
         </p>
     </div>
 </div>
@@ -112,7 +112,7 @@
             new types:
         </p>
 
-<pre class="prettyprint">
+        <pre class="prettyprint">
 Class&lt;?&gt; dynamicType = new ByteBuddy()
   .subclass(Object.class)
   .method(ElementMatchers.named("toString"))
@@ -155,11 +155,11 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
 
         <p>
             Of course, Byte Buddy is capable of much more sopisticated class generation. Furthermore, Byte Buddy is
-            not limited to creating subclasses but can transform existing code. Byte Buddy also offers a convenient 
-            API for defining so-called 
+            not limited to creating subclasses but can transform existing code. Byte Buddy also offers a convenient
+            API for defining so-called
             <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html">Java agents</a>
             which allow code transformations during the runtime of any Java application. For a taste of such features,
-            have a look at <a href="https://github.com/raphw/byte-buddy">the readme on Byte Buddy's GitHub page</a> 
+            have a look at <a href="https://github.com/raphw/byte-buddy">the readme on Byte Buddy's GitHub page</a>
             or get started with reading the full tutorial on this page!
         </p>
     </div>
@@ -235,6 +235,29 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
     </div>
 </div>
 
+<div class="row" id="support">
+    <div class="col-md-7 col-md-offset-3">
+        <h2>Support plans</h2>
+
+        <div class="row">
+            <div class="col-md-6">
+                The use of Byte Buddy is free and does not require the purchase of a license. To get the most out of the
+                library, it is however possible to purchase training, development hours or support plans. Rates are
+                dependent on the scope and duration of an engagement. Please get in touch with
+                <a href="mailto:rafael.wth@gmail.com">rafael.wth@gmail.com</a> for further information.
+            </div>
+
+            <div class="col-md-6">
+                General questions can be asked on <a href="http://stackoverflow.com/questions/tagged/byte-buddy">Stack Overflow</a>
+                or on the <a href="https://groups.google.com/forum/#!forum/byte-buddy">Byte Buddy mailing list</a> which also
+                serve as an archive for questions. Of course, bug reports will be considered also outside of a commercial
+                plan. For open source projects, it is sometimes possible to receive extended help for taking Byte Buddy into
+                use.
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row" id="dependency">
     <div class="col-md-7 col-md-offset-3">
         <h2>Dependency maintenance</h2>
@@ -249,10 +272,10 @@ assertThat(dynamicType.newInstance().toString(), is("Hello World!"));
         </p>
 
         <p>
-            ASM has previously changed its public API but added a mechanism for API compatibility starting with version 
-            4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the 
-            ASM dependency into its own namespace. If you want to use ASM directly, use the <code>byte-buddy-dep</code> 
-            artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you should then 
+            ASM has previously changed its public API but added a mechanism for API compatibility starting with version
+            4 of the library. In order to avoid version conflicts with such older versions, Byte Buddy repackages the
+            ASM dependency into its own namespace. If you want to use ASM directly, use the <code>byte-buddy-dep</code>
+            artifact offers a version of Byte Buddy with an explicit dependency to ASM. When doing so, you should then
             repackage <b>both</b> Byte Buddy and ASM into your namespace to avoid version conflicts.
         </p>
     </div>
