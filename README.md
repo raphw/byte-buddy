@@ -220,6 +220,13 @@ test case coverage which can also serve as example code. Finally, you can find a
 presentations on Byte Buddy [in the wiki](https://github.com/raphw/byte-buddy/wiki/Web-Resources). When using Byte
 Buddy, make also sure to read the following information on maintaining a project dependency.
 
+Support plans
+----------------------------
+
+| Commercial | Free |
+| ----------- | ----------- |
+| The use of Byte Buddy is free and does not require the purchase of a license. To get the most out of the library, it is however possible to purchase training, development hours or support plans. Rates are dependent on the scope and duration of an engagement. Please get in touch with <rafael.wth@gmail.com> for further information. | General questions can be asked on [Stack Overflow](http://stackoverflow.com/questions/tagged/byte-buddy) or on the [Byte Buddy mailing list](https://groups.google.com/forum/#!forum/byte-buddy) which also serve as an archive for questions. Of course, bug reports will be considered also outside of a commercial plan. For open source projects, it is sometimes possible to receive extended help for taking Byte Buddy into use. |
+
 Dependency and API evolution
 ----------------------------
 
