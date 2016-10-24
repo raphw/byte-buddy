@@ -225,7 +225,7 @@ Getting support
 
 #### Commercial ####
 
-The use of Byte Buddy is free and does not require the purchase of a license. To get the most out of the library, it is however possible to purchase training, development hours or support plans. Rates are dependent on the scope and duration of an engagement. Please get in touch with <rafael.wth@gmail.com> for further information.
+The use of Byte Buddy is free and does not require the purchase of a license. To get the most out of the library or to secure an easy start, it is however possible to purchase training, development hours or support plans. Rates are dependent on the scope and duration of an engagement. Please get in touch with <rafael.wth@gmail.com> for further information.
 
 #### Free ####
 
