@@ -79,6 +79,11 @@ h2 {
     padding-bottom: 15px;
 }
 
+h5 {
+    color: #D13838;
+    font-weight: bold;
+}
+
 /*
  * List styling
  */
