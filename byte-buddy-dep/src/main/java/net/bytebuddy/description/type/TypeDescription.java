@@ -5130,14 +5130,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeList.Generic getTypeArguments() {
-                    java.lang.reflect.Type[] typeArgument = parameterizedType.getActualTypeArguments();
-                    // Onfuscators might cause the Java reflection API to only partially erase types.
-                    for (java.lang.reflect.Type aTypeArgument : typeArgument) {
-                        if (aTypeArgument == null) {
-                            return new TypeList.Generic.Empty();
-                        }
-                    }
-                    return new ParameterArgumentTypeList(typeArgument, annotationReader);
+                    return new ParameterArgumentTypeList(parameterizedType.getActualTypeArguments(), annotationReader);
                 }
 
                 @Override
