@@ -5881,7 +5881,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public boolean equals(Object other) {
-                return resolve().equals(other);
+                return other instanceof TypeDefinition && resolve().equals(other);
             }
 
             @Override
