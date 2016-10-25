@@ -1,12 +1,13 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.Ownership;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
-import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -31,7 +32,7 @@ public class InvocationHandlerAdapterTest {
         DynamicType.Loaded<Bar> loaded = new ByteBuddy()
                 .subclass(Bar.class)
                 .method(isDeclaredBy(Bar.class))
-                .intercept(InvocationHandlerAdapter.of(foo))
+                .intercept(InvocationHandlerAdapter.of(foo).withoutMethodCache())
                 .make()
                 .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -52,7 +53,7 @@ public class InvocationHandlerAdapterTest {
         DynamicType.Loaded<Baz> loaded = new ByteBuddy()
                 .subclass(Baz.class)
                 .method(isDeclaredBy(Baz.class))
-                .intercept(InvocationHandlerAdapter.of(qux))
+                .intercept(InvocationHandlerAdapter.of(qux).withoutMethodCache())
                 .make()
                 .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -69,7 +70,7 @@ public class InvocationHandlerAdapterTest {
         DynamicType.Loaded<Bar> loaded = new ByteBuddy()
                 .subclass(Bar.class)
                 .method(isDeclaredBy(Bar.class))
-                .intercept(InvocationHandlerAdapter.of(foo).withMethodCache())
+                .intercept(InvocationHandlerAdapter.of(foo))
                 .make()
                 .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -88,15 +89,16 @@ public class InvocationHandlerAdapterTest {
     public void testInstanceAdapterWithoutCache() throws Exception {
         DynamicType.Loaded<Bar> loaded = new ByteBuddy()
                 .subclass(Bar.class)
+                .defineField(QUX, InvocationHandler.class, Visibility.PUBLIC)
                 .method(isDeclaredBy(Bar.class))
-                .intercept(InvocationHandlerAdapter.toInstanceField(QUX))
+                .intercept(InvocationHandlerAdapter.toField(QUX).withoutMethodCache())
                 .make()
                 .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         Field field = loaded.getLoaded().getDeclaredField(QUX);
-        assertThat(field.getModifiers(), is(Modifier.PUBLIC | Opcodes.ACC_SYNTHETIC));
+        assertThat(field.getModifiers(), is(Modifier.PUBLIC));
         field.setAccessible(true);
         Bar instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Foo foo = new Foo();
@@ -113,15 +115,16 @@ public class InvocationHandlerAdapterTest {
     public void testInstanceAdapterWithMethodCache() throws Exception {
         DynamicType.Loaded<Bar> loaded = new ByteBuddy()
                 .subclass(Bar.class)
+                .defineField(QUX, InvocationHandler.class, Visibility.PUBLIC)
                 .method(isDeclaredBy(Bar.class))
-                .intercept(InvocationHandlerAdapter.toInstanceField(QUX).withMethodCache())
+                .intercept(InvocationHandlerAdapter.toField(QUX))
                 .make()
                 .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(2));
         Field field = loaded.getLoaded().getDeclaredField(QUX);
-        assertThat(field.getModifiers(), is(Modifier.PUBLIC | Opcodes.ACC_SYNTHETIC));
+        assertThat(field.getModifiers(), is(Modifier.PUBLIC));
         field.setAccessible(true);
         Bar instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Foo foo = new Foo();
@@ -134,12 +137,41 @@ public class InvocationHandlerAdapterTest {
         instance.assertZeroCalls();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testStaticMethod() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(QUX, InvocationHandler.class)
+                .defineMethod(FOO, void.class, Ownership.STATIC)
+                .intercept(InvocationHandlerAdapter.toField(QUX))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonExistentField() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineMethod(FOO, void.class)
+                .intercept(InvocationHandlerAdapter.toField(QUX))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIncompatibleFieldType() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(QUX, Object.class)
+                .defineMethod(FOO, void.class)
+                .intercept(InvocationHandlerAdapter.toField(QUX))
+                .make();
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstanceDelegation.class).apply();
-        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstanceDelegation.Appender.class).apply();
-        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForStaticDelegation.class).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForStaticDelegation.Appender.class).apply();
+        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstance.Appender.class).apply();
+        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstance.Appender.class).skipSynthetic().apply();
+        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForField.class).apply();
+        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForField.Appender.class).skipSynthetic().apply();
     }
 
     private static class Foo implements InvocationHandler {
