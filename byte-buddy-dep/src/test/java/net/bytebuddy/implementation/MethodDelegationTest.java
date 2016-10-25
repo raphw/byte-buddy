@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
@@ -135,8 +136,9 @@ public class MethodDelegationTest<T extends CallTraceable> {
     public void testInstanceFieldBinding() throws Exception {
         DynamicType.Loaded<T> loaded = new ByteBuddy()
                 .subclass(sourceType)
+                .defineField(FIELD_NAME, targetType, Visibility.PUBLIC)
                 .method(isDeclaredBy(sourceType))
-                .intercept(MethodDelegation.toInstanceField(targetType, FIELD_NAME).filter(isDeclaredBy(targetType)))
+                .intercept(MethodDelegation.toField(FIELD_NAME).filter(isDeclaredBy(targetType)))
                 .make()
                 .load(sourceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
