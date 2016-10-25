@@ -3533,6 +3533,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return Array.getLength(annotatedUpperBounds) == 0 // Wildcards with a lower bound do not define annotations for their implicit upper bound.
                                 ? NoOp.INSTANCE
                                 : (AnnotatedElement) Array.get(annotatedUpperBounds, index);
+                    } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
+                        return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception);
                     } catch (InvocationTargetException exception) {
@@ -3607,6 +3609,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_LOWER_BOUNDS.invoke(annotatedElement), index);
+                    } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
+                        return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds", exception);
                     } catch (InvocationTargetException exception) {
@@ -3681,6 +3685,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement), index);
+                    } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
+                        return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds", exception);
                     } catch (InvocationTargetException exception) {
@@ -3832,6 +3838,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.invoke(annotatedElement), index);
+                    } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
+                        return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments", exception);
                     } catch (InvocationTargetException exception) {
@@ -3899,6 +3907,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
                         return (AnnotatedElement) GET_ANNOTATED_GENERIC_COMPONENT_TYPE.invoke(annotatedElement);
+                    } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
+                        return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType", exception);
                     } catch (InvocationTargetException exception) {
@@ -3968,6 +3978,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return annotatedOwnerType == null
                                 ? NoOp.INSTANCE
                                 : annotatedOwnerType;
+                    } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
+                        return NoOp.INSTANCE;
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedType#getAnnotatedOwnerType", exception);
                     } catch (InvocationTargetException exception) {
