@@ -282,6 +282,7 @@ public class InvokeDynamicTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(7)
     public void testBootstrapWithFieldExplicitType() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
         DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
@@ -303,6 +304,7 @@ public class InvokeDynamicTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(7)
     public void testBootstrapFieldNotExistent() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
         new ByteBuddy()
@@ -316,6 +318,7 @@ public class InvokeDynamicTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @JavaVersionRule.Enforce(7)
     public void testBootstrapFieldNotAssignable() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
         new ByteBuddy()
