@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Ownership;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
@@ -19,6 +20,17 @@ public class MethodDelegationOtherTest {
                 .subclass(Object.class)
                 .method(isToString())
                 .intercept(MethodDelegation.to(new Foo()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDelegationToInvisibleFieldTypeThrowsException() throws Exception {
+        new ByteBuddy()
+                .with(TypeValidation.DISABLED)
+                .subclass(Object.class)
+                .defineField("foo", Foo.class)
+                .method(isToString())
+                .intercept(MethodDelegation.toField("foo"))
                 .make();
     }
 

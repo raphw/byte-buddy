@@ -968,6 +968,8 @@ public class MethodDelegation implements Implementation.Composable {
                 FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(fieldName);
                 if (!resolution.isResolved()) {
                     throw new IllegalStateException("Could not locate field '" + fieldName + "' for " + instrumentedType);
+                } else if (!resolution.getField().getType().asErasure().isVisibleTo(instrumentedType)) {
+                    throw new IllegalStateException(resolution.getField() + " is not visible to " + instrumentedType);
                 }
                 return new Resolution(methodGraphCompiler.compile(resolution.getField().getType(), instrumentedType).listNodes().asMethodList().filter(matcher),
                         new StackManipulation.Compound(resolution.getField().isStatic()
@@ -982,10 +984,10 @@ public class MethodDelegation implements Implementation.Composable {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 ForField forField = (ForField) object;
-                if (!matcher.equals(forField.matcher)) return false;
-                if (!fieldName.equals(forField.fieldName)) return false;
-                if (!fieldLocatorFactory.equals(forField.fieldLocatorFactory)) return false;
-                return methodGraphCompiler.equals(forField.methodGraphCompiler);
+                return matcher.equals(forField.matcher)
+                        && fieldName.equals(forField.fieldName)
+                        && fieldLocatorFactory.equals(forField.fieldLocatorFactory)
+                        && methodGraphCompiler.equals(forField.methodGraphCompiler);
             }
 
             @Override
@@ -1092,6 +1094,9 @@ public class MethodDelegation implements Implementation.Composable {
 
             @Override
             public Resolution resolve(TypeDescription instrumentedType) {
+                if (!fieldType.asErasure().isVisibleTo(instrumentedType)) {
+                    throw new IllegalStateException(fieldType + " is not visible to " + instrumentedType);
+                }
                 return new Resolution(methodGraphCompiler.compile(fieldType, instrumentedType).listNodes().asMethodList().filter(matcher),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName).and(genericFieldType(fieldType))).getOnly()).getter(),
                         new MethodDelegationBinder.MethodInvoker.Virtual(fieldType.asErasure()));
