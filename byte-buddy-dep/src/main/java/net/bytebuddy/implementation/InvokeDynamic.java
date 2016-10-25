@@ -3,12 +3,12 @@ package net.bytebuddy.implementation;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Removal;
@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -434,8 +433,8 @@ public class InvokeDynamic implements Implementation.Composable {
      * @param value The arguments to pass to the bootstrapped method.
      * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
-    public WithImplicitFieldType withReference(Object value) {
-        return new WithImplicitFieldType(bootstrapMethod,
+    public WithImplicitType withReference(Object value) {
+        return new WithImplicitInstanceType(bootstrapMethod,
                 handleArguments,
                 invocationProvider,
                 terminationHandler,
@@ -455,7 +454,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public InvokeDynamic withReference(Object... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (Object aValue : value) {
-            argumentProviders.add(InvocationProvider.ArgumentProvider.ForStaticField.of(aValue));
+            argumentProviders.add(InvocationProvider.ArgumentProvider.ForInstance.of(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -589,7 +588,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * @return This invoke dynamic implementation where the bootstrapped method is passed the specified argument
      * with its implicit type.
      */
-    public WithImplicitArgumentType withArgument(int index) {
+    public WithImplicitType withArgument(int index) {
         if (index < 0) {
             throw new IllegalArgumentException("Method parameter indices cannot be negative: " + index);
         }
@@ -663,47 +662,28 @@ public class InvokeDynamic implements Implementation.Composable {
     }
 
     /**
-     * Passes the value of the specified instance field to the bootstrapped method. The field value of the created
-     * private field must be set manually on any instrumented instance.
+     * Passes the values of the specified fields to the bootstrap method. Any of the specified fields must already
+     * exist for the instrumented type.
      *
-     * @param fieldName The name of the field.
-     * @param fieldType The type of the field.
-     * @return This invoke dynamic implementation where the bootstrapped method is passed the value of the defined
-     * field.
+     * @param name The names of the fields to be passed to the bootstrapped method.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
-    public InvokeDynamic withInstanceField(String fieldName, java.lang.reflect.Type fieldType) {
-        return withInstanceField(fieldName, TypeDefinition.Sort.describe(fieldType));
-    }
-
-    /**
-     * Passes the value of the specified instance field to the bootstrapped method. The field value of the created
-     * private field must be set manually on any instrumented instance.
-     *
-     * @param fieldName The name of the field.
-     * @param fieldType The type of the field.
-     * @return This invoke dynamic implementation where the bootstrapped method is passed the value of the defined
-     * field.
-     */
-    public InvokeDynamic withInstanceField(String fieldName, TypeDefinition fieldType) {
-        return new InvokeDynamic(bootstrapMethod,
-                handleArguments,
-                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForInstanceField(fieldName, fieldType.asGenericType())),
-                terminationHandler,
-                assigner,
-                typing);
+    public InvokeDynamic withField(String... name) {
+        return withField(FieldLocator.ForClassHierarchy.Factory.INSTANCE, name);
     }
 
     /**
      * Passes the values of the specified fields to the bootstrap method. Any of the specified fields must already
      * exist for the instrumented type.
      *
-     * @param fieldName The names of the fields to be passed to the bootstrapped method.
+     * @param fieldLocatorFactory The field locator factory to use.
+     * @param name                The names of the fields to be passed to the bootstrapped method.
      * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
-    public InvokeDynamic withField(String... fieldName) {
-        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(fieldName.length);
-        for (String aFieldName : fieldName) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForExistingField(aFieldName));
+    public InvokeDynamic withField(FieldLocator.Factory fieldLocatorFactory, String... name) {
+        List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(name.length);
+        for (String aName : name) {
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForField(aName, fieldLocatorFactory));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -714,6 +694,36 @@ public class InvokeDynamic implements Implementation.Composable {
     }
 
     /**
+     * Passes the values of the specified fields to the bootstrap method. Any of the specified fields must already
+     * exist for the instrumented type.
+     *
+     * @param name The names of the fields to be passed to the bootstrapped method.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
+     */
+    public WithImplicitType withField(String name) {
+        return withField(name, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
+    }
+
+    /**
+     * Passes the values of the specified fields to the bootstrap method. Any of the specified fields must already
+     * exist for the instrumented type.
+     *
+     * @param fieldLocatorFactory The field locator factory to use.
+     * @param name                The names of the fields to be passed to the bootstrapped method.
+     * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
+     */
+    public WithImplicitType withField(String name, FieldLocator.Factory fieldLocatorFactory) {
+        return new WithImplicitFieldType(bootstrapMethod,
+                handleArguments,
+                invocationProvider,
+                terminationHandler,
+                assigner,
+                typing,
+                name,
+                fieldLocatorFactory);
+    }
+
+    /**
      * Instructs this implementation to use the provided assigner and decides if the assigner should apply
      * dynamic typing.
      *
@@ -721,7 +731,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * @param typing   {@code true} if the assigner should attempt dynamic typing.
      * @return The invoke dynamic instruction where the given assigner and dynamic-typing directive are applied.
      */
-    public InvokeDynamic withAssigner(Assigner assigner, Assigner.Typing typing) {
+    public Implementation.Composable withAssigner(Assigner assigner, Assigner.Typing typing) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
                 invocationProvider,
@@ -762,8 +772,12 @@ public class InvokeDynamic implements Implementation.Composable {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) return true;
-        if (!(other instanceof InvokeDynamic)) return false;
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof InvokeDynamic)) {
+            return false;
+        }
         InvokeDynamic that = (InvokeDynamic) other;
         return typing == that.typing
                 && assigner.equals(that.assigner)
@@ -971,8 +985,12 @@ public class InvokeDynamic implements Implementation.Composable {
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         Simple simple = (Simple) other;
                         return internalName.equals(simple.internalName)
                                 && parameterTypes.equals(simple.parameterTypes)
@@ -1293,7 +1311,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
                         return new ForJavaConstant(JavaConstant.MethodType.ofLoaded(value));
                     } else {
-                        return ForStaticField.of(value);
+                        return ForInstance.of(value);
                     }
                 }
 
@@ -1440,8 +1458,12 @@ public class InvokeDynamic implements Implementation.Composable {
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         Simple simple = (Simple) other;
                         return loadedTypes.equals(simple.loadedTypes)
                                 && stackManipulation.equals(simple.stackManipulation);
@@ -1520,7 +1542,7 @@ public class InvokeDynamic implements Implementation.Composable {
             /**
              * An argument provider for a value that is stored in a randomly named static field.
              */
-            class ForStaticField implements ArgumentProvider {
+            class ForInstance implements ArgumentProvider {
 
                 /**
                  * The prefix of any field generated by this argument provider.
@@ -1535,7 +1557,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * The type of the static field.
                  */
-                private final TypeDescription.Generic fieldType;
+                private final TypeDescription fieldType;
 
                 /**
                  * The name of the field.
@@ -1548,7 +1570,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * @param value     The value that is to be provided to the bootstrapped method.
                  * @param fieldType The type of the field which is also provided to the bootstrap method.
                  */
-                public ForStaticField(Object value, TypeDescription.Generic fieldType) {
+                public ForInstance(Object value, TypeDescription fieldType) {
                     this.value = value;
                     this.fieldType = fieldType;
                     name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
@@ -1561,13 +1583,13 @@ public class InvokeDynamic implements Implementation.Composable {
                  * @return A corresponding argument provider.
                  */
                 public static ArgumentProvider of(Object value) {
-                    return new ForStaticField(value, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass()));
+                    return new ForInstance(value, new TypeDescription.ForLoadedType(value.getClass()));
                 }
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(name)).getOnly();
-                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType(), fieldType, typing);
+                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType(), fieldType.asGenericType(), typing);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + fieldType);
                     }
@@ -1578,15 +1600,15 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
-                            .withField(new FieldDescription.Token(name, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType))
+                            .withField(new FieldDescription.Token(name, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType.asGenericType()))
                             .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldType.equals(((ForStaticField) other).fieldType)
-                            && value.equals(((ForStaticField) other).value);
+                            && fieldType.equals(((ForInstance) other).fieldType)
+                            && value.equals(((ForInstance) other).value);
                 }
 
                 @Override
@@ -1596,7 +1618,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForStaticField{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstance{" +
                             "value=" + value +
                             ", fieldType=" + fieldType +
                             ", name='" + name + '\'' +
@@ -1605,116 +1627,57 @@ public class InvokeDynamic implements Implementation.Composable {
             }
 
             /**
-             * An argument provider that loads a value from an instance field.
-             */
-            class ForInstanceField implements ArgumentProvider {
-
-                /**
-                 * The name of the field.
-                 */
-                private final String fieldName;
-
-                /**
-                 * The type of the field.
-                 */
-                private final TypeDescription.Generic fieldType;
-
-                /**
-                 * Creates a new argument provider that provides a value from an instance field.
-                 *
-                 * @param fieldName The name of the field.
-                 * @param fieldType The type of the field.
-                 */
-                public ForInstanceField(String fieldName, TypeDescription.Generic fieldType) {
-                    this.fieldName = fieldName;
-                    this.fieldType = fieldType;
-                }
-
-                @Override
-                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    if (instrumentedMethod.isStatic()) {
-                        throw new IllegalStateException("Cannot access " + fieldName + " from " + instrumentedMethod);
-                    }
-                    return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(0),
-                            FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter()), fieldType.asErasure());
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, fieldType));
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForInstanceField that = (ForInstanceField) other;
-                    return fieldName.equals(that.fieldName) && fieldType.equals(that.fieldType);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = fieldName.hashCode();
-                    result = 31 * result + fieldType.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstanceField{" +
-                            "fieldName='" + fieldName + '\'' +
-                            ", fieldType=" + fieldType +
-                            '}';
-                }
-            }
-
-            /**
              * Provides an argument from an existing field.
              */
-            class ForExistingField implements ArgumentProvider {
+            class ForField implements ArgumentProvider {
 
                 /**
                  * The name of the field.
                  */
-                private final String fieldName;
+                protected final String fieldName;
+
+                /**
+                 * The field locator factory to use.
+                 */
+                protected final FieldLocator.Factory fieldLocatorFactory;
 
                 /**
                  * Creates a new argument provider that loads the value of an existing field.
                  *
-                 * @param fieldName The name of the field.
+                 * @param fieldName           The name of the field.
+                 * @param fieldLocatorFactory The field locator factory to use.
                  */
-                public ForExistingField(String fieldName) {
+                public ForField(String fieldName, FieldLocator.Factory fieldLocatorFactory) {
                     this.fieldName = fieldName;
+                    this.fieldLocatorFactory = fieldLocatorFactory;
                 }
 
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    FieldDescription fieldDescription = locate(instrumentedType);
-                    if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
-                        throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + instrumentedMethod);
+                    FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(fieldName);
+                    if (!resolution.isResolved()) {
+                        throw new IllegalStateException("Cannot find a field " + fieldName + " for " + instrumentedType);
+                    } else if (!resolution.getField().isStatic() && instrumentedMethod.isStatic()) {
+                        throw new IllegalStateException("Cannot access non-static " + resolution.getField() + " from " + instrumentedMethod);
                     }
-                    return new Resolved.Simple(new StackManipulation.Compound(
-                            fieldDescription.isStatic()
+                    return doResolve(new StackManipulation.Compound(resolution.getField().isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
-                                    : MethodVariableAccess.REFERENCE.loadOffset(0),
-                            FieldAccess.forField(fieldDescription).getter()
-                    ), fieldDescription.getType().asErasure());
+                                    : MethodVariableAccess.REFERENCE.loadOffset(0), FieldAccess.forField(resolution.getField()).getter()),
+                            resolution.getField().getType(),
+                            assigner,
+                            typing);
                 }
 
                 /**
-                 * Locates the specified field on the instrumented type.
-                 *
-                 * @param instrumentedType The instrumented type.
-                 * @return The located field.
+                 * Resolves this argument provider.
+                 * @param access The stack manipulation for accessing the argument value.
+                 * @param type The type of the loaded value.
+                 * @param assigner The assigner to use.
+                 * @param typing The typing required.
+                 * @return A resolved version of this arguments provider.
                  */
-                private FieldDescription locate(TypeDescription instrumentedType) {
-                    for (TypeDefinition currentType : instrumentedType) {
-                        FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
-                        if (fieldList.size() != 0) {
-                            return fieldList.getOnly();
-                        }
-                    }
-                    throw new IllegalStateException(instrumentedType + " does not define a visible field " + fieldName);
+                protected Resolved doResolve(StackManipulation access, TypeDescription.Generic type, Assigner assigner, Assigner.Typing typing) {
+                    return new Resolved.Simple(access, type.asErasure());
                 }
 
                 @Override
@@ -1725,19 +1688,77 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldName.equals(((ForExistingField) other).fieldName);
+                            && fieldLocatorFactory.equals(((ForField) other).fieldLocatorFactory)
+                            && fieldName.equals(((ForField) other).fieldName);
                 }
 
                 @Override
                 public int hashCode() {
-                    return fieldName.hashCode();
+                    return fieldName.hashCode() + 31 * fieldLocatorFactory.hashCode();
                 }
 
                 @Override
                 public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForExistingField{" +
+                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForField{" +
                             "fieldName='" + fieldName + '\'' +
+                            ", fieldLocatorFactory=" + fieldLocatorFactory +
                             '}';
+                }
+
+                /**
+                 * An argument provider for a field value with an explicit type.
+                 */
+                protected static class WithExplicitType extends ForField {
+
+                    /**
+                     * The explicit type.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
+                     * Creates an argument provider for a field value with an explicit type.
+                     * @param fieldName The name of the field.
+                     * @param fieldLocatorFactory The field locator factory to use.
+                     * @param typeDescription The explicit type.
+                     */
+                    protected WithExplicitType(String fieldName, FieldLocator.Factory fieldLocatorFactory, TypeDescription typeDescription) {
+                        super(fieldName, fieldLocatorFactory);
+                        this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    protected Resolved doResolve(StackManipulation access, TypeDescription.Generic typeDescription, Assigner assigner, Assigner.Typing typing) {
+                        StackManipulation stackManipulation = assigner.assign(typeDescription, this.typeDescription.asGenericType(), typing);
+                        if (!stackManipulation.isValid()) {
+                            throw new IllegalArgumentException("Cannot assign " + typeDescription + " to " + this.typeDescription);
+                        }
+                        return new Resolved.Simple(new StackManipulation.Compound(access, stackManipulation), this.typeDescription);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        WithExplicitType that = (WithExplicitType) object;
+                        return typeDescription.equals(that.typeDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + typeDescription.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForField.WithExplicitType{" +
+                                "fieldName='" + fieldName + '\'' +
+                                ", fieldLocatorFactory=" + fieldLocatorFactory +
+                                ", typeDescription=" + typeDescription +
+                                '}';
+                    }
                 }
             }
 
@@ -1749,7 +1770,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * The index of the parameter.
                  */
-                private final int index;
+                protected final int index;
 
                 /**
                  * Creates an argument provider for an argument of the intercepted method.
@@ -1766,8 +1787,22 @@ public class InvokeDynamic implements Implementation.Composable {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    return new Resolved.Simple(MethodVariableAccess.of(parameters.get(index).getType().asErasure())
-                            .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()), parameters.get(index).getType().asErasure());
+                    return doResolve(MethodVariableAccess.of(parameters.get(index).getType().asErasure()).loadOffset(parameters.get(index).getOffset()),
+                            parameters.get(index).getType(),
+                            assigner,
+                            typing);
+                }
+
+                /**
+                 * Resolves this argument provider.
+                 * @param access The stack manipulation for accessing the argument value.
+                 * @param type The type of the loaded value.
+                 * @param assigner The assigner to use.
+                 * @param typing The typing required.
+                 * @return A resolved version of this arguments provider.
+                 */
+                protected Resolved doResolve(StackManipulation access, TypeDescription.Generic type, Assigner assigner, Assigner.Typing typing) {
+                    return new Resolved.Simple(access, type.asErasure());
                 }
 
                 @Override
@@ -1792,71 +1827,59 @@ public class InvokeDynamic implements Implementation.Composable {
                             "index=" + index +
                             '}';
                 }
-            }
-
-            /**
-             * An argument provider that loads an argument of the intercepted method.
-             */
-            class ForExplicitTypedMethodParameter implements ArgumentProvider {
 
                 /**
-                 * The index of the parameter.
+                 * An argument provider for a method parameter with an explicit type.
                  */
-                private final int index;
+                protected static class WithExplicitType extends ForMethodParameter {
 
-                /**
-                 * The type of this method parameter.
-                 */
-                private final TypeDescription typeDescription;
+                    /**
+                     * The explicit type.
+                     */
+                    private final TypeDescription typeDescription;
 
-                /**
-                 * Creates an argument provider for an argument of the intercepted method.
-                 *
-                 * @param index           The index of the parameter.
-                 * @param typeDescription The type of this method parameter.
-                 */
-                public ForExplicitTypedMethodParameter(int index, TypeDescription typeDescription) {
-                    this.index = index;
-                    this.typeDescription = typeDescription;
-                }
-
-                @Override
-                public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                    ParameterList<?> parameters = instrumentedMethod.getParameters();
-                    if (index >= parameters.size()) {
-                        throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
+                    /**
+                     * Creates a new argument provider for a method parameter with an explicit type.
+                     * @param index The index of the parameter.
+                     * @param typeDescription The explicit type.
+                     */
+                    protected WithExplicitType(int index, TypeDescription typeDescription) {
+                        super(index);
+                        this.typeDescription = typeDescription;
                     }
-                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType(), typeDescription.asGenericType(), typing);
-                    if (!stackManipulation.isValid()) {
-                        throw new IllegalArgumentException("Cannot assign " + parameters.get(index) + " to " + typeDescription);
+
+                    @Override
+                    protected Resolved doResolve(StackManipulation access, TypeDescription.Generic type, Assigner assigner, Assigner.Typing typing) {
+                        StackManipulation stackManipulation = assigner.assign(type, typeDescription.asGenericType(), typing);
+                        if (!stackManipulation.isValid()) {
+                            throw new IllegalArgumentException("Cannot assign " + type + " to " + typeDescription);
+                        }
+                        return new Resolved.Simple(new StackManipulation.Compound(access, stackManipulation), typeDescription);
                     }
-                    return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.of(parameters.get(index)
-                            .getType().asErasure()).loadOffset(parameters.get(index).getOffset()), stackManipulation), typeDescription);
-                }
 
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        WithExplicitType that = (WithExplicitType) object;
+                        return typeDescription.equals(that.typeDescription);
+                    }
 
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && index == ((ForExplicitTypedMethodParameter) other).index
-                            && typeDescription.equals(((ForExplicitTypedMethodParameter) other).typeDescription);
-                }
+                    @Override
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + typeDescription.hashCode();
+                        return result;
+                    }
 
-                @Override
-                public int hashCode() {
-                    return index + 31 * typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForExplicitTypedMethodParameter{" +
-                            "index=" + index +
-                            ", typeDescription=" + typeDescription +
-                            '}';
+                    @Override
+                    public String toString() {
+                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter.WithExplicitType{" +
+                                "index=" + index +
+                                ", typeDescription=" + typeDescription +
+                                '}';
+                    }
                 }
             }
 
@@ -2741,8 +2764,12 @@ public class InvokeDynamic implements Implementation.Composable {
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
+                if (this == other) {
+                    return true;
+                }
+                if (other == null || getClass() != other.getClass()) {
+                    return false;
+                }
                 Default that = (Default) other;
                 return argumentProviders.equals(that.argumentProviders)
                         && nameProvider.equals(that.nameProvider)
@@ -2827,8 +2854,12 @@ public class InvokeDynamic implements Implementation.Composable {
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     Target target = (Target) other;
                     return argumentProviders.equals(target.argumentProviders)
                             && instrumentedMethod.equals(target.instrumentedMethod)
@@ -2943,7 +2974,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * @param assigner           The assigner to be used.
          * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
-        public AbstractDelegator(MethodDescription.InDefinedShape bootstrapMethod,
+        protected AbstractDelegator(MethodDescription.InDefinedShape bootstrapMethod,
                                  List<?> handleArguments,
                                  InvocationProvider invocationProvider,
                                  TerminationHandler terminationHandler,
@@ -3005,7 +3036,7 @@ public class InvokeDynamic implements Implementation.Composable {
         }
 
         @Override
-        public WithImplicitFieldType withReference(Object value) {
+        public WithImplicitType withReference(Object value) {
             return materialize().withReference(value);
         }
 
@@ -3040,7 +3071,7 @@ public class InvokeDynamic implements Implementation.Composable {
         }
 
         @Override
-        public WithImplicitArgumentType withArgument(int index) {
+        public WithImplicitType withArgument(int index) {
             return materialize().withArgument(index);
         }
 
@@ -3065,18 +3096,48 @@ public class InvokeDynamic implements Implementation.Composable {
         }
 
         @Override
-        public InvokeDynamic withInstanceField(String fieldName, java.lang.reflect.Type fieldType) {
-            return materialize().withInstanceField(fieldName, fieldType);
-        }
-
-        @Override
-        public InvokeDynamic withInstanceField(String fieldName, TypeDefinition fieldType) {
-            return materialize().withInstanceField(fieldName, fieldType);
-        }
-
-        @Override
         public InvokeDynamic withField(String... fieldName) {
             return materialize().withField(fieldName);
+        }
+
+        @Override
+        public InvokeDynamic withEnumeration(EnumerationDescription... enumerationDescription) {
+            return materialize().withEnumeration(enumerationDescription);
+        }
+
+        @Override
+        public InvokeDynamic withField(FieldLocator.Factory fieldLocatorFactory, String... name) {
+            return materialize().withField(fieldLocatorFactory, name);
+        }
+
+        @Override
+        public WithImplicitType withField(String name) {
+            return materialize().withField(name);
+        }
+
+        @Override
+        public WithImplicitType withField(String name, FieldLocator.Factory fieldLocatorFactory) {
+            return materialize().withField(name, fieldLocatorFactory);
+        }
+
+        @Override
+        public Composable withAssigner(Assigner assigner, Assigner.Typing typing) {
+            return materialize().withAssigner(assigner, typing);
+        }
+
+        @Override
+        public Implementation andThen(Implementation implementation) {
+            return materialize().andThen(implementation);
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return materialize().prepare(instrumentedType);
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return materialize().appender(implementationTarget);
         }
     }
 
@@ -3276,10 +3337,51 @@ public class InvokeDynamic implements Implementation.Composable {
     }
 
     /**
+     * An {@link InvokeDynamic} invocation where the last argument is assigned its implicit type.
+     */
+    public abstract static class WithImplicitType extends AbstractDelegator {
+
+        /**
+         * Creates a new abstract delegator for a dynamic method invocation where the last argument is assigned an implicit type.
+         *
+         * @param bootstrapMethod    The bootstrap method.
+         * @param handleArguments    The arguments that are provided to the bootstrap method.
+         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
+         * @param terminationHandler A handler that handles the method return.
+         * @param assigner           The assigner to be used.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
+         */
+        protected WithImplicitType(MethodDescription.InDefinedShape bootstrapMethod,
+                                   List<?> handleArguments,
+                                   InvocationProvider invocationProvider,
+                                   TerminationHandler terminationHandler,
+                                   Assigner assigner,
+                                   Assigner.Typing typing) {
+            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, typing);
+        }
+
+        /**
+         * Represents the last value as an instance of the given type.
+         * @param type The type to represent to the dynamic method invocation.
+         * @return A new dynamic method invocation where the last argument is represented by the given type.
+         */
+        public InvokeDynamic as(Class<?> type) {
+            return as(new TypeDescription.ForLoadedType(type));
+        }
+
+        /**
+         * Represents the last value as an instance of the given type.
+         * @param typeDescription The type to represent to the dynamic method invocation.
+         * @return A new dynamic method invocation where the last argument is represented by the given type.
+         */
+        public abstract InvokeDynamic as(TypeDescription typeDescription);
+    }
+
+    /**
      * A step in the invoke dynamic domain specific language that allows to explicitly specify a field type for a reference value.
      */
     @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation convers use case")
-    public static class WithImplicitFieldType extends AbstractDelegator {
+    protected static class WithImplicitInstanceType extends WithImplicitType {
 
         /**
          * The value that is supplied as the next argument to the bootstrapped method.
@@ -3302,40 +3404,26 @@ public class InvokeDynamic implements Implementation.Composable {
          * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @param value              The value that is supplied as the next argument to the bootstrapped method.
          */
-        protected WithImplicitFieldType(MethodDescription.InDefinedShape bootstrapMethod,
-                                        List<?> handleArguments,
-                                        InvocationProvider invocationProvider,
-                                        TerminationHandler terminationHandler,
-                                        Assigner assigner,
-                                        Assigner.Typing typing,
-                                        Object value) {
+        protected WithImplicitInstanceType(MethodDescription.InDefinedShape bootstrapMethod,
+                                           List<?> handleArguments,
+                                           InvocationProvider invocationProvider,
+                                           TerminationHandler terminationHandler,
+                                           Assigner assigner,
+                                           Assigner.Typing typing,
+                                           Object value) {
             super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, typing);
             this.value = value;
-            this.argumentProvider = InvocationProvider.ArgumentProvider.ForStaticField.of(value);
+            this.argumentProvider = InvocationProvider.ArgumentProvider.ForInstance.of(value);
         }
 
-        /**
-         * Defines the given value to be treated as an instance of the provided type.
-         *
-         * @param type The type as which the provided instance should be handed to the bootstrap method.
-         * @return An invoke dynamic instance with the same configuration as this instance but with the provided argument
-         * appended to the arguments of the bootstrapped method.
-         */
-        public InvokeDynamic as(java.lang.reflect.Type type) {
-            return as(TypeDefinition.Sort.describe(type));
-        }
-
-        /**
-         * Defines the given value to be treated as an instance of the provided type.
-         *
-         * @param typeDefinition The type as which the provided instance should be handed to the bootstrap method.
-         * @return An invoke dynamic instance with the same configuration as this instance but with the provided argument
-         * appended to the arguments of the bootstrapped method.
-         */
-        public InvokeDynamic as(TypeDefinition typeDefinition) {
+        @Override
+        public InvokeDynamic as(TypeDescription typeDescription) {
+            if (!typeDescription.isInstanceOrWrapper(value)) {
+                throw new IllegalArgumentException(value + " is not of type " + typeDescription);
+            }
             return new InvokeDynamic(bootstrapMethod,
                     handleArguments,
-                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForStaticField(value, typeDefinition.asGenericType())),
+                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForInstance(value, typeDescription)),
                     terminationHandler,
                     assigner,
                     typing);
@@ -3352,33 +3440,8 @@ public class InvokeDynamic implements Implementation.Composable {
         }
 
         @Override
-        public InvokeDynamic withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return materialize().withAssigner(assigner, typing);
-        }
-
-        @Override
-        public Implementation andThen(Implementation implementation) {
-            return materialize().andThen(implementation);
-        }
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return materialize().prepare(instrumentedType);
-        }
-
-        @Override
-        public ByteCodeAppender appender(Target implementationTarget) {
-            return materialize().appender(implementationTarget);
-        }
-
-        @Override
-        protected InvocationProvider getInvocationProvider() {
-            return materialize().getInvocationProvider();
-        }
-
-        @Override
         public String toString() {
-            return "InvokeDynamic.WithImplicitFieldType{" +
+            return "InvokeDynamic.WithImplicitInstanceType{" +
                     "bootstrapMethod=" + bootstrapMethod +
                     ", handleArguments=" + handleArguments +
                     ", invocationProvider=" + invocationProvider +
@@ -3394,7 +3457,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * An invoke dynamic implementation where the last argument is an implicitly typed method argument.
      */
     @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation convers use case")
-    public static class WithImplicitArgumentType extends AbstractDelegator {
+    protected static class WithImplicitArgumentType extends WithImplicitType {
 
         /**
          * The index of the method argument.
@@ -3423,28 +3486,11 @@ public class InvokeDynamic implements Implementation.Composable {
             this.index = index;
         }
 
-        /**
-         * Defines the given argument to be treated as an instance of the provided type.
-         *
-         * @param type The type as which the provided argument should be handed to the bootstrap method.
-         * @return An invoke dynamic instance with the same configuration as this instance but with the provided argument
-         * appended to the arguments of the bootstrapped method.
-         */
-        public InvokeDynamic as(Class<?> type) {
-            return as(new TypeDescription.ForLoadedType(type));
-        }
-
-        /**
-         * Defines the given argument to be treated as an instance of the provided type.
-         *
-         * @param typeDescription The type as which the provided argument should be handed to the bootstrap method.
-         * @return An invoke dynamic instance with the same configuration as this instance but with the provided argument
-         * appended to the arguments of the bootstrapped method.
-         */
+        @Override
         public InvokeDynamic as(TypeDescription typeDescription) {
             return new InvokeDynamic(bootstrapMethod,
                     handleArguments,
-                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForExplicitTypedMethodParameter(index, typeDescription)),
+                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForMethodParameter.WithExplicitType(index, typeDescription)),
                     terminationHandler,
                     assigner,
                     typing);
@@ -3461,31 +3507,6 @@ public class InvokeDynamic implements Implementation.Composable {
         }
 
         @Override
-        public InvokeDynamic withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return materialize().withAssigner(assigner, typing);
-        }
-
-        @Override
-        public Implementation andThen(Implementation implementation) {
-            return materialize().andThen(implementation);
-        }
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return materialize().prepare(instrumentedType);
-        }
-
-        @Override
-        public ByteCodeAppender appender(Target implementationTarget) {
-            return materialize().appender(implementationTarget);
-        }
-
-        @Override
-        protected InvocationProvider getInvocationProvider() {
-            return materialize().getInvocationProvider();
-        }
-
-        @Override
         public String toString() {
             return "InvokeDynamic.WithImplicitArgumentType{" +
                     "bootstrapMethod=" + bootstrapMethod +
@@ -3495,6 +3516,99 @@ public class InvokeDynamic implements Implementation.Composable {
                     ", assigner=" + assigner +
                     ", typing=" + typing +
                     ", index=" + index +
+                    '}';
+        }
+    }
+
+    /**
+     * An invoke dynamic implementation where the last argument is an implicitly typed field value.
+     */
+    @SuppressFBWarnings(value = "EQ_DOESNT_OVERRIDE_EQUALS", justification = "Super type implementation convers use case")
+    protected static class WithImplicitFieldType extends WithImplicitType {
+
+        /**
+         * The field name.
+         */
+        private final String fieldName;
+
+        /**
+         * The field locator factory to use.
+         */
+        private final FieldLocator.Factory fieldLocatorFactory;
+
+        /**
+         * Creates a new abstract delegator for a dynamic method invocation where the last argument is assigned an implicit type.
+         *
+         * @param bootstrapMethod    The bootstrap method.
+         * @param handleArguments    The arguments that are provided to the bootstrap method.
+         * @param invocationProvider The target provided that identifies the method to be bootstrapped.
+         * @param terminationHandler A handler that handles the method return.
+         * @param assigner           The assigner to be used.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
+         *                           @param fieldName The field name.
+         *                           @param fieldLocatorFactory The field locator factory to use.
+         */
+        protected WithImplicitFieldType(MethodDescription.InDefinedShape bootstrapMethod,
+                                     List<?> handleArguments,
+                                     InvocationProvider invocationProvider,
+                                     TerminationHandler terminationHandler,
+                                     Assigner assigner,
+                                     Assigner.Typing typing,
+                                     String fieldName,
+                                     FieldLocator.Factory fieldLocatorFactory) {
+            super(bootstrapMethod, handleArguments, invocationProvider, terminationHandler, assigner, typing);
+            this.fieldName = fieldName;
+            this.fieldLocatorFactory = fieldLocatorFactory;
+        }
+
+        @Override
+        public InvokeDynamic as(TypeDescription typeDescription) {
+            return new InvokeDynamic(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForField.WithExplicitType(fieldName, fieldLocatorFactory, typeDescription)),
+                    terminationHandler,
+                    assigner,
+                    typing);
+        }
+
+        @Override
+        protected InvokeDynamic materialize() {
+            return new InvokeDynamic(bootstrapMethod,
+                    handleArguments,
+                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForField(fieldName, fieldLocatorFactory)),
+                    terminationHandler,
+                    assigner,
+                    typing);
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            if (!super.equals(object)) return false;
+            WithImplicitFieldType that = (WithImplicitFieldType) object;
+            return fieldName.equals(that.fieldName) && fieldLocatorFactory.equals(that.fieldLocatorFactory);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + fieldName.hashCode();
+            result = 31 * result + fieldLocatorFactory.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "InvokeDynamic.WithImplicitFieldType{" +
+                    "bootstrapMethod=" + bootstrapMethod +
+                    ", handleArguments=" + handleArguments +
+                    ", invocationProvider=" + invocationProvider +
+                    ", terminationHandler=" + terminationHandler +
+                    ", assigner=" + assigner +
+                    ", typing=" + typing +
+                    ", fieldName=" + fieldName +
+                    ", fieldLocatorFactory=" + fieldLocatorFactory +
                     '}';
         }
     }
@@ -3535,8 +3649,12 @@ public class InvokeDynamic implements Implementation.Composable {
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (this == other) {
+                return true;
+            }
+            if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
             Appender appender = (Appender) other;
             return instrumentedType.equals(appender.instrumentedType)
                     && InvokeDynamic.this.equals(appender.getOuter());
