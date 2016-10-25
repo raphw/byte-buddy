@@ -1731,7 +1731,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     protected Resolved doResolve(StackManipulation access, TypeDescription.Generic typeDescription, Assigner assigner, Assigner.Typing typing) {
                         StackManipulation stackManipulation = assigner.assign(typeDescription, this.typeDescription.asGenericType(), typing);
                         if (!stackManipulation.isValid()) {
-                            throw new IllegalArgumentException("Cannot assign " + typeDescription + " to " + this.typeDescription);
+                            throw new IllegalStateException("Cannot assign " + typeDescription + " to " + this.typeDescription);
                         }
                         return new Resolved.Simple(new StackManipulation.Compound(access, stackManipulation), this.typeDescription);
                     }
@@ -1855,7 +1855,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     protected Resolved doResolve(StackManipulation access, TypeDescription.Generic type, Assigner assigner, Assigner.Typing typing) {
                         StackManipulation stackManipulation = assigner.assign(type, typeDescription.asGenericType(), typing);
                         if (!stackManipulation.isValid()) {
-                            throw new IllegalArgumentException("Cannot assign " + type + " to " + typeDescription);
+                            throw new IllegalStateException("Cannot assign " + type + " to " + typeDescription);
                         }
                         return new Resolved.Simple(new StackManipulation.Compound(access, stackManipulation), typeDescription);
                     }

@@ -5,6 +5,7 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
@@ -265,10 +266,11 @@ public class InvokeDynamicTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
         DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
                 .subclass(Simple.class)
+                .defineField(FOO, String.class)
                 .method(isDeclaredBy(Simple.class))
                 .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withInstanceField(FOO, String.class))
+                        .withField(FOO))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(1));
@@ -277,6 +279,53 @@ public class InvokeDynamicTest {
         field.setAccessible(true);
         field.set(instance, FOO);
         assertThat(instance.foo(), is(FOO));
+    }
+
+    @Test
+    public void testBootstrapWithFieldExplicitType() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .defineField(FOO, Object.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+                        .invoke(QUX, String.class)
+                        .withField(FOO).as(String.class)
+                        .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(1));
+        Simple instance = dynamicType.getLoaded().getDeclaredConstructor().newInstance();
+        Field field = dynamicType.getLoaded().getDeclaredField(FOO);
+        field.setAccessible(true);
+        field.set(instance, FOO);
+        assertThat(instance.foo(), is(FOO));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testBootstrapFieldNotExistent() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+                        .invoke(QUX, String.class)
+                        .withField(FOO)
+                        .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testBootstrapFieldNotAssignable() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        new ByteBuddy()
+                .subclass(Simple.class)
+                .defineField(FOO, Object.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+                        .invoke(QUX, String.class)
+                        .withField(FOO).as(String.class))
+                .make();
     }
 
     @Test
@@ -417,6 +466,16 @@ public class InvokeDynamicTest {
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(FOO), is(FOO));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    @JavaVersionRule.Enforce(7)
+    public void testArgumentCannotAssignIllegalInstanceType() throws Exception {
+        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
+        InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+                .invoke(QUX, String.class)
+                .withReference(new Object()).as(String.class);
+    }
+
     @SuppressWarnings("unchecked")
     private Enum<?> makeEnum() throws Exception {
         Class type = Class.forName(SAMPLE_ENUM);
@@ -449,12 +508,12 @@ public class InvokeDynamicTest {
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassConstant.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForEnumerationValue.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForField.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstanceField.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForField.WithExplicitType.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstance.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForThisInstance.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaConstant.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForExplicitTypedMethodParameter.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter.WithExplicitType.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.WrappingArgumentProvider.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.class).apply();
