@@ -5889,6 +5889,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 return resolve().toString();
             }
 
+            /**
+             * A lazy projection of a type with a lazy resolution of super class and interface types. A lazy navigation
+             * must only be used for describing types that are guaranteed to define a super class and interface types,
+             * i.e. non-generic types and parameterized types. Lazy navigation can also be applied to array types where
+             * the usage does however make little sense as those properties are never generic.
+             */
             public abstract static class WithLazyNavigation extends LazyProjection {
 
                 @Override
@@ -5906,14 +5912,31 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return new TypeDefinition.SuperClassIterator(this);
                 }
 
+                /**
+                 * A lazy super class description for a lazy projection.
+                 */
                 protected static class LazySuperClass extends LazyProjection.WithLazyNavigation {
 
+                    /**
+                     * The lazy projection for which this description is a delegate.
+                     */
                     private final LazyProjection delegate;
 
+                    /**
+                     * Creates a new lazy super class description.
+                     *
+                     * @param delegate The lazy projection for which this description is a delegate.
+                     */
                     protected LazySuperClass(LazyProjection delegate) {
                         this.delegate = delegate;
                     }
 
+                    /**
+                     * Resolves a lazy super class description.
+                     *
+                     * @param delegate The lazy projection for which this description is a delegate.
+                     * @return A lazy description of the super class or {@code null} if the delegate does not define a super class.
+                     */
                     protected static Generic of(LazyProjection delegate) {
                         return delegate.asErasure().getSuperClass() == null
                                 ? Generic.UNDEFINED
@@ -5936,14 +5959,33 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
                 }
 
+                /**
+                 * A lazy interface type description for a lazy projection.
+                 */
                 protected static class LazyInterfaceType extends LazyProjection.WithLazyNavigation {
 
+                    /**
+                     * The lazy projection for which this description is a delegate.
+                     */
                     private final LazyProjection delegate;
 
+                    /**
+                     * The index of the interface in question.
+                     */
                     private final int index;
 
+                    /**
+                     * The raw interface that is declared by the erasure of the represented lazy projection.
+                     */
                     private final TypeDescription.Generic rawInterface;
 
+                    /**
+                     * Creates a new lazy interface type.
+                     *
+                     * @param delegate     The lazy projection for which this description is a delegate.
+                     * @param index        The index of the interface in question.
+                     * @param rawInterface The raw interface that is declared by the erasure of the represented lazy projection.
+                     */
                     protected LazyInterfaceType(LazyProjection delegate, int index, Generic rawInterface) {
                         this.delegate = delegate;
                         this.index = index;
@@ -5966,18 +6008,38 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
                 }
 
-
+                /**
+                 * A lazy representation of a lazy projection's interfaces.
+                 */
                 protected static class LazyInterfaceList extends TypeList.Generic.AbstractBase {
 
+                    /**
+                     * The lazy projection for which this description is a delegate.
+                     */
                     private final LazyProjection delegate;
 
+                    /**
+                     * A list of raw interface types declared by the lazy projection's erasure.
+                     */
                     private final TypeList.Generic rawInterfaces;
 
+                    /**
+                     * Creates a new lazy interface list.
+                     *
+                     * @param delegate      The lazy projection for which this description is a delegate.
+                     * @param rawInterfaces A list of raw interface types declared by the lazy projection's erasure.
+                     */
                     protected LazyInterfaceList(LazyProjection delegate, TypeList.Generic rawInterfaces) {
                         this.delegate = delegate;
                         this.rawInterfaces = rawInterfaces;
                     }
 
+                    /**
+                     * Resolves a lazy interface list.
+                     *
+                     * @param delegate The delegate for which to represent interfaces.
+                     * @return A lazy list representing the delegate's interfaces lazily.
+                     */
                     protected static TypeList.Generic of(LazyProjection delegate) {
                         return new LazyInterfaceList(delegate, delegate.asErasure().getInterfaces());
                     }
@@ -5993,6 +6055,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
                 }
 
+                /**
+                 * A description of an annotated lazy type with lazy navigation.
+                 */
                 protected abstract static class OfAnnotatedElement extends WithLazyNavigation {
 
                     /**
@@ -6009,6 +6074,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            /**
+             * A lazy projection of a type that resolves super class and interface types eagerly.
+             */
             public abstract static class WithEagerNavigation extends LazyProjection {
 
                 @Override
@@ -6026,6 +6094,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return resolve().iterator();
                 }
 
+                /**
+                 * A description of an annotated lazy type with eager navigation.
+                 */
                 protected abstract static class OfAnnotatedElement extends WithEagerNavigation {
 
                     /**
