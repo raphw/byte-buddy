@@ -2,8 +2,6 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.modifier.ModifierContributor;
-import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
@@ -15,9 +13,6 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-
-import java.lang.reflect.Type;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -60,7 +55,7 @@ public abstract class FieldAccessor implements Implementation {
      * @param name The name of the field to be accessed.
      * @return A field accessor for a field of a given name.
      */
-    public static FieldDefinable ofField(String name) {
+    public static OwnerTypeLocatable ofField(String name) {
         return new ForNamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, name);
     }
 
@@ -183,6 +178,11 @@ public abstract class FieldAccessor implements Implementation {
     protected abstract String getFieldName(MethodDescription targetMethod);
 
     @Override
+    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+        return instrumentedType;
+    }
+
+    @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && typing == ((FieldAccessor) other).typing
@@ -286,35 +286,10 @@ public abstract class FieldAccessor implements Implementation {
          * produced by the given factory.
          *
          * @param factory A factory that will produce a field locator that will be used to find locate
-         *                            a field to be accessed.
+         *                a field to be accessed.
          * @return This field accessor which will only considered fields that are defined in the given type.
          */
         AssignerConfigurable in(FieldLocator.Factory factory);
-    }
-
-    /**
-     * Determines a field accessor that accesses a field of a given name which might not yet be
-     * defined.
-     */
-    public interface FieldDefinable extends OwnerTypeLocatable {
-
-        /**
-         * Defines a field with the given name in the instrumented type.
-         *
-         * @param type     The type of the field.
-         * @param modifier The modifiers for the field.
-         * @return A field accessor that defines a field of the given type.
-         */
-        AssignerConfigurable defineAs(Type type, ModifierContributor.ForField... modifier);
-
-        /**
-         * Defines a field with the given name in the instrumented type.
-         *
-         * @param typeDefinition The type of the field.
-         * @param modifier       The modifiers for the field.
-         * @return A field accessor that defines a field of the given type.
-         */
-        AssignerConfigurable defineAs(TypeDefinition typeDefinition, ModifierContributor.ForField... modifier);
     }
 
     /**
@@ -426,17 +401,12 @@ public abstract class FieldAccessor implements Implementation {
     /**
      * Implementation of a field accessor implementation where the field name is given explicitly.
      */
-    protected static class ForNamedField extends FieldAccessor implements FieldDefinable {
+    protected static class ForNamedField extends FieldAccessor implements OwnerTypeLocatable {
 
         /**
          * The name of the field that is accessed.
          */
         private final String fieldName;
-
-        /**
-         * The preparation handler for implementing this field accessor.
-         */
-        private final PreparationHandler preparationHandler;
 
         /**
          * The field locator factory for implementing this field accessor.
@@ -453,7 +423,6 @@ public abstract class FieldAccessor implements Implementation {
         protected ForNamedField(Assigner assigner, Assigner.Typing typing, String fieldName) {
             super(assigner, typing);
             this.fieldName = fieldName;
-            preparationHandler = PreparationHandler.NoOp.INSTANCE;
             fieldLocatorFactory = FieldLocator.ForClassHierarchy.Factory.INSTANCE;
         }
 
@@ -462,7 +431,6 @@ public abstract class FieldAccessor implements Implementation {
          *
          * @param fieldName           The name of the field.
          * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
-         * @param preparationHandler  The preparation handler for potentially defining a field.
          * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
          *                            a field to be accessed.
          * @param assigner            The assigner to use.
@@ -470,26 +438,10 @@ public abstract class FieldAccessor implements Implementation {
         private ForNamedField(Assigner assigner,
                               Assigner.Typing typing,
                               String fieldName,
-                              PreparationHandler preparationHandler,
                               FieldLocator.Factory fieldLocatorFactory) {
             super(assigner, typing);
             this.fieldName = fieldName;
-            this.preparationHandler = preparationHandler;
             this.fieldLocatorFactory = fieldLocatorFactory;
-        }
-
-        @Override
-        public AssignerConfigurable defineAs(Type type, ModifierContributor.ForField... modifier) {
-            return defineAs(TypeDefinition.Sort.describe(type), modifier);
-        }
-
-        @Override
-        public AssignerConfigurable defineAs(TypeDefinition typeDefinition, ModifierContributor.ForField... modifier) {
-            return new ForNamedField(assigner,
-                    typing,
-                    fieldName,
-                    PreparationHandler.FieldDefiner.of(fieldName, typeDefinition.asGenericType(), modifier),
-                    FieldLocator.ForClassHierarchy.Factory.INSTANCE);
         }
 
         @Override
@@ -497,7 +449,6 @@ public abstract class FieldAccessor implements Implementation {
             return new ForNamedField(assigner,
                     typing,
                     fieldName,
-                    preparationHandler,
                     factory);
         }
 
@@ -518,13 +469,7 @@ public abstract class FieldAccessor implements Implementation {
             return new ForNamedField(assigner,
                     typing,
                     fieldName,
-                    preparationHandler,
                     fieldLocatorFactory);
-        }
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return preparationHandler.prepare(instrumentedType);
         }
 
         @Override
@@ -544,15 +489,13 @@ public abstract class FieldAccessor implements Implementation {
             if (!super.equals(other)) return false;
             ForNamedField that = (ForNamedField) other;
             return fieldLocatorFactory.equals(that.fieldLocatorFactory)
-                    && fieldName.equals(that.fieldName)
-                    && preparationHandler.equals(that.preparationHandler);
+                    && fieldName.equals(that.fieldName);
         }
 
         @Override
         public int hashCode() {
             int result = super.hashCode();
             result = 31 * result + fieldName.hashCode();
-            result = 31 * result + preparationHandler.hashCode();
             result = 31 * result + fieldLocatorFactory.hashCode();
             return result;
         }
@@ -563,125 +506,8 @@ public abstract class FieldAccessor implements Implementation {
                     "assigner=" + assigner +
                     ", fieldName='" + fieldName + '\'' +
                     ", typing=" + typing +
-                    ", preparationHandler=" + preparationHandler +
                     ", fieldLocatorFactory=" + fieldLocatorFactory +
                     '}';
-        }
-
-        /**
-         * A preparation handler is responsible for defining a field value on an implementation, if necessary.
-         */
-        protected interface PreparationHandler {
-
-            /**
-             * Prepares the instrumented type.
-             *
-             * @param instrumentedType The instrumented type to be prepared.
-             * @return The readily prepared instrumented type.
-             */
-            InstrumentedType prepare(InstrumentedType instrumentedType);
-
-            /**
-             * A non-operational preparation handler that does not alter the field.
-             */
-            enum NoOp implements PreparationHandler {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldAccessor.ForNamedField.PreparationHandler.NoOp." + name();
-                }
-            }
-
-            /**
-             * A preparation handler that actually defines a field on an instrumented type.
-             */
-            class FieldDefiner implements PreparationHandler {
-
-                /**
-                 * The name of the field that is defined by this preparation handler.
-                 */
-                private final String name;
-
-                /**
-                 * The type of the field that is to be defined.
-                 */
-                private final TypeDescription.Generic typeDescription;
-
-                /**
-                 * The modifier of the field that is to be defined.
-                 */
-                private final int modifiers;
-
-                /**
-                 * Creates a new field definer.
-                 *
-                 * @param name            The name of the field that is defined by this preparation handler.
-                 * @param typeDescription The type of the field that is to be defined.
-                 * @param modifiers       The modifiers of the field that is to be defined.
-                 */
-                protected FieldDefiner(String name, TypeDescription.Generic typeDescription, int modifiers) {
-                    this.name = name;
-                    this.typeDescription = typeDescription;
-                    this.modifiers = modifiers;
-                }
-
-                /**
-                 * Creates a new preparation handler that defines a given field.
-                 *
-                 * @param name            The name of the field that is defined by this preparation handler.
-                 * @param typeDescription The type of the field that is to be defined.
-                 * @param contributor     The modifiers of the field that is to be defined.
-                 * @return A corresponding preparation handler.
-                 */
-                public static PreparationHandler of(String name, TypeDescription.Generic typeDescription, ModifierContributor.ForField... contributor) {
-                    return new FieldDefiner(name, typeDescription, ModifierContributor.Resolver.of(contributor).resolve());
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    if (instrumentedType.isInterface() && ((modifiers & Opcodes.ACC_PUBLIC) == 0 || (modifiers & Opcodes.ACC_STATIC) == 0)) {
-                        throw new IllegalStateException("Cannot define a non-public, non-static field for " + instrumentedType);
-                    }
-                    return instrumentedType.withField(new FieldDescription.Token(name, modifiers, typeDescription));
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    FieldDefiner that = (FieldDefiner) other;
-                    return modifiers == that.modifiers
-                            && name.equals(that.name)
-                            && typeDescription.equals(that.typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = name.hashCode();
-                    result = 31 * result + typeDescription.hashCode();
-                    result = 31 * result + modifiers;
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldAccessor.ForNamedField.PreparationHandler.FieldDefiner{" +
-                            "name='" + name + '\'' +
-                            ", typeDescription=" + typeDescription +
-                            ", modifiers=" + modifiers +
-                            '}';
-                }
-            }
         }
     }
 

@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation;
 
-import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
 import org.hamcrest.CoreMatchers;
@@ -156,11 +155,6 @@ public class FieldAccessorTest<T extends CallTraceable,
     }
 
     @Test
-    public void testDefineFieldGetter() throws Exception {
-        testGetter(instanceGetter, FieldAccessor.ofField(FOO).defineAs(propertyType, Visibility.PUBLIC), true);
-    }
-
-    @Test
     public void testInstanceSetterBeanProperty() throws Exception {
         testSetter(instanceSetter, FieldAccessor.ofBeanProperty(), false);
     }
@@ -178,11 +172,6 @@ public class FieldAccessorTest<T extends CallTraceable,
     @Test
     public void testStaticSetterExplicit() throws Exception {
         testSetter(staticSetter, FieldAccessor.ofField(FOO), false);
-    }
-
-    @Test
-    public void testDefineFieldSetter() throws Exception {
-        testSetter(instanceSetter, FieldAccessor.ofField(FOO).defineAs(propertyType, Visibility.PUBLIC), true);
     }
 
     @SuppressWarnings("unchecked")

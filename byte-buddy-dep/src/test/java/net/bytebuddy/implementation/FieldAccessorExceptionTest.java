@@ -1,12 +1,6 @@
 package net.bytebuddy.implementation;
 
-import net.bytebuddy.description.modifier.Ownership;
-import net.bytebuddy.description.modifier.Visibility;
-import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import org.junit.Test;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class FieldAccessorExceptionTest extends AbstractImplementationTest {
 
@@ -25,20 +19,6 @@ public class FieldAccessorExceptionTest extends AbstractImplementationTest {
     @Test(expected = IllegalArgumentException.class)
     public void testFieldNoBeanMethodName() throws Exception {
         implement(Qux.class, FieldAccessor.ofBeanProperty());
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testFieldNonStaticOnInterface() throws Exception {
-        InstrumentedType instrumentedType = mock(InstrumentedType.class);
-        when(instrumentedType.isInterface()).thenReturn(true);
-        FieldAccessor.ofField(FOO).defineAs(String.class, Visibility.PUBLIC).prepare(instrumentedType);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testFieldNonPublicOnInterface() throws Exception {
-        InstrumentedType instrumentedType = mock(InstrumentedType.class);
-        when(instrumentedType.isInterface()).thenReturn(true);
-        FieldAccessor.ofField(FOO).defineAs(String.class, Ownership.STATIC).prepare(instrumentedType);
     }
 
     @SuppressWarnings("unused")
