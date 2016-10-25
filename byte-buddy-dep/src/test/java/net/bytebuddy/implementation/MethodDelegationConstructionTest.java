@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
@@ -12,14 +14,14 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
-public class MethodDelegationConstructionTest<T extends CallTraceable>
-        extends AbstractImplementationTest {
+public class MethodDelegationConstructionTest<T extends CallTraceable> {
 
-    private static final String FOO = "foo", BAR = "bar", FIELD_NAME = "qux";
+    private static final String FOO = "foo", BAR = "bar";
 
     private static final byte BYTE_MULTIPLICATOR = 3;
 
@@ -92,7 +94,12 @@ public class MethodDelegationConstructionTest<T extends CallTraceable>
     @Test
     @SuppressWarnings("unchecked")
     public void testConstruction() throws Exception {
-        DynamicType.Loaded<T> loaded = implement(sourceType, MethodDelegation.toConstructor(targetType));
+        DynamicType.Loaded<T> loaded = new ByteBuddy()
+                .subclass(sourceType)
+                .method(isDeclaredBy(sourceType))
+                .intercept(MethodDelegation.toConstructor(targetType))
+                .make()
+                .load(sourceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));

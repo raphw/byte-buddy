@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
@@ -11,11 +13,12 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
-public class StubMethodTest extends AbstractImplementationTest {
+public class StubMethodTest {
 
     private static final String OBJECT_METHOD = "reference";
 
@@ -115,7 +118,12 @@ public class StubMethodTest extends AbstractImplementationTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testInstrumentedMethod() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, StubMethod.INSTANCE);
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(StubMethod.INSTANCE)
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(11));
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();

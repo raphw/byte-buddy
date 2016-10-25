@@ -1,20 +1,28 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.FieldValue;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import org.junit.Test;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
+public class MethodDelegationFieldValueTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
     @Test
     public void testLegalFieldAccess() throws Exception {
-        DynamicType.Loaded<SimpleField> loaded = implement(SimpleField.class, MethodDelegation.to(SimpleInterceptor.class));
+        DynamicType.Loaded<SimpleField> loaded = new ByteBuddy()
+                .subclass(SimpleField.class)
+                .method(isDeclaredBy(SimpleField.class))
+                .intercept(MethodDelegation.to(SimpleInterceptor.class))
+                .make()
+                .load(SimpleField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         SimpleField instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.foo = FOO;
         assertThat(instance.foo(), is((Object) FOO));
@@ -24,7 +32,12 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
 
     @Test
     public void testLegalFieldAccessStatic() throws Exception {
-        DynamicType.Loaded<SimpleStaticField> loaded = implement(SimpleStaticField.class, MethodDelegation.to(SimpleInterceptor.class));
+        DynamicType.Loaded<SimpleStaticField> loaded = new ByteBuddy()
+                .subclass(SimpleStaticField.class)
+                .method(isDeclaredBy(SimpleStaticField.class))
+                .intercept(MethodDelegation.to(SimpleInterceptor.class))
+                .make()
+                .load(SimpleStaticField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         SimpleStaticField instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         SimpleStaticField.foo = FOO;
         assertThat(instance.foo(), is((Object) FOO));
@@ -34,12 +47,21 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonAssignableFieldAccess() throws Exception {
-        implement(SimpleField.class, MethodDelegation.to(NonAssignableInterceptor.class));
+        new ByteBuddy()
+                .subclass(SimpleField.class)
+                .method(isDeclaredBy(SimpleField.class))
+                .intercept(MethodDelegation.to(NonAssignableInterceptor.class))
+                .make();
     }
 
     @Test
     public void testLegalFieldAccessDynamicTyping() throws Exception {
-        DynamicType.Loaded<SimpleStaticField> loaded = implement(SimpleStaticField.class, MethodDelegation.to(DynamicInterceptor.class));
+        DynamicType.Loaded<SimpleStaticField> loaded = new ByteBuddy()
+                .subclass(SimpleStaticField.class)
+                .method(isDeclaredBy(SimpleStaticField.class))
+                .intercept(MethodDelegation.to(DynamicInterceptor.class))
+                .make()
+                .load(SimpleStaticField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         SimpleStaticField instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         SimpleStaticField.foo = FOO;
         assertThat(instance.foo(), is((Object) FOO));
@@ -49,7 +71,12 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
 
     @Test
     public void testExtendedFieldMostSpecific() throws Exception {
-        DynamicType.Loaded<ExtendedField> loaded = implement(ExtendedField.class, MethodDelegation.to(SimpleInterceptor.class));
+        DynamicType.Loaded<ExtendedField> loaded = new ByteBuddy()
+                .subclass(ExtendedField.class)
+                .method(isDeclaredBy(ExtendedField.class))
+                .intercept(MethodDelegation.to(SimpleInterceptor.class))
+                .make()
+                .load(ExtendedField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ExtendedField instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.foo = FOO;
         assertThat(instance.foo(), is((Object) FOO));
@@ -59,7 +86,12 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
 
     @Test
     public void testExtendedFieldSkipsNonVisible() throws Exception {
-        DynamicType.Loaded<ExtendedPrivateField> loaded = implement(ExtendedPrivateField.class, MethodDelegation.to(SimpleInterceptor.class));
+        DynamicType.Loaded<ExtendedPrivateField> loaded = new ByteBuddy()
+                .subclass(ExtendedPrivateField.class)
+                .method(isDeclaredBy(ExtendedPrivateField.class))
+                .intercept(MethodDelegation.to(SimpleInterceptor.class))
+                .make()
+                .load(ExtendedPrivateField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         SimpleField instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.foo = FOO;
         assertThat(instance.foo(), is((Object) FOO));
@@ -69,7 +101,12 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
 
     @Test
     public void testExtendedFieldExplicitType() throws Exception {
-        DynamicType.Loaded<ExtendedField> loaded = implement(ExtendedField.class, MethodDelegation.to(ExplicitInterceptor.class));
+        DynamicType.Loaded<ExtendedField> loaded = new ByteBuddy()
+                .subclass(ExtendedField.class)
+                .method(isDeclaredBy(ExtendedField.class))
+                .intercept(MethodDelegation.to(ExplicitInterceptor.class))
+                .make()
+                .load(ExtendedField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         SimpleField instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.foo = FOO;
         assertThat(instance.foo(), is((Object) FOO));
@@ -79,7 +116,12 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
 
     @Test
     public void testAccessor() throws Exception {
-        DynamicType.Loaded<SimpleFieldAccessor> loaded = implement(SimpleFieldAccessor.class, MethodDelegation.to(SimpleAccessorInterceptor.class));
+        DynamicType.Loaded<SimpleFieldAccessor> loaded = new ByteBuddy()
+                .subclass(SimpleFieldAccessor.class)
+                .method(isDeclaredBy(SimpleFieldAccessor.class))
+                .intercept(MethodDelegation.to(SimpleAccessorInterceptor.class))
+                .make()
+                .load(SimpleFieldAccessor.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         SimpleFieldAccessor instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.foo = FOO;
         assertThat(instance.getFoo(), is((Object) FOO));
@@ -87,7 +129,6 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
         instance.setFoo(FOO);
         assertThat(instance.foo, is((Object) BAR));
     }
-
 
     public static class SimpleField {
 

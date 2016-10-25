@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -13,10 +15,11 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
+public class InvocationHandlerAdapterTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
@@ -25,7 +28,12 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
     @Test
     public void testStaticAdapterWithoutCache() throws Exception {
         Foo foo = new Foo();
-        DynamicType.Loaded<Bar> loaded = implement(Bar.class, InvocationHandlerAdapter.of(foo));
+        DynamicType.Loaded<Bar> loaded = new ByteBuddy()
+                .subclass(Bar.class)
+                .method(isDeclaredBy(Bar.class))
+                .intercept(InvocationHandlerAdapter.of(foo))
+                .make()
+                .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
@@ -41,7 +49,12 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
     @Test
     public void testStaticAdapterWithoutCacheForPrimitiveValue() throws Exception {
         Qux qux = new Qux();
-        DynamicType.Loaded<Baz> loaded = implement(Baz.class, InvocationHandlerAdapter.of(qux));
+        DynamicType.Loaded<Baz> loaded = new ByteBuddy()
+                .subclass(Baz.class)
+                .method(isDeclaredBy(Baz.class))
+                .intercept(InvocationHandlerAdapter.of(qux))
+                .make()
+                .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
@@ -53,7 +66,12 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
     @Test
     public void testStaticAdapterWithMethodCache() throws Exception {
         Foo foo = new Foo();
-        DynamicType.Loaded<Bar> loaded = implement(Bar.class, InvocationHandlerAdapter.of(foo).withMethodCache());
+        DynamicType.Loaded<Bar> loaded = new ByteBuddy()
+                .subclass(Bar.class)
+                .method(isDeclaredBy(Bar.class))
+                .intercept(InvocationHandlerAdapter.of(foo).withMethodCache())
+                .make()
+                .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(2));
@@ -68,7 +86,12 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
 
     @Test
     public void testInstanceAdapterWithoutCache() throws Exception {
-        DynamicType.Loaded<Bar> loaded = implement(Bar.class, InvocationHandlerAdapter.toInstanceField(QUX));
+        DynamicType.Loaded<Bar> loaded = new ByteBuddy()
+                .subclass(Bar.class)
+                .method(isDeclaredBy(Bar.class))
+                .intercept(InvocationHandlerAdapter.toInstanceField(QUX))
+                .make()
+                .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
@@ -88,7 +111,12 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
 
     @Test
     public void testInstanceAdapterWithMethodCache() throws Exception {
-        DynamicType.Loaded<Bar> loaded = implement(Bar.class, InvocationHandlerAdapter.toInstanceField(QUX).withMethodCache());
+        DynamicType.Loaded<Bar> loaded = new ByteBuddy()
+                .subclass(Bar.class)
+                .method(isDeclaredBy(Bar.class))
+                .intercept(InvocationHandlerAdapter.toInstanceField(QUX).withMethodCache())
+                .make()
+                .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(2));
@@ -104,28 +132,6 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
         assertThat(foo.methods.size(), is(2));
         assertThat(foo.methods.get(0), sameInstance(foo.methods.get(1)));
         instance.assertZeroCalls();
-    }
-
-    @Test
-    public void testEqualsHashCodeStaticAdapter() throws Exception {
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode(), is(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode()));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)), is(InvocationHandlerAdapter.of(new Foo(FOO))));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode(), not(InvocationHandlerAdapter.of(new Foo(BAR)).hashCode()));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)), not(InvocationHandlerAdapter.of(new Foo(BAR))));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode(), not(InvocationHandlerAdapter.of(new Foo(FOO), QUX).hashCode()));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)), not(InvocationHandlerAdapter.of(new Foo(FOO), QUX)));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO), QUX).hashCode(), not(InvocationHandlerAdapter.toInstanceField(QUX).hashCode()));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO), QUX), not(InvocationHandlerAdapter.toInstanceField(QUX)));
-    }
-
-    @Test
-    public void testEqualsHashCodeInstanceAdapter() throws Exception {
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX).hashCode(), is(InvocationHandlerAdapter.toInstanceField(QUX).hashCode()));
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX), is(InvocationHandlerAdapter.toInstanceField(QUX)));
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX).hashCode(), not(InvocationHandlerAdapter.toInstanceField(FOO).hashCode()));
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX), not(InvocationHandlerAdapter.toInstanceField(FOO)));
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX).hashCode(), not(InvocationHandlerAdapter.of(new Foo(BAR), QUX).hashCode()));
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX), not(InvocationHandlerAdapter.of(new Foo(BAR), QUX)));
     }
 
     @Test
@@ -145,10 +151,6 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
         private Foo() {
             marker = FOO;
             methods = new ArrayList<Method>();
-        }
-
-        private Foo(String marker) {
-            this.marker = marker;
         }
 
         @Override

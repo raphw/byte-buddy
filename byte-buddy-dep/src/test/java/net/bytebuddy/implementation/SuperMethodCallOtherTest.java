@@ -1,11 +1,13 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
@@ -25,14 +27,15 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.Method;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class SuperMethodCallOtherTest extends AbstractImplementationTest {
+public class SuperMethodCallOtherTest {
 
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
@@ -131,8 +134,12 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
 
     @Test
     public void testAndThen() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, SuperMethodCall.INSTANCE
-                .andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(SuperMethodCall.INSTANCE.andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo foo = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(foo.foo(), is(FOO));
         foo.assertOnlyCall(FOO);
@@ -141,11 +148,12 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testUnambiguousDirectDefaultMethod() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(Object.class,
-                SuperMethodCall.INSTANCE,
-                getClass().getClassLoader(),
-                isMethod().and(not(isDeclaredBy(Object.class))),
-                Class.forName(SINGLE_DEFAULT_METHOD));
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
+                .intercept(SuperMethodCall.INSTANCE)
+                .make()
+                .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -155,10 +163,12 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testInheritedDefaultMethod() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(Class.forName(SINGLE_DEFAULT_METHOD_CLASS),
-                SuperMethodCall.INSTANCE,
-                getClass().getClassLoader(),
-                isMethod().and(not(isDeclaredBy(Object.class))));
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Class.forName(SINGLE_DEFAULT_METHOD_CLASS))
+                .method(not(isDeclaredBy(Object.class)))
+                .intercept(SuperMethodCall.INSTANCE)
+                .make()
+                .load(Class.forName(SINGLE_DEFAULT_METHOD_CLASS).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -168,11 +178,12 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(8)
     public void testAmbiguousDirectDefaultMethodThrowsException() throws Exception {
-        implement(Object.class,
-                SuperMethodCall.INSTANCE,
-                getClass().getClassLoader(),
-                not(isDeclaredBy(Object.class)),
-                Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE))
+                .intercept(SuperMethodCall.INSTANCE)
+                .make()
+                .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
     }
 
     @Test

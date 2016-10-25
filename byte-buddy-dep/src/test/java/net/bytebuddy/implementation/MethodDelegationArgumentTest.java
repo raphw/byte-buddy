@@ -6,11 +6,12 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import org.junit.Test;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationArgumentTest extends AbstractImplementationTest {
+public class MethodDelegationArgumentTest {
 
     private static final String FOO = "bar", QUX = "qux", BAZ = "baz";
 
@@ -18,7 +19,12 @@ public class MethodDelegationArgumentTest extends AbstractImplementationTest {
 
     @Test
     public void testArgument() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(Bar.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(Bar.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(FOO, BAR), is((Object) (QUX + FOO + BAR)));
     }
@@ -30,7 +36,7 @@ public class MethodDelegationArgumentTest extends AbstractImplementationTest {
                 .method(named("foo"))
                 .intercept(MethodDelegation.to(new Qux()))
                 .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .load(Baz.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .getDeclaredConstructor()
                 .newInstance()

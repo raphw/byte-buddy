@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
@@ -10,11 +12,12 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
-public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends AbstractImplementationTest {
+public class FixedValueConstantPoolTypesTest<T extends CallTraceable> {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -82,7 +85,12 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends Ab
 
     @Test
     public void testConstantPool() throws Exception {
-        DynamicType.Loaded<T> loaded = implement(helperClass, FixedValue.value(fixedValue));
+        DynamicType.Loaded<T> loaded = new ByteBuddy()
+                .subclass(helperClass)
+                .method(isDeclaredBy(helperClass))
+                .intercept(FixedValue.value(fixedValue))
+                .make()
+                .load(helperClass.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -96,7 +104,12 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends Ab
 
     @Test
     public void testStaticField() throws Exception {
-        DynamicType.Loaded<T> loaded = implement(helperClass, FixedValue.reference(fixedValue));
+        DynamicType.Loaded<T> loaded = new ByteBuddy()
+                .subclass(helperClass)
+                .method(isDeclaredBy(helperClass))
+                .intercept(FixedValue.reference(fixedValue))
+                .make()
+                .load(helperClass.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(fixedValue == null ? 0 : 1));

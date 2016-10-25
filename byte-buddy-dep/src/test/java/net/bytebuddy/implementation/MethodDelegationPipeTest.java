@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.Pipe;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.test.utility.CallTraceable;
@@ -9,10 +11,11 @@ import org.junit.Test;
 import java.io.Serializable;
 import java.util.concurrent.Callable;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationPipeTest extends AbstractImplementationTest {
+public class MethodDelegationPipeTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
@@ -20,16 +23,24 @@ public class MethodDelegationPipeTest extends AbstractImplementationTest {
 
     @Test
     public void testPipeToIdenticalType() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(new ForwardingInterceptor(new Foo(FOO)))
-                .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(new ForwardingInterceptor(new Foo(FOO))).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(QUX), is(FOO + QUX));
     }
 
     @Test
     public void testPipeToIdenticalTypeVoid() throws Exception {
-        DynamicType.Loaded<Qux> loaded = implement(Qux.class, MethodDelegation.to(new ForwardingInterceptor(new Qux()))
-                .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
+        DynamicType.Loaded<Qux> loaded = new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(MethodDelegation.to(new ForwardingInterceptor(new Qux())).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .make()
+                .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Qux instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.foo();
         instance.assertZeroCalls();
@@ -37,8 +48,12 @@ public class MethodDelegationPipeTest extends AbstractImplementationTest {
 
     @Test
     public void testPipeToIdenticalTypePrimitive() throws Exception {
-        DynamicType.Loaded<Baz> loaded = implement(Baz.class, MethodDelegation.to(new PrimitiveForwardingInterceptor(new Baz()))
-                .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
+        DynamicType.Loaded<Baz> loaded = new ByteBuddy()
+                .subclass(Baz.class)
+                .method(isDeclaredBy(Baz.class))
+                .intercept(MethodDelegation.to(new PrimitiveForwardingInterceptor(new Baz())).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .make()
+                .load(Baz.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Baz instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(BAZ), is(BAZ * 2L));
         instance.assertZeroCalls();
@@ -46,24 +61,37 @@ public class MethodDelegationPipeTest extends AbstractImplementationTest {
 
     @Test
     public void testPipeToSubtype() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(new ForwardingInterceptor(new Bar(FOO)))
-                .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(new ForwardingInterceptor(new Bar(FOO))).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(QUX), is(FOO + QUX));
     }
 
     @Test
     public void testPipeSerialization() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(new SerializableForwardingInterceptor(new Foo(FOO)))
-                .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(new SerializableForwardingInterceptor(new Foo(FOO)))
+                        .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(QUX), is(FOO + QUX));
     }
 
     @Test(expected = ClassCastException.class)
     public void testPipeToIncompatibleTypeThrowsException() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(new ForwardingInterceptor(new Object()))
-                .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(new ForwardingInterceptor(new Object())).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.foo(QUX);
     }
@@ -100,8 +128,11 @@ public class MethodDelegationPipeTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testPipeTypeOnTargetInterceptorThrowsException() throws Exception {
-        implement(Foo.class, MethodDelegation.to(WrongParameterTypeTarget.class)
-                .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)));
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(WrongParameterTypeTarget.class).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .make();
     }
 
     public interface ForwardingType<T, S> {

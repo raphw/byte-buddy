@@ -1,25 +1,33 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
-public class ExceptionMethodTest extends AbstractImplementationTest {
+public class ExceptionMethodTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
     @Test
     public void testWithoutMessage() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, ExceptionMethod.throwing(RuntimeException.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(ExceptionMethod.throwing(RuntimeException.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -38,7 +46,12 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
 
     @Test
     public void testWithMessage() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, ExceptionMethod.throwing(RuntimeException.class, BAR));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(ExceptionMethod.throwing(RuntimeException.class, BAR))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -57,7 +70,12 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
 
     @Test
     public void testWithNonDeclaredCheckedException() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, ExceptionMethod.throwing(Exception.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(ExceptionMethod.throwing(Exception.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -75,7 +93,7 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
     }
 
     @Test
-    public void testEqualsHashCode() throws Exception {
+    public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ExceptionMethod.class).apply();
         ObjectPropertyAssertion.of(ExceptionMethod.ConstructionDelegate.ForDefaultConstructor.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override

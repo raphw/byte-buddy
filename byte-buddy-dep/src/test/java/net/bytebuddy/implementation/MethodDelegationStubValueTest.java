@@ -1,42 +1,63 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.StubValue;
 import org.junit.Test;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationStubValueTest extends AbstractImplementationTest {
-
-    private static final String FOO = "FOO";
+public class MethodDelegationStubValueTest {
 
     @Test
     public void testVoidMethod() throws Exception {
-        DynamicType.Loaded<VoidMethod> loaded = implement(VoidMethod.class, MethodDelegation.to(new Interceptor(null)));
+        DynamicType.Loaded<VoidMethod> loaded = new ByteBuddy()
+                .subclass(VoidMethod.class)
+                .method(isDeclaredBy(VoidMethod.class))
+                .intercept(MethodDelegation.to(new Interceptor(null)))
+                .make()
+                .load(VoidMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         VoidMethod instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         instance.foo();
     }
 
     @Test
     public void testReference() throws Exception {
-        DynamicType.Loaded<ReferenceMethod> loaded = implement(ReferenceMethod.class, MethodDelegation.to(new Interceptor(null)));
+        DynamicType.Loaded<ReferenceMethod> loaded = new ByteBuddy()
+                .subclass(ReferenceMethod.class)
+                .method(isDeclaredBy(ReferenceMethod.class))
+                .intercept(MethodDelegation.to(new Interceptor(null)))
+                .make()
+                .load(ReferenceMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ReferenceMethod instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(), nullValue(Object.class));
     }
 
     @Test
     public void testLongValue() throws Exception {
-        DynamicType.Loaded<LongMethod> loaded = implement(LongMethod.class, MethodDelegation.to(new Interceptor(0L)));
+        DynamicType.Loaded<LongMethod> loaded = new ByteBuddy()
+                .subclass(LongMethod.class)
+                .method(isDeclaredBy(LongMethod.class))
+                .intercept(MethodDelegation.to(new Interceptor(0L)))
+                .make()
+                .load(LongMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         LongMethod instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(), is(0L));
     }
 
     @Test
     public void tesIntegerValue() throws Exception {
-        DynamicType.Loaded<IntegerMethod> loaded = implement(IntegerMethod.class, MethodDelegation.to(new Interceptor(0)));
+        DynamicType.Loaded<IntegerMethod> loaded = new ByteBuddy()
+                .subclass(IntegerMethod.class)
+                .method(isDeclaredBy(IntegerMethod.class))
+                .intercept(MethodDelegation.to(new Interceptor(0)))
+                .make()
+                .load(LongMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         IntegerMethod instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(), is(0));
     }

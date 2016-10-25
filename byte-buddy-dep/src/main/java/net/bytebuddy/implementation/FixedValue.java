@@ -19,10 +19,11 @@ import org.objectweb.asm.Opcodes;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
- * This implementation returns a fixed value for a method. Other than the
- * {@link net.bytebuddy.implementation.StubMethod} implementation, this implementation allows
- * to determine a specific value which must be assignable to the returning value of any instrumented method. Otherwise,
- * an exception will be thrown.
+ * This implementation returns a fixed value for a method. Other than the {@link net.bytebuddy.implementation.StubMethod}
+ * implementation, this implementation allows to determine a specific value which must be assignable to the returning value
+ * of any instrumented method. Otherwise, an exception will be thrown.
+ *
+ * @see FieldAccessor
  */
 public abstract class FixedValue implements Implementation {
 

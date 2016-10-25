@@ -1,6 +1,9 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.DefaultCall;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
@@ -12,12 +15,11 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationDefaultCallTest extends AbstractImplementationTest {
+public class MethodDelegationDefaultCallTest {
 
     private static final String FOO = "foo", QUX = "qux";
 
@@ -35,11 +37,12 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testRunnableDefaultCall() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodDelegation.to(RunnableClass.class),
-                getClass().getClassLoader(),
-                isMethod().and(not(isDeclaredBy(Object.class))),
-                Class.forName(SINGLE_DEFAULT_METHOD));
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
+                .intercept(MethodDelegation.to(RunnableClass.class))
+                .make()
+                .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) QUX));
@@ -48,11 +51,12 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testCallableDefaultCall() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodDelegation.to(CallableClass.class),
-                getClass().getClassLoader(),
-                isMethod().and(not(isDeclaredBy(Object.class))),
-                Class.forName(SINGLE_DEFAULT_METHOD));
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
+                .intercept(MethodDelegation.to(CallableClass.class))
+                .make()
+                .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) FOO));
@@ -60,22 +64,24 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
 
     @Test(expected = IllegalArgumentException.class)
     @JavaVersionRule.Enforce(8)
-    public void testImplicitAmbiguousDefaultCallCannotBeBound() throws Exception {
-        implement(Object.class,
-                MethodDelegation.to(CallableClass.class),
-                getClass().getClassLoader(),
-                not(isDeclaredBy(Object.class)),
-                Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
+    public void testImplicitAmbiguousDefaultCallIsBoundToFirst() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE))
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
+                .intercept(MethodDelegation.to(CallableClass.class))
+                .make();
     }
 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testExplicitDefaultCall() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodDelegation.to(Class.forName(PREFERRING_INTERCEPTOR)),
-                getClass().getClassLoader(),
-                isMethod().and(not(isDeclaredBy(Object.class))),
-                Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE))
+                .intercept(MethodDelegation.to(Class.forName(PREFERRING_INTERCEPTOR)))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) FOO));
@@ -84,11 +90,12 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testExplicitDefaultCallToOtherInterface() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodDelegation.to(Class.forName(CONFLICTING_PREFERRING_INTERCEPTOR)),
-                getClass().getClassLoader(),
-                isMethod().and(not(isDeclaredBy(Object.class))),
-                Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE))
+                .intercept(MethodDelegation.to(Class.forName(CONFLICTING_PREFERRING_INTERCEPTOR)))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) QUX));
@@ -97,21 +104,22 @@ public class MethodDelegationDefaultCallTest extends AbstractImplementationTest 
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(8)
     public void testIllegalDefaultCallThrowsException() throws Exception {
-        implement(Object.class,
-                MethodDelegation.to(IllegalAnnotation.class),
-                getClass().getClassLoader(),
-                not(isDeclaredBy(Object.class)),
-                Class.forName(SINGLE_DEFAULT_METHOD));
+        new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
+                .intercept(MethodDelegation.to(IllegalAnnotation.class))
+                .make();
     }
 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testSerializableProxy() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodDelegation.to(SerializationCheck.class),
-                getClass().getClassLoader(),
-                isMethod().and(not(isDeclaredBy(Object.class))),
-                Class.forName(SINGLE_DEFAULT_METHOD));
+        DynamicType.Loaded<?> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
+                .intercept(MethodDelegation.to(SerializationCheck.class))
+                .make()
+                .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Method method = loaded.getLoaded().getMethod(FOO);
         assertThat(method.invoke(instance), is((Object) FOO));

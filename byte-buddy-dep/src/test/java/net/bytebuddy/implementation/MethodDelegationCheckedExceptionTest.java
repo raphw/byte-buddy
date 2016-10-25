@@ -1,12 +1,20 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Test;
 
-public class MethodDelegationCheckedExceptionTest extends AbstractImplementationTest {
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+
+public class MethodDelegationCheckedExceptionTest {
 
     @Test(expected = Exception.class)
     public void testUndeclaredCheckedException() throws Exception {
-        implement(Foo.class, MethodDelegation.to(Foo.class))
+        new ByteBuddy().subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(Foo.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .getDeclaredConstructor()
                 .newInstance()

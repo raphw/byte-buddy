@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
@@ -13,6 +15,7 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -22,7 +25,7 @@ public class FieldAccessorTest<T extends CallTraceable,
         U extends CallTraceable,
         V extends CallTraceable,
         X extends CallTraceable,
-        Y extends CallTraceable> extends AbstractImplementationTest {
+        Y extends CallTraceable> {
 
     private static final String FOO = "foo";
 
@@ -178,7 +181,12 @@ public class FieldAccessorTest<T extends CallTraceable,
     private <Z extends CallTraceable> void testGetter(Class<Z> target,
                                                       Implementation implementation,
                                                       boolean definesField) throws Exception {
-        DynamicType.Loaded<Z> loaded = implement(target, implementation);
+        DynamicType.Loaded<Z> loaded = new ByteBuddy()
+                .subclass(target)
+                .method(isDeclaredBy(target))
+                .intercept(implementation)
+                .make()
+                .load(target.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(definesField ? 1 : 0));
@@ -199,7 +207,12 @@ public class FieldAccessorTest<T extends CallTraceable,
     private <Z extends CallTraceable> void testSetter(Class<Z> target,
                                                       Implementation implementation,
                                                       boolean definesField) throws Exception {
-        DynamicType.Loaded<Z> loaded = implement(target, implementation);
+        DynamicType.Loaded<Z> loaded = new ByteBuddy()
+                .subclass(target)
+                .method(isDeclaredBy(target))
+                .intercept(implementation)
+                .make()
+                .load(target.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(definesField ? 1 : 0));

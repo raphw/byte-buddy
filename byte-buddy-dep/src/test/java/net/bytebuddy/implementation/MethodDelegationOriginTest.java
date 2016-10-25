@@ -1,7 +1,10 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.Origin;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,11 +14,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationOriginTest extends AbstractImplementationTest {
+public class MethodDelegationOriginTest {
 
     private static final String FOO = "foo", TYPE = "TYPE";
 
@@ -32,7 +35,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
 
     @Test
     public void testOriginClass() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(OriginClass.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(OriginClass.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(), instanceOf(Class.class));
         assertThat(instance.foo(), is((Object) Foo.class));
@@ -40,7 +48,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
 
     @Test
     public void testOriginMethodWithoutCache() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(OriginMethod.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(OriginMethod.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Object method = instance.foo();
         assertThat(method, instanceOf(Method.class));
@@ -50,7 +63,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
 
     @Test
     public void testOriginMethodWithCache() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(OriginMethodWithCache.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(OriginMethodWithCache.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Object method = instance.foo();
         assertThat(method, instanceOf(Method.class));
@@ -62,10 +80,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     @SuppressWarnings("unchecked")
     public void testOriginConstructorWithoutCache() throws Exception {
         OriginConstructor originConstructor = new OriginConstructor();
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class,
-                SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)),
-                getClass().getClassLoader(),
-                isConstructor());
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .constructor(ElementMatchers.any())
+                .intercept(SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(originConstructor.constructor, instanceOf(Constructor.class));
         assertThat(originConstructor.constructor, is((Constructor) loaded.getLoaded().getDeclaredConstructor()));
@@ -80,10 +100,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     @SuppressWarnings("unchecked")
     public void testOriginConstructorWithCache() throws Exception {
         OriginConstructorWithCache originConstructor = new OriginConstructorWithCache();
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class,
-                SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)),
-                getClass().getClassLoader(),
-                isConstructor());
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .constructor(ElementMatchers.any())
+                .intercept(SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(originConstructor.constructor, instanceOf(Constructor.class));
         assertThat(originConstructor.constructor, is((Constructor) loaded.getLoaded().getDeclaredConstructor()));
@@ -97,7 +119,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(8)
     public void testOriginExecutableOnMethodWithoutCache() throws Exception {
         Object origin = Class.forName(ORIGIN_EXECUTABLE).getDeclaredConstructor().newInstance();
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(origin));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(origin))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Object method = instance.foo();
         assertThat(method, instanceOf(Method.class));
@@ -109,7 +136,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(8)
     public void testOriginExecutableOnMethodWithCache() throws Exception {
         Object origin = Class.forName(ORIGIN_EXECUTABLE_CACHED).getDeclaredConstructor().newInstance();
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(origin));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(origin))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Object method = instance.foo();
         assertThat(method, instanceOf(Method.class));
@@ -123,10 +155,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     public void testOriginExecutableConstructorWithoutCache() throws Exception {
         Object originConstructor = Class.forName(ORIGIN_EXECUTABLE).getDeclaredConstructor().newInstance();
         Field constructor = Class.forName(ORIGIN_EXECUTABLE).getDeclaredField("executable");
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class,
-                SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)),
-                getClass().getClassLoader(),
-                isConstructor());
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .constructor(ElementMatchers.any())
+                .intercept(SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(constructor.get(originConstructor), instanceOf(Constructor.class));
         assertThat(constructor.get(originConstructor), is((Object) loaded.getLoaded().getDeclaredConstructor()));
@@ -143,10 +177,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     public void testOriginExecutableConstructorWithCache() throws Exception {
         Object originConstructor = Class.forName(ORIGIN_EXECUTABLE_CACHED).getDeclaredConstructor().newInstance();
         Field constructor = Class.forName(ORIGIN_EXECUTABLE_CACHED).getDeclaredField("executable");
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class,
-                SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)),
-                getClass().getClassLoader(),
-                isConstructor());
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .constructor(ElementMatchers.any())
+                .intercept(SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(constructor.get(originConstructor), instanceOf(Constructor.class));
         assertThat(constructor.get(originConstructor), is((Object) loaded.getLoaded().getDeclaredConstructor()));
@@ -158,7 +194,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
 
     @Test
     public void testOriginString() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(OriginString.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(OriginString.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(), instanceOf(String.class));
         assertThat(instance.foo(), is((Object) Foo.class.getDeclaredMethod(FOO).toString()));
@@ -168,7 +209,12 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(7)
     public void testOriginMethodHandle() throws Throwable {
         Class<?> originMethodHandle = Class.forName(ORIGIN_METHOD_HANDLE);
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(originMethodHandle));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(originMethodHandle))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(), instanceOf((Class<?>) originMethodHandle.getDeclaredField(TYPE).get(null)));
     }
@@ -177,14 +223,23 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(7)
     public void testOriginMethodType() throws Throwable {
         Class<?> originMethodType = Class.forName(ORIGIN_METHOD_TYPE);
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(originMethodType));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(originMethodType))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(), instanceOf((Class<?>) originMethodType.getDeclaredField(TYPE).get(null)));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testOriginIllegal() throws Exception {
-        implement(Foo.class, MethodDelegation.to(OriginIllegal.class));
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(OriginIllegal.class))
+                .make();
     }
 
     public static class Foo {

@@ -1,8 +1,10 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
@@ -21,7 +23,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class InvokeDynamicTest extends AbstractImplementationTest {
+public class InvokeDynamicTest {
 
     public static final String INSTANCE = "INSTANCE";
 
@@ -81,10 +83,12 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
             if (method.getName().equals(FOO)) {
                 continue;
             }
-            DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                    InvokeDynamic.bootstrap(method).withoutArguments(),
-                    getClass().getClassLoader(),
-                    isDeclaredBy(Simple.class));
+            DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                    .subclass(Simple.class)
+                    .method(isDeclaredBy(Simple.class))
+                    .intercept(InvokeDynamic.bootstrap(method).withoutArguments())
+                    .make()
+                    .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
             assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(), is(FOO));
         }
     }
@@ -93,10 +97,12 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @JavaVersionRule.Enforce(7)
     public void testBootstrapConstructor() throws Exception {
         for (Constructor<?> constructor : Class.forName(STANDARD_ARGUMENT_BOOTSTRAP).getDeclaredConstructors()) {
-            DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                    InvokeDynamic.bootstrap(constructor).withoutArguments(),
-                    getClass().getClassLoader(),
-                    isDeclaredBy(Simple.class));
+            DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                    .subclass(Simple.class)
+                    .method(isDeclaredBy(Simple.class))
+                    .intercept(InvokeDynamic.bootstrap(constructor).withoutArguments())
+                    .make()
+                    .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
             assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(), is(FOO));
         }
     }
@@ -108,11 +114,13 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
         field.set(null, null);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly())
-                        .withoutArguments(),
-                getClass().getClassLoader(),
-                isDeclaredBy(Simple.class));
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly())
+                        .withoutArguments())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(), is(FOO));
         Object[] arguments = (Object[]) field.get(null);
         assertThat(arguments.length, is(0));
@@ -125,12 +133,14 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
         field.set(null, null);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly(),
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_ARRAY_ARGUMENTS)).getOnly(),
                         INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle())
-                        .withoutArguments(),
-                getClass().getClassLoader(),
-                isDeclaredBy(Simple.class));
+                        .withoutArguments())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(), is(FOO));
         Object[] arguments = (Object[]) field.get(null);
         assertThat(arguments.length, is(8));
@@ -151,12 +161,14 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         Field field = type.getDeclaredField(ARGUMENTS_FIELD_NAME);
         field.set(null, null);
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_EXPLICIT_ARGUMENTS)).getOnly(),
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP_EXPLICIT_ARGUMENTS)).getOnly(),
                         INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeMethodType(CLASS), makeMethodHandle())
-                        .withoutArguments(),
-                getClass().getClassLoader(),
-                isDeclaredBy(Simple.class));
+                        .withoutArguments())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(), is(FOO));
         Object[] arguments = (Object[]) field.get(null);
         assertThat(arguments.length, is(8));
@@ -182,8 +194,10 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     public void testBootstrapOfMethodsWithParametersPrimitive() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
         Object value = new Object();
-        DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(FOO, String.class)
                         .withBooleanValue(BOOLEAN)
                         .withByteValue(BYTE)
@@ -196,9 +210,9 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                         .withType(new TypeDescription.ForLoadedType(CLASS))
                         .withEnumeration(new EnumerationDescription.ForLoadedEnumeration(makeEnum()))
                         .withInstance(JavaConstant.MethodType.ofLoaded(makeMethodType(CLASS)), JavaConstant.MethodHandle.ofLoaded(makeMethodHandle()))
-                        .withValue(FOO, CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value),
-                getClass().getClassLoader(),
-                isDeclaredBy(Simple.class));
+                        .withValue(FOO, CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(),
                 is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + CLASS + makeEnum() + makeMethodType(CLASS)
                         + makeMethodHandle() + FOO + CLASS + makeEnum() + makeMethodType(CLASS) + makeMethodHandle() + value));
@@ -207,16 +221,17 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testBootstrapOfMethodsWithParametersWrapperConstantPool() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
         Object value = new Object();
-        DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAR, String.class)
                         .withValue(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO,
-                                CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value),
-                getClass().getClassLoader(),
-                isDeclaredBy(Simple.class));
+                                CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(1));
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(),
                 is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + makeEnum()
@@ -226,17 +241,18 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapOfMethodsWithParametersWrapperReference() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
         Object value = new Object();
-        DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAR, String.class)
                         .withReference(BOOLEAN, BYTE, SHORT, CHARACTER, INTEGER, LONG, FLOAT, DOUBLE, FOO, CLASS, makeEnum(), makeMethodType(CLASS))
                         .withReference(makeMethodHandle()).as(JavaType.METHOD_HANDLE.load()) // avoid direct method handle
-                        .withReference(value),
-                getClass().getClassLoader(),
-                isDeclaredBy(Simple.class));
+                        .withReference(value))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(14));
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(),
                 is("" + BOOLEAN + BYTE + SHORT + CHARACTER + INTEGER + LONG + FLOAT + DOUBLE + FOO + CLASS + makeEnum()
@@ -246,14 +262,15 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithFieldCreation() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withInstanceField(FOO, String.class),
-                getClass().getClassLoader(),
-                isDeclaredBy(Simple.class));
+                        .withInstanceField(FOO, String.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(1));
         Simple instance = dynamicType.getLoaded().getDeclaredConstructor().newInstance();
         Field field = dynamicType.getLoaded().getDeclaredField(FOO);
@@ -265,14 +282,15 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithFieldUse() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<SimpleWithField> dynamicType = implement(SimpleWithField.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        DynamicType.Loaded<SimpleWithField> dynamicType = new ByteBuddy()
+                .subclass(SimpleWithField.class)
+                .method(isDeclaredBy(SimpleWithField.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withField(FOO),
-                getClass().getClassLoader(),
-                isDeclaredBy(SimpleWithField.class));
+                        .withField(FOO))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         SimpleWithField instance = dynamicType.getLoaded().getDeclaredConstructor().newInstance();
         Field field = SimpleWithField.class.getDeclaredField(FOO);
@@ -284,27 +302,28 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithFieldUseInvisible() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        implement(SimpleWithFieldInvisible.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        new ByteBuddy()
+                .subclass(SimpleWithFieldInvisible.class)
+                .method(isDeclaredBy(SimpleWithFieldInvisible.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withField(FOO),
-                getClass().getClassLoader(),
-                isDeclaredBy(SimpleWithFieldInvisible.class));
+                        .withField(FOO))
+                .make();
     }
 
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithNullValue() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withNullValue(String.class),
-                getClass().getClassLoader(),
-                isDeclaredBy(Simple.class));
+                        .withNullValue(String.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(), nullValue(String.class));
     }
@@ -312,14 +331,15 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithThisValue() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<Simple> dynamicType = implement(Simple.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        DynamicType.Loaded<Simple> dynamicType = new ByteBuddy()
+                .subclass(Simple.class)
+                .method(isDeclaredBy(Simple.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(BAZ, String.class)
-                        .withThis(Object.class),
-                getClass().getClassLoader(),
-                isDeclaredBy(Simple.class));
+                        .withThis(Object.class))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         Simple simple = dynamicType.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(simple.foo(), is(simple.toString()));
@@ -328,14 +348,15 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithArgument() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<SimpleWithArgument> dynamicType = implement(SimpleWithArgument.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        DynamicType.Loaded<SimpleWithArgument> dynamicType = new ByteBuddy()
+                .subclass(SimpleWithArgument.class)
+                .method(isDeclaredBy(SimpleWithArgument.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withArgument(0),
-                getClass().getClassLoader(),
-                isDeclaredBy(SimpleWithArgument.class));
+                        .withArgument(0))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(FOO), is(FOO));
     }
@@ -353,28 +374,29 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(7)
     public void testNonExistentArgumentThrowsException() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        implement(SimpleWithArgument.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        new ByteBuddy()
+                .subclass(SimpleWithArgument.class)
+                .method(isDeclaredBy(SimpleWithArgument.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withArgument(1),
-                getClass().getClassLoader(),
-                isDeclaredBy(SimpleWithArgument.class));
+                        .withArgument(1))
+                .make();
     }
 
     @Test
     @JavaVersionRule.Enforce(7)
     public void testChainedInvocation() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<SimpleWithArgument> dynamicType = implement(SimpleWithArgument.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        DynamicType.Loaded<SimpleWithArgument> dynamicType = new ByteBuddy()
+                .subclass(SimpleWithArgument.class)
+                .method(isDeclaredBy(SimpleWithArgument.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
                         .withArgument(0)
-                        .andThen(FixedValue.value(BAZ)),
-                getClass().getClassLoader(),
-                isDeclaredBy(SimpleWithArgument.class));
+                        .andThen(FixedValue.value(BAZ)))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(FOO), is(BAZ));
     }
@@ -382,14 +404,15 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testBootstrapWithImplicitArgument() throws Exception {
-        Class<?> type = Class.forName(ARGUMENT_BOOTSTRAP);
-        TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
-        DynamicType.Loaded<SimpleWithArgument> dynamicType = implement(SimpleWithArgument.class,
-                InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(Class.forName(ARGUMENT_BOOTSTRAP));
+        DynamicType.Loaded<SimpleWithArgument> dynamicType = new ByteBuddy()
+                .subclass(SimpleWithArgument.class)
+                .method(isDeclaredBy(SimpleWithArgument.class))
+                .intercept(InvokeDynamic.bootstrap(typeDescription.getDeclaredMethods().filter(named(BOOTSTRAP)).getOnly())
                         .invoke(QUX, String.class)
-                        .withMethodArguments(),
-                getClass().getClassLoader(),
-                isDeclaredBy(SimpleWithArgument.class));
+                        .withMethodArguments())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(dynamicType.getLoaded().getDeclaredFields().length, is(0));
         assertThat(dynamicType.getLoaded().getDeclaredConstructor().newInstance().foo(FOO), is(FOO));
     }

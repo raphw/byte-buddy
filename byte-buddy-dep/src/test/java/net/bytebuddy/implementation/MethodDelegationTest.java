@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
@@ -18,7 +20,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
-public class MethodDelegationTest<T extends CallTraceable> extends AbstractImplementationTest {
+public class MethodDelegationTest<T extends CallTraceable> {
 
     private static final String FOO = "foo", BAR = "bar", FIELD_NAME = "qux";
 
@@ -93,7 +95,12 @@ public class MethodDelegationTest<T extends CallTraceable> extends AbstractImple
     @Test
     @SuppressWarnings("unchecked")
     public void testStaticMethodBinding() throws Exception {
-        DynamicType.Loaded<T> loaded = implement(sourceType, MethodDelegation.to(targetType));
+        DynamicType.Loaded<T> loaded = new ByteBuddy()
+                .subclass(sourceType)
+                .method(isDeclaredBy(sourceType))
+                .intercept(MethodDelegation.to(targetType))
+                .make()
+                .load(sourceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -107,7 +114,12 @@ public class MethodDelegationTest<T extends CallTraceable> extends AbstractImple
     @Test
     @SuppressWarnings("unchecked")
     public void testStaticFieldBinding() throws Exception {
-        DynamicType.Loaded<T> loaded = implement(sourceType, MethodDelegation.to(targetType.getDeclaredConstructor().newInstance()).filter(isDeclaredBy(targetType)));
+        DynamicType.Loaded<T> loaded = new ByteBuddy()
+                .subclass(sourceType)
+                .method(isDeclaredBy(sourceType))
+                .intercept(MethodDelegation.to(targetType.getDeclaredConstructor().newInstance()).filter(isDeclaredBy(targetType)))
+                .make()
+                .load(sourceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
@@ -121,7 +133,12 @@ public class MethodDelegationTest<T extends CallTraceable> extends AbstractImple
     @Test
     @SuppressWarnings("unchecked")
     public void testInstanceFieldBinding() throws Exception {
-        DynamicType.Loaded<T> loaded = implement(sourceType, MethodDelegation.toInstanceField(targetType, FIELD_NAME).filter(isDeclaredBy(targetType)));
+        DynamicType.Loaded<T> loaded = new ByteBuddy()
+                .subclass(sourceType)
+                .method(isDeclaredBy(sourceType))
+                .intercept(MethodDelegation.toInstanceField(targetType, FIELD_NAME).filter(isDeclaredBy(targetType)))
+                .make()
+                .load(sourceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));

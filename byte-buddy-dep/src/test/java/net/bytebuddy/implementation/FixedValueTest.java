@@ -2,23 +2,23 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class FixedValueTest extends AbstractImplementationTest {
+public class FixedValueTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
@@ -44,14 +44,26 @@ public class FixedValueTest extends AbstractImplementationTest {
 
     @Test
     public void testTypeDescriptionConstantPool() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(TypeDescription.OBJECT)).getLoaded();
+        Class<? extends Qux> qux = new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(FixedValue.value(TypeDescription.OBJECT))
+                .make()
+                .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(qux.getDeclaredConstructor().newInstance().bar(), is((Object) Object.class));
     }
 
     @Test
     public void testClassConstantPool() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(Object.class)).getLoaded();
+        Class<? extends Qux> qux = new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(FixedValue.value(Object.class))
+                .make()
+                .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(qux.getDeclaredConstructor().newInstance().bar(), is((Object) Object.class));
     }
@@ -59,7 +71,13 @@ public class FixedValueTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeConstantPool() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(JavaConstant.MethodType.of(void.class, Object.class))).getLoaded();
+        Class<? extends Qux> qux = new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(FixedValue.value(JavaConstant.MethodType.of(void.class, Object.class)))
+                .make()
+                .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(qux.getDeclaredConstructor().newInstance().bar(), is(makeMethodType(void.class, Object.class)));
     }
@@ -67,7 +85,13 @@ public class FixedValueTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeConstantPoolValue() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(makeMethodType(void.class, Object.class))).getLoaded();
+        Class<? extends Qux> qux = new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(FixedValue.value(makeMethodType(void.class, Object.class)))
+                .make()
+                .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(qux.getDeclaredConstructor().newInstance().bar(), is(makeMethodType(void.class, Object.class)));
     }
@@ -75,7 +99,13 @@ public class FixedValueTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleConstantPool() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(JavaConstant.MethodHandle.of(Qux.class.getDeclaredMethod("bar")))).getLoaded();
+        Class<? extends Qux> qux = new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(FixedValue.value(JavaConstant.MethodHandle.of(Qux.class.getDeclaredMethod("bar"))))
+                .make()
+                .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(JavaConstant.MethodHandle.ofLoaded(qux.getDeclaredConstructor().newInstance().bar()), is(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle())));
     }
@@ -83,87 +113,103 @@ public class FixedValueTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleConstantPoolValue() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(makeMethodHandle())).getLoaded();
+        Class<? extends Qux> qux = new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(FixedValue.value(makeMethodHandle()))
+                .make()
+                .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(JavaConstant.MethodHandle.ofLoaded(qux.getDeclaredConstructor().newInstance().bar()), is(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle())));
     }
 
     @Test
     public void testReferenceCall() throws Exception {
-        assertType(implement(Foo.class, FixedValue.reference(bar)));
+        new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(FixedValue.reference(bar))
+                .make();
     }
 
     @Test
     public void testValueCall() throws Exception {
-        assertType(implement(Foo.class, FixedValue.value(bar)));
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(FixedValue.reference(bar))
+                .make();
     }
 
     @Test
     public void testNullValue() throws Exception {
-        Class<?> type = implement(Foo.class, FixedValue.nullValue()).getLoaded();
-        assertThat(type.getDeclaredFields().length, is(0));
-        assertThat(type.getDeclaredMethods().length, is(1));
-        assertThat(type.getDeclaredMethod(BAR).invoke(type.getDeclaredConstructor().newInstance()), nullValue(Object.class));
+        Class<? extends Foo> foo = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(FixedValue.nullValue())
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(foo.getDeclaredFields().length, is(0));
+        assertThat(foo.getDeclaredMethods().length, is(1));
+        assertThat(foo.getDeclaredMethod(BAR).invoke(foo.getDeclaredConstructor().newInstance()), nullValue(Object.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNullValueNonAssignable() throws Exception {
-        implement(FooBar.class, FixedValue.nullValue());
+        new ByteBuddy()
+                .subclass(FooBar.class)
+                .method(isDeclaredBy(FooBar.class))
+                .intercept(FixedValue.nullValue())
+                .make();
     }
 
     @Test
     public void testThisValue() throws Exception {
-        Class<? extends QuxBaz> type = implement(QuxBaz.class, FixedValue.self()).getLoaded();
-        assertThat(type.getDeclaredFields().length, is(0));
-        assertThat(type.getDeclaredMethods().length, is(1));
-        QuxBaz self = type.getDeclaredConstructor().newInstance();
+        Class<? extends QuxBaz> quxbaz = new ByteBuddy()
+                .subclass(QuxBaz.class)
+                .method(isDeclaredBy(QuxBaz.class))
+                .intercept(FixedValue.self())
+                .make()
+                .load(QuxBaz.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(quxbaz.getDeclaredFields().length, is(0));
+        assertThat(quxbaz.getDeclaredMethods().length, is(1));
+        QuxBaz self = quxbaz.getDeclaredConstructor().newInstance();
         assertThat(self.bar(), sameInstance((Object) self));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testThisValueStatic() throws Exception {
-        new ByteBuddy().redefine(FooBarQuxBaz.class).method(named("bar")).intercept(FixedValue.self()).make();
+        new ByteBuddy()
+                .redefine(FooBarQuxBaz.class)
+                .method(named("bar"))
+                .intercept(FixedValue.self())
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testThisValueNonAssignable() throws Exception {
-        implement(Foo.class, FixedValue.self());
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(FixedValue.self())
+                .make();
     }
 
     @Test
     public void testOriginType() throws Exception {
-        Class<?> type = implement(Baz.class, FixedValue.originType()).getLoaded();
-        assertThat(type.getDeclaredFields().length, is(0));
-        assertThat(type.getDeclaredMethods().length, is(1));
-        assertThat(type.getDeclaredMethod(BAR).invoke(type.getDeclaredConstructor().newInstance()), is((Object) Baz.class));
-    }
-
-    @Test
-    public void testConstantPoolValue() throws Exception {
-        assertThat(FixedValue.value(FOO).hashCode(), is(FixedValue.value(FOO).hashCode()));
-        assertThat(FixedValue.value(FOO), is(FixedValue.value(FOO)));
-        assertThat(FixedValue.value(FOO).hashCode(), not(FixedValue.value(BAR).hashCode()));
-        assertThat(FixedValue.value(FOO), not(FixedValue.value(BAR)));
-        assertThat(FixedValue.value(FOO).hashCode(), not(FixedValue.reference(FOO).hashCode()));
-        assertThat(FixedValue.value(FOO), not(FixedValue.reference(FOO)));
-    }
-
-    @Test
-    public void testReferenceValue() throws Exception {
-        assertThat(FixedValue.reference(FOO).hashCode(), is(FixedValue.reference(FOO).hashCode()));
-        assertThat(FixedValue.reference(FOO), is(FixedValue.reference(FOO)));
-        assertThat(FixedValue.reference(FOO).hashCode(), not(FixedValue.value(FOO).hashCode()));
-        assertThat(FixedValue.reference(FOO), not(FixedValue.value(FOO)));
-        assertThat(FixedValue.reference(FOO).hashCode(), not(FixedValue.reference(BAR).hashCode()));
-        assertThat(FixedValue.reference(FOO), not(FixedValue.reference(BAR)));
-    }
-
-    @Test
-    public void testReferenceValueWithExplicitFieldName() throws Exception {
-        assertThat(FixedValue.reference(FOO, QUX).hashCode(), is(FixedValue.reference(FOO, QUX).hashCode()));
-        assertThat(FixedValue.reference(FOO, QUX), is(FixedValue.reference(FOO, QUX)));
-        assertThat(FixedValue.reference(FOO, QUX).hashCode(), not(FixedValue.reference(BAR, QUX).hashCode()));
-        assertThat(FixedValue.reference(FOO, QUX), not(FixedValue.reference(BAR, QUX)));
+        Class<? extends Baz> baz = new ByteBuddy()
+                .subclass(Baz.class)
+                .method(isDeclaredBy(Baz.class))
+                .intercept(FixedValue.originType())
+                .make()
+                .load(QuxBaz.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(baz.getDeclaredFields().length, is(0));
+        assertThat(baz.getDeclaredMethods().length, is(1));
+        assertThat(baz.getDeclaredMethod(BAR).invoke(baz.getDeclaredConstructor().newInstance()), is((Object) Baz.class));
     }
 
     @Test
@@ -175,17 +221,6 @@ public class FixedValueTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(FixedValue.ForNullValue.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForThisValue.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForThisValue.Appender.class).apply();
-    }
-
-    private void assertType(DynamicType.Loaded<Foo> loaded) throws Exception {
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
-        Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
-        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Foo.class)));
-        assertThat(instance, instanceOf(Foo.class));
-        assertThat((Bar) loaded.getLoaded().getDeclaredMethod(BAR).invoke(instance), is(bar));
-        instance.assertZeroCalls();
     }
 
     public static class Foo extends CallTraceable {

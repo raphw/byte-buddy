@@ -14,65 +14,106 @@ import org.junit.Test;
 
 import java.io.Serializable;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class MethodDelegationSuperTest extends AbstractImplementationTest {
+public class MethodDelegationSuperTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     @Test
     public void testSuperInstance() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(Baz.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(Baz.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.qux(), is((Object) (FOO + QUX)));
     }
 
     @Test
     public void testSuperInterface() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(FooBar.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(FooBar.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.qux(), is((Object) (FOO + QUX)));
     }
 
     @Test
     public void testSuperInstanceUnsafe() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(QuxBaz.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(QuxBaz.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.qux(), is((Object) (FOO + QUX)));
     }
 
     @Test
     public void testBridgeMethodResolution() throws Exception {
-        DynamicType.Loaded<Bar> loaded = implement(Bar.class, MethodDelegation.to(GenericBaz.class));
+        DynamicType.Loaded<Bar> loaded = new ByteBuddy()
+                .subclass(Bar.class)
+                .method(isDeclaredBy(Bar.class))
+                .intercept(MethodDelegation.to(GenericBaz.class))
+                .make()
+                .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Bar instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.qux(BAR), is(BAR + QUX));
     }
 
     @Test(expected = AbstractMethodError.class)
     public void testSuperCallOnAbstractMethod() throws Exception {
-        DynamicType.Loaded<FooBarQuxBaz> loaded = implement(FooBarQuxBaz.class, MethodDelegation.to(FooBar.class));
+        DynamicType.Loaded<FooBarQuxBaz> loaded = new ByteBuddy()
+                .subclass(FooBarQuxBaz.class)
+                .method(isDeclaredBy(FooBarQuxBaz.class))
+                .intercept(MethodDelegation.to(FooBar.class))
+                .make()
+                .load(FooBarQuxBaz.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         loaded.getLoaded().getDeclaredConstructor().newInstance().qux();
     }
 
     @Test
     public void testSerializableProxy() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(SerializationCheck.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(SerializationCheck.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.qux(), is((Object) (FOO + QUX)));
     }
 
     @Test
     public void testTargetTypeProxy() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(TargetTypeTest.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(TargetTypeTest.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.qux(), is((Object) (FOO + QUX)));
     }
 
     @Test
     public void testExplicitTypeProxy() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(ExplicitTypeTest.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(ExplicitTypeTest.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.qux(), is((Object) (FOO + QUX)));
     }

@@ -1,7 +1,9 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -19,12 +21,13 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
-public class MethodCallTypeTest extends AbstractImplementationTest {
+public class MethodCallTypeTest {
 
     private static final String FOO = "foo";
 
@@ -99,7 +102,12 @@ public class MethodCallTypeTest extends AbstractImplementationTest {
 
     @Test
     public void testFieldConstantPool() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodCall.invokeSuper().with(value));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodCall.invokeSuper().with(value))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, Object.class), not(nullValue(Method.class)));
@@ -113,7 +121,12 @@ public class MethodCallTypeTest extends AbstractImplementationTest {
 
     @Test
     public void testFieldReference() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodCall.invokeSuper().withReference(value));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodCall.invokeSuper().withReference(value))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, Object.class), not(nullValue(Method.class)));
@@ -127,7 +140,11 @@ public class MethodCallTypeTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testNonAssignable() throws Exception {
-        implement(Foo.class, MethodCall.invokeSuper().with(value).withAssigner(nonAssigner, Assigner.Typing.STATIC));
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodCall.invokeSuper().with(value).withAssigner(nonAssigner, Assigner.Typing.STATIC))
+                .make();
     }
 
     public enum Bar {

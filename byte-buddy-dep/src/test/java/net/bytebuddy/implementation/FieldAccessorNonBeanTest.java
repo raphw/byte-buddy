@@ -1,15 +1,18 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.CallTraceable;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class FieldAccessorNonBeanTest extends AbstractImplementationTest {
+public class FieldAccessorNonBeanTest {
 
     private static final String FOO = "foo";
 
@@ -19,7 +22,12 @@ public class FieldAccessorNonBeanTest extends AbstractImplementationTest {
 
     @Test
     public void testExplicitNameSetter() throws Exception {
-        DynamicType.Loaded<SampleSetter> loaded = implement(SampleSetter.class, FieldAccessor.ofField(FOO));
+        DynamicType.Loaded<SampleSetter> loaded = new ByteBuddy()
+                .subclass(SampleSetter.class)
+                .method(isDeclaredBy(SampleSetter.class))
+                .intercept(FieldAccessor.ofField(FOO))
+                .make()
+                .load(SampleSetter.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         SampleSetter sampleSetter = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Field field = SampleSetter.class.getDeclaredField(FOO);
         field.setAccessible(true);
@@ -31,7 +39,12 @@ public class FieldAccessorNonBeanTest extends AbstractImplementationTest {
 
     @Test
     public void testExplicitNameGetter() throws Exception {
-        DynamicType.Loaded<SampleGetter> loaded = implement(SampleGetter.class, FieldAccessor.ofField(FOO));
+        DynamicType.Loaded<SampleGetter> loaded = new ByteBuddy()
+                .subclass(SampleGetter.class)
+                .method(isDeclaredBy(SampleGetter.class))
+                .intercept(FieldAccessor.ofField(FOO))
+                .make()
+                .load(SampleSetter.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         SampleGetter sampleGetter = loaded.getLoaded().getDeclaredConstructor().newInstance();
         Field field = SampleGetter.class.getDeclaredField(FOO);
         field.setAccessible(true);

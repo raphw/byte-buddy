@@ -1,23 +1,38 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.test.packaging.PackagePrivateMethod;
 import org.junit.Test;
 
-public class MethodDelegationExceptionTest extends AbstractImplementationTest {
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
+
+public class MethodDelegationExceptionTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoMethod() throws Exception {
-        implement(Foo.class, MethodDelegation.to(Bar.class));
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(Bar.class))
+                .make();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoVisibleMethod() throws Exception {
-        implement(Foo.class, MethodDelegation.to(new PackagePrivateMethod()));
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(new PackagePrivateMethod()))
+                .make();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoCompatibleMethod() throws Exception {
-        implement(Foo.class, MethodDelegation.to(Qux.class));
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(Qux.class))
+                .make();
     }
 
     @Test(expected = IllegalArgumentException.class)

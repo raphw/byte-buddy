@@ -1,24 +1,37 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import org.junit.Test;
 
-public class FieldAccessorExceptionTest extends AbstractImplementationTest {
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 
-    private static final String FOO = "foo";
+public class FieldAccessorExceptionTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testFinalFieldSetter() throws Exception {
-        implement(Foo.class, FieldAccessor.ofBeanProperty());
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(FieldAccessor.ofBeanProperty())
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldNoVisibleField() throws Exception {
-        implement(Bar.class, FieldAccessor.ofBeanProperty());
+        new ByteBuddy()
+                .subclass(Bar.class)
+                .method(isDeclaredBy(Bar.class))
+                .intercept(FieldAccessor.ofBeanProperty())
+                .make();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testFieldNoBeanMethodName() throws Exception {
-        implement(Qux.class, FieldAccessor.ofBeanProperty());
+        new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(FieldAccessor.ofBeanProperty())
+                .make();
     }
 
     @SuppressWarnings("unused")

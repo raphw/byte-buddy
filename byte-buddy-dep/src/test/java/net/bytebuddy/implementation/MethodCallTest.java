@@ -1,8 +1,10 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -38,7 +40,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class MethodCallTest extends AbstractImplementationTest {
+public class MethodCallTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -65,16 +67,19 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Before
     public void setUp() throws Exception {
-        when(nonAssigner.assign(Mockito.any(TypeDescription.Generic.class), Mockito.any(TypeDescription.Generic.class), Mockito.any(Assigner.Typing.class)))
-                .thenReturn(StackManipulation.Illegal.INSTANCE);
+        when(nonAssigner.assign(Mockito.any(TypeDescription.Generic.class),
+                Mockito.any(TypeDescription.Generic.class),
+                Mockito.any(Assigner.Typing.class))).thenReturn(StackManipulation.Illegal.INSTANCE);
     }
 
     @Test
     public void testStaticMethodInvocationWithoutArguments() throws Exception {
-        DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
-                MethodCall.invoke(SimpleMethod.class.getDeclaredMethod(BAR)),
-                SimpleMethod.class.getClassLoader(),
-                named(FOO));
+        DynamicType.Loaded<SimpleMethod> loaded = new ByteBuddy()
+                .subclass(SimpleMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(SimpleMethod.class.getDeclaredMethod(BAR)))
+                .make()
+                .load(SimpleMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -86,10 +91,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testExternalStaticMethodInvocationWithoutArguments() throws Exception {
-        DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
-                MethodCall.invoke(StaticExternalMethod.class.getDeclaredMethod(BAR)),
-                SimpleMethod.class.getClassLoader(),
-                named(FOO));
+        DynamicType.Loaded<SimpleMethod> loaded = new ByteBuddy()
+                .subclass(SimpleMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(StaticExternalMethod.class.getDeclaredMethod(BAR)))
+                .make()
+                .load(SimpleMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -101,10 +108,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testInstanceMethodInvocationWithoutArguments() throws Exception {
-        DynamicType.Loaded<InstanceMethod> loaded = implement(InstanceMethod.class,
-                MethodCall.invoke(InstanceMethod.class.getDeclaredMethod(BAR)),
-                InstanceMethod.class.getClassLoader(),
-                named(FOO));
+        DynamicType.Loaded<InstanceMethod> loaded = new ByteBuddy()
+                .subclass(InstanceMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(InstanceMethod.class.getDeclaredMethod(BAR)))
+                .make()
+                .load(SimpleMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -121,13 +130,21 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testOnArgumentInvocationNonExisting() throws Exception {
-        implement(ArgumentCall.class, MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onArgument(10));
+        new ByteBuddy()
+                .subclass(ArgumentCall.class)
+                .method(isDeclaredBy(ArgumentCall.class))
+                .intercept(MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onArgument(10))
+                .make();
     }
 
     @Test
     public void testInvokeOnArgument() throws Exception {
-        DynamicType.Loaded<ArgumentCall> loaded = implement(ArgumentCall.class,
-                MethodCall.invoke(ArgumentCall.Target.class.getDeclaredMethod("foo")).onArgument(0));
+        DynamicType.Loaded<ArgumentCall> loaded = new ByteBuddy()
+                .subclass(ArgumentCall.class)
+                .method(isDeclaredBy(ArgumentCall.class))
+                .intercept(MethodCall.invoke(ArgumentCall.Target.class.getDeclaredMethod("foo")).onArgument(0))
+                .make()
+                .load(ArgumentCall.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -139,19 +156,31 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testInvokeOnArgumentNonAssignable() throws Exception {
-        implement(ArgumentCallDynamic.class, MethodCall.invoke(ArgumentCallDynamic.Target.class.getDeclaredMethod("foo")).onArgument(0));
+        new ByteBuddy()
+                .subclass(ArgumentCallDynamic.class)
+                .method(isDeclaredBy(ArgumentCallDynamic.class))
+                .intercept(MethodCall.invoke(ArgumentCallDynamic.Target.class.getDeclaredMethod("foo")).onArgument(0))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testInvokeOnArgumentNonVirtual() throws Exception {
-        implement(ArgumentCallDynamic.class, MethodCall.invoke(NonVirtual.class.getDeclaredMethod("foo")).onArgument(0));
+        new ByteBuddy()
+                .subclass(ArgumentCallDynamic.class)
+                .method(isDeclaredBy(ArgumentCallDynamic.class))
+                .intercept(MethodCall.invoke(NonVirtual.class.getDeclaredMethod("foo")).onArgument(0))
+                .make();
     }
 
     @Test
     public void testInvokeOnArgumentDynamic() throws Exception {
-        DynamicType.Loaded<ArgumentCallDynamic> loaded = implement(ArgumentCallDynamic.class,
-                MethodCall.invoke(ArgumentCallDynamic.Target.class.getDeclaredMethod("foo")).onArgument(0)
-                        .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC));
+        DynamicType.Loaded<ArgumentCallDynamic> loaded = new ByteBuddy()
+                .subclass(ArgumentCallDynamic.class)
+                .method(isDeclaredBy(ArgumentCallDynamic.class))
+                .intercept(MethodCall.invoke(ArgumentCallDynamic.Target.class.getDeclaredMethod("foo")).onArgument(0)
+                        .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                .make()
+                .load(ArgumentCallDynamic.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -163,10 +192,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testSuperConstructorInvocationWithoutArguments() throws Exception {
-        DynamicType.Loaded<Object> loaded = implement(Object.class,
-                MethodCall.invoke(Object.class.getDeclaredConstructor()).onSuper(),
-                Object.class.getClassLoader(),
-                isConstructor());
+        DynamicType.Loaded<Object> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .constructor(ElementMatchers.any())
+                .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()).onSuper())
+                .make()
+                .load(Object.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(0));
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
@@ -178,8 +209,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testObjectConstruction() throws Exception {
-        DynamicType.Loaded<SelfReference> loaded = implement(SelfReference.class,
-                MethodCall.construct(SelfReference.class.getDeclaredConstructor()));
+        DynamicType.Loaded<SelfReference> loaded = new ByteBuddy()
+                .subclass(SelfReference.class)
+                .method(isDeclaredBy(SelfReference.class))
+                .intercept(MethodCall.construct(SelfReference.class.getDeclaredConstructor()))
+                .make()
+                .load(SelfReference.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
@@ -194,10 +229,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testSuperInvocation() throws Exception {
-        DynamicType.Loaded<SuperMethodInvocation> loaded = implement(SuperMethodInvocation.class,
-                MethodCall.invokeSuper(),
-                SuperMethodInvocation.class.getClassLoader(),
-                takesArguments(0).and(named(FOO)));
+        DynamicType.Loaded<SuperMethodInvocation> loaded = new ByteBuddy()
+                .subclass(SuperMethodInvocation.class)
+                .method(takesArguments(0).and(named(FOO)))
+                .intercept(MethodCall.invokeSuper())
+                .make()
+                .load(SuperMethodInvocation.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
@@ -211,8 +248,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testWithExplicitArgumentConstantPool() throws Exception {
-        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = implement(MethodCallWithExplicitArgument.class,
-                MethodCall.invokeSuper().with(FOO));
+        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().with(FOO))
+                .make()
+                .load(MethodCallWithExplicitArgument.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
@@ -226,14 +267,21 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testWithExplicitArgumentConstantPoolNonAssignable() throws Exception {
-        implement(MethodCallWithExplicitArgument.class, MethodCall.invokeSuper()
-                .with(FOO).withAssigner(nonAssigner, Assigner.Typing.STATIC));
+        new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().with(FOO).withAssigner(nonAssigner, Assigner.Typing.STATIC))
+                .make();
     }
 
     @Test
     public void testWithExplicitArgumentField() throws Exception {
-        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = implement(MethodCallWithExplicitArgument.class,
-                MethodCall.invokeSuper().withReference(FOO));
+        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().withReference(FOO))
+                .make()
+                .load(MethodCallWithExplicitArgument.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
@@ -247,14 +295,21 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testWithExplicitArgumentFieldNonAssignable() throws Exception {
-        implement(MethodCallWithExplicitArgument.class, MethodCall.invokeSuper()
-                .withReference(FOO).withAssigner(nonAssigner, Assigner.Typing.STATIC));
+        new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().withReference(FOO).withAssigner(nonAssigner, Assigner.Typing.STATIC))
+                .make();
     }
 
     @Test
     public void testWithArgument() throws Exception {
-        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = implement(MethodCallWithExplicitArgument.class,
-                MethodCall.invokeSuper().withArgument(0));
+        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().withArgument(0))
+                .make()
+                .load(MethodCallWithExplicitArgument.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
@@ -268,8 +323,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testWithAllArguments() throws Exception {
-        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = implement(MethodCallWithExplicitArgument.class,
-                MethodCall.invokeSuper().withAllArguments());
+        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().withAllArguments())
+                .make()
+                .load(MethodCallWithExplicitArgument.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
@@ -283,8 +342,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testWithAllArgumentsTwoArguments() throws Exception {
-        DynamicType.Loaded<MethodCallWithTwoExplicitArguments> loaded = implement(MethodCallWithTwoExplicitArguments.class,
-                MethodCall.invokeSuper().withAllArguments());
+        DynamicType.Loaded<MethodCallWithTwoExplicitArguments> loaded = new ByteBuddy()
+                .subclass(MethodCallWithTwoExplicitArguments.class)
+                .method(isDeclaredBy(MethodCallWithTwoExplicitArguments.class))
+                .intercept(MethodCall.invokeSuper().withAllArguments())
+                .make()
+                .load(MethodCallWithTwoExplicitArguments.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class, String.class), not(nullValue(Method.class)));
@@ -298,8 +361,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testWithInstanceField() throws Exception {
-        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = implement(MethodCallWithExplicitArgument.class,
-                MethodCall.invokeSuper().withInstanceField(String.class, FOO));
+        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().withInstanceField(String.class, FOO))
+                .make()
+                .load(MethodCallWithExplicitArgument.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
@@ -316,18 +383,30 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testWithTooBigParameter() throws Exception {
-        implement(MethodCallWithExplicitArgument.class, MethodCall.invokeSuper().withArgument(1));
+        new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().withArgument(1))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithParameterNonAssignable() throws Exception {
-        implement(MethodCallWithExplicitArgument.class, MethodCall.invokeSuper().withArgument(0).withAssigner(nonAssigner, Assigner.Typing.STATIC));
+        new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
+                .intercept(MethodCall.invokeSuper().withArgument(0).withAssigner(nonAssigner, Assigner.Typing.STATIC))
+                .make();
     }
 
     @Test
     public void testWithField() throws Exception {
-        DynamicType.Loaded<MethodCallWithField> loaded = implement(MethodCallWithField.class,
-                MethodCall.invokeSuper().withField(FOO));
+        DynamicType.Loaded<MethodCallWithField> loaded = new ByteBuddy()
+                .subclass(MethodCallWithField.class)
+                .method(isDeclaredBy(MethodCallWithField.class))
+                .intercept(MethodCall.invokeSuper().withField(FOO))
+                .make()
+                .load(MethodCallWithField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
@@ -342,18 +421,30 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testWithFieldNotExist() throws Exception {
-        implement(MethodCallWithField.class, MethodCall.invokeSuper().withField(BAR));
+        new ByteBuddy()
+                .subclass(MethodCallWithField.class)
+                .method(isDeclaredBy(MethodCallWithField.class))
+                .intercept(MethodCall.invokeSuper().withField(BAR))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testWithFieldNonAssignable() throws Exception {
-        implement(MethodCallWithField.class, MethodCall.invokeSuper().withField(FOO).withAssigner(nonAssigner, Assigner.Typing.STATIC));
+        new ByteBuddy()
+                .subclass(MethodCallWithField.class)
+                .method(isDeclaredBy(MethodCallWithField.class))
+                .intercept(MethodCall.invokeSuper().withField(FOO).withAssigner(nonAssigner, Assigner.Typing.STATIC))
+                .make();
     }
 
     @Test
     public void testWithFieldHierarchyVisibility() throws Exception {
-        DynamicType.Loaded<InvisibleMethodCallWithField> loaded = implement(InvisibleMethodCallWithField.class,
-                MethodCall.invokeSuper().withField(FOO));
+        DynamicType.Loaded<InvisibleMethodCallWithField> loaded = new ByteBuddy()
+                .subclass(InvisibleMethodCallWithField.class)
+                .method(isDeclaredBy(InvisibleMethodCallWithField.class))
+                .intercept(MethodCall.invokeSuper().withField(FOO))
+                .make()
+                .load(InvisibleMethodCallWithField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
@@ -368,8 +459,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testWithThis() throws Exception {
-        DynamicType.Loaded<MethodCallWithThis> loaded = implement(MethodCallWithThis.class,
-                MethodCall.invokeSuper().withThis());
+        DynamicType.Loaded<MethodCallWithThis> loaded = new ByteBuddy()
+                .subclass(MethodCallWithThis.class)
+                .method(isDeclaredBy(MethodCallWithThis.class))
+                .intercept(MethodCall.invokeSuper().withThis())
+                .make()
+                .load(MethodCallWithThis.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, MethodCallWithThis.class), not(nullValue(Method.class)));
@@ -383,8 +478,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testWithOwnType() throws Exception {
-        DynamicType.Loaded<MethodCallWithOwnType> loaded = implement(MethodCallWithOwnType.class,
-                MethodCall.invokeSuper().withOwnType());
+        DynamicType.Loaded<MethodCallWithOwnType> loaded = new ByteBuddy()
+                .subclass(MethodCallWithOwnType.class)
+                .method(isDeclaredBy(MethodCallWithOwnType.class))
+                .intercept(MethodCall.invokeSuper().withOwnType())
+                .make()
+                .load(MethodCallWithOwnType.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, Class.class), not(nullValue(Method.class)));
@@ -398,8 +497,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testImplementationAppendingMethod() throws Exception {
-        DynamicType.Loaded<MethodCallAppending> loaded = implement(MethodCallAppending.class,
-                MethodCall.invokeSuper().andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)));
+        DynamicType.Loaded<MethodCallAppending> loaded = new ByteBuddy()
+                .subclass(MethodCallAppending.class)
+                .method(isDeclaredBy(MethodCallAppending.class))
+                .intercept(MethodCall.invokeSuper().andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)))
+                .make()
+                .load(MethodCallAppending.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
@@ -414,9 +517,13 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testImplementationAppendingConstructor() throws Exception {
-        DynamicType.Loaded<MethodCallAppending> loaded = implement(MethodCallAppending.class,
-                MethodCall.construct(Object.class.getDeclaredConstructor())
-                        .andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)));
+        DynamicType.Loaded<MethodCallAppending> loaded = new ByteBuddy()
+                .subclass(MethodCallAppending.class)
+                .method(isDeclaredBy(MethodCallAppending.class))
+                .intercept(MethodCall.construct(Object.class.getDeclaredConstructor())
+                        .andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)))
+                .make()
+                .load(MethodCallAppending.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
@@ -432,8 +539,12 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test
     public void testWithExplicitTarget() throws Exception {
         Object target = new Object();
-        DynamicType.Loaded<ExplicitTarget> loaded = implement(ExplicitTarget.class,
-                MethodCall.invoke(Object.class.getDeclaredMethod("toString")).on(target));
+        DynamicType.Loaded<ExplicitTarget> loaded = new ByteBuddy()
+                .subclass(ExplicitTarget.class)
+                .method(isDeclaredBy(ExplicitTarget.class))
+                .intercept(MethodCall.invoke(Object.class.getDeclaredMethod("toString")).on(target))
+                .make()
+                .load(ExplicitTarget.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
@@ -448,8 +559,12 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test
     public void testWithFieldTarget() throws Exception {
         Object target = new Object();
-        DynamicType.Loaded<ExplicitTarget> loaded = implement(ExplicitTarget.class,
-                MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onInstanceField(Object.class, FOO));
+        DynamicType.Loaded<ExplicitTarget> loaded = new ByteBuddy()
+                .subclass(ExplicitTarget.class)
+                .method(isDeclaredBy(ExplicitTarget.class))
+                .intercept(MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onInstanceField(Object.class, FOO))
+                .make()
+                .load(ExplicitTarget.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
@@ -466,11 +581,12 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testUnloadedType() throws Exception {
-        DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
-                MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
-                        .with(TypeDescription.OBJECT, TypeDescription.STRING),
-                SimpleMethod.class.getClassLoader(),
-                named(FOO));
+        DynamicType.Loaded<SimpleMethod> loaded = new ByteBuddy()
+                .subclass(SimpleMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class)).with(TypeDescription.OBJECT, TypeDescription.STRING))
+                .make()
+                .load(SimpleMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -483,11 +599,12 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testJava7Types() throws Exception {
-        DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
-                MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
-                        .with(makeMethodHandle(), makeMethodType(void.class)),
-                SimpleMethod.class.getClassLoader(),
-                named(FOO));
+        DynamicType.Loaded<SimpleMethod> loaded = new ByteBuddy()
+                .subclass(SimpleMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class)).with(makeMethodHandle(), makeMethodType(void.class)))
+                .make()
+                .load(SimpleMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -500,11 +617,13 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testJava7TypesExplicit() throws Exception {
-        DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
-                MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
-                        .with(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle()), JavaConstant.MethodType.ofLoaded(makeMethodType(void.class))),
-                SimpleMethod.class.getClassLoader(),
-                named(FOO));
+        DynamicType.Loaded<SimpleMethod> loaded = new ByteBuddy()
+                .subclass(SimpleMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
+                        .with(JavaConstant.MethodHandle.ofLoaded(makeMethodHandle()), JavaConstant.MethodType.ofLoaded(makeMethodType(void.class))))
+                .make()
+                .load(SimpleMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
@@ -517,11 +636,13 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testDefaultMethod() throws Exception {
-        DynamicType.Loaded<?> loaded = implement(Object.class,
-                MethodCall.invoke(Class.forName(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO)).onDefault(),
-                getClass().getClassLoader(),
-                ElementMatchers.isMethod().and(ElementMatchers.not(isDeclaredBy(Object.class))),
-                Class.forName(SINGLE_DEFAULT_METHOD));
+        DynamicType.Loaded<Object> loaded = new ByteBuddy()
+                .subclass(Object.class)
+                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
+                .method(ElementMatchers.not(isDeclaredBy(Object.class)))
+                .intercept(MethodCall.invoke(Class.forName(SINGLE_DEFAULT_METHOD).getDeclaredMethod(FOO)).onDefault())
+                .make()
+                .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         Method method = loaded.getLoaded().getDeclaredMethod(FOO);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -531,56 +652,72 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test
     public void testCallable() throws Exception {
         Traceable traceable = new Traceable();
-        Class<? extends SimpleStringMethod> loaded = implement(SimpleStringMethod.class, MethodCall.call(traceable)).getLoaded();
-        assertThat(loaded.getDeclaredConstructor().newInstance().foo(), is(FOO));
+        DynamicType.Loaded<SimpleStringMethod> loaded = new ByteBuddy()
+                .subclass(SimpleStringMethod.class)
+                .method(isDeclaredBy(SimpleStringMethod.class))
+                .intercept(MethodCall.call(traceable))
+                .make()
+                .load(SimpleStringMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoaded().getDeclaredConstructor().newInstance().foo(), is(FOO));
         traceable.assertOnlyCall(FOO);
     }
 
     @Test
     public void testRunnable() throws Exception {
         Traceable traceable = new Traceable();
-        Class<? extends SimpleStringMethod> loaded = implement(SimpleStringMethod.class, MethodCall.run(traceable)).getLoaded();
-        assertThat(loaded.getDeclaredConstructor().newInstance().foo(), nullValue(String.class));
+        DynamicType.Loaded<SimpleStringMethod> loaded = new ByteBuddy()
+                .subclass(SimpleStringMethod.class)
+                .method(isDeclaredBy(SimpleStringMethod.class))
+                .intercept(MethodCall.run(traceable))
+                .make()
+                .load(SimpleStringMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoaded().getDeclaredConstructor().newInstance().foo(), nullValue(String.class));
         traceable.assertOnlyCall(FOO);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testDefaultMethodNotCompatible() throws Exception {
-        implement(Object.class, MethodCall.invoke(String.class.getDeclaredMethod("toString")).onDefault());
+        new ByteBuddy()
+                .subclass(Object.class)
+                .method(isDeclaredBy(Object.class))
+                .intercept(MethodCall.invoke(String.class.getDeclaredMethod("toString")).onDefault())
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodTypeIncompatible() throws Exception {
-        implement(InstanceMethod.class,
-                MethodCall.invoke(String.class.getDeclaredMethod("toLowerCase")),
-                InstanceMethod.class.getClassLoader(),
-                named(FOO));
+        new ByteBuddy()
+                .subclass(InstanceMethod.class)
+                .method(isDeclaredBy(InstanceMethod.class))
+                .intercept(MethodCall.invoke(String.class.getDeclaredMethod("toLowerCase")))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArgumentIncompatibleTooFew() throws Exception {
-        implement(InstanceMethod.class,
-                MethodCall.invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class)),
-                InstanceMethod.class.getClassLoader(),
-                named(FOO));
+        new ByteBuddy()
+                .subclass(InstanceMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class)))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArgumentIncompatibleTooMany() throws Exception {
-        implement(InstanceMethod.class,
-                MethodCall.invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class))
-                        .with(FOO, BAR),
-                InstanceMethod.class.getClassLoader(),
-                named(FOO));
+        new ByteBuddy()
+                .subclass(InstanceMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class)).with(FOO, BAR))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArgumentIncompatibleNotAssignable() throws Exception {
-        implement(InstanceMethod.class,
-                MethodCall.invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class))
-                        .with(new Object()),
-                InstanceMethod.class.getClassLoader(),
-                named(FOO));
+        new ByteBuddy()
+                .subclass(InstanceMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class)).with(new Object()))
+                .make();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -595,38 +732,56 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalStateException.class)
     public void testMethodCallNonVirtual() throws Exception {
-        implement(InstanceMethod.class, MethodCall
-                .invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class))
-                .on(new StaticIncompatibleExternalMethod()).with(FOO));
+        new ByteBuddy()
+                .subclass(InstanceMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class)).on(new StaticIncompatibleExternalMethod()).with(FOO))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodCallIncompatibleInstance() throws Exception {
-        implement(InstanceMethod.class, MethodCall
-                .invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class))
-                .on(new Object()).with(FOO));
+        new ByteBuddy()
+                .subclass(InstanceMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(StaticIncompatibleExternalMethod.class.getDeclaredMethod("bar", String.class)).on(new Object()).with(FOO))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodCallNonVisibleType() throws Exception {
-        implement(Object.class, MethodCall
-                .invoke(PackagePrivateType.class.getDeclaredMethod("foo"))
-                .on(new PackagePrivateType()));
+        new ByteBuddy()
+                .subclass(Object.class)
+                .method(isDeclaredBy(Object.class))
+                .intercept(MethodCall.invoke(PackagePrivateType.class.getDeclaredMethod("foo")).on(new PackagePrivateType()))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodCallStaticTargetNonVisibleType() throws Exception {
-        implement(Object.class, MethodCall.invoke(PackagePrivateType.class.getDeclaredMethod("bar")));
+        new ByteBuddy()
+                .subclass(Object.class)
+                .method(isDeclaredBy(Object.class))
+                .intercept(MethodCall.invoke(PackagePrivateType.class.getDeclaredMethod("bar")))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodCallSuperCallNonInvokable() throws Exception {
-        implement(Object.class, MethodCall.invoke(Bar.class.getDeclaredMethod("bar")).onSuper());
+        new ByteBuddy()
+                .subclass(Object.class)
+                .method(isDeclaredBy(Object.class))
+                .intercept(MethodCall.invoke(Bar.class.getDeclaredMethod("bar")).onSuper())
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodCallDefaultCallNonInvokable() throws Exception {
-        implement(Object.class, MethodCall.invoke(Bar.class.getDeclaredMethod("bar")).onDefault());
+        new ByteBuddy()
+                .subclass(Object.class)
+                .method(isDeclaredBy(Object.class))
+                .intercept(MethodCall.invoke(Bar.class.getDeclaredMethod("bar")).onDefault())
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)

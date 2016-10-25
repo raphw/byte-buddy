@@ -1,6 +1,8 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
@@ -8,18 +10,24 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class ForwardingTest extends AbstractImplementationTest {
+public class ForwardingTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
     @Test
     public void testStaticInstanceForwarding() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, Forwarding.to(new Bar()));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(Forwarding.to(new Bar()))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
@@ -31,7 +39,12 @@ public class ForwardingTest extends AbstractImplementationTest {
 
     @Test
     public void testInstanceFieldForwarding() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, Forwarding.toInstanceField(FOO, Foo.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(Forwarding.toInstanceField(FOO, Foo.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
@@ -46,7 +59,12 @@ public class ForwardingTest extends AbstractImplementationTest {
 
     @Test
     public void testStaticFieldForwarding() throws Exception {
-        DynamicType.Loaded<Foo> loaded = implement(Foo.class, Forwarding.toStaticField(FOO, Foo.class));
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(Forwarding.toStaticField(FOO, Foo.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
@@ -68,7 +86,11 @@ public class ForwardingTest extends AbstractImplementationTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDifferentInstanceForwardingThrowsException() throws Exception {
-        implement(Foo.class, Forwarding.toStaticField(FOO, Qux.class));
+        new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(Forwarding.toStaticField(FOO, Qux.class))
+                .make();
     }
 
     @Test
