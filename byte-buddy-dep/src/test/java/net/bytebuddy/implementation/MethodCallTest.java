@@ -359,28 +359,6 @@ public class MethodCallTest {
         assertThat(instance.foo(FOO, BAR), is(FOO + BAR));
     }
 
-    @Test
-    public void testWithInstanceField() throws Exception {
-        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = new ByteBuddy()
-                .subclass(MethodCallWithExplicitArgument.class)
-                .method(isDeclaredBy(MethodCallWithExplicitArgument.class))
-                .intercept(MethodCall.invokeSuper().withInstanceField(String.class, FOO))
-                .make()
-                .load(MethodCallWithExplicitArgument.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredMethod(FOO, String.class), not(nullValue(Method.class)));
-        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
-        MethodCallWithExplicitArgument instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
-        Field field = instance.getClass().getDeclaredField(FOO);
-        field.setAccessible(true);
-        field.set(instance, FOO);
-        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithExplicitArgument.class)));
-        assertThat(instance, instanceOf(MethodCallWithExplicitArgument.class));
-        assertThat(instance.foo(BAR), is(FOO));
-    }
-
     @Test(expected = IllegalStateException.class)
     public void testWithTooBigParameter() throws Exception {
         new ByteBuddy()
@@ -821,12 +799,10 @@ public class MethodCallTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForThisReference.Factory.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstrumentedType.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstrumentedType.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStaticField.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForStaticField.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstanceField.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstanceField.Factory.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForExistingField.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForExistingField.Factory.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstance.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForInstance.Factory.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForField.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForField.Factory.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForBooleanConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForByteConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForCharacterConstant.class).apply();
