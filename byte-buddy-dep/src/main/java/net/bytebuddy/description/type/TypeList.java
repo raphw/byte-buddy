@@ -659,7 +659,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A type projection of an interface type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.WithLazyNavigation.OfAnnotatedElement {
 
                 /**
                  * The type of which an interface type is represented.
@@ -746,7 +746,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A projection of a specific exception type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.WithEagerNavigation.OfAnnotatedElement {
 
                 /**
                  * The constructor of which the exception types are represented.
@@ -833,7 +833,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A projection of a specific exception type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.WithEagerNavigation.OfAnnotatedElement {
 
                 /**
                  * The method of which the exception types are represented.

@@ -6582,7 +6582,7 @@ public interface TypePool {
             /**
              * A representation of a generic type that is described by a {@link GenericTypeToken}.
              */
-            private static class TokenizedGenericType extends Generic.LazyProjection {
+            private static class TokenizedGenericType extends Generic.LazyProjection.WithEagerNavigation {
 
                 /**
                  * The type pool to use for locating referenced types.
@@ -6818,7 +6818,7 @@ public interface TypePool {
                 /**
                  * A lazy description of a non-well-defined described generic type.
                  */
-                protected static class Malformed extends LazyProjection {
+                protected static class Malformed extends LazyProjection.WithEagerNavigation {
 
                     /**
                      * The type pool to use for locating types.

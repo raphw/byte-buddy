@@ -5795,16 +5795,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public TypeList.Generic getInterfaces() {
-                return resolve().getInterfaces();
-            }
-
-            @Override
-            public Generic getSuperClass() {
-                return resolve().getSuperClass();
-            }
-
-            @Override
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
                 return resolve().getDeclaredFields();
             }
@@ -5885,11 +5875,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public Iterator<TypeDefinition> iterator() {
-                return resolve().iterator();
-            }
-
-            @Override
             public int hashCode() {
                 return resolve().hashCode();
             }
@@ -5904,29 +5889,163 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 return resolve().toString();
             }
 
-            /**
-             * A base implementation of a lazy type projection of an annotated element that resolves its type annotations
-             * via an {@link AnnotationReader}.
-             */
-            protected abstract static class OfAnnotatedElement extends LazyProjection {
-
-                /**
-                 * Returns the current type's annotation reader.
-                 *
-                 * @return The current type's annotation reader.
-                 */
-                protected abstract AnnotationReader getAnnotationReader();
+            public abstract static class WithLazyNavigation extends LazyProjection {
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return getAnnotationReader().asList();
+                public Generic getSuperClass() {
+                    return LazySuperClass.of(this);
+                }
+
+                @Override
+                public TypeList.Generic getInterfaces() {
+                    return LazyInterfaceList.of(this);
+                }
+
+                @Override
+                public Iterator<TypeDefinition> iterator() {
+                    return new TypeDefinition.SuperClassIterator(this);
+                }
+
+                protected static class LazySuperClass extends LazyProjection.WithLazyNavigation {
+
+                    private final LazyProjection delegate;
+
+                    protected LazySuperClass(LazyProjection delegate) {
+                        this.delegate = delegate;
+                    }
+
+                    protected static Generic of(LazyProjection delegate) {
+                        return delegate.asErasure().getSuperClass() == null
+                                ? Generic.UNDEFINED
+                                : new LazySuperClass(delegate);
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return resolve().getDeclaredAnnotations();
+                    }
+
+                    @Override
+                    public TypeDescription asErasure() {
+                        return delegate.asErasure().getSuperClass().asErasure();
+                    }
+
+                    @Override
+                    protected Generic resolve() {
+                        return delegate.resolve().getSuperClass();
+                    }
+                }
+
+                protected static class LazyInterfaceType extends LazyProjection.WithLazyNavigation {
+
+                    private final LazyProjection delegate;
+
+                    private final int index;
+
+                    private final TypeDescription.Generic rawInterface;
+
+                    protected LazyInterfaceType(LazyProjection delegate, int index, Generic rawInterface) {
+                        this.delegate = delegate;
+                        this.index = index;
+                        this.rawInterface = rawInterface;
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return resolve().getDeclaredAnnotations();
+                    }
+
+                    @Override
+                    public TypeDescription asErasure() {
+                        return rawInterface.asErasure();
+                    }
+
+                    @Override
+                    protected Generic resolve() {
+                        return delegate.resolve().getInterfaces().get(index);
+                    }
+                }
+
+
+                protected static class LazyInterfaceList extends TypeList.Generic.AbstractBase {
+
+                    private final LazyProjection delegate;
+
+                    private final TypeList.Generic rawInterfaces;
+
+                    protected LazyInterfaceList(LazyProjection delegate, TypeList.Generic rawInterfaces) {
+                        this.delegate = delegate;
+                        this.rawInterfaces = rawInterfaces;
+                    }
+
+                    protected static TypeList.Generic of(LazyProjection delegate) {
+                        return new LazyInterfaceList(delegate, delegate.asErasure().getInterfaces());
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return new LazyInterfaceType(delegate, index, rawInterfaces.get(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return rawInterfaces.size();
+                    }
+                }
+
+                protected abstract static class OfAnnotatedElement extends WithLazyNavigation {
+
+                    /**
+                     * Returns the current type's annotation reader.
+                     *
+                     * @return The current type's annotation reader.
+                     */
+                    protected abstract AnnotationReader getAnnotationReader();
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return getAnnotationReader().asList();
+                    }
+                }
+            }
+
+            public abstract static class WithEagerNavigation extends LazyProjection {
+
+                @Override
+                public Generic getSuperClass() {
+                    return resolve().getSuperClass();
+                }
+
+                @Override
+                public TypeList.Generic getInterfaces() {
+                    return resolve().getInterfaces();
+                }
+
+                @Override
+                public Iterator<TypeDefinition> iterator() {
+                    return resolve().iterator();
+                }
+
+                protected abstract static class OfAnnotatedElement extends WithEagerNavigation {
+
+                    /**
+                     * Returns the current type's annotation reader.
+                     *
+                     * @return The current type's annotation reader.
+                     */
+                    protected abstract AnnotationReader getAnnotationReader();
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return getAnnotationReader().asList();
+                    }
                 }
             }
 
             /**
              * A lazy projection of a generic super type.
              */
-            public static class ForLoadedSuperClass extends LazyProjection.OfAnnotatedElement {
+            public static class ForLoadedSuperClass extends LazyProjection.WithLazyNavigation.OfAnnotatedElement {
 
                 /**
                  * The type of which the super class is represented.
@@ -5967,7 +6086,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A lazy projection of a field's type.
              */
-            public static class ForLoadedFieldType extends LazyProjection.OfAnnotatedElement {
+            public static class ForLoadedFieldType extends LazyProjection.WithEagerNavigation.OfAnnotatedElement {
 
                 /**
                  * The field of which the type is represented.
@@ -6002,7 +6121,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A lazy projection of a method's generic return type.
              */
-            public static class ForLoadedReturnType extends LazyProjection.OfAnnotatedElement {
+            public static class ForLoadedReturnType extends LazyProjection.WithEagerNavigation.OfAnnotatedElement {
 
                 /**
                  * The method which defines the return type.
@@ -6037,7 +6156,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A lazy projection of the parameter type of a {@link Constructor}.
              */
-            public static class OfConstructorParameter extends LazyProjection.OfAnnotatedElement {
+            public static class OfConstructorParameter extends LazyProjection.WithEagerNavigation.OfAnnotatedElement {
 
                 /**
                  * The constructor of which a parameter type is represented.
@@ -6090,7 +6209,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * A lazy projection of the parameter type of a {@link Method}.
              */
-            public static class OfMethodParameter extends LazyProjection.OfAnnotatedElement {
+            public static class OfMethodParameter extends LazyProjection.WithEagerNavigation.OfAnnotatedElement {
 
                 /**
                  * The method of which a parameter type is represented.
