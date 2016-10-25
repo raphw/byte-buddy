@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 25. October 2016: version 1.5.0
+
+- Refactor `Instrumentation`s to only delegate to fields instead of requireing their definition. The `defineField` API should be generally preferred for defining fields as it is much richer and therefore easier to extend.
+- Made type annotation reader more robust towards older versions of Java 8.
+- Refactored lazy type resolution for generic types to no longer eagerly load generic types when navigating through a type hierarchy.
+- Unified several implementation APIs and added better abstractions.
+- Fixed some missing bits of validation of implementations.
+
 ### 17. October 2016: version 1.4.33
 
 - Use `IMITATE_SUPER_CLASS_OPENING` as a default constructor strategy.
