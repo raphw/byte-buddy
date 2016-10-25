@@ -4,8 +4,10 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -16,6 +18,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Type;
 
+import static net.bytebuddy.matcher.ElementMatchers.genericFieldType;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -25,7 +28,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  *
  * @see MethodDelegation
  */
-public class Forwarding implements Implementation {
+public class Forwarding implements Implementation.Composable {
 
     /**
      * The prefix of any implicit field name for storing a delegate..
@@ -33,31 +36,24 @@ public class Forwarding implements Implementation {
     private static final String FIELD_PREFIX = "forwarding";
 
     /**
-     * The name of the field.
-     */
-    protected final String fieldName;
-
-    /**
-     * The type of the field.
-     */
-    protected final TypeDescription.Generic fieldType;
-
-    /**
      * A handler for preparing the instrumented type and the field invocation operation.
      */
     protected final PreparationHandler preparationHandler;
 
     /**
+     * The termination handler to apply.
+     */
+    protected final TerminationHandler terminationHandler;
+
+    /**
      * Creates a new forwarding implementation.
      *
-     * @param fieldName          The name of the field.
-     * @param fieldType          The type of the field.
      * @param preparationHandler A handler for preparing the instrumented type and the field invocation operation.
+     * @param terminationHandler The termination handler to apply.
      */
-    protected Forwarding(String fieldName, TypeDescription.Generic fieldType, PreparationHandler preparationHandler) {
-        this.fieldName = fieldName;
-        this.fieldType = fieldType;
+    protected Forwarding(PreparationHandler preparationHandler, TerminationHandler terminationHandler) {
         this.preparationHandler = preparationHandler;
+        this.terminationHandler = terminationHandler;
     }
 
     /**
@@ -67,8 +63,8 @@ public class Forwarding implements Implementation {
      * @param delegate The delegate to which all intercepted methods should be forwarded.
      * @return A corresponding implementation.
      */
-    public static Implementation to(Object delegate) {
-        return to(delegate, String.format("%s$%d", FIELD_PREFIX, Math.abs(delegate.hashCode() % Integer.MAX_VALUE)));
+    public static Implementation.Composable to(Object delegate) {
+        return to(delegate, delegate.getClass());
     }
 
     /**
@@ -79,294 +75,355 @@ public class Forwarding implements Implementation {
      * @param fieldName The name of the field in which the delegate should be stored.
      * @return A corresponding implementation.
      */
-    public static Implementation to(Object delegate, String fieldName) {
-        return new Forwarding(fieldName,
-                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(delegate.getClass()),
-                new PreparationHandler.ForStaticInstance(delegate));
+    public static Implementation.Composable to(Object delegate, String fieldName) {
+        return to(delegate, fieldName, delegate.getClass());
     }
 
     /**
-     * Forwards all intercepted method invocations to a {@code static} field of the instrumented class. The value
-     * of this field must be set explicitly.
+     * Forwards all intercepted method invocations to the given instance which is stored in a {@code static} field
+     * of the instrumented class.
      *
-     * @param fieldName The name of the field in which the delegate should be stored.
-     * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
+     * @param delegate The delegate to which all intercepted methods should be forwarded.
+     * @param type     The type of the field. Must be a subtype of the delegate's type.
      * @return A corresponding implementation.
      */
-    public static Implementation toStaticField(String fieldName, Type fieldType) {
-        return toStaticField(fieldName, TypeDefinition.Sort.describe(fieldType));
+    public static Implementation.Composable to(Object delegate, Type type) {
+        return to(delegate, String.format("%s$%d", FIELD_PREFIX, Math.abs(delegate.hashCode() % Integer.MAX_VALUE)), type);
     }
 
     /**
-     * Forwards all intercepted method invocations to a {@code static} field of the instrumented class. The value
-     * of this field must be set explicitly.
+     * Forwards all intercepted method invocations to the given instance which is stored in a {@code static} field
+     * of the instrumented class.
      *
+     * @param delegate  The delegate to which all intercepted methods should be forwarded.
      * @param fieldName The name of the field in which the delegate should be stored.
-     * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
+     * @param type      The type of the field. Must be a subtype of the delegate's type.
      * @return A corresponding implementation.
      */
-    public static Implementation toStaticField(String fieldName, TypeDefinition fieldType) {
-        return new Forwarding(fieldName, fieldType.asGenericType(), PreparationHandler.ForStaticField.INSTANCE);
+    public static Implementation.Composable to(Object delegate, String fieldName, Type type) {
+        TypeDescription.Generic typeDescription = TypeDefinition.Sort.describe(type);
+        if (!typeDescription.asErasure().isInstance(delegate)) {
+            throw new IllegalArgumentException(delegate + " is not of type " + type);
+        }
+        return new Forwarding(new PreparationHandler.ForInstance(fieldName, typeDescription, delegate), TerminationHandler.RETURNING);
     }
 
     /**
-     * Forwards all intercepted method invocations to an instance field of the instrumented class. The value
-     * of this field must be set explicitly.
+     * Delegates a method invocation to a field. The field's type must be compatible to the declaring type of the method.
      *
-     * @param fieldName The name of the field in which the delegate should be stored.
-     * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
-     * @return A corresponding implementation.
+     * @param name The name of the field.
+     * @return An implementation for a method forwarding that invokes the instrumented method on the given field.
      */
-    public static Implementation toInstanceField(String fieldName, Type fieldType) {
-        return toInstanceField(fieldName, TypeDefinition.Sort.describe(fieldType));
+    public static Implementation.Composable toField(String name) {
+        return toField(name, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
     }
 
     /**
-     * Forwards all intercepted method invocations to an instance field of the instrumented class. The value
-     * of this field must be set explicitly.
+     * Delegates a method invocation to a field. The field's type must be compatible to the declaring type of the method.
      *
-     * @param fieldName The name of the field in which the delegate should be stored.
-     * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
-     * @return A corresponding implementation.
+     * @param name                The name of the field.
+     * @param fieldLocatorFactory The field locator factory to use.
+     * @return An implementation for a method forwarding that invokes the instrumented method on the given field.
      */
-    public static Implementation toInstanceField(String fieldName, TypeDefinition fieldType) {
-        return new Forwarding(fieldName, fieldType.asGenericType(), PreparationHandler.ForInstanceField.INSTANCE);
+    public static Implementation.Composable toField(String name, FieldLocator.Factory fieldLocatorFactory) {
+        return new Forwarding(new PreparationHandler.ForField(name, fieldLocatorFactory), TerminationHandler.RETURNING);
     }
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new Appender(loadDelegate(implementationTarget.getInstrumentedType()));
+        return new Appender(preparationHandler.resolve(implementationTarget.getInstrumentedType()), terminationHandler);
     }
 
-    /**
-     * Loads the field onto the operand stack.
-     *
-     * @param instrumentedType The instrumented type that declares the field.
-     * @return A stack manipulation for loading the field value onto the operand stack.
-     */
-    private StackManipulation loadDelegate(TypeDescription instrumentedType) {
-        return new StackManipulation.Compound(preparationHandler.loadFieldOwner(),
-                FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(fieldName))).getOnly()).getter());
+    @Override
+    public Implementation andThen(Implementation implementation) {
+        return new Compound(new Forwarding(preparationHandler, TerminationHandler.DROPPING), implementation);
     }
 
     @Override
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
-        return preparationHandler.prepare(instrumentedType, fieldName, fieldType);
+        return preparationHandler.prepare(instrumentedType);
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        Forwarding that = (Forwarding) other;
-        return fieldName.equals(that.fieldName)
-                && fieldType.equals(that.fieldType)
-                && preparationHandler.equals(that.preparationHandler);
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        Forwarding that = (Forwarding) object;
+        return preparationHandler.equals(that.preparationHandler) && terminationHandler == that.terminationHandler;
     }
 
     @Override
     public int hashCode() {
-        int result = fieldName.hashCode();
-        result = 31 * result + fieldType.hashCode();
-        result = 31 * result + preparationHandler.hashCode();
+        int result = preparationHandler.hashCode();
+        result = 31 * result + terminationHandler.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
         return "Forwarding{" +
-                "fieldName='" + fieldName + '\'' +
-                ", fieldType=" + fieldType +
-                ", preparationHandler=" + preparationHandler +
+                "preparationHandler=" + preparationHandler +
+                ", terminationHandler=" + terminationHandler +
                 '}';
     }
 
     /**
-     * A handler for preparing a {@link net.bytebuddy.implementation.Forwarding} implementation.
+     * A preparation handler is responsible for reading the field containing the forwarding instance.
      */
-    protected interface PreparationHandler {
+    protected interface PreparationHandler extends InstrumentedType.Prepareable {
 
         /**
-         * Prepares the instrumented type.
+         * Resolves the field to which to delegate.
          *
-         * @param instrumentedType The instrumented type to prepare.
-         * @param fieldName        The name of the field in which the delegate should be stored.
-         * @param fieldType        The type of the field.
-         * @return The prepared instrumented type.
+         * @param instrumentedType The instrumented type.
+         * @return The field to which to delegate.
          */
-        InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType);
+        FieldDescription resolve(TypeDescription instrumentedType);
 
         /**
-         * Creates a stack manipulation for loading the field owner onto the operand stack.
-         *
-         * @return A stack manipulation for loading the field owner onto the operand stack.
+         * A preparation handler that delegates to a specific instance.
          */
-        StackManipulation loadFieldOwner();
-
-        /**
-         * A preparation handler for an unset instance that is stored in an instance field.
-         */
-        enum ForInstanceField implements PreparationHandler {
+        class ForInstance implements PreparationHandler {
 
             /**
-             * The singleton instance.
+             * The name of the field to delegate to.
              */
-            INSTANCE;
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType) {
-                if (instrumentedType.isInterface()) {
-                    throw new IllegalStateException("Cannot define instance field '" + fieldName + "' for " + instrumentedType);
-                }
-                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, fieldType));
-            }
-
-            @Override
-            public StackManipulation loadFieldOwner() {
-                return MethodVariableAccess.REFERENCE.loadOffset(0);
-            }
-
-            @Override
-            public String toString() {
-                return "Forwarding.PreparationHandler.ForInstanceField." + name();
-            }
-        }
-
-        /**
-         * A preparation handler for an unset instance that is stored in a {@code static} field.
-         */
-        enum ForStaticField implements PreparationHandler {
+            private final String fieldName;
 
             /**
-             * The singleton instance.
+             * The type of the field.
              */
-            INSTANCE;
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType) {
-                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType));
-            }
-
-            @Override
-            public StackManipulation loadFieldOwner() {
-                return StackManipulation.Trivial.INSTANCE;
-            }
-
-            @Override
-            public String toString() {
-                return "Forwarding.PreparationHandler.ForStaticField." + name();
-            }
-        }
-
-        /**
-         * A preparation handler for an explicit instance that is stored in a {@code static} field.
-         */
-        class ForStaticInstance implements PreparationHandler {
+            private final TypeDescription.Generic typeDescription;
 
             /**
-             * The target of the delegation.
+             * The delegate instance.
              */
-            private final Object target;
+            private final Object delegate;
 
             /**
-             * Creates a new preparation handler for an explicit instance.
+             * Creates a new preparation handler for delegating to a field.
              *
-             * @param target The target of the delegation.
+             * @param fieldName       The name of the field to delegate to.
+             * @param typeDescription The type of the field.
+             * @param delegate        The delegate instance.
              */
-            public ForStaticInstance(Object target) {
-                this.target = target;
+            protected ForInstance(String fieldName, TypeDescription.Generic typeDescription, Object delegate) {
+                this.fieldName = fieldName;
+                this.typeDescription = typeDescription;
+                this.delegate = delegate;
             }
 
             @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType) {
+            public FieldDescription resolve(TypeDescription instrumentedType) {
+                return instrumentedType.getDeclaredFields().filter(named(fieldName).and(genericFieldType(typeDescription))).getOnly();
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
-                        .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType))
-                        .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
+                        .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_SYNTHETIC, typeDescription))
+                        .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, delegate));
             }
 
             @Override
-            public StackManipulation loadFieldOwner() {
-                return StackManipulation.Trivial.INSTANCE;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && target.equals(((ForStaticInstance) other).target);
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForInstance that = (ForInstance) object;
+                return fieldName.equals(that.fieldName)
+                        && typeDescription.equals(that.typeDescription)
+                        && delegate.equals(that.delegate);
             }
 
             @Override
             public int hashCode() {
-                return target.hashCode();
+                int result = fieldName.hashCode();
+                result = 31 * result + typeDescription.hashCode();
+                result = 31 * result + delegate.hashCode();
+                return result;
             }
 
             @Override
             public String toString() {
-                return "Forwarding.PreparationHandler.ForStaticInstance{target=" + target + '}';
+                return "Forwarding.PreparationHandler.ForInstance{" +
+                        "fieldName='" + fieldName + '\'' +
+                        ", typeDescription=" + typeDescription +
+                        ", delegate=" + delegate +
+                        '}';
             }
+        }
+
+        /**
+         * A preparation handler that delegates to a specific field.
+         */
+        class ForField implements PreparationHandler {
+
+            /**
+             * The name of the field to delegate to.
+             */
+            private final String fieldName;
+
+            /**
+             * The field locator factory to use.
+             */
+            private final FieldLocator.Factory fieldLocatorFactory;
+
+            /**
+             * Creates a new preparation handler for forwarding to a specific field.
+             *
+             * @param fieldName           The name of the field to delegate to.
+             * @param fieldLocatorFactory The field locator factory to use.
+             */
+            protected ForField(String fieldName, FieldLocator.Factory fieldLocatorFactory) {
+                this.fieldName = fieldName;
+                this.fieldLocatorFactory = fieldLocatorFactory;
+            }
+
+            @Override
+            public FieldDescription resolve(TypeDescription instrumentedType) {
+                FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(fieldName);
+                if (!resolution.isResolved()) {
+                    throw new IllegalStateException();
+                }
+                return resolution.getField();
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForField forField = (ForField) object;
+                return fieldName.equals(forField.fieldName) && fieldLocatorFactory.equals(forField.fieldLocatorFactory);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = fieldName.hashCode();
+                result = 31 * result + fieldLocatorFactory.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "Forwarding.PreparationHandler.ForField{" +
+                        "fieldName='" + fieldName + '\'' +
+                        ", fieldLocatorFactory=" + fieldLocatorFactory +
+                        '}';
+            }
+        }
+    }
+
+    /**
+     * A termination handler is responsible for a method's return.
+     */
+    protected enum TerminationHandler {
+
+        /**
+         * A termination handler that drops the forwarded method's return value.
+         */
+        DROPPING {
+            @Override
+            protected StackManipulation resolve(TypeDefinition returnType) {
+                return Removal.pop(returnType);
+            }
+        },
+
+        /**
+         * A termination handler that returns the forwarded method's return value.
+         */
+        RETURNING {
+            @Override
+            protected StackManipulation resolve(TypeDefinition returnType) {
+                return MethodReturn.of(returnType);
+            }
+        };
+
+        /**
+         * Resolves a stack manipulation for handling the forwarded method's return value.
+         *
+         * @param returnType The return type.
+         * @return An appropriate stack manipulation.
+         */
+        protected abstract StackManipulation resolve(TypeDefinition returnType);
+
+        @Override
+        public String toString() {
+            return "Forwarding.TerminationHandler." + name();
         }
     }
 
     /**
      * An appender for implementing a {@link net.bytebuddy.implementation.Forwarding} operation.
      */
-    protected class Appender implements ByteCodeAppender {
+    protected static class Appender implements ByteCodeAppender {
 
         /**
-         * The stack manipulation for loading the delegate onto the stack, i.e. the field loading operation.
+         * The field to forward to.
          */
-        private final StackManipulation delegateLoadingInstruction;
+        private final FieldDescription fieldDescription;
 
         /**
-         * Creates a new appender.
+         * The termination handler to apply.
+         */
+        private final TerminationHandler terminationHandler;
+
+        /**
+         * Creates a new appender for a forwarding implementation.
          *
-         * @param delegateLoadingInstruction The stack manipulation for loading the delegate onto the stack, i.e.
-         *                                   the field loading operation.
+         * @param fieldDescription   The field to forward to.
+         * @param terminationHandler The termination handler to apply.
          */
-        private Appender(StackManipulation delegateLoadingInstruction) {
-            this.delegateLoadingInstruction = delegateLoadingInstruction;
+        protected Appender(FieldDescription fieldDescription, TerminationHandler terminationHandler) {
+            this.fieldDescription = fieldDescription;
+            this.terminationHandler = terminationHandler;
         }
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            if (!instrumentedMethod.isInvokableOn(fieldType.asErasure())) {
-                throw new IllegalArgumentException("Cannot forward " + instrumentedMethod + " to " + fieldType);
-            } else if (instrumentedMethod.isStatic()) {
-                throw new IllegalArgumentException("Cannot forward the static method " + instrumentedMethod);
+            if (instrumentedMethod.isStatic()) {
+                throw new IllegalStateException("Cannot forward the static method " + instrumentedMethod);
+            } else if (!instrumentedMethod.isInvokableOn(fieldDescription.getType().asErasure())) {
+                throw new IllegalStateException("Cannot forward " + instrumentedMethod + " to " + fieldDescription.getType());
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    delegateLoadingInstruction,
+                    fieldDescription.isStatic()
+                            ? StackManipulation.Trivial.INSTANCE
+                            : MethodVariableAccess.REFERENCE.loadOffset(0),
+                    FieldAccess.forField(fieldDescription).getter(),
                     MethodVariableAccess.allArgumentsOf(instrumentedMethod),
-                    MethodInvocation.invoke(instrumentedMethod).virtual(fieldType.asErasure()),
-                    MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
+                    MethodInvocation.invoke(instrumentedMethod).virtual(fieldDescription.getType().asErasure()),
+                    terminationHandler.resolve(instrumentedMethod.getReturnType())
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && delegateLoadingInstruction.equals(((Appender) other).delegateLoadingInstruction)
-                    && Forwarding.this.equals(((Appender) other).getForwarding());
-        }
-
-        /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
-         */
-        private Forwarding getForwarding() {
-            return Forwarding.this;
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            Appender appender = (Appender) object;
+            return fieldDescription.equals(appender.fieldDescription)
+                    && terminationHandler == appender.terminationHandler;
         }
 
         @Override
         public int hashCode() {
-            return Forwarding.this.hashCode() + 31 * delegateLoadingInstruction.hashCode();
+            int result = fieldDescription.hashCode();
+            result = 31 * result + terminationHandler.hashCode();
+            return result;
         }
 
         @Override
         public String toString() {
-            return "Forwarding.Appender{delegateLoadingInstruction=" + delegateLoadingInstruction + '}';
+            return "Forwarding.Appender{" +
+                    "fieldDescription=" + fieldDescription +
+                    ", terminationHandler=" + terminationHandler +
+                    '}';
         }
     }
 }
