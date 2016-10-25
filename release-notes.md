@@ -8,6 +8,7 @@ Byte Buddy release notes
 - Refactored lazy type resolution for generic types to no longer eagerly load generic types when navigating through a type hierarchy.
 - Unified several implementation APIs and added better abstractions.
 - Fixed some missing bits of validation of implementations.
+- Do not replicate incompatible bridge methods.
 
 ### 17. October 2016: version 1.4.33
 
