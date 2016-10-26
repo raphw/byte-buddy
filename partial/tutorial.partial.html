@@ -1646,8 +1646,8 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
         selecting source methods within Byte Buddy's domain specific language. The instance which is the target of the
         method delegation is stored in a static field. Similarly to the definition of fixed values, this requires the
         definition of a <code>TypeInitializer</code>. Instead of storing a delegation in a static field, you can
-        alternatively define the use of an instance field by <code>MethodDelegation.instanceField(Class, String)</code>
-        where the second argument is defining a field name to which all method delegations are forwarded. Always
+        alternatively define the use of any field by <code>MethodDelegation.toField(String)</code>
+        where the argument specifies a field name to which all method delegations are forwarded. Always
         remember to assign a value to this field before calling methods on an instance of such a dynamic class.
         Otherwise, a method delegation will result in a <code>NullPointerException</code>.
     </span></li>
@@ -1949,7 +1949,8 @@ interface InstanceCreator {
 Class&lt;? extends UserType&gt; dynamicUserType = new ByteBuddy()
   .subclass(UserType.class)
     .method(not(isDeclaredBy(Object.class)))
-    .intercept(MethodDelegation.instanceField(Interceptor.class, "interceptor"))
+    .intercept(MethodDelegation.toField("interceptor"))
+  .defineField("interceptor", Interceptor.class, Visibility.PRIVATE)
   .implement(InterceptionAccessor.class).intercept(FieldAccessor.ofBeanProperty())
   .make()
   .load(getClass().getClassLoader())
