@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -1012,6 +1013,28 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testOriginMethodStackSizeAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OriginMethodStackSizeAdvice.class).on(named(BAR)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
+    }
+
+    @Test
+    public void testOriginConstructorStackSizeAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OriginConstructorStackSizeAdvice.class).on(isConstructor()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.getDeclaredConstructor().newInstance(), FOO), is((Object) FOO));
     }
 
     @Test
@@ -2720,6 +2743,24 @@ public class AdviceTest {
                 throw new AssertionError();
             }
             Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class OriginMethodStackSizeAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Origin Method origin) throws Exception {
+            Object ignored = origin;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class OriginConstructorStackSizeAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Origin Constructor<?> origin) throws Exception {
+            Object ignored = origin;
         }
     }
 

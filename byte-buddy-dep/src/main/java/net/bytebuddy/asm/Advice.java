@@ -2965,7 +2965,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         false);
                                 return getAdditionalOffset() + (methodDescription.getParameters().isEmpty()
                                         ? 0
-                                        : 2);
+                                        : 3);
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
