@@ -20,7 +20,6 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
-import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -369,7 +368,7 @@ public class MethodDelegation implements Implementation.Composable {
     public static MethodDelegation to(Object delegate, Type type, MethodGraph.Compiler methodGraphCompiler) {
         return to(delegate,
                 type,
-                String.format("%s$%s", ImplementationDelegate.FIELD_NAME_PREFIX, RandomString.make()),
+                String.format("%s$%d", ImplementationDelegate.FIELD_NAME_PREFIX, Math.abs(delegate.hashCode() % Integer.MAX_VALUE)),
                 methodGraphCompiler);
     }
 

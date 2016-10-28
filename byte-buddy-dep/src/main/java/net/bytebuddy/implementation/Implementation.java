@@ -1033,7 +1033,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 @Override
                 public String getName() {
-                    return String.format("%s$%s$%s", FIELD_CACHE_PREFIX, suffix, RandomString.make());
+                    return String.format("%s$%s$%d", FIELD_CACHE_PREFIX, suffix, Math.abs(valueHashCode % Integer.MAX_VALUE));
                 }
             }
 

@@ -13,7 +13,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
-import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -600,7 +599,7 @@ public abstract class FixedValue implements Implementation {
          * @param typing     Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         protected ForStaticField(Object fixedValue, Assigner assigner, Assigner.Typing typing) {
-            this(String.format("%s$%s", PREFIX, RandomString.make()), fixedValue, assigner, typing);
+            this(String.format("%s$%d", PREFIX, Math.abs(fixedValue.hashCode() % Integer.MAX_VALUE)), fixedValue, assigner, typing);
         }
 
         /**

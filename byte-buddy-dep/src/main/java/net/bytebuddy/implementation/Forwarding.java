@@ -13,7 +13,6 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
-import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -89,7 +88,7 @@ public class Forwarding implements Implementation.Composable {
      * @return A corresponding implementation.
      */
     public static Implementation.Composable to(Object delegate, Type type) {
-        return to(delegate, String.format("%s$%s", FIELD_PREFIX, RandomString.make()), type);
+        return to(delegate, String.format("%s$%d", FIELD_PREFIX, Math.abs(delegate.hashCode() % Integer.MAX_VALUE)), type);
     }
 
     /**
