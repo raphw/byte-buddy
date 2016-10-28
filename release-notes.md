@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 27. October 2016: version 1.5.1
+
+- Fixed stack size computation when using `@Advice.Origin`.
+
 ### 25. October 2016: version 1.5.0
 
 - Refactor `Instrumentation`s to only delegate to fields instead of requireing their definition. The `defineField` API should be generally preferred for defining fields as it is much richer and therefore easier to extend.
