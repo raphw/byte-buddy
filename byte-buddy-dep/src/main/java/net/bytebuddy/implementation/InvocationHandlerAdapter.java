@@ -15,6 +15,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -85,7 +86,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler) {
-        return of(invocationHandler, String.format("%s$%d", ForInstance.PREFIX, Math.abs(invocationHandler.hashCode() % Integer.MAX_VALUE)));
+        return of(invocationHandler, String.format("%s$%s", ForInstance.PREFIX, RandomString.make()));
     }
 
     /**
