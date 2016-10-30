@@ -420,4 +420,52 @@ public interface FieldLocator {
             }
         }
     }
+
+    /**
+     * A field locator that only locates fields in the top-level type.
+     */
+    class ForTopLevelType extends AbstractBase {
+
+        /**
+         * Creates a new type locator for a top-level type.
+         *
+         * @param typeDescription The type to access.
+         */
+        protected ForTopLevelType(TypeDescription typeDescription) {
+            super(typeDescription);
+        }
+
+        @Override
+        protected FieldList<?> locate(ElementMatcher<? super FieldDescription> matcher) {
+            return accessingType.getDeclaredFields().filter(matcher);
+        }
+
+        @Override
+        public String toString() {
+            return "FieldLocator.ForTopLevelType{" +
+                    "accessingType=" + accessingType +
+                    "}";
+        }
+
+        /**
+         * A factory for locating a field in a top-level type.
+         */
+        public enum Factory implements FieldLocator.Factory {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public FieldLocator make(TypeDescription typeDescription) {
+                return new ForTopLevelType(typeDescription);
+            }
+
+            @Override
+            public String toString() {
+                return "FieldLocator.ForTopLevelType.Factory." + name();
+            }
+        }
+    }
 }

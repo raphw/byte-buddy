@@ -12,7 +12,7 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-public class FieldLocatorExactTypeTest {
+public class FieldLocatorForTopLevelTypeTest {
 
     private static final String FOO = "foo", QUX = "qux";
 
@@ -20,51 +20,46 @@ public class FieldLocatorExactTypeTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription locatedType, typeDescription;
+    private TypeDescription typeDescription;
 
     @Test
     public void testExactTypeFound() throws Exception {
-        FieldLocator.Resolution resolution = new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO);
+        FieldLocator.Resolution resolution = new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO);
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
     }
 
     @Test
     public void testExactTypeFoundWithType() throws Exception {
-        FieldLocator.Resolution resolution = new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Void.class));
+        FieldLocator.Resolution resolution = new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Void.class));
         assertThat(resolution.isResolved(), is(true));
         assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
     }
 
     @Test
     public void testExactTypeNotFoundInherited() throws Exception {
-        assertThat(new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Bar.class)).locate(FOO).isResolved(), is(false));
+        assertThat(new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Bar.class)).locate(FOO).isResolved(), is(false));
     }
 
     @Test
     public void testExactTypeNotFoundNotExistent() throws Exception {
-        assertThat(new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(QUX).isResolved(), is(false));
-    }
-
-    @Test
-    public void testExactTypeNotFoundInvisible() throws Exception {
-        assertThat(new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class), new TypeDescription.ForLoadedType(Object.class)).locate(FOO).isResolved(), is(false));
+        assertThat(new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Foo.class)).locate(QUX).isResolved(), is(false));
     }
 
     @Test
     public void testExactTypeNotFoundWrongType() throws Exception {
-        assertThat(new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Object.class)).isResolved(), is(false));
+        assertThat(new FieldLocator.ForTopLevelType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Object.class)).isResolved(), is(false));
     }
 
     @Test
     public void testFactory() throws Exception {
-        assertThat(new FieldLocator.ForExactType.Factory(locatedType).make(typeDescription), is((FieldLocator) new FieldLocator.ForExactType(locatedType, typeDescription)));
+        assertThat(FieldLocator.ForTopLevelType.Factory.INSTANCE.make(typeDescription), is((FieldLocator) new FieldLocator.ForTopLevelType(typeDescription)));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldLocator.ForExactType.class).apply();
-        ObjectPropertyAssertion.of(FieldLocator.ForExactType.Factory.class).apply();
+        ObjectPropertyAssertion.of(FieldLocator.ForTopLevelType.class).apply();
+        ObjectPropertyAssertion.of(FieldLocator.ForTopLevelType.Factory.class).apply();
     }
 
     @SuppressWarnings("unused")
