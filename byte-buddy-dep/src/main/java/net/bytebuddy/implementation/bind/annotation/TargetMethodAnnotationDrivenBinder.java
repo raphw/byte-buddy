@@ -556,7 +556,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         },
 
         /**
-         * A termination handler that drops the delegate method's return value,
+         * A termination handler that drops the delegate method's return value.
          */
         DROPPING {
             @Override
