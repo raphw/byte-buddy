@@ -25,43 +25,43 @@ public class FieldAccessorFieldNameExtractorForBeanPropertyTest {
     @Test
     public void testGetterMethod() throws Exception {
         when(methodDescription.getInternalName()).thenReturn("get" + FOO_CAPITAL);
-        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription), is(FOO));
+        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.resolve(methodDescription), is(FOO));
     }
 
     @Test
     public void testSetterMethod() throws Exception {
         when(methodDescription.getInternalName()).thenReturn("set" + FOO_CAPITAL);
-        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription), is(FOO));
+        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.resolve(methodDescription), is(FOO));
     }
 
     @Test
     public void testGetterMethodBooleanPrefix() throws Exception {
         when(methodDescription.getInternalName()).thenReturn("is" + FOO_CAPITAL);
-        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription), is(FOO));
+        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.resolve(methodDescription), is(FOO));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testEmptyGetter() throws Exception {
         when(methodDescription.getInternalName()).thenReturn("get");
-        FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription);
+        FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.resolve(methodDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testEmptySetter() throws Exception {
         when(methodDescription.getInternalName()).thenReturn("set");
-        FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription);
+        FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.resolve(methodDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testEmptyGetterBooleanPrefix() throws Exception {
         when(methodDescription.getInternalName()).thenReturn("is");
-        FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription);
+        FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.resolve(methodDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalName() throws Exception {
         when(methodDescription.getInternalName()).thenReturn(FOO);
-        FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription);
+        FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.resolve(methodDescription);
     }
 
     @Test

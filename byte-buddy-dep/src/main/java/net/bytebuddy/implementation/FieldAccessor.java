@@ -15,7 +15,9 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import org.objectweb.asm.MethodVisitor;
 
 /**
+ * <p>
  * Defines a method to access a given field by following the Java bean conventions for getters and setters:
+ * </p>
  * <ul>
  * <li>Getter: A method named {@code getFoo()} will be instrumented to read and return the value of a field {@code foo}
  * or another field if one was specified explicitly. If a property is of type {@link java.lang.Boolean} or
@@ -23,6 +25,12 @@ import org.objectweb.asm.MethodVisitor;
  * <li>Setter: A method named {@code setFoo(value)} will be instrumented to write the given argument {@code value}
  * to a field {@code foo} or to another field if one was specified explicitly.</li>
  * </ul>
+ * <p>
+ * Field accessors always implement a getter if a non-{@code void} value is returned from a method and attempt to define a setter
+ * otherwise. If a field accessor is not explicitly defined as a setter via {@link PropertyConfigurable}, an instrumented
+ * method must define exactly one parameter. Using the latter API, an explicit parameter index can be defined and a return
+ * value can be specified explicitly when {@code void} is not returned.
+ * </p>
  */
 public abstract class FieldAccessor implements Implementation {
 
@@ -180,7 +188,7 @@ public abstract class FieldAccessor implements Implementation {
          * @param methodDescription The method for which a field name is to be determined.
          * @return The name of the field to be accessed by this method.
          */
-        String fieldNameFor(MethodDescription methodDescription);
+        String resolve(MethodDescription methodDescription);
 
         /**
          * A {@link net.bytebuddy.implementation.FieldAccessor.FieldNameExtractor} that determines a field name
@@ -194,7 +202,7 @@ public abstract class FieldAccessor implements Implementation {
             INSTANCE;
 
             @Override
-            public String fieldNameFor(MethodDescription methodDescription) {
+            public String resolve(MethodDescription methodDescription) {
                 String name = methodDescription.getInternalName();
                 int crop;
                 if (name.startsWith("get") || name.startsWith("set")) {
@@ -229,6 +237,7 @@ public abstract class FieldAccessor implements Implementation {
 
             /**
              * Creates a new field name extractor for a fixed value.
+             *
              * @param name The name to return.
              */
             protected ForFixedValue(String name) {
@@ -236,7 +245,7 @@ public abstract class FieldAccessor implements Implementation {
             }
 
             @Override
-            public String fieldNameFor(MethodDescription methodDescription) {
+            public String resolve(MethodDescription methodDescription) {
                 return name;
             }
 
@@ -422,7 +431,7 @@ public abstract class FieldAccessor implements Implementation {
                 if (!instrumentedMethod.isMethod()) {
                     throw new IllegalArgumentException(instrumentedMethod + " does not describe a field getter or setter");
                 }
-                FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.fieldNameFor(instrumentedMethod));
+                FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.resolve(instrumentedMethod));
                 StackManipulation implementation;
                 if (!resolution.isResolved()) {
                     throw new IllegalStateException("Cannot locate accessible field for " + instrumentedMethod);
@@ -626,7 +635,7 @@ public abstract class FieldAccessor implements Implementation {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-                FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.fieldNameFor(instrumentedMethod));
+                FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.resolve(instrumentedMethod));
                 if (!resolution.isResolved()) {
                     throw new IllegalStateException("Cannot locate accessible field for " + instrumentedMethod + " with " + fieldLocator);
                 } else if (instrumentedMethod.getParameters().size() <= index) {

@@ -23,7 +23,7 @@ public class FieldAccessorFieldNameExtractorForFixedValueTest {
 
     @Test
     public void testGetterMethod() throws Exception {
-        assertThat(new FieldAccessor.FieldNameExtractor.ForFixedValue(FOO).fieldNameFor(methodDescription), is(FOO));
+        assertThat(new FieldAccessor.FieldNameExtractor.ForFixedValue(FOO).resolve(methodDescription), is(FOO));
     }
 
     @Test
