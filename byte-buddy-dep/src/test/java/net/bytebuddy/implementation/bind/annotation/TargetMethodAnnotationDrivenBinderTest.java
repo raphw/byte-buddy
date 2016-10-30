@@ -515,8 +515,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         }).apply();
         ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.class).apply();
         ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.EmptyIterator.class).apply();
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping.class).apply();
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.class).apply();
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.TerminationHandler.class).apply();
         ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.class).apply();
         ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Bound.class).apply();
         ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Unbound.class).apply();

@@ -292,7 +292,7 @@ public class DynamicTypeDefaultTest {
     }
 
     @Test
-    public void testHashCodeEquals() throws Exception {
+    public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(DynamicType.Default.class).apply();
     }
 }

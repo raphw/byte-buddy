@@ -55,7 +55,7 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerReturningTest {
 
     @Test
     public void testApplication() throws Exception {
-        StackManipulation stackManipulation = TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE
+        StackManipulation stackManipulation = TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING
                 .resolve(assigner, source, target);
         assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(this.stackManipulation, MethodReturn.REFERENCE)));
         verify(annotationList).isAnnotationPresent(RuntimeType.class);

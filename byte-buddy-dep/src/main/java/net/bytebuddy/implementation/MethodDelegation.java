@@ -237,7 +237,7 @@ public class MethodDelegation implements Implementation.Composable {
         return new MethodDelegation(ImplementationDelegate.ForStaticMethod.of(typeDescription),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT);
     }
@@ -421,7 +421,7 @@ public class MethodDelegation implements Implementation.Composable {
         return new MethodDelegation(new ImplementationDelegate.ForInstance(delegate, fieldName, typeDescription, methodGraphCompiler),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT);
     }
@@ -448,7 +448,7 @@ public class MethodDelegation implements Implementation.Composable {
         return new MethodDelegation(ImplementationDelegate.ForConstruction.of(typeDescription),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT);
     }
@@ -501,7 +501,7 @@ public class MethodDelegation implements Implementation.Composable {
         return new MethodDelegation(new ImplementationDelegate.ForField(name, fieldLocatorFactory, methodGraphCompiler),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT);
     }
@@ -611,7 +611,7 @@ public class MethodDelegation implements Implementation.Composable {
         return new Compound(new MethodDelegation(implementationDelegate,
                 parameterBinders,
                 defaultsProvider,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping.INSTANCE,
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.DROPPING,
                 ambiguityResolver,
                 assigner), implementation);
     }

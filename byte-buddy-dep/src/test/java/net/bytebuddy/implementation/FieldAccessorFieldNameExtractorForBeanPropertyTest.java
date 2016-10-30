@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -24,22 +25,19 @@ public class FieldAccessorFieldNameExtractorForBeanPropertyTest {
     @Test
     public void testGetterMethod() throws Exception {
         when(methodDescription.getInternalName()).thenReturn("get" + FOO_CAPITAL);
-        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription),
-                is(FOO));
+        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription), is(FOO));
     }
 
     @Test
     public void testSetterMethod() throws Exception {
         when(methodDescription.getInternalName()).thenReturn("set" + FOO_CAPITAL);
-        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription),
-                is(FOO));
+        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription), is(FOO));
     }
 
     @Test
     public void testGetterMethodBooleanPrefix() throws Exception {
         when(methodDescription.getInternalName()).thenReturn("is" + FOO_CAPITAL);
-        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription),
-                is(FOO));
+        assertThat(FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription), is(FOO));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -64,5 +62,10 @@ public class FieldAccessorFieldNameExtractorForBeanPropertyTest {
     public void testIllegalName() throws Exception {
         when(methodDescription.getInternalName()).thenReturn(FOO);
         FieldAccessor.FieldNameExtractor.ForBeanProperty.INSTANCE.fieldNameFor(methodDescription);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FieldAccessor.FieldNameExtractor.ForBeanProperty.class).apply();
     }
 }

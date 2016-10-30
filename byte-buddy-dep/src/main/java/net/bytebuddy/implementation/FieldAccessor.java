@@ -2,8 +2,8 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -13,8 +13,6 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import org.objectweb.asm.MethodVisitor;
-
-import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * Defines a method to access a given field by following the Java bean conventions for getters and setters:
@@ -29,6 +27,16 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public abstract class FieldAccessor implements Implementation {
 
     /**
+     * The field name extractor to be used.
+     */
+    protected final FieldNameExtractor fieldNameExtractor;
+
+    /**
+     * A factory for creating a field locator for implementing this field accessor.
+     */
+    protected final FieldLocator.Factory fieldLocatorFactory;
+
+    /**
      * The assigner to use.
      */
     protected final Assigner assigner;
@@ -41,10 +49,14 @@ public abstract class FieldAccessor implements Implementation {
     /**
      * Creates a new field accessor.
      *
-     * @param assigner The assigner to use.
-     * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
+     * @param fieldLocatorFactory The field name extractor to be used.
+     * @param fieldNameExtractor  A factory for creating a field locator for implementing this field accessor.
+     * @param assigner            The assigner to use.
+     * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected FieldAccessor(Assigner assigner, Assigner.Typing typing) {
+    protected FieldAccessor(FieldNameExtractor fieldNameExtractor, FieldLocator.Factory fieldLocatorFactory, Assigner assigner, Assigner.Typing typing) {
+        this.fieldNameExtractor = fieldNameExtractor;
+        this.fieldLocatorFactory = fieldLocatorFactory;
         this.assigner = assigner;
         this.typing = typing;
     }
@@ -56,7 +68,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor for a field of a given name.
      */
     public static OwnerTypeLocatable ofField(String name) {
-        return new ForNamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, name);
+        return of(new FieldNameExtractor.ForFixedValue(name));
     }
 
     /**
@@ -77,121 +89,83 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor using the given field name extractor.
      */
     public static OwnerTypeLocatable of(FieldNameExtractor fieldNameExtractor) {
-        return new ForUnnamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, fieldNameExtractor);
+        return new ForImplicitProperty(fieldNameExtractor, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
     }
 
     /**
-     * Applies a field getter implementation.
+     * Creates a getter getter.
      *
-     * @param methodVisitor         The method visitor to write any instructions to.
-     * @param implementationContext The implementation context of the current implementation.
-     * @param fieldDescription      The description of the field to read.
-     * @param methodDescription     The method that is target of the implementation.
-     * @return The required size of the operand stack and local variable array for this implementation.
+     * @param fieldDescription   The field to read the value from.
+     * @param instrumentedMethod The getter method.
+     * @return A stack manipulation that gets the field's value.
      */
-    protected ByteCodeAppender.Size applyGetter(MethodVisitor methodVisitor,
-                                                Implementation.Context implementationContext,
-                                                FieldDescription fieldDescription,
-                                                MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType(), methodDescription.getReturnType(), typing);
-        if (!stackManipulation.isValid()) {
-            throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
+    protected StackManipulation getter(FieldDescription fieldDescription, MethodDescription instrumentedMethod) {
+        return access(fieldDescription, instrumentedMethod, new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
+                assigner.assign(fieldDescription.getType(), instrumentedMethod.getReturnType(), typing)));
+    }
+
+    /**
+     * Creates a setter instruction.
+     *
+     * @param fieldDescription     The field to set a value for.
+     * @param parameterDescription The parameter for what value is to be set.
+     * @return A stack manipulation that sets the field's value.
+     */
+    protected StackManipulation setter(FieldDescription fieldDescription, ParameterDescription parameterDescription) {
+        if (fieldDescription.isFinal() && !parameterDescription.getDeclaringMethod().isConstructor()) {
+            throw new IllegalArgumentException("Cannot apply setter on final field " + fieldDescription + " outside of constructor");
         }
-        return apply(methodVisitor,
-                implementationContext,
-                fieldDescription,
-                methodDescription,
-                new StackManipulation.Compound(
-                        FieldAccess.forField(fieldDescription).getter(),
-                        stackManipulation
-                )
-        );
+        return access(fieldDescription,
+                parameterDescription.getDeclaringMethod(),
+                new StackManipulation.Compound(MethodVariableAccess.of(fieldDescription.getType().asErasure()).loadOffset(parameterDescription.getOffset()),
+                        assigner.assign(parameterDescription.getType(), fieldDescription.getType(), typing),
+                        FieldAccess.forField(fieldDescription).putter()));
     }
 
     /**
-     * Applies a field setter implementation.
+     * Checks a field access and loads the {@code this} instance if necessary.
      *
-     * @param methodVisitor         The method visitor to write any instructions to.
-     * @param implementationContext The implementation context of the current implementation.
-     * @param fieldDescription      The description of the field to write to.
-     * @param methodDescription     The method that is target of the instrumentation.
-     * @return The required size of the operand stack and local variable array for this implementation.
+     * @param fieldDescription   The field to get a value
+     * @param instrumentedMethod The instrumented method.
+     * @param fieldAccess        A stack manipulation describing the field access.
+     * @return An appropriate stack manipulation.
      */
-    protected ByteCodeAppender.Size applySetter(MethodVisitor methodVisitor,
-                                                Implementation.Context implementationContext,
-                                                FieldDescription fieldDescription,
-                                                MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType(), fieldDescription.getType(), typing);
-        if (!stackManipulation.isValid()) {
-            throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
-        } else if (fieldDescription.isFinal()) {
-            throw new IllegalArgumentException("Cannot apply setter on final field " + fieldDescription);
+    private StackManipulation access(FieldDescription fieldDescription, MethodDescription instrumentedMethod, StackManipulation fieldAccess) {
+        if (!fieldAccess.isValid()) {
+            throw new IllegalStateException("Incompatible type of " + fieldDescription + " and " + instrumentedMethod);
+        } else if (instrumentedMethod.isStatic() && !fieldDescription.isStatic()) {
+            throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + instrumentedMethod);
+        } else if (instrumentedMethod.isStatic() && !fieldDescription.isStatic()) {
+            throw new IllegalArgumentException("Cannot call instance field " + fieldDescription + " from static method " + instrumentedMethod);
         }
-        return apply(methodVisitor,
-                implementationContext,
-                fieldDescription,
-                methodDescription,
-                new StackManipulation.Compound(
-                        MethodVariableAccess.of(fieldDescription.getType().asErasure())
-                                .loadOffset(methodDescription.getParameters().get(0).getOffset()),
-                        stackManipulation,
-                        FieldAccess.forField(fieldDescription).putter()
-                )
-        );
-    }
-
-    /**
-     * A generic implementation of the application of a {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
-     *
-     * @param methodVisitor         The method visitor to write any instructions to.
-     * @param implementationContext The implementation context of the current implementation.
-     * @param fieldDescription      The description of the field to access.
-     * @param methodDescription     The method that is target of the implementation.
-     * @param fieldAccess           The manipulation that represents the field access.
-     * @return A suitable {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
-     */
-    private ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
-                                        Implementation.Context implementationContext,
-                                        FieldDescription fieldDescription,
-                                        MethodDescription methodDescription,
-                                        StackManipulation fieldAccess) {
-        if (methodDescription.isStatic() && !fieldDescription.isStatic()) {
-            throw new IllegalArgumentException("Cannot call instance field "
-                    + fieldDescription + " from static method " + methodDescription);
-        }
-        StackManipulation.Size stackSize = new StackManipulation.Compound(
-                fieldDescription.isStatic()
-                        ? StackManipulation.Trivial.INSTANCE
-                        : MethodVariableAccess.REFERENCE.loadOffset(0),
-                fieldAccess,
-                MethodReturn.of(methodDescription.getReturnType().asErasure())
-        ).apply(methodVisitor, implementationContext);
-        return new ByteCodeAppender.Size(stackSize.getMaximalSize(), methodDescription.getStackSize());
-    }
-
-    /**
-     * Locates a field's name.
-     *
-     * @param targetMethod The method that is target of the implementation.
-     * @return The name of the field to be located for this implementation.
-     */
-    protected abstract String getFieldName(MethodDescription targetMethod);
-
-    @Override
-    public InstrumentedType prepare(InstrumentedType instrumentedType) {
-        return instrumentedType;
+        return new StackManipulation.Compound(fieldDescription.isStatic()
+                ? StackManipulation.Trivial.INSTANCE
+                : MethodVariableAccess.REFERENCE.loadOffset(0), fieldAccess);
     }
 
     @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && typing == ((FieldAccessor) other).typing
-                && assigner.equals(((FieldAccessor) other).assigner);
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        FieldAccessor that = (FieldAccessor) object;
+        return fieldNameExtractor.equals(that.fieldNameExtractor)
+                && fieldLocatorFactory.equals(that.fieldLocatorFactory)
+                && assigner.equals(that.assigner)
+                && typing == that.typing;
     }
 
     @Override
     public int hashCode() {
-        return 31 * assigner.hashCode() + typing.hashCode();
+        int result = fieldNameExtractor.hashCode();
+        result = 31 * result + fieldLocatorFactory.hashCode();
+        result = 31 * result + assigner.hashCode();
+        result = 31 * result + typing.hashCode();
+        return result;
+    }
+
+    @Override
+    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+        return instrumentedType;
     }
 
     /**
@@ -242,12 +216,71 @@ public abstract class FieldAccessor implements Implementation {
                 return "FieldAccessor.FieldNameExtractor.ForBeanProperty." + name();
             }
         }
+
+        /**
+         * A field name extractor that returns a fixed value.
+         */
+        class ForFixedValue implements FieldNameExtractor {
+
+            /**
+             * The name to return.
+             */
+            private final String name;
+
+            /**
+             * Creates a new field name extractor for a fixed value.
+             * @param name The name to return.
+             */
+            protected ForFixedValue(String name) {
+                this.name = name;
+            }
+
+            @Override
+            public String fieldNameFor(MethodDescription methodDescription) {
+                return name;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForFixedValue that = (ForFixedValue) object;
+                return name.equals(that.name);
+            }
+
+            @Override
+            public int hashCode() {
+                return name.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FieldAccessor.FieldNameExtractor.ForFixedValue{" +
+                        "name='" + name + '\'' +
+                        '}';
+            }
+        }
+    }
+
+    /**
+     * A field accessor that allows to define the access to be a field write of a given argument.
+     */
+    public interface PropertyConfigurable extends Implementation {
+
+        /**
+         * Creates a field accessor for the described field that serves as a setter for the supplied parameter index. The instrumented
+         * method must return {@code void} or a chained instrumentation must be supplied.
+         *
+         * @param index The index of the parameter for which to set the field's value.
+         * @return An instrumentation that sets the parameter's value to the described field.
+         */
+        Implementation.Composable setsArgumentAt(int index);
     }
 
     /**
      * A field accessor that can be configured to use a given assigner and runtime type use configuration.
      */
-    public interface AssignerConfigurable extends Implementation {
+    public interface AssignerConfigurable extends PropertyConfigurable {
 
         /**
          * Returns a field accessor that is identical to this field accessor but uses the given assigner
@@ -257,7 +290,7 @@ public abstract class FieldAccessor implements Implementation {
          * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return This field accessor with the given assigner and runtime type use configuration.
          */
-        Implementation withAssigner(Assigner assigner, Assigner.Typing typing);
+        PropertyConfigurable withAssigner(Assigner assigner, Assigner.Typing typing);
     }
 
     /**
@@ -285,61 +318,59 @@ public abstract class FieldAccessor implements Implementation {
          * Determines that a field should only be considered when it was identified by a field locator that is
          * produced by the given factory.
          *
-         * @param factory A factory that will produce a field locator that will be used to find locate
-         *                a field to be accessed.
+         * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
+         *                            a field to be accessed.
          * @return This field accessor which will only considered fields that are defined in the given type.
          */
-        AssignerConfigurable in(FieldLocator.Factory factory);
+        AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory);
     }
 
     /**
-     * Implementation of a field accessor implementation where a field is identified by a method's name following
-     * the Java specification for bean properties.
+     * A field accessor for an implicit property where a getter or setter property is infered from the signature.
      */
-    protected static class ForUnnamedField extends FieldAccessor implements OwnerTypeLocatable {
+    protected static class ForImplicitProperty extends FieldAccessor implements OwnerTypeLocatable {
 
         /**
-         * A factory for creating a field locator for implementing this field accessor.
-         */
-        private final FieldLocator.Factory fieldLocatorFactory;
-
-        /**
-         * The field name extractor to be used.
-         */
-        private final FieldNameExtractor fieldNameExtractor;
-
-        /**
-         * Creates a new field accessor implementation.
+         * Creates a field accessor for an implicit property.
          *
-         * @param assigner           The assigner to use.
-         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
-         * @param fieldNameExtractor The field name extractor to use.
+         * @param fieldNameExtractor  The field name extractor to use.
+         * @param fieldLocatorFactory The field locator factory to use.
          */
-        protected ForUnnamedField(Assigner assigner, Assigner.Typing typing, FieldNameExtractor fieldNameExtractor) {
-            this(assigner, typing, fieldNameExtractor, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
+        protected ForImplicitProperty(FieldNameExtractor fieldNameExtractor, FieldLocator.Factory fieldLocatorFactory) {
+            this(fieldNameExtractor, fieldLocatorFactory, Assigner.DEFAULT, Assigner.Typing.STATIC);
         }
 
         /**
-         * Creates a new field accessor implementation.
+         * Creates a field accessor for an implicit property.
          *
-         * @param assigner            The assigner to use.
-         * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @param fieldNameExtractor  The field name extractor to use.
-         * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
-         *                            a field to be accessed.
+         * @param fieldLocatorFactory The field locator factory to use.
+         * @param assigner            The assigner to use.
+         * @param typing              The typing to use.
          */
-        protected ForUnnamedField(Assigner assigner,
-                                  Assigner.Typing typing,
-                                  FieldNameExtractor fieldNameExtractor,
-                                  FieldLocator.Factory fieldLocatorFactory) {
-            super(assigner, typing);
-            this.fieldNameExtractor = fieldNameExtractor;
-            this.fieldLocatorFactory = fieldLocatorFactory;
+        private ForImplicitProperty(FieldNameExtractor fieldNameExtractor,
+                                    FieldLocator.Factory fieldLocatorFactory,
+                                    Assigner assigner,
+                                    Assigner.Typing typing) {
+            super(fieldNameExtractor, fieldLocatorFactory, assigner, typing);
         }
 
         @Override
-        public AssignerConfigurable in(FieldLocator.Factory factory) {
-            return new ForUnnamedField(assigner, typing, fieldNameExtractor, factory);
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new Appender(fieldLocatorFactory.make(implementationTarget.getInstrumentedType()));
+        }
+
+        @Override
+        public Composable setsArgumentAt(int index) {
+            if (index < 0) {
+                throw new IllegalArgumentException("A parameter index cannot be negative: " + index);
+            }
+            return new ForParameterSetter(fieldNameExtractor, fieldLocatorFactory, assigner, typing, index);
+        }
+
+        @Override
+        public PropertyConfigurable withAssigner(Assigner assigner, Assigner.Typing typing) {
+            return new ForImplicitProperty(fieldNameExtractor, fieldLocatorFactory, assigner, typing);
         }
 
         @Override
@@ -349,127 +380,144 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public AssignerConfigurable in(TypeDescription typeDescription) {
-            return typeDescription.represents(TargetType.class)
-                    ? in(FieldLocator.ForClassHierarchy.Factory.INSTANCE)
-                    : in(new FieldLocator.ForExactType.Factory(typeDescription));
+            return in(new FieldLocator.ForExactType.Factory(typeDescription));
         }
 
         @Override
-        public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForUnnamedField(assigner, typing, fieldNameExtractor, fieldLocatorFactory);
-        }
-
-        @Override
-        public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            return instrumentedType;
-        }
-
-        @Override
-        public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(fieldLocatorFactory.make(implementationTarget.getInstrumentedType()));
-        }
-
-        @Override
-        protected String getFieldName(MethodDescription targetMethod) {
-            return fieldNameExtractor.fieldNameFor(targetMethod);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && super.equals(other)
-                    && fieldNameExtractor.equals(((ForUnnamedField) other).fieldNameExtractor)
-                    && fieldLocatorFactory.equals(((ForUnnamedField) other).fieldLocatorFactory);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * (31 * super.hashCode() + fieldLocatorFactory.hashCode()) + fieldNameExtractor.hashCode();
+        public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
+            return new ForImplicitProperty(fieldNameExtractor, fieldLocatorFactory, assigner, typing);
         }
 
         @Override
         public String toString() {
-            return "FieldAccessor.ForUnnamedField{" +
-                    "assigner=" + assigner +
-                    ", typing=" + typing +
+            return "FieldAccessor.ForImplicitProperty{" +
+                    "fieldNameExtractor=" + fieldNameExtractor +
                     ", fieldLocatorFactory=" + fieldLocatorFactory +
-                    ", fieldNameExtractor=" + fieldNameExtractor +
-                    '}';
+                    ", assigner=" + assigner +
+                    ", typing=" + typing +
+                    "}";
+        }
+
+        /**
+         * An byte code appender for an field accessor implementation.
+         */
+        protected class Appender implements ByteCodeAppender {
+
+            /**
+             * The field locator for implementing this appender.
+             */
+            private final FieldLocator fieldLocator;
+
+            /**
+             * Creates a new byte code appender for a field accessor implementation.
+             *
+             * @param fieldLocator The field locator for this byte code appender.
+             */
+            protected Appender(FieldLocator fieldLocator) {
+                this.fieldLocator = fieldLocator;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                if (!instrumentedMethod.isMethod()) {
+                    throw new IllegalArgumentException(instrumentedMethod + " does not describe a field getter or setter");
+                }
+                FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.fieldNameFor(instrumentedMethod));
+                StackManipulation implementation;
+                if (!resolution.isResolved()) {
+                    throw new IllegalStateException("Cannot locate accessible field for " + instrumentedMethod);
+                } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                    implementation = new StackManipulation.Compound(getter(resolution.getField(), instrumentedMethod), MethodReturn.of(instrumentedMethod.getReturnType()));
+                } else if (instrumentedMethod.getReturnType().represents(void.class) && instrumentedMethod.getParameters().size() == 1) {
+                    implementation = new StackManipulation.Compound(setter(resolution.getField(), instrumentedMethod.getParameters().get(0)), MethodReturn.VOID);
+                } else {
+                    throw new IllegalArgumentException("Method " + implementationContext + " is no bean property");
+                }
+                return new Size(implementation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private ForImplicitProperty getOuter() {
+                return ForImplicitProperty.this;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Appender appender = (Appender) object;
+                return fieldLocator.equals(appender.fieldLocator) && ForImplicitProperty.this.equals(appender.getOuter());
+            }
+
+            @Override
+            public int hashCode() {
+                return fieldLocator.hashCode() + 31 * ForImplicitProperty.this.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FieldAccessor.ForImplicitProperty.Appender{" +
+                        "outer=" + ForImplicitProperty.this +
+                        ", fieldLocator=" + fieldLocator +
+                        '}';
+            }
         }
     }
 
     /**
-     * Implementation of a field accessor implementation where the field name is given explicitly.
+     * A field accessor that sets a parameters value of a given index.
      */
-    protected static class ForNamedField extends FieldAccessor implements OwnerTypeLocatable {
+    protected static class ForParameterSetter extends FieldAccessor implements Implementation.Composable {
 
         /**
-         * The name of the field that is accessed.
+         * The targeted parameter index.
          */
-        private final String fieldName;
+        private final int index;
 
         /**
-         * The field locator factory for implementing this field accessor.
+         * The termination handler to apply.
          */
-        private final FieldLocator.Factory fieldLocatorFactory;
+        private final TerminationHandler terminationHandler;
 
         /**
-         * Creates a field accessor implementation for a field of a given name.
+         * Creates a new field accessor.
          *
-         * @param assigner  The assigner to use.
-         * @param typing    Indicates if dynamic type castings should be attempted for incompatible assignments.
-         * @param fieldName The name of the field.
-         */
-        protected ForNamedField(Assigner assigner, Assigner.Typing typing, String fieldName) {
-            super(assigner, typing);
-            this.fieldName = fieldName;
-            fieldLocatorFactory = FieldLocator.ForClassHierarchy.Factory.INSTANCE;
-        }
-
-        /**
-         * reates a field accessor implementation for a field of a given name.
-         *
-         * @param fieldName           The name of the field.
-         * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
-         * @param fieldLocatorFactory A factory that will produce a field locator that will be used to find locate
-         *                            a field to be accessed.
+         * @param fieldLocatorFactory The field name extractor to be used.
+         * @param fieldNameExtractor  A factory for creating a field locator for implementing this field accessor.
          * @param assigner            The assigner to use.
+         * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @param index               The targeted parameter index.
          */
-        private ForNamedField(Assigner assigner,
-                              Assigner.Typing typing,
-                              String fieldName,
-                              FieldLocator.Factory fieldLocatorFactory) {
-            super(assigner, typing);
-            this.fieldName = fieldName;
-            this.fieldLocatorFactory = fieldLocatorFactory;
+        protected ForParameterSetter(FieldNameExtractor fieldNameExtractor,
+                                     FieldLocator.Factory fieldLocatorFactory,
+                                     Assigner assigner,
+                                     Assigner.Typing typing, int index) {
+            this(fieldNameExtractor, fieldLocatorFactory, assigner, typing, index, TerminationHandler.RETURNING);
         }
 
-        @Override
-        public AssignerConfigurable in(FieldLocator.Factory factory) {
-            return new ForNamedField(assigner,
-                    typing,
-                    fieldName,
-                    factory);
-        }
-
-        @Override
-        public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(type));
-        }
-
-        @Override
-        public AssignerConfigurable in(TypeDescription typeDescription) {
-            return typeDescription.represents(TargetType.class)
-                    ? in(FieldLocator.ForClassHierarchy.Factory.INSTANCE)
-                    : in(new FieldLocator.ForExactType.Factory(typeDescription));
-        }
-
-        @Override
-        public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForNamedField(assigner,
-                    typing,
-                    fieldName,
-                    fieldLocatorFactory);
+        /**
+         * Creates a new field accessor.
+         *
+         * @param fieldLocatorFactory The field name extractor to be used.
+         * @param fieldNameExtractor  A factory for creating a field locator for implementing this field accessor.
+         * @param assigner            The assigner to use.
+         * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @param index               The targeted parameter index.
+         * @param terminationHandler  The termination handler to apply.
+         */
+        private ForParameterSetter(FieldNameExtractor fieldNameExtractor,
+                                   FieldLocator.Factory fieldLocatorFactory,
+                                   Assigner assigner,
+                                   Assigner.Typing typing,
+                                   int index,
+                                   TerminationHandler terminationHandler) {
+            super(fieldNameExtractor, fieldLocatorFactory, assigner, typing);
+            this.index = index;
+            this.terminationHandler = terminationHandler;
         }
 
         @Override
@@ -478,111 +526,148 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         @Override
-        protected String getFieldName(MethodDescription targetMethod) {
-            return fieldName;
+        public Implementation andThen(Implementation implementation) {
+            return new Compound(new ForParameterSetter(fieldNameExtractor,
+                    fieldLocatorFactory,
+                    assigner,
+                    typing,
+                    index, TerminationHandler.NON_OPERATIONAL), implementation);
         }
 
         @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (!super.equals(other)) return false;
-            ForNamedField that = (ForNamedField) other;
-            return fieldLocatorFactory.equals(that.fieldLocatorFactory)
-                    && fieldName.equals(that.fieldName);
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            if (!super.equals(object)) return false;
+            ForParameterSetter that = (ForParameterSetter) object;
+            return index == that.index && terminationHandler == that.terminationHandler;
         }
 
         @Override
         public int hashCode() {
             int result = super.hashCode();
-            result = 31 * result + fieldName.hashCode();
-            result = 31 * result + fieldLocatorFactory.hashCode();
+            result = 31 * result + index;
+            result = 31 * result + terminationHandler.hashCode();
             return result;
         }
 
         @Override
         public String toString() {
-            return "FieldAccessor.ForNamedField{" +
-                    "assigner=" + assigner +
-                    ", fieldName='" + fieldName + '\'' +
-                    ", typing=" + typing +
+            return "FieldAccessor.ForParameterSetter{" +
+                    "fieldNameExtractor=" + fieldNameExtractor +
                     ", fieldLocatorFactory=" + fieldLocatorFactory +
-                    '}';
-        }
-    }
-
-    /**
-     * An byte code appender for an field accessor implementation.
-     */
-    protected class Appender implements ByteCodeAppender {
-
-        /**
-         * The field locator for implementing this appender.
-         */
-        private final FieldLocator fieldLocator;
-
-        /**
-         * Creates a new byte code appender for a field accessor implementation.
-         *
-         * @param fieldLocator The field locator for this byte code appender.
-         */
-        protected Appender(FieldLocator fieldLocator) {
-            this.fieldLocator = fieldLocator;
-        }
-
-        @Override
-        public Size apply(MethodVisitor methodVisitor,
-                          Implementation.Context implementationContext,
-                          MethodDescription instrumentedMethod) {
-            if (isConstructor().matches(instrumentedMethod)) {
-                throw new IllegalArgumentException("Constructors cannot define beans: " + instrumentedMethod);
-            }
-            FieldLocator.Resolution resolution = fieldLocator.locate(getFieldName(instrumentedMethod));
-            if (!resolution.isResolved() || (instrumentedMethod.isStatic() && !resolution.getField().isStatic())) {
-                throw new IllegalStateException("Cannot locate accessible field for " + instrumentedMethod);
-            }
-            if (takesArguments(0).and(not(returns(void.class))).matches(instrumentedMethod)) {
-                return applyGetter(methodVisitor,
-                        implementationContext,
-                        resolution.getField(),
-                        instrumentedMethod);
-            } else if (takesArguments(1).and(returns(void.class)).matches(instrumentedMethod)) {
-                return applySetter(methodVisitor,
-                        implementationContext,
-                        resolution.getField(),
-                        instrumentedMethod);
-            } else {
-                throw new IllegalArgumentException("Method " + implementationContext + " is no bean property");
-            }
+                    ", assigner=" + assigner +
+                    ", typing=" + typing +
+                    ", index=" + index +
+                    ", terminationHandler=" + terminationHandler +
+                    "}";
         }
 
         /**
-         * Returns the outer instance.
-         *
-         * @return The outer instance.
+         * A termination handler is responsible for handling a field accessor's return.
          */
-        private FieldAccessor getFieldAccessor() {
-            return FieldAccessor.this;
+        protected enum TerminationHandler {
+
+            /**
+             * Returns {@code void} or throws an exception if this is not the return type of the instrumented method.
+             */
+            RETURNING {
+                @Override
+                protected StackManipulation resolve(MethodDescription instrumentedMethod) {
+                    if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                        throw new IllegalStateException("Cannot implement setter with return value for " + instrumentedMethod);
+                    }
+                    return MethodReturn.VOID;
+                }
+            },
+
+            /**
+             * Does not return from the method at all.
+             */
+            NON_OPERATIONAL {
+                @Override
+                protected StackManipulation resolve(MethodDescription instrumentedMethod) {
+                    return StackManipulation.Trivial.INSTANCE;
+                }
+            };
+
+            /**
+             * Resolves the return instruction.
+             *
+             * @param instrumentedMethod The instrumented method.
+             * @return An appropriate stack manipulation.
+             */
+            protected abstract StackManipulation resolve(MethodDescription instrumentedMethod);
+
+            @Override
+            public String toString() {
+                return "FieldAccessor.ForParameterSetter.TerminationHandler." + name();
+            }
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && fieldLocator.equals(((Appender) other).fieldLocator)
-                    && FieldAccessor.this.equals(((Appender) other).getFieldAccessor());
-        }
+        /**
+         * An appender for a field accessor that sets a parameter of a given index.
+         */
+        protected class Appender implements ByteCodeAppender {
 
-        @Override
-        public int hashCode() {
-            return 31 * FieldAccessor.this.hashCode() + fieldLocator.hashCode();
-        }
+            /**
+             * The field locator for implementing this appender.
+             */
+            private final FieldLocator fieldLocator;
 
-        @Override
-        public String toString() {
-            return "FieldAccessor.Appender{" +
-                    "fieldLocator=" + fieldLocator +
-                    "fieldAccessor=" + FieldAccessor.this +
-                    '}';
+            /**
+             * Creates a new byte code appender for a field accessor implementation.
+             *
+             * @param fieldLocator The field locator for this byte code appender.
+             */
+            protected Appender(FieldLocator fieldLocator) {
+                this.fieldLocator = fieldLocator;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.fieldNameFor(instrumentedMethod));
+                if (!resolution.isResolved()) {
+                    throw new IllegalStateException("Cannot locate accessible field for " + instrumentedMethod + " with " + fieldLocator);
+                } else if (instrumentedMethod.getParameters().size() <= index) {
+                    throw new IllegalStateException(instrumentedMethod + " does not define a parameter with index " + index);
+                } else {
+                    return new Size(new StackManipulation.Compound(
+                            setter(resolution.getField(), instrumentedMethod.getParameters().get(index)),
+                            terminationHandler.resolve(instrumentedMethod)
+                    ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+                }
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private ForParameterSetter getOuter() {
+                return ForParameterSetter.this;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForParameterSetter.Appender appender = (ForParameterSetter.Appender) object;
+                return fieldLocator.equals(appender.fieldLocator) && ForParameterSetter.this.equals(appender.getOuter());
+            }
+
+            @Override
+            public int hashCode() {
+                return fieldLocator.hashCode() + 31 * ForParameterSetter.this.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FieldAccessor.ForParameterSetter.Appender{" +
+                        "outer=" + ForParameterSetter.this +
+                        ", fieldLocator=" + fieldLocator +
+                        '}';
+            }
         }
     }
 }

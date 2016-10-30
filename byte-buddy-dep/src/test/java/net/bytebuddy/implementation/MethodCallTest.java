@@ -787,8 +787,7 @@ public class MethodCallTest {
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.WithImplicitType.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForSuperMethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForDefaultMethodInvocation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TerminationHandler.ForChainedInvocation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TerminationHandler.ForMethodReturn.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.TerminationHandler.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForInstanceField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForSelfOrStaticInvocation.class).apply();

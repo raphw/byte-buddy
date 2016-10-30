@@ -522,8 +522,7 @@ public class InvokeDynamicTest {
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodInstanceAndParameters.class).apply();
         ObjectPropertyAssertion.of(InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.TerminationHandler.ForMethodReturn.class).apply();
-        ObjectPropertyAssertion.of(InvokeDynamic.TerminationHandler.ForChainedInvocation.class).apply();
+        ObjectPropertyAssertion.of(InvokeDynamic.TerminationHandler.class).apply();
     }
 
     public static class Simple {

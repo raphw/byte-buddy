@@ -215,7 +215,7 @@ public class MethodCall implements Implementation.Composable {
                 TargetHandler.ForConstructingInvocation.INSTANCE,
                 Collections.<ArgumentLoader.Factory>emptyList(),
                 MethodInvoker.ForContextualInvocation.INSTANCE,
-                TerminationHandler.ForMethodReturn.INSTANCE,
+                TerminationHandler.RETURNING,
                 Assigner.DEFAULT,
                 Assigner.Typing.STATIC);
     }
@@ -469,7 +469,7 @@ public class MethodCall implements Implementation.Composable {
                 targetHandler,
                 argumentLoaders,
                 methodInvoker,
-                TerminationHandler.ForChainedInvocation.INSTANCE,
+                TerminationHandler.DROPPING,
                 assigner,
                 typing), implementation);
     }
@@ -2451,32 +2451,12 @@ public class MethodCall implements Implementation.Composable {
      * A termination handler is responsible to handle the return value of a method that is invoked via a
      * {@link net.bytebuddy.implementation.MethodCall}.
      */
-    protected interface TerminationHandler {
+    protected enum TerminationHandler {
 
         /**
-         * Returns a stack manipulation that handles the method return.
-         *
-         * @param invokedMethod      The method that was invoked by the method call.
-         * @param instrumentedMethod The method being intercepted.
-         * @param assigner           The assigner to be used.
-         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
-         * @return A stack manipulation that handles the method return.
+         * A termination handler that returns the invoked method's return value.
          */
-        StackManipulation resolve(MethodDescription invokedMethod,
-                                  MethodDescription instrumentedMethod,
-                                  Assigner assigner,
-                                  Assigner.Typing typing);
-
-        /**
-         * Returns the return value of the method call from the intercepted method.
-         */
-        enum ForMethodReturn implements TerminationHandler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
+        RETURNING {
             @Override
             public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = assigner.assign(invokedMethod.isConstructor()
@@ -2488,35 +2468,37 @@ public class MethodCall implements Implementation.Composable {
                 return new StackManipulation.Compound(stackManipulation,
                         MethodReturn.of(instrumentedMethod.getReturnType().asErasure()));
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TerminationHandler.ForMethodReturn." + name();
-            }
-        }
+        },
 
         /**
-         * Drops the return value of the called method from the operand stack without returning from the intercepted
-         * method.
+         * A termination handler that drops the invoked method's return value.
          */
-        enum ForChainedInvocation implements TerminationHandler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
+        DROPPING {
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
+            protected StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                 return Removal.pop(invokedMethod.isConstructor()
                         ? invokedMethod.getDeclaringType().asErasure()
                         : invokedMethod.getReturnType().asErasure());
             }
+        };
 
-            @Override
-            public String toString() {
-                return "MethodCall.TerminationHandler.ForChainedInvocation." + name();
-            }
+        /**
+         * Returns a stack manipulation that handles the method return.
+         *
+         * @param invokedMethod      The method that was invoked by the method call.
+         * @param instrumentedMethod The method being intercepted.
+         * @param assigner           The assigner to be used.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @return A stack manipulation that handles the method return.
+         */
+        protected abstract StackManipulation resolve(MethodDescription invokedMethod,
+                                                     MethodDescription instrumentedMethod,
+                                                     Assigner assigner,
+                                                     Assigner.Typing typing);
+
+        @Override
+        public String toString() {
+            return "MethodCall.TerminationHandler." + name();
         }
     }
 
@@ -2539,7 +2521,7 @@ public class MethodCall implements Implementation.Composable {
                     TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
                     Collections.<ArgumentLoader.Factory>emptyList(),
                     MethodInvoker.ForContextualInvocation.INSTANCE,
-                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    TerminationHandler.RETURNING,
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
         }
@@ -2568,7 +2550,7 @@ public class MethodCall implements Implementation.Composable {
                     new TargetHandler.ForStaticField(target, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(type)),
                     argumentLoaders,
                     new MethodInvoker.ForVirtualInvocation(type),
-                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    terminationHandler,
                     assigner,
                     typing);
         }
@@ -2587,7 +2569,7 @@ public class MethodCall implements Implementation.Composable {
                     new TargetHandler.ForMethodParameter(index),
                     argumentLoaders,
                     MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
-                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    terminationHandler,
                     assigner,
                     typing);
         }
@@ -2617,7 +2599,7 @@ public class MethodCall implements Implementation.Composable {
                     new TargetHandler.ForInstanceField(fieldName, typeDescription),
                     argumentLoaders,
                     new MethodInvoker.ForVirtualInvocation(typeDescription.asErasure()),
-                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    terminationHandler,
                     assigner,
                     typing);
         }
@@ -2635,7 +2617,7 @@ public class MethodCall implements Implementation.Composable {
                     TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
                     argumentLoaders,
                     MethodInvoker.ForSuperMethodInvocation.INSTANCE,
-                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    terminationHandler,
                     assigner,
                     typing);
         }
@@ -2650,7 +2632,7 @@ public class MethodCall implements Implementation.Composable {
                     TargetHandler.ForSelfOrStaticInvocation.INSTANCE,
                     argumentLoaders,
                     MethodInvoker.ForDefaultMethodInvocation.INSTANCE,
-                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    terminationHandler,
                     assigner,
                     typing);
         }
