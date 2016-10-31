@@ -120,8 +120,8 @@ public abstract class FieldAccessor implements Implementation {
      * @return A stack manipulation that sets the field's value.
      */
     protected StackManipulation setter(FieldDescription fieldDescription, ParameterDescription parameterDescription) {
-        if (fieldDescription.isFinal() && !parameterDescription.getDeclaringMethod().isConstructor()) {
-            throw new IllegalArgumentException("Cannot apply setter on final field " + fieldDescription + " outside of constructor");
+        if (fieldDescription.isFinal() && parameterDescription.getDeclaringMethod().isMethod()) {
+            throw new IllegalArgumentException("Cannot set final field " + fieldDescription + " from " + parameterDescription.getDeclaringMethod());
         }
         return access(fieldDescription,
                 parameterDescription.getDeclaringMethod(),
