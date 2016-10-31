@@ -142,8 +142,6 @@ public abstract class FieldAccessor implements Implementation {
         if (!fieldAccess.isValid()) {
             throw new IllegalStateException("Incompatible type of " + fieldDescription + " and " + instrumentedMethod);
         } else if (instrumentedMethod.isStatic() && !fieldDescription.isStatic()) {
-            throw new IllegalStateException("Cannot access non-static " + fieldDescription + " from " + instrumentedMethod);
-        } else if (instrumentedMethod.isStatic() && !fieldDescription.isStatic()) {
             throw new IllegalArgumentException("Cannot call instance field " + fieldDescription + " from static method " + instrumentedMethod);
         }
         return new StackManipulation.Compound(fieldDescription.isStatic()
