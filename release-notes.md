@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 31. October 2016: version 1.5.2
+
+- Refactored `FieldAccessor` to allow more flexible creation of getters and setters of particular parameters.
+- Create string-based hashes for random fields that depend on a value's hash value.
+
 ### 27. October 2016: version 1.5.1
 
 - Fixed stack size computation when using `@Advice.Origin`.
