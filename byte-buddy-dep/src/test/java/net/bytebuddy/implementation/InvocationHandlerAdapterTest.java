@@ -168,6 +168,7 @@ public class InvocationHandlerAdapterTest {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstance.class).apply();
         ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstance.Appender.class).apply();
         ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForInstance.Appender.class).skipSynthetic().apply();
         ObjectPropertyAssertion.of(InvocationHandlerAdapter.ForField.class).apply();
