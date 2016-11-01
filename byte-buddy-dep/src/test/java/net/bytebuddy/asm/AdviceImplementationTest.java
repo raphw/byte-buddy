@@ -2,9 +2,11 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.StubMethod;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -12,23 +14,18 @@ public class AdviceImplementationTest {
 
     private static final String FOO = "foo";
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testAbstractMethod() throws Exception {
-        assertThat(new ByteBuddy()
+        new ByteBuddy()
                 .subclass(Foo.class)
                 .method(named(FOO))
                 .intercept(Advice.to(Foo.class))
-                .make()
-                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded()
-                .getDeclaredConstructor()
-                .newInstance()
-                .foo(), is(FOO));
+                .make();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testActualMethod() throws Exception {
-        new ByteBuddy()
+        assertThat(new ByteBuddy()
                 .subclass(Bar.class)
                 .method(named(FOO))
                 .intercept(Advice.to(Bar.class))
@@ -37,21 +34,35 @@ public class AdviceImplementationTest {
                 .getLoaded()
                 .getDeclaredConstructor()
                 .newInstance()
-                .foo();
+                .foo(), is((Object) FOO));
     }
 
     @Test
-    public void testActualMethodReplaced() throws Exception {
+    public void testExplicitWrap() throws Exception {
         assertThat(new ByteBuddy()
                 .subclass(Qux.class)
                 .method(named(FOO))
-                .intercept(Advice.to(Qux.class).replaceExisting())
+                .intercept(Advice.to(Qux.class).wrap(StubMethod.INSTANCE))
                 .make()
                 .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .getDeclaredConstructor()
                 .newInstance()
                 .foo(), is(FOO));
+    }
+
+    @Test
+    public void testExplicitWrapMultiple() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Baz.class)
+                .method(named(FOO))
+                .intercept(Advice.to(Baz.class).wrap(Advice.to(Baz.class).wrap(StubMethod.INSTANCE)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Object baz = type.getDeclaredConstructor().newInstance();
+        assertThat(type.getDeclaredMethod(FOO).invoke(baz), nullValue(Object.class));
+        assertThat(type.getDeclaredField(FOO).getInt(null), is(2));
     }
 
     public abstract static class Foo {
@@ -66,16 +77,17 @@ public class AdviceImplementationTest {
 
     public static class Bar {
 
-        public void foo() {
+        public Object foo() {
             throw new RuntimeException();
         }
 
         @Advice.OnMethodExit(onThrowable = RuntimeException.class)
-        public static void exit(@Advice.Thrown(readOnly = false) Throwable throwable) {
+        public static void exit(@Advice.Thrown(readOnly = false) Throwable throwable, @Advice.Return(readOnly = false) Object returned) {
             if (!(throwable instanceof RuntimeException)) {
                 throw new AssertionError();
             }
-            throwable = new IllegalStateException();
+            throwable = null;
+            returned = FOO;
         }
     }
 
@@ -91,6 +103,20 @@ public class AdviceImplementationTest {
                 throw new AssertionError();
             }
             returned = FOO;
+        }
+    }
+
+    public static class Baz {
+
+        public static int foo;
+
+        public void foo() {
+            /* empty */
+        }
+
+        @Advice.OnMethodExit
+        public static void exit() {
+            foo += 1;
         }
     }
 }

@@ -14,12 +14,9 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
-import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
@@ -79,9 +76,8 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * <p>
  * Advice can be used either as a {@link AsmVisitorWrapper} where any declared methods of the currently instrumented type are enhanced without
  * replacing an existing implementation. Alternatively, advice can function as an {@link Implementation} where, by default, the original super
- * or default method of the instrumented method is invoked. If no such method exists or it cannot be invoked, the method is implemented as a method
- * stub. Such stubbing behavior can also be required by {@link Advice#replaceExisting()}. Doing the latter, it typically makes sense to only
- * implement advice using {@link OnMethodExit} where the complete behavior of the method is specified within the advice method.
+ * or default method of the instrumented method is invoked. If this is not possible or undesired, the delegate implementation can be changed
+ * by specifying a wrapped implementation explicitly by {@link Advice#wrap(Implementation)}.
  * </p>
  * <p>
  * When using an advice class as a visitor wrapper, native or abstract methods which are silently skipped when advice matches such a method.
@@ -188,9 +184,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     private final Dispatcher.Resolved.ForMethodExit methodExit;
 
     /**
-     * {@code true} if this advice should replace a super method invocation if used as an {@link Implementation}.
+     * The delegate implementation to apply if this advice is used as an instrumentation.
      */
-    private final boolean replace;
+    private final Implementation delegate;
 
     /**
      * Creates a new advice.
@@ -199,7 +195,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
      */
     protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit) {
-        this(methodEnter, methodExit, false);
+        this(methodEnter, methodExit, SuperMethodCall.INSTANCE);
     }
 
     /**
@@ -207,12 +203,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      *
      * @param methodEnter The dispatcher for instrumenting the instrumented method upon entering.
      * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
-     * @param replace     {@code true} if this advice should replace a super method invocation if used as an {@link Implementation}.
+     * @param delegate    The delegate implementation to apply if this advice is used as an instrumentation.
      */
-    private Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit, boolean replace) {
+    private Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit, Implementation delegate) {
         this.methodEnter = methodEnter;
         this.methodExit = methodExit;
-        this.replace = replace;
+        this.delegate = delegate;
     }
 
     /**
@@ -491,39 +487,43 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     @Override
     public InstrumentedType prepare(InstrumentedType instrumentedType) {
-        return instrumentedType;
+        return delegate.prepare(instrumentedType);
     }
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new Appender(this, implementationTarget, replace);
+        return new Appender(this, implementationTarget, delegate.appender(implementationTarget));
     }
 
     /**
-     * Returns an {@link Implementation} for this advice that does not attempt to invoke a super method, if existent, but fully replaces
-     * the original method call with a stub method implementation.
+     * Wraps the supplied implementation to have this advice applied around it.
      *
-     * @return An implementation of this advice.
+     * @param implementation The implementation to wrap.
+     * @return An implementation that applies the supplied implementation and wraps it with this advice.
      */
-    public Implementation replaceExisting() {
-        return new Advice(methodEnter, methodExit, true);
+    public Implementation wrap(Implementation implementation) {
+        return new Advice(methodEnter, methodExit, implementation);
     }
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
+        if (this == other) {
+            return true;
+        }
+        if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
         Advice advice = (Advice) other;
         return methodEnter.equals(advice.methodEnter)
                 && methodExit.equals(advice.methodExit)
-                && replace == advice.replace;
+                && delegate.equals(advice.delegate);
     }
 
     @Override
     public int hashCode() {
         int result = methodEnter.hashCode();
         result = 31 * result + methodExit.hashCode();
-        result = 31 * result + (replace ? 1 : 0);
+        result = 31 * result + delegate.hashCode();
         return result;
     }
 
@@ -532,7 +532,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return "Advice{" +
                 "methodEnter=" + methodEnter +
                 ", methodExit=" + methodExit +
-                ", replace=" + replace +
+                ", delegate=" + delegate +
                 '}';
     }
 
@@ -2067,8 +2067,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         ForBoxedDefaultValue that = (ForBoxedDefaultValue) other;
                         return primitiveDispatcher == that.primitiveDispatcher;
                     }
@@ -2138,8 +2142,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         ForParameter forParameter = (ForParameter) other;
                         return offset == forParameter.offset;
                     }
@@ -2254,9 +2262,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                             @Override
                             public boolean equals(Object other) {
-                                if (this == other) return true;
-                                if (other == null || getClass() != other.getClass()) return false;
-                                if (!super.equals(other)) return false;
+                                if (this == other) {
+                                    return true;
+                                }
+                                if (other == null || getClass() != other.getClass()) {
+                                    return false;
+                                }
+                                if (!super.equals(other)) {
+                                    return false;
+                                }
                                 WithCasting that = (WithCasting) other;
                                 return targetType.equals(that.targetType);
                             }
@@ -2356,8 +2370,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         ForField forField = (ForField) other;
                         return fieldDescription.equals(forField.fieldDescription);
                     }
@@ -2521,8 +2539,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         ForConstantPoolValue that = (ForConstantPoolValue) other;
                         return value.equals(that.value);
                     }
@@ -2592,8 +2614,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
+                        if (this == object) {
+                            return true;
+                        }
+                        if (object == null || getClass() != object.getClass()) {
+                            return false;
+                        }
                         ForType forType = (ForType) object;
                         return typeDescription.equals(forType.typeDescription);
                     }
@@ -2665,8 +2691,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         ForBoxedArgument that = (ForBoxedArgument) other;
                         return offset == that.offset && primitiveDispatcher == that.primitiveDispatcher;
                     }
@@ -2821,8 +2851,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         ForBoxedArguments that = (ForBoxedArguments) other;
                         return parameters.equals(that.parameters);
                     }
@@ -3006,8 +3040,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
+                        if (this == object) {
+                            return true;
+                        }
+                        if (object == null || getClass() != object.getClass()) {
+                            return false;
+                        }
                         ForExecutable that = (ForExecutable) object;
                         return methodDescription.equals(that.methodDescription);
                     }
@@ -3257,8 +3295,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         ForSerializedObject that = (ForSerializedObject) other;
                         return target.equals(that.target) && serialized.equals(that.serialized);
                     }
@@ -3359,8 +3401,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     ForParameter that = (ForParameter) other;
                     return index == that.index
                             && readOnly == that.readOnly
@@ -3492,8 +3538,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     ForThisReference that = (ForThisReference) other;
                     return readOnly == that.readOnly
                             && optional == that.optional
@@ -3721,8 +3771,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     ForField forField = (ForField) other;
                     return name.equals(forField.name) && targetType.equals(forField.targetType) && readOnly == forField.readOnly;
                 }
@@ -3806,9 +3860,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        if (!super.equals(other)) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
+                        if (!super.equals(other)) {
+                            return false;
+                        }
                         WithExplicitType that = (WithExplicitType) other;
                         return explicitType.equals(that.explicitType);
                     }
@@ -3970,8 +4030,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     ForOrigin forOrigin = (ForOrigin) other;
                     return renderers.equals(forOrigin.renderers);
                 }
@@ -4189,8 +4253,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
+                            if (this == other) {
+                                return true;
+                            }
+                            if (other == null || getClass() != other.getClass()) {
+                                return false;
+                            }
                             ForConstantValue that = (ForConstantValue) other;
                             return value.equals(that.value);
                         }
@@ -4408,8 +4476,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         Factory factory = (Factory) other;
                         return readOnly == factory.readOnly && enterType.equals(factory.enterType);
                     }
@@ -4471,8 +4543,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     ForReturnValue that = (ForReturnValue) other;
                     return readOnly == that.readOnly && targetType.equals(that.targetType);
                 }
@@ -4777,8 +4853,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     ForThrowable forThrowable = (ForThrowable) other;
                     return readOnly == forThrowable.readOnly
                             && targetType.equals(forThrowable.targetType)
@@ -4861,8 +4941,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         Factory factory = (Factory) other;
                         return readOnly == factory.readOnly && triggeringThrowable.equals(factory.triggeringThrowable);
                     }
@@ -4954,8 +5038,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     ForUserValue that = (ForUserValue) other;
                     return target.equals(that.target)
                             && annotation.equals(that.annotation)
@@ -5029,8 +5117,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
                         Factory factory = (Factory) other;
                         return type.equals(factory.type) && dynamicValue.equals(factory.dynamicValue);
                     }
@@ -5093,8 +5185,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     Illegal illegal = (Illegal) other;
                     return annotations.equals(illegal.annotations);
                 }
@@ -5257,8 +5353,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     Suppressing that = (Suppressing) other;
                     return suppressedType.equals(that.suppressedType);
                 }
@@ -5643,8 +5743,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                             @Override
                             public boolean equals(Object other) {
-                                if (other == this) return true;
-                                if (!(other instanceof Inverted)) return false;
+                                if (other == this) {
+                                    return true;
+                                }
+                                if (!(other instanceof Inverted)) {
+                                    return false;
+                                }
                                 Inverted inverted = (Inverted) other;
                                 return inverted.getOuter().equals(ForValue.this);
                             }
@@ -5728,8 +5832,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
+                            if (this == other) {
+                                return true;
+                            }
+                            if (other == null || getClass() != other.getClass()) {
+                                return false;
+                            }
                             ForType forType = (ForType) other;
                             return typeDescription.equals(forType.typeDescription);
                         }
@@ -6046,8 +6154,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     Inlining.Resolved resolved = (Inlining.Resolved) other;
                     return adviceMethod.equals(resolved.adviceMethod) && offsetMappings.equals(resolved.offsetMappings);
                 }
@@ -6413,9 +6525,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        if (!super.equals(other)) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
+                        if (!super.equals(other)) {
+                            return false;
+                        }
                         Inlining.Resolved.ForMethodEnter that = (Inlining.Resolved.ForMethodEnter) other;
                         return skipDispatcher == that.skipDispatcher && prependLineNumber == that.prependLineNumber;
                     }
@@ -7277,8 +7395,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
+                    if (this == other) {
+                        return true;
+                    }
+                    if (other == null || getClass() != other.getClass()) {
+                        return false;
+                    }
                     Delegating.Resolved resolved = (Delegating.Resolved) other;
                     return adviceMethod.equals(resolved.adviceMethod) && offsetMappings.equals(resolved.offsetMappings);
                 }
@@ -7631,9 +7753,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        if (!super.equals(other)) return false;
+                        if (this == other) {
+                            return true;
+                        }
+                        if (other == null || getClass() != other.getClass()) {
+                            return false;
+                        }
+                        if (!super.equals(other)) {
+                            return false;
+                        }
                         Delegating.Resolved.ForMethodEnter that = (Delegating.Resolved.ForMethodEnter) other;
                         return skipDispatcher == that.skipDispatcher && prependLineNumber == that.prependLineNumber;
                     }
@@ -8458,47 +8586,46 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         private final Implementation.Target implementationTarget;
 
         /**
-         * {@code true} if no attempt should be made to invoke a super or default method implementation.
+         * The delegate byte code appender.
          */
-        private final boolean replace;
+        private final ByteCodeAppender delegate;
 
         /**
          * Creates a new appender for an advice component.
          *
          * @param advice               The advice to implement.
          * @param implementationTarget The current implementation target.
-         * @param replace              {@code true} if no attempt should be made to invoke a super or default method implementation.
+         * @param delegate             The delegate byte code appender.
          */
-        protected Appender(Advice advice, Target implementationTarget, boolean replace) {
+        protected Appender(Advice advice, Target implementationTarget, ByteCodeAppender delegate) {
             this.advice = advice;
             this.implementationTarget = implementationTarget;
-            this.replace = replace;
+            this.delegate = delegate;
         }
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            EmulatingMethodVisitor emulatingMethodVisitor = new EmulatingMethodVisitor(methodVisitor, instrumentedMethod);
+            EmulatingMethodVisitor emulatingMethodVisitor = new EmulatingMethodVisitor(methodVisitor, delegate);
             methodVisitor = advice.doWrap(implementationTarget.getInstrumentedType(),
                     instrumentedMethod,
                     emulatingMethodVisitor,
                     implementationContext.getClassFileVersion(),
                     AsmVisitorWrapper.NO_FLAGS,
                     AsmVisitorWrapper.NO_FLAGS);
-            StackManipulation invocation = replace
-                    ? StackManipulation.Illegal.INSTANCE
-                    : implementationTarget.invokeDominant(instrumentedMethod.asSignatureToken());
-            return emulatingMethodVisitor.resolve(methodVisitor, implementationContext, new StackManipulation.Compound(invocation.isValid()
-                    ? new StackManipulation.Compound(MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(), invocation)
-                    : DefaultValue.of(instrumentedMethod.getReturnType()), MethodReturn.of(instrumentedMethod.getReturnType())));
+            return emulatingMethodVisitor.resolve(methodVisitor, implementationContext, instrumentedMethod);
         }
 
         @Override
         public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
+            if (this == object) {
+                return true;
+            }
+            if (object == null || getClass() != object.getClass()) {
+                return false;
+            }
             Appender appender = (Appender) object;
             return advice.equals(appender.advice)
-                    && replace == appender.replace
+                    && delegate.equals(appender.delegate)
                     && implementationTarget.equals(appender.implementationTarget);
         }
 
@@ -8506,7 +8633,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public int hashCode() {
             int result = advice.hashCode();
             result = 31 * result + implementationTarget.hashCode();
-            result = 31 * result + (replace ? 1 : 0);
+            result = 31 * result + delegate.hashCode();
             return result;
         }
 
@@ -8515,7 +8642,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return "Advice.Appender{" +
                     "advice=" + advice +
                     ", implementationTarget=" + implementationTarget +
-                    ", replace=" + replace +
+                    ", delegate=" + delegate +
                     '}';
         }
 
@@ -8526,9 +8653,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected static class EmulatingMethodVisitor extends MethodVisitor {
 
             /**
-             * The instrumented method.
+             * The delegate byte code appender.
              */
-            private final MethodDescription instrumentedMethod;
+            private final ByteCodeAppender delegate;
 
             /**
              * The currently recorded minimal required stack size.
@@ -8543,28 +8670,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates a new emulating method visitor.
              *
-             * @param methodVisitor      The underlying method visitor.
-             * @param instrumentedMethod The instrumented method.
+             * @param methodVisitor The underlying method visitor.
+             * @param delegate      The delegate byte code appender.
              */
-            protected EmulatingMethodVisitor(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
+            protected EmulatingMethodVisitor(MethodVisitor methodVisitor, ByteCodeAppender delegate) {
                 super(Opcodes.ASM5, methodVisitor);
-                this.instrumentedMethod = instrumentedMethod;
+                this.delegate = delegate;
             }
 
             /**
-             * Resolves the current advice class.
+             * Resolves this this advice emulating method visitor for its delegate.
              *
-             * @param methodVisitor         The actual method visitor to delegate to.
-             * @param implementationContext The current implementation context.
-             * @param stackManipulation     The stack manipulation that represents the adviced implementation of the current method.
-             * @return A description of the size of the actually implemented method.
+             * @param methodVisitor         The method visitor to apply.
+             * @param implementationContext The implementation context to apply.
+             * @param instrumentedMethod    The instrumented method.
+             * @return The resulting size of the implemented method.
              */
             protected ByteCodeAppender.Size resolve(MethodVisitor methodVisitor,
                                                     Implementation.Context implementationContext,
-                                                    StackManipulation stackManipulation) {
+                                                    MethodDescription instrumentedMethod) {
                 methodVisitor.visitCode();
-                StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
-                methodVisitor.visitMaxs(size.getMaximalSize(), instrumentedMethod.getStackSize());
+                Size size = delegate.apply(methodVisitor, implementationContext, instrumentedMethod);
+                methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                 methodVisitor.visitEnd();
                 return new ByteCodeAppender.Size(stackSize, localVariableLength);
             }
@@ -8588,7 +8715,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public String toString() {
                 return "Advice.Appender.EmulatingMethodVisitor{" +
-                        "instrumentedMethod=" + instrumentedMethod +
+                        "delegate=" + delegate +
                         ", stackSize=" + stackSize +
                         ", localVariableLength=" + localVariableLength +
                         '}';
@@ -9121,8 +9248,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
+                if (this == other) {
+                    return true;
+                }
+                if (other == null || getClass() != other.getClass()) {
+                    return false;
+                }
                 ForFixedValue that = (ForFixedValue) other;
                 return value != null ? value.equals(that.value) : that.value == null;
             }
@@ -9188,8 +9319,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
+                if (this == other) {
+                    return true;
+                }
+                if (other == null || getClass() != other.getClass()) {
+                    return false;
+                }
                 ForAnnotationProperty<?> that = (ForAnnotationProperty<?>) other;
                 return annotationProperty.equals(that.annotationProperty);
             }
@@ -9386,8 +9521,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (this == other) {
+                return true;
+            }
+            if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
             WithCustomMapping that = (WithCustomMapping) other;
             return dynamicValues.equals(that.dynamicValues);
         }
