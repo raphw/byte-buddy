@@ -171,6 +171,25 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
+     * Invokes the instrumented method recursively. Invoking this method on the same instance causes a {@link StackOverflowError} due to
+     * infinite recursion.
+     *
+     * @return A method call that invokes the method being instrumented.
+     */
+    public static WithoutSpecifiedTarget invokeSelf() {
+        return new WithoutSpecifiedTarget(MethodLocator.ForInstrumentedMethod.INSTANCE);
+    }
+
+    /**
+     * Invokes the instrumented method as a super method call on the instance itself. This is a shortcut for {@code invokeSelf().onSuper()}.
+     *
+     * @return A method call that invokes the method being instrumented as a super method call.
+     */
+    public static MethodCall invokeSuper() {
+        return invokeSelf().onSuper();
+    }
+
+    /**
      * Implements a method by invoking the provided {@link Callable}. The return value of the provided object is casted to the implemented method's
      * return type, if necessary.
      *
@@ -218,15 +237,6 @@ public class MethodCall implements Implementation.Composable {
                 TerminationHandler.RETURNING,
                 Assigner.DEFAULT,
                 Assigner.Typing.STATIC);
-    }
-
-    /**
-     * Invokes the method that is instrumented by the returned instance by a super method invocation.
-     *
-     * @return A method call that invokes the method being instrumented.
-     */
-    public static MethodCall invokeSuper() {
-        return new WithoutSpecifiedTarget(MethodLocator.ForInstrumentedMethod.INSTANCE).onSuper();
     }
 
     /**
