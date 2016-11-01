@@ -453,7 +453,7 @@ public class MethodCall implements Implementation.Composable {
      * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
      * @return This method call using the provided assigner.
      */
-    public MethodCall withAssigner(Assigner assigner, Assigner.Typing typing) {
+    public Implementation.Composable withAssigner(Assigner assigner, Assigner.Typing typing) {
         return new MethodCall(methodLocator,
                 targetHandler,
                 argumentLoaders,
