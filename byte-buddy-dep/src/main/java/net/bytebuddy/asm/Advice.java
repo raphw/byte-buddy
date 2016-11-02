@@ -2521,24 +2521,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             super(fieldDescription);
                         }
 
-                        /**
-                         * Resolves a read-only target for the field description.
-                         *
-                         * @param instrumentedType The instrumented type.
-                         * @param fieldDescription The field which is mapped by this target mapping.
-                         * @return A target for reading a field where the value is boxed, if required.
-                         */
-                        protected static Target of(TypeDescription instrumentedType, FieldDescription.InDefinedShape fieldDescription) {
-                            if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType())) {
-                                throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
-                            } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
-                                throw new IllegalStateException(fieldDescription + " is not visible from " + instrumentedType);
-                            }
-                            return fieldDescription.getType().isPrimitive()
-                                    ? new ReadBoxed(fieldDescription)
-                                    : new ReadOnly(fieldDescription);
-                        }
-
                         @Override
                         public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                             return super.resolveAccess(methodVisitor, opcode) + PrimitiveDispatcher.of(fieldDescription.getType()).box(methodVisitor);
@@ -2635,6 +2617,76 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return "Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue{" +
                                 "value=" + value +
                                 '}';
+                    }
+
+                    /**
+                     * A binding for a constant pool value that is a primitive value and is boxed after loading.
+                     */
+                    protected static class WithBoxing extends ForConstantPoolValue {
+
+                        /**
+                         * The primitive dispatcher to use.
+                         */
+                        private final PrimitiveDispatcher primitiveDispatcher;
+
+                        /**
+                         * Creates a primitive dispatcher that also applied boxing.
+                         *
+                         * @param value               The constant pool value.
+                         * @param primitiveDispatcher The primitive dispatcher to use.
+                         */
+                        protected WithBoxing(Object value, PrimitiveDispatcher primitiveDispatcher) {
+                            super(value);
+                            this.primitiveDispatcher = primitiveDispatcher;
+                        }
+
+                        /**
+                         * Creates a new binding for a constant pool value with a boxed value.
+                         *
+                         * @param value The primitive value to bind.
+                         * @return An appropriate binding target.
+                         */
+                        protected static Target of(Object value) {
+                            return new WithBoxing(value, PrimitiveDispatcher.of(new TypeDescription.ForLoadedType(value.getClass()).asUnboxed()));
+                        }
+
+                        @Override
+                        public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                            try {
+                                return super.resolveAccess(methodVisitor, opcode);
+                            } finally {
+                                primitiveDispatcher.box(methodVisitor);
+                            }
+                        }
+
+                        @Override
+                        public boolean equals(Object object) {
+                            if (this == object) {
+                                return true;
+                            }
+                            if (object == null || getClass() != object.getClass()) {
+                                return false;
+                            }
+                            if (!super.equals(object)) {
+                                return false;
+                            }
+                            WithBoxing that = (WithBoxing) object;
+                            return primitiveDispatcher == that.primitiveDispatcher;
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = super.hashCode();
+                            result = 31 * result + primitiveDispatcher.hashCode();
+                            return result;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.WithBoxing{" +
+                                    "primitiveDispatcher=" + primitiveDispatcher +
+                                    '}';
+                        }
                     }
                 }
 
@@ -5088,27 +5140,64 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Cannot map null to primitive type of " + target);
                         }
                         return Target.ForNullConstant.READ_ONLY;
-                    } else if ((value instanceof String && target.getType().asErasure().isAssignableFrom(String.class))
-                            || (target.getType().isPrimitive() && target.getType().asErasure().isInstanceOrWrapper(value))) {
-                        if (value instanceof Boolean) {
-                            value = (Boolean) value ? 1 : 0;
-                        } else if (value instanceof Byte) {
-                            value = ((Byte) value).intValue();
-                        } else if (value instanceof Short) {
-                            value = ((Short) value).intValue();
-                        } else if (value instanceof Character) {
-                            value = (int) ((Character) value).charValue();
+                    } else if ((value instanceof String)) {
+                        if (!target.getType().asErasure().isAssignableFrom(String.class)) {
+                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
                         }
                         return new Target.ForConstantPoolValue(value);
-                    } else if (value instanceof Class && target.getType().asErasure().isAssignableFrom(Class.class)) {
+                    } else if (value instanceof Boolean
+                            || value instanceof Byte
+                            || value instanceof Short
+                            || value instanceof Character
+                            || value instanceof Integer
+                            || value instanceof Long
+                            || value instanceof Float
+                            || value instanceof Double) {
+                        if (target.getType().isPrimitive() && target.getType().asErasure().asBoxed().isInstance(value)) {
+                            return new Target.ForConstantPoolValue(value);
+                        } else if (target.getType().asErasure().isInstance(value)) {
+                            return Target.ForConstantPoolValue.WithBoxing.of(value);
+                        } else {
+                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
+                        }
+                    } else if (value instanceof Class) {
+                        if (!target.getType().asErasure().isAssignableFrom(Class.class)) {
+                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
+                        }
                         return new Target.ForConstantPoolValue(Type.getType((Class<?>) value));
-                    } else if (value instanceof TypeDescription && target.getType().asErasure().isAssignableFrom(Class.class)) {
+                    } else if (value instanceof TypeDescription) {
+                        if (!target.getType().asErasure().isAssignableFrom(Class.class)) {
+                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
+                        }
                         return new Target.ForConstantPoolValue(Type.getType(((TypeDescription) value).getDescriptor()));
-                    } else if (value instanceof Field && target.getType().represents(Object.class)) {
-                        return Target.ForField.ReadBoxed.of(instrumentedType, new FieldDescription.ForLoadedField((Field) value));
-                    } else if (value instanceof FieldDescription && target.getType().represents(Object.class)) {
-                        return Target.ForField.ReadBoxed.of(instrumentedType, ((FieldDescription) value).asDefined());
-                    } else if (value instanceof Serializable && !target.getType().isPrimitive() && !target.getType().isArray() && target.getType().asErasure().isInstance(value)) {
+                    } else if (value instanceof FieldDescription) {
+                        FieldDescription.InDefinedShape fieldDescription = ((FieldDescription) value).asDefined();
+                        if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType())) {
+                            throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+                        } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
+                            throw new IllegalStateException(fieldDescription + " is not visible from " + instrumentedType);
+                        } else if (fieldDescription.getType().asErasure().isAssignableTo(target.getType().asErasure())) {
+                            return new Target.ForField.ReadOnly(fieldDescription);
+                        } else if (fieldDescription.getType().asErasure().asBoxed().isAssignableTo(target.getType().asErasure())) {
+                            return new Target.ForField.ReadBoxed(fieldDescription);
+                        } else {
+                            throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
+                        }
+                    } else if (value instanceof ParameterDescription) {
+                        ParameterDescription parameterDescription = (ParameterDescription) value;
+                        if (!instrumentedMethod.equals(parameterDescription.getDeclaringMethod())) {
+                            throw new IllegalStateException("Cannot access " + parameterDescription + " from " + instrumentedMethod);
+                        } else if (parameterDescription.getType().asErasure().isAssignableTo(target.getType().asErasure())) {
+                            return new Target.ForParameter.ReadOnly(parameterDescription.getOffset());
+                        } else if (parameterDescription.getType().asErasure().asBoxed().isAssignableTo(target.getType().asErasure())) {
+                            return new Target.ForBoxedArgument.ReadOnly(parameterDescription.getOffset(), Target.PrimitiveDispatcher.of(parameterDescription.getType()));
+                        } else {
+                            throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
+                        }
+                    } else if (value instanceof Serializable) {
+                        if (!target.getType().asErasure().isInstance(value)) {
+                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
+                        }
                         return Target.ForSerializedObject.of(target.getType().asErasure(), (Serializable) value);
                     } else {
                         throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
@@ -9275,7 +9364,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public interface DynamicValue<T extends Annotation> {
 
         /**
-         * Resolves a constant value that is mapped to a parameter that is annotated with a custom bound annotation.
+         * <p>
+         * Resolves a constant value that is mapped to a parameter that is annotated with a custom bound annotation:
+         * </p>
+         * <ul>
+         * <li>A primitive wrapper value allow binding of the primitive which is optionally boxed but never unboxed.</li>
+         * <li>A {@link Class} or {@link TypeDescription} indicate the binding of a type constant.</li>
+         * <li>A {@link FieldDescription} indicates binding the field value. The field must be visible and be declared by a super type or
+         * be static. A field value is optionally boxed but never unboxed,</li>
+         * <li>A {@link ParameterDescription} indicates binding the assigned argument value. The parameter must be declared by the instrumented method.
+         * The parameter value is optionally boxed but never unboxed,</li>
+         * <li>A {@link Serializable} value is serialized and stored Base64 encoded in the constant pool.</li>
+         * </ul>
          *
          * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The instrumented method onto which this advice is applied.
@@ -9283,7 +9383,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param annotation         The annotation that triggered this binding.
          * @param initialized        {@code true} if the method is initialized when the value is bound, i.e. that the value is not
          *                           supplied to a constructor before the super constructor was invoked.
-         * @return The constant pool value that is bound to the supplied parameter or {@code null} to assign this value.
+         * @return A constant value, a serializable value or a field or parameter description to bind to the supplied parameter or
+         * {@code null} to assign this value.
          */
         Object resolve(TypeDescription instrumentedType,
                        MethodDescription instrumentedMethod,
@@ -9451,14 +9552,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Binds the supplied annotation to a type constant of the supplied value.
          *
-         * @param type  The type of the annotation being bound.
-         * @param value The type reference to bind to this annotation.
-         * @param <T>   The annotation type.
+         * @param type            The type of the annotation being bound.
+         * @param typeDescription The type reference to bind to this annotation.
+         * @param <T>             The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          * @see DynamicValue.ForFixedValue
          */
-        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, TypeDescription value) {
-            return bind(type, new DynamicValue.ForFixedValue(value));
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, TypeDescription typeDescription) {
+            return bind(type, new DynamicValue.ForFixedValue(typeDescription));
         }
 
         /**
@@ -9466,28 +9567,78 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * instrumented type and must be declared by a super type of the instrumented field.
          *
          * @param type  The type of the annotation being bound.
-         * @param value The type reference to bind to this annotation.
+         * @param field The field to bind to this annotation.
          * @param <T>   The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          * @see DynamicValue.ForFixedValue
          */
-        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Field value) {
-            return bind(type, new DynamicValue.ForFixedValue(value));
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Field field) {
+            return bind(type, new FieldDescription.ForLoadedField(field));
         }
-
 
         /**
          * Binds the supplied annotation to the value of the supplied field. The field must be visible by the
          * instrumented type and must be declared by a super type of the instrumented field.
          *
-         * @param type  The type of the annotation being bound.
-         * @param value The type reference to bind to this annotation.
-         * @param <T>   The annotation type.
+         * @param type             The type of the annotation being bound.
+         * @param fieldDescription The field to bind to this annotation.
+         * @param <T>              The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          * @see DynamicValue.ForFixedValue
          */
-        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, FieldDescription value) {
-            return bind(type, new DynamicValue.ForFixedValue(value));
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, FieldDescription fieldDescription) {
+            return bind(type, new DynamicValue.ForFixedValue(fieldDescription));
+        }
+
+        /**
+         * Binds the supplied annotation to the supplied parameter's argument.
+         *
+         * @param type   The type of the annotation being bound.
+         * @param method The method that defines the parameter.
+         * @param index  The index of the parameter.
+         * @param <T>    The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         * @see DynamicValue.ForFixedValue
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Method method, int index) {
+            if (index < 0) {
+                throw new IllegalArgumentException("A parameter cannot be negative: " + index);
+            } else if (method.getParameterTypes().length <= index) {
+                throw new IllegalArgumentException(method + " does not declare a parameter with index " + index);
+            }
+            return bind(type, new MethodDescription.ForLoadedMethod(method).getParameters().get(index));
+        }
+
+        /**
+         * Binds the supplied annotation to the supplied parameter's argument.
+         *
+         * @param type        The type of the annotation being bound.
+         * @param constructor The constructor that defines the parameter.
+         * @param index       The index of the parameter.
+         * @param <T>         The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         * @see DynamicValue.ForFixedValue
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Constructor<?> constructor, int index) {
+            if (index < 0) {
+                throw new IllegalArgumentException("A parameter cannot be negative: " + index);
+            } else if (constructor.getParameterTypes().length <= index) {
+                throw new IllegalArgumentException(constructor + " does not declare a parameter with index " + index);
+            }
+            return bind(type, new MethodDescription.ForLoadedConstructor(constructor).getParameters().get(index));
+        }
+
+        /**
+         * Binds the supplied annotation to the supplied parameter's argument.
+         *
+         * @param type                 The type of the annotation being bound.
+         * @param parameterDescription The parameter for which to bind an argument.
+         * @param <T>                  The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         * @see DynamicValue.ForFixedValue
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, ParameterDescription parameterDescription) {
+            return bind(type, new DynamicValue.ForFixedValue(parameterDescription));
         }
 
         /**

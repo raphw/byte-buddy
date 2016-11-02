@@ -2,7 +2,6 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 @RunWith(Parameterized.class)
-public class AdviceBoxedFieldTest {
+public class AdviceCustomAnnotationOnFieldTest {
 
     private static final String FOO = "foo";
 
@@ -41,18 +40,18 @@ public class AdviceBoxedFieldTest {
 
     private final Object expected;
 
-    public AdviceBoxedFieldTest(Class<?> target, Object expected) {
+    public AdviceCustomAnnotationOnFieldTest(Class<?> target, Object expected) {
         this.target = target;
         this.expected = expected;
     }
 
     @Test
-    public void testFieldValueAdvice() throws Exception {
+    public void testPrimitiveField() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(target)
                 .visit(Advice.withCustomMapping()
-                        .bind(FieldValue.class, target.getDeclaredField(FOO))
-                        .to(FieldAdvice.class)
+                        .bind(FieldValue.class, new FieldDescription.ForLoadedField(target.getDeclaredField(FOO)))
+                        .to(target)
                         .on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -61,12 +60,12 @@ public class AdviceBoxedFieldTest {
     }
 
     @Test
-    public void testFieldDescriptionValueAdvice() throws Exception {
+    public void testBoxedField() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(target)
                 .visit(Advice.withCustomMapping()
                         .bind(FieldValue.class, new FieldDescription.ForLoadedField(target.getDeclaredField(FOO)))
-                        .to(FieldAdvice.class)
+                        .to(BoxedFieldAdvice.class)
                         .on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -74,10 +73,10 @@ public class AdviceBoxedFieldTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is(expected));
     }
 
-    public static class FieldAdvice {
+    public static class BoxedFieldAdvice {
 
         @Advice.OnMethodExit
-        static void foo(@FieldValue Object value, @Advice.Return(readOnly = false) Object returned) {
+        static void exit(@FieldValue Object value, @Advice.Return(readOnly = false) Object returned) {
             returned = value;
         }
     }
@@ -94,6 +93,11 @@ public class AdviceBoxedFieldTest {
         public Object foo() {
             return null;
         }
+
+        @Advice.OnMethodExit
+        static void exit(@FieldValue boolean value, @Advice.Return(readOnly = false) Object returned) {
+            returned = value;
+        }
     }
 
     public static class ByteValue {
@@ -102,6 +106,11 @@ public class AdviceBoxedFieldTest {
 
         public Object foo() {
             return null;
+        }
+
+        @Advice.OnMethodExit
+        static void exit(@FieldValue byte value, @Advice.Return(readOnly = false) Object returned) {
+            returned = value;
         }
     }
 
@@ -112,6 +121,11 @@ public class AdviceBoxedFieldTest {
         public Object foo() {
             return null;
         }
+
+        @Advice.OnMethodExit
+        static void exit(@FieldValue short value, @Advice.Return(readOnly = false) Object returned) {
+            returned = value;
+        }
     }
 
     public static class CharacterValue {
@@ -120,6 +134,11 @@ public class AdviceBoxedFieldTest {
 
         public Object foo() {
             return null;
+        }
+
+        @Advice.OnMethodExit
+        static void exit(@FieldValue char value, @Advice.Return(readOnly = false) Object returned) {
+            returned = value;
         }
     }
 
@@ -130,6 +149,11 @@ public class AdviceBoxedFieldTest {
         public Object foo() {
             return null;
         }
+
+        @Advice.OnMethodExit
+        static void exit(@FieldValue int value, @Advice.Return(readOnly = false) Object returned) {
+            returned = value;
+        }
     }
 
     public static class LongValue {
@@ -138,6 +162,11 @@ public class AdviceBoxedFieldTest {
 
         public Object foo() {
             return null;
+        }
+
+        @Advice.OnMethodExit
+        static void exit(@FieldValue long value, @Advice.Return(readOnly = false) Object returned) {
+            returned = value;
         }
     }
 
@@ -148,6 +177,11 @@ public class AdviceBoxedFieldTest {
         public Object foo() {
             return null;
         }
+
+        @Advice.OnMethodExit
+        static void exit(@FieldValue float value, @Advice.Return(readOnly = false) Object returned) {
+            returned = value;
+        }
     }
 
     public static class DoubleValue {
@@ -157,14 +191,24 @@ public class AdviceBoxedFieldTest {
         public Object foo() {
             return null;
         }
+
+        @Advice.OnMethodExit
+        static void exit(@FieldValue double value, @Advice.Return(readOnly = false) Object returned) {
+            returned = value;
+        }
     }
 
     public static class ReferenceValue {
 
-        Object foo = FOO;
+        String foo = FOO;
 
         public Object foo() {
             return null;
+        }
+
+        @Advice.OnMethodExit
+        static void exit(@FieldValue String value, @Advice.Return(readOnly = false) Object returned) {
+            returned = value;
         }
     }
 }

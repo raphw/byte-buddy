@@ -615,6 +615,34 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(Object.class).getSegmentCount(), is(0));
     }
 
+    @Test
+    public void testBoxed() throws Exception {
+        assertThat(describe(boolean.class).asBoxed(), is(describe(Boolean.class)));
+        assertThat(describe(byte.class).asBoxed(), is(describe(Byte.class)));
+        assertThat(describe(short.class).asBoxed(), is(describe(Short.class)));
+        assertThat(describe(char.class).asBoxed(), is(describe(Character.class)));
+        assertThat(describe(int.class).asBoxed(), is(describe(Integer.class)));
+        assertThat(describe(long.class).asBoxed(), is(describe(Long.class)));
+        assertThat(describe(float.class).asBoxed(), is(describe(Float.class)));
+        assertThat(describe(double.class).asBoxed(), is(describe(Double.class)));
+        assertThat(describe(void.class).asBoxed(), is(describe(void.class)));
+        assertThat(describe(Object.class).asBoxed(), is(describe(Object.class)));
+    }
+
+    @Test
+    public void testUnboxed() throws Exception {
+        assertThat(describe(Boolean.class).asBoxed(), is(describe(boolean.class)));
+        assertThat(describe(Byte.class).asBoxed(), is(describe(byte.class)));
+        assertThat(describe(Short.class).asBoxed(), is(describe(short.class)));
+        assertThat(describe(Character.class).asBoxed(), is(describe(char.class)));
+        assertThat(describe(Integer.class).asBoxed(), is(describe(int.class)));
+        assertThat(describe(Long.class).asBoxed(), is(describe(long.class)));
+        assertThat(describe(Float.class).asBoxed(), is(describe(float.class)));
+        assertThat(describe(Double.class).asBoxed(), is(describe(double.class)));
+        assertThat(describe(Void.class).asBoxed(), is(describe(Void.class)));
+        assertThat(describe(Object.class).asBoxed(), is(describe(Object.class)));
+    }
+
     private Class<?> inMethodClass() {
         class InMethod {
             /* empty */

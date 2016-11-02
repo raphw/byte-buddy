@@ -22,10 +22,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import static junit.framework.TestCase.fail;
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -1237,22 +1234,6 @@ public class AdviceTest {
         }
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testInvisibleField() throws Exception {
-        new ByteBuddy()
-                .redefine(SampleExtension.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredField("object")).to(SampleExtension.class).on(named(FOO)))
-                .make();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testNonRelatedField() throws Exception {
-        new ByteBuddy()
-                .redefine(TracableSample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredField("object")).to(SampleExtension.class).on(named(FOO)))
-                .make();
-    }
-
     @Test
     public void testUserTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
@@ -1437,16 +1418,99 @@ public class AdviceTest {
     public void testIllegalPrimitiveNullUserValue() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
-                    @Override
-                    public Object resolve(TypeDescription instrumentedType,
-                                          MethodDescription instrumentedMethod,
-                                          ParameterDescription.InDefinedShape target,
-                                          AnnotationDescription.Loadable<Custom> annotation,
-                                          boolean initialized) {
-                        return null;
-                    }
-                }).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .visit(Advice.withCustomMapping().bind(Custom.class, (Serializable) null).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonAssignableStringValue() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, FOO).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonAssignableTypeValue() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, Object.class).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonAssignableTypeDescriptionValue() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, TypeDescription.OBJECT).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonAssignableSerializableValue() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new ArrayList<String>()).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInvisibleField() throws Exception {
+        new ByteBuddy()
+                .redefine(SampleExtension.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredField("object")).to(CustomAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonRelatedField() throws Exception {
+        new ByteBuddy()
+                .redefine(TracableSample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredField("object")).to(CustomAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonAssignableField() throws Exception {
+        new ByteBuddy()
+                .redefine(SampleExtension.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, SampleExtension.class.getDeclaredField(FOO)).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMethodNegativeIndex() throws Exception {
+        Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredMethod(BAR, String.class), -1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMethodOverflowIndex() throws Exception {
+        Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredMethod(BAR, String.class), 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testConstrcutorNegativeIndex() throws Exception {
+        Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredConstructor(), -1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testConstructorOverflowIndex() throws Exception {
+        Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredConstructor(), 0);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonAssignableParameter() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredMethod(BAR, String.class), 0).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUnrelatedMethodParameter() throws Exception {
+        new ByteBuddy()
+                .redefine(SampleExtension.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredMethod(BAR, String.class), 0).to(CustomPrimitiveAdvice.class).on(named(FOO)))
                 .make();
     }
 
@@ -1847,7 +1911,9 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.WithCasting.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.ReadOnly.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.ReadWrite.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.ReadBoxed.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.WithBoxing.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedDefaultValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.ReadOnly.class).apply();
@@ -1987,9 +2053,11 @@ public class AdviceTest {
 
     public static class SampleExtension extends Sample {
 
-        @Advice.OnMethodEnter
-        static void foo(@Custom Object value) {
-            throw new AssertionError(value);
+        public Object foo;
+
+        @Override
+        public String foo() {
+            return null;
         }
     }
 

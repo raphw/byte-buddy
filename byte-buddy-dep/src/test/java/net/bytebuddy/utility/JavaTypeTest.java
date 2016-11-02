@@ -11,6 +11,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Member;
 
@@ -57,6 +58,15 @@ public class JavaTypeTest {
     }
 
     @Test
+    public void testParameter() throws Exception {
+        assertThat(JavaType.PARAMETER.getTypeStub().getName(), is("java.lang.reflect.Parameter"));
+        assertThat(JavaType.PARAMETER.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
+        assertThat(JavaType.PARAMETER.getTypeStub().getSuperClass(), is(TypeDescription.Generic.OBJECT));
+        assertThat(JavaType.PARAMETER.getTypeStub().getInterfaces().size(), is(1));
+        assertThat(JavaType.PARAMETER.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(AnnotatedElement.class)), is(true));
+    }
+
+    @Test
     public void testExecutable() throws Exception {
         assertThat(JavaType.EXECUTABLE.getTypeStub().getName(), is("java.lang.reflect.Executable"));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
@@ -81,6 +91,7 @@ public class JavaTypeTest {
         assertThat(JavaType.METHOD_TYPE.load(), notNullValue(Class.class));
         assertThat(JavaType.METHOD_HANDLES_LOOKUP.load(), notNullValue(Class.class));
         assertThat(JavaType.CALL_SITE.load(), notNullValue(Class.class));
+        assertThat(JavaType.PARAMETER.load(), notNullValue(Class.class));
     }
 
     @Test

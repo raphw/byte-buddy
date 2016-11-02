@@ -3404,7 +3404,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
             @Override
             public InvokeDynamic as(TypeDescription typeDescription) {
-                if (!typeDescription.isInstanceOrWrapper(value)) {
+                if (!typeDescription.asBoxed().isInstance(value)) {
                     throw new IllegalArgumentException(value + " is not of type " + typeDescription);
                 }
                 return new InvokeDynamic(bootstrapMethod,

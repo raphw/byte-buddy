@@ -89,15 +89,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
     boolean isInstance(Object value);
 
     /**
-     * Checks if {@code value} is an instance of the type represented by this instance or a wrapper instance of the
-     * corresponding primitive value.
-     *
-     * @param value The object of interest.
-     * @return {@code true} if the object is an instance or wrapper of the type described by this instance.
-     */
-    boolean isInstanceOrWrapper(Object value);
-
-    /**
      * Checks if this type is assignable from the type described by this instance, for example for
      * {@code class Foo} and {@code class Bar extends Foo}, this method would return {@code true} for
      * {@code Foo.class.isAssignableFrom(Bar.class)}.
@@ -292,6 +283,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
      * @return The number of outer classes relatively to this type.
      */
     int getSegmentCount();
+
+    /**
+     * Returns a description of this type that represents this type as a boxed type for primitive types, unless its {@code void}.
+     * @return A description of this type in its boxed form.
+     */
+    TypeDescription asBoxed();
+
+    /**
+     * Returns a description of this type that represents this type as an unboxed type for boxing types, unless its {@link Void}.
+     * @return A description of this type in its unboxed form.
+     */
+    TypeDescription asUnboxed();
 
     /**
      * <p>
@@ -7196,19 +7199,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean isInstanceOrWrapper(Object value) {
-            return isInstance(value)
-                    || (represents(boolean.class) && value instanceof Boolean)
-                    || (represents(byte.class) && value instanceof Byte)
-                    || (represents(short.class) && value instanceof Short)
-                    || (represents(char.class) && value instanceof Character)
-                    || (represents(int.class) && value instanceof Integer)
-                    || (represents(long.class) && value instanceof Long)
-                    || (represents(float.class) && value instanceof Float)
-                    || (represents(double.class) && value instanceof Double);
-        }
-
-        @Override
         public boolean isAnnotationValue(Object value) {
             if ((represents(Class.class) && value instanceof TypeDescription)
                     || (value instanceof AnnotationDescription && ((AnnotationDescription) value).getAnnotationType().equals(this))
@@ -7448,6 +7438,52 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return declaringType == null
                     ? 0
                     : declaringType.getSegmentCount() + 1;
+        }
+
+        @Override
+        public TypeDescription asBoxed() {
+            if (represents(boolean.class)) {
+                return new ForLoadedType(Boolean.class);
+            } else if (represents(byte.class)) {
+                return new ForLoadedType(Byte.class);
+            } else if (represents(short.class)) {
+                return new ForLoadedType(Short.class);
+            } else if (represents(char.class)) {
+                return new ForLoadedType(Character.class);
+            } else if (represents(int.class)) {
+                return new ForLoadedType(Integer.class);
+            } else if (represents(long.class)) {
+                return new ForLoadedType(Long.class);
+            } else if (represents(float.class)) {
+                return new ForLoadedType(Float.class);
+            } else if (represents(double.class)) {
+                return new ForLoadedType(Double.class);
+            } else {
+                return this;
+            }
+        }
+
+        @Override
+        public TypeDescription asUnboxed() {
+            if (represents(Boolean.class)) {
+                return new ForLoadedType(boolean.class);
+            } else if (represents(Byte.class)) {
+                return new ForLoadedType(byte.class);
+            } else if (represents(Short.class)) {
+                return new ForLoadedType(short.class);
+            } else if (represents(Character.class)) {
+                return new ForLoadedType(char.class);
+            } else if (represents(Integer.class)) {
+                return new ForLoadedType(int.class);
+            } else if (represents(Long.class)) {
+                return new ForLoadedType(long.class);
+            } else if (represents(Float.class)) {
+                return new ForLoadedType(float.class);
+            } else if (represents(Double.class)) {
+                return new ForLoadedType(double.class);
+            } else {
+                return this;
+            }
         }
 
         @Override

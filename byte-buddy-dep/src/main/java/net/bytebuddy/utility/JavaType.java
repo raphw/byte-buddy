@@ -6,6 +6,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Member;
 
@@ -33,6 +34,11 @@ public enum JavaType {
      * The Java 7 {@code java.lang.invoke.CallSite} type.
      */
     CALL_SITE("java.lang.invoke.CallSite", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class),
+
+    /**
+     * The Java 7 {@code java.lang.reflect.Parameter} type.
+     */
+    PARAMETER("java.lang.reflect.Parameter", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, AnnotatedElement.class),
 
     /**
      * The {@code java.lang.reflect.Executable} type.
