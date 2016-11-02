@@ -37,8 +37,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class MethodCallTest {
 
@@ -225,6 +224,29 @@ public class MethodCallTest {
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SelfReference.class)));
         assertThat(instance, instanceOf(SelfReference.class));
         assertThat(created, not(instance));
+    }
+
+    @Test
+    public void testSelfInvocation() throws Exception {
+        SuperMethodInvocation delegate = mock(SuperMethodInvocation.class);
+        when(delegate.foo()).thenReturn(FOO);
+        DynamicType.Loaded<SuperMethodInvocation> loaded = new ByteBuddy()
+                .subclass(SuperMethodInvocation.class)
+                .method(takesArguments(0).and(named(FOO)))
+                .intercept(MethodCall.invokeSelf().on(delegate))
+                .make()
+                .load(SuperMethodInvocation.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(FOO), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
+        SuperMethodInvocation instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SuperMethodInvocation.class)));
+        assertThat(instance, instanceOf(SuperMethodInvocation.class));
+        assertThat(instance.foo(), is(FOO));
+        verify(delegate).foo();
+        verifyNoMoreInteractions(delegate);
     }
 
     @Test
@@ -787,8 +809,7 @@ public class MethodCallTest {
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.WithImplicitType.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForSuperMethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForDefaultMethodInvocation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TerminationHandler.ForChainedInvocation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TerminationHandler.ForMethodReturn.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.TerminationHandler.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForInstanceField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForSelfOrStaticInvocation.class).apply();

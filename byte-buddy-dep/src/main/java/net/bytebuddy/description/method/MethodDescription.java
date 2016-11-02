@@ -124,7 +124,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * Checks if this method description represents a method, i.e. not a constructor or a type initializer.
      *
-     * @return {@code true} if this method description represents a method.
+     * @return {@code true} if this method description represents a Java method.
      */
     boolean isMethod();
 

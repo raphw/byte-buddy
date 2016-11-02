@@ -15,6 +15,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -85,7 +86,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler) {
-        return of(invocationHandler, String.format("%s$%d", ForInstance.PREFIX, Math.abs(invocationHandler.hashCode() % Integer.MAX_VALUE)));
+        return of(invocationHandler, String.format("%s$%s", ForInstance.PREFIX, RandomString.hashOf(invocationHandler.hashCode())));
     }
 
     /**
@@ -278,12 +279,13 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && super.equals(other)
-                    && invocationHandler.equals(((ForInstance) other).invocationHandler);
+                    && invocationHandler.equals(((ForInstance) other).invocationHandler)
+                    && fieldName.equals(((ForInstance) other).fieldName);
         }
 
         @Override
         public int hashCode() {
-            return 31 * super.hashCode() + invocationHandler.hashCode();
+            return 31 * (31 * super.hashCode() + invocationHandler.hashCode()) + fieldName.hashCode();
         }
 
         @Override

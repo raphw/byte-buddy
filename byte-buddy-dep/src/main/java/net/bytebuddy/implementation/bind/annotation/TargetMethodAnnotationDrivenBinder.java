@@ -539,7 +539,33 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      * Responsible for creating a {@link StackManipulation}
      * that is applied after the interception method is applied.
      */
-    public interface TerminationHandler {
+    public enum TerminationHandler {
+
+        /**
+         * A termination handler that returns the delegate method's return value.
+         */
+        RETURNING {
+            @Override
+            protected StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+                return new StackManipulation.Compound(assigner.assign(target.isConstructor()
+                                ? target.getDeclaringType().asGenericType()
+                                : target.getReturnType(),
+                        source.getReturnType(),
+                        RuntimeType.Verifier.check(target)), MethodReturn.of(source.getReturnType().asErasure()));
+            }
+        },
+
+        /**
+         * A termination handler that drops the delegate method's return value.
+         */
+        DROPPING {
+            @Override
+            protected StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+                return Removal.pop(target.isConstructor()
+                        ? target.getDeclaringType().asErasure()
+                        : target.getReturnType().asErasure());
+            }
+        };
 
         /**
          * Creates a stack manipulation that is to be applied after the method return.
@@ -549,54 +575,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * @param target   The target method that is subject to be bound by the {@code source} method.
          * @return A stack manipulation that is applied after the method return.
          */
-        StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
+        protected abstract StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
 
-        /**
-         * A termination handler that returns the return value of the interception method.
-         */
-        enum Returning implements TerminationHandler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
-                return new StackManipulation.Compound(assigner.assign(target.isConstructor()
-                                ? target.getDeclaringType().asGenericType()
-                                : target.getReturnType(),
-                        source.getReturnType(),
-                        RuntimeType.Verifier.check(target)), MethodReturn.of(source.getReturnType().asErasure()));
-            }
-
-            @Override
-            public String toString() {
-                return "TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning." + name();
-            }
-        }
-
-        /**
-         * A termination handler that pops the return value of the interception method.
-         */
-        enum Dropping implements TerminationHandler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
-                return Removal.pop(target.isConstructor()
-                        ? target.getDeclaringType().asErasure()
-                        : target.getReturnType().asErasure());
-            }
-
-            @Override
-            public String toString() {
-                return "TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping." + name();
-            }
+        @Override
+        public String toString() {
+            return "TargetMethodAnnotationDrivenBinder.TerminationHandler." + name();
         }
     }
 

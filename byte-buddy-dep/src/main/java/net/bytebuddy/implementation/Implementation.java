@@ -992,7 +992,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * The hash value of the field's value for creating a unique field name.
                  */
-                private final int valueHashCode;
+                private final int hashCode;
 
                 /**
                  * Creates a new cache value field.
@@ -1000,13 +1000,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  * @param instrumentedType The instrumented type.
                  * @param fieldType        The type of the cache's field.
                  * @param suffix           The suffix to use for the cache field's name.
-                 * @param valueHashCode    The hash value of the field's value for creating a unique field name.
+                 * @param hashCode         The hash value of the field's value for creating a unique field name.
                  */
-                protected CacheValueField(TypeDescription instrumentedType, TypeDescription.Generic fieldType, String suffix, int valueHashCode) {
+                protected CacheValueField(TypeDescription instrumentedType, TypeDescription.Generic fieldType, String suffix, int hashCode) {
                     this.instrumentedType = instrumentedType;
                     this.fieldType = fieldType;
                     this.suffix = suffix;
-                    this.valueHashCode = valueHashCode;
+                    this.hashCode = hashCode;
                 }
 
                 @Override
@@ -1033,7 +1033,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 @Override
                 public String getName() {
-                    return String.format("%s$%s$%d", FIELD_CACHE_PREFIX, suffix, Math.abs(valueHashCode % Integer.MAX_VALUE));
+                    return String.format("%s$%s$%s", FIELD_CACHE_PREFIX, suffix, RandomString.hashOf(hashCode));
                 }
             }
 

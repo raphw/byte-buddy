@@ -234,7 +234,7 @@ public class InvokeDynamic implements Implementation.Composable {
         return new WithImplicitTarget(bootstrapMethod,
                 serializedArguments,
                 new InvocationProvider.Default(),
-                TerminationHandler.ForMethodReturn.INSTANCE,
+                TerminationHandler.RETURNING,
                 Assigner.DEFAULT,
                 Assigner.Typing.STATIC);
     }
@@ -744,7 +744,7 @@ public class InvokeDynamic implements Implementation.Composable {
         return new Implementation.Compound(new InvokeDynamic(bootstrapMethod,
                 handleArguments,
                 invocationProvider,
-                TerminationHandler.ForChainedInvocation.INSTANCE,
+                TerminationHandler.DROPPING,
                 assigner,
                 typing),
                 implementation);
@@ -2896,7 +2896,33 @@ public class InvokeDynamic implements Implementation.Composable {
      * A termination handler is responsible to handle the return value of a method that is invoked via a
      * {@link net.bytebuddy.implementation.InvokeDynamic}.
      */
-    protected interface TerminationHandler {
+    protected enum TerminationHandler {
+
+        /**
+         * A termination handler that returns the bound method's return value.
+         */
+        RETURNING {
+            @Override
+            protected StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation stackManipulation = assigner.assign(returnType.asGenericType(), interceptedMethod.getReturnType(), typing);
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
+                }
+                return new StackManipulation.Compound(stackManipulation, MethodReturn.of(interceptedMethod.getReturnType().asErasure()));
+            }
+        },
+
+        /**
+         * A termination handler that drops the bound method's return value.
+         */
+        DROPPING {
+            @Override
+            protected StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
+                return Removal.pop(interceptedMethod.isConstructor()
+                        ? interceptedMethod.getDeclaringType().asErasure()
+                        : interceptedMethod.getReturnType().asErasure());
+            }
+        };
 
         /**
          * Returns a stack manipulation that handles the method return.
@@ -2907,58 +2933,14 @@ public class InvokeDynamic implements Implementation.Composable {
          * @param typing            Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return A stack manipulation that handles the method return.
          */
-        StackManipulation resolve(MethodDescription interceptedMethod,
-                                  TypeDescription returnType,
-                                  Assigner assigner,
-                                  Assigner.Typing typing);
+        protected abstract StackManipulation resolve(MethodDescription interceptedMethod,
+                                                     TypeDescription returnType,
+                                                     Assigner assigner,
+                                                     Assigner.Typing typing);
 
-        /**
-         * Returns the return value of the dynamic invocation from the intercepted method.
-         */
-        enum ForMethodReturn implements TerminationHandler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = assigner.assign(returnType.asGenericType(), interceptedMethod.getReturnType(), typing);
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
-                }
-                return new StackManipulation.Compound(stackManipulation, MethodReturn.of(interceptedMethod.getReturnType().asErasure()));
-            }
-
-            @Override
-            public String toString() {
-                return "InvokeDynamic.TerminationHandler.ForMethodReturn." + name();
-            }
-        }
-
-        /**
-         * Drops the return value of the dynamic invocation from the operand stack without returning from the
-         * intercepted method.
-         */
-        enum ForChainedInvocation implements TerminationHandler {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
-                return Removal.pop(interceptedMethod.isConstructor()
-                        ? interceptedMethod.getDeclaringType().asErasure()
-                        : interceptedMethod.getReturnType().asErasure());
-            }
-
-            @Override
-            public String toString() {
-                return "InvokeDynamic.TerminationHandler.ForChainedInvocation." + name();
-            }
+        @Override
+        public String toString() {
+            return "InvokeDynamic.TerminationHandler." + name();
         }
     }
 

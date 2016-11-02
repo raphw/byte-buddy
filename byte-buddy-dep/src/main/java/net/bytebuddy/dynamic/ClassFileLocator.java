@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static net.bytebuddy.matcher.ElementMatchers.isChildOf;
+
 /**
  * Locates a class file or its byte array representation when it is given its type description.
  */
@@ -1635,28 +1637,10 @@ public interface ClassFileLocator extends Closeable {
                                     Class<?> redefinedType,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
-                if (internalName != null && isChild(classLoader) && typeName.equals(internalName.replace('/', '.'))) {
-                    this.binaryRepresentation = binaryRepresentation;
+                if (internalName != null && isChildOf(this.classLoader).matches(classLoader) && typeName.equals(internalName.replace('/', '.'))) {
+                    this.binaryRepresentation = binaryRepresentation.clone();
                 }
                 return DO_NOT_TRANSFORM;
-            }
-
-            /**
-             * Checks if the given class loader is a child of the specified class loader.
-             *
-             * @param classLoader The class loader that loaded the retransformed class.
-             * @return {@code true} if te given class loader is a child of the specified class loader.
-             */
-            private boolean isChild(ClassLoader classLoader) {
-                if (this.classLoader == null) {
-                    return true; // The bootstrap class loader is any class loader's parent.
-                }
-                do {
-                    if (classLoader == this.classLoader) {
-                        return true;
-                    }
-                } while ((classLoader = classLoader.getParent()) != null);
-                return false;
             }
 
             /**

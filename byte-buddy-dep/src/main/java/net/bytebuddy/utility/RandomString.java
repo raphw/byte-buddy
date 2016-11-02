@@ -17,6 +17,11 @@ public class RandomString {
      */
     private static final char[] SYMBOL;
 
+    /**
+     * The amount of bits to extract out of an integer for each key generated.
+     */
+    private static final int KEY_BITS;
+
     /*
      * Creates the symbol array.
      */
@@ -32,6 +37,8 @@ public class RandomString {
             symbol.append(character);
         }
         SYMBOL = symbol.toString().toCharArray();
+        int bits = Integer.SIZE - Integer.numberOfLeadingZeros(SYMBOL.length);
+        KEY_BITS = bits - (Integer.bitCount(SYMBOL.length) == bits ? 0 : 1);
     }
 
     /**
@@ -82,6 +89,21 @@ public class RandomString {
      */
     public static String make(int length) {
         return new RandomString(length).nextString();
+    }
+
+    /**
+     * Represents an integer value as a string hash. This string is not technically random but generates a fixed character
+     * sequence based on the hash provided.
+     *
+     * @param value The value to represent as a string.
+     * @return A string representing the supplied value as a string.
+     */
+    public static String hashOf(int value) {
+        char[] buffer = new char[(Integer.SIZE / KEY_BITS) + ((Integer.SIZE % KEY_BITS) == 0 ? 0 : 1)];
+        for (int index = 0; index < buffer.length; index++) {
+            buffer[index] = SYMBOL[(value >>> index * KEY_BITS) & (-1 >>> (Integer.SIZE - KEY_BITS))];
+        }
+        return new String(buffer);
     }
 
     /**
