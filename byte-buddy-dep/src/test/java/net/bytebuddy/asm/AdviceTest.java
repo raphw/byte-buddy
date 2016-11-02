@@ -1205,6 +1205,22 @@ public class AdviceTest {
         }
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testInvisibleField() throws Exception {
+        new ByteBuddy()
+                .redefine(SampleExtension.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredField("object")).to(SampleExtension.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonRelatedField() throws Exception {
+        new ByteBuddy()
+                .redefine(TracableSample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, Sample.class.getDeclaredField("object")).to(SampleExtension.class).on(named(FOO)))
+                .make();
+    }
+
     @Test
     public void testUserTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
@@ -1934,6 +1950,14 @@ public class AdviceTest {
             } catch (Exception ignored) {
                 return FOO;
             }
+        }
+    }
+
+    public static class SampleExtension extends Sample {
+
+        @Advice.OnMethodEnter
+        static void foo(@Custom Object value) {
+            throw new AssertionError(value);
         }
     }
 

@@ -28,6 +28,7 @@ import org.objectweb.asm.*;
 import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -1911,10 +1912,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param methodVisitor the method visitor for which to load the value.
                      * @param offset        The offset of the primitive value.
+                     * @return The additional padding required on the operand stack.
                      */
-                    protected void loadBoxed(MethodVisitor methodVisitor, int offset) {
+                    protected int loadBoxed(MethodVisitor methodVisitor, int offset) {
                         methodVisitor.visitVarInsn(load, offset);
+                        return box(methodVisitor);
+                    }
+
+                    /**
+                     * Boxes the current value on top of the operand stack.
+                     *
+                     * @param methodVisitor The method visitor to apply the boxing to.
+                     * @return The additional padding required on the operand stack.
+                     */
+                    protected int box(MethodVisitor methodVisitor) {
                         methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, boxingDescriptor, false);
+                        return stackSize.getSize() - 1;
                     }
 
                     /**
@@ -1922,21 +1935,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param methodVisitor the method visitor for which to store the value.
                      * @param offset        The offset of the primitive value.
+                     * @return The additional padding required on the operand stack.
                      */
-                    protected void storeUnboxed(MethodVisitor methodVisitor, int offset) {
+                    protected int storeUnboxed(MethodVisitor methodVisitor, int offset) {
                         methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, owner);
                         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, unboxingMethod, unboxingDescriptor, false);
                         methodVisitor.visitVarInsn(store, offset);
+                        return stackSize.getSize() - 1;
                     }
 
                     /**
                      * Pushes the represented default value as a boxed value onto the operand stack.
                      *
                      * @param methodVisitor The method visitor to apply the changes to.
+                     * @return The additional padding required on the operand stack.
                      */
-                    protected void pushBoxedDefault(MethodVisitor methodVisitor) {
+                    protected int pushBoxedDefault(MethodVisitor methodVisitor) {
                         methodVisitor.visitInsn(defaultValue);
                         methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, boxingDescriptor, false);
+                        return stackSize.getSize() - 1;
                     }
 
                     /**
@@ -2050,8 +2067,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
-                                primitiveDispatcher.pushBoxedDefault(methodVisitor);
-                                return primitiveDispatcher.getStackSize().getSize() - 1;
+                                return primitiveDispatcher.pushBoxedDefault(methodVisitor);
                             case Opcodes.ASTORE:
                                 methodVisitor.visitInsn(Opcodes.POP);
                                 return NO_PADDING;
@@ -2490,6 +2506,66 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     "}";
                         }
                     }
+
+                    /**
+                     * A target for reading a field where the final value is boxed after reading.
+                     */
+                    protected static class ReadBoxed extends ForField {
+
+                        /**
+                         * Creates a new field mapping for a field that is readable and gets boxed.
+                         *
+                         * @param fieldDescription The field which is mapped by this target mapping.
+                         */
+                        protected ReadBoxed(FieldDescription.InDefinedShape fieldDescription) {
+                            super(fieldDescription);
+                        }
+
+                        /**
+                         * Resolves a read-only target for the field description.
+                         *
+                         * @param instrumentedType The instrumented type.
+                         * @param fieldDescription The field which is mapped by this target mapping.
+                         * @return A target for reading a field where the value is boxed, if required.
+                         */
+                        protected static Target of(TypeDescription instrumentedType, FieldDescription.InDefinedShape fieldDescription) {
+                            if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType())) {
+                                throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+                            } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
+                                throw new IllegalStateException(fieldDescription + " is not visible from " + instrumentedType);
+                            }
+                            return fieldDescription.getType().isPrimitive()
+                                    ? new ReadBoxed(fieldDescription)
+                                    : new ReadOnly(fieldDescription);
+                        }
+
+                        @Override
+                        public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                            return super.resolveAccess(methodVisitor, opcode) + PrimitiveDispatcher.of(fieldDescription.getType()).box(methodVisitor);
+                        }
+
+                        @Override
+                        protected int onWriteSingle(MethodVisitor methodVisitor) {
+                            throw new IllegalStateException("Cannot write to read-only field " + fieldDescription);
+                        }
+
+                        @Override
+                        protected int onWriteDouble(MethodVisitor methodVisitor) {
+                            throw new IllegalStateException("Cannot write to read-only field " + fieldDescription);
+                        }
+
+                        @Override
+                        public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                            throw new IllegalStateException("Cannot write to read-only field " + fieldDescription);
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForField.ReadBoxed{" +
+                                    "fieldDescription=" + fieldDescription +
+                                    "}";
+                        }
+                    }
                 }
 
                 /**
@@ -2667,11 +2743,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
-                                primitiveDispatcher.loadBoxed(methodVisitor, offset);
-                                return primitiveDispatcher.getStackSize().getSize() - 1;
+                                return primitiveDispatcher.loadBoxed(methodVisitor, offset);
                             case Opcodes.ASTORE:
-                                onStore(methodVisitor);
-                                return NO_PADDING;
+                                return onStore(methodVisitor);
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
@@ -2681,8 +2755,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Handles writing the boxed value if applicable.
                      *
                      * @param methodVisitor The method visitor for which to apply the writing.
+                     * @return The additional required stack size.
                      */
-                    protected abstract void onStore(MethodVisitor methodVisitor);
+                    protected abstract int onStore(MethodVisitor methodVisitor);
 
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
@@ -2735,7 +2810,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected void onStore(MethodVisitor methodVisitor) {
+                        protected int onStore(MethodVisitor methodVisitor) {
                             throw new IllegalStateException("Cannot write to read-only boxed parameter");
                         }
 
@@ -2775,8 +2850,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected void onStore(MethodVisitor methodVisitor) {
-                            primitiveDispatcher.storeUnboxed(methodVisitor, offset);
+                        protected int onStore(MethodVisitor methodVisitor) {
+                            return primitiveDispatcher.storeUnboxed(methodVisitor, offset);
                         }
 
                         @Override
@@ -5013,7 +5088,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Cannot map null to primitive type of " + target);
                         }
                         return Target.ForNullConstant.READ_ONLY;
-                    } else if ((target.getType().asErasure().isAssignableFrom(String.class) && value instanceof String)
+                    } else if ((value instanceof String && target.getType().asErasure().isAssignableFrom(String.class))
                             || (target.getType().isPrimitive() && target.getType().asErasure().isInstanceOrWrapper(value))) {
                         if (value instanceof Boolean) {
                             value = (Boolean) value ? 1 : 0;
@@ -5025,11 +5100,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             value = (int) ((Character) value).charValue();
                         }
                         return new Target.ForConstantPoolValue(value);
-                    } else if (target.getType().asErasure().isAssignableFrom(Class.class) && value instanceof Class) {
+                    } else if (value instanceof Class && target.getType().asErasure().isAssignableFrom(Class.class)) {
                         return new Target.ForConstantPoolValue(Type.getType((Class<?>) value));
-                    } else if (target.getType().asErasure().isAssignableFrom(Class.class) && value instanceof TypeDescription) {
+                    } else if (value instanceof TypeDescription && target.getType().asErasure().isAssignableFrom(Class.class)) {
                         return new Target.ForConstantPoolValue(Type.getType(((TypeDescription) value).getDescriptor()));
-                    } else if (!target.getType().isPrimitive() && !target.getType().isArray() && value instanceof Serializable && target.getType().asErasure().isInstance(value)) {
+                    } else if (value instanceof Field && target.getType().represents(Object.class)) {
+                        return Target.ForField.ReadBoxed.of(instrumentedType, new FieldDescription.ForLoadedField((Field) value));
+                    } else if (value instanceof FieldDescription && target.getType().represents(Object.class)) {
+                        return Target.ForField.ReadBoxed.of(instrumentedType, ((FieldDescription) value).asDefined());
+                    } else if (value instanceof Serializable && !target.getType().isPrimitive() && !target.getType().isArray() && target.getType().asErasure().isInstance(value)) {
                         return Target.ForSerializedObject.of(target.getType().asErasure(), (Serializable) value);
                     } else {
                         throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
@@ -9370,7 +9449,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * Binds the supplied annotation to the supplied fixed value.
+         * Binds the supplied annotation to a type constant of the supplied value.
          *
          * @param type  The type of the annotation being bound.
          * @param value The type reference to bind to this annotation.
@@ -9379,6 +9458,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @see DynamicValue.ForFixedValue
          */
         public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, TypeDescription value) {
+            return bind(type, new DynamicValue.ForFixedValue(value));
+        }
+
+        /**
+         * Binds the supplied annotation to the value of the supplied field. The field must be visible by the
+         * instrumented type and must be declared by a super type of the instrumented field.
+         *
+         * @param type  The type of the annotation being bound.
+         * @param value The type reference to bind to this annotation.
+         * @param <T>   The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         * @see DynamicValue.ForFixedValue
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Field value) {
+            return bind(type, new DynamicValue.ForFixedValue(value));
+        }
+
+
+        /**
+         * Binds the supplied annotation to the value of the supplied field. The field must be visible by the
+         * instrumented type and must be declared by a super type of the instrumented field.
+         *
+         * @param type  The type of the annotation being bound.
+         * @param value The type reference to bind to this annotation.
+         * @param <T>   The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         * @see DynamicValue.ForFixedValue
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, FieldDescription value) {
             return bind(type, new DynamicValue.ForFixedValue(value));
         }
 
