@@ -36,7 +36,7 @@ public enum JavaType {
     CALL_SITE("java.lang.invoke.CallSite", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT, Object.class),
 
     /**
-     * The Java 7 {@code java.lang.reflect.Parameter} type.
+     * The Java 8 {@code java.lang.reflect.Parameter} type.
      */
     PARAMETER("java.lang.reflect.Parameter", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, Object.class, AnnotatedElement.class),
 

@@ -91,12 +91,12 @@ public class JavaTypeTest {
         assertThat(JavaType.METHOD_TYPE.load(), notNullValue(Class.class));
         assertThat(JavaType.METHOD_HANDLES_LOOKUP.load(), notNullValue(Class.class));
         assertThat(JavaType.CALL_SITE.load(), notNullValue(Class.class));
-        assertThat(JavaType.PARAMETER.load(), notNullValue(Class.class));
     }
 
     @Test
     @JavaVersionRule.Enforce(8)
     public void testJava8Types() throws Exception {
+        assertThat(JavaType.PARAMETER.load(), notNullValue(Class.class));
         assertThat(JavaType.EXECUTABLE.load(), notNullValue(Class.class));
     }
 
