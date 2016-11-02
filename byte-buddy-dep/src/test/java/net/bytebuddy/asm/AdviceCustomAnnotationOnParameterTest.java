@@ -61,7 +61,7 @@ public class AdviceCustomAnnotationOnParameterTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is(expected));
+        assertThat(type.getDeclaredMethod(FOO, argumentType).invoke(type.getDeclaredConstructor().newInstance(), expected), is(expected));
     }
 
     @Test

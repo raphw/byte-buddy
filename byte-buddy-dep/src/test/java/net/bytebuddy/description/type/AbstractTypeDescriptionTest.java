@@ -631,16 +631,16 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testUnboxed() throws Exception {
-        assertThat(describe(Boolean.class).asBoxed(), is(describe(boolean.class)));
-        assertThat(describe(Byte.class).asBoxed(), is(describe(byte.class)));
-        assertThat(describe(Short.class).asBoxed(), is(describe(short.class)));
-        assertThat(describe(Character.class).asBoxed(), is(describe(char.class)));
-        assertThat(describe(Integer.class).asBoxed(), is(describe(int.class)));
-        assertThat(describe(Long.class).asBoxed(), is(describe(long.class)));
-        assertThat(describe(Float.class).asBoxed(), is(describe(float.class)));
-        assertThat(describe(Double.class).asBoxed(), is(describe(double.class)));
-        assertThat(describe(Void.class).asBoxed(), is(describe(Void.class)));
-        assertThat(describe(Object.class).asBoxed(), is(describe(Object.class)));
+        assertThat(describe(Boolean.class).asUnboxed(), is(describe(boolean.class)));
+        assertThat(describe(Byte.class).asUnboxed(), is(describe(byte.class)));
+        assertThat(describe(Short.class).asUnboxed(), is(describe(short.class)));
+        assertThat(describe(Character.class).asUnboxed(), is(describe(char.class)));
+        assertThat(describe(Integer.class).asUnboxed(), is(describe(int.class)));
+        assertThat(describe(Long.class).asUnboxed(), is(describe(long.class)));
+        assertThat(describe(Float.class).asUnboxed(), is(describe(float.class)));
+        assertThat(describe(Double.class).asUnboxed(), is(describe(double.class)));
+        assertThat(describe(Void.class).asUnboxed(), is(describe(Void.class)));
+        assertThat(describe(Object.class).asUnboxed(), is(describe(Object.class)));
     }
 
     private Class<?> inMethodClass() {
