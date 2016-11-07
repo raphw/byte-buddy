@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 3. November 2016: version 1.5.3
+
+- Refactored `Advice` to allow usage as a wrapper for an `Implementation`. This allows chaining of such advices.
+- Allow to dynamically locate a `FieldDescription` or `ParameterDescription` from a custom `Advice` annotation which binds the field or parameter value.
+- Added `invokeSelf` option to `MethodCall` instrumentation.
+
 ### 31. October 2016: version 1.5.2
 
 - Refactored `FieldAccessor` to allow more flexible creation of getters and setters of particular parameters.
