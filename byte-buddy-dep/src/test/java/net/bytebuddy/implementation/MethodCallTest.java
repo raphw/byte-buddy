@@ -122,6 +122,32 @@ public class MethodCallTest {
         assertThat(instance, instanceOf(InstanceMethod.class));
     }
 
+    @Test
+    public void testInstanceMethodInvocationWithoutArgumentsByMatcher() throws Exception {
+        DynamicType.Loaded<InstanceMethod> loaded = new ByteBuddy()
+                .subclass(InstanceMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(named(BAR)))
+                .make()
+                .load(SimpleMethod.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        InstanceMethod instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.foo(), is(BAR));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InstanceMethod.class)));
+        assertThat(instance, instanceOf(InstanceMethod.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMatchedCallAmbiguous() throws Exception {
+        new ByteBuddy()
+                .subclass(InstanceMethod.class)
+                .method(named(FOO))
+                .intercept(MethodCall.invoke(ElementMatchers.any()))
+                .make();
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testOnArgumentInvocationNegativeArgument() throws Exception {
         MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onArgument(-1);
@@ -798,6 +824,7 @@ public class MethodCallTest {
         ObjectPropertyAssertion.of(MethodCall.Appender.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForExplicitMethod.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForInstrumentedMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForElementMatcher.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForContextualInvocation.class).apply();
         final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(String.class, Object.class).iterator();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {

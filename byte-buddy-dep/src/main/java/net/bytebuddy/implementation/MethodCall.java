@@ -3,12 +3,14 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
@@ -16,6 +18,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
@@ -156,6 +159,27 @@ public class MethodCall implements Implementation.Composable {
      */
     public static WithoutSpecifiedTarget invoke(MethodDescription methodDescription) {
         return invoke(new MethodLocator.ForExplicitMethod(methodDescription));
+    }
+
+    /**
+     * Invokes a unique virtual method of the instrumented type that is matched by the specified matcher.
+     *
+     * @param matcher The matcher to identify the method to invoke.
+     * @return A method call for the uniquely identified method.
+     */
+    public static WithoutSpecifiedTarget invoke(ElementMatcher<? super MethodDescription> matcher) {
+        return invoke(matcher, MethodGraph.Compiler.DEFAULT);
+    }
+
+    /**
+     * Invokes a unique virtual method of the instrumented type that is matched by the specified matcher.
+     *
+     * @param matcher             The matcher to identify the method to invoke.
+     * @param methodGraphCompiler The method graph compiler to use.
+     * @return A method call for the uniquely identified method.
+     */
+    public static WithoutSpecifiedTarget invoke(ElementMatcher<? super MethodDescription> matcher, MethodGraph.Compiler methodGraphCompiler) {
+        return invoke(new MethodLocator.ForElementMatcher(matcher, methodGraphCompiler));
     }
 
     /**
@@ -545,10 +569,11 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Resolves the method to be invoked.
          *
+         * @param instrumentedType   The instrumented type.
          * @param instrumentedMethod The method being instrumented.
          * @return The method to invoke.
          */
-        MethodDescription resolve(MethodDescription instrumentedMethod);
+        MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
 
         /**
          * A method locator that simply returns the intercepted method.
@@ -561,7 +586,7 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public MethodDescription resolve(MethodDescription instrumentedMethod) {
+            public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return instrumentedMethod;
             }
 
@@ -586,12 +611,12 @@ public class MethodCall implements Implementation.Composable {
              *
              * @param methodDescription The method to be invoked.
              */
-            public ForExplicitMethod(MethodDescription methodDescription) {
+            protected ForExplicitMethod(MethodDescription methodDescription) {
                 this.methodDescription = methodDescription;
             }
 
             @Override
-            public MethodDescription resolve(MethodDescription instrumentedMethod) {
+            public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return methodDescription;
             }
 
@@ -610,6 +635,65 @@ public class MethodCall implements Implementation.Composable {
             public String toString() {
                 return "MethodCall.MethodLocator.ForExplicitMethod{" +
                         "methodDescription=" + methodDescription +
+                        '}';
+            }
+        }
+
+        /**
+         * A method locator that identifies a unique virtual method.
+         */
+        class ForElementMatcher implements MethodLocator {
+
+            /**
+             * The matcher to use.
+             */
+            private final ElementMatcher<? super MethodDescription> matcher;
+
+            /**
+             * The method graph compiler to use.
+             */
+            private final MethodGraph.Compiler methodGraphCompiler;
+
+            /**
+             * Creates a new method locator for an element matcher.
+             * @param matcher The matcher to use.
+             * @param methodGraphCompiler The method graph compiler to use.
+             */
+            protected ForElementMatcher(ElementMatcher<? super MethodDescription> matcher, MethodGraph.Compiler methodGraphCompiler) {
+                this.matcher = matcher;
+                this.methodGraphCompiler = methodGraphCompiler;
+            }
+
+            @Override
+            public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                MethodList<?> candidates = methodGraphCompiler.compile(instrumentedType).listNodes().asMethodList().filter(matcher);
+                if (candidates.size() == 1) {
+                    return candidates.getOnly();
+                } else {
+                    throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method for " + matcher);
+                }
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForElementMatcher that = (ForElementMatcher) object;
+                return matcher.equals(that.matcher) && methodGraphCompiler.equals(that.methodGraphCompiler);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = matcher.hashCode();
+                result = 31 * result + methodGraphCompiler.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.MethodLocator.ForElementMatcher{" +
+                        "matcher=" + matcher +
+                        ", methodGraphCompiler=" + methodGraphCompiler +
                         '}';
             }
         }
@@ -2682,7 +2766,7 @@ public class MethodCall implements Implementation.Composable {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
+            MethodDescription invokedMethod = methodLocator.resolve(implementationTarget.getInstrumentedType(), instrumentedMethod);
             List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(MethodCall.this.argumentLoaders.size());
             for (ArgumentLoader.Factory argumentLoader : MethodCall.this.argumentLoaders) {
                 argumentLoaders.addAll(argumentLoader.make(implementationTarget.getInstrumentedType(), instrumentedMethod));

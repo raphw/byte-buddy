@@ -1184,7 +1184,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         currentFrameDivergence = translated.length - index;
                         break;
                     default:
-                        throw new IllegalArgumentException("Unexpected frame frameType: " + frameType);
+                        throw new IllegalArgumentException("Unexpected frame type: " + frameType);
                 }
                 methodVisitor.visitFrame(frameType, localVariableLength, localVariable, stackSize, stack);
             }
