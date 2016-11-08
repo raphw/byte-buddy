@@ -997,6 +997,24 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz"))), is(true));
         assertThat(ElementMatchers.isGetter()
                 .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getBaz", Void.class))), is(false));
+        assertThat(ElementMatchers.isGetter()
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("get"))), is(true));
+        assertThat(ElementMatchers.isGetter()
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("is"))), is(true));
+    }
+
+    @Test
+    public void testPropertyGetter() throws Exception {
+        assertThat(ElementMatchers.isGetter("qux")
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getQux"))), is(true));
+        assertThat(ElementMatchers.isGetter("bar")
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getQux"))), is(false));
+        assertThat(ElementMatchers.isGetter("foo")
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("getFoo"))), is(false));
+        assertThat(ElementMatchers.isGetter("")
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("get"))), is(true));
+        assertThat(ElementMatchers.isGetter("")
+                .matches(new MethodDescription.ForLoadedMethod(Getters.class.getDeclaredMethod("is"))), is(true));
     }
 
     @Test
@@ -1011,6 +1029,20 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class))), is(true));
         assertThat(ElementMatchers.isSetter()
                 .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setBaz", String.class, Void.class))), is(false));
+        assertThat(ElementMatchers.isSetter()
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("set", Object.class))), is(true));
+    }
+
+    @Test
+    public void testPropertySetter() throws Exception {
+        assertThat(ElementMatchers.isSetter("foo")
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setFoo"))), is(false));
+        assertThat(ElementMatchers.isSetter("qux")
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setQux", Boolean.class))), is(true));
+        assertThat(ElementMatchers.isSetter("bar")
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("setQux", Boolean.class))), is(false));
+        assertThat(ElementMatchers.isSetter("")
+                .matches(new MethodDescription.ForLoadedMethod(Setters.class.getDeclaredMethod("set", Object.class))), is(true));
     }
 
     @Test
@@ -1377,6 +1409,14 @@ public class ElementMatchersTest {
         public T getQuxbaz() {
             return null;
         }
+
+        public Object get() {
+            return null;
+        }
+
+        public boolean is() {
+            return false;
+        }
     }
 
     @SuppressWarnings("unused")
@@ -1403,6 +1443,10 @@ public class ElementMatchersTest {
         }
 
         public void setQuxbaz(T argument) {
+            /* empty */
+        }
+
+        public void set(Object argument) {
             /* empty */
         }
     }

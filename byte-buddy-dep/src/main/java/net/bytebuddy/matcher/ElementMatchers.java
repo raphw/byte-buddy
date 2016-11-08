@@ -1543,6 +1543,20 @@ public final class ElementMatchers {
     }
 
     /**
+     * An element matcher that matches any setter for the given property. When given an empty string, any setter named {@code set}
+     * is matched despite that such a setter is not fulfilling the Java bean naming conventions.
+     *
+     * @param property The property to match a setter for.
+     * @param <T>      The type of the matched object.
+     * @return A matcher that matches any setter method for the supplied property.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(String property) {
+        return isSetter().and(property.isEmpty()
+                ? named("set")
+                : named("set" + Character.toUpperCase(property.charAt(0)) + property.substring(1)));
+    }
+
+    /**
      * Matches any Java bean setter method which takes an argument the given type.
      *
      * @param type The required setter type.
@@ -1615,8 +1629,22 @@ public final class ElementMatchers {
      * @return A matcher that matches any getter method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter() {
-        return takesArguments(0).and(not(returns(TypeDescription.VOID))).and(nameStartsWith("get")
-                .or(nameStartsWith("is").and(returnsGeneric(anyOf(boolean.class, Boolean.class)))));
+        return takesArguments(0).and(not(returns(TypeDescription.VOID))).and(nameStartsWith("get").or(nameStartsWith("is").and(returnsGeneric(anyOf(boolean.class, Boolean.class)))));
+    }
+
+    /**
+     * An element matcher that matches any getter for the given property. When given an empty string, any getter named {@code get}
+     * is matched despite that such a getter is not fulfilling the Java bean naming conventions. If a getter's type is {@code boolean}
+     * or {@link Boolean}, {@code is} is also accepted as a prefix.
+     *
+     * @param property The property to match a getter for.
+     * @param <T>      The type of the matched object.
+     * @return A matcher that matches any getter method for the supplied property.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(String property) {
+        return isGetter().and(property.isEmpty()
+                ? named("get").or(named("is"))
+                : named("get" + Character.toUpperCase(property.charAt(0)) + property.substring(1)).or(named("is" + Character.toUpperCase(property.charAt(0)) + property.substring(1))));
     }
 
     /**
