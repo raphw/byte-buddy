@@ -127,6 +127,8 @@ public class ClassByExtensionBenchmark {
     public ExampleClass benchmarkCglib() {
         Enhancer enhancer = new Enhancer();
         enhancer.setUseCache(false);
+        enhancer.setUseFactory(false);
+        enhancer.setInterceptDuringConstruction(true);
         enhancer.setClassLoader(newClassLoader());
         enhancer.setSuperclass(baseClass);
         CallbackHelper callbackHelper = new CallbackHelper(baseClass, new Class[0]) {
