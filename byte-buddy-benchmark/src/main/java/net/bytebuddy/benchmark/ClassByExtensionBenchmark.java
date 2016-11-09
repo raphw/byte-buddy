@@ -188,11 +188,6 @@ public class ClassByExtensionBenchmark {
         return (ExampleClass) instance;
     }
 
-    public static void main(String[] args) throws Exception {
-        System.out.println(ClassLoader.getSystemClassLoader());
-        System.out.println(new ClassByExtensionBenchmark().benchmarkJavassist().getClass().getClassLoader());
-    }
-
     /**
      * Instead of using the {@link net.bytebuddy.implementation.SuperMethodCall} implementation, we are using
      * a delegate in order to emulate the interception approach of other instrumentation libraries. Otherwise,
