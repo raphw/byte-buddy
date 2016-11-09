@@ -162,14 +162,13 @@ public class ClassByExtensionBenchmark {
      */
     @Benchmark
     public ExampleClass benchmarkJavassist() throws Exception {
-        ProxyFactory proxyFactory = new ProxyFactory();
-        proxyFactory.setUseCache(false);
-        ProxyFactory.classLoaderProvider = new ProxyFactory.ClassLoaderProvider() {
+        ProxyFactory proxyFactory = new ProxyFactory() {
             @Override
-            public ClassLoader get(ProxyFactory proxyFactory) {
+            protected ClassLoader getClassLoader() {
                 return newClassLoader();
             }
         };
+        proxyFactory.setUseCache(false);
         proxyFactory.setSuperclass(baseClass);
         proxyFactory.setFilter(new MethodFilter() {
             public boolean isHandled(Method method) {
@@ -187,6 +186,11 @@ public class ClassByExtensionBenchmark {
             }
         });
         return (ExampleClass) instance;
+    }
+
+    public static void main(String[] args) throws Exception {
+        System.out.println(ClassLoader.getSystemClassLoader());
+        System.out.println(new ClassByExtensionBenchmark().benchmarkJavassist().getClass().getClassLoader());
     }
 
     /**
