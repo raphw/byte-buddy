@@ -1,7 +1,12 @@
 package net.bytebuddy.test.utility;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.pool.TypePool;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -31,6 +36,7 @@ public class ClassFileExtraction {
         ClassWriter classWriter = new ClassWriter(classReader, AsmVisitorWrapper.NO_FLAGS);
         classReader.accept(asmVisitorWrapper.wrap(new TypeDescription.ForLoadedType(type),
                 classWriter,
+                new IllegalContext(),
                 TypePool.Empty.INSTANCE,
                 AsmVisitorWrapper.NO_FLAGS,
                 AsmVisitorWrapper.NO_FLAGS), AsmVisitorWrapper.NO_FLAGS);
@@ -53,5 +59,28 @@ public class ClassFileExtraction {
 
     private static class Foo {
         /* empty */
+    }
+
+    private static class IllegalContext implements Implementation.Context {
+
+        @Override
+        public TypeDescription register(AuxiliaryType auxiliaryType) {
+            throw new AssertionError("Did not expect method call");
+        }
+
+        @Override
+        public FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType) {
+            throw new AssertionError("Did not expect method call");
+        }
+
+        @Override
+        public TypeDescription getInstrumentedType() {
+            throw new AssertionError("Did not expect method call");
+        }
+
+        @Override
+        public ClassFileVersion getClassFileVersion() {
+            throw new AssertionError("Did not expect method call");
+        }
     }
 }

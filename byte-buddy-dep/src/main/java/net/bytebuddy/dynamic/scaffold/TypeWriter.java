@@ -3087,15 +3087,16 @@ public interface TypeWriter<T> {
             @Override
             protected UnresolvedType create(TypeInitializer typeInitializer) {
                 try {
-                    int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS), readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
+                    int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
+                    int readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
                     ClassReader classReader = new ClassReader(classFileLocator.locate(originalType.getName()).resolve());
                     ClassWriter classWriter = new FrameComputingClassWriter(classReader, writerFlags, typePool);
                     ContextRegistry contextRegistry = new ContextRegistry();
-                    classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType,
-                            ValidatingClassVisitor.of(classWriter, typeValidation),
-                            typePool,
+                    classReader.accept(writeTo(ValidatingClassVisitor.of(classWriter, typeValidation),
+                            typeInitializer,
+                            contextRegistry,
                             writerFlags,
-                            readerFlags), typeInitializer, contextRegistry), readerFlags);
+                            readerFlags), readerFlags);
                     return new UnresolvedType(classWriter.toByteArray(), contextRegistry.getAuxiliaryTypes());
                 } catch (IOException exception) {
                     throw new RuntimeException("The class file could not be written", exception);
@@ -3108,12 +3109,19 @@ public interface TypeWriter<T> {
              * @param classVisitor    The class visitor to which this entry is to be written to.
              * @param typeInitializer The type initializer to apply.
              * @param contextRegistry A context registry to register the lazily created implementation context to.
+             * @param writerFlags     The writer flags being used.
+             * @param readerFlags     The reader flags being used.
              * @return A class visitor which is capable of applying the changes.
              */
-            private ClassVisitor writeTo(ClassVisitor classVisitor, TypeInitializer typeInitializer, ContextRegistry contextRegistry) {
+            private ClassVisitor writeTo(ClassVisitor classVisitor,
+                                         TypeInitializer typeInitializer,
+                                         ContextRegistry contextRegistry,
+                                         int writerFlags,
+                                         int readerFlags) {
+                classVisitor = new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry, writerFlags, readerFlags);
                 return originalType.getName().equals(instrumentedType.getName())
-                        ? new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry)
-                        : new ClassRemapper(new RedefinitionClassVisitor(classVisitor, typeInitializer, contextRegistry), new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
+                        ? classVisitor
+                        : new ClassRemapper(classVisitor, new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
             }
 
             @Override
@@ -3298,6 +3306,16 @@ public interface TypeWriter<T> {
                 private final ContextRegistry contextRegistry;
 
                 /**
+                 * The writer flags being used.
+                 */
+                private final int writerFlags;
+
+                /**
+                 * The reader flags being used.
+                 */
+                private final int readerFlags;
+
+                /**
                  * A mapping of fields to write by their names.
                  */
                 private final Map<String, FieldDescription> declaredFields;
@@ -3330,11 +3348,19 @@ public interface TypeWriter<T> {
                  * @param classVisitor    The underlying class visitor to which writes are delegated.
                  * @param typeInitializer The type initializer to apply.
                  * @param contextRegistry A context registry to register the lazily created implementation context to.
+                 * @param writerFlags     The writer flags being used.
+                 * @param readerFlags     The reader flags being used.
                  */
-                protected RedefinitionClassVisitor(ClassVisitor classVisitor, TypeInitializer typeInitializer, ContextRegistry contextRegistry) {
+                protected RedefinitionClassVisitor(ClassVisitor classVisitor,
+                                                   TypeInitializer typeInitializer,
+                                                   ContextRegistry contextRegistry,
+                                                   int writerFlags,
+                                                   int readerFlags) {
                     super(Opcodes.ASM5, classVisitor);
                     this.typeInitializer = typeInitializer;
                     this.contextRegistry = contextRegistry;
+                    this.writerFlags = writerFlags;
+                    this.readerFlags = readerFlags;
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
                     declaredFields = new HashMap<String, FieldDescription>();
                     for (FieldDescription fieldDescription : fieldDescriptions) {
@@ -3365,6 +3391,7 @@ public interface TypeWriter<T> {
                     if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
                     }
+                    cv = asmVisitorWrapper.wrap(instrumentedType, cv, implementationContext, typePool, writerFlags, readerFlags);
                     super.visit(classFileVersionNumber,
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface())
                                     // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
@@ -3505,6 +3532,8 @@ public interface TypeWriter<T> {
                             "typeWriter=" + TypeWriter.Default.ForInlining.this +
                             ", typeInitializer=" + typeInitializer +
                             ", contextRegistry=" + contextRegistry +
+                            ", readerFlags=" + readerFlags +
+                            ", writerFlags=" + writerFlags +
                             ", implementationContext=" + implementationContext +
                             ", declaredFields=" + declaredFields +
                             ", declarableMethods=" + declarableMethods +
@@ -3854,8 +3883,14 @@ public interface TypeWriter<T> {
             protected UnresolvedType create(TypeInitializer typeInitializer) {
                 int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
                 ClassWriter classWriter = new FrameComputingClassWriter(writerFlags, typePool);
+                Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
+                        auxiliaryTypeNamingStrategy,
+                        typeInitializer,
+                        classFileVersion,
+                        classFileVersion);
                 ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType,
                         ValidatingClassVisitor.of(classWriter, typeValidation),
+                        implementationContext,
                         typePool,
                         writerFlags,
                         asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS));
@@ -3867,11 +3902,6 @@ public interface TypeWriter<T> {
                                 ? TypeDescription.OBJECT
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
-                Implementation.Context.ExtractableView implementationContext = implementationContextFactory.make(instrumentedType,
-                        auxiliaryTypeNamingStrategy,
-                        typeInitializer,
-                        classFileVersion,
-                        classFileVersion);
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);

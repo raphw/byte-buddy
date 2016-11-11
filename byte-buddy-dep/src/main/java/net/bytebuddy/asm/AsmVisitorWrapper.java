@@ -1,9 +1,9 @@
 package net.bytebuddy.asm;
 
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
@@ -49,15 +49,21 @@ public interface AsmVisitorWrapper {
     /**
      * Applies a {@code ClassVisitorWrapper} to the creation of a {@link net.bytebuddy.dynamic.DynamicType}.
      *
-     * @param instrumentedType The instrumented type.
-     * @param classVisitor     A {@code ClassVisitor} to become the new primary class visitor to which the created
-     *                         {@link net.bytebuddy.dynamic.DynamicType} is written to.
-     * @param typePool         The type pool that was provided for the class creation.
-     * @param writerFlags      The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
-     * @param readerFlags      The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
+     * @param instrumentedType      The instrumented type.
+     * @param classVisitor          A {@code ClassVisitor} to become the new primary class visitor to which the created
+     *                              {@link net.bytebuddy.dynamic.DynamicType} is written to.
+     * @param implementationContext The implementation context of the current instrumentation.
+     * @param typePool              The type pool that was provided for the class creation.
+     * @param writerFlags           The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
+     * @param readerFlags           The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
      * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.
      */
-    ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags);
+    ClassVisitor wrap(TypeDescription instrumentedType,
+                      ClassVisitor classVisitor,
+                      Implementation.Context implementationContext,
+                      TypePool typePool,
+                      int writerFlags,
+                      int readerFlags);
 
     /**
      * A class visitor wrapper that does not apply any changes.
@@ -80,7 +86,12 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType,
+                                 ClassVisitor classVisitor,
+                                 Implementation.Context implementationContext,
+                                 TypePool typePool,
+                                 int writerFlags,
+                                 int readerFlags) {
             return classVisitor;
         }
 
@@ -157,7 +168,12 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType,
+                                 ClassVisitor classVisitor,
+                                 Implementation.Context implementationContext,
+                                 TypePool typePool,
+                                 int writerFlags,
+                                 int readerFlags) {
             return new DispatchingVisitor(classVisitor, instrumentedType);
         }
 
@@ -439,8 +455,18 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
-            return new DispatchingVisitor(classVisitor, instrumentedType, writerFlags, readerFlags);
+        public ClassVisitor wrap(TypeDescription instrumentedType,
+                                 ClassVisitor classVisitor,
+                                 Implementation.Context implementationContext,
+                                 TypePool typePool,
+                                 int writerFlags,
+                                 int readerFlags) {
+            return new DispatchingVisitor(classVisitor,
+                    instrumentedType,
+                    implementationContext,
+                    typePool,
+                    writerFlags,
+                    readerFlags);
         }
 
         @Override
@@ -476,18 +502,20 @@ public interface AsmVisitorWrapper {
             /**
              * Wraps a method visitor.
              *
-             * @param instrumentedType   The instrumented type.
-             * @param instrumentedMethod The method that is currently being defined.
-             * @param methodVisitor      The original field visitor that defines the given method.
-             * @param classFileVersion   The class file version of the visited class.
-             * @param writerFlags        The ASM {@link org.objectweb.asm.ClassWriter} reader flags to consider.
-             * @param readerFlags        The ASM {@link org.objectweb.asm.ClassReader} reader flags to consider.
+             * @param instrumentedType      The instrumented type.
+             * @param instrumentedMethod    The method that is currently being defined.
+             * @param methodVisitor         The original field visitor that defines the given method.
+             * @param implementationContext The implementation context to use.
+             * @param typePool              The type pool to use.
+             * @param writerFlags           The ASM {@link org.objectweb.asm.ClassWriter} reader flags to consider.
+             * @param readerFlags           The ASM {@link org.objectweb.asm.ClassReader} reader flags to consider.
              * @return The wrapped method visitor.
              */
             MethodVisitor wrap(TypeDescription instrumentedType,
                                MethodDescription.InDefinedShape instrumentedMethod,
                                MethodVisitor methodVisitor,
-                               ClassFileVersion classFileVersion,
+                               Implementation.Context implementationContext,
+                               TypePool typePool,
                                int writerFlags,
                                int readerFlags);
         }
@@ -527,11 +555,18 @@ public interface AsmVisitorWrapper {
             public MethodVisitor wrap(TypeDescription instrumentedType,
                                       MethodDescription.InDefinedShape instrumentedMethod,
                                       MethodVisitor methodVisitor,
-                                      ClassFileVersion classFileVersion,
+                                      Implementation.Context implementationContext,
+                                      TypePool typePool,
                                       int writerFlags,
                                       int readerFlags) {
                 for (MethodVisitorWrapper methodVisitorWrapper : methodVisitorWrappers) {
-                    methodVisitor = methodVisitorWrapper.wrap(instrumentedType, instrumentedMethod, methodVisitor, classFileVersion, writerFlags, readerFlags);
+                    methodVisitor = methodVisitorWrapper.wrap(instrumentedType,
+                            instrumentedMethod,
+                            methodVisitor,
+                            implementationContext,
+                            typePool,
+                            writerFlags,
+                            readerFlags);
                 }
                 return methodVisitor;
             }
@@ -572,6 +607,16 @@ public interface AsmVisitorWrapper {
             private final TypeDescription instrumentedType;
 
             /**
+             * The implementation context to use.
+             */
+            private final Implementation.Context implementationContext;
+
+            /**
+             * The type pool to use.
+             */
+            private final TypePool typePool;
+
+            /**
              * The ASM {@link org.objectweb.asm.ClassWriter} reader flags to consider.
              */
             private final int writerFlags;
@@ -587,21 +632,25 @@ public interface AsmVisitorWrapper {
             private final Map<String, MethodDescription.InDefinedShape> methodsByName;
 
             /**
-             * The class file version of the visited class.
-             */
-            private ClassFileVersion classFileVersion;
-
-            /**
              * Creates a new dispatching visitor.
              *
-             * @param classVisitor     The underlying class visitor.
-             * @param instrumentedType The instrumented type.
-             * @param writerFlags      The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
-             * @param readerFlags      The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
+             * @param classVisitor          The underlying class visitor.
+             * @param instrumentedType      The instrumented type.
+             * @param implementationContext The implementation context to use.
+             * @param typePool              The type pool to use.
+             * @param writerFlags           The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
+             * @param readerFlags           The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
              */
-            protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType, int writerFlags, int readerFlags) {
+            protected DispatchingVisitor(ClassVisitor classVisitor,
+                                         TypeDescription instrumentedType,
+                                         Implementation.Context implementationContext,
+                                         TypePool typePool,
+                                         int writerFlags,
+                                         int readerFlags) {
                 super(Opcodes.ASM5, classVisitor);
                 this.instrumentedType = instrumentedType;
+                this.implementationContext = implementationContext;
+                this.typePool = typePool;
                 this.writerFlags = writerFlags;
                 this.readerFlags = readerFlags;
                 methodsByName = new HashMap<String, MethodDescription.InDefinedShape>();
@@ -611,18 +660,18 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
-            public void visit(int version, int modifiers, String name, String signature, String superTypeName, String[] interfaceName) {
-                classFileVersion = ClassFileVersion.ofMinorMajor(version);
-                super.visit(version, modifiers, name, signature, superTypeName, interfaceName);
-            }
-
-            @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exceptions) {
                 MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, signature, exceptions);
                 MethodDescription.InDefinedShape methodDescription = methodsByName.get(internalName + descriptor);
                 for (Entry entry : entries) {
                     if (entry.matches(methodDescription)) {
-                        methodVisitor = entry.wrap(instrumentedType, methodDescription, methodVisitor, classFileVersion, writerFlags, readerFlags);
+                        methodVisitor = entry.wrap(instrumentedType,
+                                methodDescription,
+                                methodVisitor,
+                                implementationContext,
+                                typePool,
+                                writerFlags,
+                                readerFlags);
                     }
                 }
                 return methodVisitor;
@@ -643,7 +692,8 @@ public interface AsmVisitorWrapper {
                         "outer=" + getOuter() +
                         ", instrumentedType=" + instrumentedType +
                         ", methodsByName=" + methodsByName +
-                        ", classFileVersion=" + classFileVersion +
+                        ", implementationContext=" + implementationContext +
+                        ", typePool=" + typePool +
                         ", writerFlags=" + writerFlags +
                         ", readerFlags=" + readerFlags +
                         '}';
@@ -702,9 +752,14 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType,
+                                 ClassVisitor classVisitor,
+                                 Implementation.Context implementationContext,
+                                 TypePool typePool,
+                                 int writerFlags,
+                                 int readerFlags) {
             for (AsmVisitorWrapper asmVisitorWrapper : asmVisitorWrappers) {
-                classVisitor = asmVisitorWrapper.wrap(instrumentedType, classVisitor, typePool, writerFlags, readerFlags);
+                classVisitor = asmVisitorWrapper.wrap(instrumentedType, classVisitor, implementationContext, typePool, writerFlags, readerFlags);
             }
             return classVisitor;
         }

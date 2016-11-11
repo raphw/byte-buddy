@@ -1,13 +1,14 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -38,7 +39,7 @@ public class AdviceTest {
 
     private static final String ENTER = "enter", EXIT = "exit", INSIDE = "inside", THROWABLE = "throwable";
 
-    private static final int VALUE = 42;
+    private static final int VALUE = 42, IGNORED = 1;
 
     @Test
     public void testEmptyAdviceEntryAndExit() throws Exception {
@@ -1662,9 +1663,10 @@ public class AdviceTest {
         assertThat(new Advice(methodEnter, methodExit).wrap(mock(TypeDescription.class),
                 methodDescription,
                 methodVisitor,
-                mock(ClassFileVersion.class),
-                0,
-                0), sameInstance(methodVisitor));
+                mock(Implementation.Context.class),
+                mock(TypePool.class),
+                IGNORED,
+                IGNORED), sameInstance(methodVisitor));
     }
 
     @Test
@@ -1677,9 +1679,10 @@ public class AdviceTest {
         assertThat(new Advice(methodEnter, methodExit).wrap(mock(TypeDescription.class),
                 methodDescription,
                 methodVisitor,
-                mock(ClassFileVersion.class),
-                0,
-                0), sameInstance(methodVisitor));
+                mock(Implementation.Context.class),
+                mock(TypePool.class),
+                IGNORED,
+                IGNORED), sameInstance(methodVisitor));
     }
 
     @Test(expected = IllegalStateException.class)

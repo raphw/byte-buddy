@@ -5224,11 +5224,13 @@ public interface AgentBuilder {
              */
             INSTANCE;
 
+
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,
                                       MethodDescription.InDefinedShape instrumentedMethod,
                                       MethodVisitor methodVisitor,
-                                      ClassFileVersion classFileVersion,
+                                      Implementation.Context implementationContext,
+                                      TypePool typePool,
                                       int writerFlags,
                                       int readerFlags) {
                 methodVisitor.visitCode();
@@ -5438,7 +5440,8 @@ public interface AgentBuilder {
             public MethodVisitor wrap(TypeDescription instrumentedType,
                                       MethodDescription.InDefinedShape instrumentedMethod,
                                       MethodVisitor methodVisitor,
-                                      ClassFileVersion classFileVersion,
+                                      Implementation.Context implementationContext,
+                                      TypePool typePool,
                                       int writerFlags,
                                       int readerFlags) {
                 methodVisitor.visitCode();

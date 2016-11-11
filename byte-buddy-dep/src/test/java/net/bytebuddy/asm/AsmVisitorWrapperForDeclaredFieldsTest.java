@@ -3,6 +3,7 @@ package net.bytebuddy.asm;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -47,10 +48,13 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     private ClassVisitor classVisitor;
 
     @Mock
-    private FieldVisitor fieldVisitor, wrappedVisitor;
+    private TypePool typePool;
 
     @Mock
-    private TypePool typePool;
+    private Implementation.Context implementationContext;
+
+    @Mock
+    private FieldVisitor fieldVisitor, wrappedVisitor;
 
     @Before
     public void setUp() throws Exception {
@@ -66,7 +70,7 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredFields()
                 .field(matcher, fieldVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, typePool, IRRELEVANT, IRRELEVANT)
+                .wrap(instrumentedType, classVisitor, implementationContext, typePool, IRRELEVANT, IRRELEVANT)
                 .visitField(MODIFIERS, FOO, QUX, BAZ, QUX + BAZ), is(wrappedVisitor));
         verify(matcher).matches(foo);
         verifyNoMoreInteractions(matcher);
@@ -78,7 +82,7 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testNotMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredFields()
                 .field(matcher, fieldVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, typePool, IRRELEVANT, IRRELEVANT)
+                .wrap(instrumentedType, classVisitor, implementationContext, typePool, IRRELEVANT, IRRELEVANT)
                 .visitField(MODIFIERS, BAR, QUX, BAZ, QUX + BAZ), is(fieldVisitor));
         verify(matcher).matches(bar);
         verifyNoMoreInteractions(matcher);
@@ -89,7 +93,7 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testUnknown() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredFields()
                 .field(matcher, fieldVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, typePool, IRRELEVANT, IRRELEVANT)
+                .wrap(instrumentedType, classVisitor, implementationContext, typePool, IRRELEVANT, IRRELEVANT)
                 .visitField(MODIFIERS, FOO + BAR, QUX, BAZ, QUX + BAZ), is(fieldVisitor));
         verifyZeroInteractions(matcher);
         verifyZeroInteractions(fieldVisitorWrapper);

@@ -18,6 +18,7 @@ import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
@@ -426,12 +427,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public MethodVisitor wrap(TypeDescription instrumentedType,
                               MethodDescription.InDefinedShape instrumentedMethod,
                               MethodVisitor methodVisitor,
-                              ClassFileVersion classFileVersion,
+                              Implementation.Context implementationContext,
+                              TypePool typePool,
                               int writerFlags,
                               int readerFlags) {
         return instrumentedMethod.isAbstract() || instrumentedMethod.isNative()
                 ? methodVisitor
-                : doWrap(instrumentedType, instrumentedMethod, methodVisitor, classFileVersion, writerFlags, readerFlags);
+                : doWrap(instrumentedType, instrumentedMethod, methodVisitor, implementationContext.getClassFileVersion(), writerFlags, readerFlags);
     }
 
     /**

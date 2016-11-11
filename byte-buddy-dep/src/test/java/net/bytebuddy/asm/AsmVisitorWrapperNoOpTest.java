@@ -1,6 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -18,7 +19,12 @@ public class AsmVisitorWrapperNoOpTest {
     @Test
     public void testWrapperChain() throws Exception {
         ClassVisitor classVisitor = mock(ClassVisitor.class);
-        assertThat(AsmVisitorWrapper.NoOp.INSTANCE.wrap(mock(TypeDescription.class), classVisitor, mock(TypePool.class), IGNORED, IGNORED), is(classVisitor));
+        assertThat(AsmVisitorWrapper.NoOp.INSTANCE.wrap(mock(TypeDescription.class),
+                classVisitor,
+                mock(Implementation.Context.class),
+                mock(TypePool.class),
+                IGNORED,
+                IGNORED), is(classVisitor));
         verifyZeroInteractions(classVisitor);
     }
 
