@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.pool.TypePool;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -710,7 +711,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     private static class AnnotationValueBreaker extends AsmVisitorWrapper.AbstractBase {
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
             return new BreakingClassVisitor(classVisitor);
         }
 

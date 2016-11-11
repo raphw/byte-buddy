@@ -1,6 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassVisitor;
@@ -12,12 +13,12 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class AsmVisitorWrapperNoOpTest {
 
-    private static final int FOO = 42, IRRELEVANT = -1;
+    private static final int FOO = 42, IGNORED = -1;
 
     @Test
     public void testWrapperChain() throws Exception {
         ClassVisitor classVisitor = mock(ClassVisitor.class);
-        assertThat(AsmVisitorWrapper.NoOp.INSTANCE.wrap(mock(TypeDescription.class), classVisitor, IRRELEVANT, IRRELEVANT), is(classVisitor));
+        assertThat(AsmVisitorWrapper.NoOp.INSTANCE.wrap(mock(TypeDescription.class), classVisitor, mock(TypePool.class), IGNORED, IGNORED), is(classVisitor));
         verifyZeroInteractions(classVisitor);
     }
 

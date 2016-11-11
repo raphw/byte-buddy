@@ -2,6 +2,7 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.*;
 
 public class TypeConstantAdjustmentTest {
 
-    private static final int FOOBAR = 42, IRRELEVANT = -1;
+    private static final int FOOBAR = 42, IGNORED = -1;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -54,7 +55,7 @@ public class TypeConstantAdjustmentTest {
 
     @Test
     public void testInstrumentationModernClassFile() throws Exception {
-        ClassVisitor classVisitor = TypeConstantAdjustment.INSTANCE.wrap(mock(TypeDescription.class), this.classVisitor, IRRELEVANT, IRRELEVANT);
+        ClassVisitor classVisitor = TypeConstantAdjustment.INSTANCE.wrap(mock(TypeDescription.class), this.classVisitor, mock(TypePool.class), IGNORED, IGNORED);
         classVisitor.visit(ClassFileVersion.JAVA_V5.getMinorMajorVersion(), FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         assertThat(classVisitor.visitMethod(FOOBAR, FOO, BAR, QUX, new String[]{BAZ}), is(methodVisitor));
         verify(this.classVisitor).visit(ClassFileVersion.JAVA_V5.getMinorMajorVersion(), FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
@@ -65,7 +66,7 @@ public class TypeConstantAdjustmentTest {
 
     @Test
     public void testInstrumentationLegacyClassFileObjectType() throws Exception {
-        ClassVisitor classVisitor = TypeConstantAdjustment.INSTANCE.wrap(mock(TypeDescription.class), this.classVisitor, IRRELEVANT, IRRELEVANT);
+        ClassVisitor classVisitor = TypeConstantAdjustment.INSTANCE.wrap(mock(TypeDescription.class), this.classVisitor, mock(TypePool.class), IGNORED, IGNORED);
         classVisitor.visit(ClassFileVersion.JAVA_V4.getMinorMajorVersion(), FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         MethodVisitor methodVisitor = classVisitor.visitMethod(FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         assertThat(methodVisitor, not(this.methodVisitor));
@@ -84,7 +85,7 @@ public class TypeConstantAdjustmentTest {
 
     @Test
     public void testInstrumentationLegacyClassFileArrayType() throws Exception {
-        ClassVisitor classVisitor = TypeConstantAdjustment.INSTANCE.wrap(mock(TypeDescription.class), this.classVisitor, IRRELEVANT, IRRELEVANT);
+        ClassVisitor classVisitor = TypeConstantAdjustment.INSTANCE.wrap(mock(TypeDescription.class), this.classVisitor, mock(TypePool.class), IGNORED, IGNORED);
         classVisitor.visit(ClassFileVersion.JAVA_V4.getMinorMajorVersion(), FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         MethodVisitor methodVisitor = classVisitor.visitMethod(FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         assertThat(methodVisitor, not(this.methodVisitor));
@@ -103,7 +104,7 @@ public class TypeConstantAdjustmentTest {
 
     @Test
     public void testInstrumentationLegacyClassOtherType() throws Exception {
-        ClassVisitor classVisitor = TypeConstantAdjustment.INSTANCE.wrap(mock(TypeDescription.class), this.classVisitor, IRRELEVANT, IRRELEVANT);
+        ClassVisitor classVisitor = TypeConstantAdjustment.INSTANCE.wrap(mock(TypeDescription.class), this.classVisitor, mock(TypePool.class), IGNORED, IGNORED);
         classVisitor.visit(ClassFileVersion.JAVA_V4.getMinorMajorVersion(), FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         MethodVisitor methodVisitor = classVisitor.visitMethod(FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         assertThat(methodVisitor, not(this.methodVisitor));

@@ -378,7 +378,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @Test
     public void testReaderHint() throws Exception {
         AsmVisitorWrapper asmVisitorWrapper = mock(AsmVisitorWrapper.class);
-        when(asmVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class), anyInt(), anyInt())).then(new Answer<ClassVisitor>() {
+        when(asmVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class), any(TypePool.class), anyInt(), anyInt())).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[1]) {
@@ -399,7 +399,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         verify(asmVisitorWrapper).mergeWriter(0);
         verify(asmVisitorWrapper).mergeReader(0);
-        verify(asmVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class), anyInt(), anyInt());
+        verify(asmVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class), any(TypePool.class), anyInt(), anyInt());
         verifyNoMoreInteractions(asmVisitorWrapper);
     }
 

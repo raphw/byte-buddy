@@ -5,6 +5,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -51,11 +52,12 @@ public interface AsmVisitorWrapper {
      * @param instrumentedType The instrumented type.
      * @param classVisitor     A {@code ClassVisitor} to become the new primary class visitor to which the created
      *                         {@link net.bytebuddy.dynamic.DynamicType} is written to.
+     * @param typePool         The type pool that was provided for the class creation.
      * @param writerFlags      The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
      * @param readerFlags      The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
      * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.
      */
-    ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags);
+    ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags);
 
     /**
      * A class visitor wrapper that does not apply any changes.
@@ -78,7 +80,7 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
             return classVisitor;
         }
 
@@ -155,7 +157,7 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
             return new DispatchingVisitor(classVisitor, instrumentedType);
         }
 
@@ -437,7 +439,7 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
             return new DispatchingVisitor(classVisitor, instrumentedType, writerFlags, readerFlags);
         }
 
@@ -474,12 +476,12 @@ public interface AsmVisitorWrapper {
             /**
              * Wraps a method visitor.
              *
-             * @param instrumentedType  The instrumented type.
+             * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The method that is currently being defined.
-             * @param methodVisitor     The original field visitor that defines the given method.
-             * @param classFileVersion  The class file version of the visited class.
-             * @param writerFlags       The ASM {@link org.objectweb.asm.ClassWriter} reader flags to consider.
-             * @param readerFlags       The ASM {@link org.objectweb.asm.ClassReader} reader flags to consider.
+             * @param methodVisitor      The original field visitor that defines the given method.
+             * @param classFileVersion   The class file version of the visited class.
+             * @param writerFlags        The ASM {@link org.objectweb.asm.ClassWriter} reader flags to consider.
+             * @param readerFlags        The ASM {@link org.objectweb.asm.ClassReader} reader flags to consider.
              * @return The wrapped method visitor.
              */
             MethodVisitor wrap(TypeDescription instrumentedType,
@@ -700,9 +702,9 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
             for (AsmVisitorWrapper asmVisitorWrapper : asmVisitorWrappers) {
-                classVisitor = asmVisitorWrapper.wrap(instrumentedType, classVisitor, writerFlags, readerFlags);
+                classVisitor = asmVisitorWrapper.wrap(instrumentedType, classVisitor, typePool, writerFlags, readerFlags);
             }
             return classVisitor;
         }

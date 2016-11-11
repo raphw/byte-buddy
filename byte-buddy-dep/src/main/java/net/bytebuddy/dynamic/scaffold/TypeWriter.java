@@ -3093,6 +3093,7 @@ public interface TypeWriter<T> {
                     ContextRegistry contextRegistry = new ContextRegistry();
                     classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType,
                             ValidatingClassVisitor.of(classWriter, typeValidation),
+                            typePool,
                             writerFlags,
                             readerFlags), typeInitializer, contextRegistry), readerFlags);
                     return new UnresolvedType(classWriter.toByteArray(), contextRegistry.getAuxiliaryTypes());
@@ -3855,6 +3856,7 @@ public interface TypeWriter<T> {
                 ClassWriter classWriter = new FrameComputingClassWriter(writerFlags, typePool);
                 ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType,
                         ValidatingClassVisitor.of(classWriter, typeValidation),
+                        typePool,
                         writerFlags,
                         asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS));
                 classVisitor.visit(classFileVersion.getMinorMajorVersion(),

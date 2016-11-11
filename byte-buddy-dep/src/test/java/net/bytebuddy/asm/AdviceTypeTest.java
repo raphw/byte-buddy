@@ -3,6 +3,7 @@ package net.bytebuddy.asm;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.pool.TypePool;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -1955,7 +1956,7 @@ public class AdviceTypeTest {
     private static class SerializationAssertion extends AsmVisitorWrapper.AbstractBase {
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
             return new SerializationClassVisitor(classVisitor);
         }
 

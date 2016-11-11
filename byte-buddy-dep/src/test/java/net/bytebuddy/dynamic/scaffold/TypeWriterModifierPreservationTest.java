@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.scope.EnclosingType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -125,7 +126,7 @@ public class TypeWriterModifierPreservationTest {
             }
 
             @Override
-            public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+            public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
                 return new TypeValidator(classVisitor, modifiers, inner);
             }
         }

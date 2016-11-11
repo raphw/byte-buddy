@@ -2,6 +2,7 @@ package net.bytebuddy.test.utility;
 
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.pool.TypePool;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.Printer;
@@ -52,7 +53,7 @@ public class DebuggingWrapper implements AsmVisitorWrapper {
     }
 
     @Override
-    public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+    public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
         return check
                 ? new CheckClassAdapter(new TraceClassVisitor(classVisitor, printer, printWriter))
                 : new TraceClassVisitor(classVisitor, printer, printWriter);

@@ -25,6 +25,7 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -348,7 +349,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testWriterHint() throws Exception {
         AsmVisitorWrapper asmVisitorWrapper = mock(AsmVisitorWrapper.class);
-        when(asmVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class), anyInt(), anyInt())).then(new Answer<ClassVisitor>() {
+        when(asmVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class), any(TypePool.class), anyInt(), anyInt())).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[1]) {
@@ -373,7 +374,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
         verify(asmVisitorWrapper).mergeWriter(0);
         verify(asmVisitorWrapper, atMost(1)).mergeReader(0);
-        verify(asmVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class), anyInt(), anyInt());
+        verify(asmVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class), any(TypePool.class), anyInt(), anyInt());
         verifyNoMoreInteractions(asmVisitorWrapper);
     }
 

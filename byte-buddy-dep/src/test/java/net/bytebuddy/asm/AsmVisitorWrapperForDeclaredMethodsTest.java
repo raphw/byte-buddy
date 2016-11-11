@@ -1,10 +1,10 @@
 package net.bytebuddy.asm;
 
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -47,6 +47,9 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     private ClassVisitor classVisitor;
 
     @Mock
+    private TypePool typePool;
+
+    @Mock
     private MethodVisitor methodVisitor, wrappedVisitor;
 
     @Before
@@ -65,33 +68,36 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public void testMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods()
                 .method(matcher, methodVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, FLAGS, FLAGS * 2)
+                .wrap(instrumentedType, classVisitor, typePool, FLAGS, FLAGS * 2)
                 .visitMethod(MODIFIERS, FOO, QUX, BAZ, new String[]{QUX + BAZ}), is(wrappedVisitor));
         verify(matcher).matches(foo);
         verifyNoMoreInteractions(matcher);
         verify(methodVisitorWrapper).wrap(instrumentedType, foo, methodVisitor, null, FLAGS, FLAGS * 2);
         verifyNoMoreInteractions(methodVisitorWrapper);
+        verifyZeroInteractions(typePool);
     }
 
     @Test
     public void testNotMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods()
                 .method(matcher, methodVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, FLAGS, FLAGS * 2)
+                .wrap(instrumentedType, classVisitor, typePool, FLAGS, FLAGS * 2)
                 .visitMethod(MODIFIERS, BAR, BAZ, BAZ, new String[]{QUX + BAZ}), is(methodVisitor));
         verify(matcher).matches(bar);
         verifyNoMoreInteractions(matcher);
         verifyZeroInteractions(methodVisitorWrapper);
+        verifyZeroInteractions(typePool);
     }
 
     @Test
     public void testUnknown() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods()
                 .method(matcher, methodVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, FLAGS, FLAGS * 2)
+                .wrap(instrumentedType, classVisitor, typePool, FLAGS, FLAGS * 2)
                 .visitMethod(MODIFIERS, FOO + BAR, QUX, BAZ, new String[]{QUX + BAZ}), is(methodVisitor));
         verifyZeroInteractions(matcher);
         verifyZeroInteractions(methodVisitorWrapper);
+        verifyZeroInteractions(typePool);
     }
 
     @Test

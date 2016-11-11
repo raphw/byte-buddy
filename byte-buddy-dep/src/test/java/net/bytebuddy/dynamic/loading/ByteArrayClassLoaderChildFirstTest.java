@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
@@ -218,7 +219,7 @@ public class ByteArrayClassLoaderChildFirstTest {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, TypePool typePool, int writerFlags, int readerFlags) {
             return new ClassRemapper(classVisitor, new SimpleRemapper(oldName, newName));
         }
     }
