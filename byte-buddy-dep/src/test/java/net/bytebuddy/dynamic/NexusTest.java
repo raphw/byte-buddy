@@ -15,6 +15,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -163,9 +165,39 @@ public class NexusTest {
         }
     }
 
+    @Test
+    public void testNexusClean() throws Exception {
+        Field typeInitializers = ClassLoader.getSystemClassLoader().loadClass(Nexus.class.getName()).getDeclaredField("TYPE_INITIALIZERS");
+        typeInitializers.setAccessible(true);
+        ClassLoader classLoader = new URLClassLoader(new URL[0]);
+        when(loadedTypeInitializer.isAlive()).thenReturn(true);
+        assertThat(((Map<?, ?>) typeInitializers.get(null)).isEmpty(), is(true));
+        NexusAccessor.INSTANCE.register(FOO, classLoader, BAR, loadedTypeInitializer);
+        assertThat(((Map<?, ?>) typeInitializers.get(null)).isEmpty(), is(false));
+        classLoader = null;
+        System.gc();
+        NexusAccessor.INSTANCE.clean();
+        assertThat(((Map<?, ?>) typeInitializers.get(null)).isEmpty(), is(true));
+    }
+
+    @Test
+    public void testNexusAccessorIsAvailable() throws Exception {
+        assertThat(NexusAccessor.INSTANCE.isAlive(), is(true));
+    }
+
+    @Test
+    public void testUnavailableState() throws Exception {
+        assertThat(new NexusAccessor.Dispatcher.Unavailable(new Exception()).isAlive(), is(false));
+    }
+
     @Test(expected = IllegalStateException.class)
-    public void testUnavailableDispatcherThrowsException() throws Exception {
+    public void testUnavailableDispatcherRegisterThrowsException() throws Exception {
         new NexusAccessor.Dispatcher.Unavailable(new Exception()).register(FOO, classLoader, BAR, loadedTypeInitializer);
+    }
+
+    @Test
+    public void testUnavailableDispatcherCleanDoesNotThrowException() throws Exception {
+        new NexusAccessor.Dispatcher.Unavailable(new Exception()).clean();
     }
 
     @Test

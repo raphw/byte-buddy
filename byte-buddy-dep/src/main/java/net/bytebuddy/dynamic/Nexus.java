@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import java.lang.ref.WeakReference;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
@@ -20,7 +21,7 @@ import java.util.logging.Logger;
  * system class loader in its hierarchy.
  * </p>
  */
-public class Nexus {
+public class Nexus extends WeakReference<ClassLoader> {
 
     /**
      * A map of keys identifying a loaded type by its name and class loader mapping their
@@ -33,11 +34,6 @@ public class Nexus {
      * The name of a type for which a loaded type initializer is registered.
      */
     private final String name;
-
-    /**
-     * A weak reference to the class loader for which a loaded type initializer is registered.
-     */
-    private final WeakReference<ClassLoader> classLoaderReference;
 
     /**
      * The class loader's hash code upon registration.
@@ -68,14 +64,9 @@ public class Nexus {
      * @param identification An identification for the initializer to run.
      */
     private Nexus(String name, ClassLoader classLoader, int identification) {
+        super(classLoader);
         this.name = name;
-        if (classLoader == null) {
-            classLoaderReference = null;
-            classLoaderHashCode = 0;
-        } else {
-            classLoaderReference = new WeakReference<ClassLoader>(classLoader);
-            classLoaderHashCode = System.identityHashCode(classLoader);
-        }
+        classLoaderHashCode = System.identityHashCode(classLoader);
         this.identification = identification;
     }
 
@@ -93,7 +84,15 @@ public class Nexus {
     }
 
     /**
+     * <p>
      * Initializes a loaded type. This method must only be invoked via the system class loader.
+     * </p>
+     * <p>
+     * <b>Important</b>: This method must never be called directly but only by using a {@link NexusAccessor.InitializationAppender} which enforces to
+     * access this class for the system class loader to assure a VM global singleton. This avoids a duplication of the class if this nexus is loaded
+     * by different class loaders. For this reason, the last parameter must not use a Byte Buddy specific type as those types can be loaded by
+     * different class loaders, too. Any access of the instance is done using Java reflection instead.
+     * </p>
      *
      * @param type           The loaded type to initialize.
      * @param identification An identification for the initializer to run.
@@ -112,11 +111,10 @@ public class Nexus {
      * Registers a new loaded type initializer.
      * </p>
      * <p>
-     * Important: This method must never be called directly but only by using a
-     * {@link NexusAccessor#register(String, ClassLoader, int, net.bytebuddy.implementation.LoadedTypeInitializer)} which enforces to access this class
-     * for the system class loader where a Java agent always registers its instances. This avoids a duplication of the class if this nexus is loaded by
-     * different class loaders. For this reason, the last parameter must not use a Byte Buddy specific type as those types can be loaded by different class
-     * loaders, too. Any access of the instance is done using Java reflection instead.
+     * <b>Important</b>: This method must never be called directly but only by using a {@link NexusAccessor} which enforces to access this class
+     * for the system class loader to assure a VM global singleton. This avoids a duplication of the class if this nexus is loaded by different class
+     * loaders. For this reason, the last parameter must not use a Byte Buddy specific type as those types can be loaded by different class loaders,
+     * too. Any access of the instance is done using Java reflection instead.
      * </p>
      *
      * @param name            The name of the type for the loaded type initializer.
@@ -132,14 +130,44 @@ public class Nexus {
         }
     }
 
+    /**
+     * <p>
+     * Cleans any stale entries from this nexus. Entries are considered stale if their class loader was collected before a class was initialized.
+     * </p>
+     * <p>
+     * <b>Important</b>: This method must never be called directly but only by using a {@link NexusAccessor} which enforces to access this class
+     * for the system class loader to assure a VM global singleton. This avoids a duplication of the class if this nexus is loaded by different class
+     * loaders. For this reason, the last parameter must not use a Byte Buddy specific type as those types can be loaded by different class loaders,
+     * too. Any access of the instance is done using Java reflection instead.
+     * </p>
+     */
+    public static void clean() {
+        Iterator<Nexus> iterator = TYPE_INITIALIZERS.keySet().iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next().isStale()) {
+                iterator.remove();
+            }
+        }
+    }
+
+    /**
+     * Checks if this entry is stale, i.e. the referenced class loader was garbage collected.
+     *
+     * @return {@code true} if this entry is stale.
+     */
+    private boolean isStale() {
+        return classLoaderHashCode != 0 && get() == null;
+    }
+
     @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        Nexus nexus = (Nexus) other;
-        return !(identification != nexus.identification || classLoaderHashCode != nexus.classLoaderHashCode || !name.equals(nexus.name))
-                && (classLoaderReference == nexus.classLoaderReference
-                || classLoaderReference != null && nexus.classLoaderReference != null && classLoaderReference.get() == nexus.classLoaderReference.get());
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        Nexus nexus = (Nexus) object;
+        return classLoaderHashCode == nexus.classLoaderHashCode
+                && identification == nexus.identification
+                && get() == nexus.get()
+                && name.equals(nexus.name);
     }
 
     @Override
@@ -154,7 +182,7 @@ public class Nexus {
     public String toString() {
         return "Nexus{" +
                 "name='" + name + '\'' +
-                ", classLoader=" + (classLoaderReference == null ? null : classLoaderReference.get()) +
+                ", classLoaderReference=" + get() +
                 ", classLoaderHashCode=" + classLoaderHashCode +
                 ", identification=" + identification +
                 '}';

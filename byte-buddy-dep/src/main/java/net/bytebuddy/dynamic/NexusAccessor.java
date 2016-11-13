@@ -72,7 +72,7 @@ public enum NexusAccessor implements PrivilegedAction<NexusAccessor.Dispatcher> 
      * Creates the singleton accessor.
      */
     NexusAccessor() {
-        this.dispatcher = AccessController.doPrivileged(this);
+        dispatcher = AccessController.doPrivileged(this);
         getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
                 .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
         loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
@@ -89,20 +89,38 @@ public enum NexusAccessor implements PrivilegedAction<NexusAccessor.Dispatcher> 
     @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
     public Dispatcher run() {
         try {
-            TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-            return new Dispatcher.Available(new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), Nexus.class.getProtectionDomain())
-                    .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
-                    .get(nexusType)
-                    .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
+            Class<?> nexusType = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), Nexus.class.getProtectionDomain())
+                    .inject(Collections.singletonMap(new TypeDescription.ForLoadedType(Nexus.class), ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
+                    .get(new TypeDescription.ForLoadedType(Nexus.class));
+            return new Dispatcher.Available(nexusType.getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class),
+                    nexusType.getDeclaredMethod("clean"));
         } catch (Exception exception) {
             try {
-                return new Dispatcher.Available(ClassLoader.getSystemClassLoader()
-                        .loadClass(Nexus.class.getName())
-                        .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
+                Class<?> nexusType = ClassLoader.getSystemClassLoader().loadClass(Nexus.class.getName());
+                return new Dispatcher.Available(nexusType.getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class),
+                        nexusType.getDeclaredMethod("clean"));
             } catch (Exception ignored) {
                 return new Dispatcher.Unavailable(exception);
             }
         }
+    }
+
+    /**
+     * Checks if this {@link NexusAccessor} is capable of registering loaded type initializers.
+     *
+     * @return {@code true} if this accessor is alive.
+     */
+    public boolean isAlive() {
+        return dispatcher.isAlive();
+    }
+
+    /**
+     * Removes any stale entries that are registered in the {@link Nexus}. Entries can become stale if a class is loaded but never initialized
+     * prior to its garbage collection. As all class loaders within a nexus are only referenced weakly, such class loaders are always garbage
+     * collected. However, the initialization data stored by Byte Buddy does not become eligible which is why it needs to be cleaned explicitly.
+     */
+    public void clean() {
+        dispatcher.clean();
     }
 
     /**
@@ -194,7 +212,19 @@ public enum NexusAccessor implements PrivilegedAction<NexusAccessor.Dispatcher> 
     protected interface Dispatcher {
 
         /**
-         * Registers a type initializer with the class loader's nexus.
+         * Returns {@code true} if this dispatcher is alive.
+         *
+         * @return {@code true} if this dispatcher is alive.
+         */
+        boolean isAlive();
+
+        /**
+         * Cleans any dead entries of the system class loader's {@link Nexus}.
+         */
+        void clean();
+
+        /**
+         * Registers a type initializer with the system class loader's nexus.
          *
          * @param name                  The name of a type for which a loaded type initializer is registered.
          * @param classLoader           The class loader for which a loaded type initializer is registered.
@@ -214,45 +244,70 @@ public enum NexusAccessor implements PrivilegedAction<NexusAccessor.Dispatcher> 
             private static final Object STATIC_METHOD = null;
 
             /**
-             * The method for registering a type initializer in the system class loader's {@link Nexus}.
+             * The {@link Nexus#register(String, ClassLoader, int, Object)} method.
              */
-            private final Method registration;
+            private final Method register;
+
+            /**
+             * The {@link Nexus#clean()} method.
+             */
+            private final Method clean;
 
             /**
              * Creates a new dispatcher.
              *
-             * @param registration The method for registering a type initializer in the system class loader's {@link Nexus}.
+             * @param register The {@link Nexus#register(String, ClassLoader, int, Object)} method.
+             * @param clean    The {@link Nexus#clean()} method.
              */
-            protected Available(Method registration) {
-                this.registration = registration;
+            protected Available(Method register, Method clean) {
+                this.register = register;
+                this.clean = clean;
+            }
+
+            @Override
+            public boolean isAlive() {
+                return true;
+            }
+
+            @Override
+            public void clean() {
+                try {
+                    clean.invoke(STATIC_METHOD);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access: " + clean, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot invoke: " + clean, exception.getCause());
+                }
             }
 
             @Override
             public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer loadedTypeInitializer) {
                 try {
-                    registration.invoke(STATIC_METHOD, name, classLoader, identification, loadedTypeInitializer);
+                    register.invoke(STATIC_METHOD, name, classLoader, identification, loadedTypeInitializer);
                 } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot register type initializer for " + name, exception);
+                    throw new IllegalStateException("Cannot access: " + register, exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot register type initializer for " + name, exception.getCause());
+                    throw new IllegalStateException("Cannot invoke: " + register, exception.getCause());
                 }
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && registration.equals(((Available) other).registration);
+                        && register.equals(((Available) other).register)
+                        && clean.equals(((Available) other).clean);
             }
 
             @Override
             public int hashCode() {
-                return registration.hashCode();
+                return register.hashCode() + 31 * clean.hashCode();
             }
 
             @Override
             public String toString() {
                 return "NexusAccessor.Dispatcher.Available{" +
-                        "registration=" + registration +
+                        "register=" + register +
+                        ", clean=" + clean +
                         '}';
             }
         }
@@ -277,8 +332,18 @@ public enum NexusAccessor implements PrivilegedAction<NexusAccessor.Dispatcher> 
             }
 
             @Override
+            public boolean isAlive() {
+                return false;
+            }
+
+            @Override
+            public void clean() {
+                /* do nothing */
+            }
+
+            @Override
             public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer loadedTypeInitializer) {
-                throw new IllegalStateException("Could not locate registration method", exception);
+                throw new IllegalStateException("Could not locate Nexus method", exception);
             }
 
             @Override

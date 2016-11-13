@@ -84,8 +84,13 @@ public interface TypeResolutionStrategy {
     }
 
     /**
+     * <p>
      * A type resolution strategy that applies all {@link LoadedTypeInitializer} as a part of class loading using reflection. This implies that the initializers
      * are executed <b>before</b> (as a first action of) a type initializer is executed.
+     * </p>
+     * <p>
+     * <b>Important</b>: Using self-injection might require the explicit cleaning of class loader meta data via {@link NexusAccessor#clean()}.
+     * </p>
      */
     enum Active implements TypeResolutionStrategy {
 

@@ -2243,8 +2243,13 @@ public interface AgentBuilder {
         }
 
         /**
+         * <p>
          * An initialization strategy that adds a code block to an instrumented type's type initializer which
          * then calls a specific class that is responsible for the explicit initialization.
+         * </p>
+         * <p>
+         * <b>Important</b>: Using self-injection might require the explicit cleaning of class loader meta data via {@link NexusAccessor#clean()}.
+         * </p>
          */
         @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoiding synchronization without security concerns")
         enum SelfInjection implements InitializationStrategy {
