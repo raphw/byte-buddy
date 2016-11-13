@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. November 2016: version 1.5.4
+
+- Extended `MethodCall` API.
+- Added additional element matchers.
+- Extended `AsmVisitorWrapper` API.
+
 ### 3. November 2016: version 1.5.3
 
 - Refactored `Advice` to allow usage as a wrapper for an `Implementation`. This allows chaining of such advices.
