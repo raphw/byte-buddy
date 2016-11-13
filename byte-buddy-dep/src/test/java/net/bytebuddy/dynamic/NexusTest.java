@@ -176,7 +176,7 @@ public class NexusTest {
             public Class<?> create() {
                 return types.next();
             }
-        }).apply();
+        }).skipToString().apply();
         ObjectPropertyAssertion.of(NexusAccessor.class).apply();
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
         ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.Available.class)

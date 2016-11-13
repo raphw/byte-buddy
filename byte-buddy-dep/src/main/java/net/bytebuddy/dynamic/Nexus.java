@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic;
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
@@ -34,9 +35,14 @@ public class Nexus {
     private final String name;
 
     /**
-     * The class loader for which a loaded type initializer is registered.
+     * A weak reference to the class loader for which a loaded type initializer is registered.
      */
-    private final ClassLoader classLoader;
+    private final WeakReference<ClassLoader> classLoaderReference;
+
+    /**
+     * The class loader's hash code upon registration.
+     */
+    private final int classLoaderHashCode;
 
     /**
      * A random value that uniquely identifies a Nexus entry in order to avoid conflicts when
@@ -63,7 +69,13 @@ public class Nexus {
      */
     private Nexus(String name, ClassLoader classLoader, int identification) {
         this.name = name;
-        this.classLoader = classLoader;
+        if (classLoader == null) {
+            classLoaderReference = null;
+            classLoaderHashCode = 0;
+        } else {
+            classLoaderReference = new WeakReference<ClassLoader>(classLoader);
+            classLoaderHashCode = System.identityHashCode(classLoader);
+        }
         this.identification = identification;
     }
 
@@ -125,16 +137,16 @@ public class Nexus {
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
         Nexus nexus = (Nexus) other;
-        return identification == nexus.identification
-                && !(classLoader != null ? !classLoader.equals(nexus.classLoader) : nexus.classLoader != null)
-                && name.equals(nexus.name);
+        return !(identification != nexus.identification || classLoaderHashCode != nexus.classLoaderHashCode || !name.equals(nexus.name))
+                && (classLoaderReference == nexus.classLoaderReference
+                || classLoaderReference != null && nexus.classLoaderReference != null && classLoaderReference.get() == nexus.classLoaderReference.get());
     }
 
     @Override
     public int hashCode() {
         int result = name.hashCode();
         result = 31 * result + identification;
-        result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
+        result = 31 * result + classLoaderHashCode;
         return result;
     }
 
@@ -142,7 +154,8 @@ public class Nexus {
     public String toString() {
         return "Nexus{" +
                 "name='" + name + '\'' +
-                ", classLoader=" + classLoader +
+                ", classLoader=" + (classLoaderReference == null ? null : classLoaderReference.get()) +
+                ", classLoaderHashCode=" + classLoaderHashCode +
                 ", identification=" + identification +
                 '}';
     }
