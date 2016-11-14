@@ -2243,58 +2243,107 @@ public interface AgentBuilder {
         }
 
         /**
-         * <p>
-         * An initialization strategy that adds a code block to an instrumented type's type initializer which
-         * then calls a specific class that is responsible for the explicit initialization.
-         * </p>
-         * <p>
-         * <b>Important</b>: Using self-injection might require the explicit cleaning of class loader meta data via {@link NexusAccessor#clean()}.
-         * </p>
+         * An initialization strategy that loads auxiliary types before loading the instrumented type. This strategy skips all types
+         * that are a subtype of the instrumented type which would cause a premature loading of the instrumented type and abort
+         * the instrumentation process.
          */
-        @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoiding synchronization without security concerns")
-        enum SelfInjection implements InitializationStrategy {
+        enum Minimal implements InitializationStrategy, Dispatcher {
 
             /**
-             * A form of self-injection where auxiliary types that are annotated by
-             * {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType.SignatureRelevant} of the instrumented type are loaded lazily and
-             * any other auxiliary type is loaded eagerly.
+             * The singleton instance.
              */
-            SPLIT {
-                @Override
-                public InitializationStrategy.Dispatcher dispatcher() {
-                    return new SelfInjection.Dispatcher.Split(new Random().nextInt());
-                }
-            },
+            INSTANCE;
 
-            /**
-             * A form of self-injection where any auxiliary type is loaded lazily.
-             */
-            LAZY {
-                @Override
-                public InitializationStrategy.Dispatcher dispatcher() {
-                    return new SelfInjection.Dispatcher.Lazy(new Random().nextInt());
-                }
-            },
+            @Override
+            public Dispatcher dispatcher() {
+                return this;
+            }
 
-            /**
-             * A form of self-injection where any auxiliary type is loaded eagerly.
-             */
-            EAGER {
-                @Override
-                public InitializationStrategy.Dispatcher dispatcher() {
-                    return new SelfInjection.Dispatcher.Eager(new Random().nextInt());
+            @Override
+            public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
+                return builder;
+            }
+
+            @Override
+            public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
+                Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
+                for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
+                    if (!auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)) {
+                        independentTypes.remove(auxiliaryType);
+                    }
                 }
-            };
+                if (!independentTypes.isEmpty()) {
+                    ClassInjector classInjector = injectorFactory.resolve();
+                    Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
+                    for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
+                        loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
+                    }
+                }
+            }
 
             @Override
             public String toString() {
-                return "AgentBuilder.InitializationStrategy.SelfInjection." + name();
+                return "AgentBuilder.InitializationStrategy.Minimal." + name();
+            }
+        }
+
+        /**
+         * An initialization strategy that adds a code block to an instrumented type's type initializer which
+         * then calls a specific class that is responsible for the explicit initialization.
+         */
+        abstract class SelfInjection implements InitializationStrategy {
+
+            /**
+             * The nexus accessor to use.
+             */
+            protected final NexusAccessor nexusAccessor;
+
+            /**
+             * Creates a new self-injection strategy.
+             *
+             * @param nexusAccessor The nexus accessor to use.
+             */
+            protected SelfInjection(NexusAccessor nexusAccessor) {
+                this.nexusAccessor = nexusAccessor;
+            }
+
+            @Override
+            @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoiding synchronization without security concerns")
+            public InitializationStrategy.Dispatcher dispatcher() {
+                return dispatcher(new Random().nextInt());
+            }
+
+            /**
+             * Creates a new dispatcher.
+             *
+             * @param identification The identification code to use.
+             * @return An appropriate dispatcher for an initialization strategy.
+             */
+            protected abstract InitializationStrategy.Dispatcher dispatcher(int identification);
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                SelfInjection that = (SelfInjection) object;
+                return nexusAccessor.equals(that.nexusAccessor);
+            }
+
+            @Override
+            public int hashCode() {
+                return nexusAccessor.hashCode();
             }
 
             /**
              * A dispatcher for a self-initialization strategy.
              */
             protected abstract static class Dispatcher implements InitializationStrategy.Dispatcher {
+
+                /**
+                 * The nexus accessor to use.
+                 */
+                protected final NexusAccessor nexusAccessor;
 
                 /**
                  * A random identification for the applied self-initialization.
@@ -2304,9 +2353,11 @@ public interface AgentBuilder {
                 /**
                  * Creates a new dispatcher.
                  *
+                 * @param nexusAccessor  The nexus accessor to use.
                  * @param identification A random identification for the applied self-initialization.
                  */
-                protected Dispatcher(int identification) {
+                protected Dispatcher(NexusAccessor nexusAccessor, int identification) {
+                    this.nexusAccessor = nexusAccessor;
                     this.identification = identification;
                 }
 
@@ -2318,125 +2369,13 @@ public interface AgentBuilder {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && identification == ((Dispatcher) other).identification;
+                            && identification == ((Dispatcher) other).identification
+                            && nexusAccessor == ((Dispatcher) other).nexusAccessor;
                 }
 
                 @Override
                 public int hashCode() {
-                    return identification;
-                }
-
-                /**
-                 * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection#SPLIT} strategy.
-                 */
-                protected static class Split extends Dispatcher {
-
-                    /**
-                     * Creates a new split dispatcher.
-                     *
-                     * @param identification A random identification for the applied self-initialization.
-                     */
-                    protected Split(int identification) {
-                        super(identification);
-                    }
-
-                    @Override
-                    public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
-                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
-                        LoadedTypeInitializer loadedTypeInitializer;
-                        if (!auxiliaryTypes.isEmpty()) {
-                            TypeDescription instrumentedType = dynamicType.getTypeDescription();
-                            ClassInjector classInjector = injectorFactory.resolve();
-                            Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
-                            Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
-                            for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
-                                (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)
-                                        ? dependentTypes
-                                        : independentTypes).remove(auxiliaryType);
-                            }
-                            Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                            if (!independentTypes.isEmpty()) {
-                                for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
-                                    loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
-                                }
-                            }
-                            Map<TypeDescription, LoadedTypeInitializer> lazyInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(loadedTypeInitializers);
-                            loadedTypeInitializers.keySet().removeAll(independentTypes.keySet());
-                            loadedTypeInitializer = lazyInitializers.size() > 1 // there exist auxiliary types that need lazy loading
-                                    ? new InjectingInitializer(instrumentedType, dependentTypes, lazyInitializers, classInjector)
-                                    : lazyInitializers.get(instrumentedType);
-                        } else {
-                            loadedTypeInitializer = dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription());
-                        }
-                        NexusAccessor.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Split{identification=" + identification + "}";
-                    }
-                }
-
-                /**
-                 * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection#LAZY} strategy.
-                 */
-                protected static class Lazy extends Dispatcher {
-
-                    /**
-                     * Creates a new lazy dispatcher.
-                     *
-                     * @param identification A random identification for the applied self-initialization.
-                     */
-                    protected Lazy(int identification) {
-                        super(identification);
-                    }
-
-                    @Override
-                    public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
-                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
-                        LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
-                                ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
-                                : new InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectorFactory.resolve());
-                        NexusAccessor.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Lazy{identification=" + identification + "}";
-                    }
-                }
-
-                /**
-                 * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection#EAGER} strategy.
-                 */
-                protected static class Eager extends Dispatcher {
-
-                    /**
-                     * Creates a new eager dispatcher.
-                     *
-                     * @param identification A random identification for the applied self-initialization.
-                     */
-                    protected Eager(int identification) {
-                        super(identification);
-                    }
-
-                    @Override
-                    public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
-                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
-                        Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                        if (!auxiliaryTypes.isEmpty()) {
-                            for (Map.Entry<TypeDescription, Class<?>> entry : injectorFactory.resolve().inject(auxiliaryTypes).entrySet()) {
-                                loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
-                            }
-                        }
-                        LoadedTypeInitializer loadedTypeInitializer = loadedTypeInitializers.get(dynamicType.getTypeDescription());
-                        NexusAccessor.INSTANCE.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Eager{identification=" + identification + "}";
-                    }
+                    return identification + 31 * nexusAccessor.hashCode();
                 }
 
                 /**
@@ -2527,51 +2466,234 @@ public interface AgentBuilder {
                     }
                 }
             }
-        }
-
-        /**
-         * An initialization strategy that loads auxiliary types before loading the instrumented type. This strategy skips all types
-         * that are a subtype of the instrumented type which would cause a premature loading of the instrumented type and abort
-         * the instrumentation process.
-         */
-        enum Minimal implements InitializationStrategy, Dispatcher {
 
             /**
-             * The singleton instance.
+             * A form of self-injection where auxiliary types that are annotated by
+             * {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType.SignatureRelevant} of the instrumented type are loaded lazily and
+             * any other auxiliary type is loaded eagerly.
              */
-            INSTANCE;
+            public static class Split extends SelfInjection {
 
-            @Override
-            public Dispatcher dispatcher() {
-                return this;
-            }
+                /**
+                 * Creates a new split self-injection strategy that uses a default nexus accessor.
+                 */
+                public Split() {
+                    this(new NexusAccessor());
+                }
 
-            @Override
-            public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
-                return builder;
-            }
+                /**
+                 * Creates a new split self-injection strategy that uses the supplied nexus accessor.
+                 *
+                 * @param nexusAccessor The nexus accessor to use.
+                 */
+                public Split(NexusAccessor nexusAccessor) {
+                    super(nexusAccessor);
+                }
 
-            @Override
-            public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
-                Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
-                Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
-                for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
-                    if (!auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)) {
-                        independentTypes.remove(auxiliaryType);
+                @Override
+                protected InitializationStrategy.Dispatcher dispatcher(int identification) {
+                    return new Dispatcher(nexusAccessor, identification);
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.InitializationStrategy.SelfInjection.Split{" +
+                            "nexusAccessor=" + nexusAccessor +
+                            "}";
+                }
+
+                /**
+                 * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Split} strategy.
+                 */
+                protected static class Dispatcher extends SelfInjection.Dispatcher {
+
+                    /**
+                     * Creates a new split dispatcher.
+                     *
+                     * @param nexusAccessor  The nexus accessor to use.
+                     * @param identification A random identification for the applied self-initialization.
+                     */
+                    protected Dispatcher(NexusAccessor nexusAccessor, int identification) {
+                        super(nexusAccessor, identification);
+                    }
+
+                    @Override
+                    public void register(DynamicType dynamicType, ClassLoader classLoader, InitializationStrategy.Dispatcher.InjectorFactory injectorFactory) {
+                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                        LoadedTypeInitializer loadedTypeInitializer;
+                        if (!auxiliaryTypes.isEmpty()) {
+                            TypeDescription instrumentedType = dynamicType.getTypeDescription();
+                            ClassInjector classInjector = injectorFactory.resolve();
+                            Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
+                            Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
+                            for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
+                                (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)
+                                        ? dependentTypes
+                                        : independentTypes).remove(auxiliaryType);
+                            }
+                            Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
+                            if (!independentTypes.isEmpty()) {
+                                for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
+                                    loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
+                                }
+                            }
+                            Map<TypeDescription, LoadedTypeInitializer> lazyInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(loadedTypeInitializers);
+                            loadedTypeInitializers.keySet().removeAll(independentTypes.keySet());
+                            loadedTypeInitializer = lazyInitializers.size() > 1 // there exist auxiliary types that need lazy loading
+                                    ? new Dispatcher.InjectingInitializer(instrumentedType, dependentTypes, lazyInitializers, classInjector)
+                                    : lazyInitializers.get(instrumentedType);
+                        } else {
+                            loadedTypeInitializer = dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription());
+                        }
+                        nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher{" +
+                                "nexusAccessor=" + nexusAccessor +
+                                ", identification=" + identification +
+                                "}";
                     }
                 }
-                if (!independentTypes.isEmpty()) {
-                    ClassInjector classInjector = injectorFactory.resolve();
-                    Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                    for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
-                        loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
+            }
+
+            /**
+             * A form of self-injection where any auxiliary type is loaded lazily.
+             */
+            public static class Lazy extends SelfInjection {
+
+                /**
+                 * Creates a new lazy self-injection strategy that uses a default nexus accessor.
+                 */
+                public Lazy() {
+                    this(new NexusAccessor());
+                }
+
+                /**
+                 * Creates a new lazy self-injection strategy that uses the supplied nexus accessor.
+                 *
+                 * @param nexusAccessor The nexus accessor to use.
+                 */
+                public Lazy(NexusAccessor nexusAccessor) {
+                    super(nexusAccessor);
+                }
+
+                @Override
+                protected InitializationStrategy.Dispatcher dispatcher(int identification) {
+                    return new Dispatcher(nexusAccessor, identification);
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.InitializationStrategy.SelfInjection.Lazy{" +
+                            "nexusAccessor=" + nexusAccessor +
+                            "}";
+                }
+
+                /**
+                 * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Lazy} strategy.
+                 */
+                protected static class Dispatcher extends SelfInjection.Dispatcher {
+
+                    /**
+                     * Creates a new lazy dispatcher.
+                     *
+                     * @param nexusAccessor  The nexus accessor to use.
+                     * @param identification A random identification for the applied self-initialization.
+                     */
+                    protected Dispatcher(NexusAccessor nexusAccessor, int identification) {
+                        super(nexusAccessor, identification);
+                    }
+
+                    @Override
+                    public void register(DynamicType dynamicType, ClassLoader classLoader, InitializationStrategy.Dispatcher.InjectorFactory injectorFactory) {
+                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                        LoadedTypeInitializer loadedTypeInitializer = auxiliaryTypes.isEmpty()
+                                ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
+                                : new Dispatcher.InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectorFactory.resolve());
+                        nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher{" +
+                                "nexusAccessor=" + nexusAccessor +
+                                ", identification=" + identification +
+                                "}";
                     }
                 }
             }
 
-            @Override
-            public String toString() {
-                return "AgentBuilder.InitializationStrategy.Minimal." + name();
+            /**
+             * A form of self-injection where any auxiliary type is loaded eagerly.
+             */
+            public static class Eager extends SelfInjection {
+
+                /**
+                 * Creates a new eager self-injection strategy that uses a default nexus accesor.
+                 */
+                public Eager() {
+                    this(new NexusAccessor());
+                }
+
+                /**
+                 * Creates a new eager self-injection strategy that uses the supplied nexus accessor.
+                 *
+                 * @param nexusAccessor The nexus accessor to use.
+                 */
+                public Eager(NexusAccessor nexusAccessor) {
+                    super(nexusAccessor);
+                }
+
+                @Override
+                protected InitializationStrategy.Dispatcher dispatcher(int identification) {
+                    return new Dispatcher(nexusAccessor, identification);
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.InitializationStrategy.SelfInjection.Eager{" +
+                            "nexusAccessor=" + nexusAccessor +
+                            "}";
+                }
+
+                /**
+                 * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Eager} strategy.
+                 */
+                protected static class Dispatcher extends SelfInjection.Dispatcher {
+
+                    /**
+                     * Creates a new eager dispatcher.
+                     *
+                     * @param nexusAccessor  The nexus accessor to use.
+                     * @param identification A random identification for the applied self-initialization.
+                     */
+                    protected Dispatcher(NexusAccessor nexusAccessor, int identification) {
+                        super(nexusAccessor, identification);
+                    }
+
+                    @Override
+                    public void register(DynamicType dynamicType, ClassLoader classLoader, InitializationStrategy.Dispatcher.InjectorFactory injectorFactory) {
+                        Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
+                        Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
+                        if (!auxiliaryTypes.isEmpty()) {
+                            for (Map.Entry<TypeDescription, Class<?>> entry : injectorFactory.resolve().inject(auxiliaryTypes).entrySet()) {
+                                loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
+                            }
+                        }
+                        LoadedTypeInitializer loadedTypeInitializer = loadedTypeInitializers.get(dynamicType.getTypeDescription());
+                        nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher{" +
+                                "nexusAccessor=" + nexusAccessor +
+                                ", identification=" + identification +
+                                "}";
+                    }
+                }
             }
         }
     }
@@ -5840,7 +5962,7 @@ public interface AgentBuilder {
                     TypeStrategy.Default.REBASE,
                     LocationStrategy.ForClassLoader.STRONG,
                     NativeMethodStrategy.Disabled.INSTANCE,
-                    InitializationStrategy.SelfInjection.SPLIT,
+                    new InitializationStrategy.SelfInjection.Split(),
                     RedefinitionStrategy.DISABLED,
                     RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
                     RedefinitionStrategy.Listener.NoOp.INSTANCE,
@@ -6525,7 +6647,7 @@ public interface AgentBuilder {
                     && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
                     && typeStrategy.equals(aDefault.typeStrategy)
                     && locationStrategy.equals(aDefault.locationStrategy)
-                    && initializationStrategy == aDefault.initializationStrategy
+                    && initializationStrategy.equals(aDefault.initializationStrategy)
                     && redefinitionStrategy == aDefault.redefinitionStrategy
                     && redefinitionBatchAllocator.equals(aDefault.redefinitionBatchAllocator)
                     && redefinitionListener.equals(aDefault.redefinitionListener)

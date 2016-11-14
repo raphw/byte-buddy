@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -72,7 +73,7 @@ public class TypeResolutionStrategyTest {
 
     @Test
     public void testActive() throws Exception {
-        TypeResolutionStrategy.Resolved resolved = TypeResolutionStrategy.Active.INSTANCE.resolve();
+        TypeResolutionStrategy.Resolved resolved = new TypeResolutionStrategy.Active().resolve();
         Field field = TypeResolutionStrategy.Active.Resolved.class.getDeclaredField("identification");
         field.setAccessible(true);
         int identification = (Integer) field.get(resolved);
@@ -88,9 +89,9 @@ public class TypeResolutionStrategyTest {
         } finally {
             Field initializers = Nexus.class.getDeclaredField("TYPE_INITIALIZERS");
             initializers.setAccessible(true);
-            Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, int.class);
+            Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, ReferenceQueue.class, int.class);
             constructor.setAccessible(true);
-            Object value = ((Map<?, ?>) initializers.get(null)).remove(constructor.newInstance(Foo.class.getName(), Foo.class.getClassLoader(), identification));
+            Object value = ((Map<?, ?>) initializers.get(null)).remove(constructor.newInstance(Foo.class.getName(), Foo.class.getClassLoader(), null, identification));
             assertThat(value, CoreMatchers.is((Object) loadedTypeInitializer));
         }
     }

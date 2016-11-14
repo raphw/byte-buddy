@@ -111,7 +111,6 @@ public class AgentBuilderInitializationStrategyTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.NoOp.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Minimal.class).apply();
     }
 

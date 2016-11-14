@@ -1981,6 +1981,10 @@ public class AgentBuilderDefaultTest {
         assertThat(failures.get(Foo.class), is(throwable));
     }
 
+    public static void main(String[] args) {
+        System.out.println(new AgentBuilder.Default().equals(new AgentBuilder.Default()));
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();

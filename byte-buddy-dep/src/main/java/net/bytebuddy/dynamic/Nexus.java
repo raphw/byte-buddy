@@ -1,7 +1,8 @@
 package net.bytebuddy.dynamic;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
@@ -22,6 +23,11 @@ import java.util.logging.Logger;
  * </p>
  */
 public class Nexus extends WeakReference<ClassLoader> {
+
+    /**
+     * An type-safe constant for a non-operational reference queue.
+     */
+    protected static final ReferenceQueue<ClassLoader> NO_QUEUE = null;
 
     /**
      * A map of keys identifying a loaded type by its name and class loader mapping their
@@ -53,7 +59,7 @@ public class Nexus extends WeakReference<ClassLoader> {
      * @param identification An identification for the initializer to run.
      */
     private Nexus(Class<?> type, int identification) {
-        this(nonAnonymous(type.getName()), type.getClassLoader(), identification);
+        this(nonAnonymous(type.getName()), type.getClassLoader(), NO_QUEUE, identification);
     }
 
     /**
@@ -61,10 +67,13 @@ public class Nexus extends WeakReference<ClassLoader> {
      *
      * @param name           The name of a type for which a loaded type initializer is registered.
      * @param classLoader    The class loader for which a loaded type initializer is registered.
+     * @param referenceQueue The reference queue to notify upon the class loader's collection or {@code null} if no queue should be notified.
      * @param identification An identification for the initializer to run.
      */
-    private Nexus(String name, ClassLoader classLoader, int identification) {
-        super(classLoader);
+    private Nexus(String name, ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue, int identification) {
+        super(classLoader, classLoader == null
+                ? null
+                : referenceQueue);
         this.name = name;
         classLoaderHashCode = System.identityHashCode(classLoader);
         this.identification = identification;
@@ -119,13 +128,15 @@ public class Nexus extends WeakReference<ClassLoader> {
      *
      * @param name            The name of the type for the loaded type initializer.
      * @param classLoader     The class loader of the type for the loaded type initializer.
+     * @param referenceQueue  The reference queue to notify upon the class loader's collection which will be enqueued a reference which can be
+     *                        handed to {@link Nexus#clean(Reference)} or {@code null} if no reference queue should be notified.
      * @param identification  An identification for the initializer to run.
      * @param typeInitializer The type initializer to register. The initializer must be an instance
      *                        of {@link net.bytebuddy.implementation.LoadedTypeInitializer} where
      *                        it does however not matter which class loader loaded this latter type.
      */
-    public static void register(String name, ClassLoader classLoader, int identification, Object typeInitializer) {
-        if (TYPE_INITIALIZERS.put(new Nexus(name, classLoader, identification), typeInitializer) != null) {
+    public static void register(String name, ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue, int identification, Object typeInitializer) {
+        if (TYPE_INITIALIZERS.put(new Nexus(name, classLoader, referenceQueue, identification), typeInitializer) != null) {
             Logger.getLogger("net.bytebuddy").warning("Initializer with id " + identification + " is already registered for " + name);
         }
     }
@@ -140,23 +151,11 @@ public class Nexus extends WeakReference<ClassLoader> {
      * loaders. For this reason, the last parameter must not use a Byte Buddy specific type as those types can be loaded by different class loaders,
      * too. Any access of the instance is done using Java reflection instead.
      * </p>
-     */
-    public static void clean() {
-        Iterator<Nexus> iterator = TYPE_INITIALIZERS.keySet().iterator();
-        while (iterator.hasNext()) {
-            if (iterator.next().isStale()) {
-                iterator.remove();
-            }
-        }
-    }
-
-    /**
-     * Checks if this entry is stale, i.e. the referenced class loader was garbage collected.
      *
-     * @return {@code true} if this entry is stale.
+     * @param reference The stale reference to clean.
      */
-    private boolean isStale() {
-        return classLoaderHashCode != 0 && get() == null;
+    public static void clean(Reference<? super ClassLoader> reference) {
+        TYPE_INITIALIZERS.remove(reference);
     }
 
     @Override

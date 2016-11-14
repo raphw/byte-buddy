@@ -11,6 +11,8 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -69,6 +71,7 @@ public class NexusTest {
                 ClassFileExtraction.of(Nexus.class,
                         NexusAccessor.class,
                         NexusAccessor.Dispatcher.class,
+                        NexusAccessor.Dispatcher.Creator.class,
                         NexusAccessor.Dispatcher.Available.class,
                         NexusAccessor.Dispatcher.Unavailable.class),
                 null,
@@ -85,14 +88,14 @@ public class NexusTest {
         when(loadedTypeInitializer.isAlive()).thenReturn(false);
         assertThat(accessor
                 .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, LoadedTypeInitializer.class)
-                .invoke(accessor.getEnumConstants()[0], FOO, qux, BAR, loadedTypeInitializer), nullValue(Object.class));
+                .invoke(accessor.getDeclaredConstructor().newInstance(), FOO, qux, BAR, loadedTypeInitializer), nullValue(Object.class));
         try {
             assertThat(((Map<?, ?>) duplicateInitializers.get(null)).size(), is(0));
             assertThat(((Map<?, ?>) actualInitializers.get(null)).size(), is(0));
         } finally {
-            Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, int.class);
+            Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, ReferenceQueue.class, int.class);
             constructor.setAccessible(true);
-            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, BAR));
+            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, Nexus.NO_QUEUE, BAR));
             assertThat(value, nullValue());
         }
     }
@@ -103,6 +106,7 @@ public class NexusTest {
                 ClassFileExtraction.of(Nexus.class,
                         NexusAccessor.class,
                         NexusAccessor.Dispatcher.class,
+                        NexusAccessor.Dispatcher.Creator.class,
                         NexusAccessor.Dispatcher.Available.class,
                         NexusAccessor.Dispatcher.Unavailable.class),
                 null,
@@ -119,14 +123,14 @@ public class NexusTest {
         when(loadedTypeInitializer.isAlive()).thenReturn(true);
         assertThat(accessor
                 .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, LoadedTypeInitializer.class)
-                .invoke(accessor.getEnumConstants()[0], FOO, qux, BAR, loadedTypeInitializer), nullValue(Object.class));
+                .invoke(accessor.getDeclaredConstructor().newInstance(), FOO, qux, BAR, loadedTypeInitializer), nullValue(Object.class));
         try {
             assertThat(((Map<?, ?>) duplicateInitializers.get(null)).size(), is(0));
             assertThat(((Map<?, ?>) actualInitializers.get(null)).size(), is(1));
         } finally {
-            Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, int.class);
+            Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, ReferenceQueue.class, int.class);
             constructor.setAccessible(true);
-            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, BAR));
+            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, Nexus.NO_QUEUE, BAR));
             assertThat(value, is((Object) loadedTypeInitializer));
         }
     }
@@ -137,6 +141,7 @@ public class NexusTest {
                 ClassFileExtraction.of(Nexus.class,
                         NexusAccessor.class,
                         NexusAccessor.Dispatcher.class,
+                        NexusAccessor.Dispatcher.Creator.class,
                         NexusAccessor.Dispatcher.Available.class,
                         NexusAccessor.Dispatcher.Unavailable.class),
                 null,
@@ -153,14 +158,14 @@ public class NexusTest {
         when(loadedTypeInitializer.isAlive()).thenReturn(true);
         assertThat(accessor
                 .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, LoadedTypeInitializer.class)
-                .invoke(accessor.getEnumConstants()[0], FOO, qux, BAR, loadedTypeInitializer), nullValue(Object.class));
+                .invoke(accessor.getDeclaredConstructor().newInstance(), FOO, qux, BAR, loadedTypeInitializer), nullValue(Object.class));
         try {
             assertThat(((Map<?, ?>) duplicateInitializers.get(null)).size(), is(0));
             assertThat(((Map<?, ?>) actualInitializers.get(null)).size(), is(1));
         } finally {
-            Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, int.class);
+            Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, ReferenceQueue.class, int.class);
             constructor.setAccessible(true);
-            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, BAR));
+            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, Nexus.NO_QUEUE, BAR));
             assertThat(value, is((Object) loadedTypeInitializer));
         }
     }
@@ -172,17 +177,19 @@ public class NexusTest {
         ClassLoader classLoader = new URLClassLoader(new URL[0]);
         when(loadedTypeInitializer.isAlive()).thenReturn(true);
         assertThat(((Map<?, ?>) typeInitializers.get(null)).isEmpty(), is(true));
-        NexusAccessor.INSTANCE.register(FOO, classLoader, BAR, loadedTypeInitializer);
+        ReferenceQueue<ClassLoader> referenceQueue = new ReferenceQueue<ClassLoader>();
+        NexusAccessor nexusAccessor = new NexusAccessor(referenceQueue);
+        nexusAccessor.register(FOO, classLoader, BAR, loadedTypeInitializer);
         assertThat(((Map<?, ?>) typeInitializers.get(null)).isEmpty(), is(false));
         classLoader = null;
         System.gc();
-        NexusAccessor.INSTANCE.clean();
+        NexusAccessor.clean(referenceQueue.remove(100L));
         assertThat(((Map<?, ?>) typeInitializers.get(null)).isEmpty(), is(true));
     }
 
     @Test
     public void testNexusAccessorIsAvailable() throws Exception {
-        assertThat(NexusAccessor.INSTANCE.isAlive(), is(true));
+        assertThat(NexusAccessor.isAlive(), is(true));
     }
 
     @Test
@@ -192,24 +199,30 @@ public class NexusTest {
 
     @Test(expected = IllegalStateException.class)
     public void testUnavailableDispatcherRegisterThrowsException() throws Exception {
-        new NexusAccessor.Dispatcher.Unavailable(new Exception()).register(FOO, classLoader, BAR, loadedTypeInitializer);
+        new NexusAccessor.Dispatcher.Unavailable(new Exception()).register(FOO, classLoader, Nexus.NO_QUEUE, BAR, loadedTypeInitializer);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    @SuppressWarnings("unchecked")
+    public void testUnavailableDispatcherCleanThrowsException() throws Exception {
+        new NexusAccessor.Dispatcher.Unavailable(new Exception()).clean(mock(Reference.class));
     }
 
     @Test
-    public void testUnavailableDispatcherCleanDoesNotThrowException() throws Exception {
-        new NexusAccessor.Dispatcher.Unavailable(new Exception()).clean();
+    public void testNexusEquality() throws Exception {
+        Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, ReferenceQueue.class, int.class);
+        constructor.setAccessible(true);
+        assertThat(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR),
+                is(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR)));
+        assertThat(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR).hashCode(),
+                is(constructor.newInstance(FOO, classLoader, Nexus.NO_QUEUE, BAR).hashCode()));
+
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Object.class, String.class).iterator();
-        ObjectPropertyAssertion.of(Nexus.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
-            @Override
-            public Class<?> create() {
-                return types.next();
-            }
-        }).skipToString().apply();
         ObjectPropertyAssertion.of(NexusAccessor.class).apply();
+        ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.Creator.class).applyBasic();
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
         ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.Available.class)
                 .create(new ObjectPropertyAssertion.Creator<Method>() {

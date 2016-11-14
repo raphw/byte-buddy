@@ -84,36 +84,67 @@ public interface TypeResolutionStrategy {
     }
 
     /**
-     * <p>
      * A type resolution strategy that applies all {@link LoadedTypeInitializer} as a part of class loading using reflection. This implies that the initializers
      * are executed <b>before</b> (as a first action of) a type initializer is executed.
-     * </p>
-     * <p>
-     * <b>Important</b>: Using self-injection might require the explicit cleaning of class loader meta data via {@link NexusAccessor#clean()}.
-     * </p>
      */
-    enum Active implements TypeResolutionStrategy {
+    class Active implements TypeResolutionStrategy {
 
         /**
-         * The singleton instance.
+         * The nexus accessor to use.
          */
-        INSTANCE;
+        private final NexusAccessor nexusAccessor;
+
+        /**
+         * Creates a new active type resolution strategy that uses a default nexus accessor.
+         */
+        public Active() {
+            this(new NexusAccessor());
+        }
+
+        /**
+         * Creates a new active type resolution strategy that uses the supplied nexus accessor.
+         *
+         * @param nexusAccessor The nexus accessor to use.
+         */
+        public Active(NexusAccessor nexusAccessor) {
+            this.nexusAccessor = nexusAccessor;
+        }
 
         @Override
         @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoid thread-contention")
         public TypeResolutionStrategy.Resolved resolve() {
-            return new Resolved(new Random().nextInt());
+            return new Resolved(nexusAccessor, new Random().nextInt());
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            Active active = (Active) object;
+            return nexusAccessor.equals(active.nexusAccessor);
+        }
+
+        @Override
+        public int hashCode() {
+            return nexusAccessor.hashCode();
         }
 
         @Override
         public String toString() {
-            return "TypeResolutionStrategy.Active." + name();
+            return "TypeResolutionStrategy.Active{" +
+                    "nexusAccessor=" + nexusAccessor +
+                    '}';
         }
 
         /**
          * A resolved version of an active type resolution strategy.
          */
         protected static class Resolved implements TypeResolutionStrategy.Resolved {
+
+            /**
+             * The nexus accessor to use.
+             */
+            private final NexusAccessor nexusAccessor;
 
             /**
              * The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
@@ -123,9 +154,11 @@ public interface TypeResolutionStrategy {
             /**
              * Creates a new resolved active type resolution strategy.
              *
+             * @param nexusAccessor  The nexus accessor to use.
              * @param identification The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
              */
-            protected Resolved(int identification) {
+            protected Resolved(NexusAccessor nexusAccessor, int identification) {
+                this.nexusAccessor = nexusAccessor;
                 this.identification = identification;
             }
 
@@ -139,7 +172,7 @@ public interface TypeResolutionStrategy {
                 Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(dynamicType.getLoadedTypeInitializers());
                 TypeDescription instrumentedType = dynamicType.getTypeDescription();
                 Map<TypeDescription, Class<?>> types = classLoadingStrategy.load(classLoader, dynamicType.getAllTypes());
-                NexusAccessor.INSTANCE.register(instrumentedType.getName(),
+                nexusAccessor.register(instrumentedType.getName(),
                         types.get(instrumentedType).getClassLoader(),
                         identification,
                         loadedTypeInitializers.remove(instrumentedType));
@@ -154,18 +187,19 @@ public interface TypeResolutionStrategy {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 Resolved resolved = (Resolved) object;
-                return identification == resolved.identification;
+                return identification == resolved.identification && nexusAccessor.equals(resolved.nexusAccessor);
             }
 
             @Override
             public int hashCode() {
-                return identification;
+                return identification + 31 * nexusAccessor.hashCode();
             }
 
             @Override
             public String toString() {
                 return "TypeResolutionStrategy.Active.Resolved{" +
-                        "identification=" + identification +
+                        "nexusAccessor=" + nexusAccessor +
+                        ", identification=" + identification +
                         '}';
             }
         }

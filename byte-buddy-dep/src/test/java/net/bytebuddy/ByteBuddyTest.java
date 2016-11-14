@@ -67,7 +67,7 @@ public class ByteBuddyTest {
                 .subclass(Object.class)
                 .invokable(isTypeInitializer())
                 .intercept(MethodDelegation.to(recorder))
-                .make(TypeResolutionStrategy.Active.INSTANCE)
+                .make(new TypeResolutionStrategy.Active())
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredConstructor().newInstance(), instanceOf(type));

@@ -57,6 +57,8 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @Mock
     private LoadedTypeInitializer instrumentedInitializer, dependentInitializer, independentInitializer;
 
+    private NexusAccessor nexusAccessor = new NexusAccessor();
+
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -99,7 +101,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testSplitInitialization() throws Exception {
-        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Split(IDENTIFIER);
+        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher(nexusAccessor, IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
         verify(builder).initializer(new NexusAccessor.InitializationAppender(IDENTIFIER));
         verifyNoMoreInteractions(builder);
@@ -109,7 +111,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testLazyInitialization() throws Exception {
-        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Lazy(IDENTIFIER);
+        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher(nexusAccessor, IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
         verify(builder).initializer(new NexusAccessor.InitializationAppender(IDENTIFIER));
         verifyNoMoreInteractions(builder);
@@ -119,7 +121,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testEagerInitialization() throws Exception {
-        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Eager(IDENTIFIER);
+        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher(nexusAccessor, IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
         verify(builder).initializer(new NexusAccessor.InitializationAppender(IDENTIFIER));
         verifyNoMoreInteractions(builder);
@@ -129,7 +131,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testSplit() throws Exception {
-        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Split(IDENTIFIER);
+        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher(nexusAccessor, IDENTIFIER);
         dispatcher.register(dynamicType, Qux.class.getClassLoader(), injectorFactory);
         verify(classInjector).inject(Collections.singletonMap(independent, BAR));
         verifyNoMoreInteractions(classInjector);
@@ -147,7 +149,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testEager() throws Exception {
-        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Eager(IDENTIFIER);
+        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher(nexusAccessor, IDENTIFIER);
         dispatcher.register(dynamicType, Qux.class.getClassLoader(), injectorFactory);
         Map<TypeDescription, byte[]> injected = new HashMap<TypeDescription, byte[]>();
         injected.put(independent, BAR);
@@ -167,7 +169,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testLazy() throws Exception {
-        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Lazy(IDENTIFIER);
+        AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher(nexusAccessor, IDENTIFIER);
         dispatcher.register(dynamicType, Qux.class.getClassLoader(), injectorFactory);
         verifyZeroInteractions(classInjector, dependentInitializer, independentInitializer);
         Nexus.initialize(Qux.class, IDENTIFIER);
@@ -186,19 +188,22 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
 
     @Test
     public void testDispatcherCreation() throws Exception {
-        assertThat(AgentBuilder.InitializationStrategy.SelfInjection.SPLIT.dispatcher(),
-                instanceOf(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Split.class));
-        assertThat(AgentBuilder.InitializationStrategy.SelfInjection.EAGER.dispatcher(),
-                instanceOf(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Eager.class));
-        assertThat(AgentBuilder.InitializationStrategy.SelfInjection.LAZY.dispatcher(),
-                instanceOf(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Lazy.class));
+        assertThat(new AgentBuilder.InitializationStrategy.SelfInjection.Split().dispatcher(),
+                instanceOf(AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher.class));
+        assertThat(new AgentBuilder.InitializationStrategy.SelfInjection.Eager().dispatcher(),
+                instanceOf(AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher.class));
+        assertThat(new AgentBuilder.InitializationStrategy.SelfInjection.Lazy().dispatcher(),
+                instanceOf(AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher.class));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Lazy.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Eager.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Split.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Lazy.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Eager.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Split.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitializer.class).apply();
     }
 
