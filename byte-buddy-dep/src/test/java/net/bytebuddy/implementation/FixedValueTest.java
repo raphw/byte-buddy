@@ -13,6 +13,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.util.Arrays;
+import java.util.Iterator;
+
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
@@ -20,7 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class FixedValueTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
+    private static final String BAR = "bar";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -213,14 +216,60 @@ public class FixedValueTest {
     }
 
     @Test
+    public void testArgument() throws Exception {
+        Class<? extends FooQux> fooQux = new ByteBuddy()
+                .subclass(FooQux.class)
+                .method(isDeclaredBy(FooQux.class))
+                .intercept(FixedValue.argument(1))
+                .make()
+                .load(FooQux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+
+        assertThat(fooQux.getDeclaredFields().length, is(0));
+        assertThat(fooQux.getDeclaredMethods().length, is(1));
+        assertThat(fooQux.getDeclaredMethod(BAR, Integer.class, String.class)
+                .invoke(fooQux.getDeclaredConstructor().newInstance(), 0, BAR), is((Object) BAR));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testArgumentNegative() throws Exception {
+        FixedValue.argument(-1);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArgumentNotAssignable() throws Exception {
+        new ByteBuddy()
+                .subclass(FooQux.class)
+                .method(isDeclaredBy(FooQux.class))
+                .intercept(FixedValue.argument(0))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArgumentNonExistent() throws Exception {
+        new ByteBuddy()
+                .subclass(FooQux.class)
+                .method(isDeclaredBy(FooQux.class))
+                .intercept(FixedValue.argument(2))
+                .make();
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FixedValue.ForPoolValue.class).skipSynthetic().apply();
+        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class).iterator();
+        ObjectPropertyAssertion.of(FixedValue.ForPoolValue.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return iterator.next();
+            }
+        }).skipSynthetic().apply();
         ObjectPropertyAssertion.of(FixedValue.ForStaticField.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForOriginType.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForOriginType.Appender.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForNullValue.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForThisValue.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForThisValue.Appender.class).apply();
+        ObjectPropertyAssertion.of(FixedValue.ForArgument.class).apply();
     }
 
     public static class Foo extends CallTraceable {
@@ -267,6 +316,13 @@ public class FixedValueTest {
     public static class FooBarQuxBaz {
 
         public static Object bar() {
+            return null;
+        }
+    }
+
+    public static class FooQux {
+
+        public String bar(Integer arg0, String arg1) {
             return null;
         }
     }
