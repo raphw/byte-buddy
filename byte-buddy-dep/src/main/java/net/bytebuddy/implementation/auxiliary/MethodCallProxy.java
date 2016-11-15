@@ -297,7 +297,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadOffset(0);
+                StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadFrom(0);
                 FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                 int index = 0;
@@ -305,7 +305,7 @@ public class MethodCallProxy implements AuxiliaryType {
                     fieldLoading[index] = new StackManipulation.Compound(
                             thisReference,
                             MethodVariableAccess.of(fieldDescription.getType().asErasure())
-                                    .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()),
+                                    .loadFrom(instrumentedMethod.getParameters().get(index).getOffset()),
                             FieldAccess.forField(fieldDescription).putter()
                     );
                     index++;
@@ -416,7 +416,7 @@ public class MethodCallProxy implements AuxiliaryType {
             public Size apply(MethodVisitor methodVisitor,
                               Context implementationContext,
                               MethodDescription instrumentedMethod) {
-                StackManipulation thisReference = MethodVariableAccess.of(instrumentedType).loadOffset(0);
+                StackManipulation thisReference = MethodVariableAccess.of(instrumentedType).loadFrom(0);
                 FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                 int index = 0;

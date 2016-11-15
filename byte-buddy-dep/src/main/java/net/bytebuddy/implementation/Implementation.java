@@ -1519,7 +1519,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             fieldDescription.isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
-                                    : MethodVariableAccess.REFERENCE.loadOffset(0),
+                                    : MethodVariableAccess.REFERENCE.loadFrom(0),
                             FieldAccess.forField(fieldDescription).getter(),
                             MethodReturn.of(fieldDescription.getType().asErasure())
                     ).apply(methodVisitor, implementationContext);

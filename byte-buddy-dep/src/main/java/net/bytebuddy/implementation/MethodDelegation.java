@@ -975,7 +975,7 @@ public class MethodDelegation implements Implementation.Composable {
                 return new Resolution(methodGraphCompiler.compile(resolution.getField().getType(), instrumentedType).listNodes().asMethodList().filter(matcher),
                         new StackManipulation.Compound(resolution.getField().isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadOffset(0), FieldAccess.forField(resolution.getField()).getter()),
+                                : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(resolution.getField()).getter()),
                         new MethodDelegationBinder.MethodInvoker.Virtual(resolution.getField().getType().asErasure()),
                         resolution.getField().isStatic());
             }

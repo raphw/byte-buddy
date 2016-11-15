@@ -482,7 +482,7 @@ public class TypeProxy implements AuxiliaryType {
                     new Compound(constructorValue),
                     MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
+                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadFrom(0),
                     FieldAccess.forField(proxyType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);
         }
@@ -584,7 +584,7 @@ public class TypeProxy implements AuxiliaryType {
                     MethodInvocation.invoke(proxyType.getDeclaredMethods()
                             .filter(named(REFLECTION_METHOD).and(takesArguments(0))).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
+                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadFrom(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);
@@ -675,7 +675,7 @@ public class TypeProxy implements AuxiliaryType {
                     Duplication.SINGLE,
                     MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor()).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
+                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadFrom(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);
@@ -863,7 +863,7 @@ public class TypeProxy implements AuxiliaryType {
                 public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                     MethodDescription.InDefinedShape proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
                     return new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadOffset(0),
+                            MethodVariableAccess.REFERENCE.loadFrom(0),
                             fieldLoadingInstruction,
                             MethodVariableAccess.allArgumentsOf(instrumentedMethod).asBridgeOf(proxyMethod),
                             MethodInvocation.invoke(proxyMethod),

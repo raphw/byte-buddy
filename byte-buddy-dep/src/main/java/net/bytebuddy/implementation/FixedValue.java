@@ -459,7 +459,7 @@ public abstract class FixedValue implements Implementation {
                     throw new IllegalStateException("Cannot return 'this' from " + instrumentedMethod);
                 }
                 return new ByteCodeAppender.Simple(
-                        MethodVariableAccess.REFERENCE.loadOffset(0),
+                        MethodVariableAccess.REFERENCE.loadFrom(0),
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext, instrumentedMethod);
             }
@@ -525,7 +525,7 @@ public abstract class FixedValue implements Implementation {
             }
             ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
             StackManipulation stackManipulation = new StackManipulation.Compound(
-                    MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()),
+                    MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()),
                     assigner.assign(parameterDescription.getType(), instrumentedMethod.getReturnType(), typing),
                     MethodReturn.of(instrumentedMethod.getReturnType())
             );

@@ -22,32 +22,34 @@ public enum MethodVariableAccess {
     /**
      * The accessor handler for a JVM-integer.
      */
-    INTEGER(Opcodes.ILOAD, StackSize.SINGLE),
+    INTEGER(Opcodes.ILOAD, Opcodes.ISTORE, StackSize.SINGLE),
 
     /**
      * The accessor handler for a {@code long}.
      */
-    LONG(Opcodes.LLOAD, StackSize.DOUBLE),
+    LONG(Opcodes.LLOAD, Opcodes.LSTORE, StackSize.DOUBLE),
 
     /**
      * The accessor handler for a {@code float}.
      */
-    FLOAT(Opcodes.FLOAD, StackSize.SINGLE),
+    FLOAT(Opcodes.FLOAD, Opcodes.FSTORE, StackSize.SINGLE),
 
     /**
      * The accessor handler for a {@code double}.
      */
-    DOUBLE(Opcodes.DLOAD, StackSize.DOUBLE),
+    DOUBLE(Opcodes.DLOAD, Opcodes.DSTORE, StackSize.DOUBLE),
 
     /**
      * The accessor handler for a reference type.
      */
-    REFERENCE(Opcodes.ALOAD, StackSize.SINGLE);
+    REFERENCE(Opcodes.ALOAD, Opcodes.ASTORE, StackSize.SINGLE);
 
     /**
      * The opcode for loading this variable.
      */
     private final int loadOpcode;
+
+    private final int storeOpcode;
 
     /**
      * The size impact of this stack manipulation.
@@ -56,13 +58,14 @@ public enum MethodVariableAccess {
 
     /**
      * Creates a new method variable access for a given JVM type.
-     *
-     * @param loadOpcode The opcode for loading this variable.
+     *  @param loadOpcode The opcode for loading this variable.
      * @param stackSize  The size of the JVM type.
+     * @param storeOpcode
      */
-    MethodVariableAccess(int loadOpcode, StackSize stackSize) {
+    MethodVariableAccess(int loadOpcode, int storeOpcode, StackSize stackSize) {
         this.loadOpcode = loadOpcode;
         this.size = stackSize.toIncreasingSize();
+        this.storeOpcode = storeOpcode;
     }
 
     /**
@@ -108,8 +111,20 @@ public enum MethodVariableAccess {
      *                       count two slots.
      * @return A stack manipulation representing the method retrieval.
      */
-    public StackManipulation loadOffset(int variableOffset) {
-        return new OffsetLoading(variableOffset);
+    public StackManipulation loadFrom(int offset) {
+        return new OffsetLoading(offset);
+    }
+
+    public StackManipulation storeAt(int offset) {
+        return new OffsetWriting(offset);
+    }
+
+
+    public StackManipulation increment(int offset, int value) {
+        if (this != INTEGER) {
+            throw new IllegalArgumentException("Cannot increment: " + this);
+        }
+        return new OffsetIncrementing(offset, value);
     }
 
     @Override
@@ -153,7 +168,7 @@ public enum MethodVariableAccess {
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>();
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
                 TypeDescription parameterType = parameterDescription.getType().asErasure();
-                stackManipulations.add(of(parameterType).loadOffset(parameterDescription.getOffset()));
+                stackManipulations.add(of(parameterType).loadFrom(parameterDescription.getOffset()));
                 stackManipulations.add(typeCastingHandler.ofIndex(parameterType, parameterDescription.getIndex()));
             }
             return new Compound(stackManipulations).apply(methodVisitor, implementationContext);
@@ -168,7 +183,7 @@ public enum MethodVariableAccess {
         public StackManipulation prependThisReference() {
             return methodDescription.isStatic()
                     ? this
-                    : new Compound(MethodVariableAccess.REFERENCE.loadOffset(0), this);
+                    : new Compound(MethodVariableAccess.REFERENCE.loadFrom(0), this);
         }
 
         /**
@@ -347,6 +362,93 @@ public enum MethodVariableAccess {
             return "MethodVariableAccess.OffsetLoading{" +
                     "methodVariableAccess=" + MethodVariableAccess.this +
                     " ,offset=" + offset + '}';
+        }
+    }
+    protected class OffsetWriting implements StackManipulation {
+
+        /**
+         * The index of the local variable array from which the variable should be loaded.
+         */
+        private final int offset;
+
+        /**
+         * Creates a new argument loading stack manipulation.
+         *
+         * @param offset The index of the local variable array from which the variable should be loaded.
+         */
+        protected OffsetWriting(int offset) {
+            this.offset = offset;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            methodVisitor.visitVarInsn(storeOpcode, offset);
+            return size;
+        }
+
+        /**
+         * Returns the outer instance.
+         *
+         * @return The outer instance.
+         */
+        private MethodVariableAccess getMethodVariableAccess() {
+            return MethodVariableAccess.this;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && MethodVariableAccess.this == ((OffsetWriting) other).getMethodVariableAccess()
+                    && offset == ((OffsetWriting) other).offset;
+        }
+
+        @Override
+        public int hashCode() {
+            return MethodVariableAccess.this.hashCode() + 31 * offset;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodVariableAccess.OffsetWriting{" +
+                    "methodVariableAccess=" + MethodVariableAccess.this +
+                    " ,offset=" + offset + '}';
+        }
+    }
+
+    protected static class OffsetIncrementing implements StackManipulation {
+
+        /**
+         * The index of the local variable array from which the variable should be loaded.
+         */
+        private final int offset;
+
+        private final int value;
+
+        /**
+         * Creates a new argument loading stack manipulation.
+         *
+         * @param offset The index of the local variable array from which the variable should be loaded.
+         * @param value
+         */
+        protected OffsetIncrementing(int offset, int value) {
+            this.offset = offset;
+            this.value = value;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            methodVisitor.visitIincInsn(offset, value);
+            return new Size(0, 0);
         }
     }
 }

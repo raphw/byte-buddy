@@ -80,7 +80,7 @@ public @interface Argument {
                                                                              int parameterOffset) {
                 return MethodDelegationBinder.ParameterBinding.Unique.of(
                         new StackManipulation.Compound(
-                                MethodVariableAccess.of(source).loadOffset(parameterOffset),
+                                MethodVariableAccess.of(source).loadFrom(parameterOffset),
                                 assigner.assign(source, target, typing)),
                         new ArgumentTypeResolver.ParameterIndexToken(sourceParameterIndex)
                 );
@@ -99,7 +99,7 @@ public @interface Argument {
                                                                              Assigner.Typing typing,
                                                                              int parameterOffset) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(
-                        new StackManipulation.Compound(MethodVariableAccess.of(source).loadOffset(parameterOffset), assigner.assign(source, target, typing))
+                        new StackManipulation.Compound(MethodVariableAccess.of(source).loadFrom(parameterOffset), assigner.assign(source, target, typing))
                 );
             }
         };

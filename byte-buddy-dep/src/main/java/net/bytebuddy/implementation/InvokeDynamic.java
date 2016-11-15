@@ -1511,7 +1511,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     } else if (!instrumentedType.isAssignableTo(typeDescription)) {
                         throw new IllegalStateException(instrumentedType + " is not assignable to " + instrumentedType);
                     }
-                    return new Resolved.Simple(MethodVariableAccess.REFERENCE.loadOffset(0), typeDescription);
+                    return new Resolved.Simple(MethodVariableAccess.REFERENCE.loadFrom(0), typeDescription);
                 }
 
                 @Override
@@ -1661,7 +1661,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     }
                     return doResolve(new StackManipulation.Compound(resolution.getField().isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
-                                    : MethodVariableAccess.REFERENCE.loadOffset(0), FieldAccess.forField(resolution.getField()).getter()),
+                                    : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(resolution.getField()).getter()),
                             resolution.getField().getType(),
                             assigner,
                             typing);
@@ -1788,7 +1788,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    return doResolve(MethodVariableAccess.of(parameters.get(index).getType().asErasure()).loadOffset(parameters.get(index).getOffset()),
+                    return doResolve(MethodVariableAccess.of(parameters.get(index).getType().asErasure()).loadFrom(parameters.get(index).getOffset()),
                             parameters.get(index).getType(),
                             assigner,
                             typing);

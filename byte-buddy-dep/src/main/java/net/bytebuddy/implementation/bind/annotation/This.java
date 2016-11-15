@@ -71,7 +71,7 @@ public @interface This {
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(source.isStatic()
                     ? NullConstant.INSTANCE
-                    : new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX),
+                    : new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadFrom(THIS_REFERENCE_INDEX),
                     assigner.assign(implementationTarget.getInstrumentedType().asGenericType(), target.getType(), RuntimeType.Verifier.check(target))));
         }
 

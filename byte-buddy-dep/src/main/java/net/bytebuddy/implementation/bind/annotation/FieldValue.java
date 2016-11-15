@@ -136,7 +136,7 @@ public @interface FieldValue {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadOffset(0),
+                                : MethodVariableAccess.REFERENCE.loadFrom(0),
                         FieldAccess.forField(fieldDescription).getter(),
                         assigner.assign(fieldDescription.getType(), target.getType(), RuntimeType.Verifier.check(target))
                 );

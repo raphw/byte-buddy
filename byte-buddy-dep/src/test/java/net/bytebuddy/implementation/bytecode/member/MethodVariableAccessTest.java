@@ -69,7 +69,7 @@ public class MethodVariableAccessTest {
 
     @Test
     public void testLoading() throws Exception {
-        StackManipulation stackManipulation = MethodVariableAccess.of(typeDescription).loadOffset(4);
+        StackManipulation stackManipulation = MethodVariableAccess.of(typeDescription).loadFrom(4);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(this.size));

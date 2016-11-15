@@ -745,7 +745,7 @@ public class MethodCall implements Implementation.Composable {
                 return new StackManipulation.Compound(
                         invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadOffset(0),
+                                : MethodVariableAccess.REFERENCE.loadFrom(0),
                         invokedMethod.isConstructor()
                                 ? Duplication.SINGLE
                                 : StackManipulation.Trivial.INSTANCE
@@ -898,7 +898,7 @@ public class MethodCall implements Implementation.Composable {
                 return new StackManipulation.Compound(
                         invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadOffset(0),
+                                : MethodVariableAccess.REFERENCE.loadFrom(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter());
             }
 
@@ -966,7 +966,7 @@ public class MethodCall implements Implementation.Composable {
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + parameterDescription.getType());
                 }
-                return new StackManipulation.Compound(MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()), stackManipulation);
+                return new StackManipulation.Compound(MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()), stackManipulation);
             }
 
             @Override
@@ -1088,7 +1088,7 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.REFERENCE.loadOffset(0),
+                        MethodVariableAccess.REFERENCE.loadFrom(0),
                         assigner.assign(instrumentedType.asGenericType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + target);
@@ -1253,7 +1253,7 @@ public class MethodCall implements Implementation.Composable {
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.of(parameterDescription.getType().asErasure()).loadOffset(parameterDescription.getOffset()),
+                        MethodVariableAccess.of(parameterDescription.getType().asErasure()).loadFrom(parameterDescription.getOffset()),
                         assigner.assign(parameterDescription.getType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target + " for " + instrumentedMethod);
@@ -1560,7 +1560,7 @@ public class MethodCall implements Implementation.Composable {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadOffset(0),
+                                : MethodVariableAccess.REFERENCE.loadFrom(0),
                         FieldAccess.forField(fieldDescription).getter(),
                         assigner.assign(fieldDescription.getType(), target.getType(), typing)
                 );

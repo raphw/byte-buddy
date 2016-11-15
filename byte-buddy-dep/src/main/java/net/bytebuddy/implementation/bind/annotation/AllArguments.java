@@ -142,7 +142,7 @@ public @interface AllArguments {
                     ? CompoundList.of(implementationTarget.getInstrumentedType().asGenericType(), source.getParameters().asTypeList())
                     : source.getParameters().asTypeList()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.of(sourceParameter).loadOffset(offset),
+                        MethodVariableAccess.of(sourceParameter).loadFrom(offset),
                         assigner.assign(sourceParameter, arrayFactory.getComponentType(), RuntimeType.Verifier.check(target)));
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);

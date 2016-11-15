@@ -4798,12 +4798,12 @@ public interface AgentBuilder {
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                         List<StackManipulation> fieldAssignments = new ArrayList<StackManipulation>(declaredFields.size() * 3);
                         for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
-                            fieldAssignments.add(MethodVariableAccess.REFERENCE.loadOffset(0));
-                            fieldAssignments.add(MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()));
+                            fieldAssignments.add(MethodVariableAccess.REFERENCE.loadFrom(0));
+                            fieldAssignments.add(MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()));
                             fieldAssignments.add(FieldAccess.forField(declaredFields.get(parameterDescription.getIndex())).putter());
                         }
                         return new Size(new StackManipulation.Compound(
-                                MethodVariableAccess.REFERENCE.loadOffset(0),
+                                MethodVariableAccess.REFERENCE.loadFrom(0),
                                 MethodInvocation.invoke(INSTANCE.objectConstructor),
                                 new StackManipulation.Compound(fieldAssignments),
                                 MethodReturn.VOID
@@ -5011,12 +5011,12 @@ public interface AgentBuilder {
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                         List<StackManipulation> fieldAccess = new ArrayList<StackManipulation>(declaredFields.size() * 2);
                         for (FieldDescription.InDefinedShape fieldDescription : declaredFields) {
-                            fieldAccess.add(MethodVariableAccess.REFERENCE.loadOffset(0));
+                            fieldAccess.add(MethodVariableAccess.REFERENCE.loadFrom(0));
                             fieldAccess.add(FieldAccess.forField(fieldDescription).getter());
                         }
                         List<StackManipulation> parameterAccess = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size() * 2);
                         for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
-                            parameterAccess.add(MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()));
+                            parameterAccess.add(MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()));
                             parameterAccess.add(Assigner.DEFAULT.assign(parameterDescription.getType(),
                                     specializedLambdaMethod.getParameterTypes().get(parameterDescription.getIndex()).asGenericType(),
                                     Assigner.Typing.DYNAMIC));
@@ -5127,7 +5127,7 @@ public interface AgentBuilder {
                     }
                     List<StackManipulation> lambdaArguments = new ArrayList<StackManipulation>(implementationTarget.getInstrumentedType().getDeclaredFields().size());
                     for (FieldDescription.InDefinedShape fieldDescription : implementationTarget.getInstrumentedType().getDeclaredFields()) {
-                        lambdaArguments.add(new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(0),
+                        lambdaArguments.add(new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadFrom(0),
                                 FieldAccess.forField(fieldDescription).getter(),
                                 Assigner.DEFAULT.assign(fieldDescription.getType(), TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)));
                     }

@@ -15,8 +15,10 @@ import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.SuperMethodCall;
-import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.*;
+import net.bytebuddy.implementation.bytecode.constant.*;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
+import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
@@ -26,7 +28,8 @@ import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Serializable;
 import java.lang.annotation.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -433,7 +436,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               int readerFlags) {
         return instrumentedMethod.isAbstract() || instrumentedMethod.isNative()
                 ? methodVisitor
-                : doWrap(instrumentedType, instrumentedMethod, methodVisitor, implementationContext.getClassFileVersion(), writerFlags, readerFlags);
+                : doWrap(instrumentedType, instrumentedMethod, methodVisitor, implementationContext, writerFlags, readerFlags);
     }
 
     /**
@@ -442,7 +445,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param instrumentedType   The instrumented type.
      * @param instrumentedMethod The instrumented method.
      * @param methodVisitor      The method visitor to write to.
-     * @param classFileVersion   The current class file version.
      * @param writerFlags        The ASM writer flags to use.
      * @param readerFlags        The ASM reader flags to use.
      * @return A method visitor that applies this advice.
@@ -450,7 +452,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     protected MethodVisitor doWrap(TypeDescription instrumentedType,
                                    MethodDescription instrumentedMethod,
                                    MethodVisitor methodVisitor,
-                                   ClassFileVersion classFileVersion,
+                                   Implementation.Context implementationContext,
                                    int writerFlags,
                                    int readerFlags) {
         methodVisitor = methodEnter.isPrependLineNumber()
@@ -458,30 +460,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 : methodVisitor;
         if (!methodExit.isAlive()) {
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
+                    implementationContext,
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
-                    classFileVersion,
                     writerFlags,
                     readerFlags);
         } else if (methodExit.getTriggeringThrowable().represents(NoExceptionHandler.class)) {
             return new AdviceVisitor.WithExitAdvice.WithoutExceptionHandling(methodVisitor,
+                    implementationContext,
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
                     methodExit,
-                    classFileVersion,
                     writerFlags,
                     readerFlags);
         } else if (instrumentedMethod.isConstructor()) {
             throw new IllegalStateException("Cannot catch exception during constructor call for " + instrumentedMethod);
         } else {
             return new AdviceVisitor.WithExitAdvice.WithExceptionHandling(methodVisitor,
+                    implementationContext,
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
                     methodExit,
-                    classFileVersion,
                     writerFlags,
                     readerFlags,
                     methodExit.getTriggeringThrowable());
@@ -1706,1695 +1708,267 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             interface Target {
 
-                /**
-                 * Indicates that applying this target does not require any additional padding.
-                 */
-                int NO_PADDING = 0;
+                StackManipulation resolveRead();
 
-                /**
-                 * Applies this offset mapping for a {@link MethodVisitor#visitVarInsn(int, int)} instruction.
-                 *
-                 * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
-                 * @param opcode        The opcode of the original instruction.
-                 * @return The required padding to the advice's total stack size.
-                 */
-                int resolveAccess(MethodVisitor methodVisitor, int opcode);
+                StackManipulation resolveWrite();
 
-                /**
-                 * Applies this offset mapping for a {@link MethodVisitor#visitIincInsn(int, int)} instruction.
-                 *
-                 * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
-                 * @param increment     The value with which to increment the targeted value.
-                 * @return The required padding to the advice's total stack size.
-                 */
-                int resolveIncrement(MethodVisitor methodVisitor, int increment);
+                StackManipulation resolveIncrement(int value);
 
-                /**
-                 * A dispatcher for boxing a primitive value.
-                 */
-                enum PrimitiveDispatcher {
+                enum ForThis implements Target {
 
-                    /**
-                     * A boxing dispatcher for the {@code boolean} type.
-                     */
-                    BOOLEAN(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Boolean.class, boolean.class, "booleanValue"),
-
-                    /**
-                     * A boxing dispatcher for the {@code byte} type.
-                     */
-                    BYTE(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Byte.class, byte.class, "byteValue"),
-
-                    /**
-                     * A boxing dispatcher for the {@code short} type.
-                     */
-                    SHORT(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Short.class, short.class, "shortValue"),
-
-                    /**
-                     * A boxing dispatcher for the {@code char} type.
-                     */
-                    CHARACTER(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Character.class, char.class, "charValue"),
-
-                    /**
-                     * A boxing dispatcher for the {@code int} type.
-                     */
-                    INTEGER(Opcodes.ICONST_0, Opcodes.ILOAD, Opcodes.ISTORE, Integer.class, int.class, "intValue"),
-
-                    /**
-                     * A boxing dispatcher for the {@code long} type.
-                     */
-                    LONG(Opcodes.LCONST_0, Opcodes.LLOAD, Opcodes.LSTORE, Long.class, long.class, "longValue"),
-
-                    /**
-                     * A boxing dispatcher for the {@code float} type.
-                     */
-                    FLOAT(Opcodes.FCONST_0, Opcodes.FLOAD, Opcodes.FSTORE, Float.class, float.class, "floatValue"),
-
-                    /**
-                     * A boxing dispatcher for the {@code double} type.
-                     */
-                    DOUBLE(Opcodes.DCONST_0, Opcodes.DLOAD, Opcodes.DSTORE, Double.class, double.class, "doubleValue");
-
-                    /**
-                     * The name of the boxing method of a wrapper type.
-                     */
-                    private static final String VALUE_OF = "valueOf";
-
-                    /**
-                     * The opcode for loading the default value for this type onto the operand stack.
-                     */
-                    private final int defaultValue;
-
-                    /**
-                     * The opcode to use for loading a value of this type.
-                     */
-                    private final int load;
-
-                    /**
-                     * The opcode to use for loading a value of this type.
-                     */
-                    private final int store;
-
-                    /**
-                     * The name of the method used for unboxing a primitive type.
-                     */
-                    private final String unboxingMethod;
-
-                    /**
-                     * The name of the wrapper type.
-                     */
-                    private final String owner;
-
-                    /**
-                     * The descriptor of the boxing method.
-                     */
-                    private final String boxingDescriptor;
-
-                    /**
-                     * The descriptor of the unboxing method.
-                     */
-                    private final String unboxingDescriptor;
-
-                    /**
-                     * The required stack size of the unboxed value.
-                     */
-                    private final StackSize stackSize;
-
-                    /**
-                     * Creates a new boxing dispatcher.
-                     *
-                     * @param defaultValue   The opcode for loading the default value for this type onto the operand stack.
-                     * @param load           The opcode to use for loading a value of this type.
-                     * @param store          The opcode to use for storing a value of this type.
-                     * @param wrapperType    The represented wrapper type.
-                     * @param primitiveType  The represented primitive type.
-                     * @param unboxingMethod The name of the method used for unboxing a primitive type.
-                     */
-                    PrimitiveDispatcher(int defaultValue, int load, int store, Class<?> wrapperType, Class<?> primitiveType, String unboxingMethod) {
-                        this.defaultValue = defaultValue;
-                        this.load = load;
-                        this.store = store;
-                        this.unboxingMethod = unboxingMethod;
-                        owner = Type.getInternalName(wrapperType);
-                        boxingDescriptor = Type.getMethodDescriptor(Type.getType(wrapperType), Type.getType(primitiveType));
-                        unboxingDescriptor = Type.getMethodDescriptor(Type.getType(primitiveType));
-                        stackSize = StackSize.of(primitiveType);
-                    }
-
-                    /**
-                     * Resolves a boxing dispatcher for the supplied primitive type.
-                     *
-                     * @param typeDefinition A description of a primitive type.
-                     * @return An appropriate boxing dispatcher.
-                     */
-                    protected static PrimitiveDispatcher of(TypeDefinition typeDefinition) {
-                        if (typeDefinition.represents(boolean.class)) {
-                            return BOOLEAN;
-                        } else if (typeDefinition.represents(byte.class)) {
-                            return BYTE;
-                        } else if (typeDefinition.represents(short.class)) {
-                            return SHORT;
-                        } else if (typeDefinition.represents(char.class)) {
-                            return CHARACTER;
-                        } else if (typeDefinition.represents(int.class)) {
-                            return INTEGER;
-                        } else if (typeDefinition.represents(long.class)) {
-                            return LONG;
-                        } else if (typeDefinition.represents(float.class)) {
-                            return FLOAT;
-                        } else if (typeDefinition.represents(double.class)) {
-                            return DOUBLE;
-                        } else {
-                            throw new IllegalArgumentException("Cannot box: " + typeDefinition);
-                        }
-                    }
-
-                    /**
-                     * Loads a primitive integer value onto the operand stack.
-                     *
-                     * @param methodVisitor The method visitor to use.
-                     * @param value         The value to load onto the operand stack.
-                     */
-                    protected static void loadInteger(MethodVisitor methodVisitor, int value) {
-                        switch (value) {
-                            case 0:
-                                methodVisitor.visitInsn(Opcodes.ICONST_0);
-                                break;
-                            case 1:
-                                methodVisitor.visitInsn(Opcodes.ICONST_1);
-                                break;
-                            case 2:
-                                methodVisitor.visitInsn(Opcodes.ICONST_2);
-                                break;
-                            case 3:
-                                methodVisitor.visitInsn(Opcodes.ICONST_3);
-                                break;
-                            case 4:
-                                methodVisitor.visitInsn(Opcodes.ICONST_4);
-                                break;
-                            case 5:
-                                methodVisitor.visitInsn(Opcodes.ICONST_5);
-                                break;
-                            default:
-                                if (value < Byte.MAX_VALUE) {
-                                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
-                                } else if (value < Short.MAX_VALUE) {
-                                    methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
-                                } else {
-                                    methodVisitor.visitLdcInsn(value);
-                                }
-                        }
-                    }
-
-                    /**
-                     * Loads the value as a boxed version onto the stack.
-                     *
-                     * @param methodVisitor the method visitor for which to load the value.
-                     * @param offset        The offset of the primitive value.
-                     * @return The additional padding required on the operand stack.
-                     */
-                    protected int loadBoxed(MethodVisitor methodVisitor, int offset) {
-                        methodVisitor.visitVarInsn(load, offset);
-                        return box(methodVisitor);
-                    }
-
-                    /**
-                     * Boxes the current value on top of the operand stack.
-                     *
-                     * @param methodVisitor The method visitor to apply the boxing to.
-                     * @return The additional padding required on the operand stack.
-                     */
-                    protected int box(MethodVisitor methodVisitor) {
-                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, boxingDescriptor, false);
-                        return stackSize.getSize() - 1;
-                    }
-
-                    /**
-                     * Stores the value as a unboxed version onto the stack.
-                     *
-                     * @param methodVisitor the method visitor for which to store the value.
-                     * @param offset        The offset of the primitive value.
-                     * @return The additional padding required on the operand stack.
-                     */
-                    protected int storeUnboxed(MethodVisitor methodVisitor, int offset) {
-                        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, owner);
-                        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, unboxingMethod, unboxingDescriptor, false);
-                        methodVisitor.visitVarInsn(store, offset);
-                        return stackSize.getSize() - 1;
-                    }
-
-                    /**
-                     * Pushes the represented default value as a boxed value onto the operand stack.
-                     *
-                     * @param methodVisitor The method visitor to apply the changes to.
-                     * @return The additional padding required on the operand stack.
-                     */
-                    protected int pushBoxedDefault(MethodVisitor methodVisitor) {
-                        methodVisitor.visitInsn(defaultValue);
-                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, boxingDescriptor, false);
-                        return stackSize.getSize() - 1;
-                    }
-
-                    /**
-                     * Loads this instance's type constant onto the operand stack.
-                     *
-                     * @param methodVisitor The method visitor to use.
-                     */
-                    protected void loadType(MethodVisitor methodVisitor) {
-                        methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, owner, "TYPE", Type.getDescriptor(Class.class));
-                    }
-
-                    /**
-                     * Returns the stack size of the primitive value.
-                     *
-                     * @return The stack size of the primitive value.
-                     */
-                    protected StackSize getStackSize() {
-                        return stackSize;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.PrimitiveDispatcher." + name();
-                    }
-                }
-
-                /**
-                 * Loads a default value onto the stack or pops the accessed value off it.
-                 */
-                enum ForDefaultValue implements Target {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ALOAD:
-                                methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                                break;
-                            case Opcodes.ILOAD:
-                                methodVisitor.visitInsn(Opcodes.ICONST_0);
-                                break;
-                            case Opcodes.LLOAD:
-                                methodVisitor.visitInsn(Opcodes.LCONST_0);
-                                break;
-                            case Opcodes.FLOAD:
-                                methodVisitor.visitInsn(Opcodes.FCONST_0);
-                                break;
-                            case Opcodes.DLOAD:
-                                methodVisitor.visitInsn(Opcodes.DCONST_0);
-                                break;
-                            case Opcodes.ISTORE:
-                            case Opcodes.FSTORE:
-                            case Opcodes.ASTORE:
-                                methodVisitor.visitInsn(Opcodes.POP);
-                                break;
-                            case Opcodes.LSTORE:
-                            case Opcodes.DSTORE:
-                                methodVisitor.visitInsn(Opcodes.POP2);
-                                break;
-                            default:
-                                throw new IllegalStateException("Unexpected opcode: " + opcode);
-                        }
-                        return NO_PADDING;
-                    }
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        return NO_PADDING;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue." + name();
-                    }
-                }
-
-                /**
-                 * Loads a boxed default value onto the operand stack.
-                 */
-                class ForBoxedDefaultValue implements Target {
-
-                    /**
-                     * The boxing dispatcher to use.
-                     */
-                    private final PrimitiveDispatcher primitiveDispatcher;
-
-                    /**
-                     * Creates a new target for a boxing dispatcher.
-                     *
-                     * @param primitiveDispatcher The boxing dispatcher to use.
-                     */
-                    protected ForBoxedDefaultValue(PrimitiveDispatcher primitiveDispatcher) {
-                        this.primitiveDispatcher = primitiveDispatcher;
-                    }
-
-                    /**
-                     * Creates a new target for loading a value of the given primitve type onto the operand stack.
-                     *
-                     * @param typeDefinition The primitive type to push boxed onto the operand stack.
-                     * @return An appropriate target.
-                     */
-                    protected static Target of(TypeDefinition typeDefinition) {
-                        return new Target.ForBoxedDefaultValue(PrimitiveDispatcher.of(typeDefinition));
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ALOAD:
-                                return primitiveDispatcher.pushBoxedDefault(methodVisitor);
-                            case Opcodes.ASTORE:
-                                methodVisitor.visitInsn(Opcodes.POP);
-                                return NO_PADDING;
-                            default:
-                                throw new IllegalStateException("Unexpected opcode: " + opcode);
-                        }
-                    }
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Unexpected incrementation for boxed default value");
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ForBoxedDefaultValue that = (ForBoxedDefaultValue) other;
-                        return primitiveDispatcher == that.primitiveDispatcher;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return primitiveDispatcher.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedDefaultValue{" +
-                                "primitiveDispatcher=" + primitiveDispatcher +
-                                '}';
-                    }
-                }
-
-                /**
-                 * A read-only target mapping.
-                 */
-                abstract class ForParameter implements Target {
-
-                    /**
-                     * The mapped offset.
-                     */
-                    protected final int offset;
-
-                    /**
-                     * Creates a new read-only target mapping.
-                     *
-                     * @param offset The mapped offset.
-                     */
-                    protected ForParameter(int offset) {
-                        this.offset = offset;
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ISTORE:
-                            case Opcodes.LSTORE:
-                            case Opcodes.FSTORE:
-                            case Opcodes.DSTORE:
-                            case Opcodes.ASTORE:
-                                onWrite(methodVisitor, opcode);
-                                break;
-                            case Opcodes.ILOAD:
-                            case Opcodes.LLOAD:
-                            case Opcodes.FLOAD:
-                            case Opcodes.DLOAD:
-                            case Opcodes.ALOAD:
-                                methodVisitor.visitVarInsn(opcode, offset);
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
-                        }
-                        return NO_PADDING;
-                    }
-
-                    /**
-                     * Invoked upon attempting to write to a parameter.
-                     *
-                     * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
-                     * @param opcode        The applied opcode.
-                     */
-                    protected abstract void onWrite(MethodVisitor methodVisitor, int opcode);
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ForParameter forParameter = (ForParameter) other;
-                        return offset == forParameter.offset;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return offset;
-                    }
-
-                    /**
-                     * A read-only parameter mapping.
-                     */
-                    protected static class ReadOnly extends ForParameter {
-
-                        /**
-                         * Creates a new parameter mapping that is only readable.
-                         *
-                         * @param offset The mapped offset.
-                         */
-                        protected ReadOnly(int offset) {
-                            super(offset);
-                        }
-
-                        @Override
-                        protected void onWrite(MethodVisitor methodVisitor, int opcode) {
-                            throw new IllegalStateException("Cannot write to read-only value");
-                        }
-
-                        @Override
-                        public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                            throw new IllegalStateException("Cannot write to read-only parameter at offset " + offset);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadOnly{" +
-                                    "offset=" + offset +
-                                    "}";
-                        }
-                    }
-
-                    /**
-                     * A parameter mapping that is both readable and writable.
-                     */
-                    protected static class ReadWrite extends ForParameter {
-
-                        /**
-                         * Creates a new parameter mapping that is both readable and writable.
-                         *
-                         * @param offset The mapped offset.
-                         */
-                        protected ReadWrite(int offset) {
-                            super(offset);
-                        }
-
-                        @Override
-                        protected void onWrite(MethodVisitor methodVisitor, int opcode) {
-                            methodVisitor.visitVarInsn(opcode, offset);
-                        }
-
-                        /**
-                         * Resolves a parameter mapping where the value is casted to the given type prior to assignment.
-                         *
-                         * @param targetType The type to which the target value is cased.
-                         * @return An appropriate target mapping.
-                         */
-                        protected Target casted(TypeDescription targetType) {
-                            return targetType.represents(Object.class)
-                                    ? this
-                                    : new WithCasting(offset, targetType);
-                        }
-
-                        @Override
-                        public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                            methodVisitor.visitIincInsn(offset, increment);
-                            return NO_PADDING;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite{" +
-                                    "offset=" + offset +
-                                    "}";
-                        }
-
-                        /**
-                         * A readable and writable parameter mapping where the assigned value is casted to another type prior to assignment.
-                         */
-                        protected static class WithCasting extends ReadWrite {
-
-                            /**
-                             * The type to which the written value is casted prior to assignment.
-                             */
-                            private final TypeDescription targetType;
-
-                            /**
-                             * Creates a new parameter mapping with casting prior to assignment.
-                             *
-                             * @param offset     The mapped offset.
-                             * @param targetType The type to which the written value is casted prior to assignment.
-                             */
-                            protected WithCasting(int offset, TypeDescription targetType) {
-                                super(offset);
-                                this.targetType = targetType;
-                            }
-
-                            @Override
-                            protected void onWrite(MethodVisitor methodVisitor, int opcode) {
-                                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, targetType.getInternalName());
-                                super.onWrite(methodVisitor, opcode);
-                            }
-
-                            @Override
-                            public boolean equals(Object other) {
-                                if (this == other) return true;
-                                if (other == null || getClass() != other.getClass()) return false;
-                                if (!super.equals(other)) return false;
-                                WithCasting that = (WithCasting) other;
-                                return targetType.equals(that.targetType);
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                int result = super.hashCode();
-                                result = 31 * result + targetType.hashCode();
-                                return result;
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.WithCasting{" +
-                                        "offset=" + offset +
-                                        ", targetType=" + targetType +
-                                        "}";
-                            }
-                        }
-                    }
-                }
-
-                /**
-                 * An offset mapping for a field.
-                 */
-                abstract class ForField implements Target {
-
-                    /**
-                     * The field being read.
-                     */
-                    protected final FieldDescription.InDefinedShape fieldDescription;
-
-                    /**
-                     * Creates a new offset mapping for a field.
-                     *
-                     * @param fieldDescription The field being read.
-                     */
-                    protected ForField(FieldDescription.InDefinedShape fieldDescription) {
-                        this.fieldDescription = fieldDescription;
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ISTORE:
-                            case Opcodes.ASTORE:
-                            case Opcodes.FSTORE:
-                                return onWriteSingle(methodVisitor);
-                            case Opcodes.LSTORE:
-                            case Opcodes.DSTORE:
-                                return onWriteDouble(methodVisitor);
-                            case Opcodes.ILOAD:
-                            case Opcodes.FLOAD:
-                            case Opcodes.ALOAD:
-                            case Opcodes.LLOAD:
-                            case Opcodes.DLOAD:
-                                if (fieldDescription.isStatic()) {
-                                    accessField(methodVisitor, Opcodes.GETSTATIC);
-                                } else {
-                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                                    accessField(methodVisitor, Opcodes.GETFIELD);
-                                }
-                                return NO_PADDING;
-                            default:
-                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
-                        }
-                    }
-
-                    /**
-                     * Writes a value to a field which type occupies a single slot on the operand stack.
-                     *
-                     * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
-                     * @return The required padding to the advice's total stack size.
-                     */
-                    protected abstract int onWriteSingle(MethodVisitor methodVisitor);
-
-                    /**
-                     * Writes a value to a field which type occupies two slots on the operand stack.
-                     *
-                     * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
-                     * @return The required padding to the advice's total stack size.
-                     */
-                    protected abstract int onWriteDouble(MethodVisitor methodVisitor);
-
-                    /**
-                     * Accesses a field.
-                     *
-                     * @param methodVisitor The method visitor for which to access the field.
-                     * @param opcode        The opcode for accessing the field.
-                     */
-                    protected void accessField(MethodVisitor methodVisitor, int opcode) {
-                        methodVisitor.visitFieldInsn(opcode,
-                                fieldDescription.getDeclaringType().asErasure().getInternalName(),
-                                fieldDescription.getInternalName(),
-                                fieldDescription.getDescriptor());
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ForField forField = (ForField) other;
-                        return fieldDescription.equals(forField.fieldDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return fieldDescription.hashCode();
-                    }
-
-                    /**
-                     * A target mapping for a field that is only readable.
-                     */
-                    protected static class ReadOnly extends ForField {
-
-                        /**
-                         * Creates a new field mapping for a field that is only readable.
-                         *
-                         * @param fieldDescription The field which is mapped by this target mapping.
-                         */
-                        protected ReadOnly(FieldDescription.InDefinedShape fieldDescription) {
-                            super(fieldDescription);
-                        }
-
-                        @Override
-                        protected int onWriteSingle(MethodVisitor methodVisitor) {
-                            throw new IllegalStateException("Cannot write to read-only field " + fieldDescription);
-                        }
-
-                        @Override
-                        protected int onWriteDouble(MethodVisitor methodVisitor) {
-                            throw new IllegalStateException("Cannot write to read-only field " + fieldDescription);
-                        }
-
-                        @Override
-                        public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                            throw new IllegalStateException("Cannot write to read-only field " + fieldDescription);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForField.ReadOnly{" +
-                                    "fieldDescription=" + fieldDescription +
-                                    "}";
-                        }
-                    }
-
-                    /**
-                     * A target mapping for a field that is both readable and writable.
-                     */
-                    protected static class ReadWrite extends ForField {
-
-                        /**
-                         * Creates a new field mapping for a field that is readable and writable.
-                         *
-                         * @param fieldDescription The field which is mapped by this target mapping.
-                         */
-                        protected ReadWrite(FieldDescription.InDefinedShape fieldDescription) {
-                            super(fieldDescription);
-                        }
-
-                        @Override
-                        protected int onWriteSingle(MethodVisitor methodVisitor) {
-                            if (!fieldDescription.isStatic()) {
-                                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                                methodVisitor.visitInsn(Opcodes.DUP_X1);
-                                methodVisitor.visitInsn(Opcodes.POP);
-                                accessField(methodVisitor, Opcodes.PUTFIELD);
-                                return 2;
-                            } else {
-                                accessField(methodVisitor, Opcodes.PUTSTATIC);
-                                return NO_PADDING;
-                            }
-                        }
-
-                        @Override
-                        protected int onWriteDouble(MethodVisitor methodVisitor) {
-                            if (!fieldDescription.isStatic()) {
-                                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                                methodVisitor.visitInsn(Opcodes.DUP_X2);
-                                methodVisitor.visitInsn(Opcodes.POP);
-                                accessField(methodVisitor, Opcodes.PUTFIELD);
-                                return 2;
-                            } else {
-                                accessField(methodVisitor, Opcodes.PUTSTATIC);
-                                return NO_PADDING;
-                            }
-                        }
-
-                        @Override
-                        public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                            if (fieldDescription.isStatic()) {
-                                accessField(methodVisitor, Opcodes.GETSTATIC);
-                                methodVisitor.visitInsn(Opcodes.ICONST_1);
-                                methodVisitor.visitInsn(Opcodes.IADD);
-                                accessField(methodVisitor, Opcodes.PUTSTATIC);
-                                return NO_PADDING;
-                            } else {
-                                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                                methodVisitor.visitInsn(Opcodes.DUP);
-                                accessField(methodVisitor, Opcodes.GETFIELD);
-                                methodVisitor.visitInsn(Opcodes.ICONST_1);
-                                methodVisitor.visitInsn(Opcodes.IADD);
-                                accessField(methodVisitor, Opcodes.PUTFIELD);
-                                return 2;
-                            }
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForField.ReadWrite{" +
-                                    "fieldDescription=" + fieldDescription +
-                                    "}";
-                        }
-                    }
-
-                    /**
-                     * A target for reading a field where the final value is boxed after reading.
-                     */
-                    protected static class ReadBoxed extends ForField {
-
-                        /**
-                         * Creates a new field mapping for a field that is readable and gets boxed.
-                         *
-                         * @param fieldDescription The field which is mapped by this target mapping.
-                         */
-                        protected ReadBoxed(FieldDescription.InDefinedShape fieldDescription) {
-                            super(fieldDescription);
-                        }
-
-                        @Override
-                        public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                            return super.resolveAccess(methodVisitor, opcode) + PrimitiveDispatcher.of(fieldDescription.getType()).box(methodVisitor);
-                        }
-
-                        @Override
-                        protected int onWriteSingle(MethodVisitor methodVisitor) {
-                            throw new IllegalStateException("Cannot write to read-only field " + fieldDescription);
-                        }
-
-                        @Override
-                        protected int onWriteDouble(MethodVisitor methodVisitor) {
-                            throw new IllegalStateException("Cannot write to read-only field " + fieldDescription);
-                        }
-
-                        @Override
-                        public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                            throw new IllegalStateException("Cannot write to read-only field " + fieldDescription);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForField.ReadBoxed{" +
-                                    "fieldDescription=" + fieldDescription +
-                                    "}";
-                        }
-                    }
-                }
-
-                /**
-                 * An offset mapping for a constant pool value.
-                 */
-                class ForConstantPoolValue implements Target {
-
-                    /**
-                     * The constant pool value.
-                     */
-                    private final Object value;
-
-                    /**
-                     * Creates a mapping for a constant pool value.
-                     *
-                     * @param value The constant pool value.
-                     */
-                    protected ForConstantPoolValue(Object value) {
-                        this.value = value;
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ISTORE:
-                            case Opcodes.ASTORE:
-                            case Opcodes.FSTORE:
-                            case Opcodes.LSTORE:
-                            case Opcodes.DSTORE:
-                                throw new IllegalStateException("Cannot write to fixed value: " + value);
-                            case Opcodes.ILOAD:
-                            case Opcodes.FLOAD:
-                            case Opcodes.ALOAD:
-                            case Opcodes.LLOAD:
-                            case Opcodes.DLOAD:
-                                methodVisitor.visitLdcInsn(value);
-                                return NO_PADDING;
-                            default:
-                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
-                        }
-                    }
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Cannot write to fixed value: " + value);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ForConstantPoolValue that = (ForConstantPoolValue) other;
-                        return value.equals(that.value);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return value.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue{" +
-                                "value=" + value +
-                                '}';
-                    }
-
-                    /**
-                     * A binding for a constant pool value that is a primitive value and is boxed after loading.
-                     */
-                    protected static class WithBoxing extends ForConstantPoolValue {
-
-                        /**
-                         * The primitive dispatcher to use.
-                         */
-                        private final PrimitiveDispatcher primitiveDispatcher;
-
-                        /**
-                         * Creates a primitive dispatcher that also applied boxing.
-                         *
-                         * @param value               The constant pool value.
-                         * @param primitiveDispatcher The primitive dispatcher to use.
-                         */
-                        protected WithBoxing(Object value, PrimitiveDispatcher primitiveDispatcher) {
-                            super(value);
-                            this.primitiveDispatcher = primitiveDispatcher;
-                        }
-
-                        /**
-                         * Creates a new binding for a constant pool value with a boxed value.
-                         *
-                         * @param value The primitive value to bind.
-                         * @return An appropriate binding target.
-                         */
-                        protected static Target of(Object value) {
-                            return new WithBoxing(value, PrimitiveDispatcher.of(new TypeDescription.ForLoadedType(value.getClass()).asUnboxed()));
-                        }
-
-                        @Override
-                        public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                            try {
-                                return super.resolveAccess(methodVisitor, opcode);
-                            } finally {
-                                primitiveDispatcher.box(methodVisitor);
-                            }
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            if (!super.equals(other)) return false;
-                            WithBoxing that = (WithBoxing) other;
-                            return primitiveDispatcher == that.primitiveDispatcher;
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = super.hashCode();
-                            result = 31 * result + primitiveDispatcher.hashCode();
-                            return result;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.WithBoxing{" +
-                                    "primitiveDispatcher=" + primitiveDispatcher +
-                                    '}';
-                        }
-                    }
-                }
-
-                /**
-                 * A target for an offset mapping to load a type constant onto the operand stack.
-                 */
-                class ForType implements Target {
-
-                    /**
-                     * The type to load onto the operand stack.
-                     */
-                    private final TypeDescription typeDescription;
-
-                    /**
-                     * Creates a new target for an offset mapping for a type constant.
-                     *
-                     * @param typeDescription The type to load onto the operand stack.
-                     */
-                    public ForType(TypeDescription typeDescription) {
-                        this.typeDescription = typeDescription;
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ALOAD:
-                                load(methodVisitor, typeDescription);
-                                return NO_PADDING;
-                            default:
-                                throw new IllegalStateException("Cannot write to fixed value: " + typeDescription);
-                        }
-                    }
-
-                    /**
-                     * Loads a type constant onto the operand stack.
-                     *
-                     * @param methodVisitor   The method visitor to use.
-                     * @param typeDescription The type to load into the operand stack.
-                     */
-                    protected static void load(MethodVisitor methodVisitor, TypeDescription typeDescription) {
-                        methodVisitor.visitLdcInsn(typeDescription.getName());
-                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                TypeDescription.CLASS.getInternalName(),
-                                "forName",
-                                Type.getMethodDescriptor(Type.getType(Class.class), Type.getType(String.class)),
-                                false);
-                    }
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Unexpected increment");
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ForType forType = (ForType) other;
-                        return typeDescription.equals(forType.typeDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return typeDescription.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForType{" +
-                                "typeDescription=" + typeDescription +
-                                '}';
-                    }
-                }
-
-                /**
-                 * A target for an offset mapping that boxes a primitive parameter value.
-                 */
-                abstract class ForBoxedArgument implements Target {
-
-                    /**
-                     * The parameters offset.
-                     */
-                    protected final int offset;
-
-                    /**
-                     * A dispatcher for boxing the primitive value.
-                     */
-                    protected final PrimitiveDispatcher primitiveDispatcher;
-
-                    /**
-                     * Creates a new offset mapping for boxing a primitive parameter value.
-                     *
-                     * @param offset              The parameters offset.
-                     * @param primitiveDispatcher A dispatcher for boxing the primitive value.
-                     */
-                    protected ForBoxedArgument(int offset, PrimitiveDispatcher primitiveDispatcher) {
-                        this.offset = offset;
-                        this.primitiveDispatcher = primitiveDispatcher;
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ALOAD:
-                                return primitiveDispatcher.loadBoxed(methodVisitor, offset);
-                            case Opcodes.ASTORE:
-                                return onStore(methodVisitor);
-                            default:
-                                throw new IllegalStateException("Unexpected opcode: " + opcode);
-                        }
-                    }
-
-                    /**
-                     * Handles writing the boxed value if applicable.
-                     *
-                     * @param methodVisitor The method visitor for which to apply the writing.
-                     * @return The additional required stack size.
-                     */
-                    protected abstract int onStore(MethodVisitor methodVisitor);
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Cannot increment a boxed parameter");
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ForBoxedArgument that = (ForBoxedArgument) other;
-                        return offset == that.offset && primitiveDispatcher == that.primitiveDispatcher;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = offset;
-                        result = 31 * result + primitiveDispatcher.hashCode();
-                        return result;
-                    }
-
-                    /**
-                     * A target mapping for a boxed parameter that only allows reading the boxed value.
-                     */
-                    protected static class ReadOnly extends ForBoxedArgument {
-
-                        /**
-                         * Creates a new read-only target offset mapping for a boxed parameter.
-                         *
-                         * @param offset              The parameters offset.
-                         * @param primitiveDispatcher A dispatcher for boxing the primitive value.
-                         */
-                        protected ReadOnly(int offset, PrimitiveDispatcher primitiveDispatcher) {
-                            super(offset, primitiveDispatcher);
-                        }
-
-                        /**
-                         * Creates an appropriate target mapping.
-                         *
-                         * @param offset The parameters offset.
-                         * @param type   The primitive type that is boxed or unboxed.
-                         * @return An appropriate target mapping.
-                         */
-                        protected static Target of(int offset, TypeDefinition type) {
-                            return new ReadOnly(offset, PrimitiveDispatcher.of(type));
-                        }
-
-                        @Override
-                        protected int onStore(MethodVisitor methodVisitor) {
-                            throw new IllegalStateException("Cannot write to read-only boxed parameter");
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadOnly{" +
-                                    "offset=" + offset +
-                                    ", primitiveDispatcher=" + primitiveDispatcher +
-                                    '}';
-                        }
-                    }
-
-                    /**
-                     * A target mapping for a boxed parameter that allows reading and writing the boxed value.
-                     */
-                    protected static class ReadWrite extends ForBoxedArgument {
-
-                        /**
-                         * Creates a new read-write target offset mapping for a boxed parameter.
-                         *
-                         * @param offset              The parameters offset.
-                         * @param primitiveDispatcher A dispatcher for boxing the primitive value.
-                         */
-                        protected ReadWrite(int offset, PrimitiveDispatcher primitiveDispatcher) {
-                            super(offset, primitiveDispatcher);
-                        }
-
-                        /**
-                         * Creates an appropriate target mapping.
-                         *
-                         * @param offset The parameters offset.
-                         * @param type   The primitive type that is boxed or unboxed.
-                         * @return An appropriate target mapping.
-                         */
-                        protected static Target of(int offset, TypeDefinition type) {
-                            return new ReadWrite(offset, PrimitiveDispatcher.of(type));
-                        }
-
-                        @Override
-                        protected int onStore(MethodVisitor methodVisitor) {
-                            return primitiveDispatcher.storeUnboxed(methodVisitor, offset);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadWrite{" +
-                                    "offset=" + offset +
-                                    ", primitiveDispatcher=" + primitiveDispatcher +
-                                    '}';
-                        }
-                    }
-                }
-
-                /**
-                 * A target for an offset mapping of an array containing all (boxed) arguments of the instrumented method.
-                 */
-                abstract class ForBoxedArguments implements Target {
-
-                    /**
-                     * The parameters of the instrumented method.
-                     */
-                    protected final List<? extends ParameterDescription> parameters;
-
-                    /**
-                     * Creates a mapping for a boxed array containing all arguments of the instrumented method.
-                     *
-                     * @param parameters The parameters of the instrumented method.
-                     */
-                    protected ForBoxedArguments(List<? extends ParameterDescription> parameters) {
-                        this.parameters = parameters;
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ALOAD:
-                                PrimitiveDispatcher.loadInteger(methodVisitor, parameters.size());
-                                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.OBJECT.getInternalName());
-                                StackSize stackSize = StackSize.ZERO;
-                                for (ParameterDescription parameter : parameters) {
-                                    methodVisitor.visitInsn(Opcodes.DUP);
-                                    PrimitiveDispatcher.loadInteger(methodVisitor, parameter.getIndex());
-                                    if (parameter.getType().isPrimitive()) {
-                                        PrimitiveDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
-                                    } else {
-                                        methodVisitor.visitVarInsn(Opcodes.ALOAD, parameter.getOffset());
-                                    }
-                                    methodVisitor.visitInsn(Opcodes.AASTORE);
-                                    stackSize = stackSize.maximum(parameter.getType().getStackSize());
-                                }
-                                return stackSize.getSize() + (parameters.isEmpty()
-                                        ? 0
-                                        : 2);
-                            case Opcodes.ASTORE:
-                                return onStore(methodVisitor);
-                            default:
-                                throw new IllegalStateException("Unexpected opcode: " + opcode);
-                        }
-                    }
-
-                    /**
-                     * Invoked when the parsed code indicates an attempt to replace the existing parameters.
-                     *
-                     * @param methodVisitor The method visitor to use.
-                     * @return The required padding to the advice's total stack size.
-                     */
-                    protected abstract int onStore(MethodVisitor methodVisitor);
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Cannot increment a boxed argument");
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ForBoxedArguments that = (ForBoxedArguments) other;
-                        return parameters.equals(that.parameters);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return parameters.hashCode();
-                    }
-
-                    /**
-                     * A mapping for a method's arguments which does not allow for replacing the arguments.
-                     */
-                    protected static class ReadOnly extends ForBoxedArguments {
-
-                        /**
-                         * Creates a new mapping for a method's boxed arguments which does not allow for replacing those arguments.
-                         *
-                         * @param parameters The parameters of the instrumented method.
-                         */
-                        protected ReadOnly(List<? extends ParameterDescription> parameters) {
-                            super(parameters);
-                        }
-
-                        @Override
-                        protected int onStore(MethodVisitor methodVisitor) {
-                            throw new IllegalStateException("Cannot write to read-only parameter");
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.ReadOnly{" +
-                                    "parameters=" + parameters +
-                                    '}';
-                        }
-                    }
-
-                    /**
-                     * A mapping for a method's arguments which allows for replacing the arguments.
-                     */
-                    protected static class ReadWrite extends ForBoxedArguments {
-
-                        /**
-                         * Creates a new mapping for a method's boxed arguments which allows for replacing those arguments.
-                         *
-                         * @param parameters The parameters of the instrumented method.
-                         */
-                        protected ReadWrite(List<? extends ParameterDescription> parameters) {
-                            super(parameters);
-                        }
-
-                        @Override
-                        protected int onStore(MethodVisitor methodVisitor) {
-                            StackSize stackSize = StackSize.ZERO;
-                            for (ParameterDescription parameter : parameters) {
-                                methodVisitor.visitInsn(Opcodes.DUP);
-                                PrimitiveDispatcher.loadInteger(methodVisitor, parameter.getIndex());
-                                methodVisitor.visitInsn(Opcodes.AALOAD);
-                                if (parameter.getType().isPrimitive()) {
-                                    PrimitiveDispatcher.of(parameter.getType()).storeUnboxed(methodVisitor, parameter.getOffset());
-                                } else {
-                                    if (!parameter.getType().represents(Object.class)) {
-                                        methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, parameter.getType().asErasure().getInternalName());
-                                    }
-                                    methodVisitor.visitVarInsn(Opcodes.ASTORE, parameter.getOffset());
-                                }
-                                stackSize = stackSize.maximum(parameter.getType().getStackSize());
-                            }
-                            methodVisitor.visitInsn(Opcodes.POP);
-                            return stackSize.getSize() + (parameters.isEmpty()
-                                    ? 0
-                                    : 2);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.ReadWrite{" +
-                                    "parameters=" + parameters +
-                                    '}';
-                        }
-                    }
-                }
-
-                /**
-                 * A target for an offset mapping representing an executable instance.
-                 */
-                abstract class ForExecutable implements Target {
-
-                    /**
-                     * The method to represent as a constant.
-                     */
-                    protected final MethodDescription.InDefinedShape methodDescription;
-
-                    /**
-                     * Creates a new offset mapping for an executable constant.
-                     *
-                     * @param methodDescription The method to represent as a constant.
-                     */
-                    protected ForExecutable(MethodDescription.InDefinedShape methodDescription) {
-                        this.methodDescription = methodDescription;
-                    }
-
-                    /**
-                     * Resolves an appropriate target for an offset mapping that represents a constant for a method or constructor.
-                     *
-                     * @param methodDescription The method description to represent as a constant.
-                     * @return An appropriate target.
-                     */
-                    public static Target of(MethodDescription.InDefinedShape methodDescription) {
-                        if (methodDescription.isMethod()) {
-                            return new ForMethod(methodDescription);
-                        } else if (methodDescription.isConstructor()) {
-                            return new ForConstructor(methodDescription);
-                        } else {
-                            throw new IllegalStateException("Cannot represent type initializer of " + methodDescription.getDeclaringType() + " as constant");
-                        }
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ALOAD:
-                                ForType.load(methodVisitor, methodDescription.getDeclaringType());
-                                loadMethodName(methodVisitor);
-                                PrimitiveDispatcher.loadInteger(methodVisitor, methodDescription.getParameters().size());
-                                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.CLASS.getInternalName());
-                                for (ParameterDescription parameter : methodDescription.getParameters()) {
-                                    methodVisitor.visitInsn(Opcodes.DUP);
-                                    PrimitiveDispatcher.loadInteger(methodVisitor, parameter.getIndex());
-                                    if (parameter.getType().isPrimitive()) {
-                                        PrimitiveDispatcher.of(parameter.getType()).loadType(methodVisitor);
-                                    } else {
-                                        ForType.load(methodVisitor, parameter.getType().asErasure());
-                                    }
-                                    methodVisitor.visitInsn(Opcodes.AASTORE);
-                                }
-                                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                                        TypeDescription.CLASS.getInternalName(),
-                                        getInvokedMethod(),
-                                        getInvokedSignature(),
-                                        false);
-                                return getAdditionalOffset() + (methodDescription.getParameters().isEmpty()
-                                        ? 0
-                                        : 3);
-                            default:
-                                throw new IllegalStateException("Unexpected opcode: " + opcode);
-                        }
-                    }
-
-                    /**
-                     * Loads the method's name onto the operand stack if required.
-                     *
-                     * @param methodVisitor The method visitor to use.
-                     */
-                    protected abstract void loadMethodName(MethodVisitor methodVisitor);
-
-                    /**
-                     * Returns the invoked method of the {@link Class} API.
-                     *
-                     * @return The invoked method's name.
-                     */
-                    protected abstract String getInvokedMethod();
-
-                    /**
-                     * Returns the signature of the invoked method.
-                     *
-                     * @return The signature of the invoked method.
-                     */
-                    protected abstract String getInvokedSignature();
-
-                    /**
-                     * Adds the additional required offset.
-                     *
-                     * @return The additional required offset.
-                     */
-                    protected abstract int getAdditionalOffset();
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Unexpected increment");
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ForExecutable that = (ForExecutable) other;
-                        return methodDescription.equals(that.methodDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return methodDescription.hashCode();
-                    }
-
-                    /**
-                     * A constant for a {@link Method} constant.
-                     */
-                    protected static class ForMethod extends ForExecutable {
-
-                        /**
-                         * Creates a new offset mapping target for a method constant.
-                         *
-                         * @param methodDescription The method to represent.
-                         */
-                        protected ForMethod(MethodDescription.InDefinedShape methodDescription) {
-                            super(methodDescription);
-                        }
-
-                        @Override
-                        protected void loadMethodName(MethodVisitor methodVisitor) {
-                            methodVisitor.visitLdcInsn(methodDescription.getInternalName());
-                        }
-
-                        @Override
-                        protected String getInvokedMethod() {
-                            return "getDeclaredMethod";
-                        }
-
-                        @Override
-                        protected String getInvokedSignature() {
-                            return Type.getMethodDescriptor(Type.getType(Method.class), Type.getType(String.class), Type.getType(Class[].class));
-                        }
-
-                        @Override
-                        protected int getAdditionalOffset() {
-                            return 2;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForMethod{" +
-                                    "methodDescription=" + methodDescription +
-                                    "}";
-                        }
-                    }
-
-                    /**
-                     * A constant for a {@link Constructor} constant.
-                     */
-                    protected static class ForConstructor extends ForExecutable {
-
-                        /**
-                         * Creates a new offset mapping target for a constructor constant.
-                         *
-                         * @param methodDescription The method to represent.
-                         */
-                        protected ForConstructor(MethodDescription.InDefinedShape methodDescription) {
-                            super(methodDescription);
-                        }
-
-                        @Override
-                        protected void loadMethodName(MethodVisitor methodVisitor) {
-                            /* do nothing */
-                        }
-
-                        @Override
-                        protected String getInvokedMethod() {
-                            return "getDeclaredConstructor";
-                        }
-
-                        @Override
-                        protected String getInvokedSignature() {
-                            return Type.getMethodDescriptor(Type.getType(Constructor.class), Type.getType(Class[].class));
-                        }
-
-                        @Override
-                        protected int getAdditionalOffset() {
-                            return 1;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForConstructor{" +
-                                    "methodDescription=" + methodDescription +
-                                    "}";
-                        }
-                    }
-                }
-
-                /**
-                 * Binds a null constant to the target parameter.
-                 */
-                enum ForNullConstant implements Target {
-
-                    /**
-                     * A null constant that can only be put onto the stack.
-                     */
                     READ_ONLY {
                         @Override
-                        protected void onWrite(MethodVisitor methodVisitor) {
-                            throw new IllegalStateException("Cannot write to read-only value");
+                        public StackManipulation resolveWrite() {
+                            throw new IllegalStateException("Cannot write to read-only this reference");
                         }
                     },
 
-                    /**
-                     * A null constant that also allows virtual writes where the result is simply popped.
-                     */
                     READ_WRITE {
                         @Override
-                        protected void onWrite(MethodVisitor methodVisitor) {
-                            methodVisitor.visitInsn(Opcodes.POP);
+                        public StackManipulation resolveWrite() {
+                            return MethodVariableAccess.REFERENCE.storeAt(0);
                         }
                     };
 
                     @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ALOAD:
-                                methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                                break;
-                            case Opcodes.ASTORE:
-                                onWrite(methodVisitor);
-                                break;
-                            default:
-                                throw new IllegalStateException("Unexpected opcode: " + opcode);
-                        }
-                        return NO_PADDING;
-                    }
-
-                    /**
-                     * Determines the behavior when writing to the target.
-                     *
-                     * @param methodVisitor The method visitor to which to write the result of the mapping.
-                     */
-                    protected abstract void onWrite(MethodVisitor methodVisitor);
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Cannot increment a null constant");
+                    public StackManipulation resolveRead() {
+                        return MethodVariableAccess.REFERENCE.loadFrom(0);
                     }
 
                     @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForNullConstant." + name();
+                    public StackManipulation resolveIncrement(int value) {
+                        throw new IllegalStateException("Cannot increment this variable");
                     }
                 }
 
-                /**
-                 * Creates a target that represents a value in form of a serialized field.
-                 */
-                class ForSerializedObject implements Target {
+                abstract class ForDefaultValue implements Target {
 
-                    /**
-                     * A charset that does not change the supplied byte array upon encoding or decoding.
-                     */
-                    private static final String CHARSET = "ISO-8859-1";
+                    protected final TypeDefinition typeDefinition;
 
-                    /**
-                     * The target type.
-                     */
-                    private final TypeDescription target;
-
-                    /**
-                     * The serialized form of the supplied form encoded as a string to be stored in the constant pool.
-                     */
-                    private final String serialized;
-
-                    /**
-                     * Creates a target for an offset mapping that references a serialized value.
-                     *
-                     * @param target     The target type.
-                     * @param serialized The serialized form of the supplied form encoded as a string to be stored in the constant pool.
-                     */
-                    protected ForSerializedObject(TypeDescription target, String serialized) {
-                        this.target = target;
-                        this.serialized = serialized;
+                    protected ForDefaultValue(TypeDefinition typeDefinition) {
+                        this.typeDefinition = typeDefinition;
                     }
 
-                    /**
-                     * Resolves a serializable value to a target that reads a value from reconstructing a serializable string representation.
-                     *
-                     * @param target The target type of the serializable value.
-                     * @param value  The value that the mapped field should represent.
-                     * @return A target for deserializing the supplied value on access.
-                     */
-                    protected static Target of(TypeDescription target, Serializable value) {
-                        try {
-                            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-                            try {
-                                objectOutputStream.writeObject(value);
-                            } finally {
-                                objectOutputStream.close();
+                    @Override
+                    public StackManipulation resolveRead() {
+                        return DefaultValue.of(typeDefinition);
+                    }
+
+                    protected static class ReadOnly extends ForDefaultValue {
+
+                        protected ReadOnly(TypeDefinition typeDefinition) {
+                            super(typeDefinition);
+                        }
+
+                        @Override
+                        public StackManipulation resolveWrite() {
+                            throw new IllegalStateException();
+                        }
+
+                        @Override
+                        public StackManipulation resolveIncrement(int value) {
+                            throw new IllegalStateException();
+                        }
+                    }
+
+                    protected static class ReadWrite extends ForDefaultValue {
+
+                        protected ReadWrite(TypeDefinition typeDefinition) {
+                            super(typeDefinition);
+                        }
+
+                        @Override
+                        public StackManipulation resolveWrite() {
+                            return Removal.pop(typeDefinition);
+                        }
+
+                        @Override
+                        public StackManipulation resolveIncrement(int value) {
+                            return StackManipulation.Trivial.INSTANCE;
+                        }
+                    }
+                }
+
+                abstract class ForVariable implements Target {
+
+                    protected final TypeDefinition typeDefinition;
+
+                    protected final int offset;
+
+                    protected ForVariable(TypeDefinition typeDefinition, int offset) {
+                        this.typeDefinition = typeDefinition;
+                        this.offset = offset;
+                    }
+
+                    @Override
+                    public StackManipulation resolveRead() {
+                        return MethodVariableAccess.of(typeDefinition).loadFrom(offset);
+                    }
+
+                    protected static class ReadOnly extends ForVariable {
+
+                        protected ReadOnly(TypeDefinition typeDefinition, int offset) {
+                            super(typeDefinition, offset);
+                        }
+
+                        protected static Target of(ParameterDescription parameterDescription) {
+                            return new ReadOnly(parameterDescription.getType(), parameterDescription.getOffset());
+                        }
+
+                        @Override
+                        public StackManipulation resolveWrite() {
+                            throw new IllegalStateException("Cannot write to read-only parameter " + typeDefinition + " at " + offset);
+                        }
+
+                        @Override
+                        public StackManipulation resolveIncrement(int value) {
+                            throw new IllegalStateException("Cannot write to read-only variable " + typeDefinition + " at " + offset);
+                        }
+                    }
+
+                    protected static class ReadWrite extends ForVariable {
+
+                        protected ReadWrite(TypeDefinition typeDefinition, int offet) {
+                            super(typeDefinition, offet);
+                        }
+
+                        protected static Target of(ParameterDescription parameterDescription) {
+                            return new ReadWrite(parameterDescription.getType(), parameterDescription.getOffset());
+                        }
+
+                        @Override
+                        public StackManipulation resolveWrite() {
+                            return MethodVariableAccess.of(typeDefinition).storeAt(offset);
+                        }
+
+                        @Override
+                        public StackManipulation resolveIncrement(int value) {
+                            return MethodVariableAccess.of(typeDefinition).increment(offset, value);
+                        }
+                    }
+                }
+
+                abstract class ForField implements Target {
+
+                    protected final FieldDescription fieldDescription;
+
+                    protected ForField(FieldDescription fieldDescription) {
+                        this.fieldDescription = fieldDescription;
+                    }
+
+                    @Override
+                    public StackManipulation resolveRead() {
+                        return new StackManipulation.Compound(fieldDescription.isStatic()
+                                ? StackManipulation.Trivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(fieldDescription).getter());
+                    }
+
+                    static class ReadOnly extends ForField {
+
+                        public ReadOnly(FieldDescription fieldDescription) {
+                            super(fieldDescription);
+                        }
+
+                        @Override
+                        public StackManipulation resolveWrite() {
+                            return null;
+                        }
+
+                        @Override
+                        public StackManipulation resolveIncrement(int value) {
+                            return null;
+                        }
+                    }
+
+                    static class ReadWrite extends ForField {
+
+                        protected ReadWrite(FieldDescription fieldDescription) {
+                            super(fieldDescription);
+                        }
+
+                        @Override
+                        public StackManipulation resolveWrite() {
+                            StackManipulation preparation;
+                            if (fieldDescription.isStatic()) {
+                                preparation = StackManipulation.Trivial.INSTANCE;
+                            } else {
+                                preparation = new StackManipulation.Compound(
+                                        MethodVariableAccess.REFERENCE.loadFrom(0),
+                                        Duplication.SINGLE.flipOver(fieldDescription.getType())
+                                );
                             }
-                            return new ForSerializedObject(target, byteArrayOutputStream.toString(CHARSET));
-                        } catch (IOException exception) {
-                            throw new IllegalStateException("Cannot serialize " + value, exception);
+                            return new StackManipulation.Compound(preparation, FieldAccess.forField(fieldDescription).putter());
+                        }
+
+                        @Override
+                        public StackManipulation resolveIncrement(int value) {
+                            return new StackManipulation.Compound(
+                                    resolveRead(),
+                                    IntegerConstant.forValue(value),
+                                    Addition.INTEGER,
+                                    resolveWrite()
+                            );
+                        }
+                    }
+                }
+
+                class ForStackManipulation implements Target {
+
+                    private final StackManipulation stackManipulation;
+
+                    protected ForStackManipulation(StackManipulation stackManipulation) {
+                        this.stackManipulation = stackManipulation;
+                    }
+
+                    protected static Target of(MethodDescription.InDefinedShape methodDescription) {
+                        return new ForStackManipulation(MethodConstant.forMethod(methodDescription));
+                    }
+
+                    protected static Target of(TypeDescription typeDescription) {
+                        return new ForStackManipulation(ClassConstant.of(typeDescription));
+                    }
+
+                    protected static Target of(String value) {
+                        return new ForStackManipulation(new TextConstant(value));
+                    }
+
+                    protected static Target of(Object value) {
+                        if (value instanceof Boolean) {
+                            return new ForStackManipulation(IntegerConstant.forValue((Boolean) value));
+                        } else if (value instanceof Byte) {
+                            return new ForStackManipulation(IntegerConstant.forValue((Byte) value));
+                        } else if (value instanceof Short) {
+                            return new ForStackManipulation(IntegerConstant.forValue((Short) value));
+                        } else if (value instanceof Character) {
+                            return new ForStackManipulation(IntegerConstant.forValue((Character) value));
+                        } else if (value instanceof Integer) {
+                            return new ForStackManipulation(IntegerConstant.forValue((Integer) value));
+                        } else if (value instanceof Long) {
+                            return new ForStackManipulation(LongConstant.forValue((Long) value));
+                        } else if (value instanceof Float) {
+                            return new ForStackManipulation(FloatConstant.forValue((Float) value));
+                        } else if (value instanceof Double) {
+                            return new ForStackManipulation(DoubleConstant.forValue((Double) value));
+                        } else if (value instanceof String) {
+                            return new ForStackManipulation(new TextConstant((String) value));
+                        } else {
+                            throw new IllegalArgumentException();
                         }
                     }
 
                     @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ALOAD:
-                                methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(ObjectInputStream.class));
-                                methodVisitor.visitInsn(Opcodes.DUP);
-                                methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(ByteArrayInputStream.class));
-                                methodVisitor.visitInsn(Opcodes.DUP);
-                                methodVisitor.visitLdcInsn(serialized);
-                                methodVisitor.visitLdcInsn(CHARSET);
-                                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                                        Type.getInternalName(String.class),
-                                        "getBytes",
-                                        Type.getMethodType(Type.getType(byte[].class), Type.getType(String.class)).toString(),
-                                        false);
-                                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                                        Type.getInternalName(ByteArrayInputStream.class),
-                                        MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                                        Type.getMethodType(Type.VOID_TYPE, Type.getType(byte[].class)).toString(),
-                                        false);
-                                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
-                                        Type.getInternalName(ObjectInputStream.class),
-                                        MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
-                                        Type.getMethodType(Type.VOID_TYPE, Type.getType(InputStream.class)).toString(),
-                                        false);
-                                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                                        Type.getInternalName(ObjectInputStream.class),
-                                        "readObject",
-                                        Type.getMethodType(Type.getType(Object.class)).toString(),
-                                        false);
-                                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, target.getInternalName());
-                                return 5;
-                            default:
-                                throw new IllegalStateException("Unexpected opcode: " + opcode);
-                        }
+                    public StackManipulation resolveRead() {
+                        return stackManipulation;
                     }
 
                     @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Cannot increment serialized object");
+                    public StackManipulation resolveWrite() {
+                        throw new IllegalStateException("Cannot write to constant value: " + stackManipulation);
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        ForSerializedObject that = (ForSerializedObject) other;
-                        return target.equals(that.target) && serialized.equals(that.serialized);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = target.hashCode();
-                        result = 31 * result + serialized.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForSerializedObject{" +
-                                "target=" + target +
-                                ", serialized='" + serialized + '\'' +
-                                '}';
+                    public StackManipulation resolveIncrement(int value) {
+                        throw new IllegalStateException("Cannot write to constant value: " + stackManipulation);
                     }
                 }
             }
@@ -3472,8 +2046,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException(targetType + " is not assignable to " + parameters.get(index));
                     }
                     return readOnly
-                            ? new Target.ForParameter.ReadOnly(parameters.get(index).getOffset())
-                            : new Target.ForParameter.ReadWrite(parameters.get(index).getOffset());
+                            ? Target.ForVariable.ReadOnly.of(parameters.get(index))
+                            : Target.ForVariable.ReadWrite.of(parameters.get(index));
                 }
 
                 @Override
@@ -3557,11 +2131,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             class ForThisReference implements OffsetMapping {
 
                 /**
-                 * The offset of the this reference in a Java method.
-                 */
-                private static final int THIS_REFERENCE = 0;
-
-                /**
                  * Determines if the parameter is to be treated as read-only.
                  */
                 private final boolean readOnly;
@@ -3597,16 +2166,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not assignable to " + targetType);
                     } else if (instrumentedMethod.isStatic() && optional) {
                         return readOnly
-                                ? Target.ForNullConstant.READ_ONLY
-                                : Target.ForNullConstant.READ_WRITE;
+                                ? new Target.ForDefaultValue.ReadOnly(instrumentedType.getDeclaringType())
+                                : new Target.ForDefaultValue.ReadWrite(instrumentedType.getDeclaringType());
                     } else if (instrumentedMethod.isStatic() && !optional) {
                         throw new IllegalStateException("Cannot map this reference for static method " + instrumentedMethod);
                     } else if (!context.isInitialized()) {
                         throw new IllegalStateException("Cannot access this reference before calling constructor: " + instrumentedMethod);
                     }
                     return readOnly
-                            ? new Target.ForParameter.ReadOnly(THIS_REFERENCE)
-                            : new Target.ForParameter.ReadWrite(THIS_REFERENCE);
+                            ? Target.ForThis.READ_ONLY
+                            : Target.ForThis.READ_WRITE;
                 }
 
                 @Override
@@ -3698,7 +2267,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Context context) {
-                    return new Target.ForType(instrumentedType);
+                    return Target.ForStackManipulation.of(instrumentedType);
                 }
 
                 @Override
@@ -3747,7 +2316,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!isRepresentable(instrumentedMethod)) {
                         throw new IllegalStateException("Cannot represent " + instrumentedMethod + " as given method constant");
                     }
-                    return Target.ForExecutable.of(instrumentedMethod.asDefined());
+                    return Target.ForStackManipulation.of(instrumentedMethod.asDefined());
                 }
 
                 /**
@@ -4084,7 +2653,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     for (Renderer renderer : renderers) {
                         stringBuilder.append(renderer.apply(instrumentedType, instrumentedMethod));
                     }
-                    return new Target.ForConstantPoolValue(stringBuilder.toString());
+                    return Target.ForStackManipulation.of(stringBuilder.toString());
                 }
 
                 @Override
@@ -4368,28 +2937,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
              */
-            enum ForUnusedValue implements OffsetMapping, Factory {
+            class ForUnusedValue implements OffsetMapping {
 
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
+                private final TypeDefinition typeDefinition;
+
+                ForUnusedValue(TypeDefinition typeDefinition) {
+                    this.typeDefinition = typeDefinition;
+                }
 
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Context context) {
-                    return Target.ForDefaultValue.INSTANCE;
+                    return new Target.ForDefaultValue.ReadWrite(typeDefinition);
                 }
 
-                @Override
-                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                    return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Unused.class)
-                            ? this
-                            : UNDEFINED;
-                }
+                enum Factory implements OffsetMapping.Factory {
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForUnusedValue." + name();
+                    INSTANCE;
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Unused.class)
+                                ? new ForUnusedValue(parameterDescription.getType())
+                                : UNDEFINED;
+                    }
                 }
             }
 
@@ -4431,54 +3001,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping that provides access to the value that is returned by the enter advice.
              */
-            enum ForEnterValue implements OffsetMapping {
+            class ForEnterValue implements OffsetMapping {
 
-                /**
-                 * Enables writing to the mapped offset.
-                 */
-                WRITABLE(false),
+                private final TypeDescription typeDescription;
 
-                /**
-                 * Only allows for reading the mapped offset.
-                 */
-                READ_ONLY(true);
-
-                /**
-                 * Determines if the parameter is to be treated as read-only.
-                 */
-                private final boolean readOnly;
-
-                /**
-                 * Creates a new offset mapping for an enter value.
-                 *
-                 * @param readOnly Determines if the parameter is to be treated as read-only.
-                 */
-                ForEnterValue(boolean readOnly) {
-                    this.readOnly = readOnly;
-                }
-
-                /**
-                 * Resolves an offset mapping for an enter value.
-                 *
-                 * @param readOnly {@code true} if the value is to be treated as read-only.
-                 * @return An appropriate offset mapping.
-                 */
-                public static OffsetMapping of(boolean readOnly) {
-                    return readOnly
-                            ? READ_ONLY
-                            : WRITABLE;
+                protected ForEnterValue(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
                 }
 
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Context context) {
-                    return readOnly
-                            ? new Target.ForParameter.ReadOnly(instrumentedMethod.getStackSize())
-                            : new Target.ForParameter.ReadWrite(instrumentedMethod.getStackSize());
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForEnterValue." + name();
+                    return new Target.ForVariable.ReadOnly(typeDescription, instrumentedMethod.getStackSize());
                 }
 
                 /**
@@ -4519,7 +3052,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             } else if (this.readOnly && !readOnly) {
                                 throw new IllegalStateException("Cannot write to enter value field for " + parameterDescription + " in read only context");
                             }
-                            return ForEnterValue.of(readOnly);
+                            return new ForEnterValue(enterType); // TODO: Merge factory with target
                         } else {
                             return UNDEFINED;
                         }
@@ -4584,8 +3117,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot assign return type of " + instrumentedMethod + " to " + targetType);
                     }
                     return readOnly
-                            ? new Target.ForParameter.ReadOnly(instrumentedMethod.getStackSize() + context.getPadding())
-                            : new Target.ForParameter.ReadWrite(instrumentedMethod.getStackSize() + context.getPadding());
+                            ? new Target.ForVariable.ReadOnly(instrumentedMethod.getReturnType(), instrumentedMethod.getStackSize() + context.getPadding())
+                            : new Target.ForVariable.ReadWrite(instrumentedMethod.getReturnType(), instrumentedMethod.getStackSize() + context.getPadding());
                 }
 
                 @Override
@@ -4890,8 +3423,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Context context) {
                     int offset = instrumentedMethod.getStackSize() + context.getPadding() + instrumentedMethod.getReturnType().getStackSize().getSize();
                     return readOnly
-                            ? new Target.ForParameter.ReadOnly(offset)
-                            : new Target.ForParameter.ReadWrite(offset);
+                            ? new Target.ForVariable.ReadOnly(TypeDescription.THROWABLE, offset)
+                            : new Target.ForVariable.ReadWrite(TypeDescription.THROWABLE, offset);
                 }
 
                 @Override
@@ -5523,6 +4056,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             Bound bind(TypeDescription instrumentedType,
                        MethodDescription instrumentedMethod,
                        MethodVisitor methodVisitor,
+                       Implementation.Context implementationContext,
                        MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                        StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler);
 
@@ -5550,6 +4084,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Bound.ForMethodEnter bind(TypeDescription instrumentedType,
                                           MethodDescription instrumentedMethod,
                                           MethodVisitor methodVisitor,
+                                          Implementation.Context implementationContext,
                                           MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                           StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler);
 
@@ -5930,6 +4465,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Bound.ForMethodExit bind(TypeDescription instrumentedType,
                                          MethodDescription instrumentedMethod,
                                          MethodVisitor methodVisitor,
+                                         Implementation.Context implementationContext,
                                          MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                          StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler);
             }
@@ -6051,6 +4587,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public Inactive bind(TypeDescription instrumentedType,
                                  MethodDescription instrumentedMethod,
                                  MethodVisitor methodVisitor,
+                                 Implementation.Context implementationContext,
                                  MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                  StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
                 return this;
@@ -6202,6 +4739,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return A method visitor for visiting the advice method's byte code.
                  */
                 protected abstract MethodVisitor apply(MethodVisitor methodVisitor,
+                                                       Implementation.Context implementationContext,
                                                        MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                        StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                        TypeDescription instrumentedType,
@@ -6244,6 +4782,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected final MethodVisitor methodVisitor;
 
+                    protected final Implementation.Context implementationContext;
+
                     /**
                      * A handler for computing the method size requirements.
                      */
@@ -6283,6 +4823,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected AdviceMethodInliner(TypeDescription instrumentedType,
                                                   MethodDescription instrumentedMethod,
                                                   MethodVisitor methodVisitor,
+                                                  Implementation.Context implementationContext,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   SuppressionHandler.Bound suppressionHandler,
@@ -6291,6 +4832,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.instrumentedType = instrumentedType;
                         this.instrumentedMethod = instrumentedMethod;
                         this.methodVisitor = methodVisitor;
+                        this.implementationContext = implementationContext;
                         this.methodSizeHandler = methodSizeHandler;
                         this.stackMapFrameHandler = stackMapFrameHandler;
                         this.suppressionHandler = suppressionHandler;
@@ -6314,7 +4856,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                ? new ExceptionTableSubstitutor(Inlining.Resolved.this.apply(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedType, instrumentedMethod, suppressionHandler))
+                                ? new ExceptionTableSubstitutor(Inlining.Resolved.this.apply(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, instrumentedType, instrumentedMethod, suppressionHandler))
                                 : IGNORE_METHOD;
                     }
 
@@ -6518,7 +5060,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForUnusedValue.INSTANCE,
+                                        OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
                                 classReader,
@@ -6531,11 +5073,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public Bound.ForMethodEnter bind(TypeDescription instrumentedType,
                                                      MethodDescription instrumentedMethod,
                                                      MethodVisitor methodVisitor,
+                                                     Implementation.Context implementationContext,
                                                      MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                      StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
                         return new AdviceMethodInliner(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
+                                implementationContext,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler.bind(),
@@ -6555,6 +5099,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
+                                                  Implementation.Context implementationContext,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   TypeDescription instrumentedType,
@@ -6567,6 +5112,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     OffsetMapping.Context.ForMethodEntry.of(instrumentedMethod)));
                         }
                         return new CodeTranslationVisitor.ForMethodEnter(methodVisitor,
+                                implementationContext,
                                 methodSizeHandler.bindEntry(adviceMethod),
                                 stackMapFrameHandler.bindEntry(adviceMethod),
                                 instrumentedMethod,
@@ -6627,12 +5173,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public AdviceMethodInliner(TypeDescription instrumentedType,
                                                    MethodDescription instrumentedMethod,
                                                    MethodVisitor methodVisitor,
+                                                   Implementation.Context implementationContext,
                                                    MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                    StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                    SuppressionHandler.Bound suppressionHandler,
                                                    ClassReader classReader,
                                                    SkipDispatcher skipDispatcher) {
-                            super(instrumentedType, instrumentedMethod, methodVisitor, methodSizeHandler, stackMapFrameHandler, suppressionHandler, classReader);
+                            super(instrumentedType,
+                                    instrumentedMethod,
+                                    methodVisitor,
+                                    implementationContext,
+                                    methodSizeHandler,
+                                    stackMapFrameHandler,
+                                    suppressionHandler,
+                                    classReader);
                             this.skipDispatcher = skipDispatcher;
                         }
 
@@ -6692,7 +5246,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForUnusedValue.INSTANCE,
+                                        OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.ForEnterValue.Factory(enterType, false),
                                         OffsetMapping.ForReturnValue.Factory.READ_WRITE,
@@ -6728,6 +5282,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
+                                                  Implementation.Context implementationContext,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                   TypeDescription instrumentedType,
@@ -6740,6 +5295,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     OffsetMapping.Context.ForMethodExit.of(enterType)));
                         }
                         return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
+                                implementationContext,
                                 methodSizeHandler.bindExit(adviceMethod, getTriggeringThrowable().represents(NoExceptionHandler.class)),
                                 stackMapFrameHandler.bindExit(adviceMethod),
                                 instrumentedMethod,
@@ -6754,11 +5310,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public Bound.ForMethodExit bind(TypeDescription instrumentedType,
                                                     MethodDescription instrumentedMethod,
                                                     MethodVisitor methodVisitor,
+                                                    Implementation.Context implementationContext,
                                                     MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                     StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
                         return new AdviceMethodInliner(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
+                                implementationContext,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 suppressionHandler.bind(),
@@ -6805,11 +5363,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public AdviceMethodInliner(TypeDescription instrumentedType,
                                                    MethodDescription instrumentedMethod,
                                                    MethodVisitor methodVisitor,
+                                                   Implementation.Context implementationContext,
                                                    MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                    StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                                    SuppressionHandler.Bound suppressionHandler,
                                                    ClassReader classReader) {
-                            super(instrumentedType, instrumentedMethod, methodVisitor, methodSizeHandler, stackMapFrameHandler, suppressionHandler, classReader);
+                            super(instrumentedType,
+                                    instrumentedMethod,
+                                    methodVisitor,
+                                    implementationContext,
+                                    methodSizeHandler,
+                                    stackMapFrameHandler,
+                                    suppressionHandler,
+                                    classReader);
                         }
 
                         @Override
@@ -6933,6 +5499,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final MethodVisitor methodVisitor;
 
+                protected final Implementation.Context implementationContext;
+
                 /**
                  * A handler for computing the method size requirements.
                  */
@@ -6971,23 +5539,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new code translation visitor.
                  *
-                 * @param methodVisitor        A method visitor for writing the instrumented method's byte code.
-                 * @param methodSizeHandler    A handler for computing the method size requirements.
-                 * @param stackMapFrameHandler A handler for translating and injecting stack map frames.
-                 * @param instrumentedMethod   The instrumented method.
-                 * @param adviceMethod         The advice method.
-                 * @param offsetMappings       A mapping of offsets to resolved target offsets in the instrumented method.
-                 * @param suppressionHandler   The suppression handler to use.
+                 * @param methodVisitor         A method visitor for writing the instrumented method's byte code.
+                 * @param implementationContext
+                 * @param methodSizeHandler     A handler for computing the method size requirements.
+                 * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                 * @param instrumentedMethod    The instrumented method.
+                 * @param adviceMethod          The advice method.
+                 * @param offsetMappings        A mapping of offsets to resolved target offsets in the instrumented method.
+                 * @param suppressionHandler    The suppression handler to use.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
+                                                 Context implementationContext,
                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  MethodDescription instrumentedMethod,
                                                  MethodDescription.InDefinedShape adviceMethod,
-                                                 Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
+                                                 Map<Integer, OffsetMapping.Target> offsetMappings,
                                                  SuppressionHandler.Bound suppressionHandler) {
                     super(Opcodes.ASM5, new StackAwareMethodVisitor(methodVisitor, instrumentedMethod));
                     this.methodVisitor = methodVisitor;
+                    this.implementationContext = implementationContext;
                     this.methodSizeHandler = methodSizeHandler;
                     this.stackMapFrameHandler = stackMapFrameHandler;
                     this.instrumentedMethod = instrumentedMethod;
@@ -7064,19 +5635,44 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitVarInsn(int opcode, int offset) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        methodSizeHandler.recordPadding(target.resolveAccess(mv, opcode));
+                        StackManipulation stackManipulation;
+                        StackSize expectedGrowth;
+                        switch (opcode) {
+                            case Opcodes.ILOAD:
+                            case Opcodes.FLOAD:
+                            case Opcodes.ALOAD:
+                                stackManipulation = target.resolveRead();
+                                expectedGrowth = StackSize.SINGLE;
+                                break;
+                            case Opcodes.DLOAD:
+                            case Opcodes.LLOAD:
+                                stackManipulation = target.resolveRead();
+                                expectedGrowth = StackSize.DOUBLE;
+                                break;
+                            case Opcodes.ISTORE:
+                            case Opcodes.FSTORE:
+                            case Opcodes.ASTORE:
+                            case Opcodes.LSTORE:
+                            case Opcodes.DSTORE:
+                                stackManipulation = target.resolveWrite();
+                                expectedGrowth = StackSize.ZERO;
+                                break;
+                            default:
+                                throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        }
+                        methodSizeHandler.recordPadding(stackManipulation.apply(mv, null).getMaximalSize() - expectedGrowth.getSize());
                     } else {
                         mv.visitVarInsn(opcode, adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()));
                     }
                 }
 
                 @Override
-                public void visitIincInsn(int offset, int increment) {
+                public void visitIincInsn(int offset, int value) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        methodSizeHandler.recordPadding(target.resolveIncrement(mv, increment));
+                        methodSizeHandler.recordPadding(target.resolveIncrement(value).apply(mv, null).getMaximalSize());
                     } else {
-                        mv.visitIincInsn(adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()), increment);
+                        mv.visitIincInsn(adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()), value);
                     }
                 }
 
@@ -7119,13 +5715,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param suppressionHandler   The suppression handler to use.
                      */
                     protected ForMethodEnter(MethodVisitor methodVisitor,
+                                             Context implementationContext,
                                              MethodSizeHandler.ForAdvice methodSizeHandler,
                                              StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                              MethodDescription instrumentedMethod,
                                              MethodDescription.InDefinedShape adviceMethod,
                                              Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
                                              SuppressionHandler.Bound suppressionHandler) {
-                        super(methodVisitor, methodSizeHandler, stackMapFrameHandler, instrumentedMethod, adviceMethod, offsetMappings, suppressionHandler);
+                        super(methodVisitor,
+                                implementationContext,
+                                methodSizeHandler,
+                                stackMapFrameHandler,
+                                instrumentedMethod,
+                                adviceMethod,
+                                offsetMappings,
+                                suppressionHandler);
                         doesReturn = false;
                     }
 
@@ -7225,6 +5829,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param padding              The padding after the instrumented method's arguments in the local variable array.
                      */
                     protected ForMethodExit(MethodVisitor methodVisitor,
+                                            Implementation.Context implementationContext,
                                             MethodSizeHandler.ForAdvice methodSizeHandler,
                                             StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                             MethodDescription instrumentedMethod,
@@ -7233,6 +5838,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             SuppressionHandler.Bound suppressionHandler,
                                             int padding) {
                         super(methodVisitor,
+                                implementationContext,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
                                 instrumentedMethod,
@@ -7415,12 +6021,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public T bind(TypeDescription instrumentedType,
                               MethodDescription instrumentedMethod,
                               MethodVisitor methodVisitor,
+                              Implementation.Context implementationContext,
                               MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                               StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
                     if (!adviceMethod.isVisibleTo(instrumentedType)) {
                         throw new IllegalStateException(adviceMethod + " is not visible to " + instrumentedMethod.getDeclaringType());
                     }
-                    return resolve(instrumentedType, instrumentedMethod, methodVisitor, methodSizeHandler, stackMapFrameHandler);
+                    return resolve(instrumentedType, instrumentedMethod, methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler);
                 }
 
                 /**
@@ -7436,6 +6043,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract T resolve(TypeDescription instrumentedType,
                                              MethodDescription instrumentedMethod,
                                              MethodVisitor methodVisitor,
+                                             Implementation.Context implementationContext,
                                              MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                              StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler);
 
@@ -7541,7 +6149,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         for (OffsetMapping.Target offsetMapping : offsetMappings) {
                             Type type = Type.getType(adviceMethod.getParameters().get(index++).getType().asErasure().getDescriptor());
                             currentStackSize += type.getSize();
-                            maximumStackSize = Math.max(maximumStackSize, currentStackSize + offsetMapping.resolveAccess(methodVisitor, type.getOpcode(Opcodes.ILOAD)));
+                            maximumStackSize = Math.max(maximumStackSize, currentStackSize + offsetMapping.resolveRead().apply(methodVisitor, null).getMaximalSize());
                         }
                         methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                                 adviceMethod.getDeclaringType().getInternalName(),
@@ -7753,7 +6361,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForUnusedValue.INSTANCE,
+                                        OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
@@ -7775,6 +6383,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected Bound.ForMethodEnter resolve(TypeDescription instrumentedType,
                                                            MethodDescription instrumentedMethod,
                                                            MethodVisitor methodVisitor,
+                                                           Implementation.Context implementationContext,
                                                            MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                            StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
@@ -7849,7 +6458,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForUnusedValue.INSTANCE,
+                                        OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
                                         new OffsetMapping.ForEnterValue.Factory(enterType, true),
                                         OffsetMapping.ForReturnValue.Factory.READ_ONLY,
@@ -7884,6 +6493,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected Bound.ForMethodExit resolve(TypeDescription instrumentedType,
                                                           MethodDescription instrumentedMethod,
                                                           MethodVisitor methodVisitor,
+                                                          Implementation.Context implementationContext,
                                                           MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                           StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
@@ -8049,18 +6659,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param methodEnter        The method enter advice.
          * @param methodExit         The method exit advice.
          * @param yieldedTypes       The types that are expected to be added after the instrumented method returns.
-         * @param classFileVersion   The instrumented type's class file version.
          * @param writerFlags        The ASM writer flags that were set.
          * @param readerFlags        The ASM reader flags that were set.
          */
         protected AdviceVisitor(MethodVisitor methodVisitor,
                                 MethodVisitor delegate,
+                                Implementation.Context implementationContext,
                                 TypeDescription instrumentedType,
                                 MethodDescription instrumentedMethod,
                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
                                 Dispatcher.Resolved.ForMethodExit methodExit,
                                 List<? extends TypeDescription> yieldedTypes,
-                                ClassFileVersion classFileVersion,
                                 int writerFlags,
                                 int readerFlags) {
             super(Opcodes.ASM5, delegate);
@@ -8075,11 +6684,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     instrumentedMethod,
                     requiredTypes,
                     yieldedTypes,
-                    classFileVersion,
+                    implementationContext.getClassFileVersion(),
                     writerFlags,
                     readerFlags);
-            this.methodEnter = methodEnter.bind(instrumentedType, instrumentedMethod, methodVisitor, methodSizeHandler, stackMapFrameHandler);
-            this.methodExit = methodExit.bind(instrumentedType, instrumentedMethod, methodVisitor, methodSizeHandler, stackMapFrameHandler);
+            this.methodEnter = methodEnter.bind(instrumentedType, instrumentedMethod, methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler);
+            this.methodExit = methodExit.bind(instrumentedType, instrumentedMethod, methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler);
         }
 
         @Override
@@ -8200,26 +6809,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param instrumentedType   A description of the instrumented type.
              * @param instrumentedMethod A description of the instrumented method.
              * @param methodEnter        The dispatcher to be used for method entry.
-             * @param classFileVersion   The instrumented type's class file version.
              * @param writerFlags        The ASM writer flags that were set.
              * @param readerFlags        The ASM reader flags that were set.
              */
             protected WithoutExitAdvice(MethodVisitor methodVisitor,
+                                        Implementation.Context implementationContext,
                                         TypeDescription instrumentedType,
                                         MethodDescription instrumentedMethod,
                                         Dispatcher.Resolved.ForMethodEnter methodEnter,
-                                        ClassFileVersion classFileVersion,
                                         int writerFlags,
                                         int readerFlags) {
                 super(methodVisitor,
                         methodVisitor,
+                        implementationContext,
                         instrumentedType,
                         instrumentedMethod,
                         methodEnter,
                         Dispatcher.Inactive.INSTANCE,
                         Collections.<TypeDescription>emptyList(),
-                        classFileVersion,
-                        writerFlags, readerFlags);
+                        writerFlags,
+                        readerFlags);
             }
 
             @Override
@@ -8295,27 +6904,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param methodEnter        The dispatcher to be used for method entry.
              * @param methodExit         The dispatcher to be used for method exit.
              * @param yieldedTypes       The types that are expected to be added after the instrumented method returns.
-             * @param classFileVersion   The instrumented type's class file version.
              * @param writerFlags        The ASM writer flags that were set.
              * @param readerFlags        The ASM reader flags that were set.
              */
             protected WithExitAdvice(MethodVisitor methodVisitor,
+                                     Implementation.Context implementationContext,
                                      TypeDescription instrumentedType,
                                      MethodDescription instrumentedMethod,
                                      Dispatcher.Resolved.ForMethodEnter methodEnter,
                                      Dispatcher.Resolved.ForMethodExit methodExit,
                                      List<? extends TypeDescription> yieldedTypes,
-                                     ClassFileVersion classFileVersion,
                                      int writerFlags,
                                      int readerFlags) {
                 super(methodVisitor,
                         new StackAwareMethodVisitor(methodVisitor, instrumentedMethod),
+                        implementationContext,
                         instrumentedType,
                         instrumentedMethod,
                         methodEnter,
                         methodExit,
                         yieldedTypes,
-                        classFileVersion,
                         writerFlags, readerFlags);
                 returnHandler = new Label();
                 doesReturn = false;
@@ -8415,19 +7023,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedMethod A description of the instrumented method.
                  * @param methodEnter        The dispatcher to be used for method entry.
                  * @param methodExit         The dispatcher to be used for method exit.
-                 * @param classFileVersion   The instrumented type's class file version.
                  * @param writerFlags        The ASM writer flags that were set.
                  * @param readerFlags        The ASM reader flags that were set.
                  */
                 protected WithoutExceptionHandling(MethodVisitor methodVisitor,
+                                                   Implementation.Context implementationContext,
                                                    TypeDescription instrumentedType,
                                                    MethodDescription instrumentedMethod,
                                                    Dispatcher.Resolved.ForMethodEnter methodEnter,
                                                    Dispatcher.Resolved.ForMethodExit methodExit,
-                                                   ClassFileVersion classFileVersion,
                                                    int writerFlags,
                                                    int readerFlags) {
                     super(methodVisitor,
+                            implementationContext,
                             instrumentedType,
                             instrumentedMethod,
                             methodEnter,
@@ -8435,7 +7043,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             instrumentedMethod.getReturnType().represents(void.class)
                                     ? Collections.<TypeDescription>emptyList()
                                     : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()),
-                            classFileVersion,
                             writerFlags,
                             readerFlags);
                 }
@@ -8499,21 +7106,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedMethod  A description of the instrumented method.
                  * @param methodEnter         The dispatcher to be used for method entry.
                  * @param methodExit          The dispatcher to be used for method exit.
-                 * @param classFileVersion    The instrumented type's class file version.
                  * @param writerFlags         The ASM writer flags that were set.
                  * @param readerFlags         The ASM reader flags that were set.
                  * @param triggeringThrowable The type of the handled throwable type for which this advice is invoked.
                  */
                 protected WithExceptionHandling(MethodVisitor methodVisitor,
+                                                Implementation.Context implementationContext,
                                                 TypeDescription instrumentedType,
                                                 MethodDescription instrumentedMethod,
                                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
                                                 Dispatcher.Resolved.ForMethodExit methodExit,
-                                                ClassFileVersion classFileVersion,
                                                 int writerFlags,
                                                 int readerFlags,
                                                 TypeDescription triggeringThrowable) {
                     super(methodVisitor,
+                            implementationContext,
                             instrumentedType,
                             instrumentedMethod,
                             methodEnter,
@@ -8521,7 +7128,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             instrumentedMethod.getReturnType().represents(void.class)
                                     ? Collections.singletonList(TypeDescription.THROWABLE)
                                     : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.THROWABLE),
-                            classFileVersion,
                             writerFlags,
                             readerFlags);
                     this.triggeringThrowable = triggeringThrowable;
@@ -8645,7 +7251,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             methodVisitor = advice.doWrap(implementationTarget.getInstrumentedType(),
                     instrumentedMethod,
                     emulatingMethodVisitor,
-                    implementationContext.getClassFileVersion(),
+                    implementationContext,
                     AsmVisitorWrapper.NO_FLAGS,
                     AsmVisitorWrapper.NO_FLAGS);
             return emulatingMethodVisitor.resolve(methodVisitor, implementationContext, instrumentedMethod);
