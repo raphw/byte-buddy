@@ -26,5 +26,5 @@ public interface CollectionFactory {
      *                           created by this factory in their given order.
      * @return A stack manipulation that creates the collection represented by this collection factory.
      */
-    StackManipulation withValues(List<StackManipulation> stackManipulations);
+    StackManipulation withValues(List<? extends StackManipulation> stackManipulations);
 }

@@ -93,7 +93,7 @@ public class ArrayFactory implements CollectionFactory {
     }
 
     @Override
-    public StackManipulation withValues(List<StackManipulation> stackManipulations) {
+    public StackManipulation withValues(List<? extends StackManipulation> stackManipulations) {
         return new ArrayStackManipulation(stackManipulations);
     }
 
@@ -293,14 +293,14 @@ public class ArrayFactory implements CollectionFactory {
         /**
          * A list of value load instructions that are to be stored inside the created array.
          */
-        private final List<StackManipulation> stackManipulations;
+        private final List<? extends StackManipulation> stackManipulations;
 
         /**
          * Creates a new array loading instruction.
          *
          * @param stackManipulations A list of value load instructions that are to be stored inside the created array.
          */
-        protected ArrayStackManipulation(List<StackManipulation> stackManipulations) {
+        protected ArrayStackManipulation(List<? extends StackManipulation> stackManipulations) {
             this.stackManipulations = stackManipulations;
         }
 

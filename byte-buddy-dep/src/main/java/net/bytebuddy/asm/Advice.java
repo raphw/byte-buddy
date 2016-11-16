@@ -17,6 +17,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
@@ -1806,24 +1807,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     protected final int offset;
 
-                    protected ForVariable(TypeDefinition typeDefinition, int offset) {
+                    protected final StackManipulation readAssignment;
+
+                    protected ForVariable(TypeDefinition typeDefinition, int offset, StackManipulation readAssignment) {
                         this.typeDefinition = typeDefinition;
                         this.offset = offset;
+                        this.readAssignment = readAssignment;
                     }
 
                     @Override
                     public StackManipulation resolveRead() {
-                        return MethodVariableAccess.of(typeDefinition).loadFrom(offset);
+                        return new StackManipulation.Compound(MethodVariableAccess.of(typeDefinition).loadFrom(offset), readAssignment);
                     }
 
                     protected static class ReadOnly extends ForVariable {
 
-                        protected ReadOnly(TypeDefinition typeDefinition, int offset) {
-                            super(typeDefinition, offset);
+                        protected ReadOnly(ParameterDescription parameterDescription, StackManipulation readAssignment) {
+                            this(parameterDescription.getType(), parameterDescription.getOffset(), readAssignment);
                         }
 
-                        protected static Target of(ParameterDescription parameterDescription) {
-                            return new ReadOnly(parameterDescription.getType(), parameterDescription.getOffset());
+                        protected ReadOnly(TypeDefinition typeDefinition, int offset, StackManipulation readAssignment) {
+                            super(typeDefinition, offset, readAssignment);
                         }
 
                         @Override
@@ -1839,22 +1843,76 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     protected static class ReadWrite extends ForVariable {
 
-                        protected ReadWrite(TypeDefinition typeDefinition, int offet) {
-                            super(typeDefinition, offet);
+                        private final StackManipulation writeAssignment;
+
+                        protected ReadWrite(ParameterDescription parameterDescription, StackManipulation readAssignment, StackManipulation writeAssignment) {
+                            this(parameterDescription.getType(), parameterDescription.getOffset(), readAssignment, writeAssignment);
                         }
 
-                        protected static Target of(ParameterDescription parameterDescription) {
-                            return new ReadWrite(parameterDescription.getType(), parameterDescription.getOffset());
+                        protected ReadWrite(TypeDefinition typeDefinition, int offset, StackManipulation readAssignment, StackManipulation writeAssignment) {
+                            super(typeDefinition, offset, readAssignment);
+                            this.writeAssignment = writeAssignment;
                         }
 
                         @Override
                         public StackManipulation resolveWrite() {
-                            return MethodVariableAccess.of(typeDefinition).storeAt(offset);
+                            return new StackManipulation.Compound(writeAssignment, MethodVariableAccess.of(typeDefinition).storeAt(offset));
                         }
 
                         @Override
                         public StackManipulation resolveIncrement(int value) {
-                            return MethodVariableAccess.of(typeDefinition).increment(offset, value);
+                            return typeDefinition.represents(int.class)
+                                    ? MethodVariableAccess.of(typeDefinition).increment(offset, value)
+                                    : new StackManipulation.Compound(resolveRead(), IntegerConstant.forValue(1), Addition.INTEGER, resolveWrite());
+                        }
+                    }
+                }
+
+                abstract class ForArray implements Target {
+
+                    private final TypeDescription.Generic target;
+
+                    private final List<? extends StackManipulation> valueReads;
+
+                    public ForArray(TypeDescription.Generic target, List<? extends StackManipulation> valueReads) {
+                        this.target = target;
+                        this.valueReads = valueReads;
+                    }
+
+                    @Override
+                    public StackManipulation resolveRead() {
+                        return ArrayFactory.forType(target).withValues(valueReads);
+                    }
+
+                    @Override
+                    public StackManipulation resolveIncrement(int value) {
+                        throw new IllegalStateException();
+                    }
+
+                    protected static class ReadOnly extends ForArray {
+
+                        protected ReadOnly(TypeDescription.Generic target, List<? extends StackManipulation> valueReads) {
+                            super(target, valueReads);
+                        }
+
+                        @Override
+                        public StackManipulation resolveWrite() {
+                            throw new IllegalStateException();
+                        }
+                    }
+
+                    protected static class ReadWrite extends ForArray {
+
+                        private final List<? extends StackManipulation> valueWrites;
+
+                        protected ReadWrite(TypeDescription.Generic target, List<? extends StackManipulation> valueReads, List<? extends StackManipulation> valueWrites) {
+                            super(target, valueReads);
+                            this.valueWrites = valueWrites;
+                        }
+
+                        @Override
+                        public StackManipulation resolveWrite() {
+                            return new StackManipulation.Compound(valueWrites);
                         }
                     }
                 }
@@ -2006,7 +2064,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a given parameter of the instrumented method.
              */
-            class ForParameter implements OffsetMapping {
+            class ForArgument implements OffsetMapping {
+
+                /**
+                 * The type expected by the advice method.
+                 */
+                private final TypeDescription.Generic target;
 
                 /**
                  * The index of the parameter.
@@ -2018,32 +2081,32 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final boolean readOnly;
 
-                /**
-                 * The type expected by the advice method.
-                 */
-                private final TypeDescription targetType;
+                private final Assigner.Typing typing;
 
                 /**
                  * Creates a new offset mapping for a parameter.
                  *
-                 * @param argument   The annotation for which the mapping is to be created.
-                 * @param targetType Determines if the parameter is to be treated as read-only.
+                 * @param argument The annotation for which the mapping is to be created.
                  */
-                protected ForParameter(Argument argument, TypeDescription targetType) {
-                    this(argument.value(), argument.readOnly(), targetType);
+                protected ForArgument(TypeDescription.Generic target, Argument argument) {
+                    this(target, argument.value(), argument.readOnly(), argument.typing());
+                }
+
+                protected ForArgument(ParameterDescription parameterDescription, boolean readOnly, Assigner.Typing typing) {
+                    this(parameterDescription.getType(), parameterDescription.getIndex(), readOnly, typing);
                 }
 
                 /**
                  * Creates a new offset mapping for a parameter of the instrumented method.
                  *
-                 * @param index      The index of the parameter.
-                 * @param readOnly   Determines if the parameter is to be treated as read-only.
-                 * @param targetType The type expected by the advice method.
+                 * @param index    The index of the parameter.
+                 * @param readOnly Determines if the parameter is to be treated as read-only.
                  */
-                protected ForParameter(int index, boolean readOnly, TypeDescription targetType) {
+                protected ForArgument(TypeDescription.Generic target, int index, boolean readOnly, Assigner.Typing typing) {
+                    this.target = target;
                     this.index = index;
                     this.readOnly = readOnly;
-                    this.targetType = targetType;
+                    this.typing = typing;
                 }
 
                 @Override
@@ -2051,46 +2114,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     ParameterList<?> parameters = instrumentedMethod.getParameters();
                     if (parameters.size() <= index) {
                         throw new IllegalStateException(instrumentedMethod + " does not define an index " + index);
-                    } else if (!readOnly && !parameters.get(index).getType().asErasure().equals(targetType)) {
-                        throw new IllegalStateException("read-only " + targetType + " is not equal to type of " + parameters.get(index));
-                    } else if (readOnly && !parameters.get(index).getType().asErasure().isAssignableTo(targetType)) {
-                        throw new IllegalStateException(targetType + " is not assignable to " + parameters.get(index));
                     }
-                    return readOnly
-                            ? Target.ForVariable.ReadOnly.of(parameters.get(index))
-                            : Target.ForVariable.ReadWrite.of(parameters.get(index));
+                    StackManipulation readAssignment = assigner.assign(parameters.get(index).getType(), target, typing);
+                    if (!readAssignment.isValid()) {
+                        throw new IllegalStateException("Cannot assign " + parameters.get(index) + " to " + target);
+                    } else if (readOnly) {
+                        return new Target.ForVariable.ReadOnly(parameters.get(index), readAssignment);
+                    } else {
+                        StackManipulation writeAssignment = assigner.assign(parameters.get(index).getType(), target, typing);
+                        if (!writeAssignment.isValid()) {
+                            throw new IllegalStateException("Cannot assign " + parameters.get(index) + " to " + target);
+                        }
+                        return new Target.ForVariable.ReadWrite(parameters.get(index), readAssignment, writeAssignment);
+                    }
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForParameter that = (ForParameter) other;
-                    return index == that.index
-                            && readOnly == that.readOnly
-                            && targetType.equals(that.targetType);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = index;
-                    result = 31 * result + (readOnly ? 1 : 0);
-                    result = 31 * result + targetType.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForParameter{" +
-                            "index=" + index +
-                            ", readOnly=" + readOnly +
-                            ", targetType=" + targetType +
-                            '}';
-                }
-
-                /**
-                 * A factory for creating a {@link ForParameter} offset mapping.
-                 */
                 protected enum Factory implements OffsetMapping.Factory {
 
                     /**
@@ -2125,7 +2163,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot define writable field access for " + parameterDescription);
                         } else {
-                            return new ForParameter(annotation.loadSilent(), parameterDescription.getType().asErasure());
+                            return new ForArgument(parameterDescription.getType(), annotation.loadSilent());
                         }
                     }
 
@@ -2266,6 +2304,85 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            class ForAllArguments implements OffsetMapping {
+
+                private final TypeDescription.Generic target;
+
+                private final boolean readOnly;
+
+                private final Assigner.Typing typing;
+
+                protected ForAllArguments(TypeDescription.Generic target, AllArguments annotation) {
+                    this(target, annotation.readOnly(), annotation.typing());
+                }
+
+                protected ForAllArguments(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+                    this.target = target;
+                    this.readOnly = readOnly;
+                    this.typing = typing;
+                }
+
+                @Override
+                public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+                    List<StackManipulation> valueReads = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size());
+                    for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                        StackManipulation readAssignment = assigner.assign(parameterDescription.getType(), target, typing);
+                        if (!readAssignment.isValid()) {
+                            throw new IllegalStateException();
+                        }
+                        valueReads.add(new StackManipulation.Compound(
+                                MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()),
+                                readAssignment
+                        ));
+                    }
+                    if (readOnly) {
+                        return new Target.ForArray.ReadOnly(target, valueReads);
+                    } else {
+                        List<StackManipulation> valueWrites = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size());
+                        for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                            StackManipulation writeAssignment = assigner.assign(target, parameterDescription.getType(), typing);
+                            if (!writeAssignment.isValid()) {
+                                throw new IllegalStateException();
+                            }
+                            valueReads.add(new StackManipulation.Compound(
+                                    parameterDescription.getIndex() == instrumentedMethod.getParameters().size() - 1
+                                            ? StackManipulation.Trivial.INSTANCE
+                                            : Duplication.SINGLE,
+                                    IntegerConstant.forValue(parameterDescription.getIndex()),
+                                    writeAssignment,
+                                    MethodVariableAccess.of(parameterDescription.getType()).storeAt(parameterDescription.getOffset())
+                            ));
+                        }
+                        return new Target.ForArray.ReadWrite(target, valueReads, valueWrites);
+                    }
+                }
+
+                protected enum Factory implements OffsetMapping.Factory {
+
+                    READ_ONLY(true),
+
+                    READ_WRITE(false);
+
+                    private final boolean readOnly;
+
+                    Factory(boolean readOnly) {
+                        this.readOnly = readOnly;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        AnnotationDescription.Loadable<AllArguments> annotation = parameterDescription.getDeclaredAnnotations().ofType(AllArguments.class);
+                        if (annotation == null) {
+                            return UNDEFINED;
+                        } else if (readOnly && !annotation.loadSilent().readOnly()) {
+                            throw new IllegalStateException("Cannot define writable field access for " + parameterDescription);
+                        } else {
+                            return new ForAllArguments(parameterDescription.getType(), annotation.loadSilent());
+                        }
+                    }
+                }
+            }
+
             /**
              * Maps the declaring type of the instrumented method.
              */
@@ -2318,7 +2435,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 EXECUTABLE {
                     @Override
                     protected boolean isRepresentable(MethodDescription instrumentedMethod) {
-                        return false;
+                        return true;
                     }
                 };
 
@@ -2659,7 +2776,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner,  Context context) {
+                public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
                     StringBuilder stringBuilder = new StringBuilder();
                     for (Renderer renderer : renderers) {
                         stringBuilder.append(renderer.apply(instrumentedType, instrumentedMethod));
@@ -2987,9 +3104,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
-                    return instrumentedMethod.getReturnType().isPrimitive() && !instrumentedMethod.getReturnType().represents(void.class)
-                            ? Target.ForBoxedDefaultValue.of(instrumentedMethod.getReturnType())
-                            : Target.ForNullConstant.READ_WRITE;
+                    return new Target.ForStackManipulation(new StackManipulation.Compound(
+                            DefaultValue.of(instrumentedMethod.getReturnType()),
+                            assigner.assign(instrumentedMethod.getReturnType(), TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)
+                    ));
                 }
 
                 @Override
@@ -3014,15 +3132,39 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             class ForEnterValue implements OffsetMapping {
 
-                private final TypeDescription typeDescription;
+                private final TypeDescription.Generic enterType;
 
-                protected ForEnterValue(TypeDescription typeDescription) {
-                    this.typeDescription = typeDescription;
+                private final TypeDescription.Generic target;
+
+                private final boolean readOnly;
+
+                private final Assigner.Typing typing;
+
+                protected ForEnterValue(TypeDescription.Generic target, TypeDescription.Generic enterType, Enter enter) {
+                    this(target, enterType, enter.readOnly(), enter.typing());
+                }
+
+                protected ForEnterValue(TypeDescription.Generic target, TypeDescription.Generic enterType, boolean readOnly, Assigner.Typing typing) {
+                    this.target = target;
+                    this.enterType = enterType;
+                    this.readOnly = readOnly;
+                    this.typing = typing;
                 }
 
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
-                    return new Target.ForVariable.ReadOnly(typeDescription, instrumentedMethod.getStackSize());
+                    StackManipulation readAssignment = assigner.assign(enterType, target, typing);
+                    if (!readAssignment.isValid()) {
+                        throw new IllegalStateException();
+                    } else if (readOnly) {
+                        return new Target.ForVariable.ReadOnly(target, instrumentedMethod.getStackSize(), readAssignment);
+                    } else {
+                        StackManipulation writeAssignment = assigner.assign(target, enterType, typing);
+                        if (!writeAssignment.isValid()) {
+                            throw new IllegalStateException();
+                        }
+                        return new Target.ForVariable.ReadWrite(target, instrumentedMethod.getStackSize(), readAssignment, writeAssignment);
+                    }
                 }
 
                 /**
@@ -3055,15 +3197,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
                         AnnotationDescription.Loadable<Enter> annotation = parameterDescription.getDeclaredAnnotations().ofType(Enter.class);
                         if (annotation != null) {
-                            boolean readOnly = annotation.loadSilent().readOnly();
-                            if (!readOnly && !enterType.equals(parameterDescription.getType().asErasure())) {
-                                throw new IllegalStateException("read-only type of " + parameterDescription + " does not equal " + enterType);
-                            } else if (readOnly && !enterType.isAssignableTo(parameterDescription.getType().asErasure())) {
-                                throw new IllegalStateException("Cannot assign the type of " + parameterDescription + " to supplied type " + enterType);
-                            } else if (this.readOnly && !readOnly) {
-                                throw new IllegalStateException("Cannot write to enter value field for " + parameterDescription + " in read only context");
-                            }
-                            return new ForEnterValue(enterType); // TODO: Merge factory with target
+                            return new ForEnterValue(enterType.asGenericType(), parameterDescription.getType(), annotation.loadSilent()); // TODO: Enter type to type definition.
                         } else {
                             return UNDEFINED;
                         }
@@ -3100,36 +3234,42 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             class ForReturnValue implements OffsetMapping {
 
                 /**
+                 * The type that the advice method expects for the {@code this} reference.
+                 */
+                private final TypeDescription.Generic target;
+
+                /**
                  * Determines if the parameter is to be treated as read-only.
                  */
                 private final boolean readOnly;
 
-                /**
-                 * The type that the advice method expects for the {@code this} reference.
-                 */
-                private final TypeDescription targetType;
+                private final Assigner.Typing typing;
 
-                /**
-                 * Creates an offset mapping for accessing the return type of the instrumented method.
-                 *
-                 * @param readOnly   Determines if the parameter is to be treated as read-only.
-                 * @param targetType The expected target type of the return type.
-                 */
-                protected ForReturnValue(boolean readOnly, TypeDescription targetType) {
+                protected ForReturnValue(TypeDescription.Generic target, Return annotation) {
+                    this(target, annotation.readOnly(), annotation.typing());
+                }
+
+                protected ForReturnValue(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+                    this.target = target;
                     this.readOnly = readOnly;
-                    this.targetType = targetType;
+                    this.typing = typing;
                 }
 
                 @Override
-                public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod,Assigner assigner,  Context context) {
-                    if (!readOnly && !instrumentedMethod.getReturnType().asErasure().equals(targetType)) {
-                        throw new IllegalStateException("Non read-only return type of " + instrumentedMethod + " is not equal to " + targetType);
-                    } else if (readOnly && !instrumentedMethod.getReturnType().asErasure().isAssignableTo(targetType)) {
-                        throw new IllegalStateException("Cannot assign return type of " + instrumentedMethod + " to " + targetType);
+                public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
+                    int offset = instrumentedMethod.getStackSize() + context.getPadding();
+                    StackManipulation readAssignment = assigner.assign(instrumentedMethod.getReturnType(), target, typing);
+                    if (!readAssignment.isValid()) {
+                        throw new IllegalStateException();
+                    } else if (readOnly) {
+                        return new Target.ForVariable.ReadOnly(instrumentedMethod.getReturnType(), offset, readAssignment);
+                    } else {
+                        StackManipulation writeAssignment = assigner.assign(target, instrumentedMethod.getReturnType(), typing);
+                        if (!writeAssignment.isValid()) {
+                            throw new IllegalStateException();
+                        }
+                        return new Target.ForVariable.ReadWrite(instrumentedMethod.getReturnType(), offset, readAssignment, writeAssignment);
                     }
-                    return readOnly
-                            ? new Target.ForVariable.ReadOnly(instrumentedMethod.getReturnType(), instrumentedMethod.getStackSize() + context.getPadding())
-                            : new Target.ForVariable.ReadWrite(instrumentedMethod.getReturnType(), instrumentedMethod.getStackSize() + context.getPadding());
                 }
 
                 @Override
@@ -3137,19 +3277,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     ForReturnValue that = (ForReturnValue) other;
-                    return readOnly == that.readOnly && targetType.equals(that.targetType);
+                    return readOnly == that.readOnly && target.equals(that.target);
                 }
 
                 @Override
                 public int hashCode() {
-                    return (readOnly ? 1 : 0) + 31 * targetType.hashCode();
+                    return (readOnly ? 1 : 0) + 31 * target.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "Advice.Dispatcher.OffsetMapping.ForReturnValue{" +
                             "readOnly=" + readOnly +
-                            ", targetType=" + targetType +
+                            ", target=" + target +
                             '}';
                 }
 
@@ -3190,7 +3330,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot write return value for " + parameterDescription + " in read-only context");
                         } else {
-                            return new ForReturnValue(annotation.loadSilent().readOnly(), parameterDescription.getType().asErasure());
+                            return new ForReturnValue(parameterDescription.getType(), annotation.loadSilent());
                         }
                     }
 
@@ -3209,75 +3349,53 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The type of parameter that is being accessed.
                  */
-                private final TypeDescription targetType;
-
-                /**
-                 * The type of the {@link Throwable} being catched if thrown from the instrumented method.
-                 */
-                private final TypeDescription triggeringThrowable;
+                private final TypeDescription.Generic target;
 
                 /**
                  * {@code true} if the parameter is read-only.
                  */
                 private final boolean readOnly;
 
+                private final Assigner.Typing typing;
+
+                protected ForThrowable(TypeDescription.Generic target, boolean readOnly, Thrown annotation) {
+                    this(target, readOnly || annotation.readOnly(), annotation.typing());
+                }
+
                 /**
                  * Creates a new offset mapping for access of the exception that is thrown by the instrumented method..
                  *
-                 * @param targetType          The type of parameter that is being accessed.
-                 * @param triggeringThrowable The type of the {@link Throwable} being catched if thrown from the instrumented method.
-                 * @param readOnly            {@code true} if the parameter is read-only.
+                 * @param target   The type of parameter that is being accessed.
+                 * @param readOnly {@code true} if the parameter is read-only.
+                 * @param typing
                  */
-                protected ForThrowable(TypeDescription targetType, TypeDescription triggeringThrowable, boolean readOnly) {
-                    this.targetType = targetType;
-                    this.triggeringThrowable = triggeringThrowable;
+                protected ForThrowable(TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+                    this.target = target;
                     this.readOnly = readOnly;
+                    this.typing = typing;
                 }
 
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
                     int offset = instrumentedMethod.getStackSize() + context.getPadding() + instrumentedMethod.getReturnType().getStackSize().getSize();
-                    return readOnly
-                            ? new Target.ForVariable.ReadOnly(TypeDescription.THROWABLE, offset)
-                            : new Target.ForVariable.ReadWrite(TypeDescription.THROWABLE, offset);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForThrowable forThrowable = (ForThrowable) other;
-                    return readOnly == forThrowable.readOnly
-                            && targetType.equals(forThrowable.targetType)
-                            && triggeringThrowable.equals(forThrowable.triggeringThrowable);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = triggeringThrowable.hashCode();
-                    result = 31 * result + targetType.hashCode();
-                    result = 31 * result + (readOnly ? 1 : 0);
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForThrowable{" +
-                            "targetType=" + targetType +
-                            ", triggeringThrowable=" + triggeringThrowable +
-                            ", readOnly=" + readOnly +
-                            '}';
+                    StackManipulation readAssignment = assigner.assign(TypeDescription.THROWABLE.asGenericType(), target, typing);
+                    if (!readAssignment.isValid()) {
+                        throw new IllegalStateException();
+                    } else if (readOnly) {
+                        return new Target.ForVariable.ReadOnly(TypeDescription.THROWABLE, offset, readAssignment);
+                    } else {
+                        StackManipulation writeAssignment = assigner.assign(target, TypeDescription.THROWABLE.asGenericType(), typing);
+                        if (!writeAssignment.isValid()) {
+                            throw new IllegalStateException();
+                        }
+                        return new Target.ForVariable.ReadWrite(TypeDescription.THROWABLE, offset, readAssignment, writeAssignment);
+                    }
                 }
 
                 /**
                  * A factory for accessing an exception that was thrown by the instrumented method.
                  */
                 protected static class Factory implements OffsetMapping.Factory {
-
-                    /**
-                     * The type of the {@link Throwable} being catched if thrown from the instrumented method.
-                     */
-                    private final TypeDescription triggeringThrowable;
 
                     /**
                      * {@code true} if the parameter is read-only.
@@ -3287,11 +3405,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new factory for access of the exception that is thrown by the instrumented method..
                      *
-                     * @param triggeringThrowable The type of the {@link Throwable} being catched if thrown from the instrumented method.
-                     * @param readOnly            {@code true} if the parameter is read-only.
+                     * @param readOnly {@code true} if the parameter is read-only.
                      */
-                    protected Factory(TypeDescription triggeringThrowable, boolean readOnly) {
-                        this.triggeringThrowable = triggeringThrowable;
+                    protected Factory(boolean readOnly) {
                         this.readOnly = readOnly;
                     }
 
@@ -3304,49 +3420,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected static OffsetMapping.Factory of(MethodDescription.InDefinedShape adviceMethod, boolean readOnly) {
-                        TypeDescription triggeringThrowable = adviceMethod.getDeclaredAnnotations()
+                        return adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
-                                .getValue(ON_THROWABLE).resolve(TypeDescription.class);
-                        return triggeringThrowable.represents(NoExceptionHandler.class)
-                                ? new OffsetMapping.Illegal(Thrown.class)
-                                : new Factory(triggeringThrowable, readOnly);
+                                .getValue(ON_THROWABLE)
+                                .resolve(TypeDescription.class)
+                                .represents(NoExceptionHandler.class) ? new OffsetMapping.Illegal(Thrown.class) : new Factory(readOnly);
                     }
 
                     @Override
                     public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
                         AnnotationDescription.Loadable<Thrown> annotation = parameterDescription.getDeclaredAnnotations().ofType(Thrown.class);
-                        if (annotation == null) {
-                            return UNDEFINED;
-                        } else if (!parameterDescription.getType().represents(Throwable.class)) {
-                            throw new IllegalStateException("Parameter must be a throwable type for " + parameterDescription);
-                        } else if (readOnly && !annotation.loadSilent().readOnly()) {
-                            throw new IllegalStateException("Cannot write exception value for " + parameterDescription + " in read-only context");
-                        } else {
-                            return new ForThrowable(parameterDescription.getType().asErasure(), triggeringThrowable, annotation.loadSilent().readOnly());
-                        }
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        Factory factory = (Factory) other;
-                        return readOnly == factory.readOnly && triggeringThrowable.equals(factory.triggeringThrowable);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = triggeringThrowable.hashCode();
-                        result = 31 * result + (readOnly ? 1 : 0);
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForThrowable.Factory{" +
-                                "triggeringThrowable=" + triggeringThrowable +
-                                ", readOnly=" + readOnly +
-                                '}';
+                        return annotation == null
+                                ? UNDEFINED
+                                : new ForThrowable(parameterDescription.getType(), readOnly, annotation.loadSilent());
                     }
                 }
             }
@@ -3390,74 +3476,75 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
-                    Object value = dynamicValue.resolve(instrumentedType, instrumentedMethod, target, annotation, context.isInitialized());
-                    if (value == null) {
-                        if (target.getType().isPrimitive()) {
-                            throw new IllegalStateException("Cannot map null to primitive type of " + target);
-                        }
-                        return Target.ForNullConstant.READ_ONLY;
-                    } else if ((value instanceof String)) {
-                        if (!target.getType().asErasure().isAssignableFrom(String.class)) {
-                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-                        }
-                        return new Target.ForConstantPoolValue(value);
-                    } else if (value instanceof Boolean
-                            || value instanceof Byte
-                            || value instanceof Short
-                            || value instanceof Character
-                            || value instanceof Integer
-                            || value instanceof Long
-                            || value instanceof Float
-                            || value instanceof Double) {
-                        if (target.getType().isPrimitive() && target.getType().asErasure().asBoxed().isInstance(value)) {
-                            return new Target.ForConstantPoolValue(value);
-                        } else if (target.getType().asErasure().isInstance(value)) {
-                            return Target.ForConstantPoolValue.WithBoxing.of(value);
-                        } else {
-                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-                        }
-                    } else if (value instanceof Class) {
-                        if (!target.getType().asErasure().isAssignableFrom(Class.class)) {
-                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-                        }
-                        return new Target.ForConstantPoolValue(Type.getType((Class<?>) value));
-                    } else if (value instanceof TypeDescription) {
-                        if (!target.getType().asErasure().isAssignableFrom(Class.class)) {
-                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-                        }
-                        return new Target.ForConstantPoolValue(Type.getType(((TypeDescription) value).getDescriptor()));
-                    } else if (value instanceof FieldDescription) {
-                        FieldDescription.InDefinedShape fieldDescription = ((FieldDescription) value).asDefined();
-                        if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType())) {
-                            throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
-                        } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
-                            throw new IllegalStateException(fieldDescription + " is not visible from " + instrumentedType);
-                        } else if (fieldDescription.getType().asErasure().isAssignableTo(target.getType().asErasure())) {
-                            return new Target.ForField.ReadOnly(fieldDescription);
-                        } else if (fieldDescription.getType().asErasure().asBoxed().isAssignableTo(target.getType().asErasure())) {
-                            return new Target.ForField.ReadBoxed(fieldDescription);
-                        } else {
-                            throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
-                        }
-                    } else if (value instanceof ParameterDescription) {
-                        ParameterDescription parameterDescription = (ParameterDescription) value;
-                        if (!instrumentedMethod.equals(parameterDescription.getDeclaringMethod())) {
-                            throw new IllegalStateException("Cannot access " + parameterDescription + " from " + instrumentedMethod);
-                        } else if (parameterDescription.getType().asErasure().isAssignableTo(target.getType().asErasure())) {
-                            return new Target.ForParameter.ReadOnly(parameterDescription.getOffset());
-                        } else if (parameterDescription.getType().asErasure().asBoxed().isAssignableTo(target.getType().asErasure())) {
-                            return new Target.ForBoxedArgument.ReadOnly(parameterDescription.getOffset(), Target.PrimitiveDispatcher.of(parameterDescription.getType()));
-                        } else {
-                            throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
-                        }
-                    } else if (value instanceof Serializable) {
-                        if (!target.getType().asErasure().isInstance(value)) {
-                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-                        }
-                        return Target.ForSerializedObject.of(target.getType().asErasure(), (Serializable) value);
-                    } else {
-                        throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
-                    }
+                    return null;
+//                    Object value = dynamicValue.resolve(instrumentedType, instrumentedMethod, target, annotation, context.isInitialized());
+//                    if (value == null) {
+//                        if (target.getType().isPrimitive()) {
+//                            throw new IllegalStateException("Cannot map null to primitive type of " + target);
+//                        }
+//                        return Target.ForNullConstant.READ_ONLY;
+//                    } else if ((value instanceof String)) {
+//                        if (!target.getType().asErasure().isAssignableFrom(String.class)) {
+//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
+//                        }
+//                        return new Target.ForConstantPoolValue(value);
+//                    } else if (value instanceof Boolean
+//                            || value instanceof Byte
+//                            || value instanceof Short
+//                            || value instanceof Character
+//                            || value instanceof Integer
+//                            || value instanceof Long
+//                            || value instanceof Float
+//                            || value instanceof Double) {
+//                        if (target.getType().isPrimitive() && target.getType().asErasure().asBoxed().isInstance(value)) {
+//                            return new Target.ForConstantPoolValue(value);
+//                        } else if (target.getType().asErasure().isInstance(value)) {
+//                            return Target.ForConstantPoolValue.WithBoxing.of(value);
+//                        } else {
+//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
+//                        }
+//                    } else if (value instanceof Class) {
+//                        if (!target.getType().asErasure().isAssignableFrom(Class.class)) {
+//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
+//                        }
+//                        return new Target.ForConstantPoolValue(Type.getType((Class<?>) value));
+//                    } else if (value instanceof TypeDescription) {
+//                        if (!target.getType().asErasure().isAssignableFrom(Class.class)) {
+//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
+//                        }
+//                        return new Target.ForConstantPoolValue(Type.getType(((TypeDescription) value).getDescriptor()));
+//                    } else if (value instanceof FieldDescription) {
+//                        FieldDescription.InDefinedShape fieldDescription = ((FieldDescription) value).asDefined();
+//                        if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType())) {
+//                            throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+//                        } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
+//                            throw new IllegalStateException(fieldDescription + " is not visible from " + instrumentedType);
+//                        } else if (fieldDescription.getType().asErasure().isAssignableTo(target.getType().asErasure())) {
+//                            return new Target.ForField.ReadOnly(fieldDescription);
+//                        } else if (fieldDescription.getType().asErasure().asBoxed().isAssignableTo(target.getType().asErasure())) {
+//                            return new Target.ForField.ReadBoxed(fieldDescription);
+//                        } else {
+//                            throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
+//                        }
+//                    } else if (value instanceof ParameterDescription) {
+//                        ParameterDescription parameterDescription = (ParameterDescription) value;
+//                        if (!instrumentedMethod.equals(parameterDescription.getDeclaringMethod())) {
+//                            throw new IllegalStateException("Cannot access " + parameterDescription + " from " + instrumentedMethod);
+//                        } else if (parameterDescription.getType().asErasure().isAssignableTo(target.getType().asErasure())) {
+//                            return new Target.ForParameter.ReadOnly(parameterDescription.getOffset());
+//                        } else if (parameterDescription.getType().asErasure().asBoxed().isAssignableTo(target.getType().asErasure())) {
+//                            return new Target.ForBoxedArgument.ReadOnly(parameterDescription.getOffset(), Target.PrimitiveDispatcher.of(parameterDescription.getType()));
+//                        } else {
+//                            throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
+//                        }
+//                    } else if (value instanceof Serializable) {
+//                        if (!target.getType().asErasure().isInstance(value)) {
+//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
+//                        }
+//                        return Target.ForSerializedObject.of(target.getType().asErasure(), (Serializable) value);
+//                    } else {
+//                        throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
+//                    }
                 }
 
                 @Override
@@ -4534,7 +4621,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                         }
                         offsetMappings.put(parameterDescription.getOffset(), offsetMapping == null
-                                ? new OffsetMapping.ForParameter(parameterDescription.getIndex(), READ_ONLY, parameterDescription.getType().asErasure())
+                                ? new OffsetMapping.ForArgument(parameterDescription, READ_ONLY, Assigner.Typing.STATIC)
                                 : offsetMapping);
                     }
                     this.classReader = classReader;
@@ -4885,7 +4972,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              List<? extends OffsetMapping.Factory> userFactories,
                                              ClassReader classReader) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.READ_WRITE,
+                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Factory.READ_WRITE,
+                                        OffsetMapping.ForAllArguments.Factory.READ_WRITE,
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
@@ -5075,8 +5163,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             ClassReader classReader,
                                             TypeDescription enterType) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.asList(
-                                        OffsetMapping.ForParameter.Factory.READ_WRITE,
+                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Factory.READ_WRITE,
+                                        OffsetMapping.ForAllArguments.Factory.READ_WRITE,
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
@@ -5845,7 +5933,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                         }
                         offsetMappings.add(offsetMapping == null
-                                ? new OffsetMapping.ForParameter(parameterDescription.getIndex(), READ_ONLY, parameterDescription.getType().asErasure())
+                                ? new OffsetMapping.ForArgument(parameterDescription, READ_ONLY, Assigner.Typing.STATIC)
                                 : offsetMapping);
                     }
                     suppressionHandler = SuppressionHandler.Suppressing.of(throwableType);
@@ -6197,7 +6285,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory> userFactories) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.READ_ONLY,
+                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Factory.READ_ONLY,
+                                        OffsetMapping.ForAllArguments.Factory.READ_ONLY,
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
@@ -6294,8 +6383,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             List<? extends OffsetMapping.Factory> userFactories,
                                             TypeDescription enterType) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.asList(
-                                        OffsetMapping.ForParameter.Factory.READ_ONLY,
+                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Factory.READ_ONLY,
+                                        OffsetMapping.ForAllArguments.Factory.READ_ONLY,
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
@@ -7365,6 +7454,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
+
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
+    }
+
+    public @interface AllArguments {
+
+        boolean readOnly() default true;
+
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
     }
 
     /**
@@ -7545,6 +7643,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
+
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
     }
 
     /**
@@ -7568,6 +7668,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
+
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
     }
 
     /**
@@ -7598,6 +7700,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
+
+        Assigner.Typing typing() default Assigner.Typing.DYNAMIC;
     }
 
     /**
