@@ -923,6 +923,8 @@ public class AgentBuilderDefaultTest {
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE)
+                .with(AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_FAST)
                 .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
@@ -943,7 +945,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verify(installationStrategy).onError(instrumentation, classFileTransformer, throwable);
+        verify(installationStrategy).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable)));
         verifyNoMoreInteractions(installationStrategy);
     }
 
@@ -1491,6 +1493,8 @@ public class AgentBuilderDefaultTest {
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE)
+                .with(AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_FAST)
                 .with(poolStrategy)
                 .with(typeStrategy)
                 .with(installationStrategy)
@@ -1511,7 +1515,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verify(installationStrategy).onError(instrumentation, classFileTransformer, throwable);
+        verify(installationStrategy).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable)));
         verifyNoMoreInteractions(installationStrategy);
     }
 
@@ -1981,10 +1985,6 @@ public class AgentBuilderDefaultTest {
         assertThat(failures.get(Foo.class), is(throwable));
     }
 
-    public static void main(String[] args) {
-        System.out.println(new AgentBuilder.Default().equals(new AgentBuilder.Default()));
-    }
-
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();
@@ -2062,7 +2062,7 @@ public class AgentBuilderDefaultTest {
 
         private final Class<?> type;
 
-        public ClassRedefinitionMatcher(Class<?> type) {
+        private ClassRedefinitionMatcher(Class<?> type) {
             this.type = type;
         }
 
@@ -2074,6 +2074,24 @@ public class AgentBuilderDefaultTest {
         @Override
         public void describeTo(Description description) {
             /* empty */
+        }
+    }
+
+    private static class CauseMatcher extends BaseMatcher<Throwable> {
+
+        private final Throwable throwable;
+
+        private CauseMatcher(Throwable throwable) {
+            this.throwable = throwable;
+        }
+
+        @Override
+        public boolean matches(Object item) {
+            return throwable.equals(((Throwable) item).getCause());
+        }
+
+        @Override
+        public void describeTo(Description description) {
         }
     }
 }

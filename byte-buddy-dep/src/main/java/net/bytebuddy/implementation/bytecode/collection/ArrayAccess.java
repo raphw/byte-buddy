@@ -1,11 +1,16 @@
 package net.bytebuddy.implementation.bytecode.collection;
 
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Allows accessing array values.
@@ -86,7 +91,7 @@ public enum ArrayAccess {
      * @param componentType The array's component type.
      * @return An array accessor for the given type.
      */
-    public static ArrayAccess of(TypeDescription componentType) {
+    public static ArrayAccess of(TypeDefinition componentType) {
         if (componentType.represents(boolean.class) || componentType.represents(byte.class)) {
             return BYTE;
         } else if (componentType.represents(short.class)) {
@@ -124,6 +129,26 @@ public enum ArrayAccess {
      */
     public StackManipulation store() {
         return new Putter();
+    }
+
+    /**
+     * Applies a stack manipulation to the values of an array. The array must have at least as many values as the list has elements.
+     *
+     * @param processInstructions The elements to apply.
+     * @return A stack manipulation that applies the supplied instructions.
+     */
+    public StackManipulation forEach(List<? extends StackManipulation> processInstructions) {
+        List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(processInstructions.size());
+        int index = 0;
+        for (StackManipulation processInstruction : processInstructions) {
+            stackManipulations.add(new StackManipulation.Compound(
+                    Duplication.SINGLE,
+                    IntegerConstant.forValue(index++),
+                    new Loader(),
+                    processInstruction
+            ));
+        }
+        return new StackManipulation.Compound(stackManipulations);
     }
 
     @Override

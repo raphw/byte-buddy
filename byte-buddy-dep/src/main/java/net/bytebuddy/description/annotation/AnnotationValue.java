@@ -54,6 +54,12 @@ public interface AnnotationValue<T, S> {
      */
     Loaded<S> load(ClassLoader classLoader) throws ClassNotFoundException;
 
+    /**
+     * Returns the loaded value of this annotation without throwing a checked exception.
+     *
+     * @param classLoader The class loader for loading this value.
+     * @return The loaded value of this annotation.
+     */
     Loaded<S> loadSilent(ClassLoader classLoader);
 
     /**

@@ -26,7 +26,7 @@ public class MethodVariableAccessTest {
 
     private final TypeDescription typeDescription;
 
-    private final int opcode;
+    private final int readCode, writeCode;
 
     private final int size;
 
@@ -39,31 +39,32 @@ public class MethodVariableAccessTest {
     @Mock
     private Implementation.Context implementationContext;
 
-    public MethodVariableAccessTest(Class<?> type, int opcode, int size) {
+    public MethodVariableAccessTest(Class<?> type, int readCode, int writeCode, int size) {
         this.typeDescription = mock(TypeDescription.class);
         when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
         when(typeDescription.represents(type)).thenReturn(true);
-        this.opcode = opcode;
+        this.readCode = readCode;
+        this.writeCode = writeCode;
         this.size = size;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {Object.class, Opcodes.ALOAD, 1},
-                {boolean.class, Opcodes.ILOAD, 1},
-                {byte.class, Opcodes.ILOAD, 1},
-                {short.class, Opcodes.ILOAD, 1},
-                {char.class, Opcodes.ILOAD, 1},
-                {int.class, Opcodes.ILOAD, 1},
-                {long.class, Opcodes.LLOAD, 2},
-                {float.class, Opcodes.FLOAD, 1},
-                {double.class, Opcodes.DLOAD, 2},
+                {Object.class, Opcodes.ALOAD, Opcodes.ASTORE, 1},
+                {boolean.class, Opcodes.ILOAD, Opcodes.ISTORE, 1},
+                {byte.class, Opcodes.ILOAD, Opcodes.ISTORE, 1},
+                {short.class, Opcodes.ILOAD, Opcodes.ISTORE, 1},
+                {char.class, Opcodes.ILOAD, Opcodes.ISTORE, 1},
+                {int.class, Opcodes.ILOAD, Opcodes.ISTORE, 1},
+                {long.class, Opcodes.LLOAD, Opcodes.LSTORE, 2},
+                {float.class, Opcodes.FLOAD, Opcodes.FSTORE, 1},
+                {double.class, Opcodes.DLOAD, Opcodes.DSTORE, 2},
         });
     }
 
     @After
-    public void setUp() throws Exception {
+    public void tearDown() throws Exception {
         verifyZeroInteractions(implementationContext);
     }
 
@@ -74,7 +75,18 @@ public class MethodVariableAccessTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(this.size));
         assertThat(size.getMaximalSize(), is(this.size));
-        verify(methodVisitor).visitVarInsn(opcode, 4);
+        verify(methodVisitor).visitVarInsn(readCode, 4);
+        verifyNoMoreInteractions(methodVisitor);
+    }
+
+    @Test
+    public void testStoring() throws Exception {
+        StackManipulation stackManipulation = MethodVariableAccess.of(typeDescription).storeAt(4);
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
+        assertThat(size.getSizeImpact(), is(this.size));
+        assertThat(size.getMaximalSize(), is(this.size));
+        verify(methodVisitor).visitVarInsn(writeCode, 4);
         verifyNoMoreInteractions(methodVisitor);
     }
 }

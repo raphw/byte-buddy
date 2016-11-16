@@ -4204,12 +4204,12 @@ public interface AgentBuilder {
             /**
              * The transformation instance to use for considering types.
              */
-            private final Default.Transformation transformation;
+            protected final Default.Transformation transformation;
 
             /**
              * All types that were collected for redefinition.
              */
-            private final List<Class<?>> types;
+            protected final List<Class<?>> types;
 
             /**
              * Creates a new collector.
@@ -4364,7 +4364,7 @@ public interface AgentBuilder {
                                 }
                             }
                         } catch (Throwable ignored) {
-                            /* do nothing */
+                            // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                         }
                     }
                     if (!classDefinitions.isEmpty()) {
@@ -4375,6 +4375,14 @@ public interface AgentBuilder {
                             circularityLock.acquire();
                         }
                     }
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition{" +
+                            "transformation=" + transformation +
+                            ", types=" + types +
+                            "}";
                 }
             }
 
@@ -4406,6 +4414,14 @@ public interface AgentBuilder {
                             circularityLock.acquire();
                         }
                     }
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Collector.ForRetransformation{" +
+                            "transformation=" + transformation +
+                            ", types=" + types +
+                            "}";
                 }
             }
         }

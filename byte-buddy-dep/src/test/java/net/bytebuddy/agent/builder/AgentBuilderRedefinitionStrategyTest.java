@@ -59,5 +59,7 @@ public class AgentBuilderRedefinitionStrategyTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition.class).applyBasic();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Collector.ForRetransformation.class).applyBasic();
     }
 }
