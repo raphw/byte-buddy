@@ -2,6 +2,7 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -64,7 +65,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = FOO;
         }
     }
@@ -77,7 +78,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = true;
         }
     }
@@ -90,7 +91,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = NUMERIC_VALUE;
         }
     }
@@ -103,7 +104,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = (short) NUMERIC_VALUE;
         }
     }
@@ -116,7 +117,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = (char) NUMERIC_VALUE;
         }
     }
@@ -129,7 +130,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = (int) NUMERIC_VALUE;
         }
     }
@@ -142,7 +143,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = (long) NUMERIC_VALUE;
         }
     }
@@ -155,7 +156,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = (float) NUMERIC_VALUE;
         }
     }
@@ -168,7 +169,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = (double) NUMERIC_VALUE;
         }
     }
@@ -181,7 +182,7 @@ public class AdviceBoxedReturnAssignmentTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = FOO;
         }
     }

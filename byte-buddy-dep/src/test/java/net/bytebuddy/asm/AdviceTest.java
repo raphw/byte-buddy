@@ -8,6 +8,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -1908,43 +1909,34 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodExit.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.PrimitiveDispatcher.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadOnly.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.WithCasting.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForVariable.ReadOnly.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForVariable.ReadWrite.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForArray.ReadOnly.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForArray.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.ReadOnly.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.ReadWrite.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.ReadBoxed.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.WithBoxing.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedDefaultValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.ReadOnly.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.ReadWrite.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadOnly.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArgument.ReadWrite.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForSerializedObject.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForNullConstant.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForType.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForMethod.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForExecutable.ForConstructor.class).apply();
-        final int[] value = new int[1];
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForParameter.class).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
-            @Override
-            public void apply(Advice.Argument mock) {
-                when(mock.value()).thenReturn(value[0]++);
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForParameter.Factory.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThisReference.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThisReference.Factory.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.WithImplicitType.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.WithExplicitType.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForStackManipulation.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForThis.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForArgument.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForArgument.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForAllArguments.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForAllArguments.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForEnterValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForEnterValue.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.Factory.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedReturnValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedReturnValue.Factory.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedArguments.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedArguments.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForInstrumentedMethod.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForInstrumentedType.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForReturnValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForStubValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThisReference.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThrowable.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThrowable.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUnusedValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUnusedValue.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForConstantValue.class).apply();
@@ -1954,9 +1946,6 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForJavaSignature.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUnusedValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForStubValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.class).apply();
         final Iterator<Class<?>> annotationTypes = Arrays.<Class<?>>asList(Object.class, String.class, int.class, float.class).iterator();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.Factory.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
@@ -3042,7 +3031,7 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = new Object();
         }
     }
@@ -3055,7 +3044,7 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = BAR;
         }
     }
@@ -3068,7 +3057,7 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object value) {
             value = new Object();
         }
     }
@@ -3527,7 +3516,7 @@ public class AdviceTest {
     public static class BoxedArgumentsStackSizeAdvice {
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments Object[] value) {
+        private static void enter(@Advice.AllArguments Object[] value) {
             Object ignored = value;
         }
     }
@@ -3535,7 +3524,7 @@ public class AdviceTest {
     public static class BoxedArgumentsWriteDelegateEntry {
 
         @Advice.OnMethodEnter(inline = false)
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false) Object[] value) {
             throw new AssertionError();
         }
     }
@@ -3543,7 +3532,7 @@ public class AdviceTest {
     public static class BoxedArgumentsWriteDelegateExit {
 
         @Advice.OnMethodExit(inline = false)
-        private static void exit(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void exit(@Advice.AllArguments(readOnly = false) Object[] value) {
             throw new AssertionError();
         }
     }
@@ -3551,7 +3540,7 @@ public class AdviceTest {
     public static class BoxedArgumentsCannotWrite {
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments Object[] value) {
+        private static void enter(@Advice.AllArguments Object[] value) {
             value = new Object[0];
         }
     }

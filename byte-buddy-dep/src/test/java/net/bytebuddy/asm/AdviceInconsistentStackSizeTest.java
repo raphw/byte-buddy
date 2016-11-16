@@ -11,6 +11,7 @@ import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -111,7 +112,7 @@ public class AdviceInconsistentStackSizeTest {
     private static class ExitAdvice {
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.BoxedReturn(readOnly = false) Object returned, @Value Object value) {
+        private static void exit(@Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object returned, @Value Object value) {
             returned = value;
         }
     }

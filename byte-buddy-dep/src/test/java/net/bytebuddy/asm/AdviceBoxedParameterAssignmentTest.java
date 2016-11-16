@@ -2,7 +2,7 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.DebuggingWrapper;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -72,7 +72,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[0];
         }
     }
@@ -85,7 +85,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{true};
         }
     }
@@ -98,7 +98,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{(byte) NUMERIC_VALUE};
         }
     }
@@ -111,7 +111,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{(short) NUMERIC_VALUE};
         }
     }
@@ -124,7 +124,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{(char) NUMERIC_VALUE};
         }
     }
@@ -137,7 +137,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{(int) NUMERIC_VALUE};
         }
     }
@@ -150,7 +150,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{(long) NUMERIC_VALUE};
         }
     }
@@ -163,7 +163,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{(float) NUMERIC_VALUE};
         }
     }
@@ -176,7 +176,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{(double) NUMERIC_VALUE};
         }
     }
@@ -189,7 +189,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{FOO};
         }
     }
@@ -202,7 +202,7 @@ public class AdviceBoxedParameterAssignmentTest {
         }
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.BoxedArguments(readOnly = false) Object[] value) {
+        private static void enter(@Advice.AllArguments(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object[] value) {
             value = new Object[]{FOO};
         }
     }

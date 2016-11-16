@@ -4294,12 +4294,9 @@ public interface AgentBuilder {
                     redefinitionListener.onBatch(index, types, this.types);
                     try {
                         doApply(instrumentation, circularityLock, types, locationStrategy, listener);
-                    } catch (UnmodifiableClassException exception) {
-                        redefinitionListener.onError(index, types, exception, this.types);
-                        failures.put(types, exception);
-                    } catch (ClassNotFoundException exception) {
-                        redefinitionListener.onError(index, types, exception, this.types);
-                        failures.put(types, exception);
+                    } catch (Throwable throwable) {
+                        redefinitionListener.onError(index, types, throwable, this.types);
+                        failures.put(types, throwable);
                     }
                     index += 1;
                 }
@@ -4354,16 +4351,20 @@ public interface AgentBuilder {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(types.size());
                     for (Class<?> type : types) {
                         try {
-                            classDefinitions.add(new ClassDefinition(type, locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type))
-                                    .locate(TypeDescription.ForLoadedType.getName(type))
-                                    .resolve()));
-                        } catch (Throwable throwable) {
-                            JavaModule module = JavaModule.ofType(type);
                             try {
-                                listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, throwable);
-                            } finally {
-                                listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module);
+                                classDefinitions.add(new ClassDefinition(type, locationStrategy.classFileLocator(type.getClassLoader(), JavaModule.ofType(type))
+                                        .locate(TypeDescription.ForLoadedType.getName(type))
+                                        .resolve()));
+                            } catch (Throwable throwable) {
+                                JavaModule module = JavaModule.ofType(type);
+                                try {
+                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, throwable);
+                                } finally {
+                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module);
+                                }
                             }
+                        } catch (Throwable ignored) {
+                            /* do nothing */
                         }
                     }
                     if (!classDefinitions.isEmpty()) {

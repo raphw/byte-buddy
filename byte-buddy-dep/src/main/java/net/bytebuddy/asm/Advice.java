@@ -17,9 +17,12 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
+import net.bytebuddy.implementation.bytecode.collection.ArrayReader;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
+import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
@@ -30,15 +33,14 @@ import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
 
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.lang.annotation.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * <p>
@@ -1870,7 +1872,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 abstract class ForArray implements Target {
 
-                    private final TypeDescription.Generic target;
+                    protected final TypeDescription.Generic target;
 
                     private final List<? extends StackManipulation> valueReads;
 
@@ -1912,7 +1914,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public StackManipulation resolveWrite() {
-                            return new StackManipulation.Compound(valueWrites);
+                            return ArrayReader.of(target).forEach(valueWrites);
                         }
                     }
                 }
@@ -2344,11 +2346,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             if (!writeAssignment.isValid()) {
                                 throw new IllegalStateException();
                             }
-                            valueReads.add(new StackManipulation.Compound(
-                                    parameterDescription.getIndex() == instrumentedMethod.getParameters().size() - 1
-                                            ? StackManipulation.Trivial.INSTANCE
-                                            : Duplication.SINGLE,
-                                    IntegerConstant.forValue(parameterDescription.getIndex()),
+                            valueWrites.add(new StackManipulation.Compound(
                                     writeAssignment,
                                     MethodVariableAccess.of(parameterDescription.getType()).storeAt(parameterDescription.getOffset())
                             ));
@@ -2374,10 +2372,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         AnnotationDescription.Loadable<AllArguments> annotation = parameterDescription.getDeclaredAnnotations().ofType(AllArguments.class);
                         if (annotation == null) {
                             return UNDEFINED;
+                        } else if (!parameterDescription.getType().isArray()) {
+                            throw new IllegalStateException();
                         } else if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot define writable field access for " + parameterDescription);
                         } else {
-                            return new ForAllArguments(parameterDescription.getType(), annotation.loadSilent());
+                            return new ForAllArguments(parameterDescription.getType().getComponentType(), annotation.loadSilent());
                         }
                     }
                 }
@@ -3476,75 +3476,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
-                    return null;
-//                    Object value = dynamicValue.resolve(instrumentedType, instrumentedMethod, target, annotation, context.isInitialized());
-//                    if (value == null) {
-//                        if (target.getType().isPrimitive()) {
-//                            throw new IllegalStateException("Cannot map null to primitive type of " + target);
-//                        }
-//                        return Target.ForNullConstant.READ_ONLY;
-//                    } else if ((value instanceof String)) {
-//                        if (!target.getType().asErasure().isAssignableFrom(String.class)) {
-//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-//                        }
-//                        return new Target.ForConstantPoolValue(value);
-//                    } else if (value instanceof Boolean
-//                            || value instanceof Byte
-//                            || value instanceof Short
-//                            || value instanceof Character
-//                            || value instanceof Integer
-//                            || value instanceof Long
-//                            || value instanceof Float
-//                            || value instanceof Double) {
-//                        if (target.getType().isPrimitive() && target.getType().asErasure().asBoxed().isInstance(value)) {
-//                            return new Target.ForConstantPoolValue(value);
-//                        } else if (target.getType().asErasure().isInstance(value)) {
-//                            return Target.ForConstantPoolValue.WithBoxing.of(value);
-//                        } else {
-//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-//                        }
-//                    } else if (value instanceof Class) {
-//                        if (!target.getType().asErasure().isAssignableFrom(Class.class)) {
-//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-//                        }
-//                        return new Target.ForConstantPoolValue(Type.getType((Class<?>) value));
-//                    } else if (value instanceof TypeDescription) {
-//                        if (!target.getType().asErasure().isAssignableFrom(Class.class)) {
-//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-//                        }
-//                        return new Target.ForConstantPoolValue(Type.getType(((TypeDescription) value).getDescriptor()));
-//                    } else if (value instanceof FieldDescription) {
-//                        FieldDescription.InDefinedShape fieldDescription = ((FieldDescription) value).asDefined();
-//                        if (!fieldDescription.isStatic() && !instrumentedType.isAssignableTo(fieldDescription.getDeclaringType())) {
-//                            throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
-//                        } else if (!fieldDescription.isVisibleTo(instrumentedType)) {
-//                            throw new IllegalStateException(fieldDescription + " is not visible from " + instrumentedType);
-//                        } else if (fieldDescription.getType().asErasure().isAssignableTo(target.getType().asErasure())) {
-//                            return new Target.ForField.ReadOnly(fieldDescription);
-//                        } else if (fieldDescription.getType().asErasure().asBoxed().isAssignableTo(target.getType().asErasure())) {
-//                            return new Target.ForField.ReadBoxed(fieldDescription);
-//                        } else {
-//                            throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
-//                        }
-//                    } else if (value instanceof ParameterDescription) {
-//                        ParameterDescription parameterDescription = (ParameterDescription) value;
-//                        if (!instrumentedMethod.equals(parameterDescription.getDeclaringMethod())) {
-//                            throw new IllegalStateException("Cannot access " + parameterDescription + " from " + instrumentedMethod);
-//                        } else if (parameterDescription.getType().asErasure().isAssignableTo(target.getType().asErasure())) {
-//                            return new Target.ForParameter.ReadOnly(parameterDescription.getOffset());
-//                        } else if (parameterDescription.getType().asErasure().asBoxed().isAssignableTo(target.getType().asErasure())) {
-//                            return new Target.ForBoxedArgument.ReadOnly(parameterDescription.getOffset(), Target.PrimitiveDispatcher.of(parameterDescription.getType()));
-//                        } else {
-//                            throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
-//                        }
-//                    } else if (value instanceof Serializable) {
-//                        if (!target.getType().asErasure().isInstance(value)) {
-//                            throw new IllegalStateException("Cannot assign " + value + " to " + target);
-//                        }
-//                        return Target.ForSerializedObject.of(target.getType().asErasure(), (Serializable) value);
-//                    } else {
-//                        throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
-//                    }
+                    return new Target.ForStackManipulation(dynamicValue.resolve(instrumentedType,
+                            instrumentedMethod,
+                            target,
+                            annotation,
+                            assigner,
+                            context.isInitialized()));
                 }
 
                 @Override
@@ -7458,6 +7395,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         Assigner.Typing typing() default Assigner.Typing.STATIC;
     }
 
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
     public @interface AllArguments {
 
         boolean readOnly() default true;
@@ -7740,11 +7680,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A constant value, a serializable value or a field or parameter description to bind to the supplied parameter or
          * {@code null} to assign this value.
          */
-        Object resolve(TypeDescription instrumentedType,
-                       MethodDescription instrumentedMethod,
-                       ParameterDescription.InDefinedShape target,
-                       AnnotationDescription.Loadable<T> annotation,
-                       boolean initialized);
+        StackManipulation resolve(TypeDescription instrumentedType,
+                                  MethodDescription instrumentedMethod,
+                                  ParameterDescription.InDefinedShape target,
+                                  AnnotationDescription.Loadable<T> annotation,
+                                  Assigner assigner,
+                                  boolean initialized);
 
         /**
          * <p>
@@ -7755,116 +7696,246 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * instances of {@link String} and for {@link Class} instances as well as their unloaded {@link TypeDescription} representations.
          * </p>
          */
-        class ForFixedValue implements DynamicValue<Annotation> {
-
-            /**
-             * The fixed value to bind to the corresponding annotation.
-             */
-            private final Object value;
-
-            /**
-             * Creates a dynamic value for a fixed value.
-             *
-             * @param value The fixed value to bind to the corresponding annotation.
-             */
-            public ForFixedValue(Object value) {
-                this.value = value;
-            }
+        abstract class ForFixedValue implements DynamicValue<Annotation> {
 
             @Override
-            public Object resolve(TypeDescription instrumentedType,
-                                  MethodDescription instrumentedMethod,
-                                  ParameterDescription.InDefinedShape target,
-                                  AnnotationDescription.Loadable<Annotation> annotation,
-                                  boolean initialized) {
-                return value;
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription instrumentedMethod,
+                                             ParameterDescription.InDefinedShape target,
+                                             AnnotationDescription.Loadable<Annotation> annotation,
+                                             Assigner assigner,
+                                             boolean initialized) {
+                Object value = doResolve(instrumentedType, instrumentedMethod, target, annotation, assigner, initialized);
+                StackManipulation stackManipulation;
+                if (value == null) {
+                    if (target.getType().isPrimitive()) {
+                        throw new IllegalStateException();
+                    } else {
+                        return NullConstant.INSTANCE;
+                    }
+                } else if (value instanceof Boolean) {
+                    stackManipulation = IntegerConstant.forValue((Boolean) value);
+                } else if (value instanceof Byte) {
+                    stackManipulation = IntegerConstant.forValue((Byte) value);
+                } else if (value instanceof Short) {
+                    stackManipulation = IntegerConstant.forValue((Short) value);
+                } else if (value instanceof Character) {
+                    stackManipulation = IntegerConstant.forValue((Character) value);
+                } else if (value instanceof Integer) {
+                    stackManipulation = IntegerConstant.forValue((Integer) value);
+                } else if (value instanceof Long) {
+                    stackManipulation = LongConstant.forValue((Long) value);
+                } else if (value instanceof Float) {
+                    stackManipulation = FloatConstant.forValue((Float) value);
+                } else if (value instanceof Double) {
+                    stackManipulation = DoubleConstant.forValue((Double) value);
+                } else if (value instanceof TypeDescription) {
+                    stackManipulation = ClassConstant.of((TypeDescription) value);
+                } else if (value instanceof String) {
+                    stackManipulation = new TextConstant((String) value);
+                } else {
+                    throw new IllegalStateException();
+                }
+                StackManipulation assignment = assigner.assign(new TypeDescription.ForLoadedType(value.getClass()).asUnboxed().asGenericType(),
+                        target.getType(),
+                        Assigner.Typing.STATIC);
+                return new StackManipulation.Compound(stackManipulation, assignment);
             }
 
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                ForFixedValue that = (ForFixedValue) other;
-                return value != null ? value.equals(that.value) : that.value == null;
+            protected abstract Object doResolve(TypeDescription instrumentedType,
+                                                MethodDescription instrumentedMethod,
+                                                ParameterDescription.InDefinedShape target,
+                                                AnnotationDescription.Loadable<Annotation> annotation,
+                                                Assigner assigner,
+                                                boolean initialized);
+
+            protected static class OfConstant extends ForFixedValue {
+
+                private final Object value;
+
+                protected OfConstant(Object value) {
+                    this.value = value;
+                }
+
+                @Override
+                protected Object doResolve(TypeDescription instrumentedType,
+                                           MethodDescription instrumentedMethod,
+                                           ParameterDescription.InDefinedShape target,
+                                           AnnotationDescription.Loadable<Annotation> annotation,
+                                           Assigner assigner,
+                                           boolean initialized) {
+                    return value;
+                }
             }
 
-            @Override
-            public int hashCode() {
-                return value != null ? value.hashCode() : 0;
-            }
+            protected static class OfAnnotationProperty extends ForFixedValue {
 
-            @Override
-            public String toString() {
-                return "Advice.DynamicValue.ForFixedValue{" +
-                        "value=" + value +
-                        '}';
+                private final MethodDescription.InDefinedShape property;
+
+                protected OfAnnotationProperty(MethodDescription.InDefinedShape property) {
+                    this.property = property;
+                }
+
+                @SuppressWarnings("unchecked")
+                protected static <T extends Annotation> DynamicValue<T> of(Class<? extends T> type, String property) {
+                    return (DynamicValue<T>) new OfAnnotationProperty(new TypeDescription.ForLoadedType(type).getDeclaredMethods().filter(named(property)).getOnly());
+                }
+
+                @Override
+                protected Object doResolve(TypeDescription instrumentedType,
+                                           MethodDescription instrumentedMethod,
+                                           ParameterDescription.InDefinedShape target,
+                                           AnnotationDescription.Loadable<Annotation> annotation,
+                                           Assigner assigner,
+                                           boolean initialized) {
+                    return annotation.getValue(property).resolve();
+                }
             }
         }
 
-        /**
-         * A dynamic value for an annotation type's property.
-         *
-         * @param <T> The type of the annotation for which a property is bound.
-         */
-        class ForAnnotationProperty<T extends Annotation> implements DynamicValue<T> {
+        class ForFieldValue implements DynamicValue<Annotation> {
 
-            /**
-             * The annotation property.
-             */
-            private final MethodDescription.InDefinedShape annotationProperty;
+            private final FieldDescription fieldDescription;
 
-            /**
-             * Creates a new dynamic value for an annotation property.
-             *
-             * @param annotationProperty The annotation property.
-             */
-            protected ForAnnotationProperty(MethodDescription.InDefinedShape annotationProperty) {
-                this.annotationProperty = annotationProperty;
+            public ForFieldValue(FieldDescription fieldDescription) {
+                this.fieldDescription = fieldDescription;
             }
 
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription instrumentedMethod,
+                                             ParameterDescription.InDefinedShape target,
+                                             AnnotationDescription.Loadable<Annotation> annotation,
+                                             Assigner assigner,
+                                             boolean initialized) {
+                if (!fieldDescription.isStatic()) {
+                    if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
+
+                    } else if (instrumentedMethod.isStatic()) {
+
+                    }
+                }
+                if (!fieldDescription.isVisibleTo(instrumentedType)) {
+
+                }
+                StackManipulation assignment = assigner.assign(fieldDescription.getType(), target.getType(), Assigner.Typing.STATIC);
+                if (!assignment.isValid()) {
+                    throw new IllegalStateException();
+                }
+                return new StackManipulation.Compound(
+                        fieldDescription.isStatic()
+                                ? StackManipulation.Trivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadFrom(0),
+                        FieldAccess.forField(fieldDescription).getter(),
+                        assignment
+                );
+            }
+        }
+
+        class ForParameterValue implements DynamicValue<Annotation> {
+
+            private final ParameterDescription parameterDescription;
+
+            public ForParameterValue(ParameterDescription parameterDescription) {
+                this.parameterDescription = parameterDescription;
+            }
+
+            @Override
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription instrumentedMethod,
+                                             ParameterDescription.InDefinedShape target,
+                                             AnnotationDescription.Loadable<Annotation> annotation,
+                                             Assigner assigner,
+                                             boolean initialized) {
+                if (!parameterDescription.getDeclaringMethod().equals(instrumentedMethod)) {
+                    throw new IllegalStateException();
+                }
+                StackManipulation assignment = assigner.assign(parameterDescription.getType(), target.getType(), Assigner.Typing.STATIC);
+                if (!assignment.isValid()) {
+                    throw new IllegalStateException();
+                }
+                return new StackManipulation.Compound(
+                        MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()),
+                        assignment
+                );
+            }
+        }
+
+        class ForSerializedValue implements DynamicValue<Annotation> {
+
             /**
-             * Locates the annotation property of the given name or throws an exception if no such property exists.
-             *
-             * @param type     The annotation type being bound.
-             * @param property The name of the annotation property.
-             * @param <T>      The type of the annotation.
-             * @return A dynamic value for the located property type.
+             * A charset that does not change the supplied byte array upon encoding or decoding.
              */
-            protected static <T extends Annotation> DynamicValue<T> of(Class<? extends T> type, String property) {
+            private static final String CHARSET = "ISO-8859-1";
+
+            private static final MethodDescription.InDefinedShape GET_BYTES;
+
+            private static final MethodDescription.InDefinedShape CREATE_BYTE_ARRAY_INPUT_STREAM;
+
+            private static final MethodDescription.InDefinedShape CREATE_OBJECT_INPUT_STREAM;
+
+            private static final MethodDescription.InDefinedShape READ_OBJECT;
+
+            static {
+                GET_BYTES = new TypeDescription.ForLoadedType(String.class).getDeclaredMethods()
+                        .filter(named("getBytes").and(takesArguments(String.class))).getOnly();
+                CREATE_BYTE_ARRAY_INPUT_STREAM = new TypeDescription.ForLoadedType(ByteArrayInputStream.class).getDeclaredMethods()
+                        .filter(isConstructor().and(takesArguments(byte[].class))).getOnly();
+                CREATE_OBJECT_INPUT_STREAM = new TypeDescription.ForLoadedType(ObjectInputStream.class).getDeclaredMethods()
+                        .filter(isConstructor().and(takesArguments(0))).getOnly();
+                READ_OBJECT = new TypeDescription.ForLoadedType(ObjectInputStream.class).getDeclaredMethods()
+                        .filter(named("readObject").and(takesArguments(0))).getOnly();
+            }
+
+            private final TypeDescription typeDescription;
+
+            private final String value;
+
+            protected ForSerializedValue(TypeDescription typeDescription, String value) {
+                this.typeDescription = typeDescription;
+                this.value = value;
+            }
+
+            protected static DynamicValue<Annotation> of(Serializable value) {
                 try {
-                    return new ForAnnotationProperty<T>(new MethodDescription.ForLoadedMethod(type.getDeclaredMethod(property)));
-                } catch (NoSuchMethodException exception) {
-                    throw new IllegalArgumentException("Property '" + property + "' does not exist for " + type, exception);
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+                    try {
+                        objectOutputStream.writeObject(value);
+                    } finally {
+                        objectOutputStream.close();
+                    }
+                    return new ForSerializedValue(new TypeDescription.ForLoadedType(value.getClass()), byteArrayOutputStream.toString(CHARSET));
+                } catch (IOException exception) {
+                    throw new IllegalStateException("Cannot serialize " + value, exception);
                 }
             }
 
             @Override
-            public Object resolve(TypeDescription instrumentedType,
-                                  MethodDescription instrumentedMethod,
-                                  ParameterDescription.InDefinedShape target,
-                                  AnnotationDescription.Loadable<T> annotation,
-                                  boolean initialized) {
-                return annotation.getValue(annotationProperty).resolve();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                ForAnnotationProperty<?> that = (ForAnnotationProperty<?>) other;
-                return annotationProperty.equals(that.annotationProperty);
-            }
-
-            @Override
-            public int hashCode() {
-                return annotationProperty.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.DynamicValue.ForAnnotationProperty{" +
-                        "annotationProperty=" + annotationProperty +
-                        '}';
+            public StackManipulation resolve(TypeDescription instrumentedType,
+                                             MethodDescription instrumentedMethod,
+                                             ParameterDescription.InDefinedShape target,
+                                             AnnotationDescription.Loadable<Annotation> annotation,
+                                             Assigner assigner,
+                                             boolean initialized) {
+                StackManipulation assignment = assigner.assign(typeDescription.asGenericType(), target.getType(), Assigner.Typing.STATIC);
+                if (!assignment.isValid()) {
+                    throw new IllegalStateException();
+                }
+                return new StackManipulation.Compound(
+                        TypeCreation.of(new TypeDescription.ForLoadedType(ObjectInputStream.class)),
+                        Duplication.SINGLE,
+                        TypeCreation.of(new TypeDescription.ForLoadedType(ByteArrayInputStream.class)),
+                        Duplication.SINGLE,
+                        new TextConstant(value),
+                        new TextConstant(CHARSET),
+                        MethodInvocation.invoke(GET_BYTES),
+                        MethodInvocation.invoke(CREATE_BYTE_ARRAY_INPUT_STREAM),
+                        MethodInvocation.invoke(CREATE_OBJECT_INPUT_STREAM),
+                        MethodInvocation.invoke(READ_OBJECT),
+                        TypeCasting.to(typeDescription),
+                        assignment
+                );
             }
         }
     }
@@ -7899,13 +7970,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Binds the supplied annotation to a type constant of the supplied value.
          *
          * @param type            The type of the annotation being bound.
-         * @param typeDescription The type reference to bind to this annotation.
          * @param <T>             The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          * @see DynamicValue.ForFixedValue
          */
-        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, TypeDescription typeDescription) {
-            return bind(type, new DynamicValue.ForFixedValue(typeDescription));
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Object value) {
+            return bind(type, new DynamicValue.ForFixedValue.OfConstant(value));
         }
 
         /**
@@ -7933,7 +8003,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @see DynamicValue.ForFixedValue
          */
         public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, FieldDescription fieldDescription) {
-            return bind(type, new DynamicValue.ForFixedValue(fieldDescription));
+            return bind(type, new DynamicValue.ForFieldValue(fieldDescription));
         }
 
         /**
@@ -7984,7 +8054,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @see DynamicValue.ForFixedValue
          */
         public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, ParameterDescription parameterDescription) {
-            return bind(type, new DynamicValue.ForFixedValue(parameterDescription));
+            return bind(type, new DynamicValue.ForParameterValue(parameterDescription));
         }
 
         /**
@@ -7996,8 +8066,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          * @see DynamicValue.ForFixedValue
          */
-        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, Serializable value) {
-            return bind(type, new DynamicValue.ForFixedValue(value));
+        public <T extends Annotation> WithCustomMapping bindSerialized(Class<? extends T> type, Serializable value) {
+            return bind(type, DynamicValue.ForSerializedValue.of(value));
         }
 
         /**
@@ -8009,7 +8079,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation during binding.
          */
         public <T extends Annotation> WithCustomMapping bindProperty(Class<? extends T> type, String property) {
-            return bind(type, DynamicValue.ForAnnotationProperty.<T>of(type, property));
+            return bind(type, DynamicValue.ForFixedValue.OfAnnotationProperty.<T>of(type, property));
         }
 
         /**

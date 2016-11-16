@@ -18,8 +18,7 @@ public class AdviceAnnotationTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Advice.Argument.class, ElementType.PARAMETER},
-                {Advice.BoxedArguments.class, ElementType.PARAMETER},
-                {Advice.BoxedReturn.class, ElementType.PARAMETER},
+                {Advice.AllArguments.class, ElementType.PARAMETER},
                 {Advice.FieldValue.class, ElementType.PARAMETER},
                 {Advice.Enter.class, ElementType.PARAMETER},
                 {Advice.Unused.class, ElementType.PARAMETER},
@@ -27,6 +26,7 @@ public class AdviceAnnotationTest {
                 {Advice.Return.class, ElementType.PARAMETER},
                 {Advice.This.class, ElementType.PARAMETER},
                 {Advice.Thrown.class, ElementType.PARAMETER},
+                {Advice.StubValue.class, ElementType.PARAMETER},
                 {Advice.OnMethodEnter.class, ElementType.METHOD},
                 {Advice.OnMethodExit.class, ElementType.METHOD}
         });
