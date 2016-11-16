@@ -1,9 +1,7 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -1240,16 +1238,7 @@ public class AdviceTest {
     public void testUserTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
-                    @Override
-                    public Object resolve(TypeDescription instrumentedType,
-                                          MethodDescription instrumentedMethod,
-                                          ParameterDescription.InDefinedShape target,
-                                          AnnotationDescription.Loadable<Custom> annotation,
-                                          boolean initialized) {
-                        return Object.class;
-                    }
-                }).to(CustomAdvice.class).on(named(FOO)))
+                .visit(Advice.withCustomMapping().bind(Custom.class, Object.class).to(CustomAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -1260,16 +1249,7 @@ public class AdviceTest {
     public void testUserUnloadedTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
-                    @Override
-                    public Object resolve(TypeDescription instrumentedType,
-                                          MethodDescription instrumentedMethod,
-                                          ParameterDescription.InDefinedShape target,
-                                          AnnotationDescription.Loadable<Custom> annotation,
-                                          boolean initialized) {
-                        return TypeDescription.OBJECT;
-                    }
-                }).to(CustomAdvice.class).on(named(FOO)))
+                .visit(Advice.withCustomMapping().bind(Custom.class, TypeDescription.OBJECT).to(CustomAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -1280,16 +1260,9 @@ public class AdviceTest {
     public void testUserSerializableTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
-                    @Override
-                    public Object resolve(TypeDescription instrumentedType,
-                                          MethodDescription instrumentedMethod,
-                                          ParameterDescription.InDefinedShape target,
-                                          AnnotationDescription.Loadable<Custom> annotation,
-                                          boolean initialized) {
-                        return Collections.singletonMap(FOO, BAR);
-                    }
-                }).to(CustomSerializableAdvice.class).on(named(FOO)))
+                .visit(Advice.withCustomMapping()
+                        .bindSerialized(Custom.class, (Serializable) Collections.singletonMap(FOO, BAR))
+                        .to(CustomSerializableAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -1386,16 +1359,7 @@ public class AdviceTest {
     public void testUserSerializableTypeValueNonAssignable() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
-                    @Override
-                    public Object resolve(TypeDescription instrumentedType,
-                                          MethodDescription instrumentedMethod,
-                                          ParameterDescription.InDefinedShape target,
-                                          AnnotationDescription.Loadable<Custom> annotation,
-                                          boolean initialized) {
-                        return Collections.singletonList(FOO);
-                    }
-                }).to(CustomSerializableAdvice.class).on(named(FOO)))
+                .visit(Advice.withCustomMapping().bind(Custom.class, Collections.singletonList(FOO)).to(CustomSerializableAdvice.class).on(named(FOO)))
                 .make();
     }
 
@@ -1403,16 +1367,7 @@ public class AdviceTest {
     public void testIllegalUserValue() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
-                    @Override
-                    public Object resolve(TypeDescription instrumentedType,
-                                          MethodDescription instrumentedMethod,
-                                          ParameterDescription.InDefinedShape target,
-                                          AnnotationDescription.Loadable<Custom> annotation,
-                                          boolean initialized) {
-                        return new Object();
-                    }
-                }).to(CustomAdvice.class).on(named(FOO)))
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Object()).to(CustomAdvice.class).on(named(FOO)))
                 .make();
     }
 
@@ -1758,16 +1713,7 @@ public class AdviceTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDuplicateRegistration() throws Exception {
-        Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Annotation>() {
-            @Override
-            public Object resolve(TypeDescription instrumentedType,
-                                  MethodDescription instrumentedMethod,
-                                  ParameterDescription.InDefinedShape target,
-                                  AnnotationDescription.Loadable<Annotation> annotation,
-                                  boolean initialized) {
-                return null;
-            }
-        }).bind(Custom.class, (Serializable) null);
+        Advice.withCustomMapping().bind(Custom.class, (Object) null).bind(Custom.class, (Object) null);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1983,8 +1929,11 @@ public class AdviceTest {
                 when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
             }
         }).applyBasic();
-        ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.DynamicValue.ForAnnotationProperty.class).apply();
+        ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.OfConstant.class).apply();
+        ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.OfAnnotationProperty.class).apply();
+        ObjectPropertyAssertion.of(Advice.DynamicValue.ForFieldValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.DynamicValue.ForParameterValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.DynamicValue.ForSerializedValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.Disabled.class).apply();

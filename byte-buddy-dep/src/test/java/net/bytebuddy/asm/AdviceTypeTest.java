@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.pool.TypePool;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -166,10 +167,6 @@ public class AdviceTypeTest {
             if (stubValue != null) {
                 throw new AssertionError();
             }
-            stubValue = FOO;
-            if (stubValue != null) {
-                throw new AssertionError();
-            }
             if (custom != null) {
                 throw new AssertionError();
             }
@@ -178,7 +175,7 @@ public class AdviceTypeTest {
 
         @Advice.OnMethodExit(onThrowable = Exception.class)
         public static void exit(@Advice.Thrown Throwable throwable,
-                                @Advice.Return Object boxedReturn,
+                                @Advice.Return(typing = Assigner.Typing.DYNAMIC) Object boxedReturn,
                                 @Advice.AllArguments Object[] boxed,
                                 @CustomAnnotation Void custom) {
             if (!(exception ? throwable instanceof RuntimeException : throwable == null)) {
@@ -230,7 +227,7 @@ public class AdviceTypeTest {
 
         @Advice.OnMethodExit(inline = false, onThrowable = Exception.class)
         public static void exit(@Advice.Thrown Throwable throwable,
-                                @Advice.Return Object boxedReturn,
+                                @Advice.Return(typing = Assigner.Typing.DYNAMIC) Object boxedReturn,
                                 @Advice.AllArguments Object[] boxed,
                                 @CustomAnnotation Void custom) {
             if (!(exception ? throwable instanceof RuntimeException : throwable == null)) {
@@ -286,10 +283,6 @@ public class AdviceTypeTest {
             if (value) {
                 throw new AssertionError();
             }
-            if ((Boolean) stubValue) {
-                throw new AssertionError();
-            }
-            stubValue = FOO;
             if ((Boolean) stubValue) {
                 throw new AssertionError();
             }
@@ -480,10 +473,6 @@ public class AdviceTypeTest {
             if ((Byte) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
-            stubValue = FOO;
-            if ((Byte) stubValue != NUMERIC_DEFAULT) {
-                throw new AssertionError();
-            }
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
@@ -667,10 +656,6 @@ public class AdviceTypeTest {
             if ((Short) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
-            stubValue = FOO;
-            if ((Short) stubValue != NUMERIC_DEFAULT) {
-                throw new AssertionError();
-            }
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
@@ -848,10 +833,6 @@ public class AdviceTypeTest {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
-            if ((Character) stubValue != NUMERIC_DEFAULT) {
-                throw new AssertionError();
-            }
-            stubValue = FOO;
             if ((Character) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
@@ -1035,10 +1016,6 @@ public class AdviceTypeTest {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
-            if ((Integer) stubValue != NUMERIC_DEFAULT) {
-                throw new AssertionError();
-            }
-            stubValue = FOO;
             if ((Integer) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
@@ -1228,10 +1205,6 @@ public class AdviceTypeTest {
             if ((Long) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
-            stubValue = FOO;
-            if ((Long) stubValue != NUMERIC_DEFAULT) {
-                throw new AssertionError();
-            }
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
@@ -1412,10 +1385,6 @@ public class AdviceTypeTest {
             if (value != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
-            if ((Float) stubValue != NUMERIC_DEFAULT) {
-                throw new AssertionError();
-            }
-            stubValue = FOO;
             if ((Float) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
@@ -1602,10 +1571,6 @@ public class AdviceTypeTest {
             if ((Double) stubValue != NUMERIC_DEFAULT) {
                 throw new AssertionError();
             }
-            stubValue = FOO;
-            if ((Double) stubValue != NUMERIC_DEFAULT) {
-                throw new AssertionError();
-            }
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
@@ -1780,10 +1745,6 @@ public class AdviceTypeTest {
             if (value != null) {
                 throw new AssertionError();
             }
-            if (stubValue != null) {
-                throw new AssertionError();
-            }
-            stubValue = FOO;
             if (stubValue != null) {
                 throw new AssertionError();
             }

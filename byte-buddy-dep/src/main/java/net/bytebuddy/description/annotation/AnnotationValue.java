@@ -54,6 +54,8 @@ public interface AnnotationValue<T, S> {
      */
     Loaded<S> load(ClassLoader classLoader) throws ClassNotFoundException;
 
+    Loaded<S> loadSilent(ClassLoader classLoader);
+
     /**
      * A rendering dispatcher is responsible for resolving annotation values to {@link String} representations.
      */
@@ -421,6 +423,15 @@ public interface AnnotationValue<T, S> {
         @Override
         public <W> W resolve(Class<? extends W> type) {
             return type.cast(resolve());
+        }
+
+        @Override
+        public Loaded<V> loadSilent(ClassLoader classLoader) {
+            try {
+                return load(classLoader);
+            } catch (ClassNotFoundException exception) {
+                throw new IllegalStateException("Cannot load " + this, exception);
+            }
         }
     }
 

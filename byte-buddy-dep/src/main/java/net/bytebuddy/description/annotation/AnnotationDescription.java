@@ -417,6 +417,11 @@ public interface AnnotationDescription {
             }
 
             @Override
+            public Loaded<Void> loadSilent(ClassLoader classLoader) {
+                return this;
+            }
+
+            @Override
             public Void resolve() {
                 throw new IncompleteAnnotationException(annotationType, property);
             }

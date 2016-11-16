@@ -17,7 +17,6 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.collection.ArrayReader;
 import net.bytebuddy.implementation.bytecode.constant.*;
@@ -474,7 +473,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodEnter,
                     writerFlags,
                     readerFlags);
-        } else if (methodExit.getTriggeringThrowable().represents(NoExceptionHandler.class)) {
+        } else if (methodExit.getThrowable().represents(NoExceptionHandler.class)) {
             return new AdviceVisitor.WithExitAdvice.WithoutExceptionHandling(methodVisitor,
                     implementationContext,
                     assigner,
@@ -496,7 +495,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodExit,
                     writerFlags,
                     readerFlags,
-                    methodExit.getTriggeringThrowable());
+                    methodExit.getThrowable());
         }
     }
 
@@ -1759,19 +1758,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     protected final TypeDefinition typeDefinition;
 
-                    protected ForDefaultValue(TypeDefinition typeDefinition) {
+                    private final StackManipulation readAssignment;
+
+                    protected ForDefaultValue(TypeDefinition typeDefinition, StackManipulation readAssignment) {
                         this.typeDefinition = typeDefinition;
+                        this.readAssignment = readAssignment;
                     }
 
                     @Override
                     public StackManipulation resolveRead() {
-                        return DefaultValue.of(typeDefinition);
+                        return new StackManipulation.Compound(DefaultValue.of(typeDefinition), readAssignment);
                     }
 
                     protected static class ReadOnly extends ForDefaultValue {
 
                         protected ReadOnly(TypeDefinition typeDefinition) {
-                            super(typeDefinition);
+                            this(typeDefinition, StackManipulation.Trivial.INSTANCE);
+                        }
+
+                        protected ReadOnly(TypeDefinition typeDefinition, StackManipulation readAssignment) {
+                            super(typeDefinition, readAssignment);
                         }
 
                         @Override
@@ -1788,7 +1794,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected static class ReadWrite extends ForDefaultValue {
 
                         protected ReadWrite(TypeDefinition typeDefinition) {
-                            super(typeDefinition);
+                            this(typeDefinition, StackManipulation.Trivial.INSTANCE);
+                        }
+
+                        protected ReadWrite(TypeDefinition typeDefinition, StackManipulation readAssignment) {
+                            super(typeDefinition, readAssignment);
                         }
 
                         @Override
@@ -1923,38 +1933,44 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     protected final FieldDescription fieldDescription;
 
-                    protected ForField(FieldDescription fieldDescription) {
+                    private final StackManipulation readAssignment;
+
+                    protected ForField(FieldDescription fieldDescription, StackManipulation readAssignment) {
                         this.fieldDescription = fieldDescription;
+                        this.readAssignment = readAssignment;
                     }
 
                     @Override
                     public StackManipulation resolveRead() {
                         return new StackManipulation.Compound(fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(fieldDescription).getter());
+                                : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(fieldDescription).getter(), readAssignment);
                     }
 
                     static class ReadOnly extends ForField {
 
-                        public ReadOnly(FieldDescription fieldDescription) {
-                            super(fieldDescription);
+                        public ReadOnly(FieldDescription fieldDescription, StackManipulation readAssignment) {
+                            super(fieldDescription, readAssignment);
                         }
 
                         @Override
                         public StackManipulation resolveWrite() {
-                            return null;
+                            throw new IllegalStateException();
                         }
 
                         @Override
                         public StackManipulation resolveIncrement(int value) {
-                            return null;
+                            throw new IllegalStateException();
                         }
                     }
 
                     static class ReadWrite extends ForField {
 
-                        protected ReadWrite(FieldDescription fieldDescription) {
-                            super(fieldDescription);
+                        private final StackManipulation writeAssignment;
+
+                        protected ReadWrite(FieldDescription fieldDescription, StackManipulation readAssignment, StackManipulation writeAssignment) {
+                            super(fieldDescription, readAssignment);
+                            this.writeAssignment = writeAssignment;
                         }
 
                         @Override
@@ -1965,7 +1981,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             } else {
                                 preparation = new StackManipulation.Compound(
                                         MethodVariableAccess.REFERENCE.loadFrom(0),
-                                        Duplication.SINGLE.flipOver(fieldDescription.getType())
+                                        Duplication.SINGLE.flipOver(fieldDescription.getType()),
+                                        Removal.SINGLE
                                 );
                             }
                             return new StackManipulation.Compound(preparation, FieldAccess.forField(fieldDescription).putter());
@@ -2481,11 +2498,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private static final MethodDescription.InDefinedShape READ_ONLY;
 
+                private static final MethodDescription.InDefinedShape TYPING;
+
                 static {
                     MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
                     VALUE = methods.filter(named("value")).getOnly();
                     DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
                     READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                    TYPING = methods.filter(named("typing")).getOnly();
                 }
 
                 /**
@@ -2496,24 +2516,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The expected type that the field can be assigned to.
                  */
-                protected final TypeDescription targetType;
+                protected final TypeDescription.Generic target;
 
                 /**
                  * {@code true} if this mapping is read-only.
                  */
                 protected final boolean readOnly;
 
+                private final Assigner.Typing typing;
+
                 /**
                  * Creates an offset mapping for a field.
                  *
                  * @param name       The name of the field.
-                 * @param targetType The expected type that the field can be assigned to.
                  * @param readOnly   {@code true} if this mapping is read-only.
+                 * @param typing
                  */
-                protected ForField(String name, TypeDescription targetType, boolean readOnly) {
+                protected ForField(String name, TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
                     this.name = name;
-                    this.targetType = targetType;
+                    this.target = target;
                     this.readOnly = readOnly;
+                    this.typing = typing;
                 }
 
                 @Override
@@ -2521,34 +2544,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     FieldLocator.Resolution resolution = fieldLocator(instrumentedType).locate(name);
                     if (!resolution.isResolved()) {
                         throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedMethod);
-                    } else if (readOnly && !resolution.getField().asDefined().getType().asErasure().isAssignableTo(targetType)) {
-                        throw new IllegalStateException("Cannot assign type of read-only field " + resolution.getField() + " to " + targetType);
-                    } else if (!readOnly && !resolution.getField().asDefined().getType().asErasure().equals(targetType)) {
-                        throw new IllegalStateException("Type of field " + resolution.getField() + " is not equal to " + targetType);
                     } else if (!resolution.getField().isStatic() && instrumentedMethod.isStatic()) {
                         throw new IllegalStateException("Cannot read non-static field " + resolution.getField() + " from static method " + instrumentedMethod);
                     } else if (!context.isInitialized() && !resolution.getField().isStatic()) {
                         throw new IllegalStateException("Cannot access non-static field before calling constructor: " + instrumentedMethod);
                     }
-                    return readOnly
-                            ? new Target.ForField.ReadOnly(resolution.getField().asDefined())
-                            : new Target.ForField.ReadWrite(resolution.getField().asDefined());
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForField forField = (ForField) other;
-                    return name.equals(forField.name) && targetType.equals(forField.targetType) && readOnly == forField.readOnly;
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = name.hashCode();
-                    result = 31 * result + targetType.hashCode();
-                    result = 31 * result + (readOnly ? 1 : 0);
-                    return result;
+                    StackManipulation readAssignment = assigner.assign(resolution.getField().getType(), target, typing);
+                    if (!readAssignment.isValid()) {
+                        throw new IllegalStateException();
+                    } else if (readOnly) {
+                        return new Target.ForField.ReadOnly(resolution.getField(), readAssignment);
+                    } else {
+                        StackManipulation writeAssignment = assigner.assign(target, resolution.getField().getType(), typing);
+                        if (!writeAssignment.isValid()) {
+                            throw new IllegalStateException();
+                        }
+                        return new Target.ForField.ReadWrite(resolution.getField().asDefined(), readAssignment, writeAssignment);
+                    }
                 }
 
                 /**
@@ -2568,24 +2580,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates an offset mapping for a field with an implicit declaring type.
                      *
                      * @param name       The name of the field.
-                     * @param targetType The expected type that the field can be assigned to.
                      * @param readOnly   {@code true} if the field is read-only.
                      */
-                    protected WithImplicitType(String name, TypeDescription targetType, boolean readOnly) {
-                        super(name, targetType, readOnly);
+                    protected WithImplicitType(String name, TypeDescription.Generic target, boolean readOnly, Assigner.Typing typing) {
+                        super(name, target, readOnly, typing);
                     }
 
                     @Override
                     protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
                         return new FieldLocator.ForClassHierarchy(instrumentedType);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForField.WithImplicitType{" +
-                                "name=" + name +
-                                ", targetType=" + targetType +
-                                '}';
                     }
                 }
 
@@ -2603,13 +2606,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Creates an offset mapping for a field with an explicit declaring type.
                      *
                      * @param name        The name of the field.
-                     * @param targetType  The expected type that the field can be assigned to.
-                     * @param locatedType The type declaring the field.
                      * @param readOnly    {@code true} if the field is read-only.
                      */
-                    protected WithExplicitType(String name, TypeDescription targetType, TypeDescription locatedType, boolean readOnly) {
-                        super(name, targetType, readOnly);
-                        this.explicitType = locatedType;
+                    protected WithExplicitType(String name, TypeDescription.Generic target, TypeDescription explicitType, boolean readOnly, Assigner.Typing typing) {
+                        super(name, target, readOnly, typing);
+                        this.explicitType = explicitType;
                     }
 
                     @Override
@@ -2618,31 +2619,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException(explicitType + " is no super type of " + instrumentedType);
                         }
                         return new FieldLocator.ForExactType(explicitType);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        if (!super.equals(other)) return false;
-                        WithExplicitType that = (WithExplicitType) other;
-                        return explicitType.equals(that.explicitType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + explicitType.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForField.WithExplicitType{" +
-                                "name=" + name +
-                                ", targetType=" + targetType +
-                                ", explicitType=" + explicitType +
-                                '}';
                     }
                 }
 
@@ -2685,10 +2661,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else {
                             TypeDescription declaringType = annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
                             String name = annotation.getValue(VALUE).resolve(String.class);
-                            TypeDescription targetType = parameterDescription.getType().asErasure();
+                            boolean readOnly = annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class);
+                            Assigner.Typing typing = annotation.getValue(ForField.TYPING).loadSilent(Assigner.Typing.class.getClassLoader()).resolve(Assigner.Typing.class);
                             return declaringType.represents(void.class)
-                                    ? new WithImplicitType(name, targetType, annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class))
-                                    : new WithExplicitType(name, targetType, declaringType, annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class));
+                                    ? new WithImplicitType(name, parameterDescription.getType(), readOnly, typing)
+                                    : new WithExplicitType(name, parameterDescription.getType(), declaringType, readOnly, typing);
                         }
                     }
 
@@ -3104,10 +3081,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
-                    return new Target.ForStackManipulation(new StackManipulation.Compound(
-                            DefaultValue.of(instrumentedMethod.getReturnType()),
-                            assigner.assign(instrumentedMethod.getReturnType(), TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)
-                    ));
+                    return new Target.ForDefaultValue.ReadOnly(instrumentedMethod.getReturnType(), assigner.assign(instrumentedMethod.getReturnType(),
+                            TypeDescription.Generic.OBJECT,
+                            Assigner.Typing.DYNAMIC));
                 }
 
                 @Override
@@ -3262,13 +3238,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!readAssignment.isValid()) {
                         throw new IllegalStateException();
                     } else if (readOnly) {
-                        return new Target.ForVariable.ReadOnly(instrumentedMethod.getReturnType(), offset, readAssignment);
+                        return instrumentedMethod.getReturnType().represents(void.class)
+                                ? new Target.ForDefaultValue.ReadOnly(target)
+                                : new Target.ForVariable.ReadOnly(instrumentedMethod.getReturnType(), offset, readAssignment);
                     } else {
                         StackManipulation writeAssignment = assigner.assign(target, instrumentedMethod.getReturnType(), typing);
                         if (!writeAssignment.isValid()) {
                             throw new IllegalStateException();
                         }
-                        return new Target.ForVariable.ReadWrite(instrumentedMethod.getReturnType(), offset, readAssignment, writeAssignment);
+                        return instrumentedMethod.getReturnType().represents(void.class)
+                                ? new Target.ForDefaultValue.ReadWrite(target)
+                                : new Target.ForVariable.ReadWrite(instrumentedMethod.getReturnType(), offset, readAssignment, writeAssignment);
                     }
                 }
 
@@ -4300,7 +4280,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return The {@link Throwable} type for which to invoke this exit advice or a description of {@link NoExceptionHandler}
                  * if this exit advice does not expect to be invoked upon any throwable.
                  */
-                TypeDescription getTriggeringThrowable();
+                TypeDescription getThrowable();
 
                 @Override
                 Bound.ForMethodExit bind(TypeDescription instrumentedType,
@@ -4383,7 +4363,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public TypeDescription getTriggeringThrowable() {
+            public TypeDescription getThrowable() {
                 return NoExceptionHandler.DESCRIPTION;
             }
 
@@ -5130,12 +5110,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                List<? extends OffsetMapping.Factory> userFactories,
                                                                ClassReader classReader,
                                                                TypeDescription enterType) {
-                        TypeDescription triggeringThrowable = adviceMethod.getDeclaredAnnotations()
+                        TypeDescription throwable = adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
                                 .getValue(ON_THROWABLE).resolve(TypeDescription.class);
-                        return triggeringThrowable.represents(NoExceptionHandler.class)
+                        return throwable.represents(NoExceptionHandler.class)
                                 ? new WithoutExceptionHandler(adviceMethod, userFactories, classReader, enterType)
-                                : new WithExceptionHandler(adviceMethod, userFactories, classReader, enterType, triggeringThrowable);
+                                : new WithExceptionHandler(adviceMethod, userFactories, classReader, enterType, throwable);
                     }
 
                     @Override
@@ -5156,7 +5136,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                         return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
                                 implementationContext,
-                                methodSizeHandler.bindExit(adviceMethod, getTriggeringThrowable().represents(NoExceptionHandler.class)),
+                                methodSizeHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
                                 stackMapFrameHandler.bindExit(adviceMethod),
                                 instrumentedMethod,
                                 adviceMethod,
@@ -5270,35 +5250,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * The type of the handled throwable type for which this advice is invoked.
                          */
-                        private final TypeDescription triggeringThrowable;
+                        private final TypeDescription throwable;
 
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
-                         * @param adviceMethod        The represented advice method.
-                         * @param userFactories       A list of user-defined factories for offset mappings.
-                         * @param classReader         The class reader for parsing the advice method's class file.
-                         * @param enterType           The type of the value supplied by the enter advice method or
-                         *                            a description of {@code void} if no such value exists.
-                         * @param triggeringThrowable The type of the handled throwable type for which this advice is invoked.
+                         * @param adviceMethod  The represented advice method.
+                         * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param classReader   The class reader for parsing the advice method's class file.
+                         * @param enterType     The type of the value supplied by the enter advice method or
+                         *                      a description of {@code void} if no such value exists.
+                         * @param throwable     The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                        List<? extends OffsetMapping.Factory> userFactories,
                                                        ClassReader classReader,
                                                        TypeDescription enterType,
-                                                       TypeDescription triggeringThrowable) {
+                                                       TypeDescription throwable) {
                             super(adviceMethod, userFactories, classReader, enterType);
-                            this.triggeringThrowable = triggeringThrowable;
+                            this.throwable = throwable;
                         }
 
                         @Override
                         protected StackSize getPadding() {
-                            return triggeringThrowable.getStackSize();
+                            return throwable.getStackSize();
                         }
 
                         @Override
-                        public TypeDescription getTriggeringThrowable() {
-                            return triggeringThrowable;
+                        public TypeDescription getThrowable() {
+                            return throwable;
                         }
 
                         @Override
@@ -5306,7 +5286,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithExceptionHandler{" +
                                     "adviceMethod=" + adviceMethod +
                                     ", offsetMappings=" + offsetMappings +
-                                    ", triggeringThrowable=" + triggeringThrowable +
+                                    ", throwable=" + throwable +
                                     '}';
                         }
                     }
@@ -5338,7 +5318,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public TypeDescription getTriggeringThrowable() {
+                        public TypeDescription getThrowable() {
                             return NoExceptionHandler.DESCRIPTION;
                         }
 
@@ -5524,7 +5504,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
-                        methodSizeHandler.recordPadding(stackManipulation.apply(mv, null).getMaximalSize() - expectedGrowth.getSize());
+                        methodSizeHandler.recordPadding(stackManipulation.apply(mv, implementationContext).getMaximalSize() - expectedGrowth.getSize());
                     } else {
                         mv.visitVarInsn(opcode, adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()));
                     }
@@ -5534,7 +5514,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitIincInsn(int offset, int value) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        methodSizeHandler.recordPadding(target.resolveIncrement(value).apply(mv, null).getMaximalSize());
+                        methodSizeHandler.recordPadding(target.resolveIncrement(value).apply(mv, implementationContext).getMaximalSize());
                     } else {
                         mv.visitIincInsn(adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()), value);
                     }
@@ -5959,6 +5939,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected final MethodVisitor methodVisitor;
 
+                    protected final Implementation.Context implementationContext;
+
                     /**
                      * A handler for computing the method size requirements.
                      */
@@ -5977,18 +5959,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new advice method writer.
                      *
-                     * @param adviceMethod         The advice method.
-                     * @param instrumentedMethod   The instrumented method.
-                     * @param offsetMappings       The offset mappings available to this advice.
-                     * @param methodVisitor        The method visitor for writing the instrumented method.
-                     * @param methodSizeHandler    A handler for computing the method size requirements.
-                     * @param stackMapFrameHandler A handler for translating and injecting stack map frames.
-                     * @param suppressionHandler   A bound suppression handler that is used for suppressing exceptions of this advice method.
+                     * @param adviceMethod          The advice method.
+                     * @param instrumentedMethod    The instrumented method.
+                     * @param offsetMappings        The offset mappings available to this advice.
+                     * @param methodVisitor         The method visitor for writing the instrumented method.
+                     * @param implementationContext
+                     * @param methodSizeHandler     A handler for computing the method size requirements.
+                     * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                     * @param suppressionHandler    A bound suppression handler that is used for suppressing exceptions of this advice method.
                      */
                     protected AdviceMethodWriter(MethodDescription.InDefinedShape adviceMethod,
                                                  MethodDescription instrumentedMethod,
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
+                                                 Context implementationContext,
                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  SuppressionHandler.Bound suppressionHandler) {
@@ -5996,6 +5980,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.instrumentedMethod = instrumentedMethod;
                         this.offsetMappings = offsetMappings;
                         this.methodVisitor = methodVisitor;
+                        this.implementationContext = implementationContext;
                         this.methodSizeHandler = methodSizeHandler;
                         this.stackMapFrameHandler = stackMapFrameHandler;
                         this.suppressionHandler = suppressionHandler;
@@ -6015,7 +6000,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         for (OffsetMapping.Target offsetMapping : offsetMappings) {
                             Type type = Type.getType(adviceMethod.getParameters().get(index++).getType().asErasure().getDescriptor());
                             currentStackSize += type.getSize();
-                            maximumStackSize = Math.max(maximumStackSize, currentStackSize + offsetMapping.resolveRead().apply(methodVisitor, null).getMaximalSize());
+                            maximumStackSize = Math.max(maximumStackSize, currentStackSize + offsetMapping.resolveRead()
+                                    .apply(methodVisitor, implementationContext)
+                                    .getMaximalSize());
                         }
                         methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                                 adviceMethod.getDeclaringType().getInternalName(),
@@ -6070,11 +6057,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  MethodDescription instrumentedMethod,
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
+                                                 Implementation.Context implementationContext,
                                                  MethodSizeHandler.ForAdvice methodSizeHandler,
                                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                  SuppressionHandler.Bound suppressionHandler,
                                                  Resolved.ForMethodEnter.SkipDispatcher skipDispatcher) {
-                            super(adviceMethod, instrumentedMethod, offsetMappings, methodVisitor, methodSizeHandler, stackMapFrameHandler, suppressionHandler);
+                            super(adviceMethod,
+                                    instrumentedMethod,
+                                    offsetMappings,
+                                    methodVisitor,
+                                    implementationContext,
+                                    methodSizeHandler,
+                                    stackMapFrameHandler,
+                                    suppressionHandler);
                             this.skipDispatcher = skipDispatcher;
                         }
 
@@ -6156,10 +6151,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 MethodDescription instrumentedMethod,
                                                 List<OffsetMapping.Target> offsetMappings,
                                                 MethodVisitor methodVisitor,
+                                                Implementation.Context implementationContext,
                                                 MethodSizeHandler.ForAdvice methodSizeHandler,
                                                 StackMapFrameHandler.ForAdvice stackMapFrameHandler,
                                                 SuppressionHandler.Bound suppressionHandler) {
-                            super(adviceMethod, instrumentedMethod, offsetMappings, methodVisitor, methodSizeHandler, stackMapFrameHandler, suppressionHandler);
+                            super(adviceMethod,
+                                    instrumentedMethod,
+                                    offsetMappings,
+                                    methodVisitor,
+                                    implementationContext,
+                                    methodSizeHandler,
+                                    stackMapFrameHandler,
+                                    suppressionHandler);
                         }
 
                         @Override
@@ -6264,6 +6267,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 instrumentedMethod,
                                 offsetMappings,
                                 methodVisitor,
+                                implementationContext,
                                 methodSizeHandler.bindEntry(adviceMethod),
                                 stackMapFrameHandler.bindEntry(adviceMethod),
                                 suppressionHandler.bind(),
@@ -6347,12 +6351,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
                                                                List<? extends OffsetMapping.Factory> userFactories,
                                                                TypeDescription enterType) {
-                        TypeDescription triggeringThrowable = adviceMethod.getDeclaredAnnotations()
+                        TypeDescription throwable = adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
                                 .getValue(ON_THROWABLE).resolve(TypeDescription.class);
-                        return triggeringThrowable.represents(NoExceptionHandler.class)
+                        return throwable.represents(NoExceptionHandler.class)
                                 ? new WithoutExceptionHandler(adviceMethod, userFactories, enterType)
-                                : new WithExceptionHandler(adviceMethod, userFactories, enterType, triggeringThrowable);
+                                : new WithExceptionHandler(adviceMethod, userFactories, enterType, throwable);
                     }
 
                     @Override
@@ -6374,7 +6378,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 instrumentedMethod,
                                 offsetMappings,
                                 methodVisitor,
-                                methodSizeHandler.bindExit(adviceMethod, getTriggeringThrowable().represents(NoExceptionHandler.class)),
+                                implementationContext,
+                                methodSizeHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
                                 stackMapFrameHandler.bindExit(adviceMethod),
                                 suppressionHandler.bind());
                     }
@@ -6401,28 +6406,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * The type of the handled throwable type for which this advice is invoked.
                          */
-                        private final TypeDescription triggeringThrowable;
+                        private final TypeDescription throwable;
 
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
-                         * @param adviceMethod        The represented advice method.
-                         * @param userFactories       A list of user-defined factories for offset mappings.
-                         * @param enterType           The type of the value supplied by the enter advice method or
-                         *                            a description of {@code void} if no such value exists.
-                         * @param triggeringThrowable The type of the handled throwable type for which this advice is invoked.
+                         * @param adviceMethod  The represented advice method.
+                         * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param enterType     The type of the value supplied by the enter advice method or
+                         *                      a description of {@code void} if no such value exists.
+                         * @param throwable     The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                        List<? extends OffsetMapping.Factory> userFactories,
                                                        TypeDescription enterType,
-                                                       TypeDescription triggeringThrowable) {
+                                                       TypeDescription throwable) {
                             super(adviceMethod, userFactories, enterType);
-                            this.triggeringThrowable = triggeringThrowable;
+                            this.throwable = throwable;
                         }
 
                         @Override
-                        public TypeDescription getTriggeringThrowable() {
-                            return triggeringThrowable;
+                        public TypeDescription getThrowable() {
+                            return throwable;
                         }
 
                         @Override
@@ -6430,7 +6435,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return "Advice.Dispatcher.Delegating.Resolved.ForMethodExit.WithExceptionHandler{" +
                                     "adviceMethod=" + adviceMethod +
                                     ", offsetMappings=" + offsetMappings +
-                                    ", triggeringThrowable=" + triggeringThrowable +
+                                    ", throwable=" + throwable +
                                     '}';
                         }
                     }
@@ -6455,7 +6460,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public TypeDescription getTriggeringThrowable() {
+                        public TypeDescription getThrowable() {
                             return NoExceptionHandler.DESCRIPTION;
                         }
 
@@ -6973,7 +6978,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The type of the handled throwable type for which this advice is invoked.
                  */
-                private final TypeDescription triggeringThrowable;
+                private final TypeDescription throwable;
 
                 /**
                  * Indicates the start of the user method.
@@ -6988,14 +6993,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new advice visitor that captures exception by weaving try-catch blocks around user code.
                  *
-                 * @param methodVisitor       The method visitor for the instrumented method.
-                 * @param instrumentedType    A description of the instrumented type.
-                 * @param instrumentedMethod  A description of the instrumented method.
-                 * @param methodEnter         The dispatcher to be used for method entry.
-                 * @param methodExit          The dispatcher to be used for method exit.
-                 * @param writerFlags         The ASM writer flags that were set.
-                 * @param readerFlags         The ASM reader flags that were set.
-                 * @param triggeringThrowable The type of the handled throwable type for which this advice is invoked.
+                 * @param methodVisitor      The method visitor for the instrumented method.
+                 * @param instrumentedType   A description of the instrumented type.
+                 * @param instrumentedMethod A description of the instrumented method.
+                 * @param methodEnter        The dispatcher to be used for method entry.
+                 * @param methodExit         The dispatcher to be used for method exit.
+                 * @param writerFlags        The ASM writer flags that were set.
+                 * @param readerFlags        The ASM reader flags that were set.
+                 * @param throwable          The type of the handled throwable type for which this advice is invoked.
                  */
                 protected WithExceptionHandling(MethodVisitor methodVisitor,
                                                 Implementation.Context implementationContext,
@@ -7006,7 +7011,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 Dispatcher.Resolved.ForMethodExit methodExit,
                                                 int writerFlags,
                                                 int readerFlags,
-                                                TypeDescription triggeringThrowable) {
+                                                TypeDescription throwable) {
                     super(methodVisitor,
                             implementationContext,
                             assigner,
@@ -7019,14 +7024,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.THROWABLE),
                             writerFlags,
                             readerFlags);
-                    this.triggeringThrowable = triggeringThrowable;
+                    this.throwable = throwable;
                     userStart = new Label();
                     exceptionHandler = new Label();
                 }
 
                 @Override
                 protected void onUserPrepare() {
-                    methodVisitor.visitTryCatchBlock(userStart, returnHandler, exceptionHandler, triggeringThrowable.getInternalName());
+                    methodVisitor.visitTryCatchBlock(userStart, returnHandler, exceptionHandler, throwable.getInternalName());
                 }
 
                 @Override
@@ -7093,7 +7098,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public String toString() {
                     return "Advice.AdviceVisitor.WithExitAdvice.WithExceptionHandling{" +
                             "instrumentedMethod=" + instrumentedMethod +
-                            ", triggeringThrowable=" + triggeringThrowable +
+                            ", throwable=" + throwable +
                             ", doesReturn=" + doesReturn +
                             "}";
                 }
@@ -7487,6 +7492,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
+
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
     }
 
     /**
@@ -7764,7 +7771,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            AnnotationDescription.Loadable<Annotation> annotation,
                                            Assigner assigner,
                                            boolean initialized) {
-                    return value;
+                    return value instanceof Class
+                            ? new TypeDescription.ForLoadedType((Class<?>) value)
+                            : value;
                 }
             }
 
@@ -7810,13 +7819,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              boolean initialized) {
                 if (!fieldDescription.isStatic()) {
                     if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
-
+                        throw new IllegalStateException();
                     } else if (instrumentedMethod.isStatic()) {
-
+                        throw new IllegalStateException();
                     }
                 }
                 if (!fieldDescription.isVisibleTo(instrumentedType)) {
-
+                    throw new IllegalStateException();
                 }
                 StackManipulation assignment = assigner.assign(fieldDescription.getType(), target.getType(), Assigner.Typing.STATIC);
                 if (!assignment.isValid()) {
@@ -7882,7 +7891,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 CREATE_BYTE_ARRAY_INPUT_STREAM = new TypeDescription.ForLoadedType(ByteArrayInputStream.class).getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(byte[].class))).getOnly();
                 CREATE_OBJECT_INPUT_STREAM = new TypeDescription.ForLoadedType(ObjectInputStream.class).getDeclaredMethods()
-                        .filter(isConstructor().and(takesArguments(0))).getOnly();
+                        .filter(isConstructor().and(takesArguments(InputStream.class))).getOnly();
                 READ_OBJECT = new TypeDescription.ForLoadedType(ObjectInputStream.class).getDeclaredMethods()
                         .filter(named("readObject").and(takesArguments(0))).getOnly();
             }
@@ -7918,7 +7927,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              AnnotationDescription.Loadable<Annotation> annotation,
                                              Assigner assigner,
                                              boolean initialized) {
-                StackManipulation assignment = assigner.assign(typeDescription.asGenericType(), target.getType(), Assigner.Typing.STATIC);
+                StackManipulation assignment = assigner.assign(typeDescription.asGenericType(), target.getType(), Assigner.Typing.DYNAMIC);
                 if (!assignment.isValid()) {
                     throw new IllegalStateException();
                 }
@@ -7933,7 +7942,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         MethodInvocation.invoke(CREATE_BYTE_ARRAY_INPUT_STREAM),
                         MethodInvocation.invoke(CREATE_OBJECT_INPUT_STREAM),
                         MethodInvocation.invoke(READ_OBJECT),
-                        TypeCasting.to(typeDescription),
                         assignment
                 );
             }
@@ -7969,8 +7977,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Binds the supplied annotation to a type constant of the supplied value.
          *
-         * @param type            The type of the annotation being bound.
-         * @param <T>             The annotation type.
+         * @param type The type of the annotation being bound.
+         * @param <T>  The annotation type.
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          * @see DynamicValue.ForFixedValue
          */
