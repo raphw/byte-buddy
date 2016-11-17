@@ -560,7 +560,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                     @Override
                     public ByteCodeAppender getByteCodeAppender() {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Non-defined injected code does not define a byte code appender");
                     }
 
                     @Override

@@ -147,7 +147,7 @@ public interface MethodDelegationBinder {
 
             @Override
             public Void getIdentificationToken() {
-                throw new IllegalStateException();
+                throw new IllegalStateException("An illegal binding does not define an identification token");
             }
 
             @Override

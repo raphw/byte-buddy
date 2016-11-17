@@ -284,7 +284,7 @@ public class Forwarding implements Implementation.Composable {
             public FieldDescription resolve(TypeDescription instrumentedType) {
                 FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(fieldName);
                 if (!resolution.isResolved()) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Could not resolve a field for " + fieldName + " on " + instrumentedType);
                 }
                 return resolution.getField();
             }

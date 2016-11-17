@@ -6,9 +6,9 @@ import net.bytebuddy.implementation.StubMethod;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 public class AdviceImplementationTest {
 

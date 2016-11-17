@@ -26,6 +26,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
 import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
@@ -1831,12 +1832,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public StackManipulation resolveWrite() {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot write to read-only default value");
                         }
 
                         @Override
                         public StackManipulation resolveIncrement(int value) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot write to read-only default value");
                         }
 
                         @Override
@@ -2101,7 +2102,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public StackManipulation resolveIncrement(int value) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot increment read-only array value");
                     }
 
                     @Override
@@ -2136,7 +2137,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public StackManipulation resolveWrite() {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot write to read-only array value");
                         }
 
                         @Override
@@ -2267,12 +2268,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public StackManipulation resolveWrite() {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot write to read-only field value");
                         }
 
                         @Override
                         public StackManipulation resolveIncrement(int value) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot write to read-only field value");
                         }
 
                         @Override
@@ -2433,7 +2434,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else if (value instanceof String) {
                             return new ForStackManipulation(new TextConstant((String) value));
                         } else {
-                            throw new IllegalArgumentException();
+                            throw new IllegalArgumentException("Not a constant value: " + value);
                         }
                     }
 
@@ -2720,13 +2721,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                     StackManipulation readAssignment = assigner.assign(instrumentedType.asGenericType(), target, typing);
                     if (!readAssignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + target);
                     } else if (readOnly) {
                         return new Target.ForVariable.ReadOnly(instrumentedType.asGenericType(), THIS_REFERENCE, readAssignment);
                     } else {
                         StackManipulation writeAssignment = assigner.assign(target, instrumentedType.asGenericType(), typing);
                         if (!writeAssignment.isValid()) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot assign " + target + " to " + instrumentedType);
                         }
                         return new Target.ForVariable.ReadWrite(instrumentedType.asGenericType(), THIS_REFERENCE, readAssignment, writeAssignment);
                     }
@@ -2859,7 +2860,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                         StackManipulation readAssignment = assigner.assign(parameterDescription.getType(), target, typing);
                         if (!readAssignment.isValid()) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
                         }
                         valueReads.add(new StackManipulation.Compound(
                                 MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()),
@@ -2873,7 +2874,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                             StackManipulation writeAssignment = assigner.assign(target, parameterDescription.getType(), typing);
                             if (!writeAssignment.isValid()) {
-                                throw new IllegalStateException();
+                                throw new IllegalStateException("Cannot assign " + target + " to " + parameterDescription);
                             }
                             valueWrites.add(new StackManipulation.Compound(
                                     writeAssignment,
@@ -2944,7 +2945,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (annotation == null) {
                             return UNDEFINED;
                         } else if (!parameterDescription.getType().isArray()) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot use AllArguments annotation on a non-array type");
                         } else if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot define writable field access for " + parameterDescription);
                         } else {
@@ -3120,13 +3121,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                     StackManipulation readAssignment = assigner.assign(resolution.getField().getType(), target, typing);
                     if (!readAssignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign " + resolution.getField() + " to " + target);
                     } else if (readOnly) {
                         return new Target.ForField.ReadOnly(resolution.getField(), readAssignment);
                     } else {
                         StackManipulation writeAssignment = assigner.assign(target, resolution.getField().getType(), typing);
                         if (!writeAssignment.isValid()) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot assign " + target + " to " + resolution.getField());
                         }
                         return new Target.ForField.ReadWrite(resolution.getField().asDefined(), readAssignment, writeAssignment);
                     }
@@ -3831,13 +3832,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
                     StackManipulation readAssignment = assigner.assign(enterType, target, typing);
                     if (!readAssignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign " + enterType + " to " + target);
                     } else if (readOnly) {
                         return new Target.ForVariable.ReadOnly(target, instrumentedMethod.getStackSize(), readAssignment);
                     } else {
                         StackManipulation writeAssignment = assigner.assign(target, enterType, typing);
                         if (!writeAssignment.isValid()) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot assign " + target + " to " + enterType);
                         }
                         return new Target.ForVariable.ReadWrite(target, instrumentedMethod.getStackSize(), readAssignment, writeAssignment);
                     }
@@ -3982,7 +3983,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     int offset = instrumentedMethod.getStackSize() + context.getPadding();
                     StackManipulation readAssignment = assigner.assign(instrumentedMethod.getReturnType(), target, typing);
                     if (!readAssignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign " + instrumentedMethod.getReturnType() + " to " + target);
                     } else if (readOnly) {
                         return instrumentedMethod.getReturnType().represents(void.class)
                                 ? new Target.ForDefaultValue.ReadOnly(target)
@@ -3990,7 +3991,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else {
                         StackManipulation writeAssignment = assigner.assign(target, instrumentedMethod.getReturnType(), typing);
                         if (!writeAssignment.isValid()) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot assign " + target + " to " + instrumentedMethod.getReturnType());
                         }
                         return instrumentedMethod.getReturnType().represents(void.class)
                                 ? new Target.ForDefaultValue.ReadWrite(target)
@@ -4121,13 +4122,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     int offset = instrumentedMethod.getStackSize() + context.getPadding() + instrumentedMethod.getReturnType().getStackSize().getSize();
                     StackManipulation readAssignment = assigner.assign(TypeDescription.THROWABLE.asGenericType(), target, typing);
                     if (!readAssignment.isValid()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign Throwable to " + target);
                     } else if (readOnly) {
                         return new Target.ForVariable.ReadOnly(TypeDescription.THROWABLE, offset, readAssignment);
                     } else {
                         StackManipulation writeAssignment = assigner.assign(target, TypeDescription.THROWABLE.asGenericType(), typing);
                         if (!writeAssignment.isValid()) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot assign " + target + " to Throwable");
                         }
                         return new Target.ForVariable.ReadWrite(TypeDescription.THROWABLE, offset, readAssignment, writeAssignment);
                     }
@@ -4201,7 +4202,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (annotation == null) {
                             return UNDEFINED;
                         } else if (readOnly && !annotation.loadSilent().readOnly()) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Cannot use writable " + parameterDescription + " on read-only parameter");
                         } else {
                             return new ForThrowable(parameterDescription.getType(), annotation.loadSilent());
                         }
@@ -8631,7 +8632,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 StackManipulation stackManipulation;
                 if (value == null) {
                     if (target.getType().isPrimitive()) {
-                        throw new IllegalStateException();
+                        throw new IllegalStateException("Cannot assign null to primitive " + target);
                     } else {
                         return NullConstant.INSTANCE;
                     }
@@ -8655,8 +8656,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     stackManipulation = ClassConstant.of((TypeDescription) value);
                 } else if (value instanceof String) {
                     stackManipulation = new TextConstant((String) value);
+                } else if (value instanceof JavaConstant) {
+                    stackManipulation = ((JavaConstant) value).asStackManipulation();
                 } else {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Not a constant value: " + value);
                 }
                 StackManipulation assignment = assigner.assign(new TypeDescription.ForLoadedType(value.getClass()).asUnboxed().asGenericType(),
                         target.getType(),
@@ -8710,9 +8713,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            AnnotationDescription.Loadable<Annotation> annotation,
                                            Assigner assigner,
                                            boolean initialized) {
-                    return value instanceof Class
-                            ? new TypeDescription.ForLoadedType((Class<?>) value)
-                            : value;
+                    if (value instanceof Class) {
+                        return new TypeDescription.ForLoadedType((Class<?>) value);
+                    } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
+                        return JavaConstant.MethodHandle.ofLoaded(value);
+                    } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
+                        return JavaConstant.MethodType.ofLoaded(value);
+                    } else {
+                        return value;
+                    }
                 }
 
                 @Override
@@ -8827,18 +8836,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              Assigner assigner,
                                              boolean initialized) {
                 if (!fieldDescription.isStatic()) {
-                    if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
-                        throw new IllegalStateException();
-                    } else if (instrumentedMethod.isStatic()) {
-                        throw new IllegalStateException();
+                    if (instrumentedMethod.isStatic()) {
+                        throw new IllegalStateException("Cannot access " + instrumentedMethod + " from " + fieldDescription);
+                    } else if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure())) {
+                        throw new IllegalStateException(fieldDescription + " is not declared by " + instrumentedType);
                     }
                 }
                 if (!fieldDescription.isVisibleTo(instrumentedType)) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
                 }
                 StackManipulation assignment = assigner.assign(fieldDescription.getType(), target.getType(), Assigner.Typing.STATIC);
                 if (!assignment.isValid()) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target.getType());
                 }
                 return new StackManipulation.Compound(
                         fieldDescription.isStatic()
@@ -8897,11 +8906,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              Assigner assigner,
                                              boolean initialized) {
                 if (!parameterDescription.getDeclaringMethod().equals(instrumentedMethod)) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException(parameterDescription + " is not declared by " + instrumentedMethod);
                 }
                 StackManipulation assignment = assigner.assign(parameterDescription.getType(), target.getType(), Assigner.Typing.STATIC);
                 if (!assignment.isValid()) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target.getType());
                 }
                 return new StackManipulation.Compound(
                         MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()),
@@ -9025,7 +9034,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              boolean initialized) {
                 StackManipulation assignment = assigner.assign(typeDescription.asGenericType(), target.getType(), Assigner.Typing.DYNAMIC);
                 if (!assignment.isValid()) {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Cannot assign " + typeDescription + " to " + target.getType());
                 }
                 return new StackManipulation.Compound(
                         TypeCreation.of(new TypeDescription.ForLoadedType(ObjectInputStream.class)),
