@@ -8618,14 +8618,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * The mapped value must be a constant value that can be embedded into a Java class file. This holds for all primitive types,
          * instances of {@link String} and for {@link Class} instances as well as their unloaded {@link TypeDescription} representations.
          * </p>
+         *
+         * @param <S> The annotation type.
          */
-        abstract class ForFixedValue implements DynamicValue<Annotation> {
+        abstract class ForFixedValue<S extends Annotation> implements DynamicValue<S> {
 
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription instrumentedMethod,
                                              ParameterDescription.InDefinedShape target,
-                                             AnnotationDescription.Loadable<Annotation> annotation,
+                                             AnnotationDescription.Loadable<S> annotation,
                                              Assigner assigner,
                                              boolean initialized) {
                 Object value = doResolve(instrumentedType, instrumentedMethod, target, annotation, assigner, initialized);
@@ -8683,14 +8685,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected abstract Object doResolve(TypeDescription instrumentedType,
                                                 MethodDescription instrumentedMethod,
                                                 ParameterDescription.InDefinedShape target,
-                                                AnnotationDescription.Loadable<Annotation> annotation,
+                                                AnnotationDescription.Loadable<S> annotation,
                                                 Assigner assigner,
                                                 boolean initialized);
 
             /**
              * A fixed value binding for a constant pool value.
              */
-            protected static class OfConstant extends ForFixedValue {
+            protected static class OfConstant extends ForFixedValue<Annotation> {
 
                 /**
                  * The constant value being bound.
@@ -8750,7 +8752,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A dynamic value binding for an annotation property of an annotation on the bound parameter.
              */
-            protected static class OfAnnotationProperty extends ForFixedValue {
+            protected static class OfAnnotationProperty extends ForFixedValue<Annotation> {
 
                 /**
                  * The annotation property to bind.
