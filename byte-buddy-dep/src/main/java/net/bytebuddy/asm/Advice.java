@@ -8713,7 +8713,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            AnnotationDescription.Loadable<Annotation> annotation,
                                            Assigner assigner,
                                            boolean initialized) {
-                    if (value instanceof Class) {
+                    if (value == null) {
+                        return null;
+                    } else if (value instanceof Class) {
                         return new TypeDescription.ForLoadedType((Class<?>) value);
                     } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
                         return JavaConstant.MethodHandle.ofLoaded(value);
