@@ -167,6 +167,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape ON_THROWABLE;
 
+    /**
+     * The {@link Throwable#printStackTrace()} method.
+     */
+    private static final MethodDescription.InDefinedShape PRINT_STACK_TRACE;
+
     /*
      * Extracts the annotation values for the enter and exit advice annotations.
      */
@@ -180,6 +185,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         INLINE_EXIT = exit.filter(named("inline")).getOnly();
         SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
         ON_THROWABLE = exit.filter(named("onThrowable")).getOnly();
+        PRINT_STACK_TRACE = new TypeDescription.ForLoadedType(Throwable.class).getDeclaredMethods().filter(named("printStackTrace").and(takesArguments(0))).getOnly();
     }
 
     /**
@@ -198,6 +204,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     private final Assigner assigner;
 
     /**
+     * The stack manipulation to apply within a suppression handler.
+     */
+    private final StackManipulation exceptionHandler;
+
+    /**
      * The delegate implementation to apply if this advice is used as an instrumentation.
      */
     private final Implementation delegate;
@@ -209,21 +220,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
      */
     protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit) {
-        this(methodEnter, methodExit, Assigner.DEFAULT, SuperMethodCall.INSTANCE);
+        this(methodEnter, methodExit, Assigner.DEFAULT, Removal.pop(TypeDescription.THROWABLE), SuperMethodCall.INSTANCE);
     }
 
     /**
      * Creates a new advice.
      *
-     * @param methodEnter The dispatcher for instrumenting the instrumented method upon entering.
-     * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
-     * @param assigner    The assigner to use.
-     * @param delegate    The delegate implementation to apply if this advice is used as an instrumentation.
+     * @param methodEnter      The dispatcher for instrumenting the instrumented method upon entering.
+     * @param methodExit       The dispatcher for instrumenting the instrumented method upon exiting.
+     * @param assigner         The assigner to use.
+     * @param exceptionHandler The stack manipulation to apply within a suppression handler.
+     * @param delegate         The delegate implementation to apply if this advice is used as an instrumentation.
      */
-    private Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit, Assigner assigner, Implementation delegate) {
+    private Advice(Dispatcher.Resolved.ForMethodEnter methodEnter,
+                   Dispatcher.Resolved.ForMethodExit methodExit,
+                   Assigner assigner,
+                   StackManipulation exceptionHandler,
+                   Implementation delegate) {
         this.methodEnter = methodEnter;
         this.methodExit = methodExit;
         this.assigner = assigner;
+        this.exceptionHandler = exceptionHandler;
         this.delegate = delegate;
     }
 
@@ -474,6 +491,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
                     implementationContext,
                     assigner,
+                    exceptionHandler,
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
@@ -483,6 +501,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithExitAdvice.WithoutExceptionHandling(methodVisitor,
                     implementationContext,
                     assigner,
+                    exceptionHandler,
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
@@ -495,6 +514,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithExitAdvice.WithExceptionHandling(methodVisitor,
                     implementationContext,
                     assigner,
+                    exceptionHandler,
                     instrumentedType,
                     instrumentedMethod,
                     methodEnter,
@@ -522,7 +542,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A version of this advice that uses the specified assigner.
      */
     public Advice withAssigner(Assigner assigner) {
-        return new Advice(methodEnter, methodExit, assigner, delegate);
+        return new Advice(methodEnter, methodExit, assigner, exceptionHandler, delegate);
+    }
+
+    /**
+     * Configures this advice to call {@link Throwable#printStackTrace()} upon a suppressed exception.
+     *
+     * @return A version of this advice that prints any suppressed exception.
+     */
+    public Advice withExceptionPrinting() {
+        return withExceptionHandler(MethodInvocation.invoke(PRINT_STACK_TRACE));
+    }
+
+    /**
+     * Configures this advice to execute the given stack manipulation upon a suppressed exception. The stack manipulation is executed with a
+     * {@link Throwable} instance on the operand stack. The stack must be empty upon completing the exception handler.
+     *
+     * @param exceptionHandler The exception handler to apply.
+     * @return A version of this advice that applies the supplied exception handler.
+     */
+    public Advice withExceptionHandler(StackManipulation exceptionHandler) {
+        return new Advice(methodEnter, methodExit, assigner, exceptionHandler, delegate);
     }
 
     /**
@@ -532,7 +572,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return An implementation that applies the supplied implementation and wraps it with this advice.
      */
     public Implementation wrap(Implementation implementation) {
-        return new Advice(methodEnter, methodExit, assigner, implementation);
+        return new Advice(methodEnter, methodExit, assigner, exceptionHandler, implementation);
     }
 
     @Override
@@ -543,6 +583,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return methodEnter.equals(advice.methodEnter)
                 && methodExit.equals(advice.methodExit)
                 && assigner.equals(advice.assigner)
+                && exceptionHandler.equals(advice.exceptionHandler)
                 && delegate.equals(advice.delegate);
     }
 
@@ -551,6 +592,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         int result = methodEnter.hashCode();
         result = 31 * result + methodExit.hashCode();
         result = 31 * result + assigner.hashCode();
+        result = 31 * result + exceptionHandler.hashCode();
         result = 31 * result + delegate.hashCode();
         return result;
     }
@@ -561,6 +603,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 "methodEnter=" + methodEnter +
                 ", methodExit=" + methodExit +
                 ", assigner=" + assigner +
+                ", exceptionHandler=" + exceptionHandler +
                 ", delegate=" + delegate +
                 '}';
     }
@@ -4446,9 +4489,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Binds the suppression handler for instrumenting a specific method.
              *
+             * @param exceptionHandler The stack manipulation to apply within a suppression handler.
              * @return A bound version of the suppression handler.
              */
-            Bound bind();
+            Bound bind(StackManipulation exceptionHandler);
 
             /**
              * A producer for a default return value if this is applicable.
@@ -4478,29 +4522,40 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Invoked at the start of a method.
                  *
-                 * @param methodVisitor     The method visitor of the instrumented method.
-                 * @param methodSizeHandler A handler for computing the method size requirements.
+                 * @param methodVisitor The method visitor of the instrumented method.
                  */
-                void onStart(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler);
+                void onStart(MethodVisitor methodVisitor);
 
                 /**
                  * Invoked at the end of a method.
                  *
-                 * @param methodVisitor        The method visitor of the instrumented method.
-                 * @param stackMapFrameHandler A handler for translating and injecting stack map frames.
-                 * @param returnValueProducer  A producer for defining a default return value of the advised method.
+                 * @param methodVisitor         The method visitor of the instrumented method.
+                 * @param implementationContext The implementation context to use.
+                 * @param methodSizeHandler     The advice method's method size handler.
+                 * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                 * @param returnValueProducer   A producer for defining a default return value of the advised method.
                  */
-                void onEnd(MethodVisitor methodVisitor, StackMapFrameHandler.ForAdvice stackMapFrameHandler, ReturnValueProducer returnValueProducer);
+                void onEnd(MethodVisitor methodVisitor,
+                           Implementation.Context implementationContext,
+                           MethodSizeHandler.ForAdvice methodSizeHandler,
+                           StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                           ReturnValueProducer returnValueProducer);
 
                 /**
                  * Invoked at the end of a method. Additionally indicates that the handler block should be surrounding by a skipping instruction. This method
                  * is always followed by a stack map frame (if it is required for the class level and class writer setting).
                  *
-                 * @param methodVisitor        The method visitor of the instrumented method.
-                 * @param stackMapFrameHandler A handler for translating and injecting stack map frames.
-                 * @param returnValueProducer  A producer for defining a default return value of the advised method.
+                 * @param methodVisitor         The method visitor of the instrumented method.
+                 * @param implementationContext The implementation context to use.
+                 * @param methodSizeHandler     The advice method's method size handler.
+                 * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                 * @param returnValueProducer   A producer for defining a default return value of the advised method.
                  */
-                void onEndSkipped(MethodVisitor methodVisitor, StackMapFrameHandler.ForAdvice stackMapFrameHandler, ReturnValueProducer returnValueProducer);
+                void onEndSkipped(MethodVisitor methodVisitor,
+                                  Implementation.Context implementationContext,
+                                  MethodSizeHandler.ForAdvice methodSizeHandler,
+                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                  ReturnValueProducer returnValueProducer);
             }
 
             /**
@@ -4514,7 +4569,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 INSTANCE;
 
                 @Override
-                public Bound bind() {
+                public Bound bind(StackManipulation exceptionHandler) {
                     return this;
                 }
 
@@ -4524,17 +4579,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void onStart(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                public void onStart(MethodVisitor methodVisitor) {
                     /* do nothing */
                 }
 
                 @Override
-                public void onEnd(MethodVisitor methodVisitor, StackMapFrameHandler.ForAdvice stackMapFrameHandler, ReturnValueProducer returnValueProducer) {
+                public void onEnd(MethodVisitor methodVisitor,
+                                  Implementation.Context implementationContext,
+                                  MethodSizeHandler.ForAdvice methodSizeHandler,
+                                  StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                  ReturnValueProducer returnValueProducer) {
                     /* do nothing */
                 }
 
                 @Override
-                public void onEndSkipped(MethodVisitor methodVisitor, StackMapFrameHandler.ForAdvice stackMapFrameHandler, ReturnValueProducer returnValueProducer) {
+                public void onEndSkipped(MethodVisitor methodVisitor,
+                                         Implementation.Context implementationContext,
+                                         MethodSizeHandler.ForAdvice methodSizeHandler,
+                                         StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                         ReturnValueProducer returnValueProducer) {
                     /* do nothing */
                 }
 
@@ -4576,8 +4639,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public SuppressionHandler.Bound bind() {
-                    return new Bound(suppressedType);
+                public SuppressionHandler.Bound bind(StackManipulation exceptionHandler) {
+                    return new Bound(suppressedType, exceptionHandler);
                 }
 
                 @Override
@@ -4611,6 +4674,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     private final TypeDescription suppressedType;
 
                     /**
+                     * The stack manipulation to apply within a suppression handler.
+                     */
+                    private final StackManipulation exceptionHandler;
+
+                    /**
                      * A label indicating the start of the method.
                      */
                     private final Label startOfMethod;
@@ -4623,10 +4691,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new active, bound suppression handler.
                      *
-                     * @param suppressedType The suppressed throwable type.
+                     * @param suppressedType   The suppressed throwable type.
+                     * @param exceptionHandler The stack manipulation to apply within a suppression handler.
                      */
-                    protected Bound(TypeDescription suppressedType) {
+                    protected Bound(TypeDescription suppressedType, StackManipulation exceptionHandler) {
                         this.suppressedType = suppressedType;
+                        this.exceptionHandler = exceptionHandler;
                         startOfMethod = new Label();
                         endOfMethod = new Label();
                     }
@@ -4637,24 +4707,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void onStart(MethodVisitor methodVisitor, MethodSizeHandler.ForAdvice methodSizeHandler) {
+                    public void onStart(MethodVisitor methodVisitor) {
                         methodVisitor.visitLabel(startOfMethod);
-                        methodSizeHandler.requireStackSize(StackSize.SINGLE.getSize());
                     }
 
                     @Override
-                    public void onEnd(MethodVisitor methodVisitor, StackMapFrameHandler.ForAdvice stackMapFrameHandler, ReturnValueProducer returnValueProducer) {
+                    public void onEnd(MethodVisitor methodVisitor,
+                                      Implementation.Context implementationContext,
+                                      MethodSizeHandler.ForAdvice methodSizeHandler,
+                                      StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                      ReturnValueProducer returnValueProducer) {
                         methodVisitor.visitLabel(endOfMethod);
                         stackMapFrameHandler.injectExceptionFrame(methodVisitor);
-                        methodVisitor.visitInsn(Opcodes.POP);
+                        methodSizeHandler.requireStackSize(1 + exceptionHandler.apply(methodVisitor, implementationContext).getMaximalSize());
                         returnValueProducer.onDefaultValue(methodVisitor);
                     }
 
                     @Override
-                    public void onEndSkipped(MethodVisitor methodVisitor, StackMapFrameHandler.ForAdvice stackMapFrameHandler, ReturnValueProducer returnValueProducer) {
+                    public void onEndSkipped(MethodVisitor methodVisitor,
+                                             Implementation.Context implementationContext,
+                                             MethodSizeHandler.ForAdvice methodSizeHandler,
+                                             StackMapFrameHandler.ForAdvice stackMapFrameHandler,
+                                             ReturnValueProducer returnValueProducer) {
                         Label endOfHandler = new Label();
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
-                        onEnd(methodVisitor, stackMapFrameHandler, returnValueProducer);
+                        onEnd(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, returnValueProducer);
                         methodVisitor.visitLabel(endOfHandler);
                     }
 
@@ -4662,6 +4739,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public String toString() {
                         return "Advice.Dispatcher.SuppressionHandler.Suppressing.Bound{" +
                                 "suppressedType=" + suppressedType +
+                                "exceptionHandler=" + exceptionHandler +
                                 ", startOfMethod=" + startOfMethod +
                                 ", endOfMethod=" + endOfMethod +
                                 '}';
@@ -4685,6 +4763,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param assigner              The assigner to use.
              * @param methodSizeHandler     A handler for computing the method size requirements.
              * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+             * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
              * @return A dispatcher that is bound to the instrumented method.
              */
             Bound bind(TypeDescription instrumentedType,
@@ -4693,7 +4772,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                        Implementation.Context implementationContext,
                        Assigner assigner,
                        MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                       StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler);
+                       StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                       StackManipulation exceptionHandler);
 
             /**
              * Represents a resolved dispatcher for entering a method.
@@ -4722,7 +4802,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           Implementation.Context implementationContext,
                                           Assigner assigner,
                                           MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                          StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler);
+                                          StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                          StackManipulation exceptionHandler);
 
                 /**
                  * A skip dispatcher is responsible for skipping the instrumented method depending on the
@@ -5104,7 +5185,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                          Implementation.Context implementationContext,
                                          Assigner assigner,
                                          MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                         StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler);
+                                         StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                         StackManipulation exceptionHandler);
             }
         }
 
@@ -5227,7 +5309,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                  Implementation.Context implementationContext,
                                  Assigner assigner,
                                  MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                 StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
+                                 StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                 StackManipulation exceptionHandler) {
                 return this;
             }
 
@@ -5735,7 +5818,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                      Implementation.Context implementationContext,
                                                      Assigner assigner,
                                                      MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                                     StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
+                                                     StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                                     StackManipulation exceptionHandler) {
                         return new AdviceMethodInliner(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
@@ -5743,7 +5827,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 assigner,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
-                                suppressionHandler.bind(),
+                                suppressionHandler.bind(exceptionHandler),
                                 classReader,
                                 skipDispatcher);
                     }
@@ -5760,7 +5844,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
-                                                  Implementation.Context implementationContext,
+                                                  Context implementationContext,
                                                   Assigner assigner,
                                                   MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
                                                   StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
@@ -5980,7 +6064,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                     Implementation.Context implementationContext,
                                                     Assigner assigner,
                                                     MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                                    StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
+                                                    StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                                    StackManipulation exceptionHandler) {
                         return new AdviceMethodInliner(instrumentedType,
                                 instrumentedMethod,
                                 methodVisitor,
@@ -5988,7 +6073,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 assigner,
                                 methodSizeHandler,
                                 stackMapFrameHandler,
-                                suppressionHandler.bind(),
+                                suppressionHandler.bind(exceptionHandler),
                                 classReader);
                     }
 
@@ -6286,7 +6371,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitCode() {
-                    suppressionHandler.onStart(methodVisitor, methodSizeHandler);
+                    suppressionHandler.onStart(methodVisitor);
                 }
 
                 @Override
@@ -6296,7 +6381,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitEnd() {
-                    suppressionHandler.onEnd(methodVisitor, stackMapFrameHandler, this);
+                    suppressionHandler.onEnd(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, this);
                     methodVisitor.visitLabel(endOfMethod);
                     onMethodReturn();
                     stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
@@ -6702,11 +6787,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               Implementation.Context implementationContext,
                               Assigner assigner,
                               MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                              StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
+                              StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                              StackManipulation exceptionHandler) {
                     if (!adviceMethod.isVisibleTo(instrumentedType)) {
                         throw new IllegalStateException(adviceMethod + " is not visible to " + instrumentedMethod.getDeclaringType());
                     }
-                    return resolve(instrumentedType, instrumentedMethod, methodVisitor, implementationContext, assigner, methodSizeHandler, stackMapFrameHandler);
+                    return resolve(instrumentedType,
+                            instrumentedMethod,
+                            methodVisitor,
+                            implementationContext,
+                            assigner,
+                            methodSizeHandler,
+                            stackMapFrameHandler,
+                            exceptionHandler);
                 }
 
                 /**
@@ -6719,6 +6812,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param assigner              The assigner to use.
                  * @param methodSizeHandler     A handler for computing the method size requirements.
                  * @param stackMapFrameHandler  A handler for translating and injecting stack map frames.
+                 * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
                  * @return An appropriate bound advice dispatcher.
                  */
                 protected abstract T resolve(TypeDescription instrumentedType,
@@ -6727,7 +6821,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              Implementation.Context implementationContext,
                                              Assigner assigner,
                                              MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                             StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler);
+                                             StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                             StackManipulation exceptionHandler);
 
                 @Override
                 public boolean equals(Object other) {
@@ -6834,7 +6929,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Writes the advice method invocation.
                      */
                     protected void doApply() {
-                        suppressionHandler.onStart(methodVisitor, methodSizeHandler);
+                        suppressionHandler.onStart(methodVisitor);
                         int index = 0, currentStackSize = 0, maximumStackSize = 0;
                         for (OffsetMapping.Target offsetMapping : offsetMappings) {
                             Type type = Type.getType(adviceMethod.getParameters().get(index++).getType().asErasure().getDescriptor());
@@ -6849,7 +6944,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getDescriptor(),
                                 false);
                         onMethodReturn();
-                        suppressionHandler.onEndSkipped(methodVisitor, stackMapFrameHandler, this);
+                        suppressionHandler.onEndSkipped(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, this);
                         stackMapFrameHandler.injectCompletionFrame(methodVisitor, false);
                         methodSizeHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
@@ -7096,7 +7191,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                            Implementation.Context implementationContext,
                                                            Assigner assigner,
                                                            MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                                           StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
+                                                           StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                                           StackManipulation exceptionHandler) {
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
                         for (OffsetMapping offsetMapping : this.offsetMappings) {
                             offsetMappings.add(offsetMapping.resolve(instrumentedType,
@@ -7111,7 +7207,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 implementationContext,
                                 methodSizeHandler.bindEntry(adviceMethod),
                                 stackMapFrameHandler.bindEntry(adviceMethod),
-                                suppressionHandler.bind(),
+                                suppressionHandler.bind(exceptionHandler),
                                 skipDispatcher);
                     }
 
@@ -7207,7 +7303,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                           Implementation.Context implementationContext,
                                                           Assigner assigner,
                                                           MethodSizeHandler.ForInstrumentedMethod methodSizeHandler,
-                                                          StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler) {
+                                                          StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
+                                                          StackManipulation exceptionHandler) {
                         List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
                         for (OffsetMapping offsetMapping : this.offsetMappings) {
                             offsetMappings.add(offsetMapping.resolve(instrumentedType,
@@ -7222,7 +7319,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 implementationContext,
                                 methodSizeHandler.bindExit(adviceMethod, getThrowable().represents(NoExceptionHandler.class)),
                                 stackMapFrameHandler.bindExit(adviceMethod),
-                                suppressionHandler.bind());
+                                suppressionHandler.bind(exceptionHandler));
                     }
 
                     @Override
@@ -7370,6 +7467,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param delegate              A delegate to which all instructions of the original method are written to. Must delegate to {@code methodVisitor}.
          * @param implementationContext The implementation context to use.
          * @param assigner              The assigner to use.
+         * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
          * @param instrumentedType      A description of the instrumented type.
          * @param instrumentedMethod    The instrumented method.
          * @param methodEnter           The method enter advice.
@@ -7380,8 +7478,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected AdviceVisitor(MethodVisitor methodVisitor,
                                 MethodVisitor delegate,
-                                Implementation.Context implementationContext,
+                                Context implementationContext,
                                 Assigner assigner,
+                                StackManipulation exceptionHandler,
                                 TypeDescription instrumentedType,
                                 MethodDescription instrumentedMethod,
                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
@@ -7410,14 +7509,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     implementationContext,
                     assigner,
                     methodSizeHandler,
-                    stackMapFrameHandler);
+                    stackMapFrameHandler,
+                    exceptionHandler);
             this.methodExit = methodExit.bind(instrumentedType,
                     instrumentedMethod,
                     methodVisitor,
                     implementationContext,
                     assigner,
                     methodSizeHandler,
-                    stackMapFrameHandler);
+                    stackMapFrameHandler,
+                    exceptionHandler);
         }
 
         @Override
@@ -7537,6 +7638,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param methodVisitor         The method visitor for the instrumented method.
              * @param implementationContext The implementation context to use.
              * @param assigner              The assigner to use.
+             * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
              * @param instrumentedType      A description of the instrumented type.
              * @param instrumentedMethod    A description of the instrumented method.
              * @param methodEnter           The dispatcher to be used for method entry.
@@ -7546,6 +7648,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected WithoutExitAdvice(MethodVisitor methodVisitor,
                                         Implementation.Context implementationContext,
                                         Assigner assigner,
+                                        StackManipulation exceptionHandler,
                                         TypeDescription instrumentedType,
                                         MethodDescription instrumentedMethod,
                                         Dispatcher.Resolved.ForMethodEnter methodEnter,
@@ -7555,6 +7658,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor,
                         implementationContext,
                         assigner,
+                        exceptionHandler,
                         instrumentedType,
                         instrumentedMethod,
                         methodEnter,
@@ -7634,6 +7738,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param methodVisitor         The method visitor for the instrumented method.
              * @param implementationContext The implementation context to use.
              * @param assigner              The assigner to use.
+             * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
              * @param instrumentedType      A description of the instrumented type.
              * @param instrumentedMethod    A description of the instrumented method.
              * @param methodEnter           The dispatcher to be used for method entry.
@@ -7645,6 +7750,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected WithExitAdvice(MethodVisitor methodVisitor,
                                      Implementation.Context implementationContext,
                                      Assigner assigner,
+                                     StackManipulation exceptionHandler,
                                      TypeDescription instrumentedType,
                                      MethodDescription instrumentedMethod,
                                      Dispatcher.Resolved.ForMethodEnter methodEnter,
@@ -7656,12 +7762,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         new StackAwareMethodVisitor(methodVisitor, instrumentedMethod),
                         implementationContext,
                         assigner,
+                        exceptionHandler,
                         instrumentedType,
                         instrumentedMethod,
                         methodEnter,
                         methodExit,
                         yieldedTypes,
-                        writerFlags, readerFlags);
+                        writerFlags,
+                        readerFlags);
                 returnHandler = new Label();
                 doesReturn = false;
             }
@@ -7758,6 +7866,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param methodVisitor         The method visitor for the instrumented method.
                  * @param implementationContext The implementation context to use.
                  * @param assigner              The assigner to use.
+                 * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
                  * @param instrumentedType      A description of the instrumented type.
                  * @param instrumentedMethod    A description of the instrumented method.
                  * @param methodEnter           The dispatcher to be used for method entry.
@@ -7768,6 +7877,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected WithoutExceptionHandling(MethodVisitor methodVisitor,
                                                    Implementation.Context implementationContext,
                                                    Assigner assigner,
+                                                   StackManipulation exceptionHandler,
                                                    TypeDescription instrumentedType,
                                                    MethodDescription instrumentedMethod,
                                                    Dispatcher.Resolved.ForMethodEnter methodEnter,
@@ -7777,6 +7887,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     super(methodVisitor,
                             implementationContext,
                             assigner,
+                            exceptionHandler,
                             instrumentedType,
                             instrumentedMethod,
                             methodEnter,
@@ -7846,6 +7957,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedType      A description of the instrumented type.
                  * @param implementationContext The implementation context to use.
                  * @param assigner              The assigner to use.
+                 * @param exceptionHandler      The stack manipulation to apply within a suppression handler.
                  * @param instrumentedMethod    A description of the instrumented method.
                  * @param methodEnter           The dispatcher to be used for method entry.
                  * @param methodExit            The dispatcher to be used for method exit.
@@ -7856,6 +7968,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected WithExceptionHandling(MethodVisitor methodVisitor,
                                                 Implementation.Context implementationContext,
                                                 Assigner assigner,
+                                                StackManipulation exceptionHandler,
                                                 TypeDescription instrumentedType,
                                                 MethodDescription instrumentedMethod,
                                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
@@ -7866,6 +7979,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     super(methodVisitor,
                             implementationContext,
                             assigner,
+                            exceptionHandler,
                             instrumentedType,
                             instrumentedMethod,
                             methodEnter,
@@ -7877,7 +7991,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             readerFlags);
                     this.throwable = throwable;
                     userStart = new Label();
-                    exceptionHandler = new Label();
+                    this.exceptionHandler = new Label();
                 }
 
                 @Override
@@ -8138,9 +8252,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         boolean inline() default true;
 
         /**
-         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution.
+         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution. By default,
+         * any such exception is silently suppressed. Custom behavior can be configured by using {@link Advice#withExceptionHandler(StackManipulation)}.
          *
          * @return The type of {@link Throwable} to suppress.
+         * @see Advice#withExceptionPrinting()
          */
         Class<? extends Throwable> suppress() default NoExceptionHandler.class;
 
@@ -8203,9 +8319,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         boolean inline() default true;
 
         /**
-         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution.
+         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution. By default,
+         * any such exception is silently suppressed. Custom behavior can be configured by using {@link Advice#withExceptionHandler(StackManipulation)}.
          *
          * @return The type of {@link Throwable} to suppress.
+         * @see Advice#withExceptionPrinting()
          */
         Class<? extends Throwable> suppress() default NoExceptionHandler.class;
 
