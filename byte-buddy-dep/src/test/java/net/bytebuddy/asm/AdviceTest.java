@@ -11,10 +11,12 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -30,8 +32,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class AdviceTest {
 
@@ -1334,6 +1335,27 @@ public class AdviceTest {
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testExceptionPriniting() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(ExceptionWriterTest.class).withExceptionPrinting().on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        PrintStream printStream = mock(PrintStream.class);
+        PrintStream err = System.err;
+        synchronized (System.err) {
+            System.setErr(printStream);
+            try {
+                assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+            } finally {
+                System.setErr(err);
+            }
+        }
+        verify(printStream, times(2)).println(Mockito.any(RuntimeException.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -3565,6 +3587,17 @@ public class AdviceTest {
         @Advice.OnMethodEnter
         private static void enter(@Advice.AllArguments Object[] value) {
             value = new Object[0];
+        }
+    }
+
+    public static class ExceptionWriterTest {
+
+        @Advice.OnMethodEnter(suppress = RuntimeException.class)
+        @Advice.OnMethodExit(suppress = RuntimeException.class)
+        private static void advice() {
+            RuntimeException exception = new RuntimeException();
+            exception.setStackTrace(new StackTraceElement[0]);
+            throw exception;
         }
     }
 }
