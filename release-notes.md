@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. November 2016: version 1.5.5
+
+- Refactored `Advice` to use stack manipulations and `Assigner`.
+- Refactored `Advice` to use `Return` instead of `BoxedReturn` and added `AllArguments` instead of `BoxedArguments` in conjunction with allowing to use dynamic typing for assignments via the annotation.
+- Added fixed value instrumentation for method parameters.
+- Added weak class loader referencing for `Nexus` and allow registration of a `ReferenceQueue`.
+
 ### 11. November 2016: version 1.5.4
 
 - Extended `MethodCall` API.
