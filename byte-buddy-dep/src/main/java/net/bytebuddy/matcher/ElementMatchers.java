@@ -582,16 +582,6 @@ public final class ElementMatchers {
         return new TypeSortMatcher<T>(anyOf(TypeDefinition.Sort.VARIABLE, TypeDefinition.Sort.VARIABLE_SYMBOLIC)).and(matcher);
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> internalName(String name) {
-        if (name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)) {
-            return isConstructor();
-        } else if (name.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-            return isTypeInitializer();
-        } else {
-            return named(name);
-        }
-    }
-
     /**
      * Matches a {@link NamedElement} for its exact name.
      *
