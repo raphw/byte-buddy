@@ -1071,7 +1071,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  * @return A stack manipulation that represents this storage.
                  */
                 public StackManipulation storeIn(FieldDescription fieldDescription) {
-                    return new Compound(this, FieldAccess.forField(fieldDescription).putter());
+                    return new Compound(this, FieldAccess.forField(fieldDescription).write());
                 }
 
                 /**
@@ -1520,7 +1520,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                             fieldDescription.isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadFrom(0),
-                            FieldAccess.forField(fieldDescription).getter(),
+                            FieldAccess.forField(fieldDescription).read(),
                             MethodReturn.of(fieldDescription.getType().asErasure())
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -1573,7 +1573,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
-                            FieldAccess.forField(fieldDescription).putter(),
+                            FieldAccess.forField(fieldDescription).write(),
                             MethodReturn.VOID
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

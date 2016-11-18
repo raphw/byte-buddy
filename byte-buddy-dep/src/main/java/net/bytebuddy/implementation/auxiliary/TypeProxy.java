@@ -483,7 +483,7 @@ public class TypeProxy implements AuxiliaryType {
                     MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
                     Duplication.SINGLE,
                     MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadFrom(0),
-                    FieldAccess.forField(proxyType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).putter()
+                    FieldAccess.forField(proxyType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).write()
             ).apply(methodVisitor, implementationContext);
         }
 
@@ -586,7 +586,7 @@ public class TypeProxy implements AuxiliaryType {
                     Duplication.SINGLE,
                     MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadFrom(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
-                            .filter((named(INSTANCE_FIELD))).getOnly()).putter()
+                            .filter((named(INSTANCE_FIELD))).getOnly()).write()
             ).apply(methodVisitor, implementationContext);
         }
 
@@ -677,7 +677,7 @@ public class TypeProxy implements AuxiliaryType {
                     Duplication.SINGLE,
                     MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadFrom(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
-                            .filter((named(INSTANCE_FIELD))).getOnly()).putter()
+                            .filter((named(INSTANCE_FIELD))).getOnly()).write()
             ).apply(methodVisitor, implementationContext);
         }
 
@@ -785,7 +785,7 @@ public class TypeProxy implements AuxiliaryType {
              * @param instrumentedType The instrumented type that is proxied by the enclosing instrumentation.
              */
             protected Appender(TypeDescription instrumentedType) {
-                fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).getter();
+                fieldLoadingInstruction = FieldAccess.forField(instrumentedType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).read();
             }
 
             @Override

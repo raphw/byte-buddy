@@ -70,7 +70,7 @@ public enum FieldAccess {
                 .filter(named(enumerationDescription.getValue()));
         return fieldList.size() != 1 || !fieldList.getOnly().isStatic() || !fieldList.getOnly().isPublic() || !fieldList.getOnly().isEnum()
                 ? StackManipulation.Illegal.INSTANCE
-                : STATIC.new AccessDispatcher(fieldList.getOnly()).getter();
+                : STATIC.new AccessDispatcher(fieldList.getOnly()).read();
     }
 
     /**
@@ -105,7 +105,7 @@ public enum FieldAccess {
     }
 
     /**
-     * Representation of a field access for which a getter and a putter can be created.
+     * Representation of a field access for which a getter and a setter can be created.
      */
     public interface Defined {
 
@@ -114,14 +114,14 @@ public enum FieldAccess {
          *
          * @return A stack manipulation representing the retrieval of a field value.
          */
-        StackManipulation getter();
+        StackManipulation read();
 
         /**
-         * Creates a putter representation for a given field.
+         * Creates a setter representation for a given field.
          *
          * @return A stack manipulation representing the setting of a field value.
          */
-        StackManipulation putter();
+        StackManipulation write();
     }
 
     /**
@@ -162,13 +162,13 @@ public enum FieldAccess {
         }
 
         @Override
-        public StackManipulation getter() {
-            return new StackManipulation.Compound(defined.getter(), TypeCasting.to(targetType));
+        public StackManipulation read() {
+            return new StackManipulation.Compound(defined.read(), TypeCasting.to(targetType));
         }
 
         @Override
-        public StackManipulation putter() {
-            return defined.putter();
+        public StackManipulation write() {
+            return defined.write();
         }
 
         @Override
@@ -215,12 +215,12 @@ public enum FieldAccess {
         }
 
         @Override
-        public StackManipulation getter() {
+        public StackManipulation read() {
             return new FieldGetInstruction();
         }
 
         @Override
-        public StackManipulation putter() {
+        public StackManipulation write() {
             return new FieldPutInstruction();
         }
 

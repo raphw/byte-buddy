@@ -104,8 +104,8 @@ public class FieldAccessTest {
     @Test
     public void testGetter() throws Exception {
         FieldAccess.Defined getter = FieldAccess.forField(fieldDescription);
-        assertThat(getter.getter().isValid(), is(true));
-        StackManipulation.Size size = getter.getter().apply(methodVisitor, implementationContext);
+        assertThat(getter.read().isValid(), is(true));
+        StackManipulation.Size size = getter.read().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(getterChange));
         assertThat(size.getMaximalSize(), is(getterMaximum));
         verify(methodVisitor).visitFieldInsn(getterOpcode, FOO, BAR, QUX);
@@ -115,8 +115,8 @@ public class FieldAccessTest {
     @Test
     public void testPutter() throws Exception {
         FieldAccess.Defined setter = FieldAccess.forField(fieldDescription);
-        assertThat(setter.putter().isValid(), is(true));
-        StackManipulation.Size size = setter.putter().apply(methodVisitor, implementationContext);
+        assertThat(setter.write().isValid(), is(true));
+        StackManipulation.Size size = setter.write().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(putterChange));
         assertThat(size.getMaximalSize(), is(putterMaximum));
         verify(methodVisitor).visitFieldInsn(putterOpcode, FOO, BAR, QUX);

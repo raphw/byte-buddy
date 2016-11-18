@@ -176,7 +176,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         }
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 preparingManipulation,
-                FieldAccess.forField(fieldDescription).getter(),
+                FieldAccess.forField(fieldDescription).read(),
                 MethodVariableAccess.REFERENCE.loadFrom(0),
                 cacheMethods
                         ? MethodConstant.forMethod(instrumentedMethod.asDefined()).cached()

@@ -1059,7 +1059,7 @@ public class ByteBuddy {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
                 MethodDescription cloneMethod = TypeDescription.Generic.OBJECT.getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
                 return new Size(new StackManipulation.Compound(
-                        FieldAccess.forField(valuesField).getter(),
+                        FieldAccess.forField(valuesField).read(),
                         MethodInvocation.invoke(cloneMethod).virtual(valuesField.getType().asErasure()),
                         TypeCasting.to(valuesField.getType().asErasure()),
                         MethodReturn.REFERENCE
@@ -1121,17 +1121,17 @@ public class ByteBuddy {
                             new TextConstant(value),
                             IntegerConstant.forValue(ordinal++),
                             MethodInvocation.invoke(enumConstructor),
-                            FieldAccess.forField(fieldDescription).putter());
+                            FieldAccess.forField(fieldDescription).write());
                     enumerationFields.add(fieldDescription);
                 }
                 List<StackManipulation> fieldGetters = new ArrayList<StackManipulation>(values.size());
                 for (FieldDescription fieldDescription : enumerationFields) {
-                    fieldGetters.add(FieldAccess.forField(fieldDescription).getter());
+                    fieldGetters.add(FieldAccess.forField(fieldDescription).read());
                 }
                 stackManipulation = new StackManipulation.Compound(
                         stackManipulation,
                         ArrayFactory.forType(instrumentedType.asGenericType()).withValues(fieldGetters),
-                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly()).putter()
+                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly()).write()
                 );
                 return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }

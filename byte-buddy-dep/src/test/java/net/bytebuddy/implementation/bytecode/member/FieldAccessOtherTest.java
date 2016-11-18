@@ -107,9 +107,9 @@ public class FieldAccessOtherTest {
         when(genericErasure.asErasure()).thenReturn(genericErasure);
         when(genericType.asErasure()).thenReturn(genericErasure);
         when(declaredType.asErasure()).thenReturn(declaredErasure);
-        StackManipulation stackManipulation = FieldAccess.forField(genericField).getter();
+        StackManipulation stackManipulation = FieldAccess.forField(genericField).read();
         assertThat(stackManipulation.isValid(), is(true));
-        assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(), TypeCasting.to(genericErasure))));
+        assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(FieldAccess.forField(fieldDescription).read(), TypeCasting.to(genericErasure))));
     }
 
     @Test
@@ -117,9 +117,9 @@ public class FieldAccessOtherTest {
         TypeDescription genericErasure = mock(TypeDescription.class), declaredErasure = mock(TypeDescription.class);
         when(genericType.asErasure()).thenReturn(genericErasure);
         when(declaredType.asErasure()).thenReturn(declaredErasure);
-        StackManipulation stackManipulation = FieldAccess.forField(genericField).putter();
+        StackManipulation stackManipulation = FieldAccess.forField(genericField).write();
         assertThat(stackManipulation.isValid(), is(true));
-        assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).putter()));
+        assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).write()));
     }
 
     @Test
@@ -127,9 +127,9 @@ public class FieldAccessOtherTest {
         TypeDescription declaredErasure = mock(TypeDescription.class);
         when(genericType.asErasure()).thenReturn(declaredErasure);
         when(declaredType.asErasure()).thenReturn(declaredErasure);
-        StackManipulation stackManipulation = FieldAccess.forField(genericField).getter();
+        StackManipulation stackManipulation = FieldAccess.forField(genericField).read();
         assertThat(stackManipulation.isValid(), is(true));
-        assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).getter()));
+        assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).read()));
     }
 
     @Test
@@ -137,9 +137,9 @@ public class FieldAccessOtherTest {
         TypeDescription declaredErasure = mock(TypeDescription.class);
         when(genericType.asErasure()).thenReturn(declaredErasure);
         when(declaredType.asErasure()).thenReturn(declaredErasure);
-        StackManipulation stackManipulation = FieldAccess.forField(genericField).putter();
+        StackManipulation stackManipulation = FieldAccess.forField(genericField).write();
         assertThat(stackManipulation.isValid(), is(true));
-        assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).putter()));
+        assertThat(stackManipulation, is(FieldAccess.forField(fieldDescription).write()));
     }
 
     @Test

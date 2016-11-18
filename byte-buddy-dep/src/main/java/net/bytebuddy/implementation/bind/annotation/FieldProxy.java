@@ -846,7 +846,7 @@ public @interface FieldProxy {
                             MethodVariableAccess.REFERENCE.loadFrom(0),
                             MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
                             MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
-                            FieldAccess.forField(fieldDescription).putter(),
+                            FieldAccess.forField(fieldDescription).write(),
                             MethodReturn.VOID
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -974,7 +974,7 @@ public @interface FieldProxy {
                                     : new StackManipulation.Compound(
                                     MethodVariableAccess.REFERENCE.loadFrom(0),
                                     FieldAccess.forField(typeDescription.getDeclaredFields()
-                                            .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
+                                            .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).read()),
                             MethodInvocation.invoke(getterMethod),
                             assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
                             MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
@@ -1117,7 +1117,7 @@ public @interface FieldProxy {
                                     : new StackManipulation.Compound(
                                     MethodVariableAccess.REFERENCE.loadFrom(0),
                                     FieldAccess.forField(typeDescription.getDeclaredFields()
-                                            .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
+                                            .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).read()),
                             MethodVariableAccess.of(parameterType).loadFrom(1),
                             assigner.assign(parameterType, setterMethod.getParameters().get(0).getType(), Assigner.Typing.DYNAMIC),
                             MethodInvocation.invoke(setterMethod),

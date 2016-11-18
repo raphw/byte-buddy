@@ -4817,7 +4817,7 @@ public interface AgentBuilder {
                         for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                             fieldAssignments.add(MethodVariableAccess.REFERENCE.loadFrom(0));
                             fieldAssignments.add(MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()));
-                            fieldAssignments.add(FieldAccess.forField(declaredFields.get(parameterDescription.getIndex())).putter());
+                            fieldAssignments.add(FieldAccess.forField(declaredFields.get(parameterDescription.getIndex())).write());
                         }
                         return new Size(new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadFrom(0),
@@ -5029,7 +5029,7 @@ public interface AgentBuilder {
                         List<StackManipulation> fieldAccess = new ArrayList<StackManipulation>(declaredFields.size() * 2);
                         for (FieldDescription.InDefinedShape fieldDescription : declaredFields) {
                             fieldAccess.add(MethodVariableAccess.REFERENCE.loadFrom(0));
-                            fieldAccess.add(FieldAccess.forField(fieldDescription).getter());
+                            fieldAccess.add(FieldAccess.forField(fieldDescription).read());
                         }
                         List<StackManipulation> parameterAccess = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size() * 2);
                         for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
@@ -5145,7 +5145,7 @@ public interface AgentBuilder {
                     List<StackManipulation> lambdaArguments = new ArrayList<StackManipulation>(implementationTarget.getInstrumentedType().getDeclaredFields().size());
                     for (FieldDescription.InDefinedShape fieldDescription : implementationTarget.getInstrumentedType().getDeclaredFields()) {
                         lambdaArguments.add(new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadFrom(0),
-                                FieldAccess.forField(fieldDescription).getter(),
+                                FieldAccess.forField(fieldDescription).read(),
                                 Assigner.DEFAULT.assign(fieldDescription.getType(), TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)));
                     }
                     return new ByteCodeAppender.Simple(new StackManipulation.Compound(

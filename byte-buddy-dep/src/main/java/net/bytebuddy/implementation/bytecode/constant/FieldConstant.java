@@ -115,7 +115,7 @@ public class FieldConstant implements StackManipulation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return FieldAccess.forField(implementationContext.cache(fieldConstant, new TypeDescription.ForLoadedType(Field.class)))
-                    .getter()
+                    .read()
                     .apply(methodVisitor, implementationContext);
         }
 

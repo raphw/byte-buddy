@@ -1592,7 +1592,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     if (!stackManipulation.isValid()) {
                         throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + fieldType);
                     }
-                    return new Resolved.Simple(new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
+                    return new Resolved.Simple(new StackManipulation.Compound(FieldAccess.forField(fieldDescription).read(),
                             stackManipulation), fieldDescription.getType().asErasure());
                 }
 
@@ -1661,7 +1661,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     }
                     return doResolve(new StackManipulation.Compound(resolution.getField().isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
-                                    : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(resolution.getField()).getter()),
+                                    : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(resolution.getField()).read()),
                             resolution.getField().getType(),
                             assigner,
                             typing);

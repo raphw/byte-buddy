@@ -568,7 +568,7 @@ public @interface Morph {
                                 MethodVariableAccess.REFERENCE.loadFrom(0),
                                 MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
                                 MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
-                                FieldAccess.forField(fieldDescription).putter(),
+                                FieldAccess.forField(fieldDescription).write(),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -690,7 +690,7 @@ public @interface Morph {
                                         MethodVariableAccess.REFERENCE.loadFrom(0),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(RedirectionProxy.FIELD_NAME)))
-                                                .getOnly()).getter()),
+                                                .getOnly()).read()),
                                 new StackManipulation.Compound(parameterLoading),
                                 MethodInvocation.invoke(accessorMethod),
                                 assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),

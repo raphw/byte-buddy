@@ -975,7 +975,7 @@ public class MethodDelegation implements Implementation.Composable {
                 return new Resolution(methodGraphCompiler.compile(resolution.getField().getType(), instrumentedType).listNodes().asMethodList().filter(matcher),
                         new StackManipulation.Compound(resolution.getField().isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(resolution.getField()).getter()),
+                                : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(resolution.getField()).read()),
                         new MethodDelegationBinder.MethodInvoker.Virtual(resolution.getField().getType().asErasure()),
                         resolution.getField().isStatic());
             }
@@ -1099,7 +1099,7 @@ public class MethodDelegation implements Implementation.Composable {
                     throw new IllegalStateException(fieldType + " is not visible to " + instrumentedType);
                 }
                 return new Resolution(methodGraphCompiler.compile(fieldType, instrumentedType).listNodes().asMethodList().filter(matcher),
-                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName).and(genericFieldType(fieldType))).getOnly()).getter(),
+                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName).and(genericFieldType(fieldType))).getOnly()).read(),
                         new MethodDelegationBinder.MethodInvoker.Virtual(fieldType.asErasure()));
             }
 

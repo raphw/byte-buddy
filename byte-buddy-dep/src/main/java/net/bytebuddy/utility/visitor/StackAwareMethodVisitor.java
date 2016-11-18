@@ -54,14 +54,14 @@ public class StackAwareMethodVisitor extends MethodVisitor {
     /**
      * Creates a new stack aware method visitor.
      *
-     * @param methodVisitor     The method visitor to delegate operations to.
-     * @param methodDescription The method description for which this method visitor is applied.
+     * @param methodVisitor      The method visitor to delegate operations to.
+     * @param instrumentedMethod The method description for which this method visitor is applied.
      */
-    public StackAwareMethodVisitor(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+    public StackAwareMethodVisitor(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
         super(Opcodes.ASM5, methodVisitor);
         current = new ArrayList<StackSize>();
         sizes = new HashMap<Label, List<StackSize>>();
-        freeIndex = methodDescription.getStackSize();
+        freeIndex = instrumentedMethod.getStackSize();
     }
 
     /**

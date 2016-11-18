@@ -300,7 +300,7 @@ public abstract class MethodConstant implements StackManipulation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return FieldAccess.forField(implementationContext.cache(methodConstant, METHOD_TYPE))
-                    .getter()
+                    .read()
                     .apply(methodVisitor, implementationContext);
         }
 
@@ -353,7 +353,7 @@ public abstract class MethodConstant implements StackManipulation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return FieldAccess.forField(implementationContext.cache(constructorConstant, CONSTRUCTOR_TYPE))
-                    .getter()
+                    .read()
                     .apply(methodVisitor, implementationContext);
         }
 

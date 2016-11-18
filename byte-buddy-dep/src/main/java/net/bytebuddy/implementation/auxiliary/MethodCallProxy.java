@@ -306,7 +306,7 @@ public class MethodCallProxy implements AuxiliaryType {
                             thisReference,
                             MethodVariableAccess.of(fieldDescription.getType().asErasure())
                                     .loadFrom(instrumentedMethod.getParameters().get(index).getOffset()),
-                            FieldAccess.forField(fieldDescription).putter()
+                            FieldAccess.forField(fieldDescription).write()
                     );
                     index++;
                 }
@@ -421,7 +421,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                 int index = 0;
                 for (FieldDescription fieldDescription : fieldList) {
-                    fieldLoading[index++] = new StackManipulation.Compound(thisReference, FieldAccess.forField(fieldDescription).getter());
+                    fieldLoading[index++] = new StackManipulation.Compound(thisReference, FieldAccess.forField(fieldDescription).read());
                 }
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
                         new StackManipulation.Compound(fieldLoading),

@@ -137,7 +137,7 @@ public @interface FieldValue {
                         fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadFrom(0),
-                        FieldAccess.forField(fieldDescription).getter(),
+                        FieldAccess.forField(fieldDescription).read(),
                         assigner.assign(fieldDescription.getType(), target.getType(), RuntimeType.Verifier.check(target))
                 );
                 return stackManipulation.isValid()

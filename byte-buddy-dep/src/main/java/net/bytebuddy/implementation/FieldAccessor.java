@@ -108,7 +108,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A stack manipulation that gets the field's value.
      */
     protected StackManipulation getter(FieldDescription fieldDescription, MethodDescription instrumentedMethod) {
-        return access(fieldDescription, instrumentedMethod, new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
+        return access(fieldDescription, instrumentedMethod, new StackManipulation.Compound(FieldAccess.forField(fieldDescription).read(),
                 assigner.assign(fieldDescription.getType(), instrumentedMethod.getReturnType(), typing)));
     }
 
@@ -127,7 +127,7 @@ public abstract class FieldAccessor implements Implementation {
                 parameterDescription.getDeclaringMethod(),
                 new StackManipulation.Compound(MethodVariableAccess.of(fieldDescription.getType().asErasure()).loadFrom(parameterDescription.getOffset()),
                         assigner.assign(parameterDescription.getType(), fieldDescription.getType(), typing),
-                        FieldAccess.forField(fieldDescription).putter()));
+                        FieldAccess.forField(fieldDescription).write()));
     }
 
     /**

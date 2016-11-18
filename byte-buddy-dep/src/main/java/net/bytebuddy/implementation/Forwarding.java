@@ -395,7 +395,7 @@ public class Forwarding implements Implementation.Composable {
                     fieldDescription.isStatic()
                             ? StackManipulation.Trivial.INSTANCE
                             : MethodVariableAccess.REFERENCE.loadFrom(0),
-                    FieldAccess.forField(fieldDescription).getter(),
+                    FieldAccess.forField(fieldDescription).read(),
                     MethodVariableAccess.allArgumentsOf(instrumentedMethod),
                     MethodInvocation.invoke(instrumentedMethod).virtual(fieldDescription.getType().asErasure()),
                     terminationHandler.resolve(instrumentedMethod.getReturnType())

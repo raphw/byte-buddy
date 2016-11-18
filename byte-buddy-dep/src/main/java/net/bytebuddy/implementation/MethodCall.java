@@ -832,7 +832,7 @@ public class MethodCall implements Implementation.Composable {
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
-                return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter();
+                return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).read();
             }
 
             @Override
@@ -899,7 +899,7 @@ public class MethodCall implements Implementation.Composable {
                         invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadFrom(0),
-                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter());
+                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).read());
             }
 
             @Override
@@ -1391,7 +1391,7 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        FieldAccess.forField(fieldDescription).getter(),
+                        FieldAccess.forField(fieldDescription).read(),
                         assigner.assign(fieldDescription.getType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + fieldDescription.getType() + " to " + target);
@@ -1561,7 +1561,7 @@ public class MethodCall implements Implementation.Composable {
                         fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadFrom(0),
-                        FieldAccess.forField(fieldDescription).getter(),
+                        FieldAccess.forField(fieldDescription).read(),
                         assigner.assign(fieldDescription.getType(), target.getType(), typing)
                 );
                 if (!stackManipulation.isValid()) {

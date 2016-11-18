@@ -2276,7 +2276,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public StackManipulation resolveRead() {
                         return new StackManipulation.Compound(fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(fieldDescription).getter(), readAssignment);
+                                : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(fieldDescription).read(), readAssignment);
                     }
 
                     @Override
@@ -2362,7 +2362,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         Removal.SINGLE
                                 );
                             }
-                            return new StackManipulation.Compound(preparation, FieldAccess.forField(fieldDescription).putter());
+                            return new StackManipulation.Compound(preparation, FieldAccess.forField(fieldDescription).write());
                         }
 
                         @Override
@@ -8975,7 +8975,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadFrom(0),
-                        FieldAccess.forField(fieldDescription).getter(),
+                        FieldAccess.forField(fieldDescription).read(),
                         assignment
                 );
             }
