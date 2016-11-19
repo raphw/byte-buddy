@@ -546,7 +546,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          */
         RETURNING {
             @Override
-            protected StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
                 return new StackManipulation.Compound(assigner.assign(target.isConstructor()
                                 ? target.getDeclaringType().asGenericType()
                                 : target.getReturnType(),
@@ -560,7 +560,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          */
         DROPPING {
             @Override
-            protected StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
                 return Removal.pop(target.isConstructor()
                         ? target.getDeclaringType().asErasure()
                         : target.getReturnType().asErasure());
@@ -575,7 +575,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * @param target   The target method that is subject to be bound by the {@code source} method.
          * @return A stack manipulation that is applied after the method return.
          */
-        protected abstract StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
+        public abstract StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
 
         @Override
         public String toString() {
