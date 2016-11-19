@@ -220,7 +220,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
      */
     protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit) {
-        this(methodEnter, methodExit, Assigner.DEFAULT, Removal.pop(TypeDescription.THROWABLE), SuperMethodCall.INSTANCE);
+        this(methodEnter, methodExit, Assigner.DEFAULT, Removal.of(TypeDescription.THROWABLE), SuperMethodCall.INSTANCE);
     }
 
     /**
@@ -1918,7 +1918,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public StackManipulation resolveWrite() {
-                            return Removal.pop(typeDefinition);
+                            return Removal.of(typeDefinition);
                         }
 
                         @Override

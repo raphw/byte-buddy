@@ -304,8 +304,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 for (FieldDescription fieldDescription : fieldList) {
                     fieldLoading[index] = new StackManipulation.Compound(
                             thisReference,
-                            MethodVariableAccess.of(fieldDescription.getType().asErasure())
-                                    .loadFrom(instrumentedMethod.getParameters().get(index).getOffset()),
+                            MethodVariableAccess.of(fieldDescription.getType()).loadFrom(instrumentedMethod.getParameters().get(index).getOffset()),
                             FieldAccess.forField(fieldDescription).write()
                     );
                     index++;
@@ -427,7 +426,7 @@ public class MethodCallProxy implements AuxiliaryType {
                         new StackManipulation.Compound(fieldLoading),
                         MethodInvocation.invoke(accessorMethod),
                         assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
-                        MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
+                        MethodReturn.of(instrumentedMethod.getReturnType())
                 ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }

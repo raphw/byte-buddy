@@ -1253,7 +1253,7 @@ public class MethodCall implements Implementation.Composable {
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.of(parameterDescription.getType().asErasure()).loadFrom(parameterDescription.getOffset()),
+                        MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()),
                         assigner.assign(parameterDescription.getType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target + " for " + instrumentedMethod);
@@ -2559,8 +2559,7 @@ public class MethodCall implements Implementation.Composable {
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + invokedMethod.getReturnType() + " from " + instrumentedMethod);
                 }
-                return new StackManipulation.Compound(stackManipulation,
-                        MethodReturn.of(instrumentedMethod.getReturnType().asErasure()));
+                return new StackManipulation.Compound(stackManipulation, MethodReturn.of(instrumentedMethod.getReturnType()));
             }
         },
 
@@ -2570,9 +2569,9 @@ public class MethodCall implements Implementation.Composable {
         DROPPING {
             @Override
             protected StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
-                return Removal.pop(invokedMethod.isConstructor()
-                        ? invokedMethod.getDeclaringType().asErasure()
-                        : invokedMethod.getReturnType().asErasure());
+                return Removal.of(invokedMethod.isConstructor()
+                        ? invokedMethod.getDeclaringType()
+                        : invokedMethod.getReturnType());
             }
         };
 

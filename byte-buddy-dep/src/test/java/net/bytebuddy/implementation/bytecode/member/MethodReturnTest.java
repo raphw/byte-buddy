@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -38,7 +38,7 @@ public class MethodReturnTest {
     private MethodVisitor methodVisitor;
 
     @Mock
-    private TypeDescription typeDescription;
+    private TypeDefinition typeDefinition;
 
     @Mock
     private Implementation.Context implementationContext;
@@ -68,8 +68,8 @@ public class MethodReturnTest {
 
     @Before
     public void setUp() throws Exception {
-        when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
-        when(typeDescription.represents(type)).thenReturn(true);
+        when(typeDefinition.isPrimitive()).thenReturn(type.isPrimitive());
+        when(typeDefinition.represents(type)).thenReturn(true);
     }
 
     @After
@@ -79,7 +79,7 @@ public class MethodReturnTest {
 
     @Test
     public void testVoidReturn() throws Exception {
-        StackManipulation stackManipulation = MethodReturn.of(typeDescription);
+        StackManipulation stackManipulation = MethodReturn.of(typeDefinition);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(-1 * sizeChange));

@@ -125,7 +125,7 @@ public abstract class FieldAccessor implements Implementation {
         }
         return access(fieldDescription,
                 parameterDescription.getDeclaringMethod(),
-                new StackManipulation.Compound(MethodVariableAccess.of(fieldDescription.getType().asErasure()).loadFrom(parameterDescription.getOffset()),
+                new StackManipulation.Compound(MethodVariableAccess.of(fieldDescription.getType()).loadFrom(parameterDescription.getOffset()),
                         assigner.assign(parameterDescription.getType(), fieldDescription.getType(), typing),
                         FieldAccess.forField(fieldDescription).write()));
     }
