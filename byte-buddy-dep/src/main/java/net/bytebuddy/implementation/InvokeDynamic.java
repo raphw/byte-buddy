@@ -1788,7 +1788,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    return doResolve(MethodVariableAccess.of(parameters.get(index).getType().asErasure()).loadFrom(parameters.get(index).getOffset()),
+                    return doResolve(MethodVariableAccess.of(parameters.get(index).getType()).loadFrom(parameters.get(index).getOffset()),
                             parameters.get(index).getType(),
                             assigner,
                             typing);
@@ -2908,7 +2908,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
                 }
-                return new StackManipulation.Compound(stackManipulation, MethodReturn.of(interceptedMethod.getReturnType().asErasure()));
+                return new StackManipulation.Compound(stackManipulation, MethodReturn.of(interceptedMethod.getReturnType()));
             }
         },
 
@@ -2918,9 +2918,9 @@ public class InvokeDynamic implements Implementation.Composable {
         DROPPING {
             @Override
             protected StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
-                return Removal.pop(interceptedMethod.isConstructor()
-                        ? interceptedMethod.getDeclaringType().asErasure()
-                        : interceptedMethod.getReturnType().asErasure());
+                return Removal.of(interceptedMethod.isConstructor()
+                        ? interceptedMethod.getDeclaringType()
+                        : interceptedMethod.getReturnType());
             }
         };
 

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -32,7 +33,7 @@ public class DuplicationTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription typeDescription;
+    private TypeDefinition typeDefinition;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -56,7 +57,7 @@ public class DuplicationTest {
 
     @Before
     public void setUp() throws Exception {
-        when(typeDescription.getStackSize()).thenReturn(stackSize);
+        when(typeDefinition.getStackSize()).thenReturn(stackSize);
     }
 
     @After
@@ -66,7 +67,7 @@ public class DuplicationTest {
 
     @Test
     public void testDuplication() throws Exception {
-        StackManipulation stackManipulation = Duplication.duplicate(typeDescription);
+        StackManipulation stackManipulation = Duplication.of(typeDefinition);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(stackSize.getSize()));

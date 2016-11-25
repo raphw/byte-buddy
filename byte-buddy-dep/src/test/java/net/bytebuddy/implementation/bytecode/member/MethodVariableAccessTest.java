@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class MethodVariableAccessTest {
 
-    private final TypeDescription typeDescription;
+    private final TypeDefinition typeDefinition;
 
     private final int readCode, writeCode;
 
@@ -40,9 +41,9 @@ public class MethodVariableAccessTest {
     private Implementation.Context implementationContext;
 
     public MethodVariableAccessTest(Class<?> type, int readCode, int writeCode, int size) {
-        this.typeDescription = mock(TypeDescription.class);
-        when(typeDescription.isPrimitive()).thenReturn(type.isPrimitive());
-        when(typeDescription.represents(type)).thenReturn(true);
+        typeDefinition = mock(TypeDefinition.class);
+        when(typeDefinition.isPrimitive()).thenReturn(type.isPrimitive());
+        when(typeDefinition.represents(type)).thenReturn(true);
         this.readCode = readCode;
         this.writeCode = writeCode;
         this.size = size;
@@ -70,7 +71,7 @@ public class MethodVariableAccessTest {
 
     @Test
     public void testLoading() throws Exception {
-        StackManipulation stackManipulation = MethodVariableAccess.of(typeDescription).loadFrom(4);
+        StackManipulation stackManipulation = MethodVariableAccess.of(typeDefinition).loadFrom(4);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(this.size));
@@ -81,7 +82,7 @@ public class MethodVariableAccessTest {
 
     @Test
     public void testStoring() throws Exception {
-        StackManipulation stackManipulation = MethodVariableAccess.of(typeDescription).storeAt(4);
+        StackManipulation stackManipulation = MethodVariableAccess.of(typeDefinition).storeAt(4);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(this.size));

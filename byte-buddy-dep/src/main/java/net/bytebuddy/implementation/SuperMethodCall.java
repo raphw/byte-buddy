@@ -143,7 +143,7 @@ public enum SuperMethodCall implements Implementation.Composable {
             RETURNING {
                 @Override
                 protected StackManipulation of(MethodDescription methodDescription) {
-                    return MethodReturn.of(methodDescription.getReturnType().asErasure());
+                    return MethodReturn.of(methodDescription.getReturnType());
                 }
             },
 
@@ -153,7 +153,7 @@ public enum SuperMethodCall implements Implementation.Composable {
             DROPPING {
                 @Override
                 protected StackManipulation of(MethodDescription methodDescription) {
-                    return Removal.pop(methodDescription.getReturnType().asErasure());
+                    return Removal.of(methodDescription.getReturnType());
                 }
             };
 

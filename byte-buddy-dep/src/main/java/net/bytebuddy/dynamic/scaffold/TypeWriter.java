@@ -945,7 +945,7 @@ public interface TypeWriter<T> {
                         return new ByteCodeAppender.Simple(
                                 MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                                 MethodInvocation.invoke(bridgeTarget).special(superClass),
-                                MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
+                                MethodReturn.of(instrumentedMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
 
@@ -1173,7 +1173,7 @@ public interface TypeWriter<T> {
                                 bridgeTarget.getReturnType().asErasure().isAssignableTo(bridgeMethod.getReturnType().asErasure())
                                         ? StackManipulation.Trivial.INSTANCE
                                         : TypeCasting.to(bridgeMethod.getReturnType().asErasure()),
-                                MethodReturn.of(bridgeMethod.getReturnType().asErasure())
+                                MethodReturn.of(bridgeMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext, bridgeMethod);
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                         methodVisitor.visitEnd();

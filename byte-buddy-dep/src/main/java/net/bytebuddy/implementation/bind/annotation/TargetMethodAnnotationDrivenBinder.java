@@ -551,7 +551,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                 ? target.getDeclaringType().asGenericType()
                                 : target.getReturnType(),
                         source.getReturnType(),
-                        RuntimeType.Verifier.check(target)), MethodReturn.of(source.getReturnType().asErasure()));
+                        RuntimeType.Verifier.check(target)), MethodReturn.of(source.getReturnType()));
             }
         },
 
@@ -561,9 +561,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         DROPPING {
             @Override
             protected StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
-                return Removal.pop(target.isConstructor()
-                        ? target.getDeclaringType().asErasure()
-                        : target.getReturnType().asErasure());
+                return Removal.of(target.isConstructor()
+                        ? target.getDeclaringType()
+                        : target.getReturnType());
             }
         };
 

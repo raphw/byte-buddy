@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.After;
@@ -32,7 +32,7 @@ public class RemovalTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription typeDescription;
+    private TypeDefinition typeDefinition;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -56,7 +56,7 @@ public class RemovalTest {
 
     @Before
     public void setUp() throws Exception {
-        when(typeDescription.getStackSize()).thenReturn(stackSize);
+        when(typeDefinition.getStackSize()).thenReturn(stackSize);
     }
 
     @After
@@ -66,7 +66,7 @@ public class RemovalTest {
 
     @Test
     public void testDuplication() throws Exception {
-        StackManipulation stackManipulation = Removal.pop(typeDescription);
+        StackManipulation stackManipulation = Removal.of(typeDefinition);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(-stackSize.getSize()));

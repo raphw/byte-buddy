@@ -86,7 +86,7 @@ public enum Duplication implements StackManipulation {
      * @param typeDefinition The type to be duplicated.
      * @return A stack manipulation that duplicates the given type.
      */
-    public static Duplication duplicate(TypeDefinition typeDefinition) {
+    public static Duplication of(TypeDefinition typeDefinition) {
         switch (typeDefinition.getStackSize()) {
             case SINGLE:
                 return SINGLE;

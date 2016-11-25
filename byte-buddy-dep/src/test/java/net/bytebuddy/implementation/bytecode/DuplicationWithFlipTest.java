@@ -63,7 +63,7 @@ public class DuplicationWithFlipTest {
 
     @Test
     public void testFlip() throws Exception {
-        StackManipulation stackManipulation = Duplication.duplicate(top).flipOver(second);
+        StackManipulation stackManipulation = Duplication.of(top).flipOver(second);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getMaximalSize(), is(topSize.getSize()));

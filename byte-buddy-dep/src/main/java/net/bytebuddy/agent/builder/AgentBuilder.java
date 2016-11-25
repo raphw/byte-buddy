@@ -5042,7 +5042,7 @@ public interface AgentBuilder {
                                 new StackManipulation.Compound(fieldAccess),
                                 new StackManipulation.Compound(parameterAccess),
                                 MethodInvocation.invoke(targetMethod),
-                                MethodReturn.of(targetMethod.getReturnType().asErasure())
+                                MethodReturn.of(targetMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
 
@@ -5297,8 +5297,8 @@ public interface AgentBuilder {
                                 bridgeTargetInvocation,
                                 bridgeTargetInvocation.getMethodDescription().getReturnType().asErasure().isAssignableTo(instrumentedMethod.getReturnType().asErasure())
                                         ? StackManipulation.Trivial.INSTANCE
-                                        : TypeCasting.to(instrumentedMethod.getReceiverType().asErasure()),
-                                MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
+                                        : TypeCasting.to(instrumentedMethod.getReceiverType()),
+                                MethodReturn.of(instrumentedMethod.getReturnType())
 
                         )).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }

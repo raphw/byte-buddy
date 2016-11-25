@@ -330,7 +330,7 @@ public class Forwarding implements Implementation.Composable {
         DROPPING {
             @Override
             protected StackManipulation resolve(TypeDefinition returnType) {
-                return Removal.pop(returnType);
+                return Removal.of(returnType);
             }
         },
 

@@ -422,8 +422,7 @@ public @interface Pipe {
                         for (FieldDescription fieldDescription : fieldList) {
                             fieldLoading[index] = new StackManipulation.Compound(
                                     thisReference,
-                                    MethodVariableAccess.of(fieldDescription.getType().asErasure())
-                                            .loadFrom(instrumentedMethod.getParameters().get(index).getOffset()),
+                                    MethodVariableAccess.of(fieldDescription.getType()).loadFrom(instrumentedMethod.getParameters().get(index).getOffset()),
                                     FieldAccess.forField(fieldDescription).write()
                             );
                             index++;

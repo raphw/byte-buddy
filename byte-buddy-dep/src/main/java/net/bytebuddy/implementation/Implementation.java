@@ -1467,7 +1467,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             accessorMethodInvocation,
-                            MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
+                            MethodReturn.of(instrumentedMethod.getReturnType())
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
@@ -1521,7 +1521,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                                     ? StackManipulation.Trivial.INSTANCE
                                     : MethodVariableAccess.REFERENCE.loadFrom(0),
                             FieldAccess.forField(fieldDescription).read(),
-                            MethodReturn.of(fieldDescription.getType().asErasure())
+                            MethodReturn.of(fieldDescription.getType())
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
