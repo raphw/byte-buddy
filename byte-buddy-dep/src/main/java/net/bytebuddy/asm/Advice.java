@@ -6932,8 +6932,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         suppressionHandler.onStart(methodVisitor);
                         int index = 0, currentStackSize = 0, maximumStackSize = 0;
                         for (OffsetMapping.Target offsetMapping : offsetMappings) {
-                            Type type = Type.getType(adviceMethod.getParameters().get(index++).getType().asErasure().getDescriptor());
-                            currentStackSize += type.getSize();
+                            currentStackSize += adviceMethod.getParameters().get(index++).getType().getStackSize().getSize();
                             maximumStackSize = Math.max(maximumStackSize, currentStackSize + offsetMapping.resolveRead()
                                     .apply(methodVisitor, implementationContext)
                                     .getMaximalSize());
@@ -8338,6 +8337,49 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to the {@code this} reference of the instrumented method.
+     * </p>
+     * <p>
+     * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
+     * {@link OnMethodEnter} where the {@code this} reference is not available.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface This {
+
+        /**
+         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
+         * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
+         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
+         *
+         * @return {@code true} if this parameter is read-only.
+         */
+        boolean readOnly() default true;
+
+        /**
+         * The typing that should be applied when assigning the {@code this} value.
+         *
+         * @return The typing to apply upon assignment.
+         */
+        Assigner.Typing typing() default Assigner.Typing.STATIC;
+
+        /**
+         * Determines if the parameter should be assigned {@code null} if the instrumented method is static or a constructor within
+         * an entry method.
+         *
+         * @return {@code true} if the value assignment is optional.
+         */
+        boolean optional() default false;
+    }
+
+    /**
      * Indicates that the annotated parameter should be mapped to the parameter with index {@link Argument#value()} of
      * the instrumented method.
      *
@@ -8404,45 +8446,80 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     /**
      * <p>
-     * Indicates that the annotated parameter should be mapped to the {@code this} reference of the instrumented method.
+     * Indicates that the annotated parameter should be mapped to the return value of the instrumented method. If the instrumented
+     * method terminates exceptionally, the type's default value is assigned to the parameter, i.e. {@code 0} for numeric types
+     * and {@code null} for reference types. If the return type is {@code void}, the annotated value is {@code null} if and only if
+     * {@link Return#typing()} is set to {@link Assigner.Typing#DYNAMIC}.
      * </p>
      * <p>
-     * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
-     * {@link OnMethodEnter} where the {@code this} reference is not available.
+     * <b>Note</b>: This annotation must only be used on exit advice methods.
      * </p>
      *
      * @see Advice
-     * @see OnMethodEnter
      * @see OnMethodExit
      */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @java.lang.annotation.Target(ElementType.PARAMETER)
-    public @interface This {
+    public @interface Return {
 
         /**
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
-         * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
-         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
+         * type must be equal to the parameter of the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
+         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented methods parameter.
          *
          * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
 
         /**
-         * The typing that should be applied when assigning the {@code this} value.
+         * Determines the typing that is applied when assigning the return value.
          *
-         * @return The typing to apply upon assignment.
+         * @return The typing to apply when assigning the annotated parameter.
          */
         Assigner.Typing typing() default Assigner.Typing.STATIC;
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to the return value of the instrumented method.  If the instrumented method terminates
+     * regularly, {@code null} is assigned to the annotated parameter. Note that the Java runtime does not enforce checked exceptions. In order to
+     * capture any error, the parameter type should be of type {@link Throwable}.
+     * </p>
+     * <p>
+     * <b>Note</b>: This annotation must only be used on exit advice methods.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target(ElementType.PARAMETER)
+    public @interface Thrown {
 
         /**
-         * Determines if the parameter should be assigned {@code null} if the instrumented method is static or a constructor within
-         * an entry method.
+         * <p>
+         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, it is illegal to
+         * write to the annotated parameter. If this property is set to {@code true}, the annotated parameter can either be set
+         * to {@code null} to suppress an exception that was thrown by the adviced method or it can be set to any other exception
+         * that will be thrown after the advice method returned.
+         * </p>
+         * <p>
+         * If an exception is suppressed, the default value for the return type is returned from the method, i.e. {@code 0} for any
+         * numeric type and {@code null} for a reference type. The default value can be replaced via the {@link Return} annotation.
+         * </p>
          *
-         * @return {@code true} if the value assignment is optional.
+         * @return {@code true} if this parameter is read-only.
          */
-        boolean optional() default false;
+        boolean readOnly() default true;
+
+        /**
+         * Determines the typing that is applied when assigning the captured {@link Throwable} to the annotated parameter.
+         *
+         * @return The typing to apply when assigning the annotated parameter.
+         */
+        Assigner.Typing typing() default Assigner.Typing.DYNAMIC;
     }
 
     /**
@@ -8545,37 +8622,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
-     * for {@code boolean} types and {@code null} for reference types). Any assignments to this variable are without any effect.
-     *
-     * @see Advice
-     * @see OnMethodEnter
-     * @see OnMethodExit
-     */
-    @Documented
-    @Retention(RetentionPolicy.RUNTIME)
-    @java.lang.annotation.Target(ElementType.PARAMETER)
-    public @interface Unused {
-        /* empty */
-    }
-
-    /**
-     * Indicates that the annotated parameter should always return a default a boxed version of the instrumented methods return value
-     * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
-     * parameter must be of type {@link Object} and cannot be assigned a value.
-     *
-     * @see Advice
-     * @see OnMethodEnter
-     * @see OnMethodExit
-     */
-    @Documented
-    @Retention(RetentionPolicy.RUNTIME)
-    @java.lang.annotation.Target(ElementType.PARAMETER)
-    public @interface StubValue {
-        /* empty */
-    }
-
-    /**
      * <p>
      * Indicates that the annotated parameter should be mapped to the value that is returned by the advice method that is annotated
      * by {@link OnMethodEnter}.
@@ -8608,81 +8654,34 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * <p>
-     * Indicates that the annotated parameter should be mapped to the return value of the instrumented method. If the instrumented
-     * method terminates exceptionally, the type's default value is assigned to the parameter, i.e. {@code 0} for numeric types
-     * and {@code null} for reference types. If the return type is {@code void}, the annotated value is {@code null} if and only if
-     * {@link Return#typing()} is set to {@link Assigner.Typing#DYNAMIC}.
-     * </p>
-     * <p>
-     * <b>Note</b>: This annotation must only be used on exit advice methods.
-     * </p>
+     * Indicates that the annotated parameter should always return a default a boxed version of the instrumented methods return value
+     * (i.e. {@code 0} for numeric values, {@code false} for {@code boolean} types and {@code null} for reference types). The annotated
+     * parameter must be of type {@link Object} and cannot be assigned a value.
      *
      * @see Advice
+     * @see OnMethodEnter
      * @see OnMethodExit
      */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @java.lang.annotation.Target(ElementType.PARAMETER)
-    public @interface Return {
-
-        /**
-         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
-         * type must be equal to the parameter of the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
-         * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented methods parameter.
-         *
-         * @return {@code true} if this parameter is read-only.
-         */
-        boolean readOnly() default true;
-
-        /**
-         * Determines the typing that is applied when assigning the return value.
-         *
-         * @return The typing to apply when assigning the annotated parameter.
-         */
-        Assigner.Typing typing() default Assigner.Typing.STATIC;
+    public @interface StubValue {
+        /* empty */
     }
 
     /**
-     * <p>
-     * Indicates that the annotated parameter should be mapped to the return value of the instrumented method.  If the instrumented method terminates
-     * regularly, {@code null} is assigned to the annotated parameter. Note that the Java runtime does not enforce checked exceptions. In order to
-     * capture any error, the parameter type should be of type {@link Throwable}.
-     * </p>
-     * <p>
-     * <b>Note</b>: This annotation must only be used on exit advice methods.
-     * </p>
+     * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
+     * for {@code boolean} types and {@code null} for reference types). Any assignments to this variable are without any effect.
      *
      * @see Advice
+     * @see OnMethodEnter
      * @see OnMethodExit
      */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @java.lang.annotation.Target(ElementType.PARAMETER)
-    public @interface Thrown {
-
-        /**
-         * <p>
-         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, it is illegal to
-         * write to the annotated parameter. If this property is set to {@code true}, the annotated parameter can either be set
-         * to {@code null} to suppress an exception that was thrown by the adviced method or it can be set to any other exception
-         * that will be thrown after the advice method returned.
-         * </p>
-         * <p>
-         * If an exception is suppressed, the default value for the return type is returned from the method, i.e. {@code 0} for any
-         * numeric type and {@code null} for a reference type. The default value can be replaced via the {@link Return} annotation.
-         * </p>
-         *
-         * @return {@code true} if this parameter is read-only.
-         */
-        boolean readOnly() default true;
-
-        /**
-         * Determines the typing that is applied when assigning the captured {@link Throwable} to the annotated parameter.
-         *
-         * @return The typing to apply when assigning the annotated parameter.
-         */
-        Assigner.Typing typing() default Assigner.Typing.DYNAMIC;
+    public @interface Unused {
+        /* empty */
     }
 
     /**
@@ -8750,40 +8749,53 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              boolean initialized) {
                 Object value = doResolve(instrumentedType, instrumentedMethod, target, annotation, assigner, initialized);
                 StackManipulation stackManipulation;
+                TypeDescription typeDescription;
                 if (value == null) {
                     if (target.getType().isPrimitive()) {
-                        throw new IllegalStateException("Cannot assign null to primitive " + target);
+                        throw new IllegalStateException("Cannot assign null to the primitive type " + target);
                     } else {
                         return NullConstant.INSTANCE;
                     }
                 } else if (value instanceof Boolean) {
                     stackManipulation = IntegerConstant.forValue((Boolean) value);
+                    typeDescription = new TypeDescription.ForLoadedType(boolean.class);
                 } else if (value instanceof Byte) {
                     stackManipulation = IntegerConstant.forValue((Byte) value);
+                    typeDescription = new TypeDescription.ForLoadedType(byte.class);
                 } else if (value instanceof Short) {
                     stackManipulation = IntegerConstant.forValue((Short) value);
+                    typeDescription = new TypeDescription.ForLoadedType(short.class);
                 } else if (value instanceof Character) {
                     stackManipulation = IntegerConstant.forValue((Character) value);
+                    typeDescription = new TypeDescription.ForLoadedType(char.class);
                 } else if (value instanceof Integer) {
                     stackManipulation = IntegerConstant.forValue((Integer) value);
+                    typeDescription = new TypeDescription.ForLoadedType(int.class);
                 } else if (value instanceof Long) {
                     stackManipulation = LongConstant.forValue((Long) value);
+                    typeDescription = new TypeDescription.ForLoadedType(long.class);
                 } else if (value instanceof Float) {
                     stackManipulation = FloatConstant.forValue((Float) value);
+                    typeDescription = new TypeDescription.ForLoadedType(float.class);
                 } else if (value instanceof Double) {
                     stackManipulation = DoubleConstant.forValue((Double) value);
+                    typeDescription = new TypeDescription.ForLoadedType(double.class);
                 } else if (value instanceof TypeDescription) {
                     stackManipulation = ClassConstant.of((TypeDescription) value);
+                    typeDescription = TypeDescription.CLASS;
                 } else if (value instanceof String) {
                     stackManipulation = new TextConstant((String) value);
+                    typeDescription = TypeDescription.STRING;
                 } else if (value instanceof JavaConstant) {
                     stackManipulation = ((JavaConstant) value).asStackManipulation();
+                    typeDescription = ((JavaConstant) value).getType();
                 } else {
                     throw new IllegalStateException("Not a constant value: " + value);
                 }
-                StackManipulation assignment = assigner.assign(new TypeDescription.ForLoadedType(value.getClass()).asUnboxed().asGenericType(),
-                        target.getType(),
-                        Assigner.Typing.STATIC);
+                StackManipulation assignment = assigner.assign(typeDescription.asGenericType(), target.getType(), Assigner.Typing.STATIC);
+                if (!assignment.isValid()) {
+                    throw new IllegalStateException("Cannot assign constant of type " + typeDescription + " to " + target.getType());
+                }
                 return new StackManipulation.Compound(stackManipulation, assignment);
             }
 

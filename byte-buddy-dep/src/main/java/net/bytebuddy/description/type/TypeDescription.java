@@ -286,12 +286,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
     /**
      * Returns a description of this type that represents this type as a boxed type for primitive types, unless its {@code void}.
+     *
      * @return A description of this type in its boxed form.
      */
     TypeDescription asBoxed();
 
     /**
      * Returns a description of this type that represents this type as an unboxed type for boxing types, unless its {@link Void}.
+     *
      * @return A description of this type in its unboxed form.
      */
     TypeDescription asUnboxed();
