@@ -1,5 +1,6 @@
 package net.bytebuddy.agent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 
@@ -262,6 +263,7 @@ public interface VirtualMachine {
             }
 
             @Override
+            @SuppressFBWarnings(value = "DMI_HARDCODED_ABSOLUTE_FILENAME", justification = "This is a Unix-specific implementation")
             protected void connect() throws IOException {
                 File socketFile = new File(TEMPORARY_DIRECTORY, SOCKET_FILE_PREFIX + processId);
                 if (!socketFile.exists()) {
