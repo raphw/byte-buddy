@@ -302,7 +302,7 @@ public class ByteBuddyAgent {
             try {
                 virtualMachineType
                         .getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
-                        .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), null);
+                        .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), argument);
             } finally {
                 virtualMachineType
                         .getDeclaredMethod(DETACH_METHOD_NAME)
