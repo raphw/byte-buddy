@@ -1,7 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
-### 17. November 2016: version 1.5.6
+### 25. November 2016: version 1.5.7
+
+- Fixed type discovery for custom advice annotation bindings.
+
+### 18. November 2016: version 1.5.6
 
 - Added possibility to configure suppression handler in `Advice` classes.
 
