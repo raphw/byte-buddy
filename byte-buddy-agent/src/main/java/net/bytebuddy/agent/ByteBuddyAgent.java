@@ -301,11 +301,11 @@ public class ByteBuddyAgent {
                     .invoke(STATIC_MEMBER, processId);
             try {
                 virtualMachineType
-                        .getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
+                        .getMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
                         .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), argument);
             } finally {
                 virtualMachineType
-                        .getDeclaredMethod(DETACH_METHOD_NAME)
+                        .getMethod(DETACH_METHOD_NAME)
                         .invoke(virtualMachineInstance);
             }
         } catch (RuntimeException exception) {
@@ -346,7 +346,8 @@ public class ByteBuddyAgent {
                 ForJ9Vm.INSTANCE,
                 ForToolsJarVm.JVM_ROOT,
                 ForToolsJarVm.JDK_ROOT,
-                ForToolsJarVm.MACINTOSH);
+                ForToolsJarVm.MACINTOSH,
+                ForUnixHotSpotVm.INSTANCE);
 
         /**
          * Attempts the creation of an accessor for a specific JVM's attachment API.
@@ -603,6 +604,31 @@ public class ByteBuddyAgent {
             @Override
             public String toString() {
                 return "ByteBuddyAgent.AttachmentProvider.ForToolsJarVm." + name();
+            }
+        }
+
+        /**
+         * An attachment provider using a custom protocol implementation for HotSpot on Unix.
+         */
+        enum ForUnixHotSpotVm implements AttachmentProvider {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Accessor attempt() {
+                try {
+                    return new Accessor.Simple(VirtualMachine.ForHotSpot.OnUnix.assertAvailability());
+                } catch (Throwable ignored) {
+                    return Accessor.Unavailable.INSTANCE;
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "ByteBuddyAgent.AttachmentProvider.ForUnixHotSpotVm." + name();
             }
         }
 

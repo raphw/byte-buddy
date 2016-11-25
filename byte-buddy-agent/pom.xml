@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -15,12 +16,23 @@
         <bytebuddy.agent>net.bytebuddy.agent.Installer</bytebuddy.agent>
         <attach.package.sun>com.sun.tools.attach</attach.package.sun>
         <attach.package.ibm>com.ibm.tools.attach</attach.package.ibm>
+        <version.unixsocket>2.0.4</version.unixsocket>
     </properties>
 
     <name>Byte Buddy Java agent</name>
     <description>The Byte Buddy Java agent allows to access the JVM's HotSwap feature.</description>
 
+    <!--
+      The Unix socket dependency can be excluded safely. Byte Buddy will safely discover the
+      non-availability and not use the corresponding virtual machine implementation.
+    -->
+
     <dependencies>
+        <dependency>
+            <groupId>com.kohlschutter.junixsocket</groupId>
+            <artifactId>junixsocket-native-common</artifactId>
+            <version>${version.unixsocket}</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
