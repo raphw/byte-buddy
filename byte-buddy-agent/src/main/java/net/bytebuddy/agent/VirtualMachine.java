@@ -81,7 +81,7 @@ public interface VirtualMachine {
         protected final String processId;
 
         /**
-         * Creates a new HotSpot-compatible VM implementation
+         * Creates a new HotSpot-compatible VM implementation.
          *
          * @param processId The target process's id.
          */
