@@ -105,19 +105,18 @@ public interface VirtualMachine {
                     ? jarFile
                     : jarFile + ARGUMENT_DELIMITER + argument).getBytes(UTF_8));
             write(BLANK);
-            int length;
             byte[] buffer = new byte[1];
             StringBuilder stringBuilder = new StringBuilder();
-            do {
-                length = read(buffer);
+            int length;
+            while ((length = read(buffer)) != -1) {
                 if (length > 0) {
                     if (buffer[0] == 10) {
                         break;
                     }
                     stringBuilder.append((char) buffer[0]);
                 }
-            } while (length != -1);
-            switch (Integer.parseInt(stringBuilder.toString())) {
+            }
+            switch (Integer.valueOf(stringBuilder.toString())) {
                 case 0:
                     return;
                 case 101:
@@ -172,6 +171,11 @@ public interface VirtualMachine {
             private static final long DEFAULT_PAUSE = 200;
 
             /**
+             * The default socket timeout.
+             */
+            private static final long DEFAULT_TIMEOUT = 5000;
+
+            /**
              * The temporary directory on Unix systems.
              */
             private static final String TEMPORARY_DIRECTORY = "/tmp";
@@ -202,6 +206,11 @@ public interface VirtualMachine {
             private final long pause;
 
             /**
+             * The socket timeout.
+             */
+            private final long timeout;
+
+            /**
              * The time unit of the pause time.
              */
             private final TimeUnit timeUnit;
@@ -213,13 +222,15 @@ public interface VirtualMachine {
              * @param socket    The Unix socket to use for communication.
              * @param attempts  The number of attempts to connect.
              * @param pause     The pause time between two VMs.
+             * @param timeout   The socket timeout.
              * @param timeUnit  The time unit of the pause time.
              */
-            public OnUnix(String processId, AFUNIXSocket socket, int attempts, long pause, TimeUnit timeUnit) {
+            public OnUnix(String processId, AFUNIXSocket socket, int attempts, long pause, long timeout, TimeUnit timeUnit) {
                 super(processId);
                 this.socket = socket;
                 this.attempts = attempts;
                 this.pause = pause;
+                this.timeout = timeout;
                 this.timeUnit = timeUnit;
             }
 
@@ -247,7 +258,7 @@ public interface VirtualMachine {
              * @throws IOException If an I/O exception occurs.
              */
             public static VirtualMachine attach(String processId) throws IOException {
-                return new OnUnix(processId, AFUNIXSocket.newInstance(), DEFAULT_ATTEMPTS, DEFAULT_PAUSE, TimeUnit.MILLISECONDS);
+                return new OnUnix(processId, AFUNIXSocket.newInstance(), DEFAULT_ATTEMPTS, DEFAULT_PAUSE, DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
             }
 
             @Override
@@ -301,6 +312,7 @@ public interface VirtualMachine {
                         }
                     }
                 }
+                socket.setSoTimeout((int) timeUnit.toMillis(timeout));
                 socket.connect(new AFUNIXSocketAddress(socketFile));
             }
 
@@ -326,6 +338,7 @@ public interface VirtualMachine {
                         ", socket=" + socket +
                         ", attempts=" + attempts +
                         ", pause=" + pause +
+                        ", timeout=" + timeout +
                         ", timeUnit=" + timeUnit +
                         '}';
             }
