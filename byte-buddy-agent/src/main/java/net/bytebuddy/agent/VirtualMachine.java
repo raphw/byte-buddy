@@ -6,6 +6,7 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -231,8 +232,11 @@ public interface VirtualMachine {
             public static Class<?> assertAvailability() {
                 if (!AFUNIXSocket.isSupported()) {
                     throw new IllegalStateException("POSIX sockets are not supported on the current system");
+                } else if (!System.getProperty("java.vm.name").toLowerCase(Locale.US).contains("hotspot")) {
+                    throw new IllegalStateException("Cannot apply attachment on non-Hotspot compatible VM");
+                } else {
+                    return OnUnix.class;
                 }
-                return OnUnix.class;
             }
 
             /**
