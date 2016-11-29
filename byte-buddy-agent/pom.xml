@@ -24,7 +24,8 @@
 
     <!--
       The Unix socket dependency can be excluded safely. Byte Buddy will safely discover the
-      non-availability and not use the corresponding virtual machine implementation.
+      non-availability and not use the corresponding virtual machine implementation. The
+      implementation requires Java 7+ and is deactivated on Java 6 VMs.
     -->
 
     <dependencies>

@@ -1,7 +1,10 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.test.utility.UnixSocketRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.mockito.InOrder;
 
 import java.io.IOException;
@@ -11,7 +14,11 @@ import static org.mockito.Mockito.spy;
 
 public class VirtualMachineForHotSpotTest {
 
+    @Rule
+    public MethodRule unixSocketRule = new UnixSocketRule();
+
     @Test
+    @UnixSocketRule.Enforce
     public void testAttachment() throws Exception {
         VirtualMachine.ForHotSpot virtualMachine = spy(new PseudoMachine(
                 "0".getBytes("UTF-8"),
@@ -33,6 +40,7 @@ public class VirtualMachineForHotSpotTest {
     }
 
     @Test
+    @UnixSocketRule.Enforce
     public void testAttachmentWithoutArgument() throws Exception {
         VirtualMachine.ForHotSpot virtualMachine = spy(new PseudoMachine(
                 "0".getBytes("UTF-8"),
@@ -54,6 +62,7 @@ public class VirtualMachineForHotSpotTest {
     }
 
     @Test(expected = IOException.class)
+    @UnixSocketRule.Enforce
     public void testAttachmentIncompatibleProtocol() throws Exception {
         new PseudoMachine(
                 "1".getBytes("UTF-8"),
@@ -64,6 +73,7 @@ public class VirtualMachineForHotSpotTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    @UnixSocketRule.Enforce
     public void testAttachmentUnknownError() throws Exception {
         new PseudoMachine(
                 "1".getBytes("UTF-8"),
@@ -73,6 +83,7 @@ public class VirtualMachineForHotSpotTest {
     }
 
     @Test
+    @UnixSocketRule.Enforce
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(VirtualMachine.ForHotSpot.OnUnix.class).applyBasic();
     }
