@@ -117,7 +117,7 @@ public interface VirtualMachine {
                     stringBuilder.append((char) buffer[0]);
                 }
             }
-            switch (Integer.valueOf(stringBuilder.toString())) {
+            switch (Integer.parseInt(stringBuilder.toString())) {
                 case 0:
                     return;
                 case 101:
