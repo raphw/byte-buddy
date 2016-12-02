@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -587,8 +588,9 @@ public class MethodCallTest {
         Object target = new Object();
         DynamicType.Loaded<ExplicitTarget> loaded = new ByteBuddy()
                 .subclass(ExplicitTarget.class)
+                .defineField(FOO, Object.class, Visibility.PUBLIC)
                 .method(isDeclaredBy(ExplicitTarget.class))
-                .intercept(MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onInstanceField(Object.class, FOO))
+                .intercept(MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onField(FOO))
                 .make()
                 .load(ExplicitTarget.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -597,9 +599,7 @@ public class MethodCallTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         ExplicitTarget instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
-        Field field = loaded.getLoaded().getDeclaredField(FOO);
-        field.setAccessible(true);
-        field.set(instance, target);
+        loaded.getLoaded().getDeclaredField(FOO).set(instance, target);
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ExplicitTarget.class)));
         assertThat(instance, instanceOf(ExplicitTarget.class));
         assertThat(instance.foo(), is(target.toString()));
@@ -811,10 +811,12 @@ public class MethodCallTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testMethodCallOnInterfaceToInstanceField() throws Exception {
-        InstrumentedType instrumentedType = mock(InstrumentedType.class);
-        when(instrumentedType.isInterface()).thenReturn(true);
-        MethodCall.invoke(String.class.getDeclaredMethod("toString")).onInstanceField(String.class, FOO).prepare(instrumentedType);
+    public void testMethodCallFieldDoesNotExist() throws Exception {
+        new ByteBuddy()
+                .subclass(ExplicitTarget.class)
+                .method(isDeclaredBy(ExplicitTarget.class))
+                .intercept(MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onField(FOO))
+                .make();
     }
 
     @Test
@@ -838,7 +840,7 @@ public class MethodCallTest {
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForDefaultMethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TerminationHandler.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForStaticField.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForInstanceField.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForSelfOrStaticInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForConstructingInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForMethodParameter.class).apply();

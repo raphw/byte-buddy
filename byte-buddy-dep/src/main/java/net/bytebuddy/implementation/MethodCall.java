@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -28,7 +27,6 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -656,7 +654,8 @@ public class MethodCall implements Implementation.Composable {
 
             /**
              * Creates a new method locator for an element matcher.
-             * @param matcher The matcher to use.
+             *
+             * @param matcher             The matcher to use.
              * @param methodGraphCompiler The method graph compiler to use.
              */
             protected ForElementMatcher(ElementMatcher<? super MethodDescription> matcher, MethodGraph.Compiler methodGraphCompiler) {
@@ -812,7 +811,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * The name of the field to store the target.
              */
-            private final String fieldName;
+            private final String name;
 
             /**
              * Creates a new target handler for a static field.
@@ -823,7 +822,7 @@ public class MethodCall implements Implementation.Composable {
             public ForStaticField(Object target, TypeDescription.Generic fieldType) {
                 this.target = target;
                 this.fieldType = fieldType;
-                fieldName = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
+                name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
             }
 
             @Override
@@ -832,16 +831,16 @@ public class MethodCall implements Implementation.Composable {
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
-                return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).read();
+                return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()).read();
             }
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
-                        .withField(new FieldDescription.Token(fieldName,
+                        .withField(new FieldDescription.Token(name,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
                                 fieldType))
-                        .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
+                        .withInitializer(new LoadedTypeInitializer.ForStaticField(name, target));
             }
 
             @Override
@@ -861,7 +860,7 @@ public class MethodCall implements Implementation.Composable {
                 return "MethodCall.TargetHandler.ForStaticField{" +
                         "target=" + target +
                         ", fieldType=" + fieldType +
-                        ", fieldName='" + fieldName + '\'' +
+                        ", name='" + name + '\'' +
                         '}';
             }
         }
@@ -869,66 +868,65 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Creates a target handler that stores the instance to invoke a method on in an instance field.
          */
-        class ForInstanceField implements TargetHandler {
+        class ForField implements TargetHandler {
 
             /**
              * The name of the field.
              */
-            private final String fieldName;
+            private final String name;
 
             /**
-             * The type of the field.
+             * The field locator factory to use.
              */
-            private final TypeDescription.Generic fieldType;
+            private final FieldLocator.Factory fieldLocatorFactory;
 
             /**
              * Creates a new target handler for storing a method invocation target in an
              * instance field.
              *
-             * @param fieldName The name of the field.
-             * @param fieldType The type of the field.
+             * @param name                The name of the field.
+             * @param fieldLocatorFactory The field locator factory to use.
              */
-            public ForInstanceField(String fieldName, TypeDescription.Generic fieldType) {
-                this.fieldName = fieldName;
-                this.fieldType = fieldType;
+            public ForField(String name, FieldLocator.Factory fieldLocatorFactory) {
+                this.name = name;
+                this.fieldLocatorFactory = fieldLocatorFactory;
             }
 
             @Override
             public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
-                return new StackManipulation.Compound(
-                        invokedMethod.isStatic()
-                                ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0),
-                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).read());
+                FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
+                if (!resolution.isResolved()) {
+                    throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
+                }
+                return new StackManipulation.Compound(invokedMethod.isStatic()
+                        ? StackManipulation.Trivial.INSTANCE
+                        : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(resolution.getField()).read());
             }
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                if (instrumentedType.isInterface()) {
-                    throw new IllegalStateException("Cannot define non-static field '" + fieldName + "' on " + instrumentedType);
-                }
-                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC, fieldType));
+                return instrumentedType;
             }
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass()) && fieldName
-                        .equals(((ForInstanceField) other).fieldName) && fieldType
-                        .equals(((ForInstanceField) other).fieldType);
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && name.equals(((ForField) other).name)
+                        && fieldLocatorFactory.equals(((ForField) other).fieldLocatorFactory);
             }
 
             @Override
             public int hashCode() {
-                int result = fieldName.hashCode();
-                result = 31 * result + fieldType.hashCode();
+                int result = name.hashCode();
+                result = 31 * result + fieldLocatorFactory.hashCode();
                 return result;
             }
 
             @Override
             public String toString() {
-                return "MethodCall.TargetHandler.ForInstanceField{" +
-                        "fieldName='" + fieldName + '\'' +
-                        ", fieldType=" + fieldType +
+                return "MethodCall.TargetHandler.ForField{" +
+                        "name='" + name + '\'' +
+                        ", fieldLocatorFactory=" + fieldLocatorFactory +
                         '}';
             }
         }
@@ -1437,7 +1435,7 @@ public class MethodCall implements Implementation.Composable {
                 /**
                  * The name of the field.
                  */
-                private final String fieldName;
+                private final String name;
 
                 /**
                  * Creates a factory that loads the value of a static field as an argument.
@@ -1446,7 +1444,7 @@ public class MethodCall implements Implementation.Composable {
                  */
                 protected Factory(Object value) {
                     this.value = value;
-                    fieldName = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
+                    name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
                 }
 
                 /**
@@ -1492,15 +1490,15 @@ public class MethodCall implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType
-                            .withField(new FieldDescription.Token(fieldName,
+                            .withField(new FieldDescription.Token(name,
                                     Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
                                     new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass())))
-                            .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, value));
+                            .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
                 }
 
                 @Override
                 public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    return Collections.<ArgumentLoader>singletonList(new ForInstance(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()));
+                    return Collections.<ArgumentLoader>singletonList(new ForInstance(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()));
                 }
 
                 @Override
@@ -1520,7 +1518,7 @@ public class MethodCall implements Implementation.Composable {
                 public String toString() {
                     return "MethodCall.ArgumentLoader.ForInstance.Factory{" +
                             "value=" + value +
-                            ", fieldName='" + fieldName + '\'' +
+                            ", name='" + name + '\'' +
                             '}';
                 }
             }
@@ -1602,7 +1600,7 @@ public class MethodCall implements Implementation.Composable {
                 /**
                  * The name of the field.
                  */
-                private final String fieldName;
+                private final String name;
 
                 /**
                  * The field locator to use.
@@ -1612,11 +1610,11 @@ public class MethodCall implements Implementation.Composable {
                 /**
                  * Creates a new argument loader for an existing field.
                  *
-                 * @param fieldName           The name of the field.
+                 * @param name                The name of the field.
                  * @param fieldLocatorFactory The field locator to use.
                  */
-                protected Factory(String fieldName, FieldLocator.Factory fieldLocatorFactory) {
-                    this.fieldName = fieldName;
+                protected Factory(String name, FieldLocator.Factory fieldLocatorFactory) {
+                    this.name = name;
                     this.fieldLocatorFactory = fieldLocatorFactory;
                 }
 
@@ -1627,9 +1625,9 @@ public class MethodCall implements Implementation.Composable {
 
                 @Override
                 public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
-                    FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(fieldName);
+                    FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
                     if (!resolution.isResolved()) {
-                        throw new IllegalStateException("Could not locate field '" + fieldName + "' on " + instrumentedType);
+                        throw new IllegalStateException("Could not locate field '" + name + "' on " + instrumentedType);
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForField(resolution.getField(), instrumentedMethod));
                 }
@@ -1639,18 +1637,18 @@ public class MethodCall implements Implementation.Composable {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     Factory factory = (Factory) object;
-                    return fieldName.equals(factory.fieldName) && fieldLocatorFactory.equals(factory.fieldLocatorFactory);
+                    return name.equals(factory.name) && fieldLocatorFactory.equals(factory.fieldLocatorFactory);
                 }
 
                 @Override
                 public int hashCode() {
-                    return fieldName.hashCode() + 31 * fieldLocatorFactory.hashCode();
+                    return name.hashCode() + 31 * fieldLocatorFactory.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "MethodCall.ArgumentLoader.ForField.Factory{" +
-                            "fieldName='" + fieldName + '\'' +
+                            "name='" + name + '\'' +
                             ", fieldLocatorFactory=" + fieldLocatorFactory +
                             '}';
                 }
@@ -2668,30 +2666,27 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Invokes the given method on an instance that is stored in an instance field. This field's value needs
-         * to be set by the user such that the method call does not throw a {@link java.lang.NullPointerException}.
+         * Invokes a method on the object stored in the specified field.
          *
-         * @param type      The type of the field.
-         * @param fieldName The name of the field.
-         * @return A method call that invokes the given method on an instance that is read from an instance field.
+         * @param name The name of the field.
+         * @return A method call that invokes the given method on an instance that is read from a field.
          */
-        public MethodCall onInstanceField(Type type, String fieldName) {
-            return onInstanceField(TypeDefinition.Sort.describe(type), fieldName);
+        public MethodCall onField(String name) {
+            return onField(name, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
         }
 
         /**
-         * Invokes the given method on an instance that is stored in an instance field. This field's value needs
-         * to be set by the user such that the method call does not throw a {@link java.lang.NullPointerException}.
+         * Invokes a method on the object stored in the specified field.
          *
-         * @param typeDescription The type of the field.
-         * @param fieldName       The name of the field.
-         * @return A method call that invokes the given method on an instance that is read from an instance field.
+         * @param name                The name of the field.
+         * @param fieldLocatorFactory The field locator factory to use for locating the field.
+         * @return A method call that invokes the given method on an instance that is read from a field.
          */
-        public MethodCall onInstanceField(TypeDescription.Generic typeDescription, String fieldName) {
+        public MethodCall onField(String name, FieldLocator.Factory fieldLocatorFactory) {
             return new MethodCall(methodLocator,
-                    new TargetHandler.ForInstanceField(fieldName, typeDescription),
+                    new TargetHandler.ForField(name, fieldLocatorFactory),
                     argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation(typeDescription.asErasure()),
+                    MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
                     terminationHandler,
                     assigner,
                     typing);
