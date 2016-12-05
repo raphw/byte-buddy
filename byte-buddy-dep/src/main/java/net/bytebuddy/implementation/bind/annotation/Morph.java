@@ -25,6 +25,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -391,7 +392,7 @@ public @interface Morph {
                         .intercept(specialMethodInvocation.getMethodDescription().isStatic()
                                 ? StaticFieldConstructor.INSTANCE
                                 : new InstanceFieldConstructor(instrumentedType))
-                        .method(isDeclaredBy(morphingType))
+                        .method(ElementMatchers.<MethodDescription>isAbstract().and(isDeclaredBy(morphingType)))
                         .intercept(new MethodCall(methodAccessorFactory.registerAccessorFor(specialMethodInvocation), assigner))
                         .make();
             }

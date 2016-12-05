@@ -2382,7 +2382,7 @@ public class MethodCall implements Implementation.Composable {
                 if (invokedMethod.isVirtual() && !invokedMethod.isInvokableOn(implementationTarget.getInstrumentedType())) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + implementationTarget.getInstrumentedType());
                 } else if (!invokedMethod.isVisibleTo(implementationTarget.getInstrumentedType())) {
-                    throw new IllegalStateException(implementationTarget.getInstrumentedType() + " cannot see " + invokedMethod);
+                    throw new IllegalStateException(invokedMethod + " is not visible to " + implementationTarget.getInstrumentedType());
                 }
                 return invokedMethod.isVirtual()
                         ? MethodInvocation.invoke(invokedMethod).virtual(implementationTarget.getInstrumentedType())
@@ -2429,8 +2429,8 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " virtually");
                 } else if (!invokedMethod.isInvokableOn(typeDescription.asErasure())) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + typeDescription);
-                } else if (!typeDescription.asErasure().isVisibleTo(implementationTarget.getInstrumentedType())) {
-                    throw new IllegalStateException(typeDescription + " is not visible to " + implementationTarget.getInstrumentedType());
+                } else if (!typeDescription.asErasure().isAccessibleTo(implementationTarget.getInstrumentedType())) {
+                    throw new IllegalStateException(typeDescription + " is not accessible to " + implementationTarget.getInstrumentedType());
                 }
                 return MethodInvocation.invoke(invokedMethod).virtual(typeDescription.asErasure());
             }

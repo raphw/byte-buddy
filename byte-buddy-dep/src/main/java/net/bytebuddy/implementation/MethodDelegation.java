@@ -871,7 +871,7 @@ public class MethodDelegation implements Implementation.Composable {
 
             @Override
             public Resolution resolve(TypeDescription instrumentedType) {
-                return new Resolution(candidates.filter(isVisibleTo(instrumentedType)));
+                return new Resolution(candidates.filter(isAccessibleTo(instrumentedType)));
             }
 
             @Override
@@ -1185,7 +1185,7 @@ public class MethodDelegation implements Implementation.Composable {
 
             @Override
             public Resolution resolve(TypeDescription instrumentedType) {
-                return new Resolution(candidates.filter(isVisibleTo(instrumentedType)),
+                return new Resolution(candidates.filter(isAccessibleTo(instrumentedType)),
                         new StackManipulation.Compound(TypeCreation.of(typeDescription), Duplication.SINGLE),
                         MethodDelegationBinder.MethodInvoker.Simple.INSTANCE);
             }

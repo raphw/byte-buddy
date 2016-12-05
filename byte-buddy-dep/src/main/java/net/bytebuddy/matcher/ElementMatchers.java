@@ -799,6 +799,14 @@ public final class ElementMatchers {
         return new VisibilityMatcher<T>(type);
     }
 
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isAccessibleTo(Class<?> type) {
+        return isAccessibleTo(new TypeDescription.ForLoadedType(type));
+    }
+
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isAccessibleTo(TypeDescription type) {
+        return new AccessibilityMatcher<T>(type);
+    }
+
     /**
      * Matches a {@link ModifierReviewable.OfAbstraction} that is {@code abstract}.
      *

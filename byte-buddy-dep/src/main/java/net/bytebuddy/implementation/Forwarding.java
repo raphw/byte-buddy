@@ -132,7 +132,9 @@ public class Forwarding implements Implementation.Composable {
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new Appender(preparationHandler.resolve(implementationTarget.getInstrumentedType()), terminationHandler);
+        return new Appender(implementationTarget.getInstrumentedType(),
+                preparationHandler.resolve(implementationTarget.getInstrumentedType()),
+                terminationHandler);
     }
 
     @Override
@@ -364,6 +366,11 @@ public class Forwarding implements Implementation.Composable {
     protected static class Appender implements ByteCodeAppender {
 
         /**
+         * The instrumented type.
+         */
+        private final TypeDescription instrumentedType;
+
+        /**
          * The field to forward to.
          */
         private final FieldDescription fieldDescription;
@@ -376,10 +383,12 @@ public class Forwarding implements Implementation.Composable {
         /**
          * Creates a new appender for a forwarding implementation.
          *
+         * @param instrumentedType   The instrumented type.
          * @param fieldDescription   The field to forward to.
          * @param terminationHandler The termination handler to apply.
          */
-        protected Appender(FieldDescription fieldDescription, TerminationHandler terminationHandler) {
+        protected Appender(TypeDescription instrumentedType, FieldDescription fieldDescription, TerminationHandler terminationHandler) {
+            this.instrumentedType = instrumentedType;
             this.fieldDescription = fieldDescription;
             this.terminationHandler = terminationHandler;
         }
@@ -390,6 +399,8 @@ public class Forwarding implements Implementation.Composable {
                 throw new IllegalStateException("Cannot forward the static method " + instrumentedMethod);
             } else if (!instrumentedMethod.isInvokableOn(fieldDescription.getType().asErasure())) {
                 throw new IllegalStateException("Cannot forward " + instrumentedMethod + " to " + fieldDescription.getType());
+            } else if (!instrumentedMethod.isAccessibleTo(instrumentedType)) {
+                throw new IllegalStateException("Cannot forward to " + instrumentedMethod + " which is inaccessible for " + instrumentedType);
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     fieldDescription.isStatic()
@@ -409,6 +420,7 @@ public class Forwarding implements Implementation.Composable {
             if (object == null || getClass() != object.getClass()) return false;
             Appender appender = (Appender) object;
             return fieldDescription.equals(appender.fieldDescription)
+                    && instrumentedType.equals(appender.instrumentedType)
                     && terminationHandler == appender.terminationHandler;
         }
 
@@ -416,13 +428,15 @@ public class Forwarding implements Implementation.Composable {
         public int hashCode() {
             int result = fieldDescription.hashCode();
             result = 31 * result + terminationHandler.hashCode();
+            result = 31 * result + instrumentedType.hashCode();
             return result;
         }
 
         @Override
         public String toString() {
             return "Forwarding.Appender{" +
-                    "fieldDescription=" + fieldDescription +
+                    "instrumentedType=" + instrumentedType +
+                    ", fieldDescription=" + fieldDescription +
                     ", terminationHandler=" + terminationHandler +
                     '}';
         }

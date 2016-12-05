@@ -459,8 +459,16 @@ public interface MethodDescription extends TypeVariableSource,
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
                     && (isPublic()
-                    || typeDescription.equals(getDeclaringType())
+                    || typeDescription.equals(getDeclaringType().asErasure())
                     || (isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription))
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())));
+        }
+
+        @Override
+        public boolean isAccessibleTo(TypeDescription typeDescription) {
+            return (isVirtual() || getDeclaringType().asErasure().isVisibleTo(typeDescription))
+                    && (isPublic()
+                    || typeDescription.equals(getDeclaringType().asErasure())
                     || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())));
         }
 

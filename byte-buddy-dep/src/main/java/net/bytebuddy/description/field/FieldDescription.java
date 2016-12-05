@@ -117,9 +117,16 @@ public interface FieldDescription extends ByteCodeElement,
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return getDeclaringType().asErasure().isVisibleTo(typeDescription)
                     && (isPublic()
-                    || typeDescription.equals(getDeclaringType())
+                    || typeDescription.equals(getDeclaringType().asErasure())
                     || (isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription))
                     || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())));
+        }
+
+        @Override
+        public boolean isAccessibleTo(TypeDescription typeDescription) {
+            return isPublic()
+                    || typeDescription.equals(getDeclaringType().asErasure())
+                    || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure()));
         }
 
         @Override

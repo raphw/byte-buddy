@@ -36,7 +36,9 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
 
     /**
      * <p>
-     * Checks if this element is visible from a given type.
+     * Checks if this element is visible from a given type. Visibility is a wider criteria then accessibility which can be checked by
+     * {@link ByteCodeElement#isAccessibleTo(TypeDescription)}. Visibility allows the invocation of a method on itself or on external
+     * instances.
      * </p>
      * <p>
      * <b>Note</b>: A method or field might define a signature that includes types that are not visible to a type. Such methods can be
@@ -49,10 +51,32 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
      * method but requires an additional check of the target type.
      * </p>
      *
-     * @param typeDescription The type which is checked for its access of this element.
+     * @param typeDescription The type which is checked for its visibility of this element.
      * @return {@code true} if this element is visible for {@code typeDescription}.
      */
     boolean isVisibleTo(TypeDescription typeDescription);
+
+    /**
+     * <p>
+     * Checks if this element is accessible from a given type. Accessibility is a more narrow criteria then visibility which can be
+     * checked by {@link ByteCodeElement#isVisibleTo(TypeDescription)}. Accessibility allows the invocation of a method on external
+     * instances or on itself. Methods that can be invoked from within an instance might however not be considered accessible.
+     * </p>
+     * <p>
+     * <b>Note</b>: A method or field might define a signature that includes types that are not visible to a type. Such methods can be
+     * legally invoked from this type and can even be implemented as bridge methods by this type. It is however not legal to declare
+     * a method with invisible types in its signature that are not bridges what might require additional validation.
+     * </p>
+     * <p>
+     * <b>Important</b>: Virtual byte code elements, i.e. virtual methods, are only considered visible if the type they are invoked upon
+     * is visible to a given type. The visibility of such virtual members can therefore not be determined by only investigating the invoked
+     * method but requires an additional check of the target type.
+     * </p>
+     *
+     * @param typeDescription The type which is checked for its accessibility of this element.
+     * @return {@code true} if this element is accessible for {@code typeDescription}.
+     */
+    boolean isAccessibleTo(TypeDescription typeDescription);
 
     /**
      * A type dependant describes an element that is an extension of a type definition, i.e. a field, method or method parameter.

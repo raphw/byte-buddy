@@ -7309,7 +7309,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         public boolean isVisibleTo(TypeDescription typeDescription) {
             return isPrimitive() || (isArray()
                     ? getComponentType().isVisibleTo(typeDescription)
-                    : isPublic() || isProtected() || isSamePackage(typeDescription)/* || equals(typeDescription) */);
+                    : isPublic() || isProtected() || isSamePackage(typeDescription)/* || equals(typeDescription.asErasure()) */);
+        }
+
+        @Override
+        public boolean isAccessibleTo(TypeDescription typeDescription) {
+            return isPrimitive() || (isArray()
+                    ? getComponentType().isVisibleTo(typeDescription)
+                    : isPublic() || isSamePackage(typeDescription)/* || equals(typeDescription.asErasure()) */);
         }
 
         @Override
