@@ -788,8 +788,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link ByteCodeElement} that is visible to a given
-     * {@link TypeDescription}.
+     * Matches a {@link ByteCodeElement} that is visible to a given {@link TypeDescription}.
      *
      * @param type The type that a matched byte code element is expected to be visible to.
      * @param <T>  The type of the matched object.
@@ -799,10 +798,25 @@ public final class ElementMatchers {
         return new VisibilityMatcher<T>(type);
     }
 
+
+    /**
+     * Matches a {@link ByteCodeElement} that is accessible to a given {@link java.lang.Class}.
+     *
+     * @param type The type that a matched byte code element is expected to be accessible to.
+     * @param <T>  The type of the matched object.
+     * @return A matcher for a byte code element to be accessible to a given {@code type}.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isAccessibleTo(Class<?> type) {
         return isAccessibleTo(new TypeDescription.ForLoadedType(type));
     }
 
+    /**
+     * Matches a {@link ByteCodeElement} that is accessible to a given {@link java.lang.Class}.
+     *
+     * @param type The type that a matched byte code element is expected to be accessible to.
+     * @param <T>  The type of the matched object.
+     * @return A matcher for a byte code element to be accessible to a given {@code type}.
+     */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isAccessibleTo(TypeDescription type) {
         return new AccessibilityMatcher<T>(type);
     }

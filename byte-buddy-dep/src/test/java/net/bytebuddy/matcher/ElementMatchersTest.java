@@ -571,6 +571,12 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testIsAccessibleTo() throws Exception {
+        assertThat(ElementMatchers.isAccessibleTo(Object.class).matches(new TypeDescription.ForLoadedType(IsVisibleTo.class)), is(true));
+        assertThat(ElementMatchers.isAccessibleTo(Object.class).matches(new TypeDescription.ForLoadedType(IsNotVisibleTo.class)), is(false));
+    }
+
+    @Test
     public void testIsAnnotatedWith() throws Exception {
         assertThat(ElementMatchers.isAnnotatedWith(IsAnnotatedWithAnnotation.class)
                 .matches(new TypeDescription.ForLoadedType(IsAnnotatedWith.class)), is(true));
