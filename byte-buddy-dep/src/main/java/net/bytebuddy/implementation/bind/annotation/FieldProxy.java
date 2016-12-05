@@ -754,9 +754,7 @@ public @interface FieldProxy {
 
             @Override
             public ByteCodeAppender appender(Target implementationTarget) {
-                return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadFrom(0),
-                        MethodInvocation.invoke(objectTypeDefaultConstructor),
-                        MethodReturn.VOID);
+                return new ByteCodeAppender.Simple(MethodVariableAccess.loadThis(), MethodInvocation.invoke(objectTypeDefaultConstructor), MethodReturn.VOID);
             }
 
             @Override
@@ -843,7 +841,7 @@ public @interface FieldProxy {
                                   Context implementationContext,
                                   MethodDescription instrumentedMethod) {
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadFrom(0),
+                            MethodVariableAccess.loadThis(),
                             MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
                             MethodVariableAccess.allArgumentsOf(instrumentedMethod.asDefined()).prependThisReference(),
                             FieldAccess.forField(fieldDescription).write(),
@@ -972,9 +970,8 @@ public @interface FieldProxy {
                             fieldDescription.isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
                                     : new StackManipulation.Compound(
-                                    MethodVariableAccess.REFERENCE.loadFrom(0),
-                                    FieldAccess.forField(typeDescription.getDeclaredFields()
-                                            .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).read()),
+                                    MethodVariableAccess.loadThis(),
+                                    FieldAccess.forField(typeDescription.getDeclaredFields().filter((named(AccessorProxy.FIELD_NAME))).getOnly()).read()),
                             MethodInvocation.invoke(getterMethod),
                             assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
                             MethodReturn.of(instrumentedMethod.getReturnType().asErasure())
@@ -1115,7 +1112,7 @@ public @interface FieldProxy {
                             fieldDescription.isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
                                     : new StackManipulation.Compound(
-                                    MethodVariableAccess.REFERENCE.loadFrom(0),
+                                    MethodVariableAccess.loadThis(),
                                     FieldAccess.forField(typeDescription.getDeclaredFields()
                                             .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).read()),
                             MethodVariableAccess.of(parameterType).loadFrom(1),
@@ -1242,7 +1239,7 @@ public @interface FieldProxy {
                         Duplication.SINGLE,
                         fieldDescription.isStatic()
                                 ? Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0),
+                                : MethodVariableAccess.loadThis(),
                         MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, implementationContext);
             }

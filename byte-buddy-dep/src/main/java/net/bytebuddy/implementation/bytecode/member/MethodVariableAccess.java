@@ -107,6 +107,15 @@ public enum MethodVariableAccess {
     }
 
     /**
+     * Loads a reference to the {@code this} reference what is only meaningful for a non-static method.
+     *
+     * @return A stack manipulation loading the {@code this} reference.
+     */
+    public static StackManipulation loadThis() {
+        return MethodVariableAccess.REFERENCE.loadFrom(0);
+    }
+
+    /**
      * Creates a stack assignment for a reading given offset of the local variable array.
      *
      * @param offset The offset of the variable where {@code double} and {@code long} types count two slots.
@@ -138,6 +147,37 @@ public enum MethodVariableAccess {
             throw new IllegalStateException("Cannot increment type: " + this);
         }
         return new OffsetIncrementing(offset, value);
+    }
+
+    /**
+     * Loads a parameter's value onto the operand stack.
+     *
+     * @param parameterDescription The parameter which to load onto the operand stack.
+     * @return A stack manipulation loading a parameter onto the operand stack.
+     */
+    public static StackManipulation load(ParameterDescription parameterDescription) {
+        return of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset());
+    }
+
+    /**
+     * Stores the top operand stack value at the supplied parameter.
+     *
+     * @param parameterDescription The parameter which to store a value for.
+     * @return A stack manipulation storing the top operand stack value at this parameter.
+     */
+    public static StackManipulation store(ParameterDescription parameterDescription) {
+        return of(parameterDescription.getType()).storeAt(parameterDescription.getOffset());
+    }
+
+    /**
+     * Increments the value of the supplied parameter.
+     *
+     * @param parameterDescription The parameter which to increment.
+     * @param value                The value to increment with.
+     * @return A stack manipulation incrementing the supplied parameter.
+     */
+    public static StackManipulation increment(ParameterDescription parameterDescription, int value) {
+        return of(parameterDescription.getType()).increment(parameterDescription.getOffset(), value);
     }
 
     @Override
@@ -196,7 +236,7 @@ public enum MethodVariableAccess {
         public StackManipulation prependThisReference() {
             return methodDescription.isStatic()
                     ? this
-                    : new Compound(MethodVariableAccess.REFERENCE.loadFrom(0), this);
+                    : new Compound(MethodVariableAccess.loadThis(), this);
         }
 
         /**

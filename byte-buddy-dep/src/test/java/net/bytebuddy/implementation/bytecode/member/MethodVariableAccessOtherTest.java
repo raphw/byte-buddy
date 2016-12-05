@@ -38,6 +38,35 @@ public class MethodVariableAccessOtherTest {
         verifyZeroInteractions(implementationContext);
     }
 
+    @Test
+    public void testThisReference() throws Exception {
+        assertThat(MethodVariableAccess.loadThis(), is(MethodVariableAccess.REFERENCE.loadFrom(0)));
+    }
+
+    @Test
+    public void testLoadParameter() throws Exception {
+        ParameterDescription parameterDescription = mock(ParameterDescription.class);
+        when(parameterDescription.getType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class));
+        when(parameterDescription.getOffset()).thenReturn(4);
+        assertThat(MethodVariableAccess.load(parameterDescription), is(MethodVariableAccess.INTEGER.loadFrom(4)));
+    }
+
+    @Test
+    public void testStoreParameter() throws Exception {
+        ParameterDescription parameterDescription = mock(ParameterDescription.class);
+        when(parameterDescription.getType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class));
+        when(parameterDescription.getOffset()).thenReturn(4);
+        assertThat(MethodVariableAccess.store(parameterDescription), is(MethodVariableAccess.INTEGER.storeAt(4)));
+    }
+
+    @Test
+    public void testIncrementParameter() throws Exception {
+        ParameterDescription parameterDescription = mock(ParameterDescription.class);
+        when(parameterDescription.getType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class));
+        when(parameterDescription.getOffset()).thenReturn(4);
+        assertThat(MethodVariableAccess.increment(parameterDescription, 42), is(MethodVariableAccess.INTEGER.increment(4, 42)));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testReferenceCannotIncrement() throws Exception {
         MethodVariableAccess.REFERENCE.increment(0, 1);

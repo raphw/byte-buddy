@@ -125,7 +125,7 @@ public abstract class FieldAccessor implements Implementation {
         }
         return access(fieldDescription,
                 parameterDescription.getDeclaringMethod(),
-                new StackManipulation.Compound(MethodVariableAccess.of(fieldDescription.getType()).loadFrom(parameterDescription.getOffset()),
+                new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription),
                         assigner.assign(parameterDescription.getType(), fieldDescription.getType(), typing),
                         FieldAccess.forField(fieldDescription).write()));
     }
@@ -146,7 +146,7 @@ public abstract class FieldAccessor implements Implementation {
         }
         return new StackManipulation.Compound(fieldDescription.isStatic()
                 ? StackManipulation.Trivial.INSTANCE
-                : MethodVariableAccess.REFERENCE.loadFrom(0), fieldAccess);
+                : MethodVariableAccess.loadThis(), fieldAccess);
     }
 
     @Override

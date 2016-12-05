@@ -2276,7 +2276,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public StackManipulation resolveRead() {
                         return new StackManipulation.Compound(fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(fieldDescription).read(), readAssignment);
+                                : MethodVariableAccess.loadThis(), FieldAccess.forField(fieldDescription).read(), readAssignment);
                     }
 
                     @Override
@@ -2357,7 +2357,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 preparation = StackManipulation.Trivial.INSTANCE;
                             } else {
                                 preparation = new StackManipulation.Compound(
-                                        MethodVariableAccess.REFERENCE.loadFrom(0),
+                                        MethodVariableAccess.loadThis(),
                                         Duplication.SINGLE.flipOver(fieldDescription.getType()),
                                         Removal.SINGLE
                                 );
@@ -2905,10 +2905,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (!readAssignment.isValid()) {
                             throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target);
                         }
-                        valueReads.add(new StackManipulation.Compound(
-                                MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()),
-                                readAssignment
-                        ));
+                        valueReads.add(new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), readAssignment));
                     }
                     if (readOnly) {
                         return new Target.ForArray.ReadOnly(target, valueReads);
@@ -2919,10 +2916,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             if (!writeAssignment.isValid()) {
                                 throw new IllegalStateException("Cannot assign " + target + " to " + parameterDescription);
                             }
-                            valueWrites.add(new StackManipulation.Compound(
-                                    writeAssignment,
-                                    MethodVariableAccess.of(parameterDescription.getType()).storeAt(parameterDescription.getOffset())
-                            ));
+                            valueWrites.add(new StackManipulation.Compound(writeAssignment, MethodVariableAccess.store(parameterDescription)));
                         }
                         return new Target.ForArray.ReadWrite(target, valueReads, valueWrites);
                     }
@@ -8986,7 +8980,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 return new StackManipulation.Compound(
                         fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0),
+                                : MethodVariableAccess.loadThis(),
                         FieldAccess.forField(fieldDescription).read(),
                         assignment
                 );
@@ -9046,10 +9040,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (!assignment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target.getType());
                 }
-                return new StackManipulation.Compound(
-                        MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()),
-                        assignment
-                );
+                return new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), assignment);
             }
 
             @Override

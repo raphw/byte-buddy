@@ -263,7 +263,7 @@ public class FixedValueTest {
                 return iterator.next();
             }
         }).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(FixedValue.ForStaticField.class).apply();
+        ObjectPropertyAssertion.of(FixedValue.ForValue.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForOriginType.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForOriginType.Appender.class).apply();
         ObjectPropertyAssertion.of(FixedValue.ForNullValue.class).apply();

@@ -177,7 +177,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         StackManipulation.Size stackSize = new StackManipulation.Compound(
                 preparingManipulation,
                 FieldAccess.forField(fieldDescription).read(),
-                MethodVariableAccess.REFERENCE.loadFrom(0),
+                MethodVariableAccess.loadThis(),
                 cacheMethods
                         ? MethodConstant.forMethod(instrumentedMethod.asDefined()).cached()
                         : MethodConstant.forMethod(instrumentedMethod.asDefined()),
@@ -465,7 +465,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         instrumentedMethod,
                         fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0),
+                                : MethodVariableAccess.loadThis(),
                         fieldDescription);
             }
 

@@ -409,7 +409,7 @@ public @interface Morph {
                         Duplication.SINGLE,
                         specialMethodInvocation.getMethodDescription().isStatic()
                                 ? Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0),
+                                : MethodVariableAccess.loadThis(),
                         MethodInvocation.invoke(forwardingType.getDeclaredMethods().filter(isConstructor()).getOnly())
                 ).apply(methodVisitor, implementationContext);
             }
@@ -478,9 +478,7 @@ public @interface Morph {
 
                 @Override
                 public ByteCodeAppender appender(Target implementationTarget) {
-                    return new ByteCodeAppender.Simple(MethodVariableAccess.REFERENCE.loadFrom(0),
-                            MethodInvocation.invoke(objectTypeDefaultConstructor),
-                            MethodReturn.VOID);
+                    return new ByteCodeAppender.Simple(MethodVariableAccess.loadThis(), MethodInvocation.invoke(objectTypeDefaultConstructor), MethodReturn.VOID);
                 }
 
                 @Override
@@ -565,7 +563,7 @@ public @interface Morph {
                                       Context implementationContext,
                                       MethodDescription instrumentedMethod) {
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
-                                MethodVariableAccess.REFERENCE.loadFrom(0),
+                                MethodVariableAccess.loadThis(),
                                 MethodInvocation.invoke(StaticFieldConstructor.INSTANCE.objectTypeDefaultConstructor),
                                 MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                                 FieldAccess.forField(fieldDescription).write(),
@@ -687,7 +685,7 @@ public @interface Morph {
                                 accessorMethod.isStatic()
                                         ? Trivial.INSTANCE
                                         : new StackManipulation.Compound(
-                                        MethodVariableAccess.REFERENCE.loadFrom(0),
+                                        MethodVariableAccess.loadThis(),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(RedirectionProxy.FIELD_NAME)))
                                                 .getOnly()).read()),

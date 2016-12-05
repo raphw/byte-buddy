@@ -744,7 +744,7 @@ public class MethodCall implements Implementation.Composable {
                 return new StackManipulation.Compound(
                         invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0),
+                                : MethodVariableAccess.loadThis(),
                         invokedMethod.isConstructor()
                                 ? Duplication.SINGLE
                                 : StackManipulation.Trivial.INSTANCE
@@ -791,7 +791,7 @@ public class MethodCall implements Implementation.Composable {
         /**
          * A target handler that invokes a method on an instance that is stored in a static field.
          */
-        class ForStaticField implements TargetHandler {
+        class ForValue implements TargetHandler {
 
             /**
              * The name prefix of the field to store the instance.
@@ -819,7 +819,7 @@ public class MethodCall implements Implementation.Composable {
              * @param target    The target on which the method is to be invoked.
              * @param fieldType The type of the field.
              */
-            public ForStaticField(Object target, TypeDescription.Generic fieldType) {
+            protected ForValue(Object target, TypeDescription.Generic fieldType) {
                 this.target = target;
                 this.fieldType = fieldType;
                 name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
@@ -837,17 +837,15 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
-                        .withField(new FieldDescription.Token(name,
-                                Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                fieldType))
+                        .withField(new FieldDescription.Token(name, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(name, target));
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && target.equals(((ForStaticField) other).target)
-                        && fieldType.equals(((ForStaticField) other).fieldType);
+                        && target.equals(((ForValue) other).target)
+                        && fieldType.equals(((ForValue) other).fieldType);
             }
 
             @Override
@@ -857,7 +855,7 @@ public class MethodCall implements Implementation.Composable {
 
             @Override
             public String toString() {
-                return "MethodCall.TargetHandler.ForStaticField{" +
+                return "MethodCall.TargetHandler.ForValue{" +
                         "target=" + target +
                         ", fieldType=" + fieldType +
                         ", name='" + name + '\'' +
@@ -887,7 +885,7 @@ public class MethodCall implements Implementation.Composable {
              * @param name                The name of the field.
              * @param fieldLocatorFactory The field locator factory to use.
              */
-            public ForField(String name, FieldLocator.Factory fieldLocatorFactory) {
+            protected ForField(String name, FieldLocator.Factory fieldLocatorFactory) {
                 this.name = name;
                 this.fieldLocatorFactory = fieldLocatorFactory;
             }
@@ -897,10 +895,12 @@ public class MethodCall implements Implementation.Composable {
                 FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
                 if (!resolution.isResolved()) {
                     throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
+                } else if (!resolution.getField().isStatic() && !instrumentedType.isAssignableTo(resolution.getField().getType().asErasure())) {
+                    throw new IllegalStateException("Cannot access " + resolution.getField() + " from " + instrumentedType);
                 }
                 return new StackManipulation.Compound(invokedMethod.isStatic()
                         ? StackManipulation.Trivial.INSTANCE
-                        : MethodVariableAccess.REFERENCE.loadFrom(0), FieldAccess.forField(resolution.getField()).read());
+                        : MethodVariableAccess.loadThis(), FieldAccess.forField(resolution.getField()).read());
             }
 
             @Override
@@ -946,7 +946,7 @@ public class MethodCall implements Implementation.Composable {
              *
              * @param index The index of the instrumented method's parameter that is the target of the method invocation.
              */
-            public ForMethodParameter(int index) {
+            protected ForMethodParameter(int index) {
                 this.index = index;
             }
 
@@ -964,7 +964,7 @@ public class MethodCall implements Implementation.Composable {
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + parameterDescription.getType());
                 }
-                return new StackManipulation.Compound(MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()), stackManipulation);
+                return new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), stackManipulation);
             }
 
             @Override
@@ -1086,7 +1086,7 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.REFERENCE.loadFrom(0),
+                        MethodVariableAccess.loadThis(),
                         assigner.assign(instrumentedType.asGenericType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + target);
@@ -1251,7 +1251,7 @@ public class MethodCall implements Implementation.Composable {
             public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
                 ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.of(parameterDescription.getType()).loadFrom(parameterDescription.getOffset()),
+                        MethodVariableAccess.load(parameterDescription),
                         assigner.assign(parameterDescription.getType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target + " for " + instrumentedMethod);
@@ -1558,7 +1558,7 @@ public class MethodCall implements Implementation.Composable {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         fieldDescription.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.REFERENCE.loadFrom(0),
+                                : MethodVariableAccess.loadThis(),
                         FieldAccess.forField(fieldDescription).read(),
                         assigner.assign(fieldDescription.getType(), target.getType(), typing)
                 );
@@ -2638,7 +2638,7 @@ public class MethodCall implements Implementation.Composable {
          */
         public <T> MethodCall on(T target, Class<? super T> type) {
             return new MethodCall(methodLocator,
-                    new TargetHandler.ForStaticField(target, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(type)),
+                    new TargetHandler.ForValue(target, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(type)),
                     argumentLoaders,
                     new MethodInvoker.ForVirtualInvocation(type),
                     terminationHandler,

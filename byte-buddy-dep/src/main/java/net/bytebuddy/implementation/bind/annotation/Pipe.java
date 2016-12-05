@@ -415,20 +415,19 @@ public @interface Pipe {
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                        StackManipulation thisReference = MethodVariableAccess.REFERENCE.loadFrom(0);
                         FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                         StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                         int index = 0;
                         for (FieldDescription fieldDescription : fieldList) {
                             fieldLoading[index] = new StackManipulation.Compound(
-                                    thisReference,
-                                    MethodVariableAccess.of(fieldDescription.getType()).loadFrom(instrumentedMethod.getParameters().get(index).getOffset()),
+                                    MethodVariableAccess.loadThis(),
+                                    MethodVariableAccess.load(instrumentedMethod.getParameters().get(index)),
                                     FieldAccess.forField(fieldDescription).write()
                             );
                             index++;
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
-                                thisReference,
+                                MethodVariableAccess.loadThis(),
                                 MethodInvocation.invoke(ConstructorCall.INSTANCE.objectTypeDefaultConstructor),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodReturn.VOID

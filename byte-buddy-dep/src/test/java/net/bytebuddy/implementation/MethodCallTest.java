@@ -6,7 +6,6 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
@@ -27,7 +26,6 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -839,7 +837,7 @@ public class MethodCallTest {
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForSuperMethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForDefaultMethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TerminationHandler.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForStaticField.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForValue.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForSelfOrStaticInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForConstructingInvocation.class).apply();

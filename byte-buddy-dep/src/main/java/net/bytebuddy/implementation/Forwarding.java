@@ -394,7 +394,7 @@ public class Forwarding implements Implementation.Composable {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     fieldDescription.isStatic()
                             ? StackManipulation.Trivial.INSTANCE
-                            : MethodVariableAccess.REFERENCE.loadFrom(0),
+                            : MethodVariableAccess.loadThis(),
                     FieldAccess.forField(fieldDescription).read(),
                     MethodVariableAccess.allArgumentsOf(instrumentedMethod),
                     MethodInvocation.invoke(instrumentedMethod).virtual(fieldDescription.getType().asErasure()),

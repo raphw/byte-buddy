@@ -46,11 +46,6 @@ public @interface This {
          */
         INSTANCE;
 
-        /**
-         * The index of the {@code this} reference of method variable arrays of non-static methods.
-         */
-        private static final int THIS_REFERENCE_INDEX = 0;
-
         @Override
         public Class<This> getHandledType() {
             return This.class;
@@ -71,7 +66,7 @@ public @interface This {
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(source.isStatic()
                     ? NullConstant.INSTANCE
-                    : new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadFrom(THIS_REFERENCE_INDEX),
+                    : new StackManipulation.Compound(MethodVariableAccess.loadThis(),
                     assigner.assign(implementationTarget.getInstrumentedType().asGenericType(), target.getType(), RuntimeType.Verifier.check(target))));
         }
 
