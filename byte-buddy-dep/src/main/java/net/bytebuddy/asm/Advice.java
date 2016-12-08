@@ -8236,27 +8236,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface OnMethodEnter {
 
         /**
-         * Determines if the annotated method should be inlined into the instrumented method or invoked from it. When a method
-         * is inlined, its byte code is copied into the body of the target method. this makes it is possible to execute code
-         * with the visibility privileges of the instrumented method while loosing the privileges of the declared method methods.
-         * When a method is not inlined, it is invoked similarly to a common Java method call. Note that it is not possible to
-         * set breakpoints within a method when it is inlined as no debugging information is copied from the advice method into
-         * the instrumented method.
-         *
-         * @return {@code true} if the annotated method should be inlined into the instrumented method.
-         */
-        boolean inline() default true;
-
-        /**
-         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution. By default,
-         * any such exception is silently suppressed. Custom behavior can be configured by using {@link Advice#withExceptionHandler(StackManipulation)}.
-         *
-         * @return The type of {@link Throwable} to suppress.
-         * @see Advice#withExceptionPrinting()
-         */
-        Class<? extends Throwable> suppress() default NoExceptionHandler.class;
-
-        /**
          * When specifying a non-primitive type, this method's return value that is subject to an {@code instanceof} check where
          * the instrumented method is only executed, if the returned instance is {@code not} an instance of the specified class.
          * Alternatively, it is possible to specify either {@link OnDefaultValue} or {@link OnNonDefaultValue} where the instrumented
@@ -8277,6 +8256,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if this advice code should appear as if it was added within the first line of the instrumented method.
          */
         boolean prependLineNumber() default true;
+
+        /**
+         * Determines if the annotated method should be inlined into the instrumented method or invoked from it. When a method
+         * is inlined, its byte code is copied into the body of the target method. this makes it is possible to execute code
+         * with the visibility privileges of the instrumented method while loosing the privileges of the declared method methods.
+         * When a method is not inlined, it is invoked similarly to a common Java method call. Note that it is not possible to
+         * set breakpoints within a method when it is inlined as no debugging information is copied from the advice method into
+         * the instrumented method.
+         *
+         * @return {@code true} if the annotated method should be inlined into the instrumented method.
+         */
+        boolean inline() default true;
+
+        /**
+         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution. By default,
+         * any such exception is silently suppressed. Custom behavior can be configured by using {@link Advice#withExceptionHandler(StackManipulation)}.
+         *
+         * @return The type of {@link Throwable} to suppress.
+         * @see Advice#withExceptionPrinting()
+         */
+        Class<? extends Throwable> suppress() default NoExceptionHandler.class;
     }
 
     /**
@@ -8303,6 +8303,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface OnMethodExit {
 
         /**
+         * Indicates a {@link Throwable} super type for which this exit advice is invoked if it was thrown from the instrumented method.
+         * If an exception is thrown, it is available via the {@link Thrown} parameter annotation. If a method returns exceptionally,
+         * any parameter annotated with {@link Return} is assigned the parameter type's default value.
+         *
+         * @return The type of {@link Throwable} for which this exit advice handler is invoked.
+         */
+        Class<? extends Throwable> onThrowable() default NoExceptionHandler.class;
+
+        /**
          * Determines if the annotated method should be inlined into the instrumented method or invoked from it. When a method
          * is inlined, its byte code is copied into the body of the target method. this makes it is possible to execute code
          * with the visibility privileges of the instrumented method while loosing the privileges of the declared method methods.
@@ -8322,15 +8331,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @see Advice#withExceptionPrinting()
          */
         Class<? extends Throwable> suppress() default NoExceptionHandler.class;
-
-        /**
-         * Indicates a {@link Throwable} super type for which this exit advice is invoked if it was thrown from the instrumented method.
-         * If an exception is thrown, it is available via the {@link Thrown} parameter annotation. If a method returns exceptionally,
-         * any parameter annotated with {@link Return} is assigned the parameter type's default value.
-         *
-         * @return The type of {@link Throwable} for which this exit advice handler is invoked.
-         */
-        Class<? extends Throwable> onThrowable() default NoExceptionHandler.class;
     }
 
     /**
