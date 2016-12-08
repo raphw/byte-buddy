@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 5. December 2016: version 1.5.8
+
+- Added implementation for attachment on Linux and HotSpot using a non-JDK VM.
+- Fixed argument resolution for `ByteBuddyAgent`.
+- Fixed field resolution for `MethodCall` to allow custom definition of fields.
+- Fixed visibility checks.
+- Do not override default method for proxies for `Pipe`.
+
 ### 25. November 2016: version 1.5.7
 
 - Fixed type discovery for custom advice annotation bindings.
