@@ -11,6 +11,7 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
@@ -3266,10 +3267,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
-                        if (!instrumentedType.isAssignableTo(declaringType)) {
+                        if (!declaringType.represents(TargetType.class) && !instrumentedType.isAssignableTo(declaringType)) {
                             throw new IllegalStateException(declaringType + " is no super type of " + instrumentedType);
                         }
-                        return new FieldLocator.ForExactType(declaringType);
+                        return new FieldLocator.ForExactType(declaringType.represents(TargetType.class)
+                                ? instrumentedType
+                                : declaringType);
                     }
 
                     @Override
@@ -8349,6 +8352,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface This {
 
         /**
+         * Determines if the parameter should be assigned {@code null} if the instrumented method is static or a constructor within
+         * an entry method.
+         *
+         * @return {@code true} if the value assignment is optional.
+         */
+        boolean optional() default false;
+
+        /**
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
          * type must be equal to the type declaring the instrumented method if the typing is not also set to {@link Assigner.Typing#DYNAMIC}.
          * If this property is set to {@code true}, the annotated parameter can be any super type of the instrumented method's declaring type.
@@ -8363,14 +8374,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The typing to apply upon assignment.
          */
         Assigner.Typing typing() default Assigner.Typing.STATIC;
-
-        /**
-         * Determines if the parameter should be assigned {@code null} if the instrumented method is static or a constructor within
-         * an entry method.
-         *
-         * @return {@code true} if the value assignment is optional.
-         */
-        boolean optional() default false;
     }
 
     /**
@@ -8419,7 +8422,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Retention(RetentionPolicy.RUNTIME)
     @java.lang.annotation.Target(ElementType.PARAMETER)
     public @interface AllArguments {
-
 
         /**
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
@@ -8550,8 +8552,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
          * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+         * The value can also be set to {@link TargetType} in order to look up the type on the instrumented type.
          *
-         * @return The type that declares the field or {@code void} if this type should be determined implicitly.
+         * @return The type that declares the field, {@code void} if this type should be determined implicitly or
+         * {@link TargetType} for the instrumented type.
          */
         Class<?> declaringType() default void.class;
 
