@@ -74,6 +74,7 @@
         <version.plugin.animal-sniffer>1.14</version.plugin.animal-sniffer>
         <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
         <version.plugin.cobertura>2.7</version.plugin.cobertura>
+        <version.plugin.jacoco>0.7.7.201606060606</version.plugin.jacoco>
         <version.plugin.coveralls>4.1.0</version.plugin.coveralls>
         <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
         <version.plugin.findbugs>3.0.3</version.plugin.findbugs>
@@ -217,6 +218,26 @@
                         <format>xml</format>
                     </formats>
                     <check />
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${version.plugin.jacoco}</version>
+                <configuration>
+                    <includes>
+                        <include>net/bytebuddy/**</include>
+                    </includes>
+                    <excludes>
+                        <exclude>net/bytebuddy/benchmark/generated/*</exclude>
+                        <!--
+                          JaCoCo adds additional synthetic members to classes,
+                          ByteBuddy tests inspect members,
+                          so exclude test classes from instrumentation to avoid failures of assertions
+                        -->
+                        <exclude>*Test*</exclude>
+                        <exclude>*test*</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis. -->
