@@ -25,7 +25,7 @@ matrix:
     - jdk: oraclejdk7
       env: TARGET=-Pjava7
 
-script: mvn verify $TARGET -Pintegration -Dnet.bytebuddy.test.travis=true
+script: mvn jacoco:prepare-agent verify jacoco:report $TARGET -Pchecks -Pintegration -Dnet.bytebuddy.test.travis=true
 
 after_success:
-  - mvn clean cobertura:cobertura coveralls:report -Pintegration
+  - mvn coveralls:report

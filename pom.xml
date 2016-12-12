@@ -29,7 +29,7 @@
       - java8: Sets the target level to Java 8.
 
       Additionally, the following reports are available via Maven:
-      - cobertura:cobertura - Computes line coverage for test suite (all modules)
+      - jacoco:prepare-agent verify jacoco:report - Computes coverage for test suite (all modules)
       - org.pitest:pitest-maven:mutationCoverage - Runs mutation tests (all modules)
       - findbugs:findbugs findbugs:gui - Runs findbugs and shows a report in a graphical interface (module specific)
       - com.github.ferstl:jitwatch-jarscan-maven-plugin:scan - Finds all methods above HotSpot's inlining threshold
@@ -73,7 +73,6 @@
         <version.plugin.pitest>1.1.10</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.14</version.plugin.animal-sniffer>
         <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
-        <version.plugin.cobertura>2.7</version.plugin.cobertura>
         <version.plugin.jacoco>0.7.7.201606060606</version.plugin.jacoco>
         <version.plugin.coveralls>4.1.0</version.plugin.coveralls>
         <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
@@ -196,30 +195,7 @@
                     </targetTests>
                 </configuration>
             </plugin>
-            <!-- Configure Cobertura support for evaluating test case coverage. -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>${version.plugin.cobertura}</version>
-                <configuration>
-                    <aggregate>true</aggregate>
-                    <instrumentation>
-                        <excludes>
-                            <exclude>net/bytebuddy/benchmark/generated/**/*.class</exclude>
-                            <exclude>org/openjdk/jmh/infra/generated/**/*.class</exclude>
-                            <!-- The following classes are not supposed to be tested within a default build -->
-                            <exclude>net/bytebuddy/benchmark/runner/**/*.class</exclude>
-                            <exclude>net/bytebuddy/android/test/**/*.class</exclude>
-                            <exclude>net/bytebuddy/build/gradle/**/*.class</exclude>
-                        </excludes>
-                    </instrumentation>
-                    <formats>
-                        <format>html</format>
-                        <format>xml</format>
-                    </formats>
-                    <check />
-                </configuration>
-            </plugin>
+            <!-- Configure Jacoco support for evaluating test case coverage. -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -230,11 +206,7 @@
                     </includes>
                     <excludes>
                         <exclude>net/bytebuddy/benchmark/generated/*</exclude>
-                        <!--
-                          JaCoCo adds additional synthetic members to classes,
-                          ByteBuddy tests inspect members,
-                          so exclude test classes from instrumentation to avoid failures of assertions
-                        -->
+                        <!-- Avoid adding synthetic members to test classes as test assert class members.  -->
                         <exclude>*Test*</exclude>
                         <exclude>*test*</exclude>
                     </excludes>
