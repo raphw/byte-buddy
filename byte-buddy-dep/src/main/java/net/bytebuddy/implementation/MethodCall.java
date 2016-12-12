@@ -1693,6 +1693,12 @@ public class MethodCall implements Implementation.Composable {
              */
             private final MethodDescription instrumentedMethod;
 
+            /**
+             * Creates a new argument loader for loading arguments from an array.
+             *
+             * @param index               The index of the array parameter.
+             * @param instrumentedMethod  The instrumented method.
+             */
             protected ForItemFromArrayMethodParameter(int index, MethodDescription instrumentedMethod) {
                 this.index = index;
                 this.instrumentedMethod = instrumentedMethod;
