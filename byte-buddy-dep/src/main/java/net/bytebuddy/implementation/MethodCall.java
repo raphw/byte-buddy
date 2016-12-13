@@ -12,6 +12,7 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.collection.ArrayAccess;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -405,6 +406,88 @@ public class MethodCall implements Implementation.Composable {
         return new MethodCall(methodLocator,
                 targetHandler,
                 CompoundList.of(this.argumentLoaders, ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.INSTANCE),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                typing);
+    }
+
+    /**
+     * <p>
+     * Creates a method call where the parameter with {@code index} is expected to be an array and where each element of the array
+     * is expected to represent an argument for the method being invoked.
+     * </p>
+     * <p>
+     * <b>Note</b>: This is typically used in combination with dynamic type assignments which is activated via
+     * {@link MethodCall#withAssigner(Assigner, Assigner.Typing)} using a {@link Assigner.Typing#DYNAMIC}.
+     * </p>
+     *
+     * @param index The index of the parameter.
+     * @return A method call that loads {@code size} elements from the array handed to the instrumented method as argument {@code index}.
+     */
+    public MethodCall withArgumentArrayElements(int index) {
+        if (index < 0) {
+            throw new IllegalArgumentException("A parameter index cannot be negative: " + index);
+        }
+        return new MethodCall(methodLocator,
+                targetHandler,
+                CompoundList.of(this.argumentLoaders, new ArgumentLoader.ForMethodParameterArray.OfInvokedMethod(index)),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                typing);
+    }
+
+    /**
+     * <p>
+     * Creates a method call where the parameter with {@code index} is expected to be an array and where {@code size} elements are loaded
+     * from the array as arguments for the invoked method.
+     * </p>
+     * <p>
+     * <b>Note</b>: This is typically used in combination with dynamic type assignments which is activated via
+     * {@link MethodCall#withAssigner(Assigner, Assigner.Typing)} using a {@link Assigner.Typing#DYNAMIC}.
+     * </p>
+     *
+     * @param index The index of the parameter.
+     * @param size  The amount of elements to load from the array.
+     * @return A method call that loads {@code size} elements from the array handed to the instrumented method as argument {@code index}.
+     */
+    public MethodCall withArgumentArrayElements(int index, int size) {
+        return withArgumentArrayElements(index, 0, size);
+    }
+
+    /**
+     * <p>
+     * Creates a method call where the parameter with {@code index} is expected to be an array and where {@code size} elements are loaded
+     * from the array as arguments for the invoked method. The first element is loaded from index {@code start}.
+     * </p>
+     * <p>
+     * <b>Note</b>: This is typically used in combination with dynamic type assignments which is activated via
+     * {@link MethodCall#withAssigner(Assigner, Assigner.Typing)} using a {@link Assigner.Typing#DYNAMIC}.
+     * </p>
+     *
+     * @param index The index of the parameter.
+     * @param start The first array index to consider.
+     * @param size  The amount of elements to load from the array with increasing index from {@code start}.
+     * @return A method call that loads {@code size} elements from the array handed to the instrumented method as argument {@code index}.
+     */
+    public MethodCall withArgumentArrayElements(int index, int start, int size) {
+        if (index < 0) {
+            throw new IllegalArgumentException("A parameter index cannot be negative: " + index);
+        } else if (start < 0) {
+            throw new IllegalArgumentException("An array index cannot be negative: " + start);
+        } else if (size == 0) {
+            return this;
+        } else if (size < 0) {
+            throw new IllegalArgumentException("Size cannot be negative: " + size);
+        }
+        List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(size);
+        for (int position = 0; position < size; position++) {
+            argumentLoaders.add(new ArgumentLoader.ForMethodParameterArray.OfParameter(index, start + position));
+        }
+        return new MethodCall(methodLocator,
+                targetHandler,
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -1025,9 +1108,10 @@ public class MethodCall implements Implementation.Composable {
              *
              * @param instrumentedType   The instrumented type.
              * @param instrumentedMethod The instrumented method.
+             * @param invokedMethod      The invoked method.
              * @return Any number of argument loaders to supply for the method call.
              */
-            List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod);
+            List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod);
         }
 
         /**
@@ -1041,7 +1125,7 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -1130,7 +1214,7 @@ public class MethodCall implements Implementation.Composable {
                 }
 
                 @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     if (instrumentedMethod.isStatic()) {
                         throw new IllegalStateException(instrumentedMethod + " is static and cannot supply an invoker instance");
                     }
@@ -1210,7 +1294,7 @@ public class MethodCall implements Implementation.Composable {
                 }
 
                 @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForInstrumentedType(instrumentedType));
                 }
 
@@ -1299,7 +1383,7 @@ public class MethodCall implements Implementation.Composable {
                 }
 
                 @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
                     for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                         argumentLoaders.add(new ForMethodParameter(parameterDescription.getIndex(), instrumentedMethod));
@@ -1338,7 +1422,7 @@ public class MethodCall implements Implementation.Composable {
                 }
 
                 @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     if (index >= instrumentedMethod.getParameters().size()) {
                         throw new IllegalStateException(instrumentedMethod + " does not have a parameter with index " + index);
                     }
@@ -1497,7 +1581,7 @@ public class MethodCall implements Implementation.Composable {
                 }
 
                 @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForInstance(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()));
                 }
 
@@ -1573,8 +1657,7 @@ public class MethodCall implements Implementation.Composable {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 ForField that = (ForField) object;
-                if (!fieldDescription.equals(that.fieldDescription)) return false;
-                return instrumentedMethod.equals(that.instrumentedMethod);
+                return fieldDescription.equals(that.fieldDescription) && instrumentedMethod.equals(that.instrumentedMethod);
             }
 
             @Override
@@ -1624,7 +1707,7 @@ public class MethodCall implements Implementation.Composable {
                 }
 
                 @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
                     if (!resolution.isResolved()) {
                         throw new IllegalStateException("Could not locate field '" + name + "' on " + instrumentedType);
@@ -1650,6 +1733,194 @@ public class MethodCall implements Implementation.Composable {
                     return "MethodCall.ArgumentLoader.ForField.Factory{" +
                             "name='" + name + '\'' +
                             ", fieldLocatorFactory=" + fieldLocatorFactory +
+                            '}';
+                }
+            }
+        }
+
+        /**
+         * An argument loader that loads an element of a parameter of an array type.
+         */
+        class ForMethodParameterArray implements ArgumentLoader {
+
+            /**
+             * The parameter to load the array from.
+             */
+            private final ParameterDescription parameterDescription;
+
+            /**
+             * The array index to load.
+             */
+            private final int index;
+
+            /**
+             * Creates an argument loader for a parameter of the instrumented method where an array element is assigned to the invoked method.
+             *
+             * @param parameterDescription The parameter from which to load an array element.
+             * @param index                The array index to load.
+             */
+            protected ForMethodParameterArray(ParameterDescription parameterDescription, int index) {
+                this.parameterDescription = parameterDescription;
+                this.index = index;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.load(parameterDescription),
+                        IntegerConstant.forValue(index),
+                        ArrayAccess.of(parameterDescription.getType().getComponentType()).load(),
+                        assigner.assign(parameterDescription.getType().getComponentType(), target.getType(), typing)
+                );
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + parameterDescription.getType().getComponentType() + " to " + target);
+                }
+                return stackManipulation;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForMethodParameterArray that = (ForMethodParameterArray) object;
+                return index == that.index && parameterDescription.equals(that.parameterDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = parameterDescription.hashCode();
+                result = 31 * result + index;
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.ArgumentLoader.ForMethodParameterArray{" +
+                        "parameterDescription=" + parameterDescription +
+                        ", index=" + index +
+                        '}';
+            }
+
+            /**
+             * Creates an argument loader for an array element that of a specific parameter.
+             */
+            protected static class OfParameter implements ArgumentLoader.Factory {
+
+                /**
+                 * The parameter index.
+                 */
+                private final int index;
+
+                /**
+                 * The array index to load.
+                 */
+                private final int arrayIndex;
+
+                /**
+                 * Creates a factory for an argument loader that loads a given parameter's array value.
+                 *
+                 * @param index      The index of the parameter.
+                 * @param arrayIndex The array index to load.
+                 */
+                protected OfParameter(int index, int arrayIndex) {
+                    this.index = index;
+                    this.arrayIndex = arrayIndex;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    if (instrumentedMethod.getParameters().size() <= index) {
+                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
+                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
+                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
+                    }
+                    return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArray(instrumentedMethod.getParameters().get(index), arrayIndex));
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    OfParameter that = (OfParameter) object;
+                    return index == that.index && arrayIndex == that.arrayIndex;
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = index;
+                    result = 31 * result + arrayIndex;
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodCall.ArgumentLoader.ForMethodParameterArray.OfParameter{" +
+                            "index=" + index +
+                            ", arrayIndex=" + arrayIndex +
+                            '}';
+                }
+            }
+
+            /**
+             * An argument loader factory that loads an array element from a parameter for each argument of the invoked method.
+             */
+            protected static class OfInvokedMethod implements ArgumentLoader.Factory {
+
+                /**
+                 * The parameter index.
+                 */
+                private final int index;
+
+                /**
+                 * Creates an argument loader factory for an invoked method.
+                 *
+                 * @param index The parameter index.
+                 */
+                protected OfInvokedMethod(int index) {
+                    this.index = index;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    if (instrumentedMethod.getParameters().size() <= index) {
+                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
+                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
+                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
+                    }
+                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
+                    for (int index = 0; index < invokedMethod.getParameters().size(); index++) {
+                        argumentLoaders.add(new ForMethodParameterArray(instrumentedMethod.getParameters().get(this.index), index++));
+                    }
+                    return argumentLoaders;
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    OfInvokedMethod that = (OfInvokedMethod) object;
+                    return index == that.index;
+                }
+
+                @Override
+                public int hashCode() {
+                    return index;
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodCall.ArgumentLoader.ForMethodParameterArray.OfInvokedMethod{" +
+                            "index=" + index +
                             '}';
                 }
             }
@@ -1691,7 +1962,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -1748,7 +2019,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -1805,7 +2076,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -1862,7 +2133,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -1919,7 +2190,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -1976,7 +2247,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -2035,7 +2306,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -2092,7 +2363,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -2150,7 +2421,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -2209,7 +2480,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -2268,7 +2539,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -2327,7 +2598,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+            public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
 
@@ -2763,7 +3034,7 @@ public class MethodCall implements Implementation.Composable {
             MethodDescription invokedMethod = methodLocator.resolve(implementationTarget.getInstrumentedType(), instrumentedMethod);
             List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(MethodCall.this.argumentLoaders.size());
             for (ArgumentLoader.Factory argumentLoader : MethodCall.this.argumentLoaders) {
-                argumentLoaders.addAll(argumentLoader.make(implementationTarget.getInstrumentedType(), instrumentedMethod));
+                argumentLoaders.addAll(argumentLoader.make(implementationTarget.getInstrumentedType(), instrumentedMethod, invokedMethod));
             }
             ParameterList<?> parameters = invokedMethod.getParameters();
             Iterator<? extends ParameterDescription> parameterIterator = parameters.iterator();
