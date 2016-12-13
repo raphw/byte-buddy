@@ -14,6 +14,8 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import org.objectweb.asm.MethodVisitor;
 
+import java.lang.reflect.Field;
+
 /**
  * <p>
  * Defines a method to access a given field by following the Java bean conventions for getters and setters:
@@ -35,14 +37,9 @@ import org.objectweb.asm.MethodVisitor;
 public abstract class FieldAccessor implements Implementation {
 
     /**
-     * The field name extractor to be used.
+     * The field's location.
      */
-    protected final FieldNameExtractor fieldNameExtractor;
-
-    /**
-     * A factory for creating a field locator for implementing this field accessor.
-     */
-    protected final FieldLocator.Factory fieldLocatorFactory;
+    protected final FieldLocation fieldLocation;
 
     /**
      * The assigner to use.
@@ -57,14 +54,12 @@ public abstract class FieldAccessor implements Implementation {
     /**
      * Creates a new field accessor.
      *
-     * @param fieldLocatorFactory The field name extractor to be used.
-     * @param fieldNameExtractor  A factory for creating a field locator for implementing this field accessor.
-     * @param assigner            The assigner to use.
-     * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
+     * @param fieldLocation The field's location.
+     * @param assigner      The assigner to use.
+     * @param typing        Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected FieldAccessor(FieldNameExtractor fieldNameExtractor, FieldLocator.Factory fieldLocatorFactory, Assigner assigner, Assigner.Typing typing) {
-        this.fieldNameExtractor = fieldNameExtractor;
-        this.fieldLocatorFactory = fieldLocatorFactory;
+    protected FieldAccessor(FieldLocation fieldLocation, Assigner assigner, Assigner.Typing typing) {
+        this.fieldLocation = fieldLocation;
         this.assigner = assigner;
         this.typing = typing;
     }
@@ -97,7 +92,27 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor using the given field name extractor.
      */
     public static OwnerTypeLocatable of(FieldNameExtractor fieldNameExtractor) {
-        return new ForImplicitProperty(fieldNameExtractor, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
+        return new ForImplicitProperty(new FieldLocation.Relative(fieldNameExtractor));
+    }
+
+    /**
+     * Defines a field accessor where the specified field is accessed. The field must be within the hierarchy of the instrumented type.
+     *
+     * @param field The field being accessed.
+     * @return A field accessor for the given field.
+     */
+    public static AssignerConfigurable of(Field field) {
+        return of(new FieldDescription.ForLoadedField(field));
+    }
+
+    /**
+     * Defines a field accessor where the specified field is accessed. The field must be within the hierarchy of the instrumented type.
+     *
+     * @param fieldDescription The field being accessed.
+     * @return A field accessor for the given field.
+     */
+    public static AssignerConfigurable of(FieldDescription fieldDescription) {
+        return new ForImplicitProperty(new FieldLocation.Absolute(fieldDescription));
     }
 
     /**
@@ -150,28 +165,248 @@ public abstract class FieldAccessor implements Implementation {
     }
 
     @Override
+    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+        return instrumentedType;
+    }
+
+    @Override
     public boolean equals(Object object) {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         FieldAccessor that = (FieldAccessor) object;
-        return fieldNameExtractor.equals(that.fieldNameExtractor)
-                && fieldLocatorFactory.equals(that.fieldLocatorFactory)
+        return fieldLocation.equals(that.fieldLocation)
                 && assigner.equals(that.assigner)
                 && typing == that.typing;
     }
 
     @Override
     public int hashCode() {
-        int result = fieldNameExtractor.hashCode();
-        result = 31 * result + fieldLocatorFactory.hashCode();
+        int result = fieldLocation.hashCode();
         result = 31 * result + assigner.hashCode();
         result = 31 * result + typing.hashCode();
         return result;
     }
 
-    @Override
-    public InstrumentedType prepare(InstrumentedType instrumentedType) {
-        return instrumentedType;
+    /**
+     * A field location represents an identified field description which depends on the instrumented type and method.
+     */
+    protected interface FieldLocation {
+
+        /**
+         * Specifies a field locator factory to use.
+         *
+         * @param fieldLocatorFactory The field locator factory to use.
+         * @return An appropriate field location.
+         */
+        FieldLocation with(FieldLocator.Factory fieldLocatorFactory);
+
+        /**
+         * A prepared field location.
+         *
+         * @param instrumentedType The instrumented type.
+         * @return A prepared field location.
+         */
+        Prepared prepare(TypeDescription instrumentedType);
+
+        /**
+         * A prepared field location.
+         */
+        interface Prepared {
+
+            /**
+             * Resolves the field description to use.
+             *
+             * @param instrumentedMethod The instrumented method.
+             * @return The resolved field description.
+             */
+            FieldDescription resolve(MethodDescription instrumentedMethod);
+        }
+
+        /**
+         * An absolute field description representing a previously resolved field.
+         */
+        class Absolute implements FieldLocation, Prepared {
+
+            /**
+             * The field description.
+             */
+            private final FieldDescription fieldDescription;
+
+            /**
+             * Creates an absolute field location.
+             *
+             * @param fieldDescription The field description.
+             */
+            protected Absolute(FieldDescription fieldDescription) {
+                this.fieldDescription = fieldDescription;
+            }
+
+            @Override
+            public FieldLocation with(FieldLocator.Factory fieldLocatorFactory) {
+                throw new IllegalStateException("Cannot specify a field locator factory for an absolute field location");
+            }
+
+            @Override
+            public Prepared prepare(TypeDescription instrumentedType) {
+                if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure()) || !fieldDescription.isAccessibleTo(instrumentedType)) {
+                    throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
+                }
+                return this;
+            }
+
+            @Override
+            public FieldDescription resolve(MethodDescription instrumentedMethod) {
+                return fieldDescription;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Absolute absolute = (Absolute) object;
+                return fieldDescription.equals(absolute.fieldDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return fieldDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FieldAccessor.FieldLocation.Absolute{" +
+                        "fieldDescription=" + fieldDescription +
+                        '}';
+            }
+        }
+
+        /**
+         * A relative field location where a field is located dynamically.
+         */
+        class Relative implements FieldLocation {
+
+            /**
+             * The field name extractor to use.
+             */
+            private final FieldNameExtractor fieldNameExtractor;
+
+            /**
+             * The field locator factory to use.
+             */
+            private final FieldLocator.Factory fieldLocatorFactory;
+
+            /**
+             * Creates a new relative field location.
+             *
+             * @param fieldNameExtractor The field name extractor to use.
+             */
+            protected Relative(FieldNameExtractor fieldNameExtractor) {
+                this(fieldNameExtractor, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
+            }
+
+            /**
+             * Creates a new relative field location.
+             *
+             * @param fieldNameExtractor  The field name extractor to use.
+             * @param fieldLocatorFactory The field locator factory to use.
+             */
+            private Relative(FieldNameExtractor fieldNameExtractor, FieldLocator.Factory fieldLocatorFactory) {
+                this.fieldNameExtractor = fieldNameExtractor;
+                this.fieldLocatorFactory = fieldLocatorFactory;
+            }
+
+            @Override
+            public FieldLocation with(FieldLocator.Factory fieldLocatorFactory) {
+                return new Relative(fieldNameExtractor, fieldLocatorFactory);
+            }
+
+            @Override
+            public FieldLocation.Prepared prepare(TypeDescription instrumentedType) {
+                return new Prepared(fieldNameExtractor, fieldLocatorFactory.make(instrumentedType));
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Relative relative = (Relative) object;
+                return fieldNameExtractor.equals(relative.fieldNameExtractor) && fieldLocatorFactory.equals(relative.fieldLocatorFactory);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = fieldNameExtractor.hashCode();
+                result = 31 * result + fieldLocatorFactory.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "FieldAccessor.FieldLocation.Relative{" +
+                        "fieldNameExtractor=" + fieldNameExtractor +
+                        ", fieldLocatorFactory=" + fieldLocatorFactory +
+                        '}';
+            }
+
+            /**
+             * A prepared version of a field location.
+             */
+            protected static class Prepared implements FieldLocation.Prepared {
+
+                /**
+                 * The field name extractor to use.
+                 */
+                private final FieldNameExtractor fieldNameExtractor;
+
+                /**
+                 * The field locator factory to use.
+                 */
+                private final FieldLocator fieldLocator;
+
+                /**
+                 * Creates a new relative field location.
+                 *
+                 * @param fieldNameExtractor The field name extractor to use.
+                 * @param fieldLocator       The field locator to use.
+                 */
+                protected Prepared(FieldNameExtractor fieldNameExtractor, FieldLocator fieldLocator) {
+                    this.fieldNameExtractor = fieldNameExtractor;
+                    this.fieldLocator = fieldLocator;
+                }
+
+                @Override
+                public FieldDescription resolve(MethodDescription instrumentedMethod) {
+                    FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.resolve(instrumentedMethod));
+                    if (!resolution.isResolved()) {
+                        throw new IllegalStateException("Cannot resolve field for " + instrumentedMethod + " using " + fieldLocator);
+                    }
+                    return resolution.getField();
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Prepared prepared = (Prepared) object;
+                    return fieldNameExtractor.equals(prepared.fieldNameExtractor) && fieldLocator.equals(prepared.fieldLocator);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = fieldNameExtractor.hashCode();
+                    result = 31 * result + fieldLocator.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "FieldAccessor.FieldLocation.Relative.Prepared{" +
+                            "fieldNameExtractor=" + fieldNameExtractor +
+                            ", fieldLocator=" + fieldLocator +
+                            '}';
+                }
+            }
+        }
     }
 
     /**
@@ -340,31 +575,26 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * Creates a field accessor for an implicit property.
          *
-         * @param fieldNameExtractor  The field name extractor to use.
-         * @param fieldLocatorFactory The field locator factory to use.
+         * @param fieldLocation The field's location.
          */
-        protected ForImplicitProperty(FieldNameExtractor fieldNameExtractor, FieldLocator.Factory fieldLocatorFactory) {
-            this(fieldNameExtractor, fieldLocatorFactory, Assigner.DEFAULT, Assigner.Typing.STATIC);
+        protected ForImplicitProperty(FieldLocation fieldLocation) {
+            this(fieldLocation, Assigner.DEFAULT, Assigner.Typing.STATIC);
         }
 
         /**
          * Creates a field accessor for an implicit property.
          *
-         * @param fieldNameExtractor  The field name extractor to use.
-         * @param fieldLocatorFactory The field locator factory to use.
-         * @param assigner            The assigner to use.
-         * @param typing              The typing to use.
+         * @param fieldLocation The field's location.
+         * @param assigner      The assigner to use.
+         * @param typing        The typing to use.
          */
-        private ForImplicitProperty(FieldNameExtractor fieldNameExtractor,
-                                    FieldLocator.Factory fieldLocatorFactory,
-                                    Assigner assigner,
-                                    Assigner.Typing typing) {
-            super(fieldNameExtractor, fieldLocatorFactory, assigner, typing);
+        private ForImplicitProperty(FieldLocation fieldLocation, Assigner assigner, Assigner.Typing typing) {
+            super(fieldLocation, assigner, typing);
         }
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(fieldLocatorFactory.make(implementationTarget.getInstrumentedType()));
+            return new Appender(fieldLocation.prepare(implementationTarget.getInstrumentedType()));
         }
 
         @Override
@@ -372,12 +602,12 @@ public abstract class FieldAccessor implements Implementation {
             if (index < 0) {
                 throw new IllegalArgumentException("A parameter index cannot be negative: " + index);
             }
-            return new ForParameterSetter(fieldNameExtractor, fieldLocatorFactory, assigner, typing, index);
+            return new ForParameterSetter(fieldLocation, assigner, typing, index);
         }
 
         @Override
         public PropertyConfigurable withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForImplicitProperty(fieldNameExtractor, fieldLocatorFactory, assigner, typing);
+            return new ForImplicitProperty(fieldLocation, assigner, typing);
         }
 
         @Override
@@ -392,14 +622,13 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
-            return new ForImplicitProperty(fieldNameExtractor, fieldLocatorFactory, assigner, typing);
+            return new ForImplicitProperty(fieldLocation.with(fieldLocatorFactory), assigner, typing);
         }
 
         @Override
         public String toString() {
             return "FieldAccessor.ForImplicitProperty{" +
-                    "fieldNameExtractor=" + fieldNameExtractor +
-                    ", fieldLocatorFactory=" + fieldLocatorFactory +
+                    "fieldLocation=" + fieldLocation +
                     ", assigner=" + assigner +
                     ", typing=" + typing +
                     "}";
@@ -411,17 +640,17 @@ public abstract class FieldAccessor implements Implementation {
         protected class Appender implements ByteCodeAppender {
 
             /**
-             * The field locator for implementing this appender.
+             * The field's location.
              */
-            private final FieldLocator fieldLocator;
+            private final FieldLocation.Prepared fieldLocation;
 
             /**
              * Creates a new byte code appender for a field accessor implementation.
              *
-             * @param fieldLocator The field locator for this byte code appender.
+             * @param fieldLocation The field's location.
              */
-            protected Appender(FieldLocator fieldLocator) {
-                this.fieldLocator = fieldLocator;
+            protected Appender(FieldLocation.Prepared fieldLocation) {
+                this.fieldLocation = fieldLocation;
             }
 
             @Override
@@ -429,14 +658,12 @@ public abstract class FieldAccessor implements Implementation {
                 if (!instrumentedMethod.isMethod()) {
                     throw new IllegalArgumentException(instrumentedMethod + " does not describe a field getter or setter");
                 }
-                FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.resolve(instrumentedMethod));
+                FieldDescription fieldDescription = fieldLocation.resolve(instrumentedMethod);
                 StackManipulation implementation;
-                if (!resolution.isResolved()) {
-                    throw new IllegalStateException("Cannot locate accessible field for " + instrumentedMethod);
-                } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                    implementation = new StackManipulation.Compound(getter(resolution.getField(), instrumentedMethod), MethodReturn.of(instrumentedMethod.getReturnType()));
+                if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                    implementation = new StackManipulation.Compound(getter(fieldDescription, instrumentedMethod), MethodReturn.of(instrumentedMethod.getReturnType()));
                 } else if (instrumentedMethod.getReturnType().represents(void.class) && instrumentedMethod.getParameters().size() == 1) {
-                    implementation = new StackManipulation.Compound(setter(resolution.getField(), instrumentedMethod.getParameters().get(0)), MethodReturn.VOID);
+                    implementation = new StackManipulation.Compound(setter(fieldDescription, instrumentedMethod.getParameters().get(0)), MethodReturn.VOID);
                 } else {
                     throw new IllegalArgumentException("Method " + implementationContext + " is no bean property");
                 }
@@ -457,19 +684,19 @@ public abstract class FieldAccessor implements Implementation {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 Appender appender = (Appender) object;
-                return fieldLocator.equals(appender.fieldLocator) && ForImplicitProperty.this.equals(appender.getOuter());
+                return fieldLocation.equals(appender.fieldLocation) && ForImplicitProperty.this.equals(appender.getOuter());
             }
 
             @Override
             public int hashCode() {
-                return fieldLocator.hashCode() + 31 * ForImplicitProperty.this.hashCode();
+                return fieldLocation.hashCode() + 31 * ForImplicitProperty.this.hashCode();
             }
 
             @Override
             public String toString() {
                 return "FieldAccessor.ForImplicitProperty.Appender{" +
                         "outer=" + ForImplicitProperty.this +
-                        ", fieldLocator=" + fieldLocator +
+                        ", fieldLocation=" + fieldLocation +
                         '}';
             }
         }
@@ -493,49 +720,38 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * Creates a new field accessor.
          *
-         * @param fieldLocatorFactory The field name extractor to be used.
-         * @param fieldNameExtractor  A factory for creating a field locator for implementing this field accessor.
-         * @param assigner            The assigner to use.
-         * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
-         * @param index               The targeted parameter index.
+         * @param fieldLocation The field's location.
+         * @param assigner      The assigner to use.
+         * @param typing        Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @param index         The targeted parameter index.
          */
-        protected ForParameterSetter(FieldNameExtractor fieldNameExtractor,
-                                     FieldLocator.Factory fieldLocatorFactory,
-                                     Assigner assigner,
-                                     Assigner.Typing typing, int index) {
-            this(fieldNameExtractor, fieldLocatorFactory, assigner, typing, index, TerminationHandler.RETURNING);
+        protected ForParameterSetter(FieldLocation fieldLocation, Assigner assigner, Assigner.Typing typing, int index) {
+            this(fieldLocation, assigner, typing, index, TerminationHandler.RETURNING);
         }
 
         /**
          * Creates a new field accessor.
          *
-         * @param fieldLocatorFactory The field name extractor to be used.
-         * @param fieldNameExtractor  A factory for creating a field locator for implementing this field accessor.
-         * @param assigner            The assigner to use.
-         * @param typing              Indicates if dynamic type castings should be attempted for incompatible assignments.
-         * @param index               The targeted parameter index.
-         * @param terminationHandler  The termination handler to apply.
+         * @param fieldLocation      The field's location.
+         * @param assigner           The assigner to use.
+         * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
+         * @param index              The targeted parameter index.
+         * @param terminationHandler The termination handler to apply.
          */
-        private ForParameterSetter(FieldNameExtractor fieldNameExtractor,
-                                   FieldLocator.Factory fieldLocatorFactory,
-                                   Assigner assigner,
-                                   Assigner.Typing typing,
-                                   int index,
-                                   TerminationHandler terminationHandler) {
-            super(fieldNameExtractor, fieldLocatorFactory, assigner, typing);
+        private ForParameterSetter(FieldLocation fieldLocation, Assigner assigner, Assigner.Typing typing, int index, TerminationHandler terminationHandler) {
+            super(fieldLocation, assigner, typing);
             this.index = index;
             this.terminationHandler = terminationHandler;
         }
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(fieldLocatorFactory.make(implementationTarget.getInstrumentedType()));
+            return new Appender(fieldLocation.prepare(implementationTarget.getInstrumentedType()));
         }
 
         @Override
         public Implementation andThen(Implementation implementation) {
-            return new Compound(new ForParameterSetter(fieldNameExtractor,
-                    fieldLocatorFactory,
+            return new Compound(new ForParameterSetter(fieldLocation,
                     assigner,
                     typing,
                     index, TerminationHandler.NON_OPERATIONAL), implementation);
@@ -561,8 +777,7 @@ public abstract class FieldAccessor implements Implementation {
         @Override
         public String toString() {
             return "FieldAccessor.ForParameterSetter{" +
-                    "fieldNameExtractor=" + fieldNameExtractor +
-                    ", fieldLocatorFactory=" + fieldLocatorFactory +
+                    "fieldLocation=" + fieldLocation +
                     ", assigner=" + assigner +
                     ", typing=" + typing +
                     ", index=" + index +
@@ -618,29 +833,26 @@ public abstract class FieldAccessor implements Implementation {
         protected class Appender implements ByteCodeAppender {
 
             /**
-             * The field locator for implementing this appender.
+             * The field's location.
              */
-            private final FieldLocator fieldLocator;
+            private final FieldLocation.Prepared fieldLocation;
 
             /**
              * Creates a new byte code appender for a field accessor implementation.
              *
-             * @param fieldLocator The field locator for this byte code appender.
+             * @param fieldLocation The field's location.
              */
-            protected Appender(FieldLocator fieldLocator) {
-                this.fieldLocator = fieldLocator;
+            protected Appender(FieldLocation.Prepared fieldLocation) {
+                this.fieldLocation = fieldLocation;
             }
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-                FieldLocator.Resolution resolution = fieldLocator.locate(fieldNameExtractor.resolve(instrumentedMethod));
-                if (!resolution.isResolved()) {
-                    throw new IllegalStateException("Cannot locate accessible field for " + instrumentedMethod + " with " + fieldLocator);
-                } else if (instrumentedMethod.getParameters().size() <= index) {
+                if (instrumentedMethod.getParameters().size() <= index) {
                     throw new IllegalStateException(instrumentedMethod + " does not define a parameter with index " + index);
                 } else {
                     return new Size(new StackManipulation.Compound(
-                            setter(resolution.getField(), instrumentedMethod.getParameters().get(index)),
+                            setter(fieldLocation.resolve(instrumentedMethod), instrumentedMethod.getParameters().get(index)),
                             terminationHandler.resolve(instrumentedMethod)
                     ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                 }
@@ -660,19 +872,19 @@ public abstract class FieldAccessor implements Implementation {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 ForParameterSetter.Appender appender = (ForParameterSetter.Appender) object;
-                return fieldLocator.equals(appender.fieldLocator) && ForParameterSetter.this.equals(appender.getOuter());
+                return fieldLocation.equals(appender.fieldLocation) && ForParameterSetter.this.equals(appender.getOuter());
             }
 
             @Override
             public int hashCode() {
-                return fieldLocator.hashCode() + 31 * ForParameterSetter.this.hashCode();
+                return fieldLocation.hashCode() + 31 * ForParameterSetter.this.hashCode();
             }
 
             @Override
             public String toString() {
                 return "FieldAccessor.ForParameterSetter.Appender{" +
                         "outer=" + ForParameterSetter.this +
-                        ", fieldLocator=" + fieldLocator +
+                        ", fieldLocation=" + fieldLocation +
                         '}';
             }
         }

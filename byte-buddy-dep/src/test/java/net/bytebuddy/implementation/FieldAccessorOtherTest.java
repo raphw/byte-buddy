@@ -156,6 +156,24 @@ public class FieldAccessorOtherTest {
                 .make();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testIncompatibleExplicitField() throws Exception {
+        new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(FieldAccessor.of(Bar.class.getDeclaredField(BAR)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInaccessibleExplicitField() throws Exception {
+        new ByteBuddy()
+                .subclass(Bar.class)
+                .method(isDeclaredBy(Bar.class))
+                .intercept(FieldAccessor.of(Bar.class.getDeclaredField(BAR)))
+                .make();
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldAccessor.ForImplicitProperty.class).apply();
@@ -163,6 +181,9 @@ public class FieldAccessorOtherTest {
         ObjectPropertyAssertion.of(FieldAccessor.ForParameterSetter.class).apply();
         ObjectPropertyAssertion.of(FieldAccessor.ForParameterSetter.TerminationHandler.class).apply();
         ObjectPropertyAssertion.of(FieldAccessor.ForParameterSetter.Appender.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.FieldLocation.Absolute.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.FieldLocation.Relative.class).apply();
+        ObjectPropertyAssertion.of(FieldAccessor.FieldLocation.Relative.Prepared.class).apply();
     }
 
     @SuppressWarnings("unused")
@@ -183,6 +204,10 @@ public class FieldAccessorOtherTest {
         public void setBar(Object o) {
             /* empty */
         }
+    }
+
+    public static class BarSub extends Bar {
+        /* empty */
     }
 
     @SuppressWarnings("unused")
