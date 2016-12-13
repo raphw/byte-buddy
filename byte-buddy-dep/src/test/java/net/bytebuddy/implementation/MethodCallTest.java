@@ -982,6 +982,9 @@ public class MethodCallTest {
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForClassConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForEnumerationValue.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForJavaConstant.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArray.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArray.OfParameter.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForMethodParameterArray.OfInvokedMethod.class).apply();
     }
 
     public static class SimpleMethod {
