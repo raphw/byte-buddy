@@ -45,6 +45,32 @@
 
     <build>
         <plugins>
+            <!-- Shade the ASM dependency. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${version.plugin.shade}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>true</createDependencyReducedPom>
+                            <createSourcesJar>true</createSourcesJar>
+                            <shadeSourcesContent>true</shadeSourcesContent>
+                            <relocations>
+                                <relocation>
+                                    <pattern>${shade.source}</pattern>
+                                    <shadedPattern>${shade.target}</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Disable pitest as it fails for empty modules -->
             <plugin>
                 <groupId>org.pitest</groupId>
@@ -65,32 +91,6 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- Shade the ASM dependency. -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-shade-plugin</artifactId>
-                        <version>${version.plugin.shade}</version>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>shade</goal>
-                                </goals>
-                                <configuration>
-                                    <shadedArtifactAttached>false</shadedArtifactAttached>
-                                    <createDependencyReducedPom>true</createDependencyReducedPom>
-                                    <createSourcesJar>true</createSourcesJar>
-                                    <shadeSourcesContent>true</shadeSourcesContent>
-                                    <relocations>
-                                        <relocation>
-                                            <pattern>${shade.source}</pattern>
-                                            <shadedPattern>${shade.target}</shadedPattern>
-                                        </relocation>
-                                    </relocations>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
                     <!-- Create manifest file which is required for creating an OSGi bundle. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
