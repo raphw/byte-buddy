@@ -248,7 +248,7 @@ public abstract class FieldAccessor implements Implementation {
 
             @Override
             public Prepared prepare(TypeDescription instrumentedType) {
-                if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure()) || !fieldDescription.isAccessibleTo(instrumentedType)) {
+                if (!instrumentedType.isAssignableTo(fieldDescription.getDeclaringType().asErasure()) || !fieldDescription.isVisibleTo(instrumentedType)) {
                     throw new IllegalStateException("Cannot access " + fieldDescription + " from " + instrumentedType);
                 }
                 return this;
