@@ -260,18 +260,6 @@ mvn package
 On these commands, Byte Buddy is cloned from GitHub and built on your machine. Byte Buddy is currently tested for the
 [*OpenJDK*](http://openjdk.java.net/) versions 6 and 7 and the *Oracle JDK* versions 7 and 8 using Travis CI.
 
-Note that the above build is optimized for its runtime and does not create all artifacts. To build all artifacts,
-including the zero-dependency jar of Byte Buddy, use the `extras` profile:
-
-```shell
-mvn package -Pextras
-```
-
-The zero-dependency jar file is then saved in *byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar*. The regular jar
-file is saved in *byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar*. Additionally, source code and javadoc
-artifacts are built when using this profile. See the [developer page](http://bytebuddy.net/#/develop) for further
-information on building the project.
-
 Please use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing
 code, please provide test cases that prove the functionality of your features or that demonstrate a bug fix.
 Furthermore, make sure you are not breaking any existing test cases. If possible, please take the time to write
