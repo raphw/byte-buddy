@@ -12,6 +12,7 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.collection.ArrayAccess;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -405,6 +406,28 @@ public class MethodCall implements Implementation.Composable {
         return new MethodCall(methodLocator,
                 targetHandler,
                 CompoundList.of(this.argumentLoaders, ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.INSTANCE),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                typing);
+    }
+
+    /**
+     * Adds all items of an array as arguments to the invoked method to this method call.
+     *
+     * @param index the parameter index of the array whose items will be stacked.
+     * @param size the number of items from the array to stack, each corresponding to a method argument.
+     * @return A method call that hands the provided arguments to the invoked method.
+     */
+    public MethodCall withArgumentsFromArray(int index, int size) {
+        List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(size);
+        for (int i = 0; i < size; i++) {
+            argumentLoaders.add(new ArgumentLoader.ForItemFromArrayMethodParameter.OfInstrumentedMethod(index, size));
+        }
+
+        return new MethodCall(methodLocator,
+                targetHandler,
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -1650,6 +1673,138 @@ public class MethodCall implements Implementation.Composable {
                     return "MethodCall.ArgumentLoader.ForField.Factory{" +
                             "name='" + name + '\'' +
                             ", fieldLocatorFactory=" + fieldLocatorFactory +
+                            '}';
+                }
+            }
+        }
+
+        /**
+         * Loads a value onto the operand stack that is stored in an array parameter.
+         */
+        class ForItemFromArrayMethodParameter implements ArgumentLoader {
+
+            /**
+             * The index of the array parameter to be loaded onto the operand stack.
+             */
+            private final int index;
+
+            /**
+             * The instrumented method.
+             */
+            private final MethodDescription instrumentedMethod;
+
+            /**
+             * Creates a new argument loader for loading arguments from an array.
+             *
+             * @param index               The index of the array parameter.
+             * @param instrumentedMethod  The instrumented method.
+             */
+            protected ForItemFromArrayMethodParameter(int index, MethodDescription instrumentedMethod) {
+                this.index = index;
+                this.instrumentedMethod = instrumentedMethod;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
+                if (!parameterDescription.getType().isArray()) {
+                    throw new IllegalStateException("Cannot access an item from a non-array parameter.");
+                }
+
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.load(parameterDescription),
+                        IntegerConstant.forValue(target.getIndex()),
+                        ArrayAccess.REFERENCE.load(),
+                        assigner.assign(parameterDescription.getType().asErasure().getComponentType().asGenericType(),
+                                target.getType(), typing)
+                );
+
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target + " for " + instrumentedMethod);
+                }
+
+                return stackManipulation;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForItemFromArrayMethodParameter that = (ForItemFromArrayMethodParameter) object;
+                if (index != that.index) return false;
+                return instrumentedMethod.equals(that.instrumentedMethod);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = index;
+                result = 31 * result + instrumentedMethod.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.ArgumentLoader.ForItemFromArrayMethodParameter{" +
+                        "index=" + index +
+                        ", instrumentedMethod=" + instrumentedMethod +
+                        '}';
+            }
+
+            /**
+             * A factory for an argument loader that supplies an item from a method array parameter as an argument.
+             */
+            protected static class OfInstrumentedMethod implements ArgumentLoader.Factory {
+
+                /**
+                 * The index of the parameter that contains the array whose items will be lodaded onto the operand stack.
+                 */
+                private final int index;
+
+                /**
+                 * The size of the parameter to be loaded onto the operand stack.
+                 */
+                private final int size;
+
+                /**
+                 * Creates a factory for an argument loader that supplies an item from an array parameter as an argument.
+                 *
+                 * @param index The index of the parameter that contains the array.
+                 * @param size  The size of the array to be expanded.
+                 */
+                protected OfInstrumentedMethod(int index, int size) {
+                    this.index = index;
+                    this.size = size;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
+                    return Collections.<ArgumentLoader>singletonList(
+                            new ForItemFromArrayMethodParameter(index, instrumentedMethod));
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    OfInstrumentedMethod factory = (OfInstrumentedMethod) object;
+                    return size == factory.size;
+                }
+
+                @Override
+                public int hashCode() {
+                    return size;
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodCall.ArgumentLoader.ForMethodParameter.Factory{" +
+                            "index=" + index +
+                            ", size=" + size +
                             '}';
                 }
             }

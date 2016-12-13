@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 
 public class MethodCallTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar", INVOKE_FOO = "invokeFoo";
 
     private static final String SINGLE_DEFAULT_METHOD = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
@@ -404,6 +404,29 @@ public class MethodCallTest {
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithTwoExplicitArguments.class)));
         assertThat(instance, instanceOf(MethodCallWithTwoExplicitArguments.class));
         assertThat(instance.foo(FOO, BAR), is(FOO + BAR));
+    }
+
+    @Test
+    public void testWithArgumentsFromArray() throws Exception {
+        DynamicType.Loaded<MethodCallWithExplicitArgument> loaded = new ByteBuddy()
+                .subclass(MethodCallWithExplicitArgument.class)
+                .implement(MethodCallDelegator.class)
+                .method(isDeclaredBy(MethodCallDelegator.class))
+                    .intercept(MethodCall
+                            .invoke(named("foo"))
+                            .withArgumentsFromArray(0, 1)
+                            .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
+                .make()
+                .load(MethodCallDelegator.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredMethod(INVOKE_FOO, Object[].class), not(nullValue(Method.class)));
+        assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        MethodCallDelegator instance = (MethodCallDelegator) loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithExplicitArgument.class)));
+        assertThat(instance, instanceOf(MethodCallDelegator.class));
+        assertThat(instance.invokeFoo(BAR), is(BAR));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -959,6 +982,11 @@ public class MethodCallTest {
         public String foo(String first, String second) {
             return first + second;
         }
+    }
+
+    public static interface MethodCallDelegator {
+
+        public String invokeFoo(Object ... args);
     }
 
     @SuppressWarnings("unused")
