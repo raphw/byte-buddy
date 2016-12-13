@@ -211,7 +211,7 @@ public class TransformationAction implements Action<Task> {
                                   ClassFileLocator classFileLocator,
                                   TypePool typePool,
                                   List<Plugin> plugins) {
-        String typeName = file.replace('/', '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
+        String typeName = file.replace(File.separatorChar, '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
         project.getLogger().debug("Processing class file: {}", typeName);
         TypeDescription typeDescription = typePool.describe(typeName).resolve();
         DynamicType.Builder<?> builder;
