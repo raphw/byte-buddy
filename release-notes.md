@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. December 2016: version 1.5.9
+
+- Allow specifying `TargetType` in `Advice.FieldValue`.
+- Allow array value explosion in `MethodCall`.
+- Extended `FieldAccessor` to allow reading `FieldDescription`s directly.
+- Fixed class name resolution in Maven and Gradle plugins.
+
 ### 5. December 2016: version 1.5.8
 
 - Added implementation for attachment on Linux and HotSpot using a non-JDK VM.

@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 
 public class TransformationActionTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", TEMP = "tmp";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", TEMP = ".tmp";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
