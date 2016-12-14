@@ -292,7 +292,7 @@ public class ByteBuddyAgent {
     private static void install(AttachmentProvider attachmentProvider, String processId, String argument, AgentProvider agentProvider) {
         AttachmentProvider.Accessor attachmentAccessor = attachmentProvider.attempt();
         if (!attachmentAccessor.isAvailable()) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("No compatible attachment provider is not available");
         }
         try {
             Class<?> virtualMachineType = attachmentAccessor.getVirtualMachineType();
