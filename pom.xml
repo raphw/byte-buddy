@@ -4,7 +4,7 @@
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.5.10-SNAPSHOT</version>
+    <version>1.5.10</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -114,7 +114,7 @@
         <connection>scm:git:git@github.com:raphw/byte-buddy.git</connection>
         <developerConnection>scm:git:git@github.com:raphw/byte-buddy.git</developerConnection>
         <url>git@github.com:raphw/byte-buddy.git</url>
-        <tag>HEAD</tag>
+        <tag>byte-buddy-1.5.10</tag>
     </scm>
 
     <dependencyManagement>
