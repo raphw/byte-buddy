@@ -3853,7 +3853,7 @@ public interface AgentBuilder {
                         if (batches.isEmpty()) {
                             return Collections.singletonList(types);
                         } else {
-                            batches.get(0).addAll(types.subList(0, reminder));
+                            batches.get(0).addAll(0, types.subList(0, reminder));
                             return batches;
                         }
                     }

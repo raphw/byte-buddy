@@ -231,6 +231,53 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
     }
 
     @Test
+    public void testPartitioningWithoutReminder() throws Exception {
+        Iterator<? extends List<Class<?>>> iterator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning(2)
+                .batch(Arrays.<Class<?>>asList(Object.class, Void.class))
+                .iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(Object.class)));
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(Void.class)));
+        assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test
+    public void testPartitioningWithReminder() throws Exception {
+        Iterator<? extends List<Class<?>>> iterator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning(2)
+                .batch(Arrays.<Class<?>>asList(Object.class, Void.class, String.class))
+                .iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Arrays.<Class<?>>asList(Object.class, Void.class)));
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(String.class)));
+        assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test
+    public void testPartitioningWithReminderAndNoRegularPartition() throws Exception {
+        Iterator<? extends List<Class<?>>> iterator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning(2)
+                .batch(Collections.<Class<?>>singletonList(Object.class))
+                .iterator();
+        assertThat(iterator.hasNext(), is(true));
+        assertThat(iterator.next(), is(Collections.<Class<?>>singletonList(Object.class)));
+        assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test
+    public void testPartitioningEmpty() throws Exception {
+        Iterator<? extends List<Class<?>>> iterator = new AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning(2)
+                .batch(Collections.<Class<?>>emptyList())
+                .iterator();
+        assertThat(iterator.hasNext(), is(false));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testPartitioningIllegalArgument() throws Exception {
+        AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning.of(0);
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.class).apply();
@@ -238,5 +285,6 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable.class).applyBasic();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable.SlicingIterator.class).applyBasic();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.Partitioning.class).apply();
     }
 }
