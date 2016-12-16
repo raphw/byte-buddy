@@ -873,6 +873,7 @@ public class AgentBuilderDefaultTest {
         when(redefinitionBatchAllocator.batch(Arrays.asList(REDEFINED, OTHER)))
                 .thenReturn((Iterable) Arrays.asList(Collections.singletonList(REDEFINED), Collections.singletonList(OTHER)));
         AgentBuilder.RedefinitionStrategy.Listener redefinitionListener = mock(AgentBuilder.RedefinitionStrategy.Listener.class);
+        when(redefinitionListener.onError(1, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER))).thenReturn((Iterable) Collections.emptyList());
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
@@ -1443,6 +1444,7 @@ public class AgentBuilderDefaultTest {
         when(redefinitionBatchAllocator.batch(Arrays.asList(REDEFINED, OTHER)))
                 .thenReturn((Iterable) Arrays.asList(Collections.singletonList(REDEFINED), Collections.singletonList(OTHER)));
         AgentBuilder.RedefinitionStrategy.Listener redefinitionListener = mock(AgentBuilder.RedefinitionStrategy.Listener.class);
+        when(redefinitionListener.onError(1, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER))).thenReturn((Iterable) Collections.emptyList());
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)

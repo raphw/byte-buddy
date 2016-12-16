@@ -3807,6 +3807,78 @@ public interface AgentBuilder {
                     }
                 }
             }
+
+            /**
+             * A partitioning batch allocator that splits types for redefinition into a fixed amount of parts.
+             */
+            class Partitioning implements BatchAllocator {
+
+                /**
+                 * The amount of batches to generate.
+                 */
+                private final int parts;
+
+                /**
+                 * Creates a new batch allocator that splits types for redefinition into a fixed amount of parts.
+                 *
+                 * @param parts The amount of parts to create.
+                 */
+                protected Partitioning(int parts) {
+                    this.parts = parts;
+                }
+
+                /**
+                 * Creates a part-splitting batch allocator.
+                 *
+                 * @param parts The amount of parts to create.
+                 * @return A batch allocator that splits the redefined types into a fixed amount of batches.
+                 */
+                public static BatchAllocator of(int parts) {
+                    if (parts < 1) {
+                        throw new IllegalArgumentException("A batch size must be positive: " + parts);
+                    }
+                    return new Partitioning(parts);
+                }
+
+                @Override
+                public Iterable<? extends List<Class<?>>> batch(List<Class<?>> types) {
+                    if (types.isEmpty()) {
+                        return Collections.emptyList();
+                    } else {
+                        List<List<Class<?>>> batches = new ArrayList<List<Class<?>>>();
+                        int size = types.size() / parts, reminder = types.size() % parts;
+                        for (int index = reminder; index < types.size(); index += size) {
+                            batches.add(new ArrayList<Class<?>>(types.subList(index, index + size)));
+                        }
+                        if (batches.isEmpty()) {
+                            return Collections.singletonList(types);
+                        } else {
+                            batches.get(0).addAll(types.subList(0, reminder));
+                            return batches;
+                        }
+                    }
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Partitioning that = (Partitioning) object;
+                    return parts == that.parts;
+                }
+
+                @Override
+                public int hashCode() {
+                    return parts;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning{" +
+                            "parts=" + parts +
+                            '}';
+                }
+            }
         }
 
         /**
@@ -3830,8 +3902,10 @@ public interface AgentBuilder {
              * @param batch     The types included in this batch.
              * @param throwable The throwable that caused this invocation.
              * @param types     All types included in the redefinition.
+             * @return A set of classes which should be attempted to be redefined. Typically, this should be a subset of the classes
+             * contained in {@code batch} but not all classes.
              */
-            void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types);
+            Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types);
 
             /**
              * Invoked upon completion of all batches.
@@ -3858,8 +3932,8 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
-                    /* do nothing */
+                public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    return Collections.emptyList();
                 }
 
                 @Override
@@ -3891,8 +3965,8 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
-                    /* do nothing */
+                public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    return Collections.emptyList();
                 }
 
                 @Override
@@ -3916,7 +3990,7 @@ public interface AgentBuilder {
                  */
                 FAIL_FAST {
                     @Override
-                    public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                         throw new IllegalStateException("Could not transform any of " + batch, throwable);
                     }
 
@@ -3931,8 +4005,8 @@ public interface AgentBuilder {
                  */
                 FAIL_LAST {
                     @Override
-                    public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
-                        /* do nothing */
+                    public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                        return Collections.emptyList();
                     }
 
                     @Override
@@ -3965,13 +4039,77 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
-                    /* do nothing */
+                public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    return Collections.emptyList();
                 }
 
                 @Override
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
+                }
+            }
+
+            /**
+             * <p>
+             * A batch reallocator allows to split up a failed retransformation into additional batches which are reenqueed to the
+             * current retransformation process. To do so, any batch with at least to classes is rerouted through a {@link BatchAllocator}
+             * which is responsible for regrouping the classes that failed to be retransformed into new batches.
+             * </p>
+             * <p>
+             * <b>Important</b>: To avoid endless looping over classes that cannot be successfully retransformed, the supplied batch
+             * allocator must not resubmit batches that previously failed as an identical outcome is likely.
+             * </p>
+             */
+            class BatchReallocator extends Adapter {
+
+                /**
+                 * The batch allocator to use for reallocating failed batches.
+                 */
+                private final BatchAllocator batchAllocator;
+
+                /**
+                 * Creates a new batch reallocator.
+                 *
+                 * @param batchAllocator The batch allocator to use for reallocating failed batches.
+                 */
+                public BatchReallocator(BatchAllocator batchAllocator) {
+                    this.batchAllocator = batchAllocator;
+                }
+
+                /**
+                 * Creates a batch allocator that splits any batch into two parts and resubmits these parts as two batches.
+                 *
+                 * @return A batch reallocating batch listener that splits failed batches into two parts for resubmission.
+                 */
+                public static Listener splitting() {
+                    return new BatchReallocator(new BatchAllocator.Partitioning(2));
+                }
+
+                @Override
+                public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    return batch.size() < 2
+                            ? Collections.<List<Class<?>>>emptyList()
+                            : batchAllocator.batch(batch);
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    BatchReallocator that = (BatchReallocator) object;
+                    return batchAllocator.equals(that.batchAllocator);
+                }
+
+                @Override
+                public int hashCode() {
+                    return batchAllocator.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator{" +
+                            "batchAllocator=" + batchAllocator +
+                            '}';
                 }
             }
 
@@ -4087,11 +4225,12 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                     synchronized (printStream) {
                         printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE ERROR #%d [%d of %d type(s)]%n", index, batch.size(), types.size());
                         throwable.printStackTrace(printStream);
                     }
+                    return Collections.emptyList();
                 }
 
                 @Override
@@ -4156,10 +4295,12 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                    List<Iterable<? extends List<Class<?>>>> reattempts = new ArrayList<Iterable<? extends List<Class<?>>>>();
                     for (Listener listener : listeners) {
-                        listener.onError(index, batch, throwable, types);
+                        reattempts.add(listener.onError(index, batch, throwable, types));
                     }
+                    return new CompoundIterable(reattempts);
                 }
 
                 @Override
@@ -4187,6 +4328,117 @@ public interface AgentBuilder {
                     return "AgentBuilder.RedefinitionStrategy.Listener.Compound{" +
                             "listeners=" + listeners +
                             '}';
+                }
+
+                /**
+                 * A compound iterable.
+                 */
+                protected static class CompoundIterable implements Iterable<List<Class<?>>> {
+
+                    /**
+                     * The iterables to consider.
+                     */
+                    private final List<Iterable<? extends List<Class<?>>>> iterables;
+
+                    /**
+                     * Creates a compound iterable.
+                     *
+                     * @param iterables The iterables to consider.
+                     */
+                    protected CompoundIterable(List<Iterable<? extends List<Class<?>>>> iterables) {
+                        this.iterables = iterables;
+                    }
+
+                    @Override
+                    public Iterator<List<Class<?>>> iterator() {
+                        return new CompoundIterator(new ArrayList<Iterable<? extends List<Class<?>>>>(iterables));
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        CompoundIterable lists = (CompoundIterable) object;
+                        return iterables.equals(lists.iterables);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return iterables.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable{" +
+                                "iterables=" + iterables +
+                                '}';
+                    }
+
+                    /**
+                     * A compound iterator that combines several iteratables.
+                     */
+                    protected static class CompoundIterator implements Iterator<List<Class<?>>> {
+
+                        /**
+                         * The current iterator or {@code null} if no such iterator is defined.
+                         */
+                        private Iterator<? extends List<Class<?>>> current;
+
+                        /**
+                         * A backlog of iterables to still consider.
+                         */
+                        private final List<Iterable<? extends List<Class<?>>>> backlog;
+
+                        /**
+                         * Creates a compount iterator.
+                         *
+                         * @param iterables The iterables to consider.
+                         */
+                        protected CompoundIterator(List<Iterable<? extends List<Class<?>>>> iterables) {
+                            backlog = iterables;
+                            forward();
+                        }
+
+                        @Override
+                        public boolean hasNext() {
+                            return current != null && current.hasNext();
+                        }
+
+                        @Override
+                        public List<Class<?>> next() {
+                            try {
+                                if (current != null) {
+                                    return current.next();
+                                } else {
+                                    throw new NoSuchElementException();
+                                }
+                            } finally {
+                                forward();
+                            }
+                        }
+
+                        /**
+                         * Forwards the iterator to the next relevant iterable.
+                         */
+                        private void forward() {
+                            while ((current == null || !current.hasNext()) && !backlog.isEmpty()) {
+                                current = backlog.remove(0).iterator();
+                            }
+                        }
+
+                        @Override
+                        public void remove() {
+                            throw new UnsupportedOperationException("remove");
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable.CompoundIterator{" +
+                                    "current=" + current +
+                                    ", backlog=" + backlog +
+                                    '}';
+                        }
+                    }
                 }
             }
         }
@@ -4290,12 +4542,14 @@ public interface AgentBuilder {
                                  Listener redefinitionListener) {
                 int index = 0;
                 Map<List<Class<?>>, Throwable> failures = new HashMap<List<Class<?>>, Throwable>();
-                for (List<Class<?>> types : redefinitionBatchAllocator.batch(this.types)) {
+                PrependableIterator prepanedableIterator = new PrependableIterator(redefinitionBatchAllocator.batch(this.types));
+                while (prepanedableIterator.hasNext()) {
+                    List<Class<?>> types = prepanedableIterator.next();
                     redefinitionListener.onBatch(index, types, this.types);
                     try {
                         doApply(instrumentation, circularityLock, types, locationStrategy, listener);
                     } catch (Throwable throwable) {
-                        redefinitionListener.onError(index, types, throwable, this.types);
+                        prepanedableIterator.prepend(redefinitionListener.onError(index, types, throwable, this.types));
                         failures.put(types, throwable);
                     }
                     index += 1;
@@ -4326,6 +4580,73 @@ public interface AgentBuilder {
                         "transformation=" + transformation +
                         ", types=" + types +
                         '}';
+            }
+
+            /**
+             * An iterator that allows prepending of iterables to be applied previous to another iterator.
+             */
+            protected static class PrependableIterator implements Iterator<List<Class<?>>> {
+
+                /**
+                 * The current iterator.
+                 */
+                private Iterator<? extends List<Class<?>>> current;
+
+                /**
+                 * The backlog of iterators to apply.
+                 */
+                private final Deque<Iterator<? extends List<Class<?>>>> backlog;
+
+                /**
+                 * Creates a new prependable iterator.
+                 *
+                 * @param origin The original iterable to begin with.
+                 */
+                protected PrependableIterator(Iterable<? extends List<Class<?>>> origin) {
+                    current = origin.iterator();
+                    backlog = new ArrayDeque<Iterator<? extends List<Class<?>>>>();
+                }
+
+                /**
+                 * Prepends an iterable to the backlog.
+                 *
+                 * @param iterable The iterable to prepend.
+                 */
+                public void prepend(Iterable<? extends List<Class<?>>> iterable) {
+                    if (current.hasNext()) {
+                        backlog.addLast(current);
+                    }
+                    current = iterable.iterator();
+                }
+
+                @Override
+                public boolean hasNext() {
+                    return current.hasNext();
+                }
+
+                @Override
+                public List<Class<?>> next() {
+                    try {
+                        return current.next();
+                    } finally {
+                        while (!backlog.isEmpty() && !current.hasNext()) {
+                            current = backlog.removeLast();
+                        }
+                    }
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException("remove");
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.RedefinitionStrategy.Collector.PrependableIterator{" +
+                            "current=" + current +
+                            ", backlog=" + backlog +
+                            '}';
+                }
             }
 
             /**
@@ -8439,10 +8760,11 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
+                public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
                     for (Class<?> type : batch) {
                         failures.put(type, throwable);
                     }
+                    return Collections.emptyList();
                 }
 
                 @Override
