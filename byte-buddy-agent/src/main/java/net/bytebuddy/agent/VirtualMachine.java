@@ -192,9 +192,10 @@ public interface VirtualMachine {
             private static final String ATTACH_FILE_PREFIX = ".attach_pid";
 
             /**
-             * The Unix socket to use for communication.
+             * The Unix socket to use for communication. The containing object is supposed to be an instance
+             * of {@link AFUNIXSocket} which is however not set to avoid eager loading
              */
-            private final AFUNIXSocket socket;
+            private final Object socket;
 
             /**
              * The number of attempts to connect.
@@ -226,7 +227,7 @@ public interface VirtualMachine {
              * @param timeout   The socket timeout.
              * @param timeUnit  The time unit of the pause time.
              */
-            public OnUnix(String processId, AFUNIXSocket socket, int attempts, long pause, long timeout, TimeUnit timeUnit) {
+            public OnUnix(String processId, Object socket, int attempts, long pause, long timeout, TimeUnit timeUnit) {
                 super(processId);
                 this.socket = socket;
                 this.attempts = attempts;
@@ -240,8 +241,9 @@ public interface VirtualMachine {
              * if this VM does not support Unix socket communication, a {@link Throwable} is thrown.
              *
              * @return This virtual machine type.
+             * @throws Throwable If this VM does not support POSIX sockets or is not running on a HotSpot VM.
              */
-            public static Class<?> assertAvailability() {
+            public static Class<?> assertAvailability() throws Throwable {
                 if (!AFUNIXSocket.isSupported()) {
                     throw new IllegalStateException("POSIX sockets are not supported on the current system");
                 } else if (!System.getProperty("java.vm.name").toLowerCase(Locale.US).contains("hotspot")) {
@@ -314,23 +316,23 @@ public interface VirtualMachine {
                         }
                     }
                 }
-                socket.setSoTimeout((int) timeUnit.toMillis(timeout));
-                socket.connect(new AFUNIXSocketAddress(socketFile));
+                ((AFUNIXSocket) socket).setSoTimeout((int) timeUnit.toMillis(timeout));
+                ((AFUNIXSocket) socket).connect(new AFUNIXSocketAddress(socketFile));
             }
 
             @Override
             public int read(byte[] buffer) throws IOException {
-                return socket.getInputStream().read(buffer);
+                return ((AFUNIXSocket) this.socket).getInputStream().read(buffer);
             }
 
             @Override
             public void write(byte[] buffer) throws IOException {
-                socket.getOutputStream().write(buffer);
+                ((AFUNIXSocket) this.socket).getOutputStream().write(buffer);
             }
 
             @Override
             public void detach() throws IOException {
-                socket.close();
+                ((AFUNIXSocket) this.socket).close();
             }
 
             @Override
