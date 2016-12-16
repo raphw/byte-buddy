@@ -912,6 +912,63 @@ public class AgentBuilderDefaultTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    public void testRetransformationChunkedOneFailsResubmit() throws Exception {
+        when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
+        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
+        Throwable throwable = new UnmodifiableClassException();
+        doThrow(throwable).when(instrumentation).retransformClasses(OTHER);
+        AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator = mock(AgentBuilder.RedefinitionStrategy.BatchAllocator.class);
+        when(redefinitionBatchAllocator.batch(Arrays.asList(REDEFINED, OTHER)))
+                .thenReturn((Iterable) Arrays.asList(Collections.singletonList(REDEFINED), Collections.singletonList(OTHER)));
+        AgentBuilder.RedefinitionStrategy.Listener redefinitionListener = mock(AgentBuilder.RedefinitionStrategy.Listener.class);
+        when(redefinitionListener.onError(1, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER)))
+                .thenReturn((Iterable) Collections.singleton(Collections.singletonList(OTHER)));
+        when(redefinitionListener.onError(2, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER)))
+                .thenReturn((Iterable) Collections.emptyList());
+        ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(redefinitionBatchAllocator)
+                .with(redefinitionListener)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(none())
+                .type(typeMatcher).transform(transformer)
+                .installOn(instrumentation);
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, true);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isModifiableClass(REDEFINED);
+        verify(instrumentation).isModifiableClass(OTHER);
+        verify(instrumentation).retransformClasses(REDEFINED);
+        verify(instrumentation, times(2)).retransformClasses(OTHER);
+        verify(instrumentation).isRetransformClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verifyNoMoreInteractions(typeMatcher);
+        verifyZeroInteractions(initializationStrategy);
+        verifyZeroInteractions(installationStrategy);
+        verify(redefinitionBatchAllocator).batch(Arrays.asList(REDEFINED, OTHER));
+        verifyNoMoreInteractions(redefinitionBatchAllocator);
+        verify(redefinitionListener).onBatch(0, Collections.<Class<?>>singletonList(REDEFINED), Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onBatch(1, Collections.<Class<?>>singletonList(OTHER), Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onBatch(2, Collections.<Class<?>>singletonList(OTHER), Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onError(1, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onError(2, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onComplete(3, Arrays.asList(REDEFINED, OTHER), Collections.singletonMap(Collections.<Class<?>>singletonList(OTHER), throwable));
+        verifyNoMoreInteractions(redefinitionListener);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void testRetransformationChunkedOneFailsEscalated() throws Exception {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
         when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
@@ -1478,6 +1535,63 @@ public class AgentBuilderDefaultTest {
         verify(redefinitionListener).onBatch(1, Collections.<Class<?>>singletonList(OTHER), Arrays.asList(REDEFINED, OTHER));
         verify(redefinitionListener).onError(1, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER));
         verify(redefinitionListener).onComplete(2, Arrays.asList(REDEFINED, OTHER), Collections.singletonMap(Collections.<Class<?>>singletonList(OTHER), throwable));
+        verifyNoMoreInteractions(redefinitionListener);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testRedefinitionChunkedOneFailsResubmit() throws Exception {
+        when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED, OTHER});
+        when(typeMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
+        when(typeMatcher.matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain())).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isModifiableClass(OTHER)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        Throwable throwable = new ClassNotFoundException();
+        doThrow(throwable).when(instrumentation).redefineClasses(argThat(new ClassRedefinitionMatcher(OTHER)));
+        AgentBuilder.RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator = mock(AgentBuilder.RedefinitionStrategy.BatchAllocator.class);
+        when(redefinitionBatchAllocator.batch(Arrays.asList(REDEFINED, OTHER)))
+                .thenReturn((Iterable) Arrays.asList(Collections.singletonList(REDEFINED), Collections.singletonList(OTHER)));
+        AgentBuilder.RedefinitionStrategy.Listener redefinitionListener = mock(AgentBuilder.RedefinitionStrategy.Listener.class);
+        when(redefinitionListener.onError(1, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER)))
+                .thenReturn((Iterable) Collections.singleton(Collections.singletonList(OTHER)));
+        when(redefinitionListener.onError(2, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER)))
+                .thenReturn((Iterable) Collections.emptyList());
+        ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(redefinitionBatchAllocator)
+                .with(redefinitionListener)
+                .with(poolStrategy)
+                .with(typeStrategy)
+                .with(installationStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .ignore(none())
+                .type(typeMatcher).transform(transformer)
+                .installOn(instrumentation);
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isModifiableClass(REDEFINED);
+        verify(instrumentation).isModifiableClass(OTHER);
+        verify(instrumentation).redefineClasses(argThat(new ClassRedefinitionMatcher(REDEFINED)));
+        verify(instrumentation, times(2)).redefineClasses(argThat(new ClassRedefinitionMatcher(OTHER)));
+        verify(instrumentation).isRedefineClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
+        verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
+        verifyNoMoreInteractions(typeMatcher);
+        verifyZeroInteractions(initializationStrategy);
+        verifyZeroInteractions(installationStrategy);
+        verify(redefinitionBatchAllocator).batch(Arrays.asList(REDEFINED, OTHER));
+        verifyNoMoreInteractions(redefinitionBatchAllocator);
+        verify(redefinitionListener).onBatch(0, Collections.<Class<?>>singletonList(REDEFINED), Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onBatch(1, Collections.<Class<?>>singletonList(OTHER), Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onBatch(2, Collections.<Class<?>>singletonList(OTHER), Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onError(1, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onError(2, Collections.<Class<?>>singletonList(OTHER), throwable, Arrays.asList(REDEFINED, OTHER));
+        verify(redefinitionListener).onComplete(3, Arrays.asList(REDEFINED, OTHER), Collections.singletonMap(Collections.<Class<?>>singletonList(OTHER), throwable));
         verifyNoMoreInteractions(redefinitionListener);
     }
 

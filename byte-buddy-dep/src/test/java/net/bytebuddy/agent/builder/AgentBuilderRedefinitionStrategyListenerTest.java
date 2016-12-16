@@ -63,15 +63,15 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
     public void testCompound() throws Exception {
         Throwable throwable = new Throwable();
         AgentBuilder.RedefinitionStrategy.Listener first = mock(AgentBuilder.RedefinitionStrategy.Listener.class), second = mock(AgentBuilder.RedefinitionStrategy.Listener.class);
-        when(first.onError(0, Collections.<Class<?>>emptyList(), throwable, Collections.<Class<?>>emptyList())).thenReturn((Iterable) Collections.singleton(Collections.singletonList(Foo.class)));
-        when(second.onError(0, Collections.<Class<?>>emptyList(), throwable, Collections.<Class<?>>emptyList())).thenReturn((Iterable) Collections.singleton(Collections.singletonList(Bar.class)));
+        when(first.onError(0, Collections.<Class<?>>emptyList(), throwable, Collections.<Class<?>>emptyList())).thenReturn((Iterable) Collections.singleton(Collections.singletonList(Object.class)));
+        when(second.onError(0, Collections.<Class<?>>emptyList(), throwable, Collections.<Class<?>>emptyList())).thenReturn((Iterable) Collections.singleton(Collections.singletonList(Void.class)));
         AgentBuilder.RedefinitionStrategy.Listener listener = new AgentBuilder.RedefinitionStrategy.Listener.Compound(first, second);
         listener.onBatch(0, Collections.<Class<?>>emptyList(), Collections.<Class<?>>emptyList());
         Iterator<? extends List<Class<?>>> batched = listener.onError(0, Collections.<Class<?>>emptyList(), throwable, Collections.<Class<?>>emptyList()).iterator();
         assertThat(batched.hasNext(), is(true));
-        assertThat(batched.next(), is(Collections.<Class<?>>singletonList(Foo.class)));
+        assertThat(batched.next(), is(Collections.<Class<?>>singletonList(Object.class)));
         assertThat(batched.hasNext(), is(true));
-        assertThat(batched.next(), is(Collections.<Class<?>>singletonList(Bar.class)));
+        assertThat(batched.next(), is(Collections.<Class<?>>singletonList(Void.class)));
         assertThat(batched.hasNext(), is(false));
         listener.onComplete(0, Collections.<Class<?>>emptyList(), Collections.<List<Class<?>>, Throwable>emptyMap());
         verify(first).onBatch(0, Collections.<Class<?>>emptyList(), Collections.<Class<?>>emptyList());
@@ -165,13 +165,5 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Yielding.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator.class).apply();
-    }
-
-    private static class Foo {
-        /* empty */
-    }
-
-    private static class Bar {
-        /* empty */
     }
 }
