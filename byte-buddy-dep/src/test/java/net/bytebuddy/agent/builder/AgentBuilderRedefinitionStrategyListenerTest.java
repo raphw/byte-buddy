@@ -123,6 +123,33 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void testBatchReallocatorNonBatchable() throws Exception {
+        AgentBuilder.RedefinitionStrategy.BatchAllocator delegate = mock(AgentBuilder.RedefinitionStrategy.BatchAllocator.class);
+        AgentBuilder.RedefinitionStrategy.Listener listener = new AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator(delegate);
+        assertThat(listener.onError(0, Collections.<Class<?>>singletonList(Object.class), new Throwable(), Collections.<Class<?>>emptyList()), is((Iterable) Collections.emptyList()));
+        verifyZeroInteractions(delegate);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testBatchReallocatorBatchable() throws Exception {
+        AgentBuilder.RedefinitionStrategy.BatchAllocator delegate = mock(AgentBuilder.RedefinitionStrategy.BatchAllocator.class);
+        when(delegate.batch(Arrays.<Class<?>>asList(Object.class, Void.class))).thenReturn((Iterable) Collections.emptyList());
+        AgentBuilder.RedefinitionStrategy.Listener listener = new AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator(delegate);
+        assertThat(listener.onError(0, Arrays.asList(Object.class, Void.class), new Throwable(), Collections.<Class<?>>emptyList()), is((Iterable) Collections.emptyList()));
+        verify(delegate).batch(Arrays.asList(Object.class, Void.class));
+        verifyNoMoreInteractions(delegate);
+    }
+
+    @Test
+    public void testSplittingBatchReallocator() throws Exception {
+        assertThat(AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator.splitting(),
+                is((AgentBuilder.RedefinitionStrategy.Listener) new AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator(
+                        new AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning(2))));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Compound.class).apply();
@@ -137,6 +164,7 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.StreamWriting.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Yielding.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator.class).apply();
     }
 
     private static class Foo {
