@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. December 2016: version 1.5.10
+
+- Added possibility for readding types after a failed retransformation batch.
+- Added partitioning batch allocator.
+
 ### 13. December 2016: version 1.5.9
 
 - Allow specifying `TargetType` in `Advice.FieldValue`.
