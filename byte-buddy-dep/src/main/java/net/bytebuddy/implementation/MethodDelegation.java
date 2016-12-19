@@ -151,7 +151,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * method.
  * </p>
  *
- * @see Forwarding
+ * @see MethodCall
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue
  */
 public class MethodDelegation implements Implementation.Composable {

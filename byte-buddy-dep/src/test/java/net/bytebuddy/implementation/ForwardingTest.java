@@ -15,6 +15,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@SuppressWarnings("deprecation")
 public class ForwardingTest {
 
     private static final String FOO = "foo", BAR = "bar";

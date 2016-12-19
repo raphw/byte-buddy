@@ -27,8 +27,10 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * defined on a super type of the given delegation target. Static methods cannot be forwarded as they are not
  * invoked on an instance.
  *
+ * @deprecated Use {@link MethodCall#invokeSelf()} instead. Scheduled for removal in Byte Buddy 1.6.
  * @see MethodDelegation
  */
+@Deprecated
 public class Forwarding implements Implementation.Composable {
 
     /**
