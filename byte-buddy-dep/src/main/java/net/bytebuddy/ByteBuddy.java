@@ -212,6 +212,10 @@ public class ByteBuddy {
      * to only invoke its super type constructor of equal signature. Another behavior can be specified by supplying an explicit
      * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Class, ConstructorStrategy)}.
      * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param superClass The super class or interface type to extend.
      * @param <T>        A loaded type that the generated class is guaranteed to inherit.
@@ -222,8 +226,14 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
      * this interface type is created.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param superClass          The super class or interface type to extend.
      * @param constructorStrategy A constructor strategy that determines the
@@ -244,6 +254,10 @@ public class ByteBuddy {
      * to only invoke its super type constructor of equal signature. Another behavior can be specified by supplying an explicit
      * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Class, ConstructorStrategy)}.
      * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param superType The super class or interface type to extend. The type must be a raw type or parameterized type. All type
      *                  variables that are referenced by the generic type must be declared by the generated subclass before creating
@@ -256,8 +270,14 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
      * this interface type is created.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param superType           The super class or interface type to extend. The type must be a raw type or parameterized
      *                            type. All type variables that are referenced by the generic type must be declared by the
@@ -278,7 +298,12 @@ public class ByteBuddy {
      * <p>
      * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type and sets them to be {@code public}.
      * Any constructor is implemented to only invoke its super type constructor of equal signature. Another behavior can be specified by
-     * supplying an explicit {@link ConstructorStrategy} by {@link ByteBuddy#subclass(TypeDefinition, ConstructorStrategy)}.
+     * supplying a
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
+     * n explicit {@link ConstructorStrategy} by {@link ByteBuddy#subclass(TypeDefinition, ConstructorStrategy)}.
      * </p>
      *
      * @param superType The super class or interface type to extend. The type must be a raw type or parameterized type. All type
@@ -292,8 +317,14 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
      * this interface type is created.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param superType           The super class or interface type to extend. The type must be a raw type or parameterized
      *                            type. All type variables that are referenced by the generic type must be declared by the
@@ -579,8 +610,8 @@ public class ByteBuddy {
      * alternative {@link ClassFileLocator}, use {@link ByteBuddy#redefine(Class, ClassFileLocator)}.
      * </p>
      *
-     * @param type                 The type that is being rebased.
-     * @param <T>                  The loaded type of the rebased type.
+     * @param type The type that is being rebased.
+     * @param <T>  The loaded type of the rebased type.
      * @return A type builder for rebasing the provided type.
      */
     public <T> DynamicType.Builder<T> rebase(Class<T> type) {

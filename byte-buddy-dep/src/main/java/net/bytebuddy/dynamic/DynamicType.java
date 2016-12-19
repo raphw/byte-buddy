@@ -4082,8 +4082,8 @@ public interface DynamicType {
                      */
                     private MethodDefinition.ImplementationDefinition<U> interfaceType() {
                         ElementMatcher.Junction<MethodDescription> elementMatcher = none();
-                        for (TypeDescription.Generic typeDescription : interfaces) {
-                            elementMatcher = elementMatcher.or(isDeclaredBy(isSubTypeOf(typeDescription.asErasure())));
+                        for (TypeDescription typeDescription : interfaces.asErasures()) {
+                            elementMatcher = elementMatcher.or(isDeclaredBy(isSuperTypeOf(typeDescription)));
                         }
                         return materialize().invokable(isDeclaredBy(isInterface()).and(elementMatcher));
                     }

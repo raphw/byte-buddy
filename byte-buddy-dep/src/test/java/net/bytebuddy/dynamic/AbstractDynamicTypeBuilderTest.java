@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.annotation.AbstractAnnotationDescriptionTest;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
@@ -14,10 +15,7 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.implementation.FixedValue;
-import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.implementation.*;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -1032,6 +1030,58 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
+    public void testInterfaceInterception() throws Exception {
+        assertThat(((SampleInterface) createPlain()
+                .implement(SampleInterface.class)
+                .intercept(FixedValue.value(FOO))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredConstructor()
+                .newInstance()).foo(), is(FOO));
+    }
+
+    @Test
+    public void testInterfaceInterceptionPreviousSuperseeded() throws Exception {
+        assertThat(((SampleInterface) createPlain()
+                .method(named(FOO))
+                .intercept(ExceptionMethod.throwing(AssertionError.class))
+                .implement(SampleInterface.class)
+                .intercept(FixedValue.value(FOO))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredConstructor()
+                .newInstance()).foo(), is(FOO));
+    }
+
+    @Test
+    public void testInterfaceInterceptionLaterSuperseeding() throws Exception {
+        assertThat(((SampleInterface) createPlain()
+                .implement(SampleInterface.class)
+                .intercept(ExceptionMethod.throwing(AssertionError.class))
+                .method(named(FOO))
+                .intercept(FixedValue.value(FOO))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredConstructor()
+                .newInstance()).foo(), is(FOO));
+    }
+
+    @Test
+    public void testInterfaceInterceptionSubClass() throws Exception {
+        assertThat(((SampleInterface) createPlain()
+                .implement(SampleInterface.SubInterface.class)
+                .intercept(FixedValue.value(FOO))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredConstructor()
+                .newInstance()).foo(), is(FOO));
+    }
+
+    @Test
     public void testInterfaceMakesClassMethodPublic() throws Exception {
         Class<?> type = createPlain()
                 .implement(Cloneable.class)
@@ -1040,7 +1090,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
-        Cloneable cloneable = (Cloneable) type.newInstance();
+        Cloneable cloneable = (Cloneable) type.getDeclaredConstructor().newInstance();
         assertThat(cloneable.clone(), sameInstance((Object) cloneable));
     }
 
@@ -1159,5 +1209,14 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public interface Cloneable {
 
         Object clone();
+    }
+
+    public interface SampleInterface {
+
+        String foo();
+
+        interface SubInterface extends SampleInterface {
+
+        }
     }
 }
