@@ -2,13 +2,10 @@ package net.bytebuddy;
 
 import net.bytebuddy.utility.CompoundList;
 
-import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,11 +43,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     private static final Class<?> NOT_FOUND = null;
 
     /**
-     * Represents the boot class loader which is {@code null} and which is therefore incompatible with system hash code computation.
-     */
-    private static final ClassLoader BOOT_LOADER_REPRESENTATIVE = new URLClassLoader(new URL[0]);
-
-    /**
      * The reference type to use for stored types.
      */
     protected final Sort sort;
@@ -78,7 +70,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @return The stored type or {@code null} if no type was stored.
      */
     public Class<?> find(ClassLoader classLoader, T key) {
-        ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(LookupKey.of(classLoader));
+        ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
             return NOT_FOUND;
         } else {
@@ -100,10 +92,10 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @return The supplied type or a previously submitted type for the same class loader and key combination.
      */
     public Class<?> insert(ClassLoader classLoader, T key, Class<?> type) {
-        ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(LookupKey.of(classLoader));
+        ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
             storage = new ConcurrentHashMap<T, Reference<Class<?>>>();
-            ConcurrentMap<T, Reference<Class<?>>> previous = cache.putIfAbsent(StorageKey.of(classLoader, this), storage);
+            ConcurrentMap<T, Reference<Class<?>>> previous = cache.putIfAbsent(new StorageKey(classLoader, this), storage);
             if (previous != null) {
                 storage = previous;
             }
@@ -249,21 +241,11 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * Creates a new lookup key.
          *
-         * @param classLoader A class loader representing the referenced class loader which is never {@code null}.
+         * @param classLoader The represented class loader.
          */
         protected LookupKey(ClassLoader classLoader) {
             this.classLoader = classLoader;
             hashCode = System.identityHashCode(classLoader);
-        }
-
-        /**
-         * Creates a lookup key.
-         *
-         * @param classLoader The class loader to represent.
-         * @return An appropriate lookup key.
-         */
-        protected static Object of(ClassLoader classLoader) {
-            return new LookupKey(classLoader == null ? BOOT_LOADER_REPRESENTATIVE : classLoader);
         }
 
         @Override
@@ -274,7 +256,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         @Override
         public boolean equals(Object other) {
             return (other instanceof LookupKey && ((LookupKey) other).classLoader == classLoader)
-                    || (other instanceof StorageKey && ((StorageKey) other).get() == classLoader);
+                    || (other instanceof StorageKey && ((StorageKey) other).get() == classLoader && ((StorageKey) other).hashCode == hashCode);
         }
 
         @Override
@@ -299,23 +281,12 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         /**
          * Creates a new storage key.
          *
-         * @param classLoader    A class loader representing the referenced class loader which is never {@code null}.
+         * @param classLoader    The represented class loader.
          * @param referenceQueue The reference queue to notify upon a garbage collection.
          */
         protected StorageKey(ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue) {
             super(classLoader, referenceQueue);
-            this.hashCode = System.identityHashCode(classLoader);
-        }
-
-        /**
-         * Creates a new storage key.
-         *
-         * @param classLoader    A class loader representing the referenced class loader which is never {@code null}.
-         * @param referenceQueue The reference queue to notify upon a garbage collection.
-         * @return An appropriate storage key.
-         */
-        protected static Object of(ClassLoader classLoader, ReferenceQueue<? super ClassLoader> referenceQueue) {
-            return new StorageKey(classLoader == null ? BOOT_LOADER_REPRESENTATIVE : classLoader, referenceQueue);
+            hashCode = System.identityHashCode(classLoader);
         }
 
         @Override
@@ -325,7 +296,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
 
         @Override
         public boolean equals(Object other) {
-            return (other instanceof LookupKey && ((LookupKey) other).classLoader == get())
+            return (other instanceof LookupKey && ((LookupKey) other).classLoader == get() && ((LookupKey) other).hashCode == hashCode)
                     || (other instanceof StorageKey && ((StorageKey) other).get() == get());
         }
 
@@ -405,7 +376,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * A simple key based on a collection of types where no type is strongly referenced.
      */
-    public static class SimpleKey implements Serializable {
+    public static class SimpleKey {
 
         /**
          * The referenced types.
