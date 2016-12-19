@@ -8,7 +8,9 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.MethodCallProxy;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 
 import java.lang.annotation.*;
 import java.util.concurrent.Callable;
@@ -50,6 +52,13 @@ public @interface DefaultCall {
      * @return {@code true} if the generated proxy should be {@link java.io.Serializable}.
      */
     boolean serializableProxy() default false;
+
+    /**
+     * Assigns {@code null} to the parameter if it is impossible to invoke the super method or a possible dominant default method, if permitted.
+     *
+     * @return {@code true} if a {@code null} constant should be assigned to this parameter in case that a legal binding is impossible.
+     */
+    boolean nullIfImpossible() default false;
 
     /**
      * A binder for handling the
@@ -99,16 +108,23 @@ public @interface DefaultCall {
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A default method call proxy can only be assigned to Runnable or Callable types: " + target);
             } else if (source.isConstructor()) {
-                return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+                return annotation.loadSilent().nullIfImpossible()
+                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE)
+                        : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
             TypeDescription typeDescription = annotation.getValue(TARGET_TYPE).resolve(TypeDescription.class);
             Implementation.SpecialMethodInvocation specialMethodInvocation = (typeDescription.represents(void.class)
                     ? DefaultMethodLocator.Implicit.INSTANCE
                     : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source);
-            return specialMethodInvocation.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy
-                    .AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class)))
-                    : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+            StackManipulation stackManipulation;
+            if (specialMethodInvocation.isValid()) {
+                stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
+            } else if (annotation.loadSilent().nullIfImpossible()) {
+                stackManipulation = NullConstant.INSTANCE;
+            } else {
+                return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+            }
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation);
         }
 
         @Override

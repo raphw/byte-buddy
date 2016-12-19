@@ -178,7 +178,7 @@ public class SuperMethodCallOtherTest {
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(8)
     public void testAmbiguousDirectDefaultMethodThrowsException() throws Exception {
-        DynamicType.Loaded<?> loaded = new ByteBuddy()
+        new ByteBuddy()
                 .subclass(Object.class)
                 .implement(Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE))
                 .intercept(SuperMethodCall.INSTANCE)

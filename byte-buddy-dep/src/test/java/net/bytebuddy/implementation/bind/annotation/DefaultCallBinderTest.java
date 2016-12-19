@@ -88,6 +88,24 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     }
 
     @Test
+    public void testImplicitLookupIsAmbiguousNullFallback() throws Exception {
+        when(targetParameterType.represents(any(Class.class))).thenReturn(true);
+        when(specialMethodInvocation.isValid()).thenReturn(true, false);
+        doReturn(VOID_TYPE).when(annotation).targetType();
+        when(source.asSignatureToken()).thenReturn(token);
+        when(source.isSpecializableFor(firstInterface)).thenReturn(true);
+        when(source.isSpecializableFor(secondInterface)).thenReturn(true);
+        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(firstInterface, secondInterface));
+        when(annotation.nullIfImpossible()).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(true));
+        verify(implementationTarget).getInstrumentedType();
+        verify(implementationTarget).invokeDefault(firstInterface, token);
+        verifyNoMoreInteractions(implementationTarget);
+    }
+
+    @Test
     public void testExplicitLookup() throws Exception {
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true);
@@ -120,6 +138,17 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         verifyZeroInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(false));
+    }
+
+    @Test
+    public void testConstructorNullFallback() throws Exception {
+        when(targetParameterType.represents(any(Class.class))).thenReturn(true);
+        when(source.isConstructor()).thenReturn(true);
+        when(annotation.nullIfImpossible()).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        verifyZeroInteractions(implementationTarget);
+        assertThat(parameterBinding.isValid(), is(true));
     }
 
     @Test

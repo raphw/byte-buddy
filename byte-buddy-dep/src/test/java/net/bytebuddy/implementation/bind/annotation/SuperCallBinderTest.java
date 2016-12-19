@@ -68,6 +68,18 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         assertThat(parameterBinding.isValid(), is(false));
     }
 
+    @Test
+    public void testInvalidSuperMethodCallNullFallback() throws Exception {
+        when(targetParameterType.represents(any(Class.class))).thenReturn(true);
+        when(specialMethodInvocation.isValid()).thenReturn(false);
+        when(annotation.nullIfImpossible()).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        verify(implementationTarget).invokeSuper(sourceToken);
+        verifyNoMoreInteractions(implementationTarget);
+        assertThat(parameterBinding.isValid(), is(true));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testWrongTypeThrowsException() throws Exception {
         SuperCall.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -81,6 +93,17 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         verifyZeroInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(false));
+    }
+
+    @Test
+    public void testConstructorNullFallback() throws Exception {
+        when(targetParameterType.represents(any(Class.class))).thenReturn(true);
+        when(source.isConstructor()).thenReturn(true);
+        when(annotation.nullIfImpossible()).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        verifyZeroInteractions(implementationTarget);
+        assertThat(parameterBinding.isValid(), is(true));
     }
 
     @Test
