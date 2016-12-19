@@ -4081,11 +4081,11 @@ public interface DynamicType {
                      * @return A matcher for the interfaces' methods.
                      */
                     private MethodDefinition.ImplementationDefinition<U> interfaceType() {
-                        ElementMatcher.Junction<MethodDescription> elementMatcher = none();
+                        ElementMatcher.Junction<TypeDescription> elementMatcher = none();
                         for (TypeDescription typeDescription : interfaces.asErasures()) {
-                            elementMatcher = elementMatcher.or(isDeclaredBy(isSuperTypeOf(typeDescription)));
+                            elementMatcher = elementMatcher.or(isSuperTypeOf(typeDescription));
                         }
-                        return materialize().invokable(isDeclaredBy(isInterface()).and(elementMatcher));
+                        return materialize().invokable(isDeclaredBy(isInterface().and(elementMatcher)));
                     }
 
                     /**
