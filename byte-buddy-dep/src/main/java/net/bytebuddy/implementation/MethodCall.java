@@ -978,7 +978,7 @@ public class MethodCall implements Implementation.Composable {
                 FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(name);
                 if (!resolution.isResolved()) {
                     throw new IllegalStateException("Could not locate field name " + name + " on " + instrumentedType);
-                } else if (!resolution.getField().isStatic() && !instrumentedType.isAssignableTo(resolution.getField().getType().asErasure())) {
+                } else if (!resolution.getField().isStatic() && !instrumentedType.isAssignableTo(resolution.getField().getDeclaringType().asErasure())) {
                     throw new IllegalStateException("Cannot access " + resolution.getField() + " from " + instrumentedType);
                 }
                 return new StackManipulation.Compound(invokedMethod.isStatic()

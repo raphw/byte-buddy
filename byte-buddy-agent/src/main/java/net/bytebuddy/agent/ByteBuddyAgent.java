@@ -592,7 +592,6 @@ public class ByteBuddyAgent {
             @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
             public Accessor attempt() {
                 File toolsJar = new File(System.getProperty(JAVA_HOME_PROPERTY), toolsJarPath);
-                System.out.println("Tools jar: " + toolsJar + " is present: " + toolsJar.isFile());
                 try {
                     return toolsJar.isFile() && toolsJar.canRead()
                             ? Accessor.Simple.of(new URLClassLoader(new URL[]{toolsJar.toURI().toURL()}, BOOTSTRAP_CLASS_LOADER))
