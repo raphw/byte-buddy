@@ -4,11 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.*;
 
 /**
@@ -34,11 +30,6 @@ import java.util.*;
 public class MultipleParentClassLoader extends ClassLoader {
 
     /**
-     * A dispatcher for accessing the {@link ClassLoader#loadClass(String, boolean)} method.
-     */
-    private static final Dispatcher DISPATCHER = Dispatcher.Active.make();
-
-    /**
      * The parents of this class loader in their application order.
      */
     private final List<? extends ClassLoader> parents;
@@ -55,10 +46,14 @@ public class MultipleParentClassLoader extends ClassLoader {
     }
 
     @Override
-    public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
         for (ClassLoader parent : parents) {
             try {
-                return DISPATCHER.loadClass(parent, name, resolve);
+                Class<?> type = parent.loadClass(name);
+                if (resolve) {
+                    resolveClass(type);
+                }
+                return type;
             } catch (ClassNotFoundException ignored) {
                 /* try next class loader */
             }
@@ -92,143 +87,6 @@ public class MultipleParentClassLoader extends ClassLoader {
         return "MultipleParentClassLoader{" +
                 "parents=" + parents +
                 '}';
-    }
-
-    /**
-     * A dispatcher for locating a class from a parent class loader.
-     */
-    protected interface Dispatcher {
-
-        /**
-         * Locates a class.
-         *
-         * @param classLoader The class loader to access.
-         * @param name        The name of the class.
-         * @param resolve     {@code true} if the class should be resolved.
-         * @return The loaded class.
-         * @throws ClassNotFoundException If the class could not be found.
-         */
-        Class<?> loadClass(ClassLoader classLoader, String name, boolean resolve) throws ClassNotFoundException;
-
-        /**
-         * An active dispatcher for the {@link ClassLoader#loadClass(String, boolean)} method.
-         */
-        class Active implements Dispatcher, PrivilegedAction<Dispatcher> {
-
-            /**
-             * The {@link ClassLoader#loadClass(String, boolean)} method.
-             */
-            private final Method loadClass;
-
-            /**
-             * Creates a new active dispatcher.
-             *
-             * @param loadClass The {@link ClassLoader#loadClass(String, boolean)} method.
-             */
-            protected Active(Method loadClass) {
-                this.loadClass = loadClass;
-            }
-
-            /**
-             * Creates a new dispatcher.
-             *
-             * @return A dispatcher for invoking the {@link ClassLoader#loadClass(String, boolean)} method.
-             */
-            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-            protected static Dispatcher make() {
-                try {
-                    return AccessController.doPrivileged(new Active(ClassLoader.class.getDeclaredMethod("loadClass", String.class, boolean.class)));
-                } catch (Exception exception) {
-                    return new Erroneous(exception);
-                }
-            }
-
-            @Override
-            public Dispatcher run() {
-                loadClass.setAccessible(true);
-                return this;
-            }
-
-            @Override
-            public Class<?> loadClass(ClassLoader classLoader, String name, boolean resolve) throws ClassNotFoundException {
-                try {
-                    return (Class<?>) loadClass.invoke(classLoader, name, resolve);
-                } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot access " + loadClass, exception);
-                } catch (InvocationTargetException exception) {
-                    Throwable cause = exception.getCause();
-                    if (cause instanceof ClassNotFoundException) {
-                        throw (ClassNotFoundException) cause;
-                    }
-                    throw new IllegalStateException("Cannot execute " + loadClass, cause);
-                }
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Active active = (Active) object;
-                return loadClass.equals(active.loadClass);
-            }
-
-            @Override
-            public int hashCode() {
-                return loadClass.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MultipleParentClassLoader.Dispatcher.Active{" +
-                        "loadClass=" + loadClass +
-                        '}';
-            }
-        }
-
-        /**
-         * A dispatcher when the {@link ClassLoader#loadClass(String, boolean)} method cannot be accessed.
-         */
-        class Erroneous implements Dispatcher {
-
-            /**
-             * The exception that occurred when attempting to create a dispatcher.
-             */
-            private final Exception exception;
-
-            /**
-             * Creates a new erroneous dispatcher.
-             *
-             * @param exception The exception that occurred when attempting to create a dispatcher.
-             */
-            protected Erroneous(Exception exception) {
-                this.exception = exception;
-            }
-
-            @Override
-            public Class<?> loadClass(ClassLoader classLoader, String name, boolean resolve) {
-                throw new IllegalStateException("Cannot access parent class", exception);
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Erroneous erroneous = (Erroneous) object;
-                return exception.equals(erroneous.exception);
-            }
-
-            @Override
-            public int hashCode() {
-                return exception.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MultipleParentClassLoader.Dispatcher.Erroneous{" +
-                        "exception=" + exception +
-                        '}';
-            }
-        }
     }
 
     /**

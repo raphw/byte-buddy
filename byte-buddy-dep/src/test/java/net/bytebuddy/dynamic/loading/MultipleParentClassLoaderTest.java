@@ -13,9 +13,7 @@ import org.mockito.Mock;
 
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
@@ -157,23 +155,9 @@ public class MultipleParentClassLoaderTest {
         enumeration.nextElement();
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testInactiveDispatcher() throws Exception {
-        MultipleParentClassLoader.Dispatcher dispatcher = new MultipleParentClassLoader.Dispatcher.Erroneous(new Exception());
-        dispatcher.loadClass(mock(ClassLoader.class), FOO, true);
-    }
-
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MultipleParentClassLoader.class).applyBasic();
-        final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(MultipleParentClassLoader.Dispatcher.Active.class).create(new ObjectPropertyAssertion.Creator<Method>() {
-            @Override
-            public Method create() {
-                return iterator.next();
-            }
-        }).apply();
-        ObjectPropertyAssertion.of(MultipleParentClassLoader.Dispatcher.Erroneous.class).apply();
         ObjectPropertyAssertion.of(MultipleParentClassLoader.CompoundEnumeration.class).applyBasic();
         ObjectPropertyAssertion.of(MultipleParentClassLoader.Builder.class).apply();
     }

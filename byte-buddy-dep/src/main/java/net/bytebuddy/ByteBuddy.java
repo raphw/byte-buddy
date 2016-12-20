@@ -298,12 +298,11 @@ public class ByteBuddy {
      * <p>
      * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type and sets them to be {@code public}.
      * Any constructor is implemented to only invoke its super type constructor of equal signature. Another behavior can be specified by
-     * supplying a
+     * supplying an explicit {@link ConstructorStrategy} by {@link ByteBuddy#subclass(TypeDefinition, ConstructorStrategy)}.
+     * </p>
      * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
      * types, a external cache or {@link TypeCache} should be used.
-     * </p>
-     * n explicit {@link ConstructorStrategy} by {@link ByteBuddy#subclass(TypeDefinition, ConstructorStrategy)}.
      * </p>
      *
      * @param superType The super class or interface type to extend. The type must be a raw type or parameterized type. All type
