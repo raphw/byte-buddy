@@ -39,16 +39,15 @@ public class MultipleParentClassLoaderTest {
     private URL fooUrl, barFirstUrl, barSecondUrl, quxUrl;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        Method loadClass = ClassLoader.class.getDeclaredMethod("loadClass", String.class, boolean.class);
-        loadClass.setAccessible(true);
-        when(loadClass.invoke(first, FOO, false)).thenReturn(Foo.class);
-        when(loadClass.invoke(first, BAR, false)).thenReturn(BarFirst.class);
-        when(loadClass.invoke(first, QUX, false)).thenThrow(new ClassNotFoundException());
-        when(loadClass.invoke(first, BAZ, false)).thenThrow(new ClassNotFoundException());
-        when(loadClass.invoke(second, BAR, false)).thenReturn(BarSecond.class);
-        when(loadClass.invoke(second, QUX, false)).thenReturn(Qux.class);
-        when(loadClass.invoke(second, BAZ, false)).thenThrow(new ClassNotFoundException());
+        when(first.loadClass(FOO)).thenReturn((Class) Foo.class);
+        when(first.loadClass(BAR)).thenReturn((Class) BarFirst.class);
+        when(first.loadClass(QUX)).thenThrow(new ClassNotFoundException());
+        when(first.loadClass(BAZ)).thenThrow(new ClassNotFoundException());
+        when(second.loadClass(BAR)).thenReturn((Class) BarSecond.class);
+        when(second.loadClass(QUX)).thenReturn((Class) Qux.class);
+        when(second.loadClass(BAZ)).thenThrow(new ClassNotFoundException());
         fooUrl = new URL(SCHEME + FOO);
         barFirstUrl = new URL(SCHEME + BAR);
         barSecondUrl = new URL(SCHEME + BAZ);
@@ -92,13 +91,11 @@ public class MultipleParentClassLoaderTest {
         assertThat(classLoader.loadClass(FOO), CoreMatchers.<Class<?>>is(Foo.class));
         assertThat(classLoader.loadClass(BAR), CoreMatchers.<Class<?>>is(BarFirst.class));
         assertThat(classLoader.loadClass(QUX), CoreMatchers.<Class<?>>is(Qux.class));
-        Method loadClass = ClassLoader.class.getDeclaredMethod("loadClass", String.class, boolean.class);
-        loadClass.setAccessible(true);
-        loadClass.invoke(verify(first), FOO, false);
-        loadClass.invoke(verify(first), BAR, false);
-        loadClass.invoke(verify(first), QUX, false);
+        verify(first).loadClass(FOO);
+        verify(first).loadClass(BAR);
+        verify(first).loadClass(QUX);
         verifyNoMoreInteractions(first);
-        loadClass.invoke(verify(second), QUX, false);
+        verify(second).loadClass(QUX);
         verifyNoMoreInteractions(second);
     }
 
