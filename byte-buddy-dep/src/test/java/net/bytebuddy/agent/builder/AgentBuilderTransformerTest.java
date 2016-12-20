@@ -9,6 +9,9 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -51,6 +54,11 @@ public class AgentBuilderTransformerTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Transformer.NoOp.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Transformer.Compound.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Transformer.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(mock(AgentBuilder.Transformer.class));
+            }
+        }).apply();
     }
 }

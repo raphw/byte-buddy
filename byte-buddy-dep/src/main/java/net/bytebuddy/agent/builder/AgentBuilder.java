@@ -1815,7 +1815,7 @@ public interface AgentBuilder {
             /**
              * The transformers to apply in their application order.
              */
-            private final Transformer[] transformer;
+            private final List<Transformer> transformers;
 
             /**
              * Creates a new compound transformer.
@@ -1823,12 +1823,28 @@ public interface AgentBuilder {
              * @param transformer The transformers to apply in their application order.
              */
             public Compound(Transformer... transformer) {
-                this.transformer = transformer;
+                this(Arrays.asList(transformer));
+            }
+
+            /**
+             * Creates a new compound transformer.
+             *
+             * @param transformers The transformers to apply in their application order.
+             */
+            public Compound(List<? extends Transformer> transformers) {
+                this.transformers = new ArrayList<Transformer>();
+                for (Transformer transformer : transformers) {
+                    if (transformer instanceof Compound) {
+                        this.transformers.addAll(((Compound) transformer).transformers);
+                    } else {
+                        this.transformers.add(transformer);
+                    }
+                }
             }
 
             @Override
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
-                for (Transformer transformer : this.transformer) {
+                for (Transformer transformer : transformers) {
                     builder = transformer.transform(builder, typeDescription, classLoader);
                 }
                 return builder;
@@ -1837,18 +1853,18 @@ public interface AgentBuilder {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && Arrays.equals(transformer, ((Compound) other).transformer);
+                        && transformers.equals(((Compound) other).transformers);
             }
 
             @Override
             public int hashCode() {
-                return Arrays.hashCode(transformer);
+                return transformers.hashCode();
             }
 
             @Override
             public String toString() {
                 return "AgentBuilder.Transformer.Compound{" +
-                        "transformer=" + Arrays.toString(transformer) +
+                        "transformers=" + transformers +
                         '}';
             }
         }
