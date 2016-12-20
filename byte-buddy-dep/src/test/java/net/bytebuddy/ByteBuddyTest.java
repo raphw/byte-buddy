@@ -110,8 +110,9 @@ public class ByteBuddyTest {
                     .intercept(FieldAccessor.ofBeanProperty());
         }
         byteBuddy.make();
-        if (System.currentTimeMillis() - time > baseline * 300 / 10) {
-            throw new AssertionError("Nested creation took too much time");
+        long end = System.currentTimeMillis() - time;
+        if (end> baseline * 100) {
+            throw new AssertionError("Nested creation took too much time: " + end  + " vs " + (baseline * 100));
         }
     }
 

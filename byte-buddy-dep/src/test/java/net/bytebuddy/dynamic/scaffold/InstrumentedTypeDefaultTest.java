@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.TypeVariableSource;
@@ -18,6 +19,7 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.packaging.PackagePrivateType;
 import net.bytebuddy.test.utility.MockitoRule;
+import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -507,13 +509,15 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testInterfaceTypesVisited() throws Exception {
         TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.asGenericType()).thenReturn(typeDescription);
+        when(typeDescription.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(typeDescription);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.withInterfaces(new TypeList.Generic.Explicit(typeDescription)), is(instrumentedType));
         verify(typeDescription).accept(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType));
-        verify(typeDescription).asGenericType();
+        verify(typeDescription, times(2)).asGenericType();
         verifyNoMoreInteractions(typeDescription);
     }
 
