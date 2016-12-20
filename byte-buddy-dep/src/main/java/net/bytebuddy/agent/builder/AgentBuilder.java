@@ -3066,7 +3066,7 @@ public interface AgentBuilder {
                 this.locationStrategies = new ArrayList<LocationStrategy>();
                 for (LocationStrategy locationStrategy : locationStrategies) {
                     if (locationStrategy instanceof Compound) {
-                        this.locationStrategies.addAll(((Compound) locationStrategies).locationStrategies);
+                        this.locationStrategies.addAll(((Compound) locationStrategy).locationStrategies);
                     } else {
                         this.locationStrategies.add(locationStrategy);
                     }
