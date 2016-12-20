@@ -1430,7 +1430,7 @@ public interface AgentBuilder {
             /**
              * The listeners that are represented by this compound listener in their application order.
              */
-            private final List<? extends Listener> listeners;
+            private final List<Listener> listeners;
 
             /**
              * Creates a new compound listener.
@@ -1447,7 +1447,14 @@ public interface AgentBuilder {
              * @param listeners The listeners to apply in their application order.
              */
             public Compound(List<? extends Listener> listeners) {
-                this.listeners = listeners;
+                this.listeners = new ArrayList<Listener>();
+                for (Listener listener : listeners) {
+                    if (listener instanceof Compound) {
+                        this.listeners.addAll(((Compound) listener).listeners);
+                    } else {
+                        this.listeners.add(listener);
+                    }
+                }
             }
 
             @Override
@@ -3039,7 +3046,7 @@ public interface AgentBuilder {
             /**
              * The location strategies in their application order.
              */
-            private final List<? extends LocationStrategy> locationStrategies;
+            private final List<LocationStrategy> locationStrategies;
 
             /**
              * Creates a new compound location strategy.
@@ -3056,7 +3063,14 @@ public interface AgentBuilder {
              * @param locationStrategies The location strategies in their application order.
              */
             public Compound(List<? extends LocationStrategy> locationStrategies) {
-                this.locationStrategies = locationStrategies;
+                this.locationStrategies = new ArrayList<LocationStrategy>();
+                for (LocationStrategy locationStrategy : locationStrategies) {
+                    if (locationStrategy instanceof Compound) {
+                        this.locationStrategies.addAll(((Compound) locationStrategies).locationStrategies);
+                    } else {
+                        this.locationStrategies.add(locationStrategy);
+                    }
+                }
             }
 
             @Override
@@ -4267,7 +4281,7 @@ public interface AgentBuilder {
                 /**
                  * The listeners to invoke.
                  */
-                private final List<? extends Listener> listeners;
+                private final List<Listener> listeners;
 
                 /**
                  * Creates a new compound listener.
@@ -4284,7 +4298,14 @@ public interface AgentBuilder {
                  * @param listeners The listeners to invoke.
                  */
                 protected Compound(List<? extends Listener> listeners) {
-                    this.listeners = listeners;
+                    this.listeners = new ArrayList<Listener>();
+                    for (Listener listener : listeners) {
+                        if (listener instanceof Compound) {
+                            this.listeners.addAll(((Compound) listener).listeners);
+                        } else {
+                            this.listeners.add(listener);
+                        }
+                    }
                 }
 
                 @Override
@@ -7841,7 +7862,7 @@ public interface AgentBuilder {
                 /**
                  * The list of transformations to apply in their application order.
                  */
-                private final List<? extends Transformation> transformations;
+                private final List<Transformation> transformations;
 
                 /**
                  * Creates a new compound transformation.
@@ -7858,7 +7879,14 @@ public interface AgentBuilder {
                  * @param transformations A list of transformations to apply in their application order.
                  */
                 protected Compound(List<? extends Transformation> transformations) {
-                    this.transformations = transformations;
+                    this.transformations = new ArrayList<Transformation>();
+                    for (Transformation transformation : transformations) {
+                        if (transformation instanceof Compound) {
+                            this.transformations.addAll(((Compound) transformation).transformations);
+                        } else {
+                            this.transformations.add(transformation);
+                        }
+                    }
                 }
 
                 @Override

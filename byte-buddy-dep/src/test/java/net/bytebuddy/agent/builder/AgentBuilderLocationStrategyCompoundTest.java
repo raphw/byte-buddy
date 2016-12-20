@@ -9,6 +9,9 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -44,6 +47,11 @@ public class AgentBuilderLocationStrategyCompoundTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.LocationStrategy.Compound.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.LocationStrategy.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(mock(AgentBuilder.LocationStrategy.class));
+            }
+        }).apply();
     }
 }

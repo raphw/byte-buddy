@@ -1641,7 +1641,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         /**
          * All implementation that are represented by this compound implementation.
          */
-        private final Implementation[] implementation;
+        private final List<Implementation> implementations;
 
         /**
          * Creates a new immutable compound implementation.
@@ -1649,12 +1649,28 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * @param implementation The implementations to combine in their order.
          */
         public Compound(Implementation... implementation) {
-            this.implementation = implementation;
+            this(Arrays.asList(implementation));
+        }
+
+        /**
+         * Creates a new immutable compound implementation.
+         *
+         * @param implementations The implementations to combine in their order.
+         */
+        public Compound(List<? extends Implementation> implementations) {
+            this.implementations = new ArrayList<Implementation>();
+            for (Implementation implementation : implementations) {
+                if (implementation instanceof Compound) {
+                    this.implementations.addAll(((Compound) implementation).implementations);
+                } else {
+                    this.implementations.add(implementation);
+                }
+            }
         }
 
         @Override
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
-            for (Implementation implementation : this.implementation) {
+            for (Implementation implementation : implementations) {
                 instrumentedType = implementation.prepare(instrumentedType);
             }
             return instrumentedType;
@@ -1662,9 +1678,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            ByteCodeAppender[] byteCodeAppender = new ByteCodeAppender[implementation.length];
+            ByteCodeAppender[] byteCodeAppender = new ByteCodeAppender[implementations.size()];
             int index = 0;
-            for (Implementation implementation : this.implementation) {
+            for (Implementation implementation : implementations) {
                 byteCodeAppender[index++] = implementation.appender(implementationTarget);
             }
             return new ByteCodeAppender.Compound(byteCodeAppender);
@@ -1673,17 +1689,17 @@ public interface Implementation extends InstrumentedType.Prepareable {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(implementation, ((Compound) other).implementation);
+                    && implementations.equals(((Compound) other).implementations);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(implementation);
+            return implementations.hashCode();
         }
 
         @Override
         public String toString() {
-            return "Implementation.Compound{implementation=" + Arrays.toString(implementation) + '}';
+            return "Implementation.Compound{implementations=" + implementations + '}';
         }
     }
 

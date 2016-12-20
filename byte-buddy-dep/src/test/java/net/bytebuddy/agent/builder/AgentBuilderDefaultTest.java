@@ -2109,7 +2109,12 @@ public class AgentBuilderDefaultTest {
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Ignored.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Compound.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(mock(AgentBuilder.Default.Transformation.class));
+            }
+        }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Resolution.Unresolved.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Resolution.Sort.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();

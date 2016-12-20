@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -642,7 +643,7 @@ public class ByteBuddyAgent {
             /**
              * A list of attachment providers in the order of their application.
              */
-            private final List<? extends AttachmentProvider> attachmentProviders;
+            private final List<AttachmentProvider> attachmentProviders;
 
             /**
              * Creates a new compound attachment provider.
@@ -659,7 +660,14 @@ public class ByteBuddyAgent {
              * @param attachmentProviders A list of attachment providers in the order of their application.
              */
             public Compound(List<? extends AttachmentProvider> attachmentProviders) {
-                this.attachmentProviders = attachmentProviders;
+                this.attachmentProviders = new ArrayList<AttachmentProvider>();
+                for (AttachmentProvider attachmentProvider : attachmentProviders) {
+                    if (attachmentProvider instanceof Compound) {
+                        this.attachmentProviders.addAll(((Compound) attachmentProvider).attachmentProviders);
+                    } else {
+                        this.attachmentProviders.add(attachmentProvider);
+                    }
+                }
             }
 
             @Override

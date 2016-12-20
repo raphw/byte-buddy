@@ -77,7 +77,7 @@ public interface MethodAttributeAppender {
             /**
              * The factories this compound factory represents in their application order.
              */
-            private final List<? extends Factory> factories;
+            private final List<Factory> factories;
 
             /**
              * Creates a new compound method attribute appender factory.
@@ -94,7 +94,14 @@ public interface MethodAttributeAppender {
              * @param factories The factories that are to be combined by this compound factory in the order of their application.
              */
             public Compound(List<? extends Factory> factories) {
-                this.factories = factories;
+                this.factories = new ArrayList<Factory>();
+                for (Factory factory : factories) {
+                    if (factory instanceof Compound) {
+                        this.factories.addAll(((Compound) factory).factories);
+                    } else {
+                        this.factories.add(factory);
+                    }
+                }
             }
 
             @Override
@@ -462,7 +469,7 @@ public interface MethodAttributeAppender {
         /**
          * The method attribute appenders this compound appender represents in their application order.
          */
-        private final List<? extends MethodAttributeAppender> methodAttributeAppenders;
+        private final List<MethodAttributeAppender> methodAttributeAppenders;
 
         /**
          * Creates a new compound method attribute appender.
@@ -481,7 +488,14 @@ public interface MethodAttributeAppender {
          *                                 in the order of their application.
          */
         public Compound(List<? extends MethodAttributeAppender> methodAttributeAppenders) {
-            this.methodAttributeAppenders = methodAttributeAppenders;
+            this.methodAttributeAppenders = new ArrayList<MethodAttributeAppender>();
+            for (MethodAttributeAppender methodAttributeAppender : methodAttributeAppenders) {
+                if (methodAttributeAppender instanceof Compound) {
+                    this.methodAttributeAppenders.addAll(((Compound) methodAttributeAppender).methodAttributeAppenders);
+                } else {
+                    this.methodAttributeAppenders.add(methodAttributeAppender);
+                }
+            }
         }
 
         @Override

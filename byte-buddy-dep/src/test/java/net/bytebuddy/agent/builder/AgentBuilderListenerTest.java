@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
 import java.util.Collections;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.is;
@@ -289,7 +290,12 @@ public class AgentBuilderListenerTest {
         ObjectPropertyAssertion.of(AgentBuilder.Listener.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.StreamWriting.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.Filtering.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Listener.Compound.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Listener.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(mock(AgentBuilder.Listener.class));
+            }
+        }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.ModuleReadEdgeCompleting.class).apply();
     }
 

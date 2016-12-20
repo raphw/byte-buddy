@@ -71,7 +71,7 @@ public interface FieldAttributeAppender {
             /**
              * The factories that this compound factory represents in their application order.
              */
-            private final List<? extends Factory> factories;
+            private final List<Factory> factories;
 
             /**
              * Creates a new compound field attribute appender factory.
@@ -88,7 +88,14 @@ public interface FieldAttributeAppender {
              * @param factories The factories to represent in the order of their application.
              */
             public Compound(List<? extends Factory> factories) {
-                this.factories = factories;
+                this.factories = new ArrayList<Factory>();
+                for (Factory factory : factories) {
+                    if (factory instanceof Compound) {
+                        this.factories.addAll(((Compound) factory).factories);
+                    } else {
+                        this.factories.add(factory);
+                    }
+                }
             }
 
             @Override
@@ -209,7 +216,7 @@ public interface FieldAttributeAppender {
         /**
          * The field attribute appenders this appender represents in their application order.
          */
-        private final List<? extends FieldAttributeAppender> fieldAttributeAppenders;
+        private final List<FieldAttributeAppender> fieldAttributeAppenders;
 
         /**
          * Creates a new compound field attribute appender.
@@ -228,7 +235,14 @@ public interface FieldAttributeAppender {
          *                                in the order of their application.
          */
         public Compound(List<? extends FieldAttributeAppender> fieldAttributeAppenders) {
-            this.fieldAttributeAppenders = fieldAttributeAppenders;
+            this.fieldAttributeAppenders = new ArrayList<FieldAttributeAppender>();
+            for (FieldAttributeAppender fieldAttributeAppender : fieldAttributeAppenders) {
+                if (fieldAttributeAppender instanceof Compound) {
+                    this.fieldAttributeAppenders.addAll(((Compound) fieldAttributeAppender).fieldAttributeAppenders);
+                } else {
+                    this.fieldAttributeAppenders.add(fieldAttributeAppender);
+                }
+            }
         }
 
         @Override

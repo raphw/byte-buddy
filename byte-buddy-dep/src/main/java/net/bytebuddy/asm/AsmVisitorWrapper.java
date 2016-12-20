@@ -709,7 +709,7 @@ public interface AsmVisitorWrapper {
         /**
          * The class visitor wrappers that are represented by this chain in their order. This list must not be mutated.
          */
-        private final List<? extends AsmVisitorWrapper> asmVisitorWrappers;
+        private final List<AsmVisitorWrapper> asmVisitorWrappers;
 
         /**
          * Creates a new immutable chain based on an existing list of {@link AsmVisitorWrapper}s
@@ -732,7 +732,14 @@ public interface AsmVisitorWrapper {
          *                           {@link org.objectweb.asm.ClassVisitor}.
          */
         public Compound(List<? extends AsmVisitorWrapper> asmVisitorWrappers) {
-            this.asmVisitorWrappers = asmVisitorWrappers;
+            this.asmVisitorWrappers = new ArrayList<AsmVisitorWrapper>();
+            for (AsmVisitorWrapper asmVisitorWrapper : asmVisitorWrappers) {
+                if (asmVisitorWrapper instanceof Compound) {
+                    this.asmVisitorWrappers.addAll(((Compound) asmVisitorWrapper).asmVisitorWrappers);
+                } else {
+                    this.asmVisitorWrappers.add(asmVisitorWrapper);
+                }
+            }
         }
 
         @Override

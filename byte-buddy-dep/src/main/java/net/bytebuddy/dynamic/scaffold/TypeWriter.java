@@ -2667,7 +2667,7 @@ public interface TypeWriter<T> {
                     /**
                      * A list of constraints that is enforced in the given order.
                      */
-                    private final List<? extends Constraint> constraints;
+                    private final List<Constraint> constraints;
 
                     /**
                      * Creates a new compound constraint.
@@ -2675,7 +2675,14 @@ public interface TypeWriter<T> {
                      * @param constraints A list of constraints that is enforced in the given order.
                      */
                     public Compound(List<? extends Constraint> constraints) {
-                        this.constraints = constraints;
+                        this.constraints = new ArrayList<Constraint>();
+                        for (Constraint constraint : constraints) {
+                            if (constraint instanceof Compound) {
+                                this.constraints.addAll(((Compound) constraint).constraints);
+                            } else {
+                                this.constraints.add(constraint);
+                            }
+                        }
                     }
 
                     @Override

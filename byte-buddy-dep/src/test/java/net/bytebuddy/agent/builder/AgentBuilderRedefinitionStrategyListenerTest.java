@@ -152,7 +152,12 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.NoOp.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Compound.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(mock(AgentBuilder.RedefinitionStrategy.Listener.class));
+            }
+        }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable.CompoundIterator.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override

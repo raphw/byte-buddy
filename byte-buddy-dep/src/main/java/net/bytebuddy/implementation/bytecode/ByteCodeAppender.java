@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -111,7 +112,7 @@ public interface ByteCodeAppender {
         /**
          * The byte code appenders that are represented by this compound appender in their application order.
          */
-        private final List<? extends ByteCodeAppender> byteCodeAppenders;
+        private final List<ByteCodeAppender> byteCodeAppenders;
 
         /**
          * Creates a new compound byte code appender.
@@ -128,7 +129,14 @@ public interface ByteCodeAppender {
          * @param byteCodeAppenders The byte code appenders to combine in their order.
          */
         public Compound(List<? extends ByteCodeAppender> byteCodeAppenders) {
-            this.byteCodeAppenders = byteCodeAppenders;
+            this.byteCodeAppenders = new ArrayList<ByteCodeAppender>();
+            for (ByteCodeAppender byteCodeAppender : byteCodeAppenders) {
+                if (byteCodeAppender instanceof Compound) {
+                    this.byteCodeAppenders.addAll(((Compound) byteCodeAppender).byteCodeAppenders);
+                } else {
+                    this.byteCodeAppenders.add(byteCodeAppender);
+                }
+            }
         }
 
         @Override
@@ -192,8 +200,7 @@ public interface ByteCodeAppender {
         public Size apply(MethodVisitor methodVisitor,
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
-            return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(),
-                    instrumentedMethod.getStackSize());
+            return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
         @Override

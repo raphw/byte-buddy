@@ -1,9 +1,13 @@
 package net.bytebuddy.implementation.attribute;
 
+import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 
@@ -36,6 +40,11 @@ public class FieldAttributeAppenderFactoryCompoundTest extends AbstractFieldAttr
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldAttributeAppender.Factory.Compound.class).apply();
+        ObjectPropertyAssertion.of(FieldAttributeAppender.Factory.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(mock(FieldAttributeAppender.Factory.class));
+            }
+        }).apply();
     }
 }

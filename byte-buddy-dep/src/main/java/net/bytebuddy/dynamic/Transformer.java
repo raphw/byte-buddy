@@ -11,6 +11,7 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -600,7 +601,7 @@ public interface Transformer<T> {
         /**
          * The list of transformers to apply in their application order.
          */
-        private final List<? extends Transformer<S>> transformers;
+        private final List<Transformer<S>> transformers;
 
         /**
          * Creates a new compound transformer.
@@ -618,7 +619,14 @@ public interface Transformer<T> {
          * @param transformers The list of transformers to apply in their application order.
          */
         public Compound(List<? extends Transformer<S>> transformers) {
-            this.transformers = transformers;
+            this.transformers = new ArrayList<Transformer<S>>();
+            for (Transformer<S> transformer : transformers) {
+                if (transformer instanceof Compound) {
+                    this.transformers.addAll(((Compound<S>) transformer).transformers);
+                } else {
+                    this.transformers.add(transformer);
+                }
+            }
         }
 
         @Override

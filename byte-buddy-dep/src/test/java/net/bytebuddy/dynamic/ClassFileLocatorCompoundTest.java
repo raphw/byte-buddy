@@ -9,6 +9,8 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.io.Closeable;
+import java.util.Collections;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -67,6 +69,11 @@ public class ClassFileLocatorCompoundTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassFileLocator.Compound.class).apply();
+        ObjectPropertyAssertion.of(ClassFileLocator.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(mock(ClassFileLocator.class));
+            }
+        }).apply();
     }
 }

@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import org.objectweb.asm.ClassVisitor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -231,7 +232,7 @@ public interface TypeAttributeAppender {
         /**
          * The type attribute appenders this compound appender represents in their application order.
          */
-        private final List<? extends TypeAttributeAppender> typeAttributeAppenders;
+        private final List<TypeAttributeAppender> typeAttributeAppenders;
 
         /**
          * Creates a new compound attribute appender.
@@ -248,7 +249,14 @@ public interface TypeAttributeAppender {
          * @param typeAttributeAppenders The type attribute appenders to concatenate in the order of their application.
          */
         public Compound(List<? extends TypeAttributeAppender> typeAttributeAppenders) {
-            this.typeAttributeAppenders = typeAttributeAppenders;
+            this.typeAttributeAppenders = new ArrayList<TypeAttributeAppender>();
+            for (TypeAttributeAppender typeAttributeAppender : typeAttributeAppenders) {
+                if (typeAttributeAppender instanceof Compound) {
+                    this.typeAttributeAppenders.addAll(((Compound) typeAttributeAppender).typeAttributeAppenders);
+                } else {
+                    this.typeAttributeAppenders.add(typeAttributeAppender);
+                }
+            }
         }
 
         @Override

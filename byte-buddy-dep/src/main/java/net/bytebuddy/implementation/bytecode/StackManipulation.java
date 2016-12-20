@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bytecode;
 import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -177,7 +178,7 @@ public interface StackManipulation {
         /**
          * The stack manipulations this compound operation represents in their application order.
          */
-        private final List<? extends StackManipulation> stackManipulations;
+        private final List<StackManipulation> stackManipulations;
 
         /**
          * Creates a new compound stack manipulation.
@@ -194,7 +195,14 @@ public interface StackManipulation {
          * @param stackManipulations The stack manipulations to be composed in the order of their composition.
          */
         public Compound(List<? extends StackManipulation> stackManipulations) {
-            this.stackManipulations = stackManipulations;
+            this.stackManipulations = new ArrayList<StackManipulation>();
+            for (StackManipulation stackManipulation : stackManipulations) {
+                if (stackManipulation instanceof Compound) {
+                    this.stackManipulations.addAll(((Compound) stackManipulation).stackManipulations);
+                } else {
+                    this.stackManipulations.add(stackManipulation);
+                }
+            }
         }
 
         @Override

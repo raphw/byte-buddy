@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -154,7 +155,7 @@ public interface LoadedTypeInitializer {
         /**
          * The loaded type initializers that are represented by this compound type initializer.
          */
-        private final LoadedTypeInitializer[] loadedTypeInitializer;
+        private final List<LoadedTypeInitializer> loadedTypeInitializers;
 
         /**
          * Creates a new compound loaded type initializer.
@@ -162,7 +163,7 @@ public interface LoadedTypeInitializer {
          * @param loadedTypeInitializer A number of loaded type initializers in their invocation order.
          */
         public Compound(LoadedTypeInitializer... loadedTypeInitializer) {
-            this.loadedTypeInitializer = loadedTypeInitializer;
+            this(Arrays.asList(loadedTypeInitializer));
         }
 
         /**
@@ -171,19 +172,26 @@ public interface LoadedTypeInitializer {
          * @param loadedTypeInitializers A number of loaded type initializers in their invocation order.
          */
         public Compound(List<? extends LoadedTypeInitializer> loadedTypeInitializers) {
-            this.loadedTypeInitializer = loadedTypeInitializers.toArray(new LoadedTypeInitializer[loadedTypeInitializers.size()]);
+            this.loadedTypeInitializers = new ArrayList<LoadedTypeInitializer>();
+            for (LoadedTypeInitializer loadedTypeInitializer : loadedTypeInitializers) {
+                if (loadedTypeInitializer instanceof Compound) {
+                    this.loadedTypeInitializers.addAll(((Compound) loadedTypeInitializer).loadedTypeInitializers);
+                } else {
+                    this.loadedTypeInitializers.add(loadedTypeInitializer);
+                }
+            }
         }
 
         @Override
         public void onLoad(Class<?> type) {
-            for (LoadedTypeInitializer loadedTypeInitializer : this.loadedTypeInitializer) {
+            for (LoadedTypeInitializer loadedTypeInitializer : loadedTypeInitializers) {
                 loadedTypeInitializer.onLoad(type);
             }
         }
 
         @Override
         public boolean isAlive() {
-            for (LoadedTypeInitializer loadedTypeInitializer : this.loadedTypeInitializer) {
+            for (LoadedTypeInitializer loadedTypeInitializer : loadedTypeInitializers) {
                 if (loadedTypeInitializer.isAlive()) {
                     return true;
                 }
@@ -194,17 +202,17 @@ public interface LoadedTypeInitializer {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(loadedTypeInitializer, ((Compound) other).loadedTypeInitializer);
+                    && loadedTypeInitializers.equals(((Compound) other).loadedTypeInitializers);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(loadedTypeInitializer);
+            return loadedTypeInitializers.hashCode();
         }
 
         @Override
         public String toString() {
-            return "LoadedTypeInitializer.Compound{loadedTypeInitializer=" + Arrays.toString(loadedTypeInitializer) + '}';
+            return "LoadedTypeInitializer.Compound{loadedTypeInitializers=" + loadedTypeInitializers + '}';
         }
     }
 }

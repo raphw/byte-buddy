@@ -1737,7 +1737,7 @@ public interface ClassFileLocator extends Closeable {
          * The {@link ClassFileLocator}s which are represented by this compound
          * class file locator  in the order of their application.
          */
-        private final List<? extends ClassFileLocator> classFileLocators;
+        private final List<ClassFileLocator> classFileLocators;
 
         /**
          * Creates a new compound class file locator.
@@ -1756,7 +1756,14 @@ public interface ClassFileLocator extends Closeable {
          *                          the order of their application.
          */
         public Compound(List<? extends ClassFileLocator> classFileLocators) {
-            this.classFileLocators = classFileLocators;
+            this.classFileLocators = new ArrayList<ClassFileLocator>();
+            for (ClassFileLocator classFileLocator : classFileLocators) {
+                if (classFileLocator instanceof Compound) {
+                    this.classFileLocators.addAll(((Compound) classFileLocator).classFileLocators);
+                } else {
+                    this.classFileLocators.add(classFileLocator);
+                }
+            }
         }
 
         @Override

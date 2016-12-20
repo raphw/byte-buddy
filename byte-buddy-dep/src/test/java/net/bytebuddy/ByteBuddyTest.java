@@ -111,8 +111,8 @@ public class ByteBuddyTest {
         }
         byteBuddy.make();
         long end = System.currentTimeMillis() - time;
-        if (end> baseline * 100) {
-            throw new AssertionError("Nested creation took too much time: " + end  + " vs " + (baseline * 100));
+        if (end > baseline * 200) {
+            throw new AssertionError("Nested creation took too much time: " + end + " vs " + (baseline * 200));
         }
     }
 

@@ -5,10 +5,13 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class ByteBuddyAgentAttachmentProviderTest {
 
@@ -35,7 +38,12 @@ public class ByteBuddyAgentAttachmentProviderTest {
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForJ9Vm.class).apply();
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForToolsJarVm.class).apply();
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForUnixHotSpotVm.class).apply();
-        ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.Compound.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(mock(ByteBuddyAgent.AttachmentProvider.class));
+            }
+        }).apply();
         final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Void.class, Object.class).iterator();
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.Accessor.Simple.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
