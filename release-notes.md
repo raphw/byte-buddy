@@ -1,7 +1,7 @@
 Byte Buddy release notes
 ------------------------
 
-### 21. December 2016: version 1.5.11
+### 20. December 2016: version 1.5.11
 
 - Resolved compound components to linerarize nested collections for vastly improved performance with large structures.
 - Added `TypeCache`.
