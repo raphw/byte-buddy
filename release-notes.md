@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. December 2016: version 1.5.11
+
+- Resolved compound components to linerarize nested collections for vastly improved performance with large structures.
+- Added `TypeCache`.
+- Added fallback to assign `null` to `SuperCall` and `DefaultCall` if assignment is impossible.
+- Deprecated `Forwarding` in favor of `MethodCall`.
+- Fixed matcher for interfaces in type builder DSL.
+- Fixed resolution of field type in `MethodCall`.
+
 ### 16. December 2016: version 1.5.10
 
 - Added possibility for readding types after a failed retransformation batch.
