@@ -1,5 +1,6 @@
 package net.bytebuddy;
 
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
@@ -71,6 +72,28 @@ public class TypeCacheTest {
         }
         typeCache.expungeStaleEntries();
         assertThat(typeCache.cache.isEmpty(), is(true));
+    }
+
+    @Test
+    public void testCacheTypeCollection() throws Exception {
+        TypeCache<Object> typeCache = new TypeCache<Object>(TypeCache.Sort.WEAK);
+        Object key = new Object();
+        ClassLoader classLoader = mock(ClassLoader.class);
+        assertThat(typeCache.find(classLoader, key), nullValue(Class.class));
+        Class<?> type = new ByteBuddy().subclass(Object.class)
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(typeCache.insert(classLoader, key, type), is((Object) type));
+        assertThat(typeCache.find(classLoader, key), is((Object) type));
+        type = null; // Make eligable for GC
+        for (int index = 0; index < 2; index++) {
+            System.gc();
+            Thread.sleep(50L);
+        }
+        assertThat(typeCache.find(classLoader, key), nullValue(Class.class));
+        assertThat(typeCache.insert(classLoader, key, Void.class), is((Object) Void.class));
+        assertThat(typeCache.find(classLoader, key), is((Object) Void.class));
     }
 
     @Test
