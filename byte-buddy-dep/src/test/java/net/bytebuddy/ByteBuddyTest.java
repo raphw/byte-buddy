@@ -1,7 +1,9 @@
 package net.bytebuddy;
 
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -93,6 +95,24 @@ public class ByteBuddyTest {
                 .load(classLoader)
                 .getLoaded();
         assertThat(type.getClassLoader(), is(classLoader));
+    }
+
+    @Test
+    public void testNestingPerformance() throws Exception {
+        DynamicType.Builder<Object> byteBuddy = new ByteBuddy().subclass(Object.class);
+        long time = System.currentTimeMillis();
+        byteBuddy.make();
+        long baseline = System.currentTimeMillis() - time;
+        time = System.currentTimeMillis();
+        for (int index = 0; index < 300; index++) {
+            byteBuddy = byteBuddy.defineField("field" + index, String.class, Modifier.PRIVATE)
+                    .defineMethod("getField" + index, String.class, Modifier.PUBLIC)
+                    .intercept(FieldAccessor.ofBeanProperty());
+        }
+        byteBuddy.make();
+        if (System.currentTimeMillis() - time > baseline * 300) {
+            throw new AssertionError("Nested creation took too much time");
+        }
     }
 
     @Test

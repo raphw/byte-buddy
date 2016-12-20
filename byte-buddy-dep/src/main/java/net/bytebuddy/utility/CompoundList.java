@@ -1,35 +1,19 @@
 package net.bytebuddy.utility;
 
-import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * A list representation of two lists as a single, compound list.
- *
- * @param <T> The type of the list's elements.
+ * Creates a list representation of two lists as a single, compound list.
  */
-public class CompoundList<T> extends AbstractList<T> {
+public class CompoundList {
 
     /**
-     * The left list.
+     * A compund list cannot be created.
      */
-    private final List<? extends T> left;
-
-    /**
-     * The right list.
-     */
-    private final List<? extends T> right;
-
-    /**
-     * Creates a new compound list.
-     *
-     * @param left  The left list.
-     * @param right The right list.
-     */
-    protected CompoundList(List<? extends T> left, List<? extends T> right) {
-        this.left = left;
-        this.right = right;
+    private CompoundList() {
+        throw new UnsupportedOperationException("Cannot create a compound list");
     }
 
     /**
@@ -65,19 +49,9 @@ public class CompoundList<T> extends AbstractList<T> {
      * @return A compound list representing the element and the list.
      */
     public static <S> List<S> of(List<? extends S> left, List<? extends S> right) {
-        return new CompoundList<S>(left, right);
-    }
-
-    @Override
-    public T get(int index) {
-        int leftSize = left.size();
-        return leftSize - index > 0
-                ? left.get(index)
-                : right.get(index - leftSize);
-    }
-
-    @Override
-    public int size() {
-        return left.size() + right.size();
+        List<S> list = new ArrayList<S>(left.size() + right.size());
+        list.addAll(left);
+        list.addAll(right);
+        return list;
     }
 }
