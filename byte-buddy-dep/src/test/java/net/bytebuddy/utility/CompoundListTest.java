@@ -6,9 +6,12 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 
+import static junit.framework.TestCase.fail;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
@@ -19,6 +22,18 @@ public class CompoundListTest {
 
     @Mock
     private Object first, second, third, forth;
+    
+    @Test(expected = UnsupportedOperationException.class)
+    public void testConstruction() throws Throwable {
+        Constructor<?> constructor = CompoundList.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        try {
+            constructor.newInstance();
+            fail();
+        } catch (InvocationTargetException exception) {
+            throw exception.getCause();
+        }
+    }
 
     @Test
     public void testElementAndList() throws Exception {
