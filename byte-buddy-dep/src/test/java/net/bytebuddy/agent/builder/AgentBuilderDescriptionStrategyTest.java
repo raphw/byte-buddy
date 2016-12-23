@@ -35,7 +35,11 @@ public class AgentBuilderDescriptionStrategyTest {
         ClassFileLocator classFileLocator = ClassFileLocator.ForClassLoader.of(Object.class.getClassLoader());
         when(typePool.describe(Object.class.getName())).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         when(locationStrategy.classFileLocator(Object.class.getClassLoader(), JavaModule.ofType(Object.class))).thenReturn(classFileLocator);
-        TypeDescription typeDescription = AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class.getName(), Object.class, typePool);
+        TypeDescription typeDescription = AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class.getName(),
+                Object.class,
+                typePool,
+                Object.class.getClassLoader(),
+                JavaModule.ofType(Object.class));
         assertThat(typeDescription, is(TypeDescription.OBJECT));
         assertThat(typeDescription, instanceOf(TypeDescription.ForLoadedType.class));
     }
@@ -43,18 +47,27 @@ public class AgentBuilderDescriptionStrategyTest {
     @Test
     public void testDescriptionHybridWithoutLoaded() throws Exception {
         when(typePool.describe(Object.class.getName())).thenReturn(new TypePool.Resolution.Simple(typeDescription));
-        TypeDescription typeDescription = AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class.getName(), null, typePool);
+        TypeDescription typeDescription = AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class.getName(),
+                null,
+                typePool,
+                Object.class.getClassLoader(),
+                JavaModule.ofType(Object.class));
         assertThat(typeDescription, is(this.typeDescription));
     }
 
     @Test
     public void testDescriptionPoolOnly() throws Exception {
         when(typePool.describe(Object.class.getName())).thenReturn(new TypePool.Resolution.Simple(typeDescription));
-        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.apply(Object.class.getName(), Object.class, typePool), is(typeDescription));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.apply(Object.class.getName(),
+                Object.class,
+                typePool,
+                Object.class.getClassLoader(),
+                JavaModule.ofType(Object.class)), is(typeDescription));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.Default.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.class).apply();
     }
 }

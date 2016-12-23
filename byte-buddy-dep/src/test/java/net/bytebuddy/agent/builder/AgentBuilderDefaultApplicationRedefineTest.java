@@ -47,6 +47,7 @@ public class AgentBuilderDefaultApplicationRedefineTest {
         for (AgentBuilder.DescriptionStrategy descriptionStrategy : AgentBuilder.DescriptionStrategy.Default.values()) {
             list.add(new Object[]{descriptionStrategy});
         }
+        list.add(new Object[]{new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY)});
         return list;
     }
 

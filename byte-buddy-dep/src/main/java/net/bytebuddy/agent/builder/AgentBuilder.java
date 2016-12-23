@@ -2729,12 +2729,14 @@ public interface AgentBuilder {
         /**
          * Describes the given type.
          *
-         * @param typeName The binary name of the type to describe.
-         * @param type     The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
-         * @param typePool The type pool to use for locating a type if required.
+         * @param typeName    The binary name of the type to describe.
+         * @param type        The type that is being redefined, if a redefinition is applied or {@code null} if no redefined type is available.
+         * @param typePool    The type pool to use for locating a type if required.
+         * @param classLoader The type's class loader where {@code null} represents the bootstrap class loader.
+         * @param module      The type's module or {@code null} if the current VM does not support modules.
          * @return An appropriate type description.
          */
-        TypeDescription apply(String typeName, Class<?> type, TypePool typePool);
+        TypeDescription apply(String typeName, Class<?> type, TypePool typePool, ClassLoader classLoader, JavaModule module);
 
         /**
          * Indicates if this description strategy makes use of loaded type information and yields a different type description if no loaded type is available.
@@ -2763,7 +2765,7 @@ public interface AgentBuilder {
              */
             HYBRID(true) {
                 @Override
-                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
+                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool, ClassLoader classLoader, JavaModule module) {
                     return type == null
                             ? typePool.describe(typeName).resolve()
                             : new TypeDescription.ForLoadedType(type);
@@ -2785,7 +2787,7 @@ public interface AgentBuilder {
              */
             POOL_ONLY(false) {
                 @Override
-                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
+                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool, ClassLoader classLoader, JavaModule module) {
                     return typePool.describe(typeName).resolve();
                 }
             },
@@ -2804,7 +2806,7 @@ public interface AgentBuilder {
              */
             POOL_FIRST(false) {
                 @Override
-                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool) {
+                public TypeDescription apply(String typeName, Class<?> type, TypePool typePool, ClassLoader classLoader, JavaModule module) {
                     TypePool.Resolution resolution = typePool.describe(typeName);
                     return resolution.isResolved() || type == null
                             ? resolution.resolve()
@@ -2834,6 +2836,59 @@ public interface AgentBuilder {
             @Override
             public String toString() {
                 return "AgentBuilder.DescriptionStrategy.Default." + name();
+            }
+        }
+
+        /**
+         * Creates a description strategy that enforces the loading of any super type of a type description.
+         */
+        class SuperTypeLoading implements DescriptionStrategy {
+
+            /**
+             * The delegate description strategy.
+             */
+            private final DescriptionStrategy delegate;
+
+            /**
+             * Creates a new description strategy that enforces loading of a super type.
+             *
+             * @param delegate The delegate description strategy.
+             */
+            public SuperTypeLoading(DescriptionStrategy delegate) {
+                this.delegate = delegate;
+            }
+
+            @Override
+            public TypeDescription apply(String typeName, Class<?> type, TypePool typePool, ClassLoader classLoader, JavaModule module) {
+                TypeDescription typeDescription = delegate.apply(typeName, type, typePool, classLoader, module);
+                return typeDescription instanceof TypeDescription.ForLoadedType
+                        ? typeDescription
+                        : new TypeDescription.SuperTypeLoading(typeDescription, classLoader);
+            }
+
+            @Override
+            public boolean isLoadedFirst() {
+                return delegate.isLoadedFirst();
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                SuperTypeLoading that = (SuperTypeLoading) object;
+                return delegate.equals(that.delegate);
+            }
+
+            @Override
+            public int hashCode() {
+                return delegate.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.DescriptionStrategy.SuperTypeLoading{" +
+                        "delegate=" + delegate +
+                        '}';
             }
         }
     }
@@ -6953,7 +7008,7 @@ public interface AgentBuilder {
                                 try {
                                     collector.consider(ignoredTypeMatcher,
                                             listener,
-                                            descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool),
+                                            descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool, type.getClassLoader(), module),
                                             type,
                                             type,
                                             module,
@@ -8249,7 +8304,7 @@ public interface AgentBuilder {
                                                       Class<?> classBeingRedefined,
                                                       ProtectionDomain protectionDomain,
                                                       TypePool typePool) {
-                TypeDescription typeDescription = descriptionStrategy.apply(typeName, classBeingRedefined, typePool);
+                TypeDescription typeDescription = descriptionStrategy.apply(typeName, classBeingRedefined, typePool, classLoader, module);
                 return ignoredTypeMatcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                         ? new Transformation.Resolution.Unresolved(typeDescription, classLoader, module)
                         : transformation.resolve(typeDescription, classLoader, module, classBeingRedefined, protectionDomain, typePool);
@@ -8277,7 +8332,9 @@ public interface AgentBuilder {
                                     Listener.NoOp.INSTANCE,
                                     descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type),
                                             type,
-                                            poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader())),
+                                            poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader()),
+                                            type.getClassLoader(),
+                                            module),
                                     type,
                                     type,
                                     module,
@@ -8289,7 +8346,9 @@ public interface AgentBuilder {
                                             Listener.NoOp.INSTANCE,
                                             descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type),
                                                     NO_LOADED_TYPE,
-                                                    poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader())),
+                                                    poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader()),
+                                                    type.getClassLoader(),
+                                                    module),
                                             type,
                                             module);
                                 } else {
