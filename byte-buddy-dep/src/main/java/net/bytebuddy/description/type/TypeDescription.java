@@ -8485,7 +8485,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             private final Generic delegate;
 
             /**
-             * The class loader to use for loading types.
+             * The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
             private final ClassLoader classLoader;
 
@@ -8493,7 +8493,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * Creates a class loading type description.
              *
              * @param delegate    The delegate type description.
-             * @param classLoader The class loader to use for loading types.
+             * @param classLoader The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
             protected ClassLoadingTypeProjection(Generic delegate, ClassLoader classLoader) {
                 this.delegate = delegate;
@@ -8508,7 +8508,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public TypeDescription asErasure() {
                 try {
-                    return new ForLoadedType(Class.forName(delegate.asErasure().getName(), false, classLoader));
+                    return new ForLoadedType(load());
                 } catch (ClassNotFoundException ignored) {
                     return delegate.asErasure();
                 }
@@ -8522,19 +8522,40 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public Generic getSuperClass() {
                 Generic superClass = delegate.getSuperClass();
-                return superClass == null
-                        ? Generic.UNDEFINED
-                        : new ClassLoadingTypeProjection(superClass, classLoader);
+                if (superClass == null) {
+                    return Generic.UNDEFINED;
+                } else {
+                    try {
+                        return new ClassLoadingTypeProjection(superClass, load().getClassLoader());
+                    } catch (ClassNotFoundException ignored) {
+                        return superClass;
+                    }
+                }
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new ClassLoadingTypeList(delegate.getInterfaces(), classLoader);
+                TypeList.Generic interfaces = delegate.getInterfaces();
+                try {
+                    return new ClassLoadingTypeList(interfaces, load().getClassLoader());
+                } catch (ClassNotFoundException ignored) {
+                    return interfaces;
+                }
             }
 
             @Override
             public Iterator<TypeDefinition> iterator() {
                 return new SuperClassIterator(this);
+            }
+
+            /**
+             * Loads the represented raw type.
+             *
+             * @return The loaded type.
+             * @throws ClassNotFoundException If the class cannot be loaded.
+             */
+            private Class<?> load() throws ClassNotFoundException {
+                return Class.forName(delegate.asErasure().getName(), false, classLoader);
             }
         }
 
@@ -8549,7 +8570,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             private final TypeList.Generic delegate;
 
             /**
-             * The class loader to use for loading types.
+             * The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
             private final ClassLoader classLoader;
 
@@ -8557,7 +8578,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              * Creates a class loading
              *
              * @param delegate    The delegate type list.
-             * @param classLoader The class loader to use for loading types.
+             * @param classLoader The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
             protected ClassLoadingTypeList(TypeList.Generic delegate, ClassLoader classLoader) {
                 this.delegate = delegate;
