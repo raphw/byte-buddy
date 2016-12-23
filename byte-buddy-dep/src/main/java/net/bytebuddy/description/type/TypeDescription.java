@@ -8575,7 +8575,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             private final ClassLoader classLoader;
 
             /**
-             * Creates a class loading
+             * Creates a class loading type list.
              *
              * @param delegate    The delegate type list.
              * @param classLoader The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
