@@ -8329,4 +8329,250 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return packageDescription.getName() + "." + PackageDescription.PACKAGE_CLASS_NAME;
         }
     }
+
+    /**
+     * A delegating type description that always attempts to load the super types of a delegate type.
+     */
+    class SuperTypeLoading extends AbstractBase {
+
+        /**
+         * The delegate type description.
+         */
+        private final TypeDescription delegate;
+
+        /**
+         * The class loader to use for loading a super type.
+         */
+        private final ClassLoader classLoader;
+
+        /**
+         * Creates a super type loading type description.
+         *
+         * @param delegate    The delegate type description.
+         * @param classLoader The class loader to use for loading a super type.
+         */
+        public SuperTypeLoading(TypeDescription delegate, ClassLoader classLoader) {
+            this.delegate = delegate;
+            this.classLoader = classLoader;
+        }
+
+        @Override
+        public AnnotationList getDeclaredAnnotations() {
+            return delegate.getDeclaredAnnotations();
+        }
+
+        @Override
+        public int getModifiers() {
+            return delegate.getModifiers();
+        }
+
+        @Override
+        public TypeList.Generic getTypeVariables() {
+            return delegate.getTypeVariables();
+        }
+
+        @Override
+        public String getDescriptor() {
+            return delegate.getDescriptor();
+        }
+
+        @Override
+        public String getName() {
+            return delegate.getName();
+        }
+
+        @Override
+        public Generic getSuperClass() {
+            Generic superClass = delegate.getSuperClass();
+            return superClass == null
+                    ? Generic.UNDEFINED
+                    : new ClassLoadingTypeProjection(superClass, classLoader);
+        }
+
+        @Override
+        public TypeList.Generic getInterfaces() {
+            return new ClassLoadingTypeList(delegate.getInterfaces(), classLoader);
+        }
+
+        @Override
+        public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
+            return delegate.getDeclaredFields();
+        }
+
+        @Override
+        public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
+            return delegate.getDeclaredMethods();
+        }
+
+        @Override
+        public StackSize getStackSize() {
+            return delegate.getStackSize();
+        }
+
+        @Override
+        public boolean isArray() {
+            return delegate.isArray();
+        }
+
+        @Override
+        public boolean isPrimitive() {
+            return delegate.isPrimitive();
+        }
+
+        @Override
+        public TypeDescription getComponentType() {
+            return delegate.getComponentType();
+        }
+
+        @Override
+        public TypeDescription getDeclaringType() {
+            return delegate.getDeclaringType();
+        }
+
+        @Override
+        public TypeList getDeclaredTypes() {
+            return delegate.getDeclaredTypes();
+        }
+
+        @Override
+        public MethodDescription getEnclosingMethod() {
+            return delegate.getEnclosingMethod();
+        }
+
+        @Override
+        public TypeDescription getEnclosingType() {
+            return delegate.getEnclosingType();
+        }
+
+        @Override
+        public String getSimpleName() {
+            return delegate.getSimpleName();
+        }
+
+        @Override
+        public String getCanonicalName() {
+            return delegate.getCanonicalName();
+        }
+
+        @Override
+        public boolean isAnonymousClass() {
+            return delegate.isAnonymousClass();
+        }
+
+        @Override
+        public boolean isLocalClass() {
+            return delegate.isLocalClass();
+        }
+
+        @Override
+        public boolean isMemberClass() {
+            return delegate.isMemberClass();
+        }
+
+        @Override
+        public PackageDescription getPackage() {
+            return delegate.getPackage();
+        }
+
+        /**
+         * A type projection that attempts to load any super type of the delegate type.
+         */
+        protected static class ClassLoadingTypeProjection extends TypeDescription.Generic.LazyProjection {
+
+            /**
+             * The delegate type description.
+             */
+            private final Generic delegate;
+
+            /**
+             * The class loader to use for loading types.
+             */
+            private final ClassLoader classLoader;
+
+            /**
+             * Creates a class loading type description.
+             *
+             * @param delegate    The delegate type description.
+             * @param classLoader The class loader to use for loading types.
+             */
+            protected ClassLoadingTypeProjection(Generic delegate, ClassLoader classLoader) {
+                this.delegate = delegate;
+                this.classLoader = classLoader;
+            }
+
+            @Override
+            public AnnotationList getDeclaredAnnotations() {
+                return delegate.getDeclaredAnnotations();
+            }
+
+            @Override
+            public TypeDescription asErasure() {
+                try {
+                    return new ForLoadedType(Class.forName(delegate.asErasure().getName(), false, classLoader));
+                } catch (ClassNotFoundException ignored) {
+                    return delegate.asErasure();
+                }
+            }
+
+            @Override
+            protected Generic resolve() {
+                return delegate;
+            }
+
+            @Override
+            public Generic getSuperClass() {
+                Generic superClass = delegate.getSuperClass();
+                return superClass == null
+                        ? Generic.UNDEFINED
+                        : new ClassLoadingTypeProjection(superClass, classLoader);
+            }
+
+            @Override
+            public TypeList.Generic getInterfaces() {
+                return new ClassLoadingTypeList(delegate.getInterfaces(), classLoader);
+            }
+
+            @Override
+            public Iterator<TypeDefinition> iterator() {
+                return new SuperClassIterator(this);
+            }
+        }
+
+        /**
+         * A type list that attempts loading any type.
+         */
+        protected static class ClassLoadingTypeList extends TypeList.Generic.AbstractBase {
+
+            /**
+             * The delegate type list.
+             */
+            private final TypeList.Generic delegate;
+
+            /**
+             * The class loader to use for loading types.
+             */
+            private final ClassLoader classLoader;
+
+            /**
+             * Creates a class loading
+             *
+             * @param delegate    The delegate type list.
+             * @param classLoader The class loader to use for loading types.
+             */
+            protected ClassLoadingTypeList(TypeList.Generic delegate, ClassLoader classLoader) {
+                this.delegate = delegate;
+                this.classLoader = classLoader;
+            }
+
+            @Override
+            public Generic get(int index) {
+                return new ClassLoadingTypeProjection(delegate.get(index), classLoader);
+            }
+
+            @Override
+            public int size() {
+                return delegate.size();
+            }
+        }
+    }
 }
