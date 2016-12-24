@@ -512,68 +512,14 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * writes the type initializer. The type initializer must therefore never be written manually.
              *
              * @param classVisitor                 The class visitor to which the extractable view is to be written.
-             * @param methodPool                   A method pool which is queried for any user code to add to the type initializer.
-             * @param injectedCode                 Potential code that is to be injected into the type initializer.
              * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotation.
              */
-            void drain(ClassVisitor classVisitor,
-                       TypeWriter.MethodPool methodPool,
-                       InjectedCode injectedCode,
-                       AnnotationValueFilter.Factory annotationValueFilterFactory);
+            void drain(TypeInitializer.Drain drain, ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             /**
              * Prohibits any instrumentation of an instrumented class's type initializer.
              */
             void prohibitTypeInitializer();
-
-            /**
-             * When draining an implementation context, a type initializer might be written to the created class
-             * file. If any code must be explicitly invoked from within the type initializer, this can be achieved
-             * by providing a code injection by this instance. The injected code is added after the class is set up but
-             * before any user code is run from within the type initializer.
-             */
-            interface InjectedCode {
-
-                /**
-                 * Returns a byte code appender for appending the injected code.
-                 *
-                 * @return A byte code appender for appending the injected code.
-                 */
-                ByteCodeAppender getByteCodeAppender();
-
-                /**
-                 * Checks if there is actually code defined to be injected.
-                 *
-                 * @return {@code true} if code is to be injected.
-                 */
-                boolean isDefined();
-
-                /**
-                 * A canonical implementation of non-applicable injected code.
-                 */
-                enum None implements InjectedCode {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public ByteCodeAppender getByteCodeAppender() {
-                        throw new IllegalStateException("Non-defined injected code does not define a byte code appender");
-                    }
-
-                    @Override
-                    public boolean isDefined() {
-                        return false;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Implementation.Context.ExtractableView.InjectedCode.None." + name();
-                    }
-                }
-            }
 
             /**
              * An abstract base implementation of an extractable view of an implementation context.
@@ -663,13 +609,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public void drain(ClassVisitor classVisitor,
-                              TypeWriter.MethodPool methodPool,
-                              InjectedCode injectedCode,
-                              AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                if (injectedCode.isDefined() || methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType)).getSort().isDefined()) {
-                    throw new IllegalStateException("Type initializer interception is impossible or was disabled for " + instrumentedType);
-                }
+            public void drain(TypeInitializer.Drain drain, ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                drain.apply(classVisitor, TypeInitializer.None.INSTANCE, this);
             }
 
             @Override
@@ -911,9 +852,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public void drain(ClassVisitor classVisitor,
-                              TypeWriter.MethodPool methodPool,
-                              InjectedCode injectedCode,
+            public void drain(TypeInitializer.Drain drain,
+                              ClassVisitor classVisitor,
                               AnnotationValueFilter.Factory annotationValueFilterFactory) {
                 fieldCacheCanAppendEntries = false;
                 TypeInitializer typeInitializer = this.typeInitializer;
@@ -925,20 +865,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
                             FieldDescription.NO_DEFAULT_VALUE).visitEnd();
                     typeInitializer = typeInitializer.expandWith(new ByteCodeAppender.Simple(entry.getKey().storeIn(entry.getValue())));
                 }
-                if (injectedCode.isDefined()) {
-                    typeInitializer = typeInitializer.expandWith(injectedCode.getByteCodeAppender());
-                }
-                MethodDescription typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
-                TypeWriter.MethodPool.Record initializerRecord = methodPool.target(typeInitializerMethod);
-                if (initializerRecord.getSort().isImplemented() && typeInitializer.isDefined()) {
-                    initializerRecord = initializerRecord.prepend(typeInitializer);
-                } else if (typeInitializer.isDefined()) {
-                    initializerRecord = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
-                }
-                if (prohibitTypeInitializer && initializerRecord.getSort().isDefined()) {
+                if (prohibitTypeInitializer && typeInitializer.isDefined()) {
                     throw new IllegalStateException("It is impossible to define a class initializer or cached values for " + instrumentedType);
                 }
-                initializerRecord.apply(classVisitor, this, annotationValueFilterFactory);
+                drain.apply(classVisitor, typeInitializer, this);
                 for (TypeWriter.MethodPool.Record record : accessorMethods) {
                     record.apply(classVisitor, this, annotationValueFilterFactory);
                 }

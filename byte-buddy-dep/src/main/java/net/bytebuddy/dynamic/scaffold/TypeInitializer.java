@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
 /**
@@ -34,6 +35,11 @@ public interface TypeInitializer extends ByteCodeAppender {
      * @return This type initializer with an ending return statement.
      */
     ByteCodeAppender withReturn();
+
+    interface Drain {
+
+        void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext);
+    }
 
     /**
      * Canonical implementation of a non-defined type initializer.
