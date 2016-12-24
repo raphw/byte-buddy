@@ -862,6 +862,50 @@ public interface AgentBuilder {
                         ProtectionDomain protectionDomain);
 
         /**
+         * A raw matcher indicating the state of a type's class loading.
+         */
+        enum ForLoadState implements RawMatcher {
+
+            /**
+             * Indicates that a type was already loaded.
+             */
+            LOADED(false),
+
+            /**
+             * Indicates that a type was not yet loaded.
+             */
+            UNLOADED(true);
+
+            /**
+             * {@code true} if a type is expected to be unloaded..
+             */
+            private final boolean unloaded;
+
+            /**
+             * Creates a new load state matcher.
+             *
+             * @param unloaded {@code true} if a type is expected to be unloaded..
+             */
+            ForLoadState(boolean unloaded) {
+                this.unloaded = unloaded;
+            }
+
+            @Override
+            public boolean matches(TypeDescription typeDescription,
+                                   ClassLoader classLoader,
+                                   JavaModule module,
+                                   Class<?> classBeingRedefined,
+                                   ProtectionDomain protectionDomain) {
+                return classBeingRedefined == null == unloaded;
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.RawMatcher.ForLoadState." + name();
+            }
+        }
+
+        /**
          * A conjunction of two raw matchers.
          */
         class Conjunction implements RawMatcher {
