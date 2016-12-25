@@ -1349,8 +1349,18 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 @Override
                 public void applyBody(MethodVisitor methodVisitor, Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     methodVisitor.visitCode();
-                    Size size = apply(methodVisitor, implementationContext, getMethod());
+                    Size size = applyCode(methodVisitor, implementationContext);
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                }
+
+                @Override
+                public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                    /* do nothing */
+                }
+
+                @Override
+                public Size applyCode(MethodVisitor methodVisitor, Context implementationContext) {
+                    return apply(methodVisitor, implementationContext, getMethod());
                 }
 
                 @Override

@@ -39,9 +39,6 @@ public class ImplementationContextDisabledTest {
     @Mock
     private TypeWriter.MethodPool.Record record;
 
-    @Mock
-    private Implementation.Context.ExtractableView.InjectedCode injectedCode;
-
     @Before
     public void setUp() throws Exception {
         when(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType))).thenReturn(record);
@@ -94,24 +91,7 @@ public class ImplementationContextDisabledTest {
         new Implementation.Context.Disabled(instrumentedType, classFileVersion).register(mock(AuxiliaryType.class));
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testDrainWithInjectedCode() throws Exception {
-        when(injectedCode.isDefined()).thenReturn(true);
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        new Implementation.Context.Disabled(instrumentedType, classFileVersion).drain(mock(ClassVisitor.class),
-                methodPool,
-                injectedCode,
-                mock(AnnotationValueFilter.Factory.class));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testDrainWithMatchedCode() throws Exception {
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.DEFINED);
-        new Implementation.Context.Disabled(instrumentedType, classFileVersion).drain(mock(ClassVisitor.class),
-                methodPool,
-                injectedCode,
-                mock(AnnotationValueFilter.Factory.class));
-    }
+    // TODO: Test coverage!
 
     @Test
     public void testClassFileVersion() throws Exception {

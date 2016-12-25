@@ -580,7 +580,6 @@ public class TypeWriterDefaultTest {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingFieldVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingMethodVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.CodePreservingMethodVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.TypeInitializerInjection.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingFieldVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyBasic();

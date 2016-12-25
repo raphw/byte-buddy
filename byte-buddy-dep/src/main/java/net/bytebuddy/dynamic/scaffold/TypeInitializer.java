@@ -1,7 +1,9 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import org.objectweb.asm.ClassVisitor;
@@ -39,6 +41,35 @@ public interface TypeInitializer extends ByteCodeAppender {
     interface Drain {
 
         void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext);
+
+        class Default implements Drain {
+
+            protected final TypeDescription instrumentedType;
+
+            protected final TypeWriter.MethodPool methodPool;
+
+            protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
+
+            public Default(TypeDescription instrumentedType,
+                           TypeWriter.MethodPool methodPool,
+                           AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                this.instrumentedType = instrumentedType;
+                this.methodPool = methodPool;
+                this.annotationValueFilterFactory = annotationValueFilterFactory;
+            }
+
+            @Override
+            public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
+                MethodDescription typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
+                TypeWriter.MethodPool.Record initializerRecord = methodPool.target(typeInitializerMethod);
+                if (initializerRecord.getSort().isImplemented() && typeInitializer.isDefined()) {
+                    initializerRecord = initializerRecord.prepend(typeInitializer); // TODO: Automate?
+                } else if (typeInitializer.isDefined()) {
+                    initializerRecord = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
+                }
+                initializerRecord.apply(classVisitor, implementationContext, annotationValueFilterFactory);
+            }
+        }
     }
 
     /**

@@ -111,8 +111,8 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testSkippedMethod() throws Exception {
-        assertThat(TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.getSort(), is(TypeWriter.MethodPool.Record.Sort.SKIPPED));
-        TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.apply(classVisitor, implementationContext, annotationValueFilterFactory);
+        assertThat(TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.getSort(), is(TypeWriter.MethodPool.Record.Sort.SKIPPED));
+        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.apply(classVisitor, implementationContext, annotationValueFilterFactory);
         verifyZeroInteractions(classVisitor);
         verifyZeroInteractions(implementationContext);
         verifyZeroInteractions(methodAttributeAppender);
@@ -120,22 +120,22 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotGetImplementedMethod() throws Exception {
-        TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.getMethod();
+        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.getMethod();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotBePrepended() throws Exception {
-        TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.prepend(byteCodeAppender);
+        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.prepend(byteCodeAppender);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotApplyBody() throws Exception {
-        TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
+        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotApplyHead() throws Exception {
-        TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.applyHead(methodVisitor);
+        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.applyHead(methodVisitor);
     }
 
     @Test
@@ -475,7 +475,7 @@ public class TypeWriterMethodPoolRecordTest {
         ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForNonDefinedMethod.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForUndefinedMethod.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.AccessBridgeWrapper.class).apply();
     }
 }

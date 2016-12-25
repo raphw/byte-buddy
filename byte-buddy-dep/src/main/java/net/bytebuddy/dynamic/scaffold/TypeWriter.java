@@ -465,7 +465,7 @@ public interface TypeWriter<T> {
             /**
              * A canonical implementation of a method that is not declared but inherited by the instrumented type.
              */
-            enum ForNonDefinedMethod implements Record {
+            enum ForUndefinedMethod implements Record {
 
                 /**
                  * The singleton instance.
@@ -484,7 +484,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                    throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
+                    /* do nothing */
                 }
 
                 @Override
@@ -847,6 +847,16 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                        throw new IllegalStateException(); // TODO: Fix
+                    }
+
+                    @Override
+                    public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                        throw new IllegalStateException(); // TODO: Fix
+                    }
+
+                    @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
                         throw new IllegalStateException("Cannot prepend code to method that defines a default annotation value");
                     }
@@ -967,10 +977,20 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                        attributeAppender.apply(methodVisitor, visibilityBridge, annotationValueFilterFactory.on(visibilityBridge));
+                        applyAttributes(methodVisitor, annotationValueFilterFactory);
                         methodVisitor.visitCode();
-                        ByteCodeAppender.Size size = apply(methodVisitor, implementationContext, visibilityBridge);
+                        ByteCodeAppender.Size size = applyCode(methodVisitor, implementationContext);
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                    }
+
+                    @Override
+                    public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                        attributeAppender.apply(methodVisitor, visibilityBridge, annotationValueFilterFactory.on(visibilityBridge));
+                    }
+
+                    @Override
+                    public Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                        return apply(methodVisitor, implementationContext, visibilityBridge);
                     }
 
                     @Override
@@ -3222,15 +3242,33 @@ public interface TypeWriter<T> {
                         '}';
             }
 
-            protected interface TypeInitializerHandler {
+            protected interface InitializationHandler {
 
                 void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext);
 
-                class CodeAppending extends MethodVisitor implements TypeInitializerHandler, TypeInitializer.Drain {
+                class Creating extends TypeInitializer.Drain.Default implements InitializationHandler {
+
+                    protected Creating(TypeDescription instrumentedType,
+                                       MethodPool methodPool,
+                                       AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                        super(instrumentedType, methodPool, annotationValueFilterFactory);
+                    }
+
+                    @Override
+                    public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                        implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
+                    }
+                }
+
+                class Appending extends MethodVisitor implements InitializationHandler, TypeInitializer.Drain {
+
+                    private static final Object[] EMPTY = new Object[0];
 
                     private final MethodDescription typeInitializerMethod;
 
                     private final AnnotationValueFilter.Factory annotationValueFilterFactory;
+
+                    private final boolean requireFrame;
 
                     private final MethodPool.Record initializerRecord;
 
@@ -3240,22 +3278,22 @@ public interface TypeWriter<T> {
 
                     private int localVariableLength;
 
-                    protected CodeAppending(MethodVisitor methodVisitor,
-                                            MethodPool methodPool,
-                                            TypeDescription instrumentedType,
-                                            AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                    protected Appending(MethodVisitor methodVisitor,
+                                        TypeDescription instrumentedType,
+                                        MethodPool methodPool,
+                                        AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                        Implementation.Context implementationContext) {
                         super(Opcodes.ASM5, methodVisitor);
                         typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
                         this.annotationValueFilterFactory = annotationValueFilterFactory;
+                        requireFrame = implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6);
                         initializerRecord = methodPool.target(typeInitializerMethod);
                         label = new Label();
                     }
 
                     @Override
                     public void visitCode() {
-                        if (initializerRecord.getSort().isDefined()) {
-                            initializerRecord.applyAttributes(mv, annotationValueFilterFactory);
-                        }
+                        initializerRecord.applyAttributes(mv, annotationValueFilterFactory);
                         super.visitCode();
                     }
 
@@ -3277,7 +3315,9 @@ public interface TypeWriter<T> {
                     @Override
                     public void visitEnd() {
                         mv.visitLabel(label);
-                        mv.visitFrame(Opcodes.F_FULL, 0, null, 0, null); // TODO: Check class file version.
+                        if (requireFrame) {
+                            mv.visitFrame(Opcodes.F_FULL, 0, EMPTY, 0, EMPTY);
+                        }
                     }
 
                     @Override
@@ -3349,7 +3389,7 @@ public interface TypeWriter<T> {
              * A class visitor which is capable of applying a redefinition of an existing class file.
              */
             @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Field access order is implied by ASM")
-            protected class RedefinitionClassVisitor extends ClassVisitor implements TypeInitializerHandler, TypeInitializer.Drain {
+            protected class RedefinitionClassVisitor extends ClassVisitor {
 
                 /**
                  * The type initializer to apply.
@@ -3381,17 +3421,14 @@ public interface TypeWriter<T> {
                  */
                 private final Map<String, MethodDescription> declarableMethods;
 
+                private MethodPool methodPool;
+
+                private InitializationHandler initializationHandler;
+
                 /**
                  * The implementation context for this class creation or {@code null} if it was not yet created.
                  */
                 private Implementation.Context.ExtractableView implementationContext;
-
-                private TypeInitializerHandler typeInitializerHandler;
-
-                /**
-                 * The method pool to use or {@code null} until it is created upon discovering the class file version.
-                 */
-                private MethodPool methodPool;
 
                 /**
                  * Creates a class visitor which is capable of redefining an existent class on the fly.
@@ -3415,13 +3452,12 @@ public interface TypeWriter<T> {
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
                     declaredFields = new HashMap<String, FieldDescription>();
                     for (FieldDescription fieldDescription : fieldDescriptions) {
-                        declaredFields.put(fieldDescription.getName(), fieldDescription);
+                        declaredFields.put(fieldDescription.getInternalName() + fieldDescription.getDescriptor(), fieldDescription);
                     }
                     declarableMethods = new HashMap<String, MethodDescription>();
                     for (MethodDescription methodDescription : instrumentedMethods) {
                         declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
                     }
-                    typeInitializerHandler = this;
                 }
 
                 @Override
@@ -3433,6 +3469,7 @@ public interface TypeWriter<T> {
                                   String[] interfaceTypeInternalName) {
                     ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(classFileVersionNumber);
                     methodPool = methodRegistry.compile(implementationTargetFactory, classFileVersion);
+                    initializationHandler = new InitializationHandler.Creating(instrumentedType, methodPool, annotationValueFilterFactory);
                     implementationContext = implementationContextFactory.make(instrumentedType,
                             auxiliaryTypeNamingStrategy,
                             typeInitializer,
@@ -3440,7 +3477,7 @@ public interface TypeWriter<T> {
                             ForInlining.this.classFileVersion);
                     contextRegistry.setImplementationContext(implementationContext);
                     if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
-                        implementationContext.prohibitTypeInitializer();
+                        implementationContext.prohibitTypeInitializer(); // TODO: Validation visitor?
                     }
                     cv = asmVisitorWrapper.wrap(instrumentedType, cv, implementationContext, typePool, writerFlags, readerFlags);
                     super.visit(classFileVersionNumber,
@@ -3484,7 +3521,7 @@ public interface TypeWriter<T> {
                                                String descriptor,
                                                String genericSignature,
                                                Object defaultValue) {
-                    FieldDescription fieldDescription = declaredFields.remove(internalName);
+                    FieldDescription fieldDescription = declaredFields.remove(internalName + descriptor);
                     if (fieldDescription != null) {
                         FieldPool.Record record = fieldPool.target(fieldDescription);
                         if (!record.isImplicit()) {
@@ -3517,10 +3554,11 @@ public interface TypeWriter<T> {
                                                  String genericSignature,
                                                  String[] exceptionTypeInternalName) {
                     if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                        MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionTypeInternalName);
-                        return implementationContext.isRetainTypeInitializer()
-                                ? methodVisitor
-                                : ((MethodVisitor) (typeInitializerHandler = new TypeInitializerHandler.CodeAppending(methodVisitor, methodPool, instrumentedType, annotationValueFilterFactory)));
+                        return (MethodVisitor) (initializationHandler = new InitializationHandler.Appending(super.visitMethod(modifiers,
+                                internalName,
+                                descriptor,
+                                genericSignature,
+                                exceptionTypeInternalName), instrumentedType, methodPool, annotationValueFilterFactory, implementationContext));
                     } else {
                         MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
                         return methodDescription == null
@@ -3567,25 +3605,8 @@ public interface TypeWriter<T> {
                     for (MethodDescription methodDescription : declarableMethods.values()) {
                         methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
                     }
-                    typeInitializerHandler.complete(cv, implementationContext);
+                    initializationHandler.complete(cv, implementationContext); // TODO: Fix prohibition of extension.
                     super.visitEnd();
-                }
-
-                @Override
-                public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
-                    implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
-                }
-
-                @Override
-                public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
-                    MethodDescription typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
-                    MethodPool.Record initializerRecord = methodPool.target(typeInitializerMethod);
-                    if (initializerRecord.getSort().isImplemented() && typeInitializer.isDefined()) {
-                        initializerRecord = initializerRecord.prepend(typeInitializer); // TODO: Automate?
-                    } else if (typeInitializer.isDefined()) {
-                        initializerRecord = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
-                    }
-                    initializerRecord.apply(classVisitor, implementationContext, annotationValueFilterFactory);
                 }
 
                 @Override
@@ -3831,7 +3852,7 @@ public interface TypeWriter<T> {
          *
          * @param <U> The best known loaded type for the dynamically created type.
          */
-        public static class ForCreation<U> extends Default<U> implements TypeInitializer.Drain {
+        public static class ForCreation<U> extends Default<U> {
 
             /**
              * The method pool to use.
@@ -3922,21 +3943,11 @@ public interface TypeWriter<T> {
                 for (MethodDescription methodDescription : instrumentedMethods) {
                     methodPool.target(methodDescription).apply(classVisitor, implementationContext, annotationValueFilterFactory);
                 }
-                implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
+                implementationContext.drain(new TypeInitializer.Drain.Default(instrumentedType,
+                        methodPool,
+                        annotationValueFilterFactory), classVisitor, annotationValueFilterFactory); // TODO: Simplify
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
-            }
-
-            @Override
-            public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
-                MethodDescription typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
-                MethodPool.Record initializerRecord = methodPool.target(typeInitializerMethod);
-                if (initializerRecord.getSort().isImplemented() && typeInitializer.isDefined()) {
-                    initializerRecord = initializerRecord.prepend(typeInitializer); // TODO: Automate?
-                } else if (typeInitializer.isDefined()) {
-                    initializerRecord = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
-                }
-                initializerRecord.apply(classVisitor, implementationContext, annotationValueFilterFactory);
             }
 
             @Override
