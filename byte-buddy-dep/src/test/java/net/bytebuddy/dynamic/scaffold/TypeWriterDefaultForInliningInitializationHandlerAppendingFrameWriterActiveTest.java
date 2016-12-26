@@ -73,6 +73,11 @@ public class TypeWriterDefaultForInliningInitializationHandlerAppendingFrameWrit
         verifyZeroInteractions(methodVisitor);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testUnexpected() throws Exception {
+        frameWriter.onFrame(-2, 0);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.Active.class).applyBasic();

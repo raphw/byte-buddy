@@ -3582,7 +3582,7 @@ public interface TypeWriter<T> {
                                         currentLocalVariableLength = localVariableLength;
                                         break;
                                     default:
-                                        throw new IllegalStateException();
+                                        throw new IllegalStateException("Unexpected frame type: " + type);
                                 }
                             }
 
