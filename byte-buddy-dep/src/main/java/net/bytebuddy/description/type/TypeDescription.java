@@ -8345,6 +8345,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         private final ClassLoader classLoader;
 
+        /**
+         * A delegate for loading a type.
+         */
         private final ClassLoadingDelegate classLoadingDelegate;
 
         /**
@@ -8352,6 +8355,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          *
          * @param delegate    The delegate type description.
          * @param classLoader The class loader to use for loading a super type.
+         */
+        public SuperTypeLoading(TypeDescription delegate, ClassLoader classLoader) {
+            this(delegate, classLoader, ClassLoadingDelegate.Simple.INSTANCE);
+        }
+
+        /**
+         * Creates a super type loading type description.
+         *
+         * @param delegate             The delegate type description.
+         * @param classLoader          The class loader to use for loading a super type.
+         * @param classLoadingDelegate A delegate for loading a type.
          */
         public SuperTypeLoading(TypeDescription delegate, ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
             this.delegate = delegate;
@@ -8477,17 +8491,39 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return delegate.getPackage();
         }
 
+        /**
+         * A class loading delegate is responsible for resolving a type given a class loader and a type name.
+         */
         public interface ClassLoadingDelegate {
 
+            /**
+             * Loads a type.
+             *
+             * @param name        The type's name,
+             * @param classLoader The class loader to load the type from which might be {@code null} to represent the bootstrap class loader.
+             * @return The loaded type.
+             * @throws ClassNotFoundException If the type could not be found.
+             */
             Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException;
 
+            /**
+             * A simple class loading delegate that simply loads a type.
+             */
             enum Simple implements ClassLoadingDelegate {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
                 public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
                     return Class.forName(name, false, classLoader);
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.SuperTypeLoading.ClassLoadingDelegate.Simple." + name();
                 }
             }
         }
@@ -8507,13 +8543,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             private final ClassLoader classLoader;
 
+            /**
+             * A delegate for loading a type.
+             */
             private final ClassLoadingDelegate classLoadingDelegate;
 
             /**
              * Creates a class loading type description.
              *
-             * @param delegate    The delegate type description.
-             * @param classLoader The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
+             * @param delegate             The delegate type description.
+             * @param classLoader          The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
+             * @param classLoadingDelegate A delegate for loading a type.
              */
             protected ClassLoadingTypeProjection(Generic delegate, ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
                 this.delegate = delegate;
@@ -8589,13 +8629,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             private final ClassLoader classLoader;
 
+            /**
+             * A delegate for loading a type.
+             */
             private final ClassLoadingDelegate classLoadingDelegate;
 
             /**
              * Creates a class loading type list.
              *
-             * @param delegate    The delegate type list.
-             * @param classLoader The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
+             * @param delegate             The delegate type list.
+             * @param classLoader          The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
+             * @param classLoadingDelegate A delegate for loading a type.
              */
             protected ClassLoadingTypeList(TypeList.Generic delegate, ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
                 this.delegate = delegate;

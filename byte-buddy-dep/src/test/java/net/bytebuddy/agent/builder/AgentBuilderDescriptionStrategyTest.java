@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class AgentBuilderDescriptionStrategyTest {
@@ -38,6 +39,7 @@ public class AgentBuilderDescriptionStrategyTest {
         TypeDescription typeDescription = AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class.getName(),
                 Object.class,
                 typePool,
+                mock(AgentBuilder.CircularityLock.class),
                 Object.class.getClassLoader(),
                 JavaModule.ofType(Object.class));
         assertThat(typeDescription, is(TypeDescription.OBJECT));
@@ -50,6 +52,7 @@ public class AgentBuilderDescriptionStrategyTest {
         TypeDescription typeDescription = AgentBuilder.DescriptionStrategy.Default.HYBRID.apply(Object.class.getName(),
                 null,
                 typePool,
+                mock(AgentBuilder.CircularityLock.class),
                 Object.class.getClassLoader(),
                 JavaModule.ofType(Object.class));
         assertThat(typeDescription, is(this.typeDescription));
@@ -61,6 +64,7 @@ public class AgentBuilderDescriptionStrategyTest {
         assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.apply(Object.class.getName(),
                 Object.class,
                 typePool,
+                mock(AgentBuilder.CircularityLock.class),
                 Object.class.getClassLoader(),
                 JavaModule.ofType(Object.class)), is(typeDescription));
     }
@@ -69,5 +73,6 @@ public class AgentBuilderDescriptionStrategyTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.Default.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.UnlockingClassLoadingDelegate.class).apply();
     }
 }
