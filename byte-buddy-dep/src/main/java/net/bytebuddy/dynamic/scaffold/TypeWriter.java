@@ -3917,7 +3917,7 @@ public interface TypeWriter<T> {
                                 instrumentedType,
                                 methodPool,
                                 annotationValueFilterFactory,
-                                (writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6),
+                                (writerFlags & ClassWriter.COMPUTE_FRAMES) == 0 && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6),
                                 (readerFlags & ClassReader.EXPAND_FRAMES) != 0));
                     } else {
                         MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);

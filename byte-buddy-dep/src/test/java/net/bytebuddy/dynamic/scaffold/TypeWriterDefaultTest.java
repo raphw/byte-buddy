@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -25,6 +26,8 @@ import net.bytebuddy.utility.JavaConstant;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
 import java.io.Serializable;
@@ -378,6 +381,26 @@ public class TypeWriterDefaultTest {
     public void testTypeInitializerOnRebasedLegacyInterface() throws Exception {
         assertThat(new ByteBuddy()
                 .rebase(Class.forName(LEGACY_INTERFACE))
+                .invokable(isTypeInitializer())
+                .intercept(StubMethod.INSTANCE)
+                .make(), notNullValue(DynamicType.class));
+    }
+
+    @Test
+    public void testTypeInitializerOnRebasedInterfaceWithFrameComputation() throws Exception {
+        assertThat(new ByteBuddy()
+                .makeInterface()
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES))
+                .invokable(isTypeInitializer())
+                .intercept(StubMethod.INSTANCE)
+                .make(), notNullValue(DynamicType.class));
+    }
+
+    @Test
+    public void testTypeInitializerOnRebasedInterfaceWithFrameExpansion() throws Exception {
+        assertThat(new ByteBuddy()
+                .makeInterface()
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().readerFlags(ClassReader.EXPAND_FRAMES))
                 .invokable(isTypeInitializer())
                 .intercept(StubMethod.INSTANCE)
                 .make(), notNullValue(DynamicType.class));
