@@ -2,6 +2,7 @@ package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.scaffold.TypeInitializer;
+import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -11,7 +12,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -21,6 +21,9 @@ public class TypeInitializerTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
+    private TypeWriter.MethodPool.Record record, expanded;
 
     @Mock
     private ByteCodeAppender byteCodeAppender;
@@ -44,9 +47,17 @@ public class TypeInitializerTest {
         assertThat(TypeInitializer.None.INSTANCE.isDefined(), is(false));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testNoneThrowsExceptionOnApplication() throws Exception {
-        TypeInitializer.None.INSTANCE.apply(methodVisitor, implementationContext, methodDescription);
+        ByteCodeAppender.Size size = TypeInitializer.None.INSTANCE.apply(methodVisitor, implementationContext, methodDescription);
+        assertThat(size.getOperandStackSize(), is(0));
+        assertThat(size.getLocalVariableSize(), is(0));
+        verifyZeroInteractions(methodDescription);
+    }
+
+    @Test
+    public void testNoneWrap() throws Exception {
+        assertThat(TypeInitializer.None.INSTANCE.wrap(record), is(record));
     }
 
     @Test
@@ -66,8 +77,14 @@ public class TypeInitializerTest {
     }
 
     @Test
+    public void testSimpleWrap() throws Exception {
+        when(record.prepend(byteCodeAppender)).thenReturn(expanded);
+        assertThat(new TypeInitializer.Simple(byteCodeAppender).wrap(record), is(expanded));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeInitializer.Simple.class).apply();
         ObjectPropertyAssertion.of(TypeInitializer.None.class).apply();
+        ObjectPropertyAssertion.of(TypeInitializer.Simple.class).apply();
     }
 }

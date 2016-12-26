@@ -466,11 +466,18 @@ public interface TypeWriter<T> {
             /**
              * A canonical implementation of a method that is not declared but inherited by the instrumented type.
              */
-            class ForUndefinedMethod implements Record {
+            class ForNonImplementedMethod implements Record {
 
+                /**
+                 * The undefined method.
+                 */
                 private final MethodDescription methodDescription;
 
-                public ForUndefinedMethod(MethodDescription methodDescription) {
+                /**
+                 * Creates a new undefined record.
+                 * @param methodDescription  The undefined method.
+                 */
+                public ForNonImplementedMethod(MethodDescription methodDescription) {
                     this.methodDescription = methodDescription;
                 }
 
@@ -518,6 +525,26 @@ public interface TypeWriter<T> {
                 public Record prepend(ByteCodeAppender byteCodeAppender) {
                     return new ForDefinedMethod.WithBody(methodDescription, new ByteCodeAppender.Compound(byteCodeAppender,
                             new ByteCodeAppender.Simple(DefaultValue.of(methodDescription.getReturnType()), MethodReturn.of(methodDescription.getReturnType()))));
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForNonImplementedMethod that = (ForNonImplementedMethod) object;
+                    return methodDescription.equals(that.methodDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    return methodDescription.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeWriter.MethodPool.Record.ForNonImplementedMethod{" +
+                            "methodDescription=" + methodDescription +
+                            '}';
                 }
             }
 
@@ -3239,12 +3266,31 @@ public interface TypeWriter<T> {
                         '}';
             }
 
+            /**
+             * An initialization handler is responsible for handling the creation of the type initializer.
+             */
             protected interface InitializationHandler {
 
+                /**
+                 * Invoked upon completion of writing the instrumented type.
+                 *
+                 * @param classVisitor          The class visitor to write any methods to.
+                 * @param implementationContext The implementation context to use.
+                 */
                 void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext);
 
+                /**
+                 * An initialization handler that creates a new type initializer.
+                 */
                 class Creating extends TypeInitializer.Drain.Default implements InitializationHandler {
 
+                    /**
+                     * Creates a new creating initialization handler.
+                     *
+                     * @param instrumentedType             The instrumented type.
+                     * @param methodPool                   The method pool to use.
+                     * @param annotationValueFilterFactory The annotation value filter factory to use.
+                     */
                     protected Creating(TypeDescription instrumentedType,
                                        MethodPool methodPool,
                                        AnnotationValueFilter.Factory annotationValueFilterFactory) {
@@ -3255,26 +3301,72 @@ public interface TypeWriter<T> {
                     public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
                         implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ForInlining.InitializationHandler.Creating{" +
+                                "instrumentedType=" + instrumentedType +
+                                ", methodPool=" + methodPool +
+                                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
+                                "}";
+                    }
                 }
 
+                /**
+                 * An initialization handler that appends code to a c previously visited type initializer.
+                 */
                 abstract class Appending extends MethodVisitor implements InitializationHandler, TypeInitializer.Drain {
 
+                    /**
+                     * The instrumented type.
+                     */
                     protected final TypeDescription instrumentedType;
 
+                    /**
+                     * The method pool record for the type initializer.
+                     */
                     protected final MethodPool.Record record;
 
+                    /**
+                     * The used annotation value filter factory.
+                     */
                     protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
 
+                    /**
+                     * The frame writer to use.
+                     */
                     protected final FrameWriter frameWriter;
 
+                    /**
+                     * A label marking the beginning of the appended code.
+                     */
                     protected final Label appended;
 
+                    /**
+                     * A label marking the beginning og the original type initializer's code.
+                     */
                     protected final Label original;
 
+                    /**
+                     * The currently recorded stack size.
+                     */
                     protected int stackSize;
 
+                    /**
+                     * The currently recorded local variable length.
+                     */
                     protected int localVariableLength;
 
+                    /**
+                     * Creates a new appending initialization handler.
+                     *
+                     * @param methodVisitor                The underlying method visitor.
+                     * @param instrumentedType             The instrumented type.
+                     * @param record                       The method pool record for the type initializer.
+                     * @param annotationValueFilterFactory The used annotation value filter factory.
+                     * @param requireFrames                {@code true} if the visitor is required to add frames.
+                     * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                     */
                     protected Appending(MethodVisitor methodVisitor,
                                         TypeDescription instrumentedType,
                                         MethodPool.Record record,
@@ -3296,6 +3388,17 @@ public interface TypeWriter<T> {
                         original = new Label();
                     }
 
+                    /**
+                     * Creates a new initialization handler that is appropriate for the supplied arguments.
+                     *
+                     * @param methodVisitor                The underlying method visitor.
+                     * @param instrumentedType             The instrumented type.
+                     * @param methodPool                   The method pool to use.
+                     * @param annotationValueFilterFactory The used annotation value filter factory.
+                     * @param requireFrames                {@code true} if the visitor is required to add frames.
+                     * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                     * @return An appropriate initialization handler which is required to also be a {@link MethodVisitor}.
+                     */
                     protected static InitializationHandler of(MethodVisitor methodVisitor,
                                                               TypeDescription instrumentedType,
                                                               MethodPool methodPool,
@@ -3304,8 +3407,8 @@ public interface TypeWriter<T> {
                                                               boolean expandFrames) {
                         MethodPool.Record record = methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
                         return record.getSort().isImplemented()
-                                ? new WithRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
-                                : new WithoutRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                ? new WithActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
+                                : new WithoutActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
                     }
 
                     @Override
@@ -3337,11 +3440,9 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
-                        if (typeInitializer.isDefined()) {
-                            ByteCodeAppender.Size size = typeInitializer.apply(mv, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
-                            stackSize = Math.max(stackSize, size.getOperandStackSize());
-                            localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
-                        }
+                        ByteCodeAppender.Size size = typeInitializer.apply(mv, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
+                        stackSize = Math.max(stackSize, size.getOperandStackSize());
+                        localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
                         mv.visitJumpInsn(Opcodes.GOTO, original);
                         onComplete(implementationContext);
                     }
@@ -3353,18 +3454,46 @@ public interface TypeWriter<T> {
                         mv.visitEnd();
                     }
 
+                    /**
+                     * Invoked upon completion of writing the type initializer.
+                     *
+                     * @param implementationContext The implementation context to use.
+                     */
                     protected abstract void onComplete(Implementation.Context implementationContext);
 
+                    /**
+                     * A frame writer is responsible for adding empty frames on jumo instructions.
+                     */
                     protected interface FrameWriter {
 
+                        /**
+                         * An empty array.
+                         */
                         Object[] EMPTY = new Object[0];
 
+                        /**
+                         * Informs this frame writer of an observed frame.
+                         *
+                         * @param type                The frame type.
+                         * @param localVariableLength The length of the local variables array.
+                         */
                         void onFrame(int type, int localVariableLength);
 
+                        /**
+                         * Emits an empty frame.
+                         *
+                         * @param methodVisitor The method visitor to write the frame to.
+                         */
                         void emitFrame(MethodVisitor methodVisitor);
 
+                        /**
+                         * A non-operational frame writer.
+                         */
                         enum NoOp implements FrameWriter {
 
+                            /**
+                             * The singleton instance.
+                             */
                             INSTANCE;
 
                             @Override
@@ -3376,10 +3505,21 @@ public interface TypeWriter<T> {
                             public void emitFrame(MethodVisitor methodVisitor) {
                                 /* do nothing */
                             }
+
+                            @Override
+                            public String toString() {
+                                return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.NoOp." + name();
+                            }
                         }
 
+                        /**
+                         * A frame writer that creates an expanded frame.
+                         */
                         enum Expanding implements FrameWriter {
 
+                            /**
+                             * The singleton instance.
+                             */
                             INSTANCE;
 
                             @Override
@@ -3391,10 +3531,21 @@ public interface TypeWriter<T> {
                             public void emitFrame(MethodVisitor methodVisitor) {
                                 methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                             }
+
+                            @Override
+                            public String toString() {
+                                return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.Expanding." + name();
+                            }
                         }
 
+                        /**
+                         * An active frame writer that creates the most efficient frame.
+                         */
                         class Active implements FrameWriter {
 
+                            /**
+                             * The current length of the current local variable array.
+                             */
                             private int currentLocalVariableLength;
 
                             @Override
@@ -3426,40 +3577,84 @@ public interface TypeWriter<T> {
                                 } else if (currentLocalVariableLength > 3) {
                                     methodVisitor.visitFrame(Opcodes.F_FULL, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                                 } else {
-                                    methodVisitor.visitFrame(Opcodes.F_CHOP, EMPTY.length, EMPTY, -currentLocalVariableLength, EMPTY);
+                                    methodVisitor.visitFrame(Opcodes.F_CHOP, currentLocalVariableLength, EMPTY, EMPTY.length, EMPTY);
                                 }
+                                currentLocalVariableLength = 0;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.Active{" +
+                                        "currentLocalVariableLength=" + currentLocalVariableLength +
+                                        '}';
                             }
                         }
                     }
 
-                    protected static class WithoutRecord extends Appending {
+                    /**
+                     * A code appending initialization handler that does not apply an explicit record.
+                     */
+                    protected static class WithoutActiveRecord extends Appending {
 
-                        protected WithoutRecord(MethodVisitor methodVisitor,
-                                                TypeDescription instrumentedType,
-                                                MethodPool.Record record,
-                                                AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                boolean requireFrame,
-                                                boolean expandFrames) {
-                            super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrame, expandFrames);
+                        /**
+                         * Creates a new appending initialization handler without an active record.
+                         *
+                         * @param methodVisitor                The underlying method visitor.
+                         * @param instrumentedType             The instrumented type.
+                         * @param record                       The method pool record for the type initializer.
+                         * @param annotationValueFilterFactory The used annotation value filter factory.
+                         * @param requireFrames                {@code true} if the visitor is required to add frames.
+                         * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                         */
+                        protected WithoutActiveRecord(MethodVisitor methodVisitor,
+                                                      TypeDescription instrumentedType,
+                                                      MethodPool.Record record,
+                                                      AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                      boolean requireFrames,
+                                                      boolean expandFrames) {
+                            super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
                         }
 
                         @Override
                         protected void onComplete(Implementation.Context implementationContext) {
                             /* do nothing */
                         }
+
+                        @Override
+                        public String toString() {
+                            return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.WithoutActiveRecord{" +
+                                    "instrumentedType=" + instrumentedType +
+                                    '}';
+                        }
                     }
 
-                    protected static class WithRecord extends Appending {
+                    /**
+                     * A code appending initialization handler that applies an explicit record.
+                     */
+                    protected static class WithActiveRecord extends Appending {
 
+                        /**
+                         * A label indicating the beginning of the record's code.
+                         */
                         private final Label label;
 
-                        protected WithRecord(MethodVisitor methodVisitor,
-                                             TypeDescription instrumentedType,
-                                             MethodPool.Record record,
-                                             AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                             boolean requireFrame,
-                                             boolean expandFrames) {
-                            super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrame, expandFrames);
+                        /**
+                         * Creates a new appending initialization handler with an active record.
+                         *
+                         * @param methodVisitor                The underlying method visitor.
+                         * @param instrumentedType             The instrumented type.
+                         * @param record                       The method pool record for the type initializer.
+                         * @param annotationValueFilterFactory The used annotation value filter factory.
+                         * @param requireFrames                {@code true} if the visitor is required to add frames.
+                         * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                         */
+                        protected WithActiveRecord(MethodVisitor methodVisitor,
+                                                   TypeDescription instrumentedType,
+                                                   MethodPool.Record record,
+                                                   AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                   boolean requireFrames,
+                                                   boolean expandFrames) {
+                            super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
                             label = new Label();
                         }
 
@@ -3479,6 +3674,14 @@ public interface TypeWriter<T> {
                             ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
                             stackSize = Math.max(stackSize, size.getOperandStackSize());
                             localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.WithActiveRecord{" +
+                                    "instrumentedType=" + instrumentedType +
+                                    ", label=" + label +
+                                    '}';
                         }
                     }
                 }
@@ -3558,8 +3761,14 @@ public interface TypeWriter<T> {
                  */
                 private final Map<String, MethodDescription> declarableMethods;
 
+                /**
+                 * The method pool to use or {@code null} if the pool was not yet initialized.
+                 */
                 private MethodPool methodPool;
 
+                /**
+                 * The initialization handler to use or {@code null} if the handler was not yet initialized.
+                 */
                 private InitializationHandler initializationHandler;
 
                 /**
@@ -3756,6 +3965,7 @@ public interface TypeWriter<T> {
                             ", declaredFields=" + declaredFields +
                             ", declarableMethods=" + declarableMethods +
                             ", methodPool=" + methodPool +
+                            ", initializationHandler=" + initializationHandler +
                             '}';
                 }
 
@@ -4080,7 +4290,7 @@ public interface TypeWriter<T> {
                 }
                 implementationContext.drain(new TypeInitializer.Drain.Default(instrumentedType,
                         methodPool,
-                        annotationValueFilterFactory), classVisitor, annotationValueFilterFactory); // TODO: Simplify
+                        annotationValueFilterFactory), classVisitor, annotationValueFilterFactory);
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
             }

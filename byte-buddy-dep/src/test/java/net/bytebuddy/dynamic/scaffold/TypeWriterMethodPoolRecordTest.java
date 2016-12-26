@@ -113,7 +113,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testSkippedMethod() throws Exception {
-        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForUndefinedMethod(methodDescription);
+        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForNonImplementedMethod(methodDescription);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.SKIPPED));
         assertThat(record.getMethod(), is(methodDescription));
         record.apply(classVisitor, implementationContext, annotationValueFilterFactory);
@@ -124,19 +124,19 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testSkippedMethodCannotBePrepended() throws Exception {
-        assertThat(new TypeWriter.MethodPool.Record.ForUndefinedMethod(methodDescription).prepend(byteCodeAppender), is((TypeWriter.MethodPool.Record)
+        assertThat(new TypeWriter.MethodPool.Record.ForNonImplementedMethod(methodDescription).prepend(byteCodeAppender), is((TypeWriter.MethodPool.Record)
                 new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
                         new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(NullConstant.INSTANCE, MethodReturn.REFERENCE)))));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotApplyBody() throws Exception {
-        new TypeWriter.MethodPool.Record.ForUndefinedMethod(methodDescription).applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
+        new TypeWriter.MethodPool.Record.ForNonImplementedMethod(methodDescription).applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotApplyHead() throws Exception {
-        new TypeWriter.MethodPool.Record.ForUndefinedMethod(methodDescription).applyHead(methodVisitor);
+        new TypeWriter.MethodPool.Record.ForNonImplementedMethod(methodDescription).applyHead(methodVisitor);
     }
 
     @Test
@@ -476,7 +476,7 @@ public class TypeWriterMethodPoolRecordTest {
         ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForUndefinedMethod.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForNonImplementedMethod.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.AccessBridgeWrapper.class).apply();
     }
 }
