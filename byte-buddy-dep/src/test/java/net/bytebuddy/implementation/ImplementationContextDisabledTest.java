@@ -79,8 +79,6 @@ public class ImplementationContextDisabledTest {
         new Implementation.Context.Disabled(instrumentedType, classFileVersion).register(mock(AuxiliaryType.class));
     }
 
-    // TODO: Test coverage!
-
     @Test
     public void testClassFileVersion() throws Exception {
         assertThat(new Implementation.Context.Disabled(instrumentedType, classFileVersion).getClassFileVersion(), is(classFileVersion));

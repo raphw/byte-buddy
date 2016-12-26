@@ -88,12 +88,6 @@ public class ImplementationContextDefaultTest {
     private FieldVisitor fieldVisitor;
 
     @Mock
-    private TypeWriter.MethodPool methodPool;
-
-    @Mock
-    private TypeWriter.MethodPool.Record record, otherRecord;
-
-    @Mock
     private AuxiliaryType auxiliaryType, otherAuxiliaryType;
 
     @Mock
@@ -139,7 +133,7 @@ public class ImplementationContextDefaultTest {
     private AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
     @Mock
-    private TypeDescription firstSpecialType, secondSpecialType, firstDeclaringType, secondDeclaringType;
+    private TypeDescription firstSpecialType, secondSpecialType;
 
     @Mock
     private FieldDescription.InDefinedShape firstField, secondField;
@@ -152,6 +146,9 @@ public class ImplementationContextDefaultTest {
     @Mock
     private AnnotationValueFilter.Factory annotationValueFilterFactory;
 
+    @Mock
+    private TypeInitializer.Drain drain;
+
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -160,7 +157,6 @@ public class ImplementationContextDefaultTest {
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
         when(instrumentedType.isInterface()).thenReturn(interfaceType);
-        when(methodPool.target(any(MethodDescription.class))).thenReturn(record);
         when(auxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
                 .thenReturn(firstDynamicType);
         when(firstDynamicType.getTypeDescription()).thenReturn(firstDescription);
@@ -264,7 +260,7 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialMethod.getDeclaringType()).thenReturn(secondSpecialType);
         when(secondSpecialType.asErasure()).thenReturn(secondSpecialType);
     }
-/*
+
     @Test
     public void testInitialContextIsEmpty() throws Exception {
         Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
@@ -273,15 +269,12 @@ public class ImplementationContextDefaultTest {
                 typeInitializer,
                 auxiliaryClassFileVersion);
         assertThat(implementationContext.getAuxiliaryTypes().size(), is(0));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verifyZeroInteractions(classVisitor);
-        verify(methodPool).target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
-        verifyNoMoreInteractions(methodPool);
-        verify(injectedCode).isDefined();
-        verifyNoMoreInteractions(injectedCode);
+        verify(drain).apply(classVisitor, typeInitializer, implementationContext);
+        verifyNoMoreInteractions(drain);
     }
-*/
+
     @Test
     public void testAuxiliaryTypeRegistration() throws Exception {
         Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
@@ -302,7 +295,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.getAuxiliaryTypes().contains(firstDynamicType), is(true));
         assertThat(implementationContext.getAuxiliaryTypes().contains(secondDynamicType), is(true));
     }
-/*
+
     @Test
     public void testDrainEmpty() throws Exception {
         Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
@@ -310,9 +303,10 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verifyZeroInteractions(classVisitor);
+        verify(drain).apply(classVisitor, typeInitializer, implementationContext);
+        verifyNoMoreInteractions(drain);
     }
 
     @Test
@@ -322,13 +316,11 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verifyZeroInteractions(classVisitor);
-        verify(typeInitializer).isDefined();
-        verifyNoMoreInteractions(typeInitializer);
-        verify(injectedCode).isDefined();
-        verifyNoMoreInteractions(injectedCode);
+        verifyZeroInteractions(typeInitializer);
+        verify(drain).apply(classVisitor, typeInitializer, implementationContext);
+        verifyNoMoreInteractions(drain);
     }
 
     @Test
@@ -338,85 +330,11 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
-        verify(record).getSort();
-        verify(record).apply(classVisitor, implementationContext, annotationValueFilterFactory);
-        verifyNoMoreInteractions(record);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verifyZeroInteractions(classVisitor);
-        verify(typeInitializer, atLeast(1)).isDefined();
-        verifyNoMoreInteractions(typeInitializer);
-        verify(injectedCode, atLeast(1)).isDefined();
-        verifyNoMoreInteractions(injectedCode);
-    }
-
-    @Test
-    public void testDrainNoUserCodeInjectedCodeNoTypeInitializer() throws Exception {
-        Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
-                classFileVersion,
-                auxiliaryTypeNamingStrategy,
-                typeInitializer,
-                auxiliaryClassFileVersion);
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        when(injectedCode.isDefined()).thenReturn(true);
-        when(otherTypeInitializer.isDefined()).thenReturn(true);
-        when(typeInitializer.expandWith(injectedCodeAppender)).thenReturn(otherTypeInitializer);
-        when(otherTypeInitializer.withReturn()).thenReturn(terminationAppender);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
-        verify(record).getSort();
-        verify(typeInitializer).expandWith(injectedCodeAppender);
-        verifyNoMoreInteractions(typeInitializer);
-        verify(injectedCode, atLeast(1)).isDefined();
-        verify(injectedCode).getByteCodeAppender();
-        verifyNoMoreInteractions(injectedCode);
-        verify(otherTypeInitializer, atLeast(1)).isDefined();
-        verify(otherTypeInitializer).withReturn();
-        verifyNoMoreInteractions(otherTypeInitializer);
-        verify(terminationAppender).apply(methodVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
-        verifyNoMoreInteractions(terminationAppender);
-    }
-
-    @Test
-    public void testDrainNoUserCodeNoInjectedCodeTypeInitializer() throws Exception {
-        Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
-                classFileVersion,
-                auxiliaryTypeNamingStrategy,
-                typeInitializer,
-                auxiliaryClassFileVersion);
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        when(typeInitializer.isDefined()).thenReturn(true);
-        when(typeInitializer.withReturn()).thenReturn(terminationAppender);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
-        verify(record).getSort();
-        verifyNoMoreInteractions(record);
-        verify(typeInitializer, atLeast(1)).isDefined();
-        verify(typeInitializer).withReturn();
-        verifyNoMoreInteractions(typeInitializer);
-        verify(injectedCode, atLeast(1)).isDefined();
-        verifyNoMoreInteractions(injectedCode);
-        verify(terminationAppender).apply(methodVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
-        verifyNoMoreInteractions(terminationAppender);
-    }
-
-    @Test
-    public void testDrainUserCodeNoInjectedCodeTypeInitializer() throws Exception {
-        Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
-                classFileVersion,
-                auxiliaryTypeNamingStrategy,
-                typeInitializer,
-                auxiliaryClassFileVersion);
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED);
-        when(typeInitializer.isDefined()).thenReturn(true);
-        when(record.prepend(typeInitializer)).thenReturn(otherRecord);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
-        verify(record).getSort();
-        verify(record).prepend(typeInitializer);
-        verifyNoMoreInteractions(record);
-        verify(otherRecord).apply(classVisitor, implementationContext, annotationValueFilterFactory);
-        verify(typeInitializer, atLeast(1)).isDefined();
-        verifyNoMoreInteractions(typeInitializer);
-        verify(injectedCode, atLeast(1)).isDefined();
-        verifyNoMoreInteractions(injectedCode);
+        verifyZeroInteractions(typeInitializer);
+        verify(drain).apply(classVisitor, typeInitializer, implementationContext);
+        verifyNoMoreInteractions(drain);
     }
 
     @Test
@@ -431,12 +349,10 @@ public class ImplementationContextDefaultTest {
         FieldDescription secondField = implementationContext.cache(secondFieldValue, secondRawFieldType);
         assertThat(implementationContext.cache(secondFieldValue, secondRawFieldType), is(secondField));
         assertThat(firstField.getName(), not(secondField.getName()));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
         when(typeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(otherTypeInitializer);
         when(otherTypeInitializer.expandWith(any(ByteCodeAppender.class))).thenReturn(thirdTypeInitializer);
-        when(thirdTypeInitializer.withReturn()).thenReturn(terminationAppender);
         when(thirdTypeInitializer.isDefined()).thenReturn(true);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitField(eq(cacheFieldModifiers),
                 Mockito.startsWith(Implementation.Context.Default.FIELD_CACHE_PREFIX),
                 eq(BAR),
@@ -449,10 +365,6 @@ public class ImplementationContextDefaultTest {
                 Mockito.isNull(Object.class));
         verify(typeInitializer).expandWith(any(ByteCodeAppender.class));
         verify(otherTypeInitializer).expandWith(any(ByteCodeAppender.class));
-        verify(thirdTypeInitializer).withReturn();
-        verify(thirdTypeInitializer).isDefined();
-        verify(terminationAppender).apply(methodVisitor, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
-        verifyNoMoreInteractions(terminationAppender);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -462,13 +374,10 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verifyZeroInteractions(classVisitor);
-        verify(methodPool).target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
-        verifyNoMoreInteractions(methodPool);
-        verify(injectedCode).isDefined();
-        verifyNoMoreInteractions(injectedCode);
+        verify(drain).apply(classVisitor, typeInitializer, implementationContext);
+        verifyNoMoreInteractions(drain);
         implementationContext.cache(firstFieldValue, firstRawFieldType);
     }
 
@@ -495,8 +404,7 @@ public class ImplementationContextDefaultTest {
         assertThat(secondMethodDescription.getExceptionTypes(), is(secondSpecialExceptionTypes));
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation), is(secondMethodDescription));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
@@ -512,8 +420,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion);
         MethodDescription firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation);
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
         verify(methodVisitor).visitCode();
@@ -535,8 +442,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion);
         MethodDescription secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation);
         assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation), is(secondMethodDescription));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + BAR + ")" + FOO), isNull(String.class), aryEq(new String[]{BAZ}));
         verify(methodVisitor).visitCode();
@@ -570,8 +476,7 @@ public class ImplementationContextDefaultTest {
         assertThat(secondFieldGetter.getExceptionTypes(), is((TypeList.Generic) new TypeList.Generic.Empty()));
         assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
         assertThat(implementationContext.registerGetterFor(secondField), is(secondFieldGetter));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("()" + BAR), isNull(String.class), isNull(String[].class));
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
@@ -587,8 +492,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion);
         MethodDescription firstMethodDescription = implementationContext.registerGetterFor(firstField);
         assertThat(implementationContext.registerGetterFor(firstField), is(firstMethodDescription));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("()" + BAR), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
@@ -609,8 +513,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion);
         MethodDescription secondMethodDescription = implementationContext.registerGetterFor(secondField);
         assertThat(implementationContext.registerGetterFor(secondField), is(secondMethodDescription));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("()" + QUX), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
@@ -643,8 +546,7 @@ public class ImplementationContextDefaultTest {
         assertThat(secondFieldSetter.getExceptionTypes(), is((TypeList.Generic) new TypeList.Generic.Empty()));
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         assertThat(implementationContext.registerSetterFor(secondField), is(secondFieldSetter));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
@@ -660,8 +562,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion);
         MethodDescription firstMethodDescription = implementationContext.registerSetterFor(firstField);
         assertThat(implementationContext.registerSetterFor(firstField), is(firstMethodDescription));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
@@ -683,8 +584,7 @@ public class ImplementationContextDefaultTest {
                 auxiliaryClassFileVersion);
         MethodDescription secondMethodDescription = implementationContext.registerSetterFor(secondField);
         assertThat(implementationContext.registerSetterFor(secondField), is(secondMethodDescription));
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.SKIPPED);
-        implementationContext.drain(classVisitor, methodPool, injectedCode, annotationValueFilterFactory);
+        implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));
         verify(methodVisitor).visitCode();
@@ -693,5 +593,5 @@ public class ImplementationContextDefaultTest {
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
         verify(methodVisitor).visitMaxs(1, 0);
         verify(methodVisitor).visitEnd();
-    }*/
+    }
 }

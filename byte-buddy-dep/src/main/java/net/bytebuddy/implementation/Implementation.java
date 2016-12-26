@@ -503,6 +503,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * to the provided class visitor. This contains any fields for value caching, any accessor method and it
              * writes the type initializer. The type initializer must therefore never be written manually.
              *
+             * @param drain                        The drain to write the type initializer to.
              * @param classVisitor                 The class visitor to which the extractable view is to be written.
              * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotation.
              */
