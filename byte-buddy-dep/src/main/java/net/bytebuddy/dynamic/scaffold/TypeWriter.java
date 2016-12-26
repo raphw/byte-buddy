@@ -28,6 +28,7 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
+import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
@@ -465,12 +466,13 @@ public interface TypeWriter<T> {
             /**
              * A canonical implementation of a method that is not declared but inherited by the instrumented type.
              */
-            enum ForUndefinedMethod implements Record {
+            class ForUndefinedMethod implements Record {
 
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
+                private final MethodDescription methodDescription;
+
+                public ForUndefinedMethod(MethodDescription methodDescription) {
+                    this.methodDescription = methodDescription;
+                }
 
                 @Override
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
@@ -499,14 +501,13 @@ public interface TypeWriter<T> {
 
                 @Override
                 public MethodDescription getMethod() {
-                    throw new IllegalStateException("A method that is not defined cannot be extracted");
+                    return methodDescription;
                 }
 
                 @Override
                 public Visibility getVisibility() {
-                    throw new IllegalStateException("A method that is not defined does not require a specific visibility");
+                    return methodDescription.getVisibility();
                 }
-
 
                 @Override
                 public Sort getSort() {
@@ -515,12 +516,8 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Record prepend(ByteCodeAppender byteCodeAppender) {
-                    throw new IllegalStateException("Cannot prepend code to non-implemented method");
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.MethodPool.Record.ForNonDefinedMethod." + name();
+                    return new ForDefinedMethod.WithBody(methodDescription, new ByteCodeAppender.Compound(byteCodeAppender,
+                            new ByteCodeAppender.Simple(DefaultValue.of(methodDescription.getReturnType()), MethodReturn.of(methodDescription.getReturnType()))));
                 }
             }
 

@@ -18,6 +18,7 @@ import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.matcher.ElementMatchers;
@@ -416,7 +417,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @Test(expected = IllegalStateException.class)
     public void testForbidTypeInitilizerInterception() throws Exception {
         createDisabledContext()
-                .invokable(isTypeInitializer()).intercept(StubMethod.INSTANCE)
+                .initializer(new ByteCodeAppender.Simple())
                 .make();
     }
 

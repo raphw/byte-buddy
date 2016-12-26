@@ -1056,7 +1056,7 @@ public interface MethodRegistry {
             public Record target(MethodDescription methodDescription) {
                 Entry entry = implementations.get(methodDescription);
                 return entry == null
-                        ? Record.ForUndefinedMethod.INSTANCE
+                        ? new Record.ForUndefinedMethod(methodDescription)
                         : entry.bind(instrumentedType, supportsBridges);
             }
 
@@ -1161,7 +1161,7 @@ public interface MethodRegistry {
                  */
                 protected Record bind(TypeDescription instrumentedType, boolean supportsBridges) {
                     if (bridgeMethod && !supportsBridges) {
-                        return Record.ForUndefinedMethod.INSTANCE;
+                        return new Record.ForUndefinedMethod(methodDescription);
                     }
                     Record record = handler.assemble(methodDescription, attributeAppender, visibility);
                     return supportsBridges

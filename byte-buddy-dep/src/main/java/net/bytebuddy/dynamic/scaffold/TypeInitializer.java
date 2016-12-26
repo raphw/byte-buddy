@@ -30,13 +30,7 @@ public interface TypeInitializer extends ByteCodeAppender {
      */
     TypeInitializer expandWith(ByteCodeAppender byteCodeAppender);
 
-    /**
-     * Returns this type initializer with an ending return statement. For this to be possible, this type initializer must
-     * be defined.
-     *
-     * @return This type initializer with an ending return statement.
-     */
-    ByteCodeAppender withReturn();
+    TypeWriter.MethodPool.Record wrap(TypeWriter.MethodPool.Record record);
 
     interface Drain {
 
@@ -60,14 +54,9 @@ public interface TypeInitializer extends ByteCodeAppender {
 
             @Override
             public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
-                MethodDescription typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
-                TypeWriter.MethodPool.Record initializerRecord = methodPool.target(typeInitializerMethod);
-                if (initializerRecord.getSort().isImplemented() && typeInitializer.isDefined()) {
-                    initializerRecord = initializerRecord.prepend(typeInitializer); // TODO: Automate?
-                } else if (typeInitializer.isDefined()) {
-                    initializerRecord = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(typeInitializerMethod, typeInitializer.withReturn());
-                }
-                initializerRecord.apply(classVisitor, implementationContext, annotationValueFilterFactory);
+                typeInitializer.wrap(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType))).apply(classVisitor,
+                        implementationContext,
+                        annotationValueFilterFactory);
             }
         }
     }
@@ -93,8 +82,8 @@ public interface TypeInitializer extends ByteCodeAppender {
         }
 
         @Override
-        public ByteCodeAppender withReturn() {
-            throw new IllegalStateException("Cannot append return to non-defined type initializer");
+        public TypeWriter.MethodPool.Record wrap(TypeWriter.MethodPool.Record record) {
+            return record;
         }
 
         @Override
@@ -138,8 +127,8 @@ public interface TypeInitializer extends ByteCodeAppender {
         }
 
         @Override
-        public ByteCodeAppender withReturn() {
-            return new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(MethodReturn.VOID));
+        public TypeWriter.MethodPool.Record wrap(TypeWriter.MethodPool.Record record) {
+            return record.prepend(byteCodeAppender);
         }
 
         @Override
