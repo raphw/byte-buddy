@@ -3260,50 +3260,70 @@ public interface TypeWriter<T> {
                     }
                 }
 
-                class Appending extends MethodVisitor implements InitializationHandler, TypeInitializer.Drain {
+                abstract class Appending extends MethodVisitor implements InitializationHandler, TypeInitializer.Drain {
 
-                    private static final Object[] EMPTY = new Object[0];
+                    protected final TypeDescription instrumentedType;
 
-                    private final MethodDescription typeInitializerMethod;
+                    protected final MethodPool.Record record;
 
-                    private final AnnotationValueFilter.Factory annotationValueFilterFactory;
+                    protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
 
-                    private final boolean requireFrame;
+                    protected final FrameWriter frameWriter;
 
-                    private final MethodPool.Record initializerRecord;
+                    protected final Label appended;
 
-                    private final Label label;
+                    protected final Label original;
 
-                    private int stackSize;
+                    protected int stackSize;
 
-                    private int localVariableLength;
+                    protected int localVariableLength;
 
                     protected Appending(MethodVisitor methodVisitor,
                                         TypeDescription instrumentedType,
-                                        MethodPool methodPool,
+                                        MethodPool.Record record,
                                         AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                        Implementation.Context implementationContext) {
+                                        boolean requireFrames,
+                                        boolean expandFrames) {
                         super(Opcodes.ASM5, methodVisitor);
-                        typeInitializerMethod = new MethodDescription.Latent.TypeInitializer(instrumentedType);
+                        this.instrumentedType = instrumentedType;
+                        this.record = record;
                         this.annotationValueFilterFactory = annotationValueFilterFactory;
-                        requireFrame = implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6);
-                        initializerRecord = methodPool.target(typeInitializerMethod);
-                        label = new Label();
+                        if (!requireFrames) {
+                            frameWriter = FrameWriter.NoOp.INSTANCE;
+                        } else if (expandFrames) {
+                            frameWriter = FrameWriter.Expanding.INSTANCE;
+                        } else {
+                            frameWriter = new FrameWriter.Active();
+                        }
+                        appended = new Label();
+                        original = new Label();
+                    }
+
+                    protected static InitializationHandler of(MethodVisitor methodVisitor,
+                                                              TypeDescription instrumentedType,
+                                                              MethodPool methodPool,
+                                                              AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                              boolean requireFrames,
+                                                              boolean expandFrames) {
+                        MethodPool.Record record = methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
+                        return record.getSort().isImplemented()
+                                ? new WithRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
+                                : new WithoutRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
                     }
 
                     @Override
                     public void visitCode() {
-                        initializerRecord.applyAttributes(mv, annotationValueFilterFactory);
+                        record.applyAttributes(mv, annotationValueFilterFactory);
                         super.visitCode();
+                        mv.visitJumpInsn(Opcodes.GOTO, appended);
+                        mv.visitLabel(original);
+                        frameWriter.emitFrame(mv);
                     }
 
                     @Override
-                    public void visitInsn(int opcode) {
-                        if (opcode == Opcodes.RETURN) {
-                            mv.visitJumpInsn(Opcodes.GOTO, label);
-                        } else {
-                            super.visitInsn(opcode);
-                        }
+                    public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
+                        super.visitFrame(type, nLocal, local, nStack, stack);
+                        frameWriter.onFrame(type, nLocal, nStack);
                     }
 
                     @Override
@@ -3314,35 +3334,155 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitEnd() {
-                        mv.visitLabel(label);
-                        if (requireFrame) {
-                            mv.visitFrame(Opcodes.F_FULL, 0, EMPTY, 0, EMPTY);
-                        }
+                        mv.visitLabel(appended);
+                        frameWriter.emitFrame(mv);
                     }
 
                     @Override
                     public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
                         if (typeInitializer.isDefined()) {
-                            ByteCodeAppender.Size size = typeInitializer.apply(mv, implementationContext, typeInitializerMethod);
+                            ByteCodeAppender.Size size = typeInitializer.apply(mv, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
                             stackSize = Math.max(stackSize, size.getOperandStackSize());
                             localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
                         }
-                        if (initializerRecord.getSort().isDefined()) {
-                            initializerRecord.applyAttributes(mv, annotationValueFilterFactory);
-                        }
-                        if (initializerRecord.getSort().isImplemented()) {
-                            ByteCodeAppender.Size size = initializerRecord.applyCode(mv, implementationContext);
-                            stackSize = Math.max(stackSize, size.getOperandStackSize());
-                            localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
-                        } else {
-                            mv.visitInsn(Opcodes.RETURN);
-                            mv.visitMaxs(stackSize, localVariableLength);
-                        }
+                        mv.visitJumpInsn(Opcodes.GOTO, original);
                     }
 
                     @Override
                     public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
                         implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
+                        onComplete(implementationContext);
+                        mv.visitMaxs(stackSize, localVariableLength);
+                        mv.visitEnd();
+                    }
+
+                    protected abstract void onComplete(Implementation.Context implementationContext);
+
+                    protected interface FrameWriter {
+
+                        Object[] EMPTY = new Object[0];
+
+                        void onFrame(int type, int stackSize, int localVariableLength);
+
+                        void emitFrame(MethodVisitor methodVisitor);
+
+                        enum NoOp implements FrameWriter {
+
+                            INSTANCE;
+
+                            @Override
+                            public void onFrame(int type, int stackSize, int localVariableLength) {
+                                /* do nothing */
+                            }
+
+                            @Override
+                            public void emitFrame(MethodVisitor methodVisitor) {
+                                /* do nothing */
+                            }
+                        }
+
+                        enum Expanding implements FrameWriter {
+
+                            INSTANCE;
+
+                            @Override
+                            public void onFrame(int type, int stackSize, int localVariableLength) {
+                                /* do nothing */
+                            }
+
+                            @Override
+                            public void emitFrame(MethodVisitor methodVisitor) {
+                                methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                            }
+                        }
+
+                        class Active implements FrameWriter {
+
+                            private int currentLocalVariableLength;
+
+                            @Override
+                            public void onFrame(int type, int stackSize, int localVariableLength) {
+                                switch (type) {
+                                    case Opcodes.F_SAME:
+                                    case Opcodes.F_SAME1:
+                                        currentLocalVariableLength = 0;
+                                        break;
+                                    case Opcodes.F_APPEND:
+                                        currentLocalVariableLength += localVariableLength;
+                                        break;
+                                    case Opcodes.F_CHOP:
+                                        currentLocalVariableLength -= localVariableLength;
+                                        break;
+                                    case Opcodes.F_NEW:
+                                    case Opcodes.F_FULL:
+                                        currentLocalVariableLength = localVariableLength;
+                                        break;
+                                    default:
+                                        throw new IllegalStateException();
+                                }
+                            }
+
+                            @Override
+                            public void emitFrame(MethodVisitor methodVisitor) {
+                                if (currentLocalVariableLength == 0) {
+                                    methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                                } else if (currentLocalVariableLength > 3) {
+                                    methodVisitor.visitFrame(Opcodes.F_FULL, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
+                                } else {
+                                    methodVisitor.visitFrame(Opcodes.F_CHOP, EMPTY.length, EMPTY, -currentLocalVariableLength, EMPTY);
+                                }
+                            }
+                        }
+                    }
+
+                    protected static class WithoutRecord extends Appending {
+
+                        protected WithoutRecord(MethodVisitor methodVisitor,
+                                                TypeDescription instrumentedType,
+                                                MethodPool.Record record,
+                                                AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                boolean requireFrame,
+                                                boolean expandFrames) {
+                            super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrame, expandFrames);
+                        }
+
+                        @Override
+                        protected void onComplete(Implementation.Context implementationContext) {
+                            /* do nothing */
+                        }
+                    }
+
+                    protected static class WithRecord extends Appending {
+
+                        private final Label label;
+
+                        protected WithRecord(MethodVisitor methodVisitor,
+                                             TypeDescription instrumentedType,
+                                             MethodPool.Record record,
+                                             AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                             boolean requireFrame,
+                                             boolean expandFrames) {
+                            super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrame, expandFrames);
+                            label = new Label();
+                        }
+
+                        @Override
+                        public void visitInsn(int opcode) {
+                            if (opcode == Opcodes.RETURN) {
+                                mv.visitJumpInsn(Opcodes.GOTO, label);
+                            } else {
+                                super.visitInsn(opcode);
+                            }
+                        }
+
+                        @Override
+                        protected void onComplete(Implementation.Context implementationContext) {
+                            mv.visitLabel(label);
+                            frameWriter.emitFrame(mv);
+                            ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
+                            stackSize = Math.max(stackSize, size.getOperandStackSize());
+                            localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
+                        }
                     }
                 }
             }
@@ -3552,17 +3692,18 @@ public interface TypeWriter<T> {
                                                  String internalName,
                                                  String descriptor,
                                                  String genericSignature,
-                                                 String[] exceptionTypeInternalName) {
+                                                 String[] exceptionName) {
                     if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                        return (MethodVisitor) (initializationHandler = new InitializationHandler.Appending(super.visitMethod(modifiers,
-                                internalName,
-                                descriptor,
-                                genericSignature,
-                                exceptionTypeInternalName), instrumentedType, methodPool, annotationValueFilterFactory, implementationContext));
+                        return (MethodVisitor) (initializationHandler = InitializationHandler.Appending.of(super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName),
+                                instrumentedType,
+                                methodPool,
+                                annotationValueFilterFactory,
+                                (writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 && implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V6),
+                                (readerFlags & ClassReader.EXPAND_FRAMES) != 0));
                     } else {
                         MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
                         return methodDescription == null
-                                ? super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionTypeInternalName)
+                                ? super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName)
                                 : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0);
                     }
                 }

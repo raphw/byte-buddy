@@ -1269,9 +1269,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public void injectReturnFrame(MethodVisitor methodVisitor) {
                 if (!expandFrames && currentFrameDivergence == 0 && !instrumentedMethod.isConstructor()) {
                     if (instrumentedMethod.getReturnType().represents(void.class)) {
-                        methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
+                        methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     } else {
-                        methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure())});
+                        methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure())});
                     }
                 } else {
                     injectFullFrame(methodVisitor, requiredTypes, instrumentedMethod.getReturnType().represents(void.class)
@@ -1283,7 +1283,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public void injectExceptionFrame(MethodVisitor methodVisitor) {
                 if (!expandFrames && currentFrameDivergence == 0) {
-                    methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
+                    methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
                 } else {
                     injectFullFrame(methodVisitor, requiredTypes, Collections.singletonList(TypeDescription.THROWABLE));
                 }
@@ -1293,14 +1293,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
                 if (!expandFrames && currentFrameDivergence == 0 && (secondary || !instrumentedMethod.isConstructor())) {
                     if (secondary) {
-                        methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
+                        methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                     } else {
                         Object[] local = new Object[yieldedTypes.size()];
                         int index = 0;
                         for (TypeDescription typeDescription : yieldedTypes) {
                             local[index++] = toFrame(typeDescription);
                         }
-                        methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
+                        methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                     }
                 } else {
                     injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.<TypeDescription>emptyList());
@@ -1505,9 +1505,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void injectReturnFrame(MethodVisitor methodVisitor) {
                     if (!expandFrames && currentFrameDivergence == 0) {
                         if (yieldedTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)) {
-                            methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
+                            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
-                            methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{toFrame(adviceMethod.getReturnType().asErasure())});
+                            methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{toFrame(adviceMethod.getReturnType().asErasure())});
                         }
                     } else {
                         injectFullFrame(methodVisitor, requiredTypes, yieldedTypes.isEmpty() || adviceMethod.getReturnType().represents(void.class)
@@ -1519,7 +1519,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void injectExceptionFrame(MethodVisitor methodVisitor) {
                     if (!expandFrames && currentFrameDivergence == 0) {
-                        methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
+                        methodVisitor.visitFrame(Opcodes.F_SAME1, EMPTY.length, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
                     } else {
                         injectFullFrame(methodVisitor, requiredTypes, Collections.singletonList(TypeDescription.THROWABLE));
                     }
@@ -1529,14 +1529,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
                     if ((!expandFrames && currentFrameDivergence == 0 && yieldedTypes.size() < 4)) {
                         if (secondary || yieldedTypes.isEmpty()) {
-                            methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
+                            methodVisitor.visitFrame(Opcodes.F_SAME, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
                         } else {
                             Object[] local = new Object[yieldedTypes.size()];
                             int index = 0;
                             for (TypeDescription typeDescription : yieldedTypes) {
                                 local[index++] = toFrame(typeDescription);
                             }
-                            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
+                            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, EMPTY.length, EMPTY);
                         }
                     } else {
                         injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.<TypeDescription>emptyList());
