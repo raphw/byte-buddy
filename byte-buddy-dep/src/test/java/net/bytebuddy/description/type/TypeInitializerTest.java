@@ -36,8 +36,7 @@ public class TypeInitializerTest {
 
     @Test
     public void testNoneExpansion() throws Exception {
-        assertThat(TypeInitializer.None.INSTANCE.expandWith(byteCodeAppender),
-                is((TypeInitializer) new TypeInitializer.Simple(byteCodeAppender)));
+        assertThat(TypeInitializer.None.INSTANCE.expandWith(byteCodeAppender), is((TypeInitializer) new TypeInitializer.Simple(byteCodeAppender)));
     }
 
     @Test
@@ -48,11 +47,6 @@ public class TypeInitializerTest {
     @Test(expected = IllegalStateException.class)
     public void testNoneThrowsExceptionOnApplication() throws Exception {
         TypeInitializer.None.INSTANCE.apply(methodVisitor, implementationContext, methodDescription);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testNoneThrowsExceptionOnTermination() throws Exception {
-        TypeInitializer.None.INSTANCE.withReturn();
     }
 
     @Test
@@ -68,17 +62,6 @@ public class TypeInitializerTest {
         typeInitializer.apply(methodVisitor, implementationContext, methodDescription);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
         verifyZeroInteractions(byteCodeAppender);
-        verifyZeroInteractions(implementationContext);
-    }
-
-    @Test
-    public void testSimpleApplicationAfterTermination() throws Exception {
-        when(byteCodeAppender.apply(methodVisitor, implementationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
-        ByteCodeAppender terminated = new TypeInitializer.Simple(byteCodeAppender).withReturn();
-        terminated.apply(methodVisitor, implementationContext, methodDescription);
-        verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
-        verify(methodVisitor).visitInsn(Opcodes.RETURN);
-        verifyNoMoreInteractions(byteCodeAppender);
         verifyZeroInteractions(implementationContext);
     }
 

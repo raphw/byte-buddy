@@ -29,45 +29,6 @@ public class ImplementationContextDefaultOtherTest {
     }
 
     @Test
-    public void testTypeInitializerNotRetained() throws Exception {
-        assertThat(new Implementation.Context.Default(mock(TypeDescription.class),
-                mock(ClassFileVersion.class),
-                mock(AuxiliaryType.NamingStrategy.class),
-                mock(TypeInitializer.class),
-                mock(ClassFileVersion.class)).isRetainTypeInitializer(), is(false));
-    }
-
-    @Test
-    public void testFrozenTypeInitializerRetainsInitializer() throws Exception {
-        Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(mock(TypeDescription.class),
-                mock(ClassFileVersion.class),
-                mock(AuxiliaryType.NamingStrategy.class),
-                mock(TypeInitializer.class),
-                mock(ClassFileVersion.class));
-        implementationContext.prohibitTypeInitializer();
-        assertThat(implementationContext.isRetainTypeInitializer(), is(true));
-    }
-/*
-    @Test(expected = IllegalStateException.class)
-    public void testFrozenTypeInitializerFrozenThrowsExceptionOnDrain() throws Exception {
-        TypeDescription instrumentedType = mock(TypeDescription.class);
-        Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Default(instrumentedType,
-                mock(ClassFileVersion.class),
-                mock(AuxiliaryType.NamingStrategy.class),
-                mock(TypeInitializer.class),
-                mock(ClassFileVersion.class));
-        implementationContext.prohibitTypeInitializer();
-        TypeWriter.MethodPool methodPool = mock(TypeWriter.MethodPool.class);
-        TypeWriter.MethodPool.Record record = mock(TypeWriter.MethodPool.Record.class);
-        when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.DEFINED);
-        when(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType))).thenReturn(record);
-        implementationContext.drain(mock(ClassVisitor.class),
-                methodPool,
-                mock(Implementation.Context.ExtractableView.InjectedCode.class),
-                mock(AnnotationValueFilter.Factory.class));
-    }
-*/
-    @Test
     public void testInstrumentationGetter() throws Exception {
         TypeDescription instrumentedType = mock(TypeDescription.class);
         assertThat(new Implementation.Context.Default(instrumentedType,

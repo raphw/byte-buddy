@@ -11,6 +11,8 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.constant.NullConstant;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -111,31 +113,30 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testSkippedMethod() throws Exception {
-        assertThat(TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.getSort(), is(TypeWriter.MethodPool.Record.Sort.SKIPPED));
-        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.apply(classVisitor, implementationContext, annotationValueFilterFactory);
+        TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForUndefinedMethod(methodDescription);
+        assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.SKIPPED));
+        assertThat(record.getMethod(), is(methodDescription));
+        record.apply(classVisitor, implementationContext, annotationValueFilterFactory);
         verifyZeroInteractions(classVisitor);
         verifyZeroInteractions(implementationContext);
         verifyZeroInteractions(methodAttributeAppender);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testSkippedMethodCannotGetImplementedMethod() throws Exception {
-        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.getMethod();
-    }
-
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testSkippedMethodCannotBePrepended() throws Exception {
-        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.prepend(byteCodeAppender);
+        assertThat(new TypeWriter.MethodPool.Record.ForUndefinedMethod(methodDescription).prepend(byteCodeAppender), is((TypeWriter.MethodPool.Record)
+                new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
+                        new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(NullConstant.INSTANCE, MethodReturn.REFERENCE)))));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotApplyBody() throws Exception {
-        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
+        new TypeWriter.MethodPool.Record.ForUndefinedMethod(methodDescription).applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotApplyHead() throws Exception {
-        TypeWriter.MethodPool.Record.ForUndefinedMethod.INSTANCE.applyHead(methodVisitor);
+        new TypeWriter.MethodPool.Record.ForUndefinedMethod(methodDescription).applyHead(methodVisitor);
     }
 
     @Test

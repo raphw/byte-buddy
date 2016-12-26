@@ -939,13 +939,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Translates a frame.
          *
          * @param methodVisitor       The method visitor to write the frame to.
-         * @param frameType           The frame's type.
+         * @param type           The frame's type.
          * @param localVariableLength The local variable length.
          * @param localVariable       An array containing the types of the current local variables.
          * @param stackSize           The size of the operand stack.
          * @param stack               An array containing the types of the current operand stack.
          */
-        void translateFrame(MethodVisitor methodVisitor, int frameType, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack);
+        void translateFrame(MethodVisitor methodVisitor, int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack);
 
         /**
          * Injects a frame indicating the beginning of a return value handler for the currently handled method.
@@ -1032,7 +1032,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public void translateFrame(MethodVisitor methodVisitor,
-                                       int frameType,
+                                       int type,
                                        int localVariableLength,
                                        Object[] localVariable,
                                        int stackSize,
@@ -1213,7 +1213,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param translationMode     The translation mode to apply.
              * @param methodDescription   The method description for which the frame is written.
              * @param additionalTypes     The additional types to consider part of the instrumented method's parameters.
-             * @param frameType           The frame's type.
+             * @param type           The frame's type.
              * @param localVariableLength The local variable length.
              * @param localVariable       An array containing the types of the current local variables.
              * @param stackSize           The size of the operand stack.
@@ -1223,12 +1223,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           TranslationMode translationMode,
                                           MethodDescription methodDescription,
                                           TypeList additionalTypes,
-                                          int frameType,
+                                          int type,
                                           int localVariableLength,
                                           Object[] localVariable,
                                           int stackSize,
                                           Object[] stack) {
-                switch (frameType) {
+                switch (type) {
                     case Opcodes.F_SAME:
                     case Opcodes.F_SAME1:
                         break;
@@ -1260,9 +1260,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         currentFrameDivergence = translated.length - index;
                         break;
                     default:
-                        throw new IllegalArgumentException("Unexpected frame type: " + frameType);
+                        throw new IllegalArgumentException("Unexpected frame type: " + type);
                 }
-                methodVisitor.visitFrame(frameType, localVariableLength, localVariable, stackSize, stack);
+                methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
             }
 
             @Override
@@ -6372,8 +6372,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitFrame(int frameType, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
-                    stackMapFrameHandler.translateFrame(methodVisitor, frameType, localVariableLength, localVariable, stackSize, stack);
+                public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+                    stackMapFrameHandler.translateFrame(methodVisitor, type, localVariableLength, localVariable, stackSize, stack);
                 }
 
                 @Override
@@ -7566,8 +7566,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
-        public void visitFrame(int frameType, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
-            stackMapFrameHandler.translateFrame(methodVisitor, frameType, localVariableLength, localVariable, stackSize, stack);
+        public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+            stackMapFrameHandler.translateFrame(methodVisitor, type, localVariableLength, localVariable, stackSize, stack);
         }
 
         @Override

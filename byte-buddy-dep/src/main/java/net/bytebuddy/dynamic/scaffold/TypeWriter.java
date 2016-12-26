@@ -3318,9 +3318,9 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
-                        super.visitFrame(type, nLocal, local, nStack, stack);
-                        frameWriter.onFrame(type, nLocal, nStack);
+                    public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+                        super.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
+                        frameWriter.onFrame(type, localVariableLength);
                     }
 
                     @Override
@@ -3343,12 +3343,12 @@ public interface TypeWriter<T> {
                             localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
                         }
                         mv.visitJumpInsn(Opcodes.GOTO, original);
+                        onComplete(implementationContext);
                     }
 
                     @Override
                     public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
                         implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
-                        onComplete(implementationContext);
                         mv.visitMaxs(stackSize, localVariableLength);
                         mv.visitEnd();
                     }
@@ -3359,7 +3359,7 @@ public interface TypeWriter<T> {
 
                         Object[] EMPTY = new Object[0];
 
-                        void onFrame(int type, int stackSize, int localVariableLength);
+                        void onFrame(int type, int localVariableLength);
 
                         void emitFrame(MethodVisitor methodVisitor);
 
@@ -3368,7 +3368,7 @@ public interface TypeWriter<T> {
                             INSTANCE;
 
                             @Override
-                            public void onFrame(int type, int stackSize, int localVariableLength) {
+                            public void onFrame(int type, int localVariableLength) {
                                 /* do nothing */
                             }
 
@@ -3383,7 +3383,7 @@ public interface TypeWriter<T> {
                             INSTANCE;
 
                             @Override
-                            public void onFrame(int type, int stackSize, int localVariableLength) {
+                            public void onFrame(int type, int localVariableLength) {
                                 /* do nothing */
                             }
 
@@ -3398,7 +3398,7 @@ public interface TypeWriter<T> {
                             private int currentLocalVariableLength;
 
                             @Override
-                            public void onFrame(int type, int stackSize, int localVariableLength) {
+                            public void onFrame(int type, int localVariableLength) {
                                 switch (type) {
                                     case Opcodes.F_SAME:
                                     case Opcodes.F_SAME1:
@@ -3613,9 +3613,6 @@ public interface TypeWriter<T> {
                             classFileVersion,
                             ForInlining.this.classFileVersion);
                     contextRegistry.setImplementationContext(implementationContext);
-                    if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
-                        implementationContext.prohibitTypeInitializer(); // TODO: Validation visitor?
-                    }
                     cv = asmVisitorWrapper.wrap(instrumentedType, cv, implementationContext, typePool, writerFlags, readerFlags);
                     super.visit(classFileVersionNumber,
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface())
@@ -3743,7 +3740,7 @@ public interface TypeWriter<T> {
                     for (MethodDescription methodDescription : declarableMethods.values()) {
                         methodPool.target(methodDescription).apply(cv, implementationContext, annotationValueFilterFactory);
                     }
-                    initializationHandler.complete(cv, implementationContext); // TODO: Fix prohibition of extension.
+                    initializationHandler.complete(cv, implementationContext);
                     super.visitEnd();
                 }
 

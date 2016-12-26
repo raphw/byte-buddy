@@ -65,20 +65,8 @@ public class ImplementationContextDisabledTest {
     }
 
     @Test
-    public void testRetainTypeInitializer() throws Exception {
-        assertThat(new Implementation.Context.Disabled(instrumentedType, classFileVersion).isRetainTypeInitializer(), is(true));
-    }
-
-    @Test
     public void testAuxiliaryTypes() throws Exception {
         assertThat(new Implementation.Context.Disabled(instrumentedType, classFileVersion).getAuxiliaryTypes().size(), is(0));
-    }
-
-    @Test
-    public void testFreezeHasNoEffect() throws Exception {
-        Implementation.Context.ExtractableView implementationContext = new Implementation.Context.Disabled(instrumentedType, classFileVersion);
-        implementationContext.prohibitTypeInitializer();
-        assertThat(implementationContext.isRetainTypeInitializer(), is(true));
     }
 
     @Test(expected = IllegalStateException.class)

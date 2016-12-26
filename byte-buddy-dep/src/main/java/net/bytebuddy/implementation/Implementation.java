@@ -491,14 +491,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
         interface ExtractableView extends Context {
 
             /**
-             * Determines if this implementation context allows for the retention of a static type initializer.
-             *
-             * @return {@code true} if the original type initializer can be retained. {@code false} if the original type
-             * initializer needs to be copied to another method for allowing code injection into the initializer.
-             */
-            boolean isRetainTypeInitializer();
-
-            /**
              * Returns any {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType} that was registered
              * with this {@link Implementation.Context}.
              *
@@ -515,11 +507,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotation.
              */
             void drain(TypeInitializer.Drain drain, ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory);
-
-            /**
-             * Prohibits any instrumentation of an instrumented class's type initializer.
-             */
-            void prohibitTypeInitializer();
 
             /**
              * An abstract base implementation of an extractable view of an implementation context.
@@ -599,11 +586,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public boolean isRetainTypeInitializer() {
-                return true;
-            }
-
-            @Override
             public List<DynamicType> getAuxiliaryTypes() {
                 return Collections.emptyList();
             }
@@ -621,11 +603,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
             @Override
             public FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType) {
                 throw new IllegalStateException("Field values caching was disabled: " + fieldType);
-            }
-
-            @Override
-            public void prohibitTypeInitializer() {
-                /* do nothing */
             }
 
             @Override
@@ -749,12 +726,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
             private boolean fieldCacheCanAppendEntries;
 
             /**
-             * If {@code true}, this instance suggests the retention of the original type initializer and prohibits the definition of a custom initializer.
-             * This property is required for interfaces before the Java 8 byte code level where type initializers are not allowed.
-             */
-            private boolean prohibitTypeInitializer;
-
-            /**
              * Creates a new default implementation context.
              *
              * @param instrumentedType            The description of the type that is currently subject of creation.
@@ -780,7 +751,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
                 suffix = RandomString.make();
                 fieldCacheCanAppendEntries = true;
-                prohibitTypeInitializer = false;
             }
 
             @Override
@@ -827,11 +797,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public boolean isRetainTypeInitializer() {
-                return prohibitTypeInitializer;
-            }
-
-            @Override
             public List<DynamicType> getAuxiliaryTypes() {
                 return new ArrayList<DynamicType>(auxiliaryTypes.values());
             }
@@ -863,20 +828,12 @@ public interface Implementation extends InstrumentedType.Prepareable {
                             entry.getValue().getDescriptor(),
                             entry.getValue().getGenericSignature(),
                             FieldDescription.NO_DEFAULT_VALUE).visitEnd();
-                    typeInitializer = typeInitializer.expandWith(new ByteCodeAppender.Simple(entry.getKey().storeIn(entry.getValue())));
-                }
-                if (prohibitTypeInitializer && typeInitializer.isDefined()) {
-                    throw new IllegalStateException("It is impossible to define a class initializer or cached values for " + instrumentedType);
+                    typeInitializer = typeInitializer.expandWith(entry.getKey().storeIn(entry.getValue()));
                 }
                 drain.apply(classVisitor, typeInitializer, this);
                 for (TypeWriter.MethodPool.Record record : accessorMethods) {
                     record.apply(classVisitor, this, annotationValueFilterFactory);
                 }
-            }
-
-            @Override
-            public void prohibitTypeInitializer() {
-                prohibitTypeInitializer = true;
             }
 
             @Override
@@ -895,7 +852,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
                         ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
                         ", suffix=" + suffix +
                         ", fieldCacheCanAppendEntries=" + fieldCacheCanAppendEntries +
-                        ", prohibitTypeInitializer=" + prohibitTypeInitializer +
                         '}';
             }
 
@@ -998,10 +954,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  * Returns a stack manipulation where the represented value is stored in the given field.
                  *
                  * @param fieldDescription A static field in which the value is to be stored.
-                 * @return A stack manipulation that represents this storage.
+                 * @return A byte code appender that represents this storage.
                  */
-                public StackManipulation storeIn(FieldDescription fieldDescription) {
-                    return new Compound(this, FieldAccess.forField(fieldDescription).write());
+                protected ByteCodeAppender storeIn(FieldDescription fieldDescription) {
+                    return new ByteCodeAppender.Simple(this, FieldAccess.forField(fieldDescription).write());
                 }
 
                 /**
@@ -1009,7 +965,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                  *
                  * @return The field type that is represented by this field cache entry.
                  */
-                public TypeDescription getFieldType() {
+                protected TypeDescription getFieldType() {
                     return fieldType;
                 }
 
