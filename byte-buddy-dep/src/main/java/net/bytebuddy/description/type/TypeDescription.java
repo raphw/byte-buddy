@@ -8345,15 +8345,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
          */
         private final ClassLoader classLoader;
 
+        private final ClassLoadingDelegate classLoadingDelegate;
+
         /**
          * Creates a super type loading type description.
          *
          * @param delegate    The delegate type description.
          * @param classLoader The class loader to use for loading a super type.
          */
-        public SuperTypeLoading(TypeDescription delegate, ClassLoader classLoader) {
+        public SuperTypeLoading(TypeDescription delegate, ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
             this.delegate = delegate;
             this.classLoader = classLoader;
+            this.classLoadingDelegate = classLoadingDelegate;
         }
 
         @Override
@@ -8386,12 +8389,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             Generic superClass = delegate.getSuperClass();
             return superClass == null
                     ? Generic.UNDEFINED
-                    : new ClassLoadingTypeProjection(superClass, classLoader);
+                    : new ClassLoadingTypeProjection(superClass, classLoader, classLoadingDelegate);
         }
 
         @Override
         public TypeList.Generic getInterfaces() {
-            return new ClassLoadingTypeList(delegate.getInterfaces(), classLoader);
+            return new ClassLoadingTypeList(delegate.getInterfaces(), classLoader, classLoadingDelegate);
         }
 
         @Override
@@ -8474,6 +8477,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             return delegate.getPackage();
         }
 
+        public interface ClassLoadingDelegate {
+
+            Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException;
+
+            enum Simple implements ClassLoadingDelegate {
+
+                INSTANCE;
+
+                @Override
+                public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
+                    return Class.forName(name, false, classLoader);
+                }
+            }
+        }
+
         /**
          * A type projection that attempts to load any super type of the delegate type.
          */
@@ -8489,15 +8507,18 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             private final ClassLoader classLoader;
 
+            private final ClassLoadingDelegate classLoadingDelegate;
+
             /**
              * Creates a class loading type description.
              *
              * @param delegate    The delegate type description.
              * @param classLoader The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
-            protected ClassLoadingTypeProjection(Generic delegate, ClassLoader classLoader) {
+            protected ClassLoadingTypeProjection(Generic delegate, ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
                 this.delegate = delegate;
                 this.classLoader = classLoader;
+                this.classLoadingDelegate = classLoadingDelegate;
             }
 
             @Override
@@ -8508,7 +8529,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public TypeDescription asErasure() {
                 try {
-                    return new ForLoadedType(load());
+                    return new ForLoadedType(classLoadingDelegate.load(delegate.asErasure().getName(), classLoader));
                 } catch (ClassNotFoundException ignored) {
                     return delegate.asErasure();
                 }
@@ -8526,7 +8547,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return Generic.UNDEFINED;
                 } else {
                     try {
-                        return new ClassLoadingTypeProjection(superClass, load().getClassLoader());
+                        return new ClassLoadingTypeProjection(superClass,
+                                classLoadingDelegate.load(delegate.asErasure().getName(), classLoader).getClassLoader(),
+                                classLoadingDelegate);
                     } catch (ClassNotFoundException ignored) {
                         return superClass;
                     }
@@ -8537,7 +8560,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             public TypeList.Generic getInterfaces() {
                 TypeList.Generic interfaces = delegate.getInterfaces();
                 try {
-                    return new ClassLoadingTypeList(interfaces, load().getClassLoader());
+                    return new ClassLoadingTypeList(interfaces,
+                            classLoadingDelegate.load(delegate.asErasure().getName(), classLoader).getClassLoader(),
+                            classLoadingDelegate);
                 } catch (ClassNotFoundException ignored) {
                     return interfaces;
                 }
@@ -8546,16 +8571,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public Iterator<TypeDefinition> iterator() {
                 return new SuperClassIterator(this);
-            }
-
-            /**
-             * Loads the represented raw type.
-             *
-             * @return The loaded type.
-             * @throws ClassNotFoundException If the class cannot be loaded.
-             */
-            private Class<?> load() throws ClassNotFoundException {
-                return Class.forName(delegate.asErasure().getName(), false, classLoader);
             }
         }
 
@@ -8574,20 +8589,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             private final ClassLoader classLoader;
 
+            private final ClassLoadingDelegate classLoadingDelegate;
+
             /**
              * Creates a class loading type list.
              *
              * @param delegate    The delegate type list.
              * @param classLoader The class loader to use for loading types which might be {@code null} to represent the bootstrap class loader.
              */
-            protected ClassLoadingTypeList(TypeList.Generic delegate, ClassLoader classLoader) {
+            protected ClassLoadingTypeList(TypeList.Generic delegate, ClassLoader classLoader, ClassLoadingDelegate classLoadingDelegate) {
                 this.delegate = delegate;
                 this.classLoader = classLoader;
+                this.classLoadingDelegate = classLoadingDelegate;
             }
 
             @Override
             public Generic get(int index) {
-                return new ClassLoadingTypeProjection(delegate.get(index), classLoader);
+                return new ClassLoadingTypeProjection(delegate.get(index), classLoader, classLoadingDelegate);
             }
 
             @Override
