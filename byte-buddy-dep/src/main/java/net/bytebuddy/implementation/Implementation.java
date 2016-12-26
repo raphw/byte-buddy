@@ -1322,7 +1322,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 @Override
                 public TypeWriter.MethodPool.Record prepend(ByteCodeAppender byteCodeAppender) {
-                    throw new UnsupportedOperationException("Cannot prepend code to a delegation");
+                    throw new UnsupportedOperationException("Cannot prepend code to a delegation for " + methodDescription);
                 }
 
                 @Override

@@ -11,6 +11,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -83,7 +84,7 @@ public class TypeWriterMethodPoolRecordTest {
     private MethodDescription.TypeToken typeToken;
 
     @Mock
-    private AnnotationValueFilter valueFilter;
+    private AnnotationValueFilter annotationValueFilter;
 
     @Mock
     private AnnotationValueFilter.Factory annotationValueFilterFactory;
@@ -107,7 +108,7 @@ public class TypeWriterMethodPoolRecordTest {
                 .thenReturn(new ByteCodeAppender.Size(ONE, TWO));
         when(otherAppender.apply(methodVisitor, implementationContext, methodDescription))
                 .thenReturn(new ByteCodeAppender.Size(ONE * MULTIPLIER, TWO * MULTIPLIER));
-        when(annotationValueFilterFactory.on(methodDescription)).thenReturn(valueFilter);
+        when(annotationValueFilterFactory.on(methodDescription)).thenReturn(annotationValueFilter);
         when(methodDescription.getVisibility()).thenReturn(Visibility.PUBLIC);
     }
 
@@ -124,9 +125,10 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testSkippedMethodCannotBePrepended() throws Exception {
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
         assertThat(new TypeWriter.MethodPool.Record.ForNonImplementedMethod(methodDescription).prepend(byteCodeAppender), is((TypeWriter.MethodPool.Record)
                 new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription,
-                        new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(NullConstant.INSTANCE, MethodReturn.REFERENCE)))));
+                        new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(DefaultValue.ANY_REFERENCE, MethodReturn.REFERENCE)))));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -151,7 +153,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
     }
 
@@ -178,7 +180,7 @@ public class TypeWriterMethodPoolRecordTest {
         record.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
     }
 
     @Test
@@ -196,8 +198,24 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
+    }
+
+    @Test
+    public void testDefinedMethodApplyAttributes() throws Exception {
+        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription,
+                methodAttributeAppender,
+                Visibility.PUBLIC).applyAttributes(methodVisitor, annotationValueFilterFactory);
+        verifyZeroInteractions(methodVisitor);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDefinedMethodApplyCode() throws Exception {
+        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription,
+                methodAttributeAppender,
+                Visibility.PUBLIC).applyCode(methodVisitor, implementationContext);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -225,7 +243,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(annotationVisitor).visitEnd();
         verifyNoMoreInteractions(annotationVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
     }
 
@@ -258,7 +276,7 @@ public class TypeWriterMethodPoolRecordTest {
         record.applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
     }
 
@@ -283,8 +301,22 @@ public class TypeWriterMethodPoolRecordTest {
         verify(annotationVisitor).visitEnd();
         verifyNoMoreInteractions(annotationVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDefaultValueMethodApplyCode() throws Exception {
+        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
+                AnnotationValue.ForConstant.of(FOO),
+                methodAttributeAppender).applyCode(methodVisitor, implementationContext);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDefaultValueMethodApplyAttributes() throws Exception {
+        new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
+                AnnotationValue.ForConstant.of(FOO),
+                methodAttributeAppender).applyAttributes(methodVisitor, annotationValueFilterFactory);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -317,7 +349,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
         verifyNoMoreInteractions(byteCodeAppender);
@@ -350,7 +382,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitCode();
         verify(methodVisitor).visitMaxs(ONE, TWO);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
         verifyNoMoreInteractions(byteCodeAppender);
@@ -374,7 +406,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
         verifyNoMoreInteractions(byteCodeAppender);
@@ -396,7 +428,7 @@ public class TypeWriterMethodPoolRecordTest {
         verify(methodVisitor).visitEnd();
         verifyNoMoreInteractions(methodVisitor);
         verifyZeroInteractions(implementationContext);
-        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, valueFilter);
+        verify(methodAttributeAppender).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(methodAttributeAppender);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
         verifyNoMoreInteractions(byteCodeAppender);
@@ -454,6 +486,32 @@ public class TypeWriterMethodPoolRecordTest {
         verify(delegate).applyHead(methodVisitor);
         verifyNoMoreInteractions(delegate);
         verifyZeroInteractions(methodVisitor);
+    }
+
+    @Test
+    public void testAccessorBridgeAttributeApplication() throws Exception {
+        new TypeWriter.MethodPool.Record.AccessBridgeWrapper(delegate,
+                instrumentedType,
+                bridgeTarget,
+                Collections.singleton(typeToken),
+                methodAttributeAppender).applyAttributes(methodVisitor, annotationValueFilterFactory);
+        verify(delegate).applyAttributes(methodVisitor, annotationValueFilterFactory);
+        verifyNoMoreInteractions(delegate);
+        verifyZeroInteractions(methodVisitor);
+        verifyZeroInteractions(annotationValueFilterFactory);
+    }
+
+    @Test
+    public void testAccessorBridgeCodeApplication() throws Exception {
+        new TypeWriter.MethodPool.Record.AccessBridgeWrapper(delegate,
+                instrumentedType,
+                bridgeTarget,
+                Collections.singleton(typeToken),
+                methodAttributeAppender).applyCode(methodVisitor, implementationContext);
+        verify(delegate).applyCode(methodVisitor, implementationContext);
+        verifyNoMoreInteractions(delegate);
+        verifyZeroInteractions(methodVisitor);
+        verifyZeroInteractions(implementationContext);
     }
 
     @Test

@@ -7,9 +7,11 @@ import net.bytebuddy.dynamic.scaffold.TypeInitializer;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -36,6 +38,16 @@ public class ImplementationContextDefaultOtherTest {
                 mock(AuxiliaryType.NamingStrategy.class),
                 mock(TypeInitializer.class),
                 mock(ClassFileVersion.class)).getInstrumentedType(), is(instrumentedType));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testDefaultContext() throws Exception {
+        new Implementation.Context.Default.AbstractDelegationRecord(mock(MethodDescription.class)) {
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+                throw new AssertionError();
+            }
+        }.prepend(mock(ByteCodeAppender.class));
     }
 
     @Test

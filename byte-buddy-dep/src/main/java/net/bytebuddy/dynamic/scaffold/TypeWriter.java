@@ -394,8 +394,23 @@ public interface TypeWriter<T> {
              */
             void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
+            /**
+             * Applies the attributes of this entry. Applying the body of an entry is only possible if a method is implemented, i.e. the sort of this
+             * entry is {@link Record.Sort#DEFINED}.
+             *
+             * @param methodVisitor                The method visitor to which this entry should be applied.
+             * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotations.
+             */
             void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
+            /**
+             * Applies the code of this entry. Applying the body of an entry is only possible if a method is implemented, i.e. the sort of this
+             * entry is {@link Record.Sort#IMPLEMENTED}.
+             *
+             * @param methodVisitor         The method visitor to which this entry should be applied.
+             * @param implementationContext The implementation context to which this entry should be applied.
+             * @return The size requirements of the implemented code.
+             */
             ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext);
 
             /**
@@ -475,7 +490,8 @@ public interface TypeWriter<T> {
 
                 /**
                  * Creates a new undefined record.
-                 * @param methodDescription  The undefined method.
+                 *
+                 * @param methodDescription The undefined method.
                  */
                 public ForNonImplementedMethod(MethodDescription methodDescription) {
                     this.methodDescription = methodDescription;
@@ -488,7 +504,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                    throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
+                    throw new IllegalStateException("Cannot apply body for non-implemented method on " + methodDescription);
                 }
 
                 @Override
@@ -498,12 +514,12 @@ public interface TypeWriter<T> {
 
                 @Override
                 public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                    throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
+                    throw new IllegalStateException("Cannot apply code for non-implemented method on " + methodDescription);
                 }
 
                 @Override
                 public void applyHead(MethodVisitor methodVisitor) {
-                    throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
+                    throw new IllegalStateException("Cannot apply head for non-implemented method on " + methodDescription);
                 }
 
                 @Override
@@ -766,12 +782,12 @@ public interface TypeWriter<T> {
 
                     @Override
                     public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                        throw new IllegalStateException("Cannot apply "); // TODO: Fix
+                        throw new IllegalStateException("Cannot apply code for abstract method on " + methodDescription);
                     }
 
                     @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
-                        throw new IllegalStateException("Cannot prepend code to abstract method");
+                        throw new IllegalStateException("Cannot prepend code for abstract method on " + methodDescription);
                     }
 
                     @Override
@@ -872,17 +888,17 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void applyAttributes(MethodVisitor methodVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                        throw new IllegalStateException(); // TODO: Fix
+                        throw new IllegalStateException("Cannot apply attributes for default value on " + methodDescription);
                     }
 
                     @Override
                     public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                        throw new IllegalStateException(); // TODO: Fix
+                        throw new IllegalStateException("Cannot apply code for default value on " + methodDescription);
                     }
 
                     @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
-                        throw new IllegalStateException("Cannot prepend code to method that defines a default annotation value");
+                        throw new IllegalStateException("Cannot prepend code for default value on " + methodDescription);
                     }
 
                     @Override

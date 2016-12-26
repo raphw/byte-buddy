@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -19,6 +18,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaConstant;
@@ -374,13 +374,23 @@ public class TypeWriterDefaultTest {
                 .make(), notNullValue(DynamicType.class));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testTypeInitializerOnRebasedLegacyInterface() throws Exception {
-        new ByteBuddy()
+        assertThat(new ByteBuddy()
                 .rebase(Class.forName(LEGACY_INTERFACE))
                 .invokable(isTypeInitializer())
                 .intercept(StubMethod.INSTANCE)
-                .make();
+                .make(), notNullValue(DynamicType.class));
+    }
+
+    @Test
+    public void testTypeInitializerOnRebasedInterfaceWithInitializer() throws Exception {
+        assertThat(new ByteBuddy()
+                .makeInterface()
+                .initializer(new ByteCodeAppender.Simple())
+                .invokable(isTypeInitializer())
+                .intercept(StubMethod.INSTANCE)
+                .make(), notNullValue(DynamicType.class));
     }
 
     @Test
