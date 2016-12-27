@@ -133,6 +133,11 @@ public enum MethodInvocation {
         }
 
         @Override
+        public StackManipulation onHandle(HandleType type) {
+            return Illegal.INSTANCE;
+        }
+
+        @Override
         public boolean isValid() {
             return false;
         }
@@ -185,6 +190,14 @@ public enum MethodInvocation {
                                   TypeDescription returnType,
                                   List<? extends TypeDescription> methodType,
                                   List<?> arguments);
+
+        /**
+         * Invokes the method via a {@code MethodHandle}.
+         *
+         * @param type The type of invocation.
+         * @return A stack manipulation that represents a method call of the specified method via a method handle.
+         */
+        StackManipulation onHandle(HandleType type);
     }
 
     /**
@@ -240,6 +253,11 @@ public enum MethodInvocation {
         }
 
         @Override
+        public StackManipulation onHandle(HandleType type) {
+            return new Compound(invocation.onHandle(type), TypeCasting.to(targetType));
+        }
+
+        @Override
         public boolean isValid() {
             return invocation.isValid();
         }
@@ -286,15 +304,15 @@ public enum MethodInvocation {
         /**
          * The type on which this method is to be invoked.
          */
-        private final MethodDescription methodDescription;
+        private final MethodDescription.InDefinedShape methodDescription;
 
         /**
          * Creates an invocation of a given method on its declaring type as an invocation target.
          *
          * @param methodDescription The method to be invoked.
          */
-        protected Invocation(MethodDescription methodDescription) {
-            this(methodDescription, methodDescription.getDeclaringType().asErasure());
+        protected Invocation(MethodDescription.InDefinedShape methodDescription) {
+            this(methodDescription, methodDescription.getDeclaringType());
         }
 
         /**
@@ -303,7 +321,7 @@ public enum MethodInvocation {
          * @param methodDescription The method to be invoked.
          * @param typeDescription   The type on which this method is to be invoked.
          */
-        protected Invocation(MethodDescription methodDescription, TypeDescription typeDescription) {
+        protected Invocation(MethodDescription.InDefinedShape methodDescription, TypeDescription typeDescription) {
             this.typeDescription = typeDescription;
             this.methodDescription = methodDescription;
         }
@@ -351,6 +369,11 @@ public enum MethodInvocation {
             return methodDescription.isBootstrap()
                     ? new DynamicInvocation(methodName, returnType, new TypeList.Explicit(methodType), methodDescription.asDefined(), arguments)
                     : Illegal.INSTANCE;
+        }
+
+        @Override
+        public StackManipulation onHandle(HandleType type) {
+            return new HandleInvocation(methodDescription, type);
         }
 
         /**
@@ -507,6 +530,123 @@ public enum MethodInvocation {
                     ", bootstrapMethod=" + bootstrapMethod +
                     ", arguments=" + arguments +
                     '}';
+        }
+    }
+
+    /**
+     * Performs a method invocation on a method handle with a polymorphic type signature.
+     */
+    protected class HandleInvocation implements StackManipulation {
+
+        /**
+         * The internal name of the method handle type.
+         */
+        private static final String METHOD_HANDLE = "java/lang/invoke/MethodHandle";
+
+        /**
+         * The invoked method.
+         */
+        private final MethodDescription.InDefinedShape methodDescription;
+
+        /**
+         * The type of method handle invocation.
+         */
+        private final HandleType type;
+
+        /**
+         * Creates a new method handle invocation.
+         *
+         * @param methodDescription The invoked method.
+         * @param type              The type of method handle invocation.
+         */
+        protected HandleInvocation(MethodDescription.InDefinedShape methodDescription, HandleType type) {
+            this.methodDescription = methodDescription;
+            this.type = type;
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                    METHOD_HANDLE,
+                    type.getMethodName(),
+                    methodDescription.isStatic() || methodDescription.isConstructor()
+                            ? methodDescription.getDescriptor()
+                            : "(" + methodDescription.getDeclaringType().getDescriptor() + methodDescription.getDescriptor().substring(1),
+                    false);
+            int parameterSize = 1 + methodDescription.getStackSize(), returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
+            return new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            HandleInvocation that = (HandleInvocation) object;
+            return methodDescription.equals(that.methodDescription) && type == that.type;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = methodDescription.hashCode();
+            result = 31 * result + type.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodInvocation.HandleInvocation{" +
+                    "methodDescription=" + methodDescription +
+                    ", type=" + type +
+                    '}';
+        }
+    }
+
+    /**
+     * The type of method handle invocation.
+     */
+    public enum HandleType {
+
+        /**
+         * An exact invocation without type adjustments.
+         */
+        EXACT("invokeExact"),
+
+        /**
+         * A regular invocation with standard type adjustments.
+         */
+        REGULAR("invoke");
+
+        /**
+         * The name of the invoked method.
+         */
+        private final String methodName;
+
+        /**
+         * Creates a new handle type.
+         *
+         * @param methodName The name of the invoked method.
+         */
+        HandleType(String methodName) {
+            this.methodName = methodName;
+        }
+
+        /**
+         * Returns the name of the represented method.
+         *
+         * @return The name of the invoked method.
+         */
+        protected String getMethodName() {
+            return methodName;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodInvocation.nHandleType." + name();
         }
     }
 }

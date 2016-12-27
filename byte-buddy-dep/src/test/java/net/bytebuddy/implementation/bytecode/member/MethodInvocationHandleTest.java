@@ -12,19 +12,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-
-import java.util.Arrays;
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class MethodInvocationDynamicTest {
+public class MethodInvocationHandleTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -35,7 +31,10 @@ public class MethodInvocationDynamicTest {
     private MethodDescription.InDefinedShape methodDescription;
 
     @Mock
-    private TypeDescription returnType, declaringType, firstType, secondType;
+    private TypeDescription.Generic returnType;
+
+    @Mock
+    private TypeDescription declaringType, firstType, secondType;
 
     @Mock
     private Implementation.Context implementationContext;
@@ -43,55 +42,58 @@ public class MethodInvocationDynamicTest {
     @Mock
     private MethodVisitor methodVisitor;
 
-    @Mock
-    private Object argument;
-
     @Before
     public void setUp() throws Exception {
         when(methodDescription.asDefined()).thenReturn(methodDescription);
+        when(methodDescription.getReturnType()).thenReturn(returnType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
+        when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstType.getDescriptor()).thenReturn(FOO);
         when(secondType.getDescriptor()).thenReturn(BAR);
         when(secondType.getStackSize()).thenReturn(StackSize.ZERO);
         when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(returnType.getDescriptor()).thenReturn(QUX);
         when(methodDescription.getInternalName()).thenReturn(QUX);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
-        when(declaringType.getInternalName()).thenReturn(BAR);
+        when(declaringType.getDescriptor()).thenReturn(BAR);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, firstType, secondType));
     }
 
     @Test
-    public void testDynamicStaticBootstrap() throws Exception {
-        when(methodDescription.isBootstrap()).thenReturn(true);
+    public void testExactHandleStatic() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
-        StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription)
-                .dynamic(FOO, returnType, Arrays.asList(firstType, secondType), Collections.singletonList(argument));
+        StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).onHandle(MethodInvocation.HandleType.EXACT);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
-        assertThat(size.getSizeImpact(), is(0));
+        assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
-        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_INVOKESTATIC, BAR, QUX, BAZ, false), argument);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle", "invokeExact", BAZ, false);
     }
 
     @Test
-    public void testDynamicConstructorBootstrap() throws Exception {
-        when(methodDescription.isBootstrap()).thenReturn(true);
+    public void testExactHandleConstructor() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
-        StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription)
-                .dynamic(FOO, returnType, Arrays.asList(firstType, secondType), Collections.singletonList(argument));
+        StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).onHandle(MethodInvocation.HandleType.EXACT);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
-        assertThat(size.getSizeImpact(), is(0));
+        assertThat(size.getSizeImpact(), is(-1));
         assertThat(size.getMaximalSize(), is(0));
-        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_NEWINVOKESPECIAL, BAR, QUX, BAZ, false), argument);
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle", "invokeExact", BAZ, false);
     }
 
     @Test
-    public void testIllegalBootstrap() throws Exception {
-        StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription)
-                .dynamic(FOO, returnType, Arrays.asList(firstType, secondType), Collections.singletonList(argument));
-        assertThat(stackManipulation.isValid(), is(false));
+    public void testExactHandleNonStatic() throws Exception {
+        StackManipulation stackManipulation = MethodInvocation.invoke(methodDescription).onHandle(MethodInvocation.HandleType.EXACT);
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
+        assertThat(size.getSizeImpact(), is(-1));
+        assertThat(size.getMaximalSize(), is(0));
+        verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle", "invokeExact", "(" + BAR + BAZ.substring(1), false);
+    }
+
+    @Test
+    public void testMethodNames() throws Exception {
+        assertThat(MethodInvocation.HandleType.EXACT.getMethodName(), is("invokeExact"));
+        assertThat(MethodInvocation.HandleType.REGULAR.getMethodName(), is("invoke"));
     }
 }

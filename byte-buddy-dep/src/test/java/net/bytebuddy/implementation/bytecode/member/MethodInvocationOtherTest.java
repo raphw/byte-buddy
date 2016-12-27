@@ -29,6 +29,8 @@ public class MethodInvocationOtherTest {
                 is((StackManipulation) StackManipulation.Illegal.INSTANCE));
         assertThat(MethodInvocation.IllegalInvocation.INSTANCE.dynamic(FOO, mock(TypeDescription.class), mock(TypeList.class), mock(List.class)),
                 is((StackManipulation) StackManipulation.Illegal.INSTANCE));
+        assertThat(MethodInvocation.IllegalInvocation.INSTANCE.onHandle(null),
+                is((StackManipulation) StackManipulation.Illegal.INSTANCE));
         MethodInvocation.IllegalInvocation.INSTANCE.apply(mock(MethodVisitor.class), mock(Implementation.Context.class));
     }
 
@@ -48,5 +50,7 @@ public class MethodInvocationOtherTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(MethodInvocation.DynamicInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodInvocation.HandleInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodInvocation.HandleType.class).apply();
     }
 }
