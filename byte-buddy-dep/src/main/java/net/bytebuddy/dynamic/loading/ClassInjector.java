@@ -295,7 +295,7 @@ public interface ClassInjector {
                 private final Method defineClass;
 
                 /**
-                 * An instance of {@link ClassLoader#getPackage(String)}.
+                 * An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
                  */
                 private final Method getPackage;
 
@@ -320,7 +320,7 @@ public interface ClassInjector {
                  *
                  * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
                  * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
-                 * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
+                 * @param getPackage        An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
                  * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  * @param defineClassUnsafe An instance of {@code sun.misc.Unsafe#theUnsafe} or {@code null} if it is not available.
                  * @param theUnsafe         An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}
@@ -365,6 +365,12 @@ public interface ClassInjector {
                         defineClass = null;
                     }
                     try {
+                        Method getPackage;
+                        try {
+                            getPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
+                        } catch (Exception ignored) {
+                            getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                        }
                         return new Dispatcher.Resolved(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
                                 ClassLoader.class.getDeclaredMethod("defineClass",
                                         String.class,
@@ -372,7 +378,7 @@ public interface ClassInjector {
                                         int.class,
                                         int.class,
                                         ProtectionDomain.class),
-                                ClassLoader.class.getDeclaredMethod("getPackage", String.class),
+                                getPackage,
                                 ClassLoader.class.getDeclaredMethod("definePackage",
                                         String.class,
                                         String.class,
