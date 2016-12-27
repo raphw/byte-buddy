@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 27. December 2016: version 1.5.12
+
+- Refactored rebasing of type initializers. Do no longer rebase into static method to pass validation for final static field assignment on Java 9.
+- Added fallback to `sun.misc.Unsafe` for class definition if reflective access to the protected `ClassLoader` methods is not available which are required for the injection strategy.
+- Added super-type-loading `DescriptorStrategy` for agent builder.
+- Added assignment checks for `MethodCall` for invocation target.
+
 ### 20. December 2016: version 1.5.11
 
 - Resolved compound components to linerarize nested collections for vastly improved performance with large structures.
