@@ -11,21 +11,27 @@ import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.CompoundList;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ClassInjectorUsingReflectionTest {
@@ -83,13 +89,55 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    public void testUnsafeDispatcher() throws Exception {
+        Class<?> unsafe = Class.forName("sun.misc.Unsafe");
+        Field theUnsafe = unsafe.getDeclaredField("theUnsafe");
+        theUnsafe.setAccessible(true);
+        Method defineClass = unsafe.getDeclaredMethod("defineClass",
+                String.class,
+                byte[].class,
+                int.class,
+                int.class,
+                ClassLoader.class,
+                ProtectionDomain.class);
+        ClassInjector.UsingReflection.Dispatcher dispatcher = new ClassInjector.UsingReflection.Dispatcher.Resolved.UnsafeDispatcher(theUnsafe.get(null),
+                defineClass);
+        ClassLoader classLoader = new URLClassLoader(new URL[0], null);
+        assertThat(dispatcher.findClass(classLoader, Bar.class.getName()), nullValue(Class.class));
+        Class<?> type = dispatcher.defineClass(classLoader, Bar.class.getName(), ClassFileExtraction.extract(Bar.class), null);
+        assertThat(dispatcher.findClass(classLoader, Bar.class.getName()), is((Object) type));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testUnsafeDispatcherGetPackage() throws Exception {
+        new ClassInjector.UsingReflection.Dispatcher.Resolved.UnsafeDispatcher(null, null).getPackage(null, FOO);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testUnsafeDispatcherDefinePackage() throws Exception {
+        new ClassInjector.UsingReflection.Dispatcher.Resolved.UnsafeDispatcher(null, null).definePackage(null, FOO, null, null, null, null, null, null, null);
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).apply();
-        final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
+        final Iterator<Field> fields = Arrays.asList(String.class.getDeclaredFields()).iterator();
+        final Iterator<Method> methods = Arrays.asList(String.class.getDeclaredMethods()).iterator();
         ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Resolved.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
-                return iterator.next();
+                return methods.next();
+            }
+        }).create(new ObjectPropertyAssertion.Creator<Field>() {
+            @Override
+            public Field create() {
+                return fields.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Resolved.UnsafeDispatcher.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+            @Override
+            public Method create() {
+                return methods.next();
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Faulty.class).apply();

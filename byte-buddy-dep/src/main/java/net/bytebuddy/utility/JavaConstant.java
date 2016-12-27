@@ -1196,7 +1196,7 @@ public interface JavaConstant {
                 @Override
                 public Dispatcher run() {
                     // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
-                    // By always setting accessability, the security manager is always triggered if this operation was illegal.
+                    // By always setting accessibility, the security manager is always triggered if this operation was illegal.
                     methodInfo.setAccessible(true);
                     getName.setAccessible(true);
                     getDeclaringClass.setAccessible(true);

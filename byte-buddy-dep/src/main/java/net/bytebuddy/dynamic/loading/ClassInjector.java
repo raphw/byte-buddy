@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -54,45 +55,9 @@ public interface ClassInjector {
     class UsingReflection implements ClassInjector {
 
         /**
-         * Indicates that an array should be included from the first index position. Improves source code readabilty.
-         */
-        private static final int FROM_BEGINNING = 0;
-
-        /**
          * The dispatcher to use for accessing a class loader via reflection.
          */
-        private static final Dispatcher.Initializable DISPATCHER = dispatcher();
-
-        /**
-         * Obtains the reflective instances used by this injector or a no-op instance that throws the exception
-         * that occurred when attempting to obtain the reflective member instances.
-         *
-         * @return A dispatcher for the current VM.
-         */
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-        private static Dispatcher.Initializable dispatcher() {
-            try {
-                return new Dispatcher.Resolved(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
-                        ClassLoader.class.getDeclaredMethod("defineClass",
-                                String.class,
-                                byte[].class,
-                                int.class,
-                                int.class,
-                                ProtectionDomain.class),
-                        ClassLoader.class.getDeclaredMethod("getPackage", String.class),
-                        ClassLoader.class.getDeclaredMethod("definePackage",
-                                String.class,
-                                String.class,
-                                String.class,
-                                String.class,
-                                String.class,
-                                String.class,
-                                String.class,
-                                URL.class));
-            } catch (Exception exception) {
-                return new Dispatcher.Faulty(exception);
-            }
-        }
+        private static final Dispatcher.Initializable DISPATCHER = Dispatcher.Resolved.make();
 
         /**
          * The class loader into which the classes are to be injected.
@@ -118,7 +83,7 @@ public interface ClassInjector {
          * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link java.security.ProtectionDomain} and a
          * trivial {@link PackageDefinitionStrategy} which does not trigger an error when discovering existent classes.
          *
-         * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+         * @param classLoader The {@link java.lang.ClassLoader} into which new class definitions are to be injected. Must not be the bootstrap loader.
          */
         public UsingReflection(ClassLoader classLoader) {
             this(classLoader, DEFAULT_PROTECTION_DOMAIN);
@@ -128,7 +93,7 @@ public interface ClassInjector {
          * Creates a new injector for the given {@link java.lang.ClassLoader} and a default {@link PackageDefinitionStrategy} where the
          * injection of existent classes does not trigger an error.
          *
-         * @param classLoader      The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+         * @param classLoader      The {@link java.lang.ClassLoader} into which new class definitions are to be injected. Must not be the bootstrap loader.
          * @param protectionDomain The protection domain to apply during class definition.
          */
         public UsingReflection(ClassLoader classLoader, ProtectionDomain protectionDomain) {
@@ -198,13 +163,7 @@ public interface ClassInjector {
                                 }
                             }
                         }
-                        byte[] binaryRepresentation = entry.getValue();
-                        type = dispatcher.loadClass(classLoader,
-                                typeName,
-                                binaryRepresentation,
-                                FROM_BEGINNING,
-                                binaryRepresentation.length,
-                                protectionDomain);
+                        type = dispatcher.defineClass(classLoader, typeName, entry.getValue(), protectionDomain);
                     } else if (forbidExisting) {
                         throw new IllegalStateException("Cannot inject already loaded type: " + type);
                     }
@@ -264,17 +223,10 @@ public interface ClassInjector {
              * @param classLoader          The class loader for which a new class should be defined.
              * @param name                 The binary name of the class that should be defined.
              * @param binaryRepresentation The binary representation of the class.
-             * @param startIndex           The start index of the provided binary representation.
-             * @param endIndex             The final index of the binary representation.
              * @param protectionDomain     The protection domain for the defined class.
              * @return The defined, loaded class.
              */
-            Class<?> loadClass(ClassLoader classLoader,
-                               String name,
-                               byte[] binaryRepresentation,
-                               int startIndex,
-                               int endIndex,
-                               ProtectionDomain protectionDomain);
+            Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain);
 
             /**
              * Looks up a package from a class loader.
@@ -289,7 +241,7 @@ public interface ClassInjector {
              * Defines a package for the given class loader.
              *
              * @param classLoader           The class loader for which a package is to be defined.
-             * @param packageName           The binary name of the package.
+             * @param name                  The binary name of the package.
              * @param specificationTitle    The specification title of the package or {@code null} if no specification title exists.
              * @param specificationVersion  The specification version of the package or {@code null} if no specification version exists.
              * @param specificationVendor   The specification vendor of the package or {@code null} if no specification vendor exists.
@@ -300,7 +252,7 @@ public interface ClassInjector {
              * @return The defined package.
              */
             Package definePackage(ClassLoader classLoader,
-                                  String packageName,
+                                  String name,
                                   String specificationTitle,
                                   String specificationVersion,
                                   String specificationVendor,
@@ -328,39 +280,113 @@ public interface ClassInjector {
             class Resolved implements Dispatcher, Initializable {
 
                 /**
-                 * An accessible instance of {@link ClassLoader#findLoadedClass(String)}.
+                 * Indicates an reflective access on a static member.
+                 */
+                private static final Object STATIC_MEMBER = null;
+
+                /**
+                 * An instance of {@link ClassLoader#findLoadedClass(String)}.
                  */
                 private final Method findLoadedClass;
 
                 /**
-                 * An accessible instance of {@link ClassLoader#loadClass(String)}.
+                 * An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
                  */
-                private final Method loadClass;
+                private final Method defineClass;
 
                 /**
-                 * An accessible instance of {@link ClassLoader#getPackage(String)}.
+                 * An instance of {@link ClassLoader#getPackage(String)}.
                  */
                 private final Method getPackage;
 
                 /**
-                 * An accessible instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                 * An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  */
                 private final Method definePackage;
 
                 /**
+                 * An instance of {@code sun.misc.Unsafe#theUnsafe} or {@code null} if it is not available.
+                 */
+                private final Field theUnsafe;
+
+                /**
+                 * An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}
+                 * or {@code null} if it is not available.
+                 */
+                private final Method defineClassUnsafe;
+
+                /**
                  * Creates a new resolved reflection store.
                  *
-                 * @param findLoadedClass An accessible instance of {@link ClassLoader#findLoadedClass(String)}.
-                 * @param loadClass       An accessible instance of {@link ClassLoader#loadClass(String)}.
-                 * @param getPackage      An accessible instance of {@link ClassLoader#getPackage(String)}.
-                 * @param definePackage   An accessible instance of
-                 *                        {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                 * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
+                 * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                 * @param getPackage        An instance of {@link ClassLoader#getPackage(String)}.
+                 * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                 * @param defineClassUnsafe An instance of {@code sun.misc.Unsafe#theUnsafe} or {@code null} if it is not available.
+                 * @param theUnsafe         An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}
+                 *                          or {@code null} if it is not available.
                  */
-                protected Resolved(Method findLoadedClass, Method loadClass, Method getPackage, Method definePackage) {
+                protected Resolved(Method findLoadedClass,
+                                   Method defineClass,
+                                   Method getPackage,
+                                   Method definePackage,
+                                   Field theUnsafe,
+                                   Method defineClassUnsafe) {
                     this.findLoadedClass = findLoadedClass;
-                    this.loadClass = loadClass;
+                    this.defineClass = defineClass;
                     this.getPackage = getPackage;
                     this.definePackage = definePackage;
+                    this.theUnsafe = theUnsafe;
+                    this.defineClassUnsafe = defineClassUnsafe;
+                }
+
+                /**
+                 * Obtains the reflective instances used by this injector or a no-op instance that throws the exception
+                 * that occurred when attempting to obtain the reflective member instances.
+                 *
+                 * @return A dispatcher for the current VM.
+                 */
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                protected static Dispatcher.Initializable make() {
+                    Field theUnsafe;
+                    Method defineClass;
+                    try {
+                        Class<?> unsafe = Class.forName("sun.misc.Unsafe");
+                        theUnsafe = unsafe.getDeclaredField("theUnsafe");
+                        defineClass = unsafe.getDeclaredMethod("defineClass",
+                                String.class,
+                                byte[].class,
+                                int.class,
+                                int.class,
+                                ClassLoader.class,
+                                ProtectionDomain.class);
+                    } catch (Throwable ignored) {
+                        theUnsafe = null;
+                        defineClass = null;
+                    }
+                    try {
+                        return new Dispatcher.Resolved(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
+                                ClassLoader.class.getDeclaredMethod("defineClass",
+                                        String.class,
+                                        byte[].class,
+                                        int.class,
+                                        int.class,
+                                        ProtectionDomain.class),
+                                ClassLoader.class.getDeclaredMethod("getPackage", String.class),
+                                ClassLoader.class.getDeclaredMethod("definePackage",
+                                        String.class,
+                                        String.class,
+                                        String.class,
+                                        String.class,
+                                        String.class,
+                                        String.class,
+                                        String.class,
+                                        URL.class),
+                                theUnsafe,
+                                defineClass);
+                    } catch (Exception exception) {
+                        return new Dispatcher.Faulty(exception);
+                    }
                 }
 
                 @Override
@@ -375,14 +401,9 @@ public interface ClassInjector {
                 }
 
                 @Override
-                public Class<?> loadClass(ClassLoader classLoader,
-                                          String name,
-                                          byte[] binaryRepresentation,
-                                          int startIndex,
-                                          int endIndex,
-                                          ProtectionDomain protectionDomain) {
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
                     try {
-                        return (Class<?>) loadClass.invoke(classLoader, name, binaryRepresentation, startIndex, endIndex, protectionDomain);
+                        return (Class<?>) defineClass.invoke(classLoader, name, binaryRepresentation, 0, binaryRepresentation.length, protectionDomain);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Could not access java.lang.ClassLoader#findClass", exception);
                     } catch (InvocationTargetException exception) {
@@ -403,7 +424,7 @@ public interface ClassInjector {
 
                 @Override
                 public Package definePackage(ClassLoader classLoader,
-                                             String packageName,
+                                             String name,
                                              String specificationTitle,
                                              String specificationVersion,
                                              String specificationVendor,
@@ -413,7 +434,7 @@ public interface ClassInjector {
                                              URL sealBase) {
                     try {
                         return (Package) definePackage.invoke(classLoader,
-                                packageName,
+                                name,
                                 specificationTitle,
                                 specificationVersion,
                                 specificationVendor,
@@ -431,13 +452,27 @@ public interface ClassInjector {
                 @Override
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
                 public Dispatcher initialize() {
-                    // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
-                    // By always setting accessability, the security manager is always triggered if this operation was illegal.
-                    findLoadedClass.setAccessible(true);
-                    loadClass.setAccessible(true);
-                    getPackage.setAccessible(true);
-                    definePackage.setAccessible(true);
-                    return this;
+                    try {
+                        // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
+                        // By always setting accessibility, the security manager is always triggered if this operation was illegal.
+                        findLoadedClass.setAccessible(true);
+                        defineClass.setAccessible(true);
+                        getPackage.setAccessible(true);
+                        definePackage.setAccessible(true);
+                        return this;
+                    } catch (RuntimeException exception) {
+                        if (theUnsafe == null) {
+                            throw exception;
+                        } else {
+                            try {
+                                // This serves as a fallback on environments where accessible reflection on the class loader methods is not available.
+                                theUnsafe.setAccessible(true);
+                                return new UnsafeDispatcher(theUnsafe.get(STATIC_MEMBER), defineClassUnsafe);
+                            } catch (Exception ignored) {
+                                throw exception;
+                            }
+                        }
+                    }
                 }
 
                 @Override
@@ -446,17 +481,21 @@ public interface ClassInjector {
                     if (other == null || getClass() != other.getClass()) return false;
                     Resolved resolved = (Resolved) other;
                     return findLoadedClass.equals(resolved.findLoadedClass)
-                            && loadClass.equals(resolved.loadClass)
+                            && defineClass.equals(resolved.defineClass)
                             && getPackage.equals(resolved.getPackage)
-                            && definePackage.equals(resolved.definePackage);
+                            && definePackage.equals(resolved.definePackage)
+                            && theUnsafe.equals(resolved.theUnsafe)
+                            && defineClassUnsafe.equals(resolved.defineClassUnsafe);
                 }
 
                 @Override
                 public int hashCode() {
                     int result = findLoadedClass.hashCode();
-                    result = 31 * result + loadClass.hashCode();
+                    result = 31 * result + defineClass.hashCode();
                     result = 31 * result + getPackage.hashCode();
                     result = 31 * result + definePackage.hashCode();
+                    result = 31 * result + theUnsafe.hashCode();
+                    result = 31 * result + defineClassUnsafe.hashCode();
                     return result;
                 }
 
@@ -464,10 +503,111 @@ public interface ClassInjector {
                 public String toString() {
                     return "ClassInjector.UsingReflection.Dispatcher.Resolved{" +
                             "findLoadedClass=" + findLoadedClass +
-                            ", loadClass=" + loadClass +
+                            ", defineClass=" + defineClass +
                             ", getPackage=" + getPackage +
                             ", definePackage=" + definePackage +
+                            ", theUnsafe=" + theUnsafe +
+                            ", defineClassUnsafe=" + defineClassUnsafe +
                             '}';
+                }
+
+                /**
+                 * A dispatcher that uses {@code sun.misc.Unsafe} for class loading but which is incapable of defining packages.
+                 */
+                protected static class UnsafeDispatcher implements Dispatcher {
+
+                    /**
+                     * Indicates a class that is currently not defined.
+                     */
+                    private static final Class<?> UNDEFINED = null;
+
+                    /**
+                     * An instance of {@code sun.misc.Unsafe}.
+                     */
+                    private final Object unsafe;
+
+                    /**
+                     * An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}.
+                     */
+                    private final Method defineClass;
+
+                    /**
+                     * Creates a new unsafe dispatcher.
+                     *
+                     * @param unsafe      An instance of {@code sun.misc.Unsafe}.
+                     * @param defineClass An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}.
+                     */
+                    protected UnsafeDispatcher(Object unsafe, Method defineClass) {
+                        this.unsafe = unsafe;
+                        this.defineClass = defineClass;
+                    }
+
+                    @Override
+                    public Class<?> findClass(ClassLoader classLoader, String name) {
+                        try {
+                            return classLoader.loadClass(name);
+                        } catch (ClassNotFoundException ignored) {
+                            return UNDEFINED;
+                        }
+                    }
+
+                    @Override
+                    public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                        try {
+                            return (Class<?>) defineClass.invoke(unsafe,
+                                    name,
+                                    binaryRepresentation,
+                                    0,
+                                    binaryRepresentation.length,
+                                    classLoader,
+                                    protectionDomain);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Could not access com.sun.Unsafe#defineClass", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Error invoking com.sun.Unsafe#defineClass", exception.getCause());
+                        }
+                    }
+
+                    @Override
+                    public Package getPackage(ClassLoader classLoader, String name) {
+                        throw new UnsupportedOperationException("Cannot get package using unsafe injection dispatcher: " + name);
+                    }
+
+                    @Override
+                    public Package definePackage(ClassLoader classLoader,
+                                                 String name,
+                                                 String specificationTitle,
+                                                 String specificationVersion,
+                                                 String specificationVendor,
+                                                 String implementationTitle,
+                                                 String implementationVersion,
+                                                 String implementationVendor,
+                                                 URL sealBase) {
+                        throw new UnsupportedOperationException("Cannot define package using unsafe injection dispatcher: " + name);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        UnsafeDispatcher that = (UnsafeDispatcher) object;
+                        return unsafe.equals(that.unsafe) && defineClass.equals(that.defineClass);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = unsafe.hashCode();
+                        result = 31 * result + defineClass.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "ClassInjector.UsingReflection.Dispatcher.Resolved.UnsafeDispatcher{" +
+                                "unsafe=" + unsafe +
+                                ", defineClass=" + defineClass +
+                                '}';
+                    }
                 }
             }
 
