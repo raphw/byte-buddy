@@ -785,7 +785,7 @@ public class MethodCall implements Implementation.Composable {
      * A target handler is responsible for invoking a method for a
      * {@link net.bytebuddy.implementation.MethodCall}.
      */
-    protected interface TargetHandler {
+    protected interface TargetHandler extends InstrumentedType.Prepareable {
 
         /**
          * Creates a stack manipulation that represents the method's invocation.
@@ -802,14 +802,6 @@ public class MethodCall implements Implementation.Composable {
                                   TypeDescription instrumentedType,
                                   Assigner assigner,
                                   Assigner.Typing typing);
-
-        /**
-         * Prepares the instrumented type in order to allow for the represented invocation.
-         *
-         * @param instrumentedType The instrumented type.
-         * @return The prepared instrumented type.
-         */
-        InstrumentedType prepare(InstrumentedType instrumentedType);
 
         /**
          * A target handler that invokes a method either on the instance of the instrumented
@@ -914,7 +906,14 @@ public class MethodCall implements Implementation.Composable {
                                              TypeDescription instrumentedType,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
-                return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()).read();
+                StackManipulation stackManipulation = assigner.assign(fieldType, invokedMethod.getDeclaringType().asGenericType(), typing);
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + fieldType);
+                }
+                return new StackManipulation.Compound(
+                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()).read(),
+                        stackManipulation
+                );
             }
 
             @Override
@@ -981,9 +980,13 @@ public class MethodCall implements Implementation.Composable {
                 } else if (!resolution.getField().isStatic() && !instrumentedType.isAssignableTo(resolution.getField().getDeclaringType().asErasure())) {
                     throw new IllegalStateException("Cannot access " + resolution.getField() + " from " + instrumentedType);
                 }
+                StackManipulation stackManipulation = assigner.assign(resolution.getField().getType(), invokedMethod.getDeclaringType().asGenericType(), typing);
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + resolution.getField());
+                }
                 return new StackManipulation.Compound(invokedMethod.isStatic()
                         ? StackManipulation.Trivial.INSTANCE
-                        : MethodVariableAccess.loadThis(), FieldAccess.forField(resolution.getField()).read());
+                        : MethodVariableAccess.loadThis(), FieldAccess.forField(resolution.getField()).read(), stackManipulation);
             }
 
             @Override
