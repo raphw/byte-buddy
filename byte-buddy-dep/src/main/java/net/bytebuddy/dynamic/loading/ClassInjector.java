@@ -106,7 +106,7 @@ public interface ClassInjector {
         /**
          * Creates a new injector for the given {@link java.lang.ClassLoader} and {@link java.security.ProtectionDomain}.
          *
-         * @param classLoader               The {@link java.lang.ClassLoader} into which new class definitions are to be injected.
+         * @param classLoader               The {@link java.lang.ClassLoader} into which new class definitions are to be injected.Must  not be the bootstrap loader.
          * @param protectionDomain          The protection domain to apply during class definition.
          * @param packageDefinitionStrategy The package definer to be queried for package definitions.
          * @param forbidExisting            Determines if an exception should be thrown when attempting to load a type that already exists.
