@@ -5,10 +5,10 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
     .constant('repository', {
         groupId: 'net.bytebuddy',
         artifactId: 'byte-buddy',
-        version: '1.5.10'
+        version: '1.5.12'
     })
 
-    .config(function ($routeProvider) {
+    .config(function ($routeProvider, repository) {
         $routeProvider
             .when('/', {
                 controller: 'mainController',
@@ -21,6 +21,9 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
             .when('/develop', {
                 controller: 'developController',
                 templateUrl: 'partial/develop.partial.html'
+            })
+            .when({'/javadoc', {
+              redirectTo: 'javadoc/' + repository.version + '/index.html'
             })
             .otherwise({redirectTo: '/'});
     })
