@@ -450,7 +450,7 @@ public interface ClassInjector {
                 }
 
                 @Override
-                @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+                @SuppressFBWarnings(value = {"DP_DO_INSIDE_DO_PRIVILEGED", "REC_CATCH_EXCEPTION"}, justification = "Privilege is explicit user responsibility")
                 public Dispatcher initialize() {
                     try {
                         // This is safe even in a multi-threaded environment as all threads set the instances accessible before invoking any methods.
