@@ -536,7 +536,7 @@ public enum MethodInvocation {
     /**
      * Performs a method invocation on a method handle with a polymorphic type signature.
      */
-    protected class HandleInvocation implements StackManipulation {
+    protected static class HandleInvocation implements StackManipulation {
 
         /**
          * The internal name of the method handle type.
@@ -646,7 +646,7 @@ public enum MethodInvocation {
 
         @Override
         public String toString() {
-            return "MethodInvocation.nHandleType." + name();
+            return "MethodInvocation.HandleType." + name();
         }
     }
 }
