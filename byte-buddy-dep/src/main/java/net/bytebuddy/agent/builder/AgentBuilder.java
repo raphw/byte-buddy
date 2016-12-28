@@ -2888,6 +2888,15 @@ public interface AgentBuilder {
                 this.loadedFirst = loadedFirst;
             }
 
+            /**
+             * Returns this description strategy where any described super type is loaded.
+             *
+             * @return This description strategy where any described super type is loaded.
+             */
+            public DescriptionStrategy withSuperTypeLoading() {
+                return new SuperTypeLoading(this);
+            }
+
             @Override
             public boolean isLoadedFirst() {
                 return loadedFirst;

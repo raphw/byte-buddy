@@ -70,6 +70,13 @@ public class AgentBuilderDescriptionStrategyTest {
     }
 
     @Test
+    public void testSuperTypeLoading() throws Exception {
+        assertThat(AgentBuilder.DescriptionStrategy.Default.HYBRID.withSuperTypeLoading(), is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.HYBRID)));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST.withSuperTypeLoading(), is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST)));
+        assertThat(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.withSuperTypeLoading(), is((AgentBuilder.DescriptionStrategy) new AgentBuilder.DescriptionStrategy.SuperTypeLoading(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY)));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.Default.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.class).apply();
