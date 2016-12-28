@@ -41,7 +41,19 @@ public class MultipleParentClassLoader extends ClassLoader {
      *                i.e. the bootstrap class loader which is an implicit parent of any class loader.
      */
     public MultipleParentClassLoader(List<? extends ClassLoader> parents) {
-        super(ClassLoadingStrategy.BOOTSTRAP_LOADER);
+        this(ClassLoadingStrategy.BOOTSTRAP_LOADER, parents);
+    }
+
+    /**
+     * Creates a new class loader with multiple parents.
+     *
+     * @param parent  An explicit parent in compliance with the class loader API. This explicit parent should only be set if
+     *                the current platform does not allow creating a class loader that extends the bootstrap loader.
+     * @param parents The parents of this class loader in their application order. This list must not contain {@code null},
+     *                i.e. the bootstrap class loader which is an implicit parent of any class loader.
+     */
+    public MultipleParentClassLoader(ClassLoader parent, List<? extends ClassLoader> parents) {
+        super(parent);
         this.parents = parents;
     }
 
