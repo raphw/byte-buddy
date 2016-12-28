@@ -23,7 +23,9 @@ angular.module('byteBuddy', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.affix', 'd
                 templateUrl: 'partial/develop.partial.html'
             })
             .when('/javadoc', {
-              redirectTo: 'javadoc/' + repository.version + '/index.html'
+                redirectTo: function() {
+                    window.location = 'javadoc/' + repository.version + '/index.html';
+                }
             })
             .otherwise({redirectTo: '/'});
     })
