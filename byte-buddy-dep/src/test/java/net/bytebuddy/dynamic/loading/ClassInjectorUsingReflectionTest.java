@@ -9,13 +9,9 @@ import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.mockito.Mock;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -35,15 +31,6 @@ import static org.mockito.Mockito.mock;
 public class ClassInjectorUsingReflectionTest {
 
     private static final String FOO = "foo", BAR = "bar";
-
-    @Rule
-    public TestRule mockitoRule = new MockitoRule(this);
-
-    @Mock
-    private ClassInjector mockInjector;
-
-    @Mock
-    private TypeDescription typeDescription;
 
     private ClassLoader classLoader;
 

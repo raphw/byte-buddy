@@ -379,7 +379,6 @@ public interface ClassInjector {
                             getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                         }
                         try {
-
                             return new Dispatcher.Resolved.ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
                                     ClassLoader.class.getDeclaredMethod("defineClass",
                                             String.class,
