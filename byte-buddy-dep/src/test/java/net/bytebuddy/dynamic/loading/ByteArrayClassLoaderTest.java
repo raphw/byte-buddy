@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -15,7 +16,6 @@ import org.mockito.Mock;
 
 import java.io.InputStream;
 import java.net.URL;
-import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,7 +45,7 @@ public class ByteArrayClassLoaderTest {
     @Rule
     public MethodRule integrationRule = new IntegrationRule();
 
-    private ClassLoader classLoader;
+    private InjectionClassLoader classLoader;
 
     private URL sealBase;
 
@@ -75,12 +75,14 @@ public class ByteArrayClassLoaderTest {
         sealBase = new URL("file://foo");
         when(packageDefinitionStrategy.define(classLoader, Foo.class.getPackage().getName(), Foo.class.getName()))
                 .thenReturn(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, QUX, FOO, BAR, sealBase));
+        when(packageDefinitionStrategy.define(classLoader, Bar.class.getPackage().getName(), Bar.class.getName()))
+                .thenReturn(PackageDefinitionStrategy.Definition.Trivial.INSTANCE);
     }
 
     @Test
     public void testLoading() throws Exception {
         Class<?> type = classLoader.loadClass(Foo.class.getName());
-        assertThat(type.getClassLoader(), is(classLoader));
+        assertThat(type.getClassLoader(), is((ClassLoader) classLoader));
         assertEquals(classLoader.loadClass(Foo.class.getName()), type);
         assertThat(type, not(CoreMatchers.<Class<?>>is(Foo.class)));
     }
@@ -116,7 +118,7 @@ public class ByteArrayClassLoaderTest {
 
     @Test
     public void testResourceStreamLookupAfterLoading() throws Exception {
-        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is((ClassLoader) classLoader));
         InputStream inputStream = classLoader.getResourceAsStream(Foo.class.getName().replace('.', '/') + CLASS_FILE);
         try {
             assertThat(inputStream, expectedResourceLookup ? notNullValue(InputStream.class) : nullValue(InputStream.class));
@@ -136,7 +138,7 @@ public class ByteArrayClassLoaderTest {
 
     @Test
     public void testResourceLookupAfterLoading() throws Exception {
-        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is((ClassLoader) classLoader));
         assertThat(classLoader.getResource(Foo.class.getName().replace('.', '/') + CLASS_FILE), expectedResourceLookup
                 ? notNullValue(URL.class)
                 : nullValue(URL.class));
@@ -154,7 +156,7 @@ public class ByteArrayClassLoaderTest {
 
     @Test
     public void testResourcesLookupAfterLoading() throws Exception {
-        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is((ClassLoader) classLoader));
         Enumeration<URL> enumeration = classLoader.getResources(Foo.class.getName().replace('.', '/') + CLASS_FILE);
         assertThat(enumeration.hasMoreElements(), is(expectedResourceLookup));
         if (expectedResourceLookup) {
@@ -172,7 +174,7 @@ public class ByteArrayClassLoaderTest {
 
     @Test
     public void testResourceLookupWithPrefixAfterLoading() throws Exception {
-        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is((ClassLoader) classLoader));
         assertThat(classLoader.getResource("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE), expectedResourceLookup
                 ? notNullValue(URL.class)
                 : nullValue(URL.class));
@@ -190,7 +192,7 @@ public class ByteArrayClassLoaderTest {
 
     @Test
     public void testResourcesLookupWithPrefixAfterLoading() throws Exception {
-        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
+        assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is((ClassLoader) classLoader));
         Enumeration<URL> enumeration = classLoader.getResources("/" + Foo.class.getName().replace('.', '/') + CLASS_FILE);
         assertThat(enumeration.hasMoreElements(), is(expectedResourceLookup));
         if (expectedResourceLookup) {
@@ -211,7 +213,28 @@ public class ByteArrayClassLoaderTest {
         assertThat(classLoader.loadClass(Foo.class.getName()).getPackage(), not(Foo.class.getPackage()));
     }
 
+    @Test
+    public void testInjection() throws Exception {
+        assertThat(classLoader.defineClass(Bar.class.getName(), ClassFileLocator.ForClassLoader.read(Bar.class).resolve()).getName(), is(Bar.class.getName()));
+    }
+
+    @Test
+    public void testDuplicateInjection() throws Exception {
+        Class<?> type = classLoader.defineClass(Bar.class.getName(), ClassFileLocator.ForClassLoader.read(Bar.class).resolve());
+        assertThat(classLoader.defineClass(Bar.class.getName(), ClassFileLocator.ForClassLoader.read(Bar.class).resolve()), is((Object) type));
+    }
+
+    @Test
+    public void testPredefinedInjection() throws Exception {
+        Class<?> type = classLoader.defineClass(Foo.class.getName(), ClassFileLocator.ForClassLoader.read(Foo.class).resolve());
+        assertThat(type, is((Object) classLoader.loadClass(Foo.class.getName())));
+    }
+
     private static class Foo {
         /* Note: Foo is know to the system class loader but not to the bootstrap class loader */
+    }
+
+    private static class Bar {
+        /* Note: Bar is know to the system class loader but not to the bootstrap class loader */
     }
 }

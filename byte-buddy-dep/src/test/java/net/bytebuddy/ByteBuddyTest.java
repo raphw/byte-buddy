@@ -1,7 +1,10 @@
 package net.bytebuddy;
 
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.TypeResolutionStrategy;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -9,6 +12,7 @@ import org.junit.Test;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static org.hamcrest.CoreMatchers.*;
@@ -86,7 +90,7 @@ public class ByteBuddyTest {
 
     @Test
     public void testImplicitStrategyNonBootstrap() throws Exception {
-        ClassLoader classLoader = new URLClassLoader(new URL[0], null);
+        ClassLoader classLoader = new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
         Class<?> type = new ByteBuddy()
                 .subclass(Object.class)
                 .make()
@@ -94,6 +98,22 @@ public class ByteBuddyTest {
                 .getLoaded();
         assertThat(type.getClassLoader(), is(classLoader));
     }
+
+    @Test
+    public void testImplicitStrategyInjectable() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                Collections.<String, byte[]>emptyMap(),
+                null,
+                ByteArrayClassLoader.PersistenceHandler.LATENT,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+        Class<?> type = new ByteBuddy()
+                .subclass(Object.class)
+                .make()
+                .load(classLoader)
+                .getLoaded();
+        assertThat(type.getClassLoader(), is(classLoader));
+    }
+
 
     @Test
     public void testObjectProperties() throws Exception {

@@ -15,6 +15,8 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * <p>
@@ -31,7 +33,7 @@ import java.util.*;
  * <b>Note</b>: Any class and package definition is performed using the creator's {@link AccessControlContext}.
  * </p>
  */
-public class ByteArrayClassLoader extends ClassLoader {
+public class ByteArrayClassLoader extends InjectionClassLoader {
 
     /**
      * The schema for URLs that represent a class file of byte array class loaders.
@@ -70,7 +72,7 @@ public class ByteArrayClassLoader extends ClassLoader {
     /**
      * A mutable map of type names mapped to their binary representation.
      */
-    protected final Map<String, byte[]> typeDefinitions;
+    protected final ConcurrentMap<String, byte[]> typeDefinitions;
 
     /**
      * The persistence handler of this class loader.
@@ -107,7 +109,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy) {
         super(parent);
-        this.typeDefinitions = new HashMap<String, byte[]>(typeDefinitions);
+        this.typeDefinitions = new ConcurrentHashMap<String, byte[]>(typeDefinitions);
         this.protectionDomain = protectionDomain;
         this.persistenceHandler = persistenceHandler;
         this.packageDefinitionStrategy = packageDefinitionStrategy;
@@ -180,6 +182,25 @@ public class ByteArrayClassLoader extends ClassLoader {
             }
         }
         return loadedTypes;
+    }
+
+    @Override
+    public Class<?> defineClass(String name, byte[] binaryRepresentation) throws ClassNotFoundException {
+        synchronized (typeDefinitions) {
+            byte[] previous = typeDefinitions.putIfAbsent(name, binaryRepresentation);
+            Class<?> type = null;
+            try {
+                return type = loadClass(name);
+            } finally {
+                if (type == null || type.getClassLoader() != this) {
+                    if (previous == null) {
+                        typeDefinitions.remove(name);
+                    } else {
+                        typeDefinitions.put(name, previous);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -413,12 +434,12 @@ public class ByteArrayClassLoader extends ClassLoader {
          */
         MANIFEST(true) {
             @Override
-            protected byte[] lookup(String name, Map<String, byte[]> typeDefinitions) {
+            protected byte[] lookup(String name, ConcurrentMap<String, byte[]> typeDefinitions) {
                 return typeDefinitions.get(name);
             }
 
             @Override
-            protected URL url(String resourceName, Map<String, byte[]> typeDefinitions) {
+            protected URL url(String resourceName, ConcurrentMap<String, byte[]> typeDefinitions) {
                 if (!resourceName.endsWith(CLASS_FILE_SUFFIX)) {
                     return NO_URL;
                 } else if (resourceName.startsWith("/")) {
@@ -439,12 +460,12 @@ public class ByteArrayClassLoader extends ClassLoader {
          */
         LATENT(false) {
             @Override
-            protected byte[] lookup(String name, Map<String, byte[]> typeDefinitions) {
+            protected byte[] lookup(String name, ConcurrentMap<String, byte[]> typeDefinitions) {
                 return typeDefinitions.remove(name);
             }
 
             @Override
-            protected URL url(String resourceName, Map<String, byte[]> typeDefinitions) {
+            protected URL url(String resourceName, ConcurrentMap<String, byte[]> typeDefinitions) {
                 return NO_URL;
             }
         };
@@ -484,7 +505,7 @@ public class ByteArrayClassLoader extends ClassLoader {
          * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
          * @return The byte array representing the requested class or {@code null} if no such class is known.
          */
-        protected abstract byte[] lookup(String name, Map<String, byte[]> typeDefinitions);
+        protected abstract byte[] lookup(String name, ConcurrentMap<String, byte[]> typeDefinitions);
 
         /**
          * Returns a URL representing a class file.
@@ -493,7 +514,7 @@ public class ByteArrayClassLoader extends ClassLoader {
          * @param typeDefinitions A mapping of byte arrays by their type names.
          * @return A URL representing the type definition or {@code null} if the requested resource does not represent a class file.
          */
-        protected abstract URL url(String resourceName, Map<String, byte[]> typeDefinitions);
+        protected abstract URL url(String resourceName, ConcurrentMap<String, byte[]> typeDefinitions);
 
         @Override
         public String toString() {

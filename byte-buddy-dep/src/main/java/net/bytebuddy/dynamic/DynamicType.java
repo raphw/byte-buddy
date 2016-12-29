@@ -16,6 +16,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.InjectionClassLoader;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -4134,8 +4135,9 @@ public interface DynamicType {
 
         /**
          * Attempts to load this dynamic type including all of its auxiliary types, if any. If the class loader
-         * is the bootstrap class loader, a new class loader is created for loading those types. Otherwise, the
-         * types are injected into the provided class loader.
+         * is the bootstrap class loader, a new class loader is created for loading those types. If the class loader
+         * is an instance of {@link InjectionClassLoader}, the class is injected. And otherwise, the types are injected
+         * into the provided class loader.
          *
          * @param classLoader The class loader to use for this class loading.
          * @return This dynamic type in its loaded state.
@@ -4512,9 +4514,13 @@ public interface DynamicType {
 
             @Override
             public DynamicType.Loaded<T> load(ClassLoader classLoader) {
-                return load(classLoader, classLoader == null
-                        ? ClassLoadingStrategy.Default.WRAPPER
-                        : ClassLoadingStrategy.Default.INJECTION);
+                if (classLoader == null) {
+                    return load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
+                } else if (classLoader instanceof InjectionClassLoader) {
+                    return load((InjectionClassLoader) classLoader, InjectionClassLoader.Strategy.INSTANCE);
+                } else {
+                    return load(classLoader, ClassLoadingStrategy.Default.INJECTION);
+                }
             }
 
             @Override
