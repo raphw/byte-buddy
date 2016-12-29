@@ -9,8 +9,10 @@ import java.util.Map;
 
 /**
  * A strategy for loading a collection of types.
+ *
+ * @param <T> The least specific type of class loader this strategy can apply to.
  */
-public interface ClassLoadingStrategy {
+public interface ClassLoadingStrategy<T extends ClassLoader> {
 
     /**
      * A type-safe constant representing the bootstrap class loader which is represented by {@code null} within Java.
@@ -27,12 +29,12 @@ public interface ClassLoadingStrategy {
      * @return A collection of the loaded classes which will be initialized in the iteration order of the
      * returned collection.
      */
-    Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types);
+    Map<TypeDescription, Class<?>> load(T classLoader, Map<TypeDescription, byte[]> types);
 
     /**
      * This class contains implementations of default class loading strategies.
      */
-    enum Default implements Configurable {
+    enum Default implements Configurable<ClassLoader> {
 
         /**
          * This strategy creates a new {@link net.bytebuddy.dynamic.loading.ByteArrayClassLoader} with the given
@@ -101,14 +103,14 @@ public interface ClassLoadingStrategy {
         /**
          * The dispatcher to be used when loading a class.
          */
-        private final Configurable dispatcher;
+        private final Configurable<ClassLoader> dispatcher;
 
         /**
          * Creates a new default class loading strategy.
          *
          * @param dispatcher The dispatcher to be used when loading a class.
          */
-        Default(Configurable dispatcher) {
+        Default(Configurable<ClassLoader> dispatcher) {
             this.dispatcher = dispatcher;
         }
 
@@ -118,17 +120,17 @@ public interface ClassLoadingStrategy {
         }
 
         @Override
-        public Configurable with(ProtectionDomain protectionDomain) {
+        public Configurable<ClassLoader> with(ProtectionDomain protectionDomain) {
             return dispatcher.with(protectionDomain);
         }
 
         @Override
-        public Configurable with(PackageDefinitionStrategy packageDefinitionStrategy) {
+        public Configurable<ClassLoader> with(PackageDefinitionStrategy packageDefinitionStrategy) {
             return dispatcher.with(packageDefinitionStrategy);
         }
 
         @Override
-        public Configurable allowExistingTypes() {
+        public Configurable<ClassLoader> allowExistingTypes() {
             return dispatcher.allowExistingTypes();
         }
 
@@ -141,7 +143,7 @@ public interface ClassLoadingStrategy {
          * A class loading strategy which applies a class loader injection while applying a given
          * {@link java.security.ProtectionDomain} on class injection.
          */
-        protected static class InjectionDispatcher implements ClassLoadingStrategy.Configurable {
+        protected static class InjectionDispatcher implements ClassLoadingStrategy.Configurable<ClassLoader> {
 
             /**
              * The protection domain to apply.
@@ -189,17 +191,17 @@ public interface ClassLoadingStrategy {
             }
 
             @Override
-            public Configurable with(ProtectionDomain protectionDomain) {
+            public Configurable<ClassLoader> with(ProtectionDomain protectionDomain) {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, forbidExisting);
             }
 
             @Override
-            public Configurable with(PackageDefinitionStrategy packageDefinitionStrategy) {
+            public Configurable<ClassLoader> with(PackageDefinitionStrategy packageDefinitionStrategy) {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, forbidExisting);
             }
 
             @Override
-            public Configurable allowExistingTypes() {
+            public Configurable<ClassLoader> allowExistingTypes() {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, false);
             }
 
@@ -235,7 +237,7 @@ public interface ClassLoadingStrategy {
          * A class loading strategy which creates a wrapping class loader while applying a given
          * {@link java.security.ProtectionDomain} on class loading.
          */
-        protected static class WrappingDispatcher implements ClassLoadingStrategy.Configurable {
+        protected static class WrappingDispatcher implements ClassLoadingStrategy.Configurable<ClassLoader> {
 
             /**
              * Indicates that a child first loading strategy should be attempted.
@@ -319,17 +321,17 @@ public interface ClassLoadingStrategy {
             }
 
             @Override
-            public Configurable with(ProtectionDomain protectionDomain) {
+            public Configurable<ClassLoader> with(ProtectionDomain protectionDomain) {
                 return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting);
             }
 
             @Override
-            public Configurable with(PackageDefinitionStrategy packageDefinitionStrategy) {
+            public Configurable<ClassLoader> with(PackageDefinitionStrategy packageDefinitionStrategy) {
                 return new WrappingDispatcher(protectionDomain, packageDefinitionStrategy, persistenceHandler, childFirst, forbidExisting);
             }
 
             @Override
-            public Configurable allowExistingTypes() {
+            public Configurable<ClassLoader> allowExistingTypes() {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, false);
             }
 
@@ -370,8 +372,10 @@ public interface ClassLoadingStrategy {
 
     /**
      * A {@link ClassLoadingStrategy} that allows configuring the strategy's behavior.
+     *
+     * @param <S> The least specific type of class loader this strategy can apply to.
      */
-    interface Configurable extends ClassLoadingStrategy {
+    interface Configurable<S extends ClassLoader> extends ClassLoadingStrategy<S> {
 
         /**
          * Overrides the implicitly set default {@link java.security.ProtectionDomain} with an explicit one.
@@ -379,7 +383,7 @@ public interface ClassLoadingStrategy {
          * @param protectionDomain The protection domain to apply.
          * @return This class loading strategy with an explicitly set {@link java.security.ProtectionDomain}.
          */
-        Configurable with(ProtectionDomain protectionDomain);
+        Configurable<S> with(ProtectionDomain protectionDomain);
 
         /**
          * Defines the supplied package definition strategy to be used for defining packages.
@@ -387,7 +391,7 @@ public interface ClassLoadingStrategy {
          * @param packageDefinitionStrategy The package definer to be used.
          * @return A version of this class loading strategy that applies the supplied package definition strategy.
          */
-        Configurable with(PackageDefinitionStrategy packageDefinitionStrategy);
+        Configurable<S> with(PackageDefinitionStrategy packageDefinitionStrategy);
 
         /**
          * Determines if this class loading strategy should not throw an exception when attempting to load a class that
@@ -395,14 +399,14 @@ public interface ClassLoadingStrategy {
          *
          * @return A version of this class loading strategy that does not throw an exception when a class is already loaded.
          */
-        Configurable allowExistingTypes();
+        Configurable<S> allowExistingTypes();
     }
 
     /**
      * A class loading strategy which allows class injection into the bootstrap class loader if
      * appropriate.
      */
-    class ForBootstrapInjection implements ClassLoadingStrategy {
+    class ForBootstrapInjection implements ClassLoadingStrategy<ClassLoader> {
 
         /**
          * The instrumentation to use.

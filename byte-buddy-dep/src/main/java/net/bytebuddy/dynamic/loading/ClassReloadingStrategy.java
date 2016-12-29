@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * recommended to use this {@link ClassLoadingStrategy} with arbitrary classes.
  * </p>
  */
-public class ClassReloadingStrategy implements ClassLoadingStrategy {
+public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader> {
 
     /**
      * The name of the Byte Buddy {@code net.bytebuddy.agent.Installer} class.

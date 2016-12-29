@@ -49,7 +49,7 @@ import java.util.logging.Logger;
  * </p>
  */
 @TargetApi(Build.VERSION_CODES.CUPCAKE)
-public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
+public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLoader> {
 
     /**
      * The name of the dex file that the {@link dalvik.system.DexClassLoader} expects to find inside of a jar file

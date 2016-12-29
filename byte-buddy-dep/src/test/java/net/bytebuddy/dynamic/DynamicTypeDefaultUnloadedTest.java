@@ -37,7 +37,7 @@ public class DynamicTypeDefaultUnloadedTest {
     private ClassLoader classLoader;
 
     @Mock
-    private ClassLoadingStrategy classLoadingStrategy;
+    private ClassLoadingStrategy<ClassLoader> classLoadingStrategy;
 
     @Mock
     private TypeResolutionStrategy.Resolved typeResolutionStrategy;

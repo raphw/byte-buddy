@@ -40,7 +40,7 @@ public class TypeResolutionStrategyTest {
     private ClassLoader classLoader;
 
     @Mock
-    private ClassLoadingStrategy classLoadingStrategy;
+    private ClassLoadingStrategy<ClassLoader> classLoadingStrategy;
 
     @Mock
     private TypeDescription typeDescription;

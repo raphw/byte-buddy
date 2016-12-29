@@ -42,9 +42,12 @@ public interface TypeResolutionStrategy {
          * @param dynamicType          The dynamic type to initialize.
          * @param classLoader          The class loader to use.
          * @param classLoadingStrategy The class loading strategy to use.
+         * @param <S>                  The least specific type of class loader this strategy can apply to.
          * @return A map of all type descriptions mapped to their representation as a loaded class.
          */
-        Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy);
+        <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
+                                                                          S classLoader,
+                                                                          ClassLoadingStrategy<? super S> classLoadingStrategy);
     }
 
     /**
@@ -69,7 +72,9 @@ public interface TypeResolutionStrategy {
         }
 
         @Override
-        public Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
+        public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
+                                                                                 S classLoader,
+                                                                                 ClassLoadingStrategy<? super S> classLoadingStrategy) {
             Map<TypeDescription, Class<?>> types = classLoadingStrategy.load(classLoader, dynamicType.getAllTypes());
             for (Map.Entry<TypeDescription, LoadedTypeInitializer> entry : dynamicType.getLoadedTypeInitializers().entrySet()) {
                 entry.getValue().onLoad(types.get(entry.getKey()));
@@ -168,7 +173,9 @@ public interface TypeResolutionStrategy {
             }
 
             @Override
-            public Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
+            public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
+                                                                                     S classLoader,
+                                                                                     ClassLoadingStrategy<? super S> classLoadingStrategy) {
                 Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(dynamicType.getLoadedTypeInitializers());
                 TypeDescription instrumentedType = dynamicType.getTypeDescription();
                 Map<TypeDescription, Class<?>> types = classLoadingStrategy.load(classLoader, dynamicType.getAllTypes());
@@ -226,7 +233,9 @@ public interface TypeResolutionStrategy {
         }
 
         @Override
-        public Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
+        public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
+                                                                                 S classLoader,
+                                                                                 ClassLoadingStrategy<? super S> classLoadingStrategy) {
             return classLoadingStrategy.load(classLoader, dynamicType.getAllTypes());
         }
 
@@ -257,7 +266,9 @@ public interface TypeResolutionStrategy {
         }
 
         @Override
-        public Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType, ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
+        public <S extends ClassLoader> Map<TypeDescription, Class<?>> initialize(DynamicType dynamicType,
+                                                                                 S classLoader,
+                                                                                 ClassLoadingStrategy<? super S> classLoadingStrategy) {
             throw new IllegalStateException("Cannot initialize a dynamic type for a disabled type resolution strategy");
         }
 

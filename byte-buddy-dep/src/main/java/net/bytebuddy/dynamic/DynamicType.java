@@ -4147,10 +4147,11 @@ public interface DynamicType {
          *
          * @param classLoader          The class loader to use for this class loading.
          * @param classLoadingStrategy The class loader strategy which should be used for this class loading.
+         * @param <S>                  The least specific type of class loader this strategy can apply to.
          * @return This dynamic type in its loaded state.
          * @see net.bytebuddy.dynamic.loading.ClassLoadingStrategy.Default
          */
-        Loaded<T> load(ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy);
+        <S extends ClassLoader> Loaded<T> load(S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy);
 
         /**
          * Includes the provided dynamic types as auxiliary types of this instance.
@@ -4517,7 +4518,7 @@ public interface DynamicType {
             }
 
             @Override
-            public DynamicType.Loaded<T> load(ClassLoader classLoader, ClassLoadingStrategy classLoadingStrategy) {
+            public <S extends ClassLoader> DynamicType.Loaded<T> load(S classLoader, ClassLoadingStrategy<? super S> classLoadingStrategy) {
                 return new Default.Loaded<T>(typeDescription,
                         binaryRepresentation,
                         loadedTypeInitializer,

@@ -71,7 +71,7 @@ public class AndroidClassLoadingStrategyTest {
         when(dexProcessor.makeClassLoader(any(File.class), eq(folder), any(ClassLoader.class))).thenReturn(classLoader);
         AndroidClassLoadingStrategy.DexProcessor.Conversion conversion = mock(AndroidClassLoadingStrategy.DexProcessor.Conversion.class);
         when(dexProcessor.create()).thenReturn(conversion);
-        ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(folder, dexProcessor);
+        ClassLoadingStrategy<ClassLoader> classLoadingStrategy = new AndroidClassLoadingStrategy(folder, dexProcessor);
         Map<TypeDescription, byte[]> unloaded = new HashMap<TypeDescription, byte[]>();
         unloaded.put(firstType, QUX);
         unloaded.put(secondType, BAZ);
@@ -100,7 +100,7 @@ public class AndroidClassLoadingStrategyTest {
                 .method(named(TO_STRING)).intercept(FixedValue.value(FOO))
                 .make();
         StubClassLoader stubClassLoader = new StubClassLoader(dynamicType);
-        ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(folder, new StubbedClassLoaderDexCompilation(stubClassLoader));
+        ClassLoadingStrategy<ClassLoader> classLoadingStrategy = new AndroidClassLoadingStrategy(folder, new StubbedClassLoaderDexCompilation(stubClassLoader));
         Map<TypeDescription, Class<?>> map = classLoadingStrategy.load(getClass().getClassLoader(), dynamicType.getAllTypes());
         assertThat(map.size(), is(1));
         assertThat(map.get(dynamicType.getTypeDescription()), CoreMatchers.<Class<?>>is(stubClassLoader.getLoaded()));
