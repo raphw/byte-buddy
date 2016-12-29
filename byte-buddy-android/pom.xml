@@ -25,12 +25,6 @@
             <artifactId>byte-buddy</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- Important: Add JUnit first to shadow the stubbed JUnit that comes with Android SDK dependency. -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
@@ -42,9 +36,8 @@
             <version>${version.android.sdk.dx}</version>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>byte-buddy-agent</artifactId>
-            <version>${project.version}</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
