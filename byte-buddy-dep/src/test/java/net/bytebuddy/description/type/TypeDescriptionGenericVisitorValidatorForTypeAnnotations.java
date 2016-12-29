@@ -14,6 +14,7 @@ import org.mockito.Mock;
 
 import java.lang.annotation.ElementType;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -52,14 +53,15 @@ public class TypeDescriptionGenericVisitorValidatorForTypeAnnotations {
             Enum<?> typeUse = Enum.valueOf(ElementType.class, "TYPE_USE");
             Enum<?> typeParameter = Enum.valueOf(ElementType.class, "TYPE_PARAMETER");
             when(legalAnnotation.getElementTypes()).thenReturn(new HashSet(Arrays.asList(typeUse, typeParameter)));
-            when(legal.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(legalAnnotation));
-            when(duplicate.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(legalAnnotation, duplicateAnnotation));
             when(duplicateAnnotation.getElementTypes()).thenReturn(new HashSet(Arrays.asList(typeUse, typeParameter)));
-            when(legalAnnotation.getAnnotationType()).thenReturn(legalType);
-            when(duplicateAnnotation.getAnnotationType()).thenReturn(legalType);
         } catch (IllegalArgumentException ignored) {
-            /* do nothing */
+            when(legalAnnotation.getElementTypes()).thenReturn(Collections.<ElementType>emptySet());
+            when(duplicateAnnotation.getElementTypes()).thenReturn(Collections.<ElementType>emptySet());
         }
+        when(legal.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(legalAnnotation));
+        when(duplicate.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(legalAnnotation, duplicateAnnotation));
+        when(legalAnnotation.getAnnotationType()).thenReturn(legalType);
+        when(duplicateAnnotation.getAnnotationType()).thenReturn(legalType);
     }
 
     @Test
