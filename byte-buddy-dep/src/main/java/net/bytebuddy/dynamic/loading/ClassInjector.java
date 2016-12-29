@@ -213,6 +213,13 @@ public interface ClassInjector {
              */
             Class<?> UNDEFINED = null;
 
+            /**
+             * Returns the lock for loading the specified class.
+             *
+             * @param classLoader the class loader to inject the class into.
+             * @param name        The name of the class.
+             * @return The lock for loading this class.
+             */
             Object getClassLoadingLock(ClassLoader classLoader, String name);
 
             /**
