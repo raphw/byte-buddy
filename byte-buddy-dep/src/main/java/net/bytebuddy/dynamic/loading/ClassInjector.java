@@ -685,6 +685,7 @@ public interface ClassInjector {
                     }
 
                     @Override
+                    @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
                     protected void onInitialization() {
                         getClassLoadingLock.setAccessible(true);
                     }
