@@ -2,6 +2,8 @@ package net.bytebuddy.android;
 
 import android.annotation.TargetApi;
 import android.os.Build;
+import com.android.dx.cf.direct.DirectClassFile;
+import com.android.dx.cf.direct.StdAttributeFactory;
 import com.android.dx.dex.DexOptions;
 import com.android.dx.dex.cf.CfOptions;
 import com.android.dx.dex.cf.CfTranslator;
@@ -303,6 +305,11 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
             protected class Conversion implements DexProcessor.Conversion {
 
                 /**
+                 * Indicates non-strict parsing of a class file.
+                 */
+                private static final boolean NON_STRICT = false;
+
+                /**
                  * The dex file that is created by this conversion.
                  */
                 private final DexFile dexFile;
@@ -318,10 +325,13 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
 
                 @Override
                 public void register(String name, byte[] binaryRepresentation) {
-                    dexFile.add(CfTranslator.translate(name.replace('.', '/') + CLASS_FILE_EXTENSION,
+                    DirectClassFile directClassFile = new DirectClassFile(binaryRepresentation, name.replace('.', '/') + CLASS_FILE_EXTENSION, NON_STRICT);
+                    directClassFile.setAttributeFactory(new StdAttributeFactory());
+                    dexFile.add(CfTranslator.translate(directClassFile,
                             binaryRepresentation,
                             dexCompilerOptions,
-                            dexFileOptions));
+                            dexFileOptions,
+                            new DexFile(dexFileOptions)));
                 }
 
                 @Override

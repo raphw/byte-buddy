@@ -11,7 +11,6 @@ import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import net.bytebuddy.utility.CompoundList;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,11 +25,9 @@ import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -59,7 +56,7 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testBootstrapClassLoader() throws Exception {
-        new ClassInjector.UsingReflection(null);
+        new ClassInjector.UsingReflection(ClassLoadingStrategy.BOOTSTRAP_LOADER);
     }
 
     @Test
@@ -68,9 +65,42 @@ public class ClassInjectorUsingReflectionTest {
         assertThat(classLoader.loadClass(Foo.class.getName()).getClassLoader(), is(classLoader));
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testDispatcherFaultyInitialization() throws Exception {
-        new ClassInjector.UsingReflection.Dispatcher.Faulty(new Exception()).initialize();
+    @Test
+    public void testDispatcherFaultyInitializationGetClass() throws Exception {
+        assertThat(new ClassInjector.UsingReflection.Dispatcher.Faulty(new Exception()).initialize().findClass(getClass().getClassLoader(),
+                Object.class.getName()), is((Object) Object.class));
+    }
+
+    @Test
+    public void testDispatcherFaultyInitializationGetClassInexistant() throws Exception {
+        assertThat(new ClassInjector.UsingReflection.Dispatcher.Faulty(new Exception()).initialize().findClass(getClass().getClassLoader(),
+                FOO), nullValue(Class.class));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testDispatcherFaultyInitializationDefineClass() throws Exception {
+        new ClassInjector.UsingReflection.Dispatcher.Faulty(new Exception()).initialize().defineClass(null,
+                null,
+                null,
+                null);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testDispatcherFaultyInitializationGetPackage() throws Exception {
+        new ClassInjector.UsingReflection.Dispatcher.Faulty(new Exception()).initialize().getPackage(null, null);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testDispatcherFaultyInitializationDefinePackage() throws Exception {
+        new ClassInjector.UsingReflection.Dispatcher.Faulty(new Exception()).initialize().definePackage(null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     @Test

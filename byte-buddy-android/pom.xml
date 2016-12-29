@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <version.android.sdk.dx>1.7</version.android.sdk.dx>
+        <version.android.sdk.dx>7.1.0_r7</version.android.sdk.dx>
     </properties>
 
     <name>Byte Buddy for Android</name>
@@ -36,8 +36,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.android.tools</groupId>
-            <artifactId>dx</artifactId>
+            <groupId>com.jakewharton.android.repackaged</groupId>
+            <artifactId>dalvik-dx</artifactId>
             <version>${version.android.sdk.dx}</version>
         </dependency>
         <dependency>

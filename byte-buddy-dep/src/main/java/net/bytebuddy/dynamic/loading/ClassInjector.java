@@ -209,6 +209,11 @@ public interface ClassInjector {
         protected interface Dispatcher {
 
             /**
+             * Indicates a class that is currently not defined.
+             */
+            Class<?> UNDEFINED = null;
+
+            /**
              * Looks up a class from the given class loader.
              *
              * @param classLoader The class loader for which a class should be located.
@@ -468,14 +473,14 @@ public interface ClassInjector {
                         return this;
                     } catch (RuntimeException exception) {
                         if (theUnsafe == null) {
-                            throw exception;
+                            return new Faulty(exception);
                         } else {
                             try {
                                 // This serves as a fallback on environments where accessible reflection on the class loader methods is not available.
                                 theUnsafe.setAccessible(true);
                                 return new UnsafeDispatcher(theUnsafe.get(STATIC_MEMBER), defineClassUnsafe);
                             } catch (Exception ignored) {
-                                throw exception;
+                                return new Faulty(exception);
                             }
                         }
                     }
@@ -521,11 +526,6 @@ public interface ClassInjector {
                  * A dispatcher that uses {@code sun.misc.Unsafe} for class loading but which is incapable of defining packages.
                  */
                 protected static class UnsafeDispatcher implements Dispatcher {
-
-                    /**
-                     * Indicates a class that is currently not defined.
-                     */
-                    private static final Class<?> UNDEFINED = null;
 
                     /**
                      * An instance of {@code sun.misc.Unsafe}.
@@ -620,7 +620,7 @@ public interface ClassInjector {
             /**
              * Represents an unsuccessfully loaded method lookup.
              */
-            class Faulty implements Initializable {
+            class Faulty implements Dispatcher, Initializable {
 
                 /**
                  * The exception that occurred when looking up the reflection methods.
@@ -638,7 +638,39 @@ public interface ClassInjector {
 
                 @Override
                 public Dispatcher initialize() {
-                    throw new IllegalStateException("Error locating class loader API", exception);
+                    return this;
+                }
+
+                @Override
+                public Class<?> findClass(ClassLoader classLoader, String name) {
+                    try {
+                        return classLoader.loadClass(name);
+                    } catch (ClassNotFoundException ignored) {
+                        return UNDEFINED;
+                    }
+                }
+
+                @Override
+                public Class<?> defineClass(ClassLoader classLoader, String name, byte[] binaryRepresentation, ProtectionDomain protectionDomain) {
+                    throw new UnsupportedOperationException("Cannot define class using reflection", exception);
+                }
+
+                @Override
+                public Package getPackage(ClassLoader classLoader, String name) {
+                    throw new UnsupportedOperationException("Cannot get package using reflection", exception);
+                }
+
+                @Override
+                public Package definePackage(ClassLoader classLoader,
+                                             String name,
+                                             String specificationTitle,
+                                             String specificationVersion,
+                                             String specificationVendor,
+                                             String implementationTitle,
+                                             String implementationVersion,
+                                             String implementationVendor,
+                                             URL sealBase) {
+                    throw new UnsupportedOperationException("Cannot define package using injection", exception);
                 }
 
                 @Override
