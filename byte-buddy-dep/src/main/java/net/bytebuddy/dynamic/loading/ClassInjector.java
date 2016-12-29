@@ -135,11 +135,11 @@ public interface ClassInjector {
 
         @Override
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
-            synchronized (classLoader) {
-                Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
-                for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
-                    String typeName = entry.getKey().getName();
-                    Dispatcher dispatcher = DISPATCHER.initialize();
+            Dispatcher dispatcher = DISPATCHER.initialize();
+            Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
+            for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
+                String typeName = entry.getKey().getName();
+                synchronized (dispatcher.getClassLoadingLock(classLoader, typeName)) {
                     Class<?> type = dispatcher.findClass(classLoader, typeName);
                     if (type == null) {
                         int packageIndex = typeName.lastIndexOf('.');
@@ -169,8 +169,8 @@ public interface ClassInjector {
                     }
                     loadedTypes.put(entry.getKey(), type);
                 }
-                return loadedTypes;
             }
+            return loadedTypes;
         }
 
         @Override
@@ -212,6 +212,8 @@ public interface ClassInjector {
              * Indicates a class that is currently not defined.
              */
             Class<?> UNDEFINED = null;
+
+            Object getClassLoadingLock(ClassLoader classLoader, String name);
 
             /**
              * Looks up a class from the given class loader.
@@ -282,7 +284,7 @@ public interface ClassInjector {
             /**
              * Represents a successfully loaded method lookup for the dispatcher.
              */
-            class Resolved implements Dispatcher, Initializable {
+            abstract class Resolved implements Dispatcher, Initializable {
 
                 /**
                  * Indicates an reflective access on a static member.
@@ -292,33 +294,33 @@ public interface ClassInjector {
                 /**
                  * An instance of {@link ClassLoader#findLoadedClass(String)}.
                  */
-                private final Method findLoadedClass;
+                protected final Method findLoadedClass;
 
                 /**
                  * An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
                  */
-                private final Method defineClass;
+                protected final Method defineClass;
 
                 /**
                  * An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
                  */
-                private final Method getPackage;
+                protected final Method getPackage;
 
                 /**
                  * An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
                  */
-                private final Method definePackage;
+                protected final Method definePackage;
 
                 /**
                  * An instance of {@code sun.misc.Unsafe#theUnsafe} or {@code null} if it is not available.
                  */
-                private final Field theUnsafe;
+                protected final Field theUnsafe;
 
                 /**
                  * An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}
                  * or {@code null} if it is not available.
                  */
-                private final Method defineClassUnsafe;
+                protected final Method defineClassUnsafe;
 
                 /**
                  * Creates a new resolved reflection store.
@@ -373,28 +375,52 @@ public interface ClassInjector {
                         Method getPackage;
                         try {
                             getPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
-                        } catch (Exception ignored) {
+                        } catch (NoSuchMethodException ignored) {
                             getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                         }
-                        return new Dispatcher.Resolved(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
-                                ClassLoader.class.getDeclaredMethod("defineClass",
-                                        String.class,
-                                        byte[].class,
-                                        int.class,
-                                        int.class,
-                                        ProtectionDomain.class),
-                                getPackage,
-                                ClassLoader.class.getDeclaredMethod("definePackage",
-                                        String.class,
-                                        String.class,
-                                        String.class,
-                                        String.class,
-                                        String.class,
-                                        String.class,
-                                        String.class,
-                                        URL.class),
-                                theUnsafe,
-                                defineClass);
+                        try {
+
+                            return new Dispatcher.Resolved.ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
+                                    ClassLoader.class.getDeclaredMethod("defineClass",
+                                            String.class,
+                                            byte[].class,
+                                            int.class,
+                                            int.class,
+                                            ProtectionDomain.class),
+                                    getPackage,
+                                    ClassLoader.class.getDeclaredMethod("definePackage",
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            URL.class),
+                                    theUnsafe,
+                                    defineClass,
+                                    ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
+                        } catch (NoSuchMethodException ignored) {
+                            return new Dispatcher.Resolved.ForLegacyVm(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
+                                    ClassLoader.class.getDeclaredMethod("defineClass",
+                                            String.class,
+                                            byte[].class,
+                                            int.class,
+                                            int.class,
+                                            ProtectionDomain.class),
+                                    getPackage,
+                                    ClassLoader.class.getDeclaredMethod("definePackage",
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            String.class,
+                                            URL.class),
+                                    theUnsafe,
+                                    defineClass);
+                        }
                     } catch (Exception exception) {
                         return new Dispatcher.Faulty(exception);
                     }
@@ -470,6 +496,7 @@ public interface ClassInjector {
                         defineClass.setAccessible(true);
                         getPackage.setAccessible(true);
                         definePackage.setAccessible(true);
+                        onInitialization();
                         return this;
                     } catch (RuntimeException exception) {
                         if (theUnsafe == null) {
@@ -485,6 +512,11 @@ public interface ClassInjector {
                         }
                     }
                 }
+
+                /**
+                 * Invoked upon initializing methods.
+                 */
+                protected abstract void onInitialization();
 
                 @Override
                 public boolean equals(Object other) {
@@ -508,18 +540,6 @@ public interface ClassInjector {
                     result = 31 * result + theUnsafe.hashCode();
                     result = 31 * result + defineClassUnsafe.hashCode();
                     return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "ClassInjector.UsingReflection.Dispatcher.Resolved{" +
-                            "findLoadedClass=" + findLoadedClass +
-                            ", defineClass=" + defineClass +
-                            ", getPackage=" + getPackage +
-                            ", definePackage=" + definePackage +
-                            ", theUnsafe=" + theUnsafe +
-                            ", defineClassUnsafe=" + defineClassUnsafe +
-                            '}';
                 }
 
                 /**
@@ -546,6 +566,11 @@ public interface ClassInjector {
                     protected UnsafeDispatcher(Object unsafe, Method defineClass) {
                         this.unsafe = unsafe;
                         this.defineClass = defineClass;
+                    }
+
+                    @Override
+                    public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+                        return classLoader;
                     }
 
                     @Override
@@ -615,6 +640,133 @@ public interface ClassInjector {
                                 '}';
                     }
                 }
+
+                /**
+                 * A resolved class dispatcher for a class injector on a VM running at least Java 7.
+                 */
+                protected static class ForJava7CapableVm extends Resolved {
+
+                    /**
+                     * An instance of {@code ClassLoader#getClassLoadingLock(String)}.
+                     */
+                    private final Method getClassLoadingLock;
+
+                    /**
+                     * Creates a new resolved reflection store for a VM running at least Java 7.
+                     *
+                     * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
+                     * @param defineClass         An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                     * @param getPackage          An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                     * @param definePackage       An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                     * @param defineClassUnsafe   An instance of {@code sun.misc.Unsafe#theUnsafe} or {@code null} if it is not available.
+                     * @param theUnsafe           An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}
+                     *                            or {@code null} if it is not available.
+                     * @param getClassLoadingLock An instance of {@code ClassLoader#getClassLoadingLock(String)}.
+                     */
+                    protected ForJava7CapableVm(Method findLoadedClass,
+                                                Method defineClass,
+                                                Method getPackage,
+                                                Method definePackage,
+                                                Field theUnsafe,
+                                                Method defineClassUnsafe,
+                                                Method getClassLoadingLock) {
+                        super(findLoadedClass, defineClass, getPackage, definePackage, theUnsafe, defineClassUnsafe);
+                        this.getClassLoadingLock = getClassLoadingLock;
+                    }
+
+                    @Override
+                    public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+                        try {
+                            return getClassLoadingLock.invoke(classLoader, name);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Could not access java.lang.ClassLoader#getClassLoadingLock", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Error invoking java.lang.ClassLoader#getClassLoadingLock", exception.getCause());
+                        }
+                    }
+
+                    @Override
+                    protected void onInitialization() {
+                        getClassLoadingLock.setAccessible(true);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        ForJava7CapableVm that = (ForJava7CapableVm) object;
+                        return getClassLoadingLock.equals(that.getClassLoadingLock);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + getClassLoadingLock.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "ClassInjector.UsingReflection.Dispatcher.Resolved.ForJava7CapableVm{" +
+                                "findLoadedClass=" + findLoadedClass +
+                                ", defineClass=" + defineClass +
+                                ", getPackage=" + getPackage +
+                                ", definePackage=" + definePackage +
+                                ", theUnsafe=" + theUnsafe +
+                                ", defineClassUnsafe=" + defineClassUnsafe +
+                                ", getClassLoadingLock=" + getClassLoadingLock +
+                                '}';
+                    }
+                }
+
+                /**
+                 * A resolved class dispatcher for a class injector prior to Java 7.
+                 */
+                protected static class ForLegacyVm extends Resolved {
+
+                    /**
+                     * Creates a new resolved reflection store for a VM prior to Java 8.
+                     *
+                     * @param findLoadedClass   An instance of {@link ClassLoader#findLoadedClass(String)}.
+                     * @param defineClass       An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
+                     * @param getPackage        An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
+                     * @param definePackage     An instance of {@link ClassLoader#definePackage(String, String, String, String, String, String, String, URL)}.
+                     * @param defineClassUnsafe An instance of {@code sun.misc.Unsafe#theUnsafe} or {@code null} if it is not available.
+                     * @param theUnsafe         An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}
+                     *                          or {@code null} if it is not available.
+                     */
+                    protected ForLegacyVm(Method findLoadedClass,
+                                          Method defineClass,
+                                          Method getPackage,
+                                          Method definePackage,
+                                          Field theUnsafe,
+                                          Method defineClassUnsafe) {
+                        super(findLoadedClass, defineClass, getPackage, definePackage, theUnsafe, defineClassUnsafe);
+                    }
+
+                    @Override
+                    public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+                        return classLoader;
+                    }
+
+                    @Override
+                    protected void onInitialization() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "ClassInjector.UsingReflection.Dispatcher.Resolved.ForLegacyVm{" +
+                                "findLoadedClass=" + findLoadedClass +
+                                ", defineClass=" + defineClass +
+                                ", getPackage=" + getPackage +
+                                ", definePackage=" + definePackage +
+                                ", theUnsafe=" + theUnsafe +
+                                ", defineClassUnsafe=" + defineClassUnsafe +
+                                '}';
+                    }
+                }
             }
 
             /**
@@ -639,6 +791,11 @@ public interface ClassInjector {
                 @Override
                 public Dispatcher initialize() {
                     return this;
+                }
+
+                @Override
+                public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+                    return classLoader;
                 }
 
                 @Override

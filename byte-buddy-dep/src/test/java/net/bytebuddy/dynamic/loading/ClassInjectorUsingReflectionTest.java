@@ -30,6 +30,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class ClassInjectorUsingReflectionTest {
 
@@ -104,6 +105,23 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    public void testLegacyDispatcherGetLock() throws Exception {
+        ClassLoader classLoader = mock(ClassLoader.class);
+        assertThat(new ClassInjector.UsingReflection.Dispatcher.Resolved.ForLegacyVm(null,
+                null,
+                null,
+                null,
+                null,
+                null).getClassLoadingLock(classLoader, FOO), is((Object) classLoader));
+    }
+
+    @Test
+    public void testFaultyDispatcherGetLock() throws Exception {
+        ClassLoader classLoader = mock(ClassLoader.class);
+        assertThat(new ClassInjector.UsingReflection.Dispatcher.Faulty(null).getClassLoadingLock(classLoader, FOO), is((Object) classLoader));
+    }
+
+    @Test
     public void testInjectionOrderNoPrematureAuxiliaryInjection() throws Exception {
         ClassLoader classLoader = new ByteArrayClassLoader(null,
                 ClassFileExtraction.of(Bar.class, Interceptor.class),
@@ -149,11 +167,28 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    public void testUnsafeDispatcherGetLock() throws Exception {
+        ClassLoader classLoader = mock(ClassLoader.class);
+        assertThat(new ClassInjector.UsingReflection.Dispatcher.Resolved.UnsafeDispatcher(null, null).getClassLoadingLock(classLoader, FOO), is((Object) classLoader));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).apply();
         final Iterator<Field> fields = Arrays.asList(String.class.getDeclaredFields()).iterator();
         final Iterator<Method> methods = Arrays.asList(String.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Resolved.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Resolved.ForLegacyVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+            @Override
+            public Method create() {
+                return methods.next();
+            }
+        }).create(new ObjectPropertyAssertion.Creator<Field>() {
+            @Override
+            public Field create() {
+                return fields.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Resolved.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return methods.next();
