@@ -26,7 +26,7 @@ public class ByteArrayClassLoaderSynchronizationStrategyTest {
 
     @Test
     public void testLegacyVm() throws Exception {
-        assertThat(ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForLegacyVm.INSTANCE.classLoadingLock(FOO, classLoader), is((Object) classLoader));
+        assertThat(ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForLegacyVm.INSTANCE.getClassLoadingLock(FOO, classLoader), is((Object) classLoader));
     }
 
     @Test

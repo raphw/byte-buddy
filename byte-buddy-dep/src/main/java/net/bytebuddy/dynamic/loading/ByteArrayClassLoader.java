@@ -56,6 +56,24 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     private static final PackageLookupStrategy PACKAGE_LOOKUP_STRATEGY = packageLookupStrategy();
 
     /**
+     * The synchronization engine for the executing JVM.
+     */
+    protected static final SynchronizationStrategy SYNCHRONIZATION_STRATEGY;
+
+    /*
+     * Sets up the suitable synchronization engine (Java 8+ or earlier).
+     */
+    static {
+        SynchronizationStrategy synchronizationStrategy;
+        try {
+            synchronizationStrategy = SynchronizationStrategy.ForJava7CapableVm.resolve();
+        } catch (Exception ignored) {
+            synchronizationStrategy = SynchronizationStrategy.ForLegacyVm.INSTANCE;
+        }
+        SYNCHRONIZATION_STRATEGY = synchronizationStrategy;
+    }
+
+    /**
      * Locates the best available package lookup strategy.
      *
      * @return A package lookup strategy for the current VM.
@@ -186,7 +204,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
 
     @Override
     public Class<?> defineClass(String name, byte[] binaryRepresentation) throws ClassNotFoundException {
-        synchronized (typeDefinitions) {
+        synchronized (SYNCHRONIZATION_STRATEGY.getClassLoadingLock(this, name)) {
             byte[] previous = typeDefinitions.putIfAbsent(name, binaryRepresentation);
             Class<?> type = null;
             try {
@@ -246,6 +264,105 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                 ", accessControlContext=" + accessControlContext +
                 '}';
+    }
+
+    /**
+     * An engine for receiving a <i>class loading lock</i> when loading a class.
+     */
+    protected interface SynchronizationStrategy {
+
+        /**
+         * Receives the class loading lock.
+         *
+         * @param name        The name of the class being loaded.
+         * @param classLoader The class loader loading the class.
+         * @return The corresponding class loading lock.
+         */
+        Object getClassLoadingLock(ClassLoader classLoader, String name);
+
+        /**
+         * A synchronization engine for a VM that is not aware of parallel-capable class loaders.
+         */
+        enum ForLegacyVm implements SynchronizationStrategy {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+                return classLoader;
+            }
+
+            @Override
+            public String toString() {
+                return "ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForLegacyVm." + name();
+            }
+        }
+
+        /**
+         * A synchronization engine for a VM that is aware of parallel-capable class loaders.
+         */
+        class ForJava7CapableVm implements SynchronizationStrategy, PrivilegedAction<SynchronizationStrategy> {
+
+            /**
+             * The {@code ClassLoader#getClassLoadingLock(String)} method.
+             */
+            private final Method method;
+
+            /**
+             * Creates a new synchronization engine.
+             *
+             * @param method The {@code ClassLoader#getClassLoadingLock(String)} method.
+             */
+            protected ForJava7CapableVm(Method method) {
+                this.method = method;
+            }
+
+            /**
+             * Resolves a synchronization engine for a modern VM if this is possible.
+             *
+             * @return A modern synchronization engine.
+             * @throws NoSuchMethodException If the executing VM is not a modern VM.
+             */
+            protected static SynchronizationStrategy resolve() throws NoSuchMethodException {
+                return AccessController.doPrivileged(new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class)));
+            }
+
+            @Override
+            public Object getClassLoadingLock(ClassLoader classLoader, String name) {
+                try {
+                    return method.invoke(classLoader, name);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access class loading lock for " + name + " on " + classLoader, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception);
+                }
+            }
+
+            @Override
+            public SynchronizationStrategy run() {
+                method.setAccessible(true);
+                return this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && method.equals(((ForJava7CapableVm) other).method);
+            }
+
+            @Override
+            public int hashCode() {
+                return method.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForJava7CapableVm{method=" + method + '}';
+            }
+        }
     }
 
     /**
@@ -705,24 +822,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         private static final String CLASS_FILE_SUFFIX = ".class";
 
         /**
-         * The synchronization engine for the executing JVM.
-         */
-        private static final SynchronizationStrategy SYNCHRONIZATION_STRATEGY;
-
-        /*
-         * Sets up the suitable synchronization engine (Java 8+ or earlier).
-         */
-        static {
-            SynchronizationStrategy synchronizationStrategy;
-            try {
-                synchronizationStrategy = SynchronizationStrategy.ForJava7CapableVm.resolve();
-            } catch (Exception ignored) {
-                synchronizationStrategy = SynchronizationStrategy.ForLegacyVm.INSTANCE;
-            }
-            SYNCHRONIZATION_STRATEGY = synchronizationStrategy;
-        }
-
-        /**
          * Creates a new child-first byte array class loader.
          *
          * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
@@ -741,7 +840,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
 
         @Override
         protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            synchronized (SYNCHRONIZATION_STRATEGY.classLoadingLock(name, this)) {
+            synchronized (SYNCHRONIZATION_STRATEGY.getClassLoadingLock(this, name)) {
                 Class<?> type = findLoadedClass(name);
                 if (type != null) {
                     return type;
@@ -810,105 +909,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                     ", accessControlContext=" + accessControlContext +
                     '}';
-        }
-
-        /**
-         * An engine for receiving a <i>class loading lock</i> when loading a class.
-         */
-        protected interface SynchronizationStrategy {
-
-            /**
-             * Receives the class loading lock.
-             *
-             * @param name        The name of the class being loaded.
-             * @param classLoader The class loader loading the class.
-             * @return The corresponding class loading lock.
-             */
-            Object classLoadingLock(String name, ClassLoader classLoader);
-
-            /**
-             * A synchronization engine for a VM that is not aware of parallel-capable class loaders.
-             */
-            enum ForLegacyVm implements SynchronizationStrategy {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public Object classLoadingLock(String name, ClassLoader classLoader) {
-                    return classLoader;
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForLegacyVm." + name();
-                }
-            }
-
-            /**
-             * A synchronization engine for a VM that is aware of parallel-capable class loaders.
-             */
-            class ForJava7CapableVm implements SynchronizationStrategy, PrivilegedAction<SynchronizationStrategy> {
-
-                /**
-                 * The {@code ClassLoader#getClassLoadingLock(String)} method.
-                 */
-                private final Method method;
-
-                /**
-                 * Creates a new synchronization engine.
-                 *
-                 * @param method The {@code ClassLoader#getClassLoadingLock(String)} method.
-                 */
-                protected ForJava7CapableVm(Method method) {
-                    this.method = method;
-                }
-
-                /**
-                 * Resolves a synchronization engine for a modern VM if this is possible.
-                 *
-                 * @return A modern synchronization engine.
-                 * @throws NoSuchMethodException If the executing VM is not a modern VM.
-                 */
-                protected static SynchronizationStrategy resolve() throws NoSuchMethodException {
-                    return AccessController.doPrivileged(new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class)));
-                }
-
-                @Override
-                public Object classLoadingLock(String name, ClassLoader classLoader) {
-                    try {
-                        return method.invoke(classLoader, name);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access class loading lock for " + name + " on " + classLoader, exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception);
-                    }
-                }
-
-                @Override
-                public SynchronizationStrategy run() {
-                    method.setAccessible(true);
-                    return this;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && method.equals(((ForJava7CapableVm) other).method);
-                }
-
-                @Override
-                public int hashCode() {
-                    return method.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForJava7CapableVm{method=" + method + '}';
-                }
-            }
         }
 
         /**
