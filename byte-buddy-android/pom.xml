@@ -12,7 +12,8 @@
     <packaging>jar</packaging>
 
     <properties>
-        <version.android.sdk.dx>7.1.0_r7</version.android.sdk.dx>
+        <!-- Newer versions require Java 7 -->
+        <version.android.sdk.dx>1</version.android.sdk.dx>
     </properties>
 
     <name>Byte Buddy for Android</name>

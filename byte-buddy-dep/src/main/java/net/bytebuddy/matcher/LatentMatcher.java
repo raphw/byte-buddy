@@ -54,10 +54,12 @@ public interface LatentMatcher<T> {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription typeDescription) {
-            return inverted
+            // Casting is required by some Java 6 compilers.
+            return (ElementMatcher<? super MethodDescription>) (inverted
                     ? not(isDeclaredBy(typeDescription))
-                    : isDeclaredBy(typeDescription);
+                    : isDeclaredBy(typeDescription));
         }
 
         @Override
