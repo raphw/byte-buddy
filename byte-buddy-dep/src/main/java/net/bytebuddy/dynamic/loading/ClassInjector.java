@@ -379,7 +379,8 @@ public interface ClassInjector {
                             getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
                         }
                         try {
-                            return new Dispatcher.Resolved.ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
+                            return new Dispatcher.Resolved.ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class),
+                                    ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
                                     ClassLoader.class.getDeclaredMethod("defineClass",
                                             String.class,
                                             byte[].class,
@@ -397,8 +398,7 @@ public interface ClassInjector {
                                             String.class,
                                             URL.class),
                                     theUnsafe,
-                                    defineClass,
-                                    ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
+                                    defineClass);
                         } catch (NoSuchMethodException ignored) {
                             return new Dispatcher.Resolved.ForLegacyVm(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
                                     ClassLoader.class.getDeclaredMethod("defineClass",
@@ -653,6 +653,7 @@ public interface ClassInjector {
                     /**
                      * Creates a new resolved reflection store for a VM running at least Java 7.
                      *
+                     * @param getClassLoadingLock An instance of {@code ClassLoader#getClassLoadingLock(String)}.
                      * @param findLoadedClass     An instance of {@link ClassLoader#findLoadedClass(String)}.
                      * @param defineClass         An instance of {@link ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)}.
                      * @param getPackage          An instance of {@link ClassLoader#getPackage(String)} or {@code ClassLoader#getDefinedPackage(String)}.
@@ -660,15 +661,14 @@ public interface ClassInjector {
                      * @param defineClassUnsafe   An instance of {@code sun.misc.Unsafe#theUnsafe} or {@code null} if it is not available.
                      * @param theUnsafe           An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}
                      *                            or {@code null} if it is not available.
-                     * @param getClassLoadingLock An instance of {@code ClassLoader#getClassLoadingLock(String)}.
                      */
-                    protected ForJava7CapableVm(Method findLoadedClass,
+                    protected ForJava7CapableVm(Method getClassLoadingLock,
+                                                Method findLoadedClass,
                                                 Method defineClass,
                                                 Method getPackage,
                                                 Method definePackage,
                                                 Field theUnsafe,
-                                                Method defineClassUnsafe,
-                                                Method getClassLoadingLock) {
+                                                Method defineClassUnsafe) {
                         super(findLoadedClass, defineClass, getPackage, definePackage, theUnsafe, defineClassUnsafe);
                         this.getClassLoadingLock = getClassLoadingLock;
                     }
