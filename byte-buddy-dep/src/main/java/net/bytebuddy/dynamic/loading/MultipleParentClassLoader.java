@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
+import static net.bytebuddy.matcher.ElementMatchers.not;
+
 /**
  * <p>
  * This {@link java.lang.ClassLoader} is capable of loading classes from multiple parents. This class loader
@@ -273,7 +276,9 @@ public class MultipleParentClassLoader extends ClassLoader {
         /**
          * <p>
          * Returns the only class loader that was appended if exactly one class loader was appended or a multiple parent class loader as
-         * a parent of all supplied class loader and with the bootstrap class loader as an implicit parent. If no class loader
+         * a parent of all supplied class loader and with the bootstrap class loader as an implicit parent. If no class loader was appended,
+         * a new class loader is created that declares no parents. If a class loader is created, its explicit parent is set to be the
+         * bootstrap class loader.
          * </p>
          * <p>
          * <b>Important</b>: Byte Buddy does not provide any access control for the creation of the class loader. It is the responsibility
@@ -287,6 +292,38 @@ public class MultipleParentClassLoader extends ClassLoader {
             return classLoaders.size() == 1
                     ? classLoaders.get(ONLY)
                     : new MultipleParentClassLoader(classLoaders);
+        }
+
+        /**
+         * <p>
+         * Returns the only class loader that was appended if exactly one class loader was appended or a multiple parent class loader as
+         * a parent of all supplied class loader and with the bootstrap class loader as an implicit parent. If no class loader was appended,
+         * or if only the supplied parent to this method was included, this class loader is returned,
+         * </p>
+         * <p>
+         * <b>Important</b>: Byte Buddy does not provide any access control for the creation of the class loader. It is the responsibility
+         * of the user of this builder to provide such privileges.
+         * </p>
+         *
+         * @param parent The class loader's contractual parent which is accessible via {@link ClassLoader#getParent()}. If this class loader
+         *               is also included in the appended class loaders, it is not
+         * @return A suitable class loader.
+         */
+        public ClassLoader build(ClassLoader parent) {
+            return classLoaders.isEmpty() || (classLoaders.size() == 1 && classLoaders.contains(parent))
+                    ? parent
+                    : filter(not(is(parent))).doBuild(parent);
+        }
+
+        /**
+         * Creates a multiple parent class loader with an explicit parent.
+         *
+         * @param parent The explicit parent class loader.
+         * @return A multiple parent class loader that includes all collected class loaders and the explicit parent.
+         */
+        @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
+        private ClassLoader doBuild(ClassLoader parent) {
+            return new MultipleParentClassLoader(parent, classLoaders);
         }
 
         @Override

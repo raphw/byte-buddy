@@ -153,6 +153,31 @@ public class MultipleParentClassLoaderTest {
     }
 
     @Test
+    public void testMultipleParentClassLoaderExplicitParentOnly() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder().build(first), is(first));
+    }
+
+    @Test
+    public void testMultipleParentClassLoaderExplicitParentPreIncluded() throws Exception {
+        assertThat(new MultipleParentClassLoader.Builder().append(first).build(first), is(first));
+    }
+
+    @Test
+    public void testMultipleParentClassLoaderExplicitParentPreIncludedWithOther() throws Exception {
+        ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(first, second).build(first);;
+        assertThat(classLoader, CoreMatchers.not(first));
+        assertThat(classLoader, CoreMatchers.not(second));
+        assertThat(classLoader.getParent(), is(first));
+    }
+
+    @Test
+    public void testMultipleParentClassLoaderExplicitParentNotPreIncludedWithOther() throws Exception {
+        ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(second).build(first);;
+        assertThat(classLoader, CoreMatchers.not(second));
+        assertThat(classLoader.getParent(), is(first));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MultipleParentClassLoader.class).applyBasic();
         ObjectPropertyAssertion.of(MultipleParentClassLoader.CompoundEnumeration.class).applyBasic();
