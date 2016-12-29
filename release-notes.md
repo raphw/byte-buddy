@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 29. December 2016: version 1.5.13
+
+- Updates to ASM 5.2
+- Updates Android DX-maker.
+- Adds API to `MultipleParentClassLoader` to use other loader than bootstrap loader as a parent which is not always legal, e.g. on Android.
+- Make `ClassInjector` use official class loading lock if one is available.
+- Make `ClassInjector` use `getDefinedPackage` instead of `getPackage` if available.
+- Declare UNIX socket library as provided in Byte Buddy agent to only add the dependency on demand.
+
 ### 27. December 2016: version 1.5.12
 
 - Refactored rebasing of type initializers. Do no longer rebase into static method to pass validation for final static field assignment on Java 9.
