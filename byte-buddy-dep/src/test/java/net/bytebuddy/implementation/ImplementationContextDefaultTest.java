@@ -10,7 +10,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.TypeInitializer;
-import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -157,10 +156,10 @@ public class ImplementationContextDefaultTest {
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
         when(instrumentedType.isInterface()).thenReturn(interfaceType);
-        when(auxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
+        when(auxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(MethodAccessorFactory.class)))
                 .thenReturn(firstDynamicType);
         when(firstDynamicType.getTypeDescription()).thenReturn(firstDescription);
-        when(otherAuxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(AuxiliaryType.MethodAccessorFactory.class)))
+        when(otherAuxiliaryType.make(any(String.class), any(ClassFileVersion.class), any(MethodAccessorFactory.class)))
                 .thenReturn(secondDynamicType);
         when(secondDynamicType.getTypeDescription()).thenReturn(secondDescription);
         when(classVisitor.visitMethod(any(int.class), any(String.class), any(String.class), any(String.class), any(String[].class)))
@@ -388,22 +387,22 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        MethodDescription.InDefinedShape firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation);
+        MethodDescription.InDefinedShape firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(firstMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstMethodDescription, firstSpecialParameterType)));
         assertThat(firstMethodDescription.getReturnType(), is(firstSpecialReturnType));
         assertThat(firstMethodDescription.getInternalName(), startsWith(FOO));
         assertThat(firstMethodDescription.getModifiers(), is(accessorMethodModifiers));
         assertThat(firstMethodDescription.getExceptionTypes(), is(firstSpecialExceptionTypes));
-        assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
+        assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
         when(secondSpecialMethod.isStatic()).thenReturn(true);
-        MethodDescription.InDefinedShape secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation);
+        MethodDescription.InDefinedShape secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(secondMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondMethodDescription, secondSpecialParameterType)));
         assertThat(secondMethodDescription.getReturnType(), is(secondSpecialReturnType));
         assertThat(secondMethodDescription.getInternalName(), startsWith(BAR));
         assertThat(secondMethodDescription.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
         assertThat(secondMethodDescription.getExceptionTypes(), is(secondSpecialExceptionTypes));
-        assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
-        assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation), is(secondMethodDescription));
+        assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
+        assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
@@ -418,8 +417,8 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        MethodDescription firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation);
-        assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
+        MethodDescription firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT);
+        assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAZ + ")" + QUX), isNull(String.class), aryEq(new String[]{FOO}));
@@ -440,8 +439,8 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        MethodDescription secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation);
-        assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation), is(secondMethodDescription));
+        MethodDescription secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT);
+        assertThat(implementationContext.registerAccessorFor(secondSpecialInvocation, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + BAR + ")" + FOO), isNull(String.class), aryEq(new String[]{BAZ}));
@@ -460,22 +459,22 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        MethodDescription firstFieldGetter = implementationContext.registerGetterFor(firstField);
+        MethodDescription firstFieldGetter = implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(firstFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty<ParameterDescription>()));
         assertThat(firstFieldGetter.getReturnType(), is(firstFieldType));
         assertThat(firstFieldGetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldGetter.getModifiers(), is(accessorMethodModifiers));
         assertThat(firstFieldGetter.getExceptionTypes(), is((TypeList.Generic) new TypeList.Generic.Empty()));
-        assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
+        assertThat(implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstFieldGetter));
         when(secondField.isStatic()).thenReturn(true);
-        MethodDescription secondFieldGetter = implementationContext.registerGetterFor(secondField);
+        MethodDescription secondFieldGetter = implementationContext.registerGetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(secondFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty<ParameterDescription>()));
         assertThat(secondFieldGetter.getReturnType(), is(secondFieldType));
         assertThat(secondFieldGetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldGetter.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
         assertThat(secondFieldGetter.getExceptionTypes(), is((TypeList.Generic) new TypeList.Generic.Empty()));
-        assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
-        assertThat(implementationContext.registerGetterFor(secondField), is(secondFieldGetter));
+        assertThat(implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstFieldGetter));
+        assertThat(implementationContext.registerGetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondFieldGetter));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("()" + BAR), isNull(String.class), isNull(String[].class));
@@ -490,8 +489,8 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        MethodDescription firstMethodDescription = implementationContext.registerGetterFor(firstField);
-        assertThat(implementationContext.registerGetterFor(firstField), is(firstMethodDescription));
+        MethodDescription firstMethodDescription = implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
+        assertThat(implementationContext.registerGetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("()" + BAR), isNull(String.class), isNull(String[].class));
@@ -511,8 +510,8 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        MethodDescription secondMethodDescription = implementationContext.registerGetterFor(secondField);
-        assertThat(implementationContext.registerGetterFor(secondField), is(secondMethodDescription));
+        MethodDescription secondMethodDescription = implementationContext.registerGetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT);
+        assertThat(implementationContext.registerGetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("()" + QUX), isNull(String.class), isNull(String[].class));
@@ -530,22 +529,22 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        MethodDescription.InDefinedShape firstFieldSetter = implementationContext.registerSetterFor(firstField);
+        MethodDescription.InDefinedShape firstFieldSetter = implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(firstFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstFieldSetter, firstFieldType)));
         assertThat(firstFieldSetter.getReturnType(), is(TypeDescription.Generic.VOID));
         assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldSetter.getModifiers(), is(accessorMethodModifiers));
         assertThat(firstFieldSetter.getExceptionTypes(), is((TypeList.Generic) new TypeList.Generic.Empty()));
-        assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
+        assertThat(implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstFieldSetter));
         when(secondField.isStatic()).thenReturn(true);
-        MethodDescription.InDefinedShape secondFieldSetter = implementationContext.registerSetterFor(secondField);
+        MethodDescription.InDefinedShape secondFieldSetter = implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT);
         assertThat(secondFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondFieldSetter, secondFieldType)));
         assertThat(secondFieldSetter.getReturnType(), is(TypeDescription.Generic.VOID));
         assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldSetter.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
         assertThat(secondFieldSetter.getExceptionTypes(), is((TypeList.Generic) new TypeList.Generic.Empty()));
-        assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
-        assertThat(implementationContext.registerSetterFor(secondField), is(secondFieldSetter));
+        assertThat(implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstFieldSetter));
+        assertThat(implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondFieldSetter));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
@@ -560,8 +559,8 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        MethodDescription firstMethodDescription = implementationContext.registerSetterFor(firstField);
-        assertThat(implementationContext.registerSetterFor(firstField), is(firstMethodDescription));
+        MethodDescription firstMethodDescription = implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT);
+        assertThat(implementationContext.registerSetterFor(firstField, MethodAccessorFactory.AccessType.DEFAULT), is(firstMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers), Matchers.startsWith(FOO),
                 eq("(" + BAR + ")V"), isNull(String.class), isNull(String[].class));
@@ -582,8 +581,8 @@ public class ImplementationContextDefaultTest {
                 auxiliaryTypeNamingStrategy,
                 typeInitializer,
                 auxiliaryClassFileVersion);
-        MethodDescription secondMethodDescription = implementationContext.registerSetterFor(secondField);
-        assertThat(implementationContext.registerSetterFor(secondField), is(secondMethodDescription));
+        MethodDescription secondMethodDescription = implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT);
+        assertThat(implementationContext.registerSetterFor(secondField, MethodAccessorFactory.AccessType.DEFAULT), is(secondMethodDescription));
         implementationContext.drain(drain, classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitMethod(eq(accessorMethodModifiers | Opcodes.ACC_STATIC), Matchers.startsWith(BAR),
                 eq("(" + QUX + ")V"), isNull(String.class), isNull(String[].class));

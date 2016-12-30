@@ -11,6 +11,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -46,7 +47,7 @@ public class TypeProxyCreationTest {
     private TypeProxy.InvocationFactory invocationFactory;
 
     @Mock
-    private AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
+    private MethodAccessorFactory methodAccessorFactory;
 
     @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
@@ -113,7 +114,7 @@ public class TypeProxyCreationTest {
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(specialMethodInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
-        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation)).thenReturn(proxyMethod);
+        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT)).thenReturn(proxyMethod);
         TypeDescription dynamicType = new TypeProxy(foo,
                 implementationTarget,
                 invocationFactory,
@@ -127,7 +128,7 @@ public class TypeProxyCreationTest {
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(false));
-        verify(methodAccessorFactory, times(fooMethods.size())).registerAccessorFor(specialMethodInvocation);
+        verify(methodAccessorFactory, times(fooMethods.size())).registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         for (MethodDescription methodDescription : fooMethods) {
             verify(invocationFactory).invoke(implementationTarget, foo, methodDescription);
         }
@@ -144,7 +145,7 @@ public class TypeProxyCreationTest {
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(specialMethodInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
-        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation)).thenReturn(proxyMethod);
+        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT)).thenReturn(proxyMethod);
         TypeDescription dynamicType = new TypeProxy(foo,
                 implementationTarget,
                 invocationFactory,
@@ -158,7 +159,7 @@ public class TypeProxyCreationTest {
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(true));
-        verify(methodAccessorFactory, times(fooMethods.size())).registerAccessorFor(specialMethodInvocation);
+        verify(methodAccessorFactory, times(fooMethods.size())).registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         for (MethodDescription methodDescription : fooMethods) {
             verify(invocationFactory).invoke(implementationTarget, foo, methodDescription);
         }
@@ -175,7 +176,7 @@ public class TypeProxyCreationTest {
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(specialMethodInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
-        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation)).thenReturn(proxyMethod);
+        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT)).thenReturn(proxyMethod);
         TypeDescription dynamicType = new TypeProxy(foo,
                 implementationTarget,
                 invocationFactory,
@@ -189,7 +190,7 @@ public class TypeProxyCreationTest {
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(false));
-        verify(methodAccessorFactory, times(fooMethods.size() + 1)).registerAccessorFor(specialMethodInvocation);
+        verify(methodAccessorFactory, times(fooMethods.size() + 1)).registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         for (MethodDescription methodDescription : fooMethods) {
             verify(invocationFactory).invoke(implementationTarget, foo, methodDescription);
         }
@@ -208,7 +209,7 @@ public class TypeProxyCreationTest {
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(specialMethodInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
-        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation)).thenReturn(proxyMethod);
+        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT)).thenReturn(proxyMethod);
         StackManipulation stackManipulation = new TypeProxy.ForSuperMethodByConstructor(foo,
                 implementationTarget,
                 Collections.singletonList((TypeDescription) new TypeDescription.ForLoadedType(Void.class)),
@@ -247,7 +248,7 @@ public class TypeProxyCreationTest {
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(specialMethodInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
-        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation)).thenReturn(proxyMethod);
+        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT)).thenReturn(proxyMethod);
         StackManipulation stackManipulation = new TypeProxy.ForDefaultMethod(foo,
                 implementationTarget,
                 false);
@@ -283,7 +284,7 @@ public class TypeProxyCreationTest {
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(specialMethodInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
-        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation)).thenReturn(proxyMethod);
+        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT)).thenReturn(proxyMethod);
         StackManipulation stackManipulation = new TypeProxy.ForSuperMethodByReflectionFactory(foo,
                 implementationTarget,
                 true,
@@ -325,7 +326,7 @@ public class TypeProxyCreationTest {
                 mock(TypeProxy.InvocationFactory.class),
                 false,
                 false);
-        TypeProxy.MethodCall methodCall = typeProxy.new MethodCall(mock(AuxiliaryType.MethodAccessorFactory.class));
+        TypeProxy.MethodCall methodCall = typeProxy.new MethodCall(mock(MethodAccessorFactory.class));
         TypeDescription instrumentedType = mock(TypeDescription.class);
         FieldList<FieldDescription.InDefinedShape> fieldList = mock(FieldList.class);
         when(fieldList.filter(any(ElementMatcher.class))).thenReturn(fieldList);

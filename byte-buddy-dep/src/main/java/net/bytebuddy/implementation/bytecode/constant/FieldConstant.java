@@ -11,9 +11,6 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.lang.reflect.Field;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
-
 /**
  * Represents a {@link Field} constant for a given type.
  */

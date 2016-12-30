@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
@@ -32,12 +33,12 @@ public class AbstractMethodCallProxyTest {
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Mock
-    private AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
+    private MethodAccessorFactory methodAccessorFactory;
 
     protected Class<?> proxyOnlyDeclaredMethodOf(Class<?> proxyTarget) throws Exception {
         MethodDescription.InDefinedShape proxyMethod = new TypeDescription.ForLoadedType(proxyTarget)
                 .getDeclaredMethods().filter(not(isConstructor())).getOnly();
-        when(methodAccessorFactory.registerAccessorFor(eq(specialMethodInvocation))).thenReturn(proxyMethod);
+        when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT)).thenReturn(proxyMethod);
         String auxiliaryTypeName = getClass().getName() + "$" + proxyTarget.getSimpleName() + "$Proxy";
         DynamicType dynamicType = new MethodCallProxy(specialMethodInvocation, false).make(auxiliaryTypeName,
                 ClassFileVersion.ofThisVm(),
@@ -45,7 +46,7 @@ public class AbstractMethodCallProxyTest {
         DynamicType.Unloaded<?> unloaded = (DynamicType.Unloaded<?>) dynamicType;
         Class<?> auxiliaryType = unloaded.load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(auxiliaryType.getName(), is(auxiliaryTypeName));
-        verify(methodAccessorFactory).registerAccessorFor(specialMethodInvocation);
+        verify(methodAccessorFactory).registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT);
         verifyNoMoreInteractions(methodAccessorFactory);
         verifyZeroInteractions(specialMethodInvocation);
         assertThat(auxiliaryType.getModifiers(), is(Opcodes.ACC_SYNTHETIC));

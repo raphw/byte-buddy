@@ -12,6 +12,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -393,7 +394,7 @@ public @interface Morph {
                                 ? StaticFieldConstructor.INSTANCE
                                 : new InstanceFieldConstructor(instrumentedType))
                         .method(ElementMatchers.<MethodDescription>isAbstract().and(isDeclaredBy(morphingType)))
-                        .intercept(new MethodCall(methodAccessorFactory.registerAccessorFor(specialMethodInvocation), assigner))
+                        .intercept(new MethodCall(methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT), assigner))
                         .make();
             }
 

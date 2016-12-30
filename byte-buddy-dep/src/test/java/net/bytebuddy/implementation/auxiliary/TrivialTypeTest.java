@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.auxiliary;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -25,7 +26,7 @@ public class TrivialTypeTest {
     private ClassFileVersion classFileVersion;
 
     @Mock
-    private AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
+    private MethodAccessorFactory methodAccessorFactory;
 
     @Test
     public void testPlain() throws Exception {

@@ -9,6 +9,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.auxiliary.TrivialType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -486,7 +487,7 @@ public interface MethodRebaseResolver {
                         if (placeholderType == null) {
                             placeholderType = TrivialType.SIGNATURE_RELEVANT.make(auxiliaryTypeNamingStrategy.name(instrumentedType),
                                     classFileVersion,
-                                    AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
+                                    MethodAccessorFactory.Illegal.INSTANCE);
                         }
                         resolution = Resolution.ForRebasedConstructor.of(instrumentedMethod, placeholderType.getTypeDescription());
                     } else {

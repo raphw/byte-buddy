@@ -159,7 +159,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         }
 
         /**
-         * A canonical implementation of a {@link Implementation.SpecialMethodInvocation}.
+         * A canonical implementation of a {@link SpecialMethodInvocation}.
          */
         class Simple extends SpecialMethodInvocation.AbstractBase {
 
@@ -343,7 +343,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.SignatureToken token) {
+            public SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.SignatureToken token) {
                 return defaultMethodInvocation.apply(methodGraph.getInterfaceGraph(targetType).locate(token), targetType);
             }
 
@@ -395,7 +395,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     protected SpecialMethodInvocation apply(MethodGraph.Node node, TypeDescription targetType) {
                         return node.getSort().isUnique()
                                 ? SpecialMethodInvocation.Simple.of(node.getRepresentative(), targetType)
-                                : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
+                                : SpecialMethodInvocation.Illegal.INSTANCE;
                     }
                 },
 
@@ -657,9 +657,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
         /**
          * A default implementation of an {@link Implementation.Context.ExtractableView}
-         * which serves as its own {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType.MethodAccessorFactory}.
+         * which serves as its own {@link MethodAccessorFactory}.
          */
-        class Default extends ExtractableView.AbstractBase implements AuxiliaryType.MethodAccessorFactory {
+        class Default extends ExtractableView.AbstractBase implements MethodAccessorFactory {
 
             /**
              * The name suffix to be appended to an accessor method.
@@ -689,22 +689,17 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * A mapping of special method invocations to their accessor methods that each invoke their mapped invocation.
              */
-            private final Map<Implementation.SpecialMethodInvocation, MethodDescription.InDefinedShape> registeredAccessorMethods;
+            private final Map<SpecialMethodInvocation, DelegationRecord> registeredAccessorMethods;
 
             /**
              * The registered getters.
              */
-            private final Map<FieldDescription, MethodDescription.InDefinedShape> registeredGetters;
+            private final Map<FieldDescription, DelegationRecord> registeredGetters;
 
             /**
              * The registered setters.
              */
-            private final Map<FieldDescription, MethodDescription.InDefinedShape> registeredSetters;
-
-            /**
-             * A map of accessor methods to a method pool entry that represents their implementation.
-             */
-            private final List<TypeWriter.MethodPool.Record> accessorMethods;
+            private final Map<FieldDescription, DelegationRecord> registeredSetters;
 
             /**
              * A map of registered auxiliary types to their dynamic type representation.
@@ -744,10 +739,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.typeInitializer = typeInitializer;
                 this.auxiliaryClassFileVersion = auxiliaryClassFileVersion;
-                registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription.InDefinedShape>();
-                registeredGetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
-                registeredSetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
-                accessorMethods = new ArrayList<TypeWriter.MethodPool.Record>();
+                registeredAccessorMethods = new HashMap<SpecialMethodInvocation, DelegationRecord>();
+                registeredGetters = new HashMap<FieldDescription, DelegationRecord>();
+                registeredSetters = new HashMap<FieldDescription, DelegationRecord>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
                 suffix = RandomString.make();
@@ -755,36 +749,33 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public MethodDescription.InDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation) {
-                MethodDescription.InDefinedShape accessorMethod = registeredAccessorMethods.get(specialMethodInvocation);
-                if (accessorMethod == null) {
-                    accessorMethod = new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), suffix);
-                    registeredAccessorMethods.put(specialMethodInvocation, accessorMethod);
-                    accessorMethods.add(new AccessorMethodDelegation(accessorMethod, specialMethodInvocation));
-                }
-                return accessorMethod;
+            public MethodDescription.InDefinedShape registerAccessorFor(SpecialMethodInvocation specialMethodInvocation, AccessType accessType) {
+                DelegationRecord record = registeredAccessorMethods.get(specialMethodInvocation);
+                record = record == null
+                        ? new AccessorMethodDelegation(instrumentedType, suffix, accessType, specialMethodInvocation)
+                        : record.with(accessType);
+                registeredAccessorMethods.put(specialMethodInvocation, record);
+                return record.getMethod();
             }
 
             @Override
-            public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription) {
-                MethodDescription.InDefinedShape accessorMethod = registeredGetters.get(fieldDescription);
-                if (accessorMethod == null) {
-                    accessorMethod = new FieldGetter(instrumentedType, fieldDescription, suffix);
-                    registeredGetters.put(fieldDescription, accessorMethod);
-                    accessorMethods.add(new FieldGetterDelegation(accessorMethod, fieldDescription));
-                }
-                return accessorMethod;
+            public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription, AccessType accessType) {
+                DelegationRecord record = registeredGetters.get(fieldDescription);
+                record = record == null
+                        ? new FieldGetterDelegation(instrumentedType, suffix, accessType, fieldDescription)
+                        : record.with(accessType);
+                registeredGetters.put(fieldDescription, record);
+                return record.getMethod();
             }
 
             @Override
-            public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription) {
-                MethodDescription.InDefinedShape accessorMethod = registeredSetters.get(fieldDescription);
-                if (accessorMethod == null) {
-                    accessorMethod = new FieldSetter(instrumentedType, fieldDescription, suffix);
-                    registeredSetters.put(fieldDescription, accessorMethod);
-                    accessorMethods.add(new FieldSetterDelegation(accessorMethod, fieldDescription));
-                }
-                return accessorMethod;
+            public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType) {
+                DelegationRecord record = registeredSetters.get(fieldDescription);
+                record = record == null
+                        ? new FieldSetterDelegation(instrumentedType, suffix, accessType, fieldDescription)
+                        : record.with(accessType);
+                registeredSetters.put(fieldDescription, record);
+                return record.getMethod();
             }
 
             @Override
@@ -832,7 +823,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     typeInitializer = typeInitializer.expandWith(entry.getKey().storeIn(entry.getValue()));
                 }
                 drain.apply(classVisitor, typeInitializer, this);
-                for (TypeWriter.MethodPool.Record record : accessorMethods) {
+                for (TypeWriter.MethodPool.Record record : registeredAccessorMethods.values()) {
+                    record.apply(classVisitor, this, annotationValueFilterFactory);
+                }
+                for (TypeWriter.MethodPool.Record record : registeredGetters.values()) {
+                    record.apply(classVisitor, this, annotationValueFilterFactory);
+                }
+                for (TypeWriter.MethodPool.Record record : registeredSetters.values()) {
                     record.apply(classVisitor, this, annotationValueFilterFactory);
                 }
             }
@@ -848,7 +845,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
                         ", registeredAccessorMethods=" + registeredAccessorMethods +
                         ", registeredGetters=" + registeredGetters +
                         ", registeredSetters=" + registeredSetters +
-                        ", accessorMethods=" + accessorMethods +
                         ", auxiliaryTypes=" + auxiliaryTypes +
                         ", registeredFieldCacheEntries=" + registeredFieldCacheEntries +
                         ", suffix=" + suffix +
@@ -1267,24 +1263,33 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An abstract method pool entry that delegates the implementation of a method to itself.
              */
-            protected abstract static class AbstractDelegationRecord extends TypeWriter.MethodPool.Record.ForDefinedMethod implements ByteCodeAppender {
+            protected abstract static class DelegationRecord extends TypeWriter.MethodPool.Record.ForDefinedMethod implements ByteCodeAppender {
 
                 /**
                  * The delegation method.
                  */
-                protected final MethodDescription methodDescription;
+                protected final MethodDescription.InDefinedShape methodDescription;
+
+                /**
+                 * The record's visibility.
+                 */
+                protected final Visibility visibility;
 
                 /**
                  * Creates a new delegation record.
                  *
                  * @param methodDescription The delegation method.
+                 * @param visibility        The method's actual visibility.
                  */
-                protected AbstractDelegationRecord(MethodDescription methodDescription) {
+                protected DelegationRecord(MethodDescription.InDefinedShape methodDescription, Visibility visibility) {
                     this.methodDescription = methodDescription;
+                    this.visibility = visibility;
                 }
 
+                protected abstract DelegationRecord with(AccessType accessType);
+
                 @Override
-                public MethodDescription getMethod() {
+                public MethodDescription.InDefinedShape getMethod() {
                     return methodDescription;
                 }
 
@@ -1295,7 +1300,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 @Override
                 public Visibility getVisibility() {
-                    return methodDescription.getVisibility();
+                    return visibility;
                 }
 
                 @Override
@@ -1328,12 +1333,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && methodDescription.equals(((AbstractDelegationRecord) other).methodDescription);
+                            && methodDescription.equals(((DelegationRecord) other).methodDescription)
+                            && visibility.equals(((DelegationRecord) other).visibility);
                 }
 
                 @Override
                 public int hashCode() {
-                    return methodDescription.hashCode();
+                    return methodDescription.hashCode() + 31 * visibility.hashCode();
                 }
             }
 
@@ -1341,7 +1347,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * An implementation of a {@link TypeWriter.MethodPool.Record} for implementing
              * an accessor method.
              */
-            protected static class AccessorMethodDelegation extends AbstractDelegationRecord {
+            protected static class AccessorMethodDelegation extends DelegationRecord {
 
                 /**
                  * The stack manipulation that represents the requested special method invocation.
@@ -1349,14 +1355,39 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 private final StackManipulation accessorMethodInvocation;
 
                 /**
-                 * Creates a new accessor method delegation.
+                 * Creates a delegation to an accessor method.
+                 *
+                 * @param instrumentedType        The instrumented type.
+                 * @param suffix                  The suffix to append to the method.
+                 * @param accessType              The access type.
+                 * @param specialMethodInvocation The actual method's invocation.
+                 */
+                protected AccessorMethodDelegation(TypeDescription instrumentedType,
+                                                   String suffix,
+                                                   AccessType accessType,
+                                                   SpecialMethodInvocation specialMethodInvocation) {
+                    this(new AccessorMethod(instrumentedType, specialMethodInvocation.getMethodDescription(), suffix),
+                            accessType.getVisibility(),
+                            specialMethodInvocation);
+                }
+
+                /**
+                 * Creates a delegation to an accessor method.
                  *
                  * @param methodDescription        The accessor method.
-                 * @param accessorMethodInvocation The stack manipulation that represents the requested special method invocation.
+                 * @param visibility               The method's visibility.
+                 * @param accessorMethodInvocation The actual method's invocation.
                  */
-                protected AccessorMethodDelegation(MethodDescription methodDescription, StackManipulation accessorMethodInvocation) {
-                    super(methodDescription);
+                private AccessorMethodDelegation(MethodDescription.InDefinedShape methodDescription,
+                                                 Visibility visibility,
+                                                 StackManipulation accessorMethodInvocation) {
+                    super(methodDescription, visibility);
                     this.accessorMethodInvocation = accessorMethodInvocation;
+                }
+
+                @Override
+                protected DelegationRecord with(AccessType accessType) {
+                    return new AccessorMethodDelegation(methodDescription, visibility.expandTo(accessType.getVisibility()), accessorMethodInvocation);
                 }
 
                 @Override
@@ -1386,6 +1417,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     return "Implementation.Context.Default.AccessorMethodDelegation{" +
                             "accessorMethodInvocation=" + accessorMethodInvocation +
                             ", methodDescription=" + methodDescription +
+                            ", visibility=" + visibility +
                             '}';
                 }
             }
@@ -1393,7 +1425,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An implementation for a field getter.
              */
-            protected static class FieldGetterDelegation extends AbstractDelegationRecord {
+            protected static class FieldGetterDelegation extends DelegationRecord {
 
                 /**
                  * The field to read from.
@@ -1403,12 +1435,30 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 /**
                  * Creates a new field getter implementation.
                  *
+                 * @param instrumentedType The instrumented type.
+                 * @param suffix           The suffix to use for the setter method.
+                 * @param accessType       The method's access type.
+                 * @param fieldDescription The field to write to.
+                 */
+                protected FieldGetterDelegation(TypeDescription instrumentedType, String suffix, AccessType accessType, FieldDescription fieldDescription) {
+                    this(new FieldGetter(instrumentedType, fieldDescription, suffix), accessType.getVisibility(), fieldDescription);
+                }
+
+                /**
+                 * Creates a new field getter implementation.
+                 *
                  * @param methodDescription The delegation method.
+                 * @param visibility        The delegation method's visibility.
                  * @param fieldDescription  The field to read.
                  */
-                protected FieldGetterDelegation(MethodDescription methodDescription, FieldDescription fieldDescription) {
-                    super(methodDescription);
+                private FieldGetterDelegation(MethodDescription.InDefinedShape methodDescription, Visibility visibility, FieldDescription fieldDescription) {
+                    super(methodDescription, visibility);
                     this.fieldDescription = fieldDescription;
+                }
+
+                @Override
+                protected DelegationRecord with(AccessType accessType) {
+                    return new FieldGetterDelegation(methodDescription, visibility.expandTo(accessType.getVisibility()), fieldDescription);
                 }
 
                 @Override
@@ -1441,6 +1491,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     return "Implementation.Context.Default.FieldGetterDelegation{" +
                             "fieldDescription=" + fieldDescription +
                             ", methodDescription=" + methodDescription +
+                            ", visibility=" + visibility +
                             '}';
                 }
             }
@@ -1448,7 +1499,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An implementation for a field setter.
              */
-            protected static class FieldSetterDelegation extends AbstractDelegationRecord {
+            protected static class FieldSetterDelegation extends DelegationRecord {
 
                 /**
                  * The field to write to.
@@ -1456,14 +1507,32 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 private final FieldDescription fieldDescription;
 
                 /**
+                 * Creates a new field setter implementation.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @param suffix           The suffix to use for the setter method.
+                 * @param accessType       The method's access type.
+                 * @param fieldDescription The field to write to.
+                 */
+                protected FieldSetterDelegation(TypeDescription instrumentedType, String suffix, AccessType accessType, FieldDescription fieldDescription) {
+                    this(new FieldSetter(instrumentedType, fieldDescription, suffix), accessType.getVisibility(), fieldDescription);
+                }
+
+                /**
                  * Creates a new field setter.
                  *
                  * @param methodDescription The field accessor method.
+                 * @param visibility        The delegation method's visibility.
                  * @param fieldDescription  The field to write to.
                  */
-                protected FieldSetterDelegation(MethodDescription methodDescription, FieldDescription fieldDescription) {
-                    super(methodDescription);
+                private FieldSetterDelegation(MethodDescription.InDefinedShape methodDescription, Visibility visibility, FieldDescription fieldDescription) {
+                    super(methodDescription, visibility);
                     this.fieldDescription = fieldDescription;
+                }
+
+                @Override
+                protected DelegationRecord with(AccessType accessType) {
+                    return new FieldSetterDelegation(methodDescription, visibility.expandTo(accessType.getVisibility()), fieldDescription);
                 }
 
                 @Override
@@ -1493,6 +1562,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     return "Implementation.Context.Default.FieldSetterDelegation{" +
                             "fieldDescription=" + fieldDescription +
                             ", methodDescription=" + methodDescription +
+                            ", visibility=" + visibility +
                             '}';
                 }
             }

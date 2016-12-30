@@ -9,7 +9,7 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -283,7 +283,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         FieldProxy.Binder.FieldResolver.Unresolved.INSTANCE.apply(mock(DynamicType.Builder.class),
                 mock(FieldDescription.class),
                 mock(Assigner.class),
-                mock(AuxiliaryType.MethodAccessorFactory.class));
+                mock(MethodAccessorFactory.class));
     }
 
     @Test

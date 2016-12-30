@@ -13,6 +13,7 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.ExceptionMethod;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -337,7 +338,7 @@ public @interface FieldProxy {
             DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                          FieldDescription fieldDescription,
                                          Assigner assigner,
-                                         AuxiliaryType.MethodAccessorFactory methodAccessorFactory);
+                                         MethodAccessorFactory methodAccessorFactory);
 
             /**
              * A factory for creating a field resolver.
@@ -513,7 +514,7 @@ public @interface FieldProxy {
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                                     FieldDescription fieldDescription,
                                                     Assigner assigner,
-                                                    AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
+                                                    MethodAccessorFactory methodAccessorFactory) {
                     throw new IllegalStateException("Cannot apply unresolved field resolver");
                 }
 
@@ -556,7 +557,7 @@ public @interface FieldProxy {
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                                     FieldDescription fieldDescription,
                                                     Assigner assigner,
-                                                    AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
+                                                    MethodAccessorFactory methodAccessorFactory) {
                     return builder.method(is(getterMethod)).intercept(new FieldGetter(fieldDescription, assigner, methodAccessorFactory));
                 }
 
@@ -614,7 +615,7 @@ public @interface FieldProxy {
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                                     FieldDescription fieldDescription,
                                                     Assigner assigner,
-                                                    AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
+                                                    MethodAccessorFactory methodAccessorFactory) {
                     return builder.method(is(setterMethod)).intercept(new FieldSetter(fieldDescription, assigner, methodAccessorFactory));
                 }
 
@@ -688,7 +689,7 @@ public @interface FieldProxy {
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder,
                                                     FieldDescription fieldDescription,
                                                     Assigner assigner,
-                                                    AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
+                                                    MethodAccessorFactory methodAccessorFactory) {
                     return builder
                             .method(is(getterMethod)).intercept(new FieldGetter(fieldDescription, assigner, methodAccessorFactory))
                             .method(is(setterMethod)).intercept(fieldDescription.isFinal()
@@ -888,7 +889,7 @@ public @interface FieldProxy {
             /**
              * The accessed type's method accessor factory.
              */
-            private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
+            private final MethodAccessorFactory methodAccessorFactory;
 
             /**
              * Creates a new getter implementation.
@@ -899,7 +900,7 @@ public @interface FieldProxy {
              */
             protected FieldGetter(FieldDescription fieldDescription,
                                   Assigner assigner,
-                                  AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
+                                  MethodAccessorFactory methodAccessorFactory) {
                 this.fieldDescription = fieldDescription;
                 this.assigner = assigner;
                 this.methodAccessorFactory = methodAccessorFactory;
@@ -965,7 +966,7 @@ public @interface FieldProxy {
                 public Size apply(MethodVisitor methodVisitor,
                                   Context implementationContext,
                                   MethodDescription instrumentedMethod) {
-                    MethodDescription getterMethod = methodAccessorFactory.registerGetterFor(fieldDescription);
+                    MethodDescription getterMethod = methodAccessorFactory.registerGetterFor(fieldDescription, MethodAccessorFactory.AccessType.DEFAULT);
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             fieldDescription.isStatic()
                                     ? StackManipulation.Trivial.INSTANCE
@@ -1029,7 +1030,7 @@ public @interface FieldProxy {
             /**
              * The accessed type's method accessor factory.
              */
-            private final AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
+            private final MethodAccessorFactory methodAccessorFactory;
 
             /**
              * Creates a new setter implementation.
@@ -1040,7 +1041,7 @@ public @interface FieldProxy {
              */
             protected FieldSetter(FieldDescription fieldDescription,
                                   Assigner assigner,
-                                  AuxiliaryType.MethodAccessorFactory methodAccessorFactory) {
+                                  MethodAccessorFactory methodAccessorFactory) {
                 this.fieldDescription = fieldDescription;
                 this.assigner = assigner;
                 this.methodAccessorFactory = methodAccessorFactory;
@@ -1107,7 +1108,7 @@ public @interface FieldProxy {
                                   Context implementationContext,
                                   MethodDescription instrumentedMethod) {
                     TypeDescription.Generic parameterType = instrumentedMethod.getParameters().get(0).getType();
-                    MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(fieldDescription);
+                    MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(fieldDescription, MethodAccessorFactory.AccessType.DEFAULT);
                     StackManipulation.Size stackSize = new StackManipulation.Compound(
                             fieldDescription.isStatic()
                                     ? StackManipulation.Trivial.INSTANCE

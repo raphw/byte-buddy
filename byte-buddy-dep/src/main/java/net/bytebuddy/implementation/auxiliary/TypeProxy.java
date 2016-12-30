@@ -11,6 +11,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
@@ -857,7 +858,7 @@ public class TypeProxy implements AuxiliaryType {
 
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                    MethodDescription.InDefinedShape proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
+                    MethodDescription.InDefinedShape proxyMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation, MethodAccessorFactory.AccessType.DEFAULT);
                     return new StackManipulation.Compound(
                             MethodVariableAccess.loadThis(),
                             fieldLoadingInstruction,
