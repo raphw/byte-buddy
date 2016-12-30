@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.android.AndroidClassLoadingStrategy;
@@ -16,6 +17,8 @@ import net.bytebuddy.utility.RandomString;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -39,6 +42,20 @@ public class TestActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        TextView mavenInfo = (TextView) findViewById(R.id.maven_info);
+        String version = null;
+        InputStream inputStream = TestActivity.class.getResourceAsStream("/maven.properties");
+        if (inputStream != null) {
+            Properties properties = new Properties();
+            try {
+                properties.load(inputStream);
+                version = properties.getProperty("info.version");
+            } catch (IOException exception) {
+                Log.w(BYTE_BUDDY_TAG, "Could not load maven.properties", exception);
+                Toast.makeText(TestActivity.this, "Failure: Could not read version property. (" + exception.getMessage() + ")", Toast.LENGTH_SHORT).show();
+            }
+        }
+        mavenInfo.setText(getResources().getString(R.string.version_info, version == null ? "(n/a)" : version));
         Button runTest = (Button) findViewById(R.id.run_test);
         runTest.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -46,9 +63,9 @@ public class TestActivity extends Activity {
                 ByteBuddy byteBuddy;
                 try {
                     byteBuddy = new ByteBuddy();
-                } catch (Throwable e) {
-                    Log.w(BYTE_BUDDY_TAG, e);
-                    Toast.makeText(TestActivity.this, "Failure: Could not create Byte Buddy instance. (" + e.getMessage() + ")", Toast.LENGTH_LONG).show();
+                } catch (Throwable throwable) {
+                    Log.w(BYTE_BUDDY_TAG, throwable);
+                    Toast.makeText(TestActivity.this, "Failure: Could not create Byte Buddy instance. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
                     return;
                 }
                 try {
@@ -62,9 +79,9 @@ public class TestActivity extends Activity {
                                 .method(named("toString")).intercept(MethodDelegation.to(Interceptor.class))
                                 .make()
                                 .load(TestActivity.class.getClassLoader(), new AndroidClassLoadingStrategy(file));
-                    } catch (Throwable e) {
-                        Log.w(BYTE_BUDDY_TAG, e);
-                        Toast.makeText(TestActivity.this, "Failure: Could not load dynamic type. (" + e.getMessage() + ")", Toast.LENGTH_LONG).show();
+                    } catch (Throwable throwable) {
+                        Log.w(BYTE_BUDDY_TAG, throwable);
+                        Toast.makeText(TestActivity.this, "Failure: Could not load dynamic type. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
                         return;
                     }
                     try {
@@ -74,13 +91,13 @@ public class TestActivity extends Activity {
                                         ? "Success: Created type and verified instrumentation."
                                         : "Failure: Expected different value by instrumented method. (was: " + value + ")",
                                 Toast.LENGTH_LONG).show();
-                    } catch (Throwable e) {
-                        Log.w(BYTE_BUDDY_TAG, e);
-                        Toast.makeText(TestActivity.this, "Failure: Could create dynamic instance. (" + e.getMessage() + ")", Toast.LENGTH_LONG).show();
+                    } catch (Throwable throwable) {
+                        Log.w(BYTE_BUDDY_TAG, throwable);
+                        Toast.makeText(TestActivity.this, "Failure: Could create dynamic instance. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
                     }
-                } catch (Throwable e) {
-                    Log.w(BYTE_BUDDY_TAG, e);
-                    Toast.makeText(TestActivity.this, "Failure: Could not create temporary file. (" + e.getMessage() + ")", Toast.LENGTH_LONG).show();
+                } catch (Throwable throwable) {
+                    Log.w(BYTE_BUDDY_TAG, throwable);
+                    Toast.makeText(TestActivity.this, "Failure: Could not create temporary file. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
                 }
             }
         });

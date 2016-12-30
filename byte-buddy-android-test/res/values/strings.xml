@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Byte Buddy Android test</string>
+    <string name="version_info">Build version: %1$s</string>
     <string name="info">
         This application creates a runtime subclass using Byte Buddy and loads the generated classes using Byte
         Buddy\'s class loading strategy for Android. For this, it uses version 1.7 of the Android SDK\'s dex

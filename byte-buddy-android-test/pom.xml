@@ -8,7 +8,7 @@
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy-parent</artifactId>
         <!-- The version number is not updated by the release plugin as this artifact is not released! -->
-        <version>1.5.13-SNAPSHOT</version>
+        <version>1.5.14-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-android-test</artifactId>
@@ -19,7 +19,9 @@
 
     <properties>
         <version.maven.android>3.8.2</version.maven.android>
+        <version.maven.properties>1.0.0</version.maven.properties>
         <version.android.sdk.platform>4</version.android.sdk.platform>
+        <info.version>${project.version}</info.version>
     </properties>
 
     <!--
@@ -61,6 +63,23 @@
                     </sdk>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
                 </configuration>
+            </plugin>
+            <!-- Make properties available from test project to allow for some diagnostics. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>${version.plugin.properties}</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>${project.build.outputDirectory}/maven.properties</outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <!-- This artifact should not be deployed. -->
             <plugin>
