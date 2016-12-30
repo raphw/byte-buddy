@@ -12,6 +12,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -113,21 +115,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         /**
          * The dispatcher used creating parameter list instances and for accessing {@code java.lang.reflect.Executable} instances.
          */
-        private static final Dispatcher DISPATCHER = dispatcher();
-
-        /**
-         * Creates a dispatcher for a loaded parameter if the type is available for the running JVM.
-         *
-         * @return A dispatcher for the current VM.
-         */
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-        private static Dispatcher dispatcher() {
-            try {
-                return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameterCount"));
-            } catch (Exception ignored) {
-                return Dispatcher.ForLegacyVm.INSTANCE;
-            }
-        }
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
          * The executable for which a parameter list is represented.
@@ -196,6 +184,32 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
              * @return A list describing the method's parameters.
              */
             ParameterList<ParameterDescription.InDefinedShape> describe(Method method);
+
+            /**
+             * A creation action for a dispatcher.
+             */
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                public Dispatcher run() {
+                    try {
+                        return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameterCount"));
+                    } catch (Exception ignored) {
+                        return Dispatcher.ForLegacyVm.INSTANCE;
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "ParameterList.ForLoadedExecutable.Dispatcher.CreationAction." + name();
+                }
+            }
 
             /**
              * A dispatcher for a legacy VM that does not support the {@code java.lang.reflect.Parameter} type.

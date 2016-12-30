@@ -39,12 +39,6 @@ public class NexusTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private DynamicType.Builder<?> builder;
-
-    @Mock
-    private DynamicType dynamicType;
-
-    @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
 
     @Mock
@@ -71,7 +65,7 @@ public class NexusTest {
                 ClassFileExtraction.of(Nexus.class,
                         NexusAccessor.class,
                         NexusAccessor.Dispatcher.class,
-                        NexusAccessor.Dispatcher.Creator.class,
+                        NexusAccessor.Dispatcher.CreationAction.class,
                         NexusAccessor.Dispatcher.Available.class,
                         NexusAccessor.Dispatcher.Unavailable.class),
                 null,
@@ -106,7 +100,7 @@ public class NexusTest {
                 ClassFileExtraction.of(Nexus.class,
                         NexusAccessor.class,
                         NexusAccessor.Dispatcher.class,
-                        NexusAccessor.Dispatcher.Creator.class,
+                        NexusAccessor.Dispatcher.CreationAction.class,
                         NexusAccessor.Dispatcher.Available.class,
                         NexusAccessor.Dispatcher.Unavailable.class),
                 null,
@@ -141,7 +135,7 @@ public class NexusTest {
                 ClassFileExtraction.of(Nexus.class,
                         NexusAccessor.class,
                         NexusAccessor.Dispatcher.class,
-                        NexusAccessor.Dispatcher.Creator.class,
+                        NexusAccessor.Dispatcher.CreationAction.class,
                         NexusAccessor.Dispatcher.Available.class,
                         NexusAccessor.Dispatcher.Unavailable.class),
                 null,
@@ -222,7 +216,7 @@ public class NexusTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(NexusAccessor.class).apply();
-        ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.Creator.class).applyBasic();
+        ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.CreationAction.class).apply();
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
         ObjectPropertyAssertion.of(NexusAccessor.Dispatcher.Available.class)
                 .create(new ObjectPropertyAssertion.Creator<Method>() {

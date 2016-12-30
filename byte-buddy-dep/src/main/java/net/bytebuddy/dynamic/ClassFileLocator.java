@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.StreamDrainer;
@@ -1313,20 +1314,7 @@ public interface ClassFileLocator extends Closeable {
                 /**
                  * A dispatcher for extracting a class loader's loaded classes.
                  */
-                private static final Dispatcher.Initializable DISPATCHER;
-
-                /*
-                 * Locates the {@link java.lang.ClassLoader}'s field that contains all loaded classes.
-                 */
-                static {
-                    Dispatcher.Initializable dispatcher;
-                    try {
-                        dispatcher = new Dispatcher.Resolved(ClassLoader.class.getDeclaredField("classes"));
-                    } catch (NoSuchFieldException exception) {
-                        dispatcher = new Dispatcher.Unresolved(exception);
-                    }
-                    DISPATCHER = dispatcher;
-                }
+                private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
                 /**
                  * Creates a class loading delegate for a delegating class loader.
@@ -1396,6 +1384,31 @@ public interface ClassFileLocator extends Closeable {
                          * @return An initialized dispatcher.
                          */
                         Dispatcher initialize();
+                    }
+
+                    /**
+                     * An action for creating a dispatcher.
+                     */
+                    enum CreationAction implements PrivilegedAction<Initializable> {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        @Override
+                        public Initializable run() {
+                            try {
+                                return new Dispatcher.Resolved(ClassLoader.class.getDeclaredField("classes"));
+                            } catch (Exception exception) {
+                                return new Dispatcher.Unresolved(exception);
+                            }
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.CreationAction." + name();
+                        }
                     }
 
                     /**

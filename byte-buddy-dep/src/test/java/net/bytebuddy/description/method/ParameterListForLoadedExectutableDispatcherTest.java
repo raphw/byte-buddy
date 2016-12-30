@@ -42,5 +42,6 @@ public class ParameterListForLoadedExectutableDispatcherTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(ParameterList.ForLoadedExecutable.Dispatcher.ForLegacyVm.class).apply();
+        ObjectPropertyAssertion.of(ParameterList.ForLoadedExecutable.Dispatcher.CreationAction.class).apply();
     }
 }

@@ -27,6 +27,7 @@ public class ByteArrayClassLoaderPackageLookupStrategy {
 
     @Test
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(ByteArrayClassLoader.PackageLookupStrategy.CreationAction.class).apply();
         ObjectPropertyAssertion.of(ByteArrayClassLoader.PackageLookupStrategy.ForLegacyVm.class).apply();
         final Iterator<Method> iterator = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
         ObjectPropertyAssertion.of(ByteArrayClassLoader.PackageLookupStrategy.ForJava9CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {

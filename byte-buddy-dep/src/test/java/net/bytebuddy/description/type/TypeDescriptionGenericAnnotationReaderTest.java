@@ -144,5 +144,7 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                 return iterator.next();
             }
         }).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Delegator.Chained.MethodLookupAction.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.CreationAction.class).apply();
     }
 }

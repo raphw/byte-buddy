@@ -43,28 +43,6 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public class MethodCall implements Implementation.Composable {
 
     /**
-     * A reference to {@link Callable#call()}.
-     */
-    private static final MethodDescription CALL;
-
-    /**
-     * A reference to {@link Runnable#run()}.
-     */
-    private static final MethodDescription RUN;
-
-    /*
-     * Looks up references to known methods.
-     */
-    static {
-        try {
-            CALL = new MethodDescription.ForLoadedMethod(Callable.class.getDeclaredMethod("call"));
-            RUN = new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"));
-        } catch (NoSuchMethodException exception) {
-            throw new RuntimeException("Cannot find standard method", exception);
-        }
-    }
-
-    /**
      * The method locator to use.
      */
     protected final MethodLocator methodLocator;
@@ -220,7 +198,11 @@ public class MethodCall implements Implementation.Composable {
      * @return A composable method implementation that invokes the given callable.
      */
     public static Composable call(Callable<?> callable) {
-        return invoke(CALL).on(callable, Callable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
+        try {
+            return invoke(Callable.class.getDeclaredMethod("call")).on(callable, Callable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
+        } catch (NoSuchMethodException exception) {
+            throw new IllegalStateException("Could not locate Callable::call method", exception);
+        }
     }
 
     /**
@@ -230,7 +212,11 @@ public class MethodCall implements Implementation.Composable {
      * @return A composable method implementation that invokes the given runnable.
      */
     public static Composable run(Runnable runnable) {
-        return invoke(RUN).on(runnable, Runnable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
+        try {
+            return invoke(Runnable.class.getDeclaredMethod("run")).on(runnable, Runnable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
+        } catch (NoSuchMethodException exception) {
+            throw new IllegalStateException("Could not locate Runnable::run method", exception);
+        }
     }
 
     /**

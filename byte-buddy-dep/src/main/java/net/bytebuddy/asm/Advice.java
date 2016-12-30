@@ -41,7 +41,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * <p>
@@ -168,11 +168,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     private static final MethodDescription.InDefinedShape ON_THROWABLE;
 
-    /**
-     * The {@link Throwable#printStackTrace()} method.
-     */
-    private static final MethodDescription.InDefinedShape PRINT_STACK_TRACE;
-
     /*
      * Extracts the annotation values for the enter and exit advice annotations.
      */
@@ -186,7 +181,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         INLINE_EXIT = exit.filter(named("inline")).getOnly();
         SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
         ON_THROWABLE = exit.filter(named("onThrowable")).getOnly();
-        PRINT_STACK_TRACE = new TypeDescription.ForLoadedType(Throwable.class).getDeclaredMethods().filter(named("printStackTrace").and(takesArguments(0))).getOnly();
     }
 
     /**
@@ -552,7 +546,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A version of this advice that prints any suppressed exception.
      */
     public Advice withExceptionPrinting() {
-        return withExceptionHandler(MethodInvocation.invoke(PRINT_STACK_TRACE));
+        try {
+            return withExceptionHandler(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Throwable.class.getDeclaredMethod("printStackTrace"))));
+        } catch (NoSuchMethodException exception) {
+            throw new IllegalStateException("Cannot locate Throwable::printStackTrace");
+        }
     }
 
     /**
@@ -939,7 +937,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Translates a frame.
          *
          * @param methodVisitor       The method visitor to write the frame to.
-         * @param type           The frame's type.
+         * @param type                The frame's type.
          * @param localVariableLength The local variable length.
          * @param localVariable       An array containing the types of the current local variables.
          * @param stackSize           The size of the operand stack.
@@ -1213,7 +1211,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param translationMode     The translation mode to apply.
              * @param methodDescription   The method description for which the frame is written.
              * @param additionalTypes     The additional types to consider part of the instrumented method's parameters.
-             * @param type           The frame's type.
+             * @param type                The frame's type.
              * @param localVariableLength The local variable length.
              * @param localVariable       An array containing the types of the current local variables.
              * @param stackSize           The size of the operand stack.
@@ -9079,40 +9077,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             private static final String CHARSET = "ISO-8859-1";
 
             /**
-             * The {@link String#getBytes(String)} method.
-             */
-            private static final MethodDescription.InDefinedShape GET_BYTES;
-
-            /**
-             * The {@link ByteArrayInputStream#ByteArrayInputStream(byte[])} constructor.
-             */
-            private static final MethodDescription.InDefinedShape CREATE_BYTE_ARRAY_INPUT_STREAM;
-
-            /**
-             * The {@link ObjectInputStream#ObjectInputStream()} constructor.
-             */
-            private static final MethodDescription.InDefinedShape CREATE_OBJECT_INPUT_STREAM;
-
-            /**
-             * The {@link ObjectInputStream#readObject()} method.
-             */
-            private static final MethodDescription.InDefinedShape READ_OBJECT;
-
-            /*
-             * Looks up method description for the methods to be invoked from this dynamic value.
-             */
-            static {
-                GET_BYTES = new TypeDescription.ForLoadedType(String.class).getDeclaredMethods()
-                        .filter(named("getBytes").and(takesArguments(String.class))).getOnly();
-                CREATE_BYTE_ARRAY_INPUT_STREAM = new TypeDescription.ForLoadedType(ByteArrayInputStream.class).getDeclaredMethods()
-                        .filter(isConstructor().and(takesArguments(byte[].class))).getOnly();
-                CREATE_OBJECT_INPUT_STREAM = new TypeDescription.ForLoadedType(ObjectInputStream.class).getDeclaredMethods()
-                        .filter(isConstructor().and(takesArguments(InputStream.class))).getOnly();
-                READ_OBJECT = new TypeDescription.ForLoadedType(ObjectInputStream.class).getDeclaredMethods()
-                        .filter(named("readObject").and(takesArguments(0))).getOnly();
-            }
-
-            /**
              * The represented type.
              */
             private final TypeDescription typeDescription;
@@ -9165,19 +9129,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (!assignment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + typeDescription + " to " + target.getType());
                 }
-                return new StackManipulation.Compound(
-                        TypeCreation.of(new TypeDescription.ForLoadedType(ObjectInputStream.class)),
-                        Duplication.SINGLE,
-                        TypeCreation.of(new TypeDescription.ForLoadedType(ByteArrayInputStream.class)),
-                        Duplication.SINGLE,
-                        new TextConstant(value),
-                        new TextConstant(CHARSET),
-                        MethodInvocation.invoke(GET_BYTES),
-                        MethodInvocation.invoke(CREATE_BYTE_ARRAY_INPUT_STREAM),
-                        MethodInvocation.invoke(CREATE_OBJECT_INPUT_STREAM),
-                        MethodInvocation.invoke(READ_OBJECT),
-                        assignment
-                );
+                try {
+                    return new StackManipulation.Compound(
+                            TypeCreation.of(new TypeDescription.ForLoadedType(ObjectInputStream.class)),
+                            Duplication.SINGLE,
+                            TypeCreation.of(new TypeDescription.ForLoadedType(ByteArrayInputStream.class)),
+                            Duplication.SINGLE,
+                            new TextConstant(value),
+                            new TextConstant(CHARSET),
+                            MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(String.class.getDeclaredMethod("getBytes", String.class))),
+                            MethodInvocation.invoke(new MethodDescription.ForLoadedConstructor(ByteArrayInputStream.class.getDeclaredConstructor(byte[].class))),
+                            MethodInvocation.invoke(new MethodDescription.ForLoadedConstructor(ObjectInputStream.class.getDeclaredConstructor(InputStream.class))),
+                            MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(ObjectInputStream.class.getDeclaredMethod("readObject"))),
+                            assignment
+                    );
+                } catch (NoSuchMethodException exception) {
+                    throw new IllegalStateException("Cannot locate method", exception);
+                }
             }
 
             @Override

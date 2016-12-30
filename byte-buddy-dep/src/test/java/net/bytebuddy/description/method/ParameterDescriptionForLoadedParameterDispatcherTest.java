@@ -45,6 +45,7 @@ public class ParameterDescriptionForLoadedParameterDispatcherTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.class).apply();
+        ObjectPropertyAssertion.of(ParameterDescription.ForLoadedParameter.Dispatcher.CreationAction.class).apply();
     }
 
     private static class Foo {

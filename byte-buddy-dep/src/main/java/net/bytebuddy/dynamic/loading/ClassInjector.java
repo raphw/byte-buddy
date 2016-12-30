@@ -12,6 +12,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +59,7 @@ public interface ClassInjector {
         /**
          * The dispatcher to use for accessing a class loader via reflection.
          */
-        private static final Dispatcher.Initializable DISPATCHER = Dispatcher.Resolved.make();
+        private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
          * The class loader into which the classes are to be injected.
@@ -289,6 +291,85 @@ public interface ClassInjector {
             }
 
             /**
+             * A creation action for a dispatcher.
+             */
+            enum CreationAction implements PrivilegedAction<Initializable> {
+
+                /**
+                 * The singelton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                public Initializable run() {
+                    Field theUnsafe;
+                    Method defineClassUnsafe;
+                    try {
+                        Class<?> unsafe = Class.forName("sun.misc.Unsafe");
+                        theUnsafe = unsafe.getDeclaredField("theUnsafe");
+                        defineClassUnsafe = unsafe.getDeclaredMethod("defineClass",
+                                String.class,
+                                byte[].class,
+                                int.class,
+                                int.class,
+                                ClassLoader.class,
+                                ProtectionDomain.class);
+                    } catch (Throwable ignored) {
+                        theUnsafe = null;
+                        defineClassUnsafe = null;
+                    }
+                    try {
+                        Method getPackage;
+                        try {
+                            getPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
+                        } catch (NoSuchMethodException ignored) {
+                            getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
+                        }
+                        Method findLoadedClass = ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class);
+                        Method defineClass = ClassLoader.class.getDeclaredMethod("defineClass",
+                                String.class,
+                                byte[].class,
+                                int.class,
+                                int.class,
+                                ProtectionDomain.class);
+                        Method definePackage = ClassLoader.class.getDeclaredMethod("definePackage",
+                                String.class,
+                                String.class,
+                                String.class,
+                                String.class,
+                                String.class,
+                                String.class,
+                                String.class,
+                                URL.class);
+                        try {
+                            return new Dispatcher.Resolved.ForJava7CapableVm(findLoadedClass,
+                                    defineClass,
+                                    getPackage,
+                                    definePackage,
+                                    theUnsafe,
+                                    defineClassUnsafe,
+                                    ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
+                        } catch (NoSuchMethodException ignored) {
+                            return new Dispatcher.Resolved.ForLegacyVm(findLoadedClass,
+                                    defineClass,
+                                    getPackage,
+                                    definePackage,
+                                    theUnsafe,
+                                    defineClassUnsafe);
+                        }
+                    } catch (Exception exception) {
+                        return new Dispatcher.Faulty(exception);
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "ClassInjector.UsingReflection.Dispatcher.CreationAction." + name();
+                }
+            }
+
+            /**
              * Represents a successfully loaded method lookup for the dispatcher.
              */
             abstract class Resolved implements Dispatcher, Initializable {
@@ -352,84 +433,6 @@ public interface ClassInjector {
                     this.definePackage = definePackage;
                     this.theUnsafe = theUnsafe;
                     this.defineClassUnsafe = defineClassUnsafe;
-                }
-
-                /**
-                 * Obtains the reflective instances used by this injector or a no-op instance that throws the exception
-                 * that occurred when attempting to obtain the reflective member instances.
-                 *
-                 * @return A dispatcher for the current VM.
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                protected static Dispatcher.Initializable make() {
-                    Field theUnsafe;
-                    Method defineClass;
-                    try {
-                        Class<?> unsafe = Class.forName("sun.misc.Unsafe");
-                        theUnsafe = unsafe.getDeclaredField("theUnsafe");
-                        defineClass = unsafe.getDeclaredMethod("defineClass",
-                                String.class,
-                                byte[].class,
-                                int.class,
-                                int.class,
-                                ClassLoader.class,
-                                ProtectionDomain.class);
-                    } catch (Throwable ignored) {
-                        theUnsafe = null;
-                        defineClass = null;
-                    }
-                    try {
-                        Method getPackage;
-                        try {
-                            getPackage = ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class);
-                        } catch (NoSuchMethodException ignored) {
-                            getPackage = ClassLoader.class.getDeclaredMethod("getPackage", String.class);
-                        }
-                        try {
-                            return new Dispatcher.Resolved.ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class),
-                                    ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
-                                    ClassLoader.class.getDeclaredMethod("defineClass",
-                                            String.class,
-                                            byte[].class,
-                                            int.class,
-                                            int.class,
-                                            ProtectionDomain.class),
-                                    getPackage,
-                                    ClassLoader.class.getDeclaredMethod("definePackage",
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            URL.class),
-                                    theUnsafe,
-                                    defineClass);
-                        } catch (NoSuchMethodException ignored) {
-                            return new Dispatcher.Resolved.ForLegacyVm(ClassLoader.class.getDeclaredMethod("findLoadedClass", String.class),
-                                    ClassLoader.class.getDeclaredMethod("defineClass",
-                                            String.class,
-                                            byte[].class,
-                                            int.class,
-                                            int.class,
-                                            ProtectionDomain.class),
-                                    getPackage,
-                                    ClassLoader.class.getDeclaredMethod("definePackage",
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            String.class,
-                                            URL.class),
-                                    theUnsafe,
-                                    defineClass);
-                        }
-                    } catch (Exception exception) {
-                        return new Dispatcher.Faulty(exception);
-                    }
                 }
 
                 @Override
@@ -669,13 +672,13 @@ public interface ClassInjector {
                      * @param theUnsafe           An instance of {@code sun.misc.Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)}
                      *                            or {@code null} if it is not available.
                      */
-                    protected ForJava7CapableVm(Method getClassLoadingLock,
-                                                Method findLoadedClass,
+                    protected ForJava7CapableVm(Method findLoadedClass,
                                                 Method defineClass,
                                                 Method getPackage,
                                                 Method definePackage,
                                                 Field theUnsafe,
-                                                Method defineClassUnsafe) {
+                                                Method defineClassUnsafe,
+                                                Method getClassLoadingLock) {
                         super(findLoadedClass, defineClass, getPackage, definePackage, theUnsafe, defineClassUnsafe);
                         this.getClassLoadingLock = getClassLoadingLock;
                     }

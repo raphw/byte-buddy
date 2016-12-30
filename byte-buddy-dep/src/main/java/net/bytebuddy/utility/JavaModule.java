@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 /**
  * Type-safe representation of a {@code java.lang.reflect.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
@@ -21,28 +23,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
     /**
      * The dispatcher to use for accessing Java modules, if available.
      */
-    private static final Dispatcher DISPATCHER = dispatcher();
-
-    /**
-     * Extracts the dispatcher for Java modules that is supported by the current JVM.
-     *
-     * @return A dispatcher for the current VM.
-     */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-    private static Dispatcher dispatcher() {
-        try {
-            Class<?> module = Class.forName("java.lang.reflect.Module");
-            return new Dispatcher.Enabled(Class.class.getDeclaredMethod("getModule"),
-                    module.getDeclaredMethod("getClassLoader"),
-                    module.getDeclaredMethod("isNamed"),
-                    module.getDeclaredMethod("getName"),
-                    module.getDeclaredMethod("getResourceAsStream", String.class),
-                    module.getDeclaredMethod("canRead", module),
-                    Instrumentation.class.getDeclaredMethod("addModuleReads", module, module));
-        } catch (Exception ignored) {
-            return Dispatcher.Disabled.INSTANCE;
-        }
-    }
+    private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
     /**
      * The {@code java.lang.reflect.Module} instance this wrapper represents.
@@ -237,6 +218,39 @@ public class JavaModule implements NamedElement.WithOptionalName {
          * @param target          The target module.
          */
         void addReads(Instrumentation instrumentation, Object source, Object target);
+
+        /**
+         * A creation action for a dispatcher.
+         */
+        enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+            public Dispatcher run() {
+                try {
+                    Class<?> module = Class.forName("java.lang.reflect.Module");
+                    return new Dispatcher.Enabled(Class.class.getDeclaredMethod("getModule"),
+                            module.getDeclaredMethod("getClassLoader"),
+                            module.getDeclaredMethod("isNamed"),
+                            module.getDeclaredMethod("getName"),
+                            module.getDeclaredMethod("getResourceAsStream", String.class),
+                            module.getDeclaredMethod("canRead", module),
+                            Instrumentation.class.getDeclaredMethod("addModuleReads", module, module));
+                } catch (Exception ignored) {
+                    return Dispatcher.Disabled.INSTANCE;
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "JavaModule.Dispatcher.CreationAction." + name();
+            }
+        }
 
         /**
          * A dispatcher for a VM that does support the {@code java.lang.reflect.Module} API.

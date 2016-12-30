@@ -193,6 +193,7 @@ public class ClassInjectorUsingReflectionTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.Faulty.class).apply();
+        ObjectPropertyAssertion.of(ClassInjector.UsingReflection.Dispatcher.CreationAction.class).apply();
     }
 
     private static class Foo {

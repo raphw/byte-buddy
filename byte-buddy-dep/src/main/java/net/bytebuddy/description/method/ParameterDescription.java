@@ -15,6 +15,8 @@ import net.bytebuddy.matcher.ElementMatcher;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
@@ -189,26 +191,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         /**
          * A dispatcher for reading properties from {@code java.lang.reflect.Executable} instances.
          */
-        private static final Dispatcher DISPATCHER = dispatcher();
-
-        /**
-         * Creates a dispatcher for a loaded parameter if the type is available for the running JVM.
-         *
-         * @return A dispatcher for the current VM.
-         */
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-        private static Dispatcher dispatcher() {
-            try {
-                Class<?> executableType = Class.forName("java.lang.reflect.Executable");
-                Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
-                return new Dispatcher.ForJava8CapableVm(executableType.getDeclaredMethod("getParameters"),
-                        parameterType.getDeclaredMethod("getName"),
-                        parameterType.getDeclaredMethod("isNamePresent"),
-                        parameterType.getDeclaredMethod("getModifiers"));
-            } catch (Exception ignored) {
-                return Dispatcher.ForLegacyVm.INSTANCE;
-            }
-        }
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
          * The {@code java.lang.reflect.Executable} for which the parameter types are described.
@@ -289,6 +272,37 @@ public interface ParameterDescription extends AnnotatedCodeElement,
              * @return The parameter's name.
              */
             String getName(AccessibleObject executable, int index);
+
+            /**
+             * A creation action for a dispatcher.
+             */
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                public Dispatcher run() {
+                    try {
+                        Class<?> executableType = Class.forName("java.lang.reflect.Executable");
+                        Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
+                        return new Dispatcher.ForJava8CapableVm(executableType.getDeclaredMethod("getParameters"),
+                                parameterType.getDeclaredMethod("getName"),
+                                parameterType.getDeclaredMethod("isNamePresent"),
+                                parameterType.getDeclaredMethod("getModifiers"));
+                    } catch (Exception ignored) {
+                        return Dispatcher.ForLegacyVm.INSTANCE;
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "ParameterDescription.ForLoadedParameter.Dispatcher.CreationAction." + name();
+                }
+            }
 
             /**
              * A dispatcher for VMs that support the {@code java.lang.reflect.Parameter} API for Java 8+.

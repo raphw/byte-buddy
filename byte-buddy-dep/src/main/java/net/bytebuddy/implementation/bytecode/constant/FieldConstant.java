@@ -20,20 +20,6 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 public class FieldConstant implements StackManipulation {
 
     /**
-     * The {@link Class#getDeclaredField(String)} method.
-     */
-    private static final MethodDescription.InDefinedShape GET_DECLARED_FIELD;
-
-    /*
-     * Looks up the method for finding a class's declared field.
-     */
-    static {
-        GET_DECLARED_FIELD = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
-                .filter(named("getDeclaredField").and(takesArguments(String.class)))
-                .getOnly();
-    }
-
-    /**
      * The field to be represent as a {@link Field}.
      */
     private final FieldDescription.InDefinedShape fieldDescription;
@@ -63,11 +49,15 @@ public class FieldConstant implements StackManipulation {
 
     @Override
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-        return new Compound(
-                ClassConstant.of(fieldDescription.getDeclaringType()),
-                new TextConstant(fieldDescription.getInternalName()),
-                MethodInvocation.invoke(GET_DECLARED_FIELD)
-        ).apply(methodVisitor, implementationContext);
+        try {
+            return new Compound(
+                    ClassConstant.of(fieldDescription.getDeclaringType()),
+                    new TextConstant(fieldDescription.getInternalName()),
+                    MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Class.class.getDeclaredMethod("getDeclaredField", String.class)))
+            ).apply(methodVisitor, implementationContext);
+        } catch (NoSuchMethodException exception) {
+            throw new IllegalStateException("Cannot locate Class::getDeclaredField", exception);
+        }
     }
 
     @Override

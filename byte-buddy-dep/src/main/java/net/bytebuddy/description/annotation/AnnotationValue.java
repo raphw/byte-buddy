@@ -154,16 +154,9 @@ public interface AnnotationValue<T, S> {
         /**
          * The rendering dispatcher for the current VM.
          */
-        public static final RenderingDispatcher CURRENT;
-
-        /*
-         * Resolves the rendering dispatcher for the current VM.
-         */
-        static {
-            CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
-                    ? JAVA_9_CAPABLE_VM
-                    : LEGACY_VM;
-        }
+        public static final RenderingDispatcher CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+                ? JAVA_9_CAPABLE_VM
+                : LEGACY_VM;
 
         /**
          * The opening brace of an array {@link String} representation.

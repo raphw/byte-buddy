@@ -56,22 +56,7 @@ public interface JavaConstant {
         /**
          * A dispatcher for extracting information from a {@code java.lang.invoke.MethodType} instance.
          */
-        private static final Dispatcher DISPATCHER = dispatcher();
-
-        /**
-         * Locates a dispatcher depending on the feature set of the currently running JVM.
-         *
-         * @return A dispatcher for the current VM.
-         */
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-        private static Dispatcher dispatcher() {
-            try {
-                Class<?> methodType = JavaType.METHOD_TYPE.load();
-                return new Dispatcher.ForJava7CapableVm(methodType.getDeclaredMethod("returnType"), methodType.getDeclaredMethod("parameterArray"));
-            } catch (Exception ignored) {
-                return Dispatcher.ForLegacyVm.INSTANCE;
-            }
-        }
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
          * The return type of this method type.
@@ -325,6 +310,33 @@ public interface JavaConstant {
             Class<?>[] parameterArray(Object methodType);
 
             /**
+             * A creation action for a dispatcher.
+             */
+            enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                public Dispatcher run() {
+                    try {
+                        Class<?> methodType = JavaType.METHOD_TYPE.load();
+                        return new Dispatcher.ForJava7CapableVm(methodType.getDeclaredMethod("returnType"), methodType.getDeclaredMethod("parameterArray"));
+                    } catch (Exception ignored) {
+                        return Dispatcher.ForLegacyVm.INSTANCE;
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "JavaConstant.MethodType.Dispatcher.CreationAction." + name();
+                }
+            }
+
+            /**
              * A dispatcher for virtual machines that are aware of the {@code java.lang.invoke.MethodType} type that was added in Java version 7.
              */
             class ForJava7CapableVm implements Dispatcher {
@@ -434,41 +446,7 @@ public interface JavaConstant {
         /**
          * A dispatcher for receiving the type information that is represented by a {@code java.lang.invoke.MethodHandle} instance.
          */
-        private static final Dispatcher.Initializable DISPATCHER = dispatcher();
-
-        /**
-         * Locates a dispatcher depending on the feature set of the currently running JVM.
-         *
-         * @return A dispatcher for the current VM.
-         */
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-        private static Dispatcher.Initializable dispatcher() {
-            try {
-                try {
-                    return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
-                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
-                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
-                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
-                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
-                            JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
-                            JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
-                            JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
-                            JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
-                } catch (Exception ignored) {
-                    return new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
-                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
-                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
-                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
-                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
-                            JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
-                            JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
-                            JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
-                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredConstructor(JavaType.METHOD_HANDLE.load()));
-                }
-            } catch (Exception ignored) {
-                return Dispatcher.ForLegacyVm.INSTANCE;
-            }
-        }
+        private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
          * The handle type that is represented by this instance.
@@ -873,6 +851,52 @@ public interface JavaConstant {
                  * @return The provided instance's lookup type.
                  */
                 Class<?> lookupType(Object lookup);
+            }
+
+            /**
+             * A creation action for a dispatcher.
+             */
+            enum CreationAction implements PrivilegedAction<Initializable> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                public Initializable run() {
+                    try {
+                        try {
+                            return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
+                                    JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
+                                    JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
+                                    JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
+                                    JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
+                        } catch (Exception ignored) {
+                            return new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
+                                    JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
+                                    JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
+                                    JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredConstructor(JavaType.METHOD_HANDLE.load()));
+                        }
+                    } catch (Exception ignored) {
+                        return Dispatcher.ForLegacyVm.INSTANCE;
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "JavaConstant.MethodHandle.Dispatcher.CreationAction." + name();
+                }
             }
 
             /**

@@ -28,6 +28,8 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -2415,7 +2417,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * The dispatcher to use.
              */
-            Dispatcher DISPATCHER = Dispatcher.ForJava8CapableVm.make();
+            Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
             /**
              * Resolves the underlying {@link AnnotatedElement}.
@@ -2576,6 +2578,40 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic resolve(AnnotatedElement annotatedType);
 
                 /**
+                 * A creation action for a dispatcher.
+                 */
+                enum CreationAction implements PrivilegedAction<Dispatcher> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public Dispatcher run() {
+                        try {
+                            return new ForJava8CapableVm(Class.class.getDeclaredMethod("getAnnotatedSuperclass"),
+                                    Class.class.getDeclaredMethod("getAnnotatedInterfaces"),
+                                    Field.class.getDeclaredMethod("getAnnotatedType"),
+                                    Method.class.getDeclaredMethod("getAnnotatedReturnType"),
+                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedParameterTypes"),
+                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedExceptionTypes"),
+                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedReceiverType"),
+                                    Class.forName("java.lang.reflect.AnnotatedType").getDeclaredMethod("getType"));
+                        } catch (RuntimeException exception) {
+                            throw exception;
+                        } catch (Exception ignored) {
+                            return Dispatcher.ForLegacyVm.INSTANCE;
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.AnnotationReader.Dispatcher.CreationAction." + name();
+                    }
+                }
+
+                /**
                  * A dispatcher for {@link AnnotationReader}s on a legacy VM that does not support type annotations.
                  */
                 enum ForLegacyVm implements Dispatcher {
@@ -2709,29 +2745,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.getAnnotatedExceptionTypes = getAnnotatedExceptionTypes;
                         this.getAnnotatedReceiverType = getAnnotatedReceiverType;
                         this.getType = getType;
-                    }
-
-                    /**
-                     * Creates a new annotation reader dispatcher if this is possible or falls back to a no-op version if the
-                     * current JVM does not support this feature.
-                     *
-                     * @return A suitable dispatcher for the current JVM.
-                     */
-                    protected static Dispatcher make() {
-                        try {
-                            return new ForJava8CapableVm(Class.class.getDeclaredMethod("getAnnotatedSuperclass"),
-                                    Class.class.getDeclaredMethod("getAnnotatedInterfaces"),
-                                    Field.class.getDeclaredMethod("getAnnotatedType"),
-                                    Method.class.getDeclaredMethod("getAnnotatedReturnType"),
-                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedParameterTypes"),
-                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedExceptionTypes"),
-                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedReceiverType"),
-                                    Class.forName("java.lang.reflect.AnnotatedType").getDeclaredMethod("getType"));
-                        } catch (RuntimeException exception) {
-                            throw exception;
-                        } catch (Exception ignored) {
-                            return Dispatcher.ForLegacyVm.INSTANCE;
-                        }
                     }
 
                     @Override
@@ -3488,6 +3501,77 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     public int hashCode() {
                         return annotationReader.hashCode();
                     }
+
+                    /**
+                     * A privileged action for lookup up a getter method.
+                     */
+                    protected static class MethodLookupAction implements PrivilegedAction<Method> {
+
+                        /**
+                         * The declaring type's name.
+                         */
+                        private final String typeName;
+
+                        /**
+                         * The method's name.
+                         */
+                        private final String methodName;
+
+                        /**
+                         * Creates a method lookup action.
+                         *
+                         * @param typeName   The declaring type's name.
+                         * @param methodName The method's name.
+                         */
+                        private MethodLookupAction(String typeName, String methodName) {
+                            this.typeName = typeName;
+                            this.methodName = methodName;
+                        }
+
+                        /**
+                         * Resolves the method in a privileged block.
+                         *
+                         * @param typeName   The declaring type's name.
+                         * @param methodName The method's name.
+                         * @return The resolved method.
+                         */
+                        protected static Method of(String typeName, String methodName) {
+                            return AccessController.doPrivileged(new MethodLookupAction(typeName, methodName));
+                        }
+
+                        @Override
+                        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                        public Method run() {
+                            try {
+                                return Class.forName(typeName).getDeclaredMethod(methodName);
+                            } catch (Exception exception) {
+                                return NOT_AVAILABLE;
+                            }
+                        }
+
+                        @Override
+                        public boolean equals(Object object) {
+                            if (this == object) return true;
+                            if (object == null || getClass() != object.getClass()) return false;
+                            MethodLookupAction that = (MethodLookupAction) object;
+                            return typeName.equals(that.typeName) && methodName.equals(that.methodName);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = typeName.hashCode();
+                            result = 31 * result + methodName.hashCode();
+                            return result;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.AnnotationReader.Delegator.Chained.MethodLookupAction{" +
+                                    "typeName='" + typeName + '\'' +
+                                    ", methodName='" + methodName + '\'' +
+                                    '}';
+                        }
+                    }
                 }
             }
 
@@ -3499,21 +3583,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds} method.
                  */
-                private static final Method GET_ANNOTATED_UPPER_BOUNDS = method();
-
-                /**
-                 * Reads the {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds} method.
-                 *
-                 * @return The method or {@code null} if it is not provided by the current VM.
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                private static Method method() {
-                    try {
-                        return Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedUpperBounds");
-                    } catch (Exception exception) {
-                        return NOT_AVAILABLE;
-                    }
-                }
+                private static final Method GET_ANNOTATED_UPPER_BOUNDS = MethodLookupAction.of("java.lang.reflect.AnnotatedWildcardType", "getAnnotatedUpperBounds");
 
                 /**
                  * The wildcard bound's index.
@@ -3578,21 +3648,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds} method.
                  */
-                private static final Method GET_ANNOTATED_LOWER_BOUNDS = method();
-
-                /**
-                 * Reads the {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds} method.
-                 *
-                 * @return The method or {@code null} if it is not provided by the current VM.
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                private static Method method() {
-                    try {
-                        return Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedLowerBounds");
-                    } catch (Exception exception) {
-                        return NOT_AVAILABLE;
-                    }
-                }
+                private static final Method GET_ANNOTATED_LOWER_BOUNDS = MethodLookupAction.of("java.lang.reflect.AnnotatedWildcardType", "getAnnotatedLowerBounds");
 
                 /**
                  * The wildcard bound's index.
@@ -3654,21 +3710,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds} method.
                  */
-                private static final Method GET_ANNOTATED_BOUNDS = method();
-
-                /**
-                 * Reads the {@code java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds} method.
-                 *
-                 * @return The method or {@code null} if it is not provided by the current VM.
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                private static Method method() {
-                    try {
-                        return Class.forName("java.lang.reflect.AnnotatedTypeVariable").getDeclaredMethod("getAnnotatedBounds");
-                    } catch (Exception exception) {
-                        return NOT_AVAILABLE;
-                    }
-                }
+                private static final Method GET_ANNOTATED_BOUNDS = MethodLookupAction.of("java.lang.reflect.AnnotatedTypeVariable", "getAnnotatedBounds");
 
                 /**
                  * The type variable's index.
@@ -3729,21 +3771,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * The {@code java.lang.reflect.TypeVariable#getAnnotatedBounds} method.
                      */
-                    private static final Method GET_ANNOTATED_BOUNDS = method();
-
-                    /**
-                     * Reads the {@code java.lang.reflect.TypeVariable#getAnnotatedBounds} method.
-                     *
-                     * @return The method or {@code null} if it is not provided by the current VM.
-                     */
-                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                    private static Method method() {
-                        try {
-                            return TypeVariable.class.getDeclaredMethod("getAnnotatedBounds");
-                        } catch (Exception exception) {
-                            return NOT_AVAILABLE;
-                        }
-                    }
+                    private static final Method GET_ANNOTATED_BOUNDS = MethodLookupAction.of(TypeVariable.class.getName(), "getAnnotatedBounds");
 
                     /**
                      * The represented type variable.
@@ -3807,21 +3835,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments} method.
                  */
-                private static final Method GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = method();
-
-                /**
-                 * Reads the {@code java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments} method.
-                 *
-                 * @return The method or {@code null} if it is not provided by the current VM.
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                private static Method method() {
-                    try {
-                        return Class.forName("java.lang.reflect.AnnotatedParameterizedType").getDeclaredMethod("getAnnotatedActualTypeArguments");
-                    } catch (Exception exception) {
-                        return NOT_AVAILABLE;
-                    }
-                }
+                private static final Method GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = MethodLookupAction.of("java.lang.reflect.AnnotatedParameterizedType", "getAnnotatedActualTypeArguments");
 
                 /**
                  * The type argument's index.
@@ -3883,21 +3897,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType} method.
                  */
-                private static final Method GET_ANNOTATED_GENERIC_COMPONENT_TYPE = method();
-
-                /**
-                 * Reads the {@code java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType} method.
-                 *
-                 * @return The method or {@code null} if it is not provided by the current VM.
-                 */
-                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                private static Method method() {
-                    try {
-                        return Class.forName("java.lang.reflect.AnnotatedArrayType").getDeclaredMethod("getAnnotatedGenericComponentType");
-                    } catch (Exception exception) {
-                        return NOT_AVAILABLE;
-                    }
-                }
+                private static final Method GET_ANNOTATED_GENERIC_COMPONENT_TYPE = MethodLookupAction.of("java.lang.reflect.AnnotatedArrayType", "getAnnotatedGenericComponentType");
 
                 /**
                  * Creates a chained annotation reader for reading a component type.
@@ -3937,21 +3937,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedType#getAnnotatedOwnerType} method.
                  */
-                private static final Method GET_ANNOTATED_OWNER_TYPE = method();
-
-                /**
-                 * Reads the {@code java.lang.reflect.AnnotatedType#getAnnotatedOwnerType} method.
-                 *
-                 * @return The method or {@code null} if it is not available on the current VM.
-                 */
-                @SuppressFBWarnings(value = "", justification = "Exception should not be rethrown but trigger a fallback")
-                private static Method method() {
-                    try {
-                        return Class.forName("java.lang.reflect.AnnotatedType").getDeclaredMethod("getAnnotatedOwnerType");
-                    } catch (Exception exception) {
-                        return null;
-                    }
-                }
+                private static final Method GET_ANNOTATED_OWNER_TYPE = MethodLookupAction.of("java.lang.reflect.AnnotatedType", "getAnnotatedOwnerType");
 
                 /**
                  * Creates a chained annotation reader for reading an owner type if it is accessible. This method checks if annotated
@@ -5084,16 +5070,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A rendering delegate for the current VM.
                  */
-                protected static final RenderingDelegate CURRENT;
-
-                /*
-                 * Resolves the current VM's rendering delegate.
-                 */
-                static {
-                    CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
-                            ? RenderingDelegate.JAVA_9_CAPABLE_VM
-                            : RenderingDelegate.LEGACY_VM;
-                }
+                protected static final RenderingDelegate CURRENT = ClassFileVersion.ofThisVm(ClassFileVersion.JAVA_V6).isAtLeast(ClassFileVersion.JAVA_V9)
+                        ? RenderingDelegate.JAVA_9_CAPABLE_VM
+                        : RenderingDelegate.LEGACY_VM;
 
                 /**
                  * Applies this rendering delegate.

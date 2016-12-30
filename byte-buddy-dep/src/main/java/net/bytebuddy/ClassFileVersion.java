@@ -72,22 +72,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * A version locator for the executing JVM.
      */
-    private static final VersionLocator VERSION_LOCATOR = versionLocator();
-
-    /**
-     * Creates a version locator of the executing JVM.
-     *
-     * @return An appropriate version locator.
-     */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-    private static VersionLocator versionLocator() {
-        try {
-            return new VersionLocator.ForJava9CapableVm(Runtime.class.getDeclaredMethod("version"),
-                    Class.forName("java.lang.Runtime$Version").getDeclaredMethod("major"));
-        } catch (Exception ignored) {
-            return VersionLocator.ForLegacyVm.INSTANCE;
-        }
-    }
+    private static final VersionLocator VERSION_LOCATOR = AccessController.doPrivileged(VersionLocator.CreationAction.INSTANCE);
 
     /**
      * The version number that is represented by this class file version instance.
@@ -305,6 +290,33 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
          * @return The current VM's major version number.
          */
         ClassFileVersion locate();
+
+        /**
+         * A creation action for a version locator.
+         */
+        enum CreationAction implements PrivilegedAction<VersionLocator> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+            public VersionLocator run() {
+                try {
+                    return new VersionLocator.ForJava9CapableVm(Runtime.class.getDeclaredMethod("version"),
+                            Class.forName("java.lang.Runtime$Version").getDeclaredMethod("major"));
+                } catch (Exception ignored) {
+                    return VersionLocator.ForLegacyVm.INSTANCE;
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "ClassFileVersion.VersionLocator.CreationAction." + name();
+            }
+        }
 
         /**
          * A version locator for a JVM of at least version 9.

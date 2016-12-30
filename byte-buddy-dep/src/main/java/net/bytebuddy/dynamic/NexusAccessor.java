@@ -26,9 +26,6 @@ import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
-
 /**
  * The Nexus accessor is creating a VM-global singleton {@link Nexus} such that it can be seen by all class loaders of
  * a virtual machine. Furthermore, it provides an API to access this global instance.
@@ -38,7 +35,7 @@ public class NexusAccessor {
     /**
      * The dispatcher to use.
      */
-    private static final Dispatcher DISPATCHER = Dispatcher.Creator.make();
+    private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
     /**
      * The reference queue that is notified upon a GC eligible {@link Nexus} entry or {@code null} if no such queue should be notified.
@@ -124,44 +121,6 @@ public class NexusAccessor {
     public static class InitializationAppender implements ByteCodeAppender {
 
         /**
-         * The {@link ClassLoader#getSystemClassLoader()} method.
-         */
-        private static final MethodDescription.InDefinedShape GET_SYSTEM_CLASS_LOADER;
-
-        /**
-         * The {@link java.lang.ClassLoader#loadClass(String)} method.
-         */
-        private static final MethodDescription.InDefinedShape LOAD_CLASS;
-
-        /**
-         * The {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
-         */
-        private static final MethodDescription.InDefinedShape GET_DECLARED_METHOD;
-
-        /**
-         * The {@link java.lang.reflect.Method#invoke(Object, Object...)} method.
-         */
-        private static final MethodDescription.InDefinedShape INVOKE_METHOD;
-
-        /**
-         * The {@link Integer#valueOf(int)} method.
-         */
-        private static final MethodDescription.InDefinedShape VALUE_OF;
-
-        static {
-            GET_SYSTEM_CLASS_LOADER = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
-                    .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
-            LOAD_CLASS = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
-                    .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
-            GET_DECLARED_METHOD = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
-                    .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
-            INVOKE_METHOD = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
-                    .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
-            VALUE_OF = new TypeDescription.ForLoadedType(Integer.class).getDeclaredMethods()
-                    .filter(named("valueOf").and(takesArguments(int.class))).getOnly();
-        }
-
-        /**
          * The id used for identifying the loaded type initializer that was added to the {@link Nexus}.
          */
         private final int identification;
@@ -177,26 +136,30 @@ public class NexusAccessor {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-            return new ByteCodeAppender.Simple(new StackManipulation.Compound(
-                    MethodInvocation.invoke(GET_SYSTEM_CLASS_LOADER),
-                    new TextConstant(Nexus.class.getName()),
-                    MethodInvocation.invoke(LOAD_CLASS),
-                    new TextConstant("initialize"),
-                    ArrayFactory.forType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class))
-                            .withValues(Arrays.asList(
-                                    ClassConstant.of(TypeDescription.CLASS),
-                                    ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
-                    MethodInvocation.invoke(GET_DECLARED_METHOD),
-                    NullConstant.INSTANCE,
-                    ArrayFactory.forType(TypeDescription.Generic.OBJECT)
-                            .withValues(Arrays.asList(
-                                    ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
-                                    new StackManipulation.Compound(
-                                            IntegerConstant.forValue(identification),
-                                            MethodInvocation.invoke(VALUE_OF)))),
-                    MethodInvocation.invoke(INVOKE_METHOD),
-                    Removal.SINGLE
-            )).apply(methodVisitor, implementationContext, instrumentedMethod);
+            try {
+                return new ByteCodeAppender.Simple(new StackManipulation.Compound(
+                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(ClassLoader.class.getDeclaredMethod("getSystemClassLoader"))),
+                        new TextConstant(Nexus.class.getName()),
+                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(ClassLoader.class.getDeclaredMethod("loadClass", String.class))),
+                        new TextConstant("initialize"),
+                        ArrayFactory.forType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class))
+                                .withValues(Arrays.asList(
+                                        ClassConstant.of(TypeDescription.CLASS),
+                                        ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
+                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Class.class.getDeclaredMethod("getDeclaredMethod", String.class, Class[].class))),
+                        NullConstant.INSTANCE,
+                        ArrayFactory.forType(TypeDescription.Generic.OBJECT)
+                                .withValues(Arrays.asList(
+                                        ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
+                                        new StackManipulation.Compound(
+                                                IntegerConstant.forValue(identification),
+                                                MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Integer.class.getDeclaredMethod("valueOf", int.class)))))),
+                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Method.class.getDeclaredMethod("invoke", Object.class, Object[].class))),
+                        Removal.SINGLE
+                )).apply(methodVisitor, implementationContext, instrumentedMethod);
+            } catch (NoSuchMethodException exception) {
+                throw new IllegalStateException("Cannot locate method", exception);
+            }
         }
 
         @Override
@@ -257,16 +220,12 @@ public class NexusAccessor {
         /**
          * Creates a new dispatcher for accessing a {@link Nexus}.
          */
-        class Creator implements PrivilegedAction<Dispatcher> {
+        enum CreationAction implements PrivilegedAction<Dispatcher> {
 
             /**
-             * Creates a new dispatcher.
-             *
-             * @return An active dispatcher for accessing this VM's {@link Nexus} if possible.
+             * The singleton instance.
              */
-            protected static Dispatcher make() {
-                return AccessController.doPrivileged(new Creator());
-            }
+            INSTANCE;
 
             @Override
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
@@ -290,7 +249,7 @@ public class NexusAccessor {
 
             @Override
             public String toString() {
-                return "NexusAccessor.Dispatcher.Creator{}";
+                return "NexusAccessor.Dispatcher.CreationAction." + name();
             }
         }
 

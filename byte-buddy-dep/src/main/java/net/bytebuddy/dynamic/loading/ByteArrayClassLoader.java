@@ -53,39 +53,12 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     /**
      * A strategy for locating a package by name.
      */
-    private static final PackageLookupStrategy PACKAGE_LOOKUP_STRATEGY = packageLookupStrategy();
+    private static final PackageLookupStrategy PACKAGE_LOOKUP_STRATEGY = AccessController.doPrivileged(PackageLookupStrategy.CreationAction.INSTANCE);
 
     /**
      * The synchronization engine for the executing JVM.
      */
-    protected static final SynchronizationStrategy SYNCHRONIZATION_STRATEGY;
-
-    /*
-     * Sets up the suitable synchronization engine (Java 8+ or earlier).
-     */
-    static {
-        SynchronizationStrategy synchronizationStrategy;
-        try {
-            synchronizationStrategy = SynchronizationStrategy.ForJava7CapableVm.resolve();
-        } catch (Exception ignored) {
-            synchronizationStrategy = SynchronizationStrategy.ForLegacyVm.INSTANCE;
-        }
-        SYNCHRONIZATION_STRATEGY = synchronizationStrategy;
-    }
-
-    /**
-     * Locates the best available package lookup strategy.
-     *
-     * @return A package lookup strategy for the current VM.
-     */
-    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-    private static PackageLookupStrategy packageLookupStrategy() {
-        try {
-            return new PackageLookupStrategy.ForJava9CapableVm(ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class));
-        } catch (Exception ignored) {
-            return PackageLookupStrategy.ForLegacyVm.INSTANCE;
-        }
-    }
+    protected static final SynchronizationStrategy.Initializable SYNCHRONIZATION_STRATEGY = AccessController.doPrivileged(SynchronizationStrategy.CreationAction.INSTANCE);
 
     /**
      * A mutable map of type names mapped to their binary representation.
@@ -204,7 +177,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
 
     @Override
     public Class<?> defineClass(String name, byte[] binaryRepresentation) throws ClassNotFoundException {
-        synchronized (SYNCHRONIZATION_STRATEGY.getClassLoadingLock(this, name)) {
+        synchronized (SYNCHRONIZATION_STRATEGY.initialize().getClassLoadingLock(this, name)) {
             byte[] previous = typeDefinitions.putIfAbsent(name, binaryRepresentation);
             Class<?> type = null;
             try {
@@ -281,9 +254,47 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         Object getClassLoadingLock(ClassLoader classLoader, String name);
 
         /**
+         * An uninitialized synchronization strategy.
+         */
+        interface Initializable {
+
+            /**
+             * Initializes this synchronization strategy.
+             *
+             * @return The synchronization strategy to use.
+             */
+            SynchronizationStrategy initialize();
+        }
+
+        /**
+         * A creation action for a synchronization strategy.
+         */
+        enum CreationAction implements PrivilegedAction<Initializable> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Initializable run() {
+                try {
+                    return new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
+                } catch (Exception ignored) {
+                    return SynchronizationStrategy.ForLegacyVm.INSTANCE;
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "ByteArrayClassLoader.SynchronizationStrategy.CreationAction." + name();
+            }
+        }
+
+        /**
          * A synchronization engine for a VM that is not aware of parallel-capable class loaders.
          */
-        enum ForLegacyVm implements SynchronizationStrategy {
+        enum ForLegacyVm implements SynchronizationStrategy, Initializable {
 
             /**
              * The singleton instance.
@@ -296,15 +307,20 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             }
 
             @Override
+            public SynchronizationStrategy initialize() {
+                return this;
+            }
+
+            @Override
             public String toString() {
-                return "ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForLegacyVm." + name();
+                return "ByteArrayClassLoader.SynchronizationStrategy.ForLegacyVm." + name();
             }
         }
 
         /**
          * A synchronization engine for a VM that is aware of parallel-capable class loaders.
          */
-        class ForJava7CapableVm implements SynchronizationStrategy, PrivilegedAction<SynchronizationStrategy> {
+        class ForJava7CapableVm implements SynchronizationStrategy, Initializable {
 
             /**
              * The {@code ClassLoader#getClassLoadingLock(String)} method.
@@ -320,16 +336,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 this.method = method;
             }
 
-            /**
-             * Resolves a synchronization engine for a modern VM if this is possible.
-             *
-             * @return A modern synchronization engine.
-             * @throws NoSuchMethodException If the executing VM is not a modern VM.
-             */
-            protected static SynchronizationStrategy resolve() throws NoSuchMethodException {
-                return AccessController.doPrivileged(new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class)));
-            }
-
             @Override
             public Object getClassLoadingLock(ClassLoader classLoader, String name) {
                 try {
@@ -342,9 +348,13 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             }
 
             @Override
-            public SynchronizationStrategy run() {
-                method.setAccessible(true);
-                return this;
+            public SynchronizationStrategy initialize() {
+                try {
+                    method.setAccessible(true);
+                    return this;
+                } catch (Exception ignored) {
+                    return ForLegacyVm.INSTANCE;
+                }
             }
 
             @Override
@@ -360,7 +370,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
 
             @Override
             public String toString() {
-                return "ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForJava7CapableVm{method=" + method + '}';
+                return "ByteArrayClassLoader.SynchronizationStrategy.ForJava7CapableVm{method=" + method + '}';
             }
         }
     }
@@ -466,6 +476,32 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          * @return A suitable package or {@code null} if no such package exists.
          */
         Package apply(ByteArrayClassLoader classLoader, String name);
+
+        /**
+         * A creation action for a package lookup strategy.
+         */
+        enum CreationAction implements PrivilegedAction<PackageLookupStrategy> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+            public PackageLookupStrategy run() {
+                try {
+                    return new PackageLookupStrategy.ForJava9CapableVm(ClassLoader.class.getDeclaredMethod("getDefinedPackage", String.class));
+                } catch (Exception ignored) {
+                    return PackageLookupStrategy.ForLegacyVm.INSTANCE;
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "ByteArrayClassLoader.PackageLookupStrategy.CreationAction." + name();
+            }
+        }
 
         /**
          * A package lookup strategy for a VM prior to Java 9.
@@ -840,7 +876,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
 
         @Override
         protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            synchronized (SYNCHRONIZATION_STRATEGY.getClassLoadingLock(this, name)) {
+            synchronized (SYNCHRONIZATION_STRATEGY.initialize().getClassLoadingLock(this, name)) {
                 Class<?> type = findLoadedClass(name);
                 if (type != null) {
                     return type;

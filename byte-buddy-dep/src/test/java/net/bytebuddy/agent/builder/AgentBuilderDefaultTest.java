@@ -2125,7 +2125,7 @@ public class AgentBuilderDefaultTest {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).applyBasic();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.FactoryCreationOption.class);
+        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.CreationAction.class);
         final Iterator<Class<?>> java9Dispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override

@@ -10,8 +10,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -192,6 +195,32 @@ public class JavaConstantMethodHandleTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(JavaConstant.MethodHandle.class).apply();
+        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.CreationAction.class).apply();
+        final Iterator<Method> methods = Arrays.asList(String.class.getDeclaredMethods()).iterator();
+        final Iterator<Constructor<?>> constructors= Arrays.asList(String.class.getDeclaredConstructors()).iterator();
+        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+            @Override
+            public Method create() {
+                return methods.next();
+            }
+        }).create(new ObjectPropertyAssertion.Creator<Constructor<?>>() {
+            @Override
+            public Constructor<?> create() {
+                return constructors.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForJava8CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+            @Override
+            public Method create() {
+                return methods.next();
+            }
+        }).create(new ObjectPropertyAssertion.Creator<Constructor<?>>() {
+            @Override
+            public Constructor<?> create() {
+                return constructors.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(JavaConstant.MethodHandle.Dispatcher.ForLegacyVm.class).apply();
         ObjectPropertyAssertion.of(JavaConstant.MethodHandle.HandleType.class).apply();
     }
 

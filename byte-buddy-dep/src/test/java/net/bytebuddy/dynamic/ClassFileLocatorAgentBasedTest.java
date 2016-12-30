@@ -126,6 +126,7 @@ public class ClassFileLocatorAgentBasedTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ExtractionClassFileTransformer.class).applyBasic();
+        ObjectPropertyAssertion.of(ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.CreationAction.class).apply();
     }
 
 

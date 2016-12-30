@@ -82,5 +82,6 @@ public class JavaModuleTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(JavaModule.Dispatcher.Disabled.class).apply();
+        ObjectPropertyAssertion.of(JavaModule.Dispatcher.CreationAction.class).apply();
     }
 }
