@@ -277,6 +277,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             INSTANCE;
 
             @Override
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Initializable run() {
                 try {
                     return new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class));
