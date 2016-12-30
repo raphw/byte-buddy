@@ -77,20 +77,26 @@ public @interface DefaultCall {
         /**
          * A reference to the target type method of the default call annotation.
          */
-        private final MethodDescription.InDefinedShape targetType;
+        private static final MethodDescription.InDefinedShape TARGET_TYPE;
 
         /**
          * A reference to the serializable proxy method of the default call annotation.
          */
-        private final MethodDescription.InDefinedShape serializableProxy;
+        private static final MethodDescription.InDefinedShape SERIALIZABLE_PROXY;
 
-        private final MethodDescription.InDefinedShape nullIfImpossible;
+        /**
+         * A reference to the null if possible method of the default call annotation.
+         */
+        private static final MethodDescription.InDefinedShape NULL_IF_IMPOSSIBLE;
 
-        Binder() {
+        /*
+         * Looks up method constants of the default call annotation.
+         */
+        static {
             MethodList<MethodDescription.InDefinedShape> annotationProperties = new TypeDescription.ForLoadedType(DefaultCall.class).getDeclaredMethods();
-            targetType= annotationProperties.filter(named("targetType")).getOnly();
-            serializableProxy = annotationProperties.filter(named("serializableProxy")).getOnly();
-            nullIfImpossible = annotationProperties.filter(named("nullIfImpossible")).getOnly();
+            TARGET_TYPE = annotationProperties.filter(named("targetType")).getOnly();
+            SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
+            NULL_IF_IMPOSSIBLE = annotationProperties.filter(named("nullIfImpossible")).getOnly();
         }
 
         @Override
@@ -108,17 +114,17 @@ public @interface DefaultCall {
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A default method call proxy can only be assigned to Runnable or Callable types: " + target);
             } else if (source.isConstructor()) {
-                return annotation.getValue(nullIfImpossible).resolve(Boolean.class)
+                return annotation.getValue(NULL_IF_IMPOSSIBLE).resolve(Boolean.class)
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE)
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            TypeDescription typeDescription = annotation.getValue(this.targetType).resolve(TypeDescription.class);
+            TypeDescription typeDescription = annotation.getValue(TARGET_TYPE).resolve(TypeDescription.class);
             Implementation.SpecialMethodInvocation specialMethodInvocation = (typeDescription.represents(void.class)
                     ? DefaultMethodLocator.Implicit.INSTANCE
                     : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source);
             StackManipulation stackManipulation;
             if (specialMethodInvocation.isValid()) {
-                stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.getValue(serializableProxy).resolve(Boolean.class));
+                stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
             } else if (annotation.loadSilent().nullIfImpossible()) {
                 stackManipulation = NullConstant.INSTANCE;
             } else {
@@ -160,8 +166,7 @@ public @interface DefaultCall {
                 INSTANCE;
 
                 @Override
-                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                                      MethodDescription source) {
+                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     Implementation.SpecialMethodInvocation specialMethodInvocation = Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
                     for (TypeDescription candidate : implementationTarget.getInstrumentedType().getInterfaces().asErasures()) {
                         if (source.isSpecializableFor(candidate)) {
@@ -201,8 +206,7 @@ public @interface DefaultCall {
                 }
 
                 @Override
-                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                                      MethodDescription source) {
+                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }

@@ -22,6 +22,9 @@ import java.lang.reflect.Method;
  * If such a method is not available, this annotation causes that this delegation target cannot be bound unless {@link SuperMethod#nullIfImpossible()}
  * is set to {@code true}. The method is declared as {@code public} and is invokable unless the instrumented type itself is not visible. Note that
  * requesting such a method exposes the super method to reflection.
+ *
+ * @see net.bytebuddy.implementation.MethodDelegation
+ * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.TypeInitializer;
@@ -72,6 +73,21 @@ public class ImplementationContextDisabledTest {
     @Test(expected = IllegalStateException.class)
     public void testCannotCacheValue() throws Exception {
         new Implementation.Context.Disabled(instrumentedType, classFileVersion).cache(mock(StackManipulation.class), mock(TypeDescription.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCannotCreateFieldGetter() throws Exception {
+        new Implementation.Context.Disabled(instrumentedType, classFileVersion).registerGetterFor(mock(FieldDescription.class), MethodAccessorFactory.AccessType.DEFAULT);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCannotCreateFieldSetter() throws Exception {
+        new Implementation.Context.Disabled(instrumentedType, classFileVersion).registerSetterFor(mock(FieldDescription.class), MethodAccessorFactory.AccessType.DEFAULT);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCannotCreateMethodAccessor() throws Exception {
+        new Implementation.Context.Disabled(instrumentedType, classFileVersion).registerAccessorFor(mock(Implementation.SpecialMethodInvocation.class), MethodAccessorFactory.AccessType.DEFAULT);
     }
 
     @Test(expected = IllegalStateException.class)

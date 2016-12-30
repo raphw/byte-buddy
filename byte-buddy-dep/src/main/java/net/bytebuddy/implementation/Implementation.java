@@ -613,7 +613,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
             @Override
             public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType) {
-                throw new IllegalStateException("Registration of field accessor was disabled: " + fieldDescription); // TODO: Test!
+                throw new IllegalStateException("Registration of field accessor was disabled: " + fieldDescription);
             }
 
             @Override
