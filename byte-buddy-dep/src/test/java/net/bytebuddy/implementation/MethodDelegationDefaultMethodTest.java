@@ -4,19 +4,16 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.implementation.bind.annotation.DefaultCall;
 import net.bytebuddy.implementation.bind.annotation.DefaultMethod;
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
-import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -37,25 +34,11 @@ public class MethodDelegationDefaultMethodTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    public void testRunnableDefaultCall() throws Exception {
-        DynamicType.Loaded<?> loaded = new ByteBuddy()
-                .subclass(Object.class)
-                .implement(Class.forName(SINGLE_DEFAULT_METHOD))
-                .intercept(MethodDelegation.to(RunnableClass.class))
-                .make()
-                .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
-        Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
-        Method method = loaded.getLoaded().getMethod(FOO);
-        assertThat(method.invoke(instance), is((Object) QUX));
-    }
-
-    @Test
-    @JavaVersionRule.Enforce(8)
     public void testCallableDefaultCall() throws Exception {
         DynamicType.Loaded<?> loaded = new ByteBuddy()
                 .subclass(Object.class)
                 .implement(Class.forName(SINGLE_DEFAULT_METHOD))
-                .intercept(MethodDelegation.to(CallableClass.class))
+                .intercept(MethodDelegation.to(SampleClass.class))
                 .make()
                 .load(Class.forName(SINGLE_DEFAULT_METHOD).getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -70,7 +53,7 @@ public class MethodDelegationDefaultMethodTest {
                 .subclass(Object.class)
                 .implement(Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE))
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
-                .intercept(MethodDelegation.to(CallableClass.class))
+                .intercept(MethodDelegation.to(SampleClass.class))
                 .make();
     }
 
@@ -112,18 +95,12 @@ public class MethodDelegationDefaultMethodTest {
                 .make();
     }
 
-    public static class RunnableClass {
-
-        public static Object foo(@DefaultCall Runnable runnable) {
-            assertThat(runnable, CoreMatchers.not(instanceOf(Serializable.class)));
-            runnable.run();
-            return QUX;
-        }
-    }
-
-    public static class CallableClass {
+    public static class SampleClass {
 
         public static String bar(@DefaultMethod Method method, @This Object target) throws Exception {
+            if (!Modifier.isPublic(method.getModifiers())) {
+                throw new AssertionError();
+            }
             return (String) method.invoke(target);
         }
     }

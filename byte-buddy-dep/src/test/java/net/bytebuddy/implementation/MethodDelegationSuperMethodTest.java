@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.is;
@@ -146,6 +147,9 @@ public class MethodDelegationSuperMethodTest {
     public static class NonVoidTarget {
 
         public static Object foo(@SuperMethod Method method, @This Object target) throws Exception {
+            if (!Modifier.isPublic(method.getModifiers())) {
+                throw new AssertionError();
+            }
             return method.invoke(target);
         }
     }
