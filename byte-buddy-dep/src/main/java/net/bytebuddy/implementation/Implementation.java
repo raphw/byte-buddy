@@ -1286,6 +1286,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     this.visibility = visibility;
                 }
 
+                /**
+                 * Returns this delegation record with the minimal visibility represented by the supplied access type.
+                 * @param accessType The access type to enforce.
+                 * @return A new version of this delegation record with the minimal implied visibility.
+                 */
                 protected abstract DelegationRecord with(AccessType accessType);
 
                 @Override

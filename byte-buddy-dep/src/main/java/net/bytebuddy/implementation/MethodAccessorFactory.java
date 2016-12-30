@@ -18,6 +18,7 @@ public interface MethodAccessorFactory {
      * with package-private visibility, similarly to a Java compiler's accessor methods.
      *
      * @param specialMethodInvocation The special method invocation.
+     * @param accessType              The required access type.
      * @return The accessor method for invoking the special method invocation.
      */
     MethodDescription.InDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation, AccessType accessType);
@@ -29,6 +30,7 @@ public interface MethodAccessorFactory {
      * compiler's accessor methods. If the field is {@code static}, this accessor method is also {@code static}.
      *
      * @param fieldDescription The field which is to be accessed.
+     * @param accessType       The required access type.
      * @return A getter method for the given field.
      */
     MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription, AccessType accessType);
@@ -40,6 +42,7 @@ public interface MethodAccessorFactory {
      * compiler's accessor methods. If the field is {@code static}, this accessor method is also {@code static}.
      *
      * @param fieldDescription The field which is to be accessed.
+     * @param accessType       The required access type.
      * @return A setter method for the given field.
      */
     MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType);
