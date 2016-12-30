@@ -168,12 +168,6 @@ public class MethodDelegation implements Implementation.Composable {
     private final List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
 
     /**
-     * The {@link net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.DefaultsProvider}
-     * to be used by this method delegation.
-     */
-    private final TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider;
-
-    /**
      * The termination handler to apply.
      */
     private final TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler;
@@ -194,20 +188,17 @@ public class MethodDelegation implements Implementation.Composable {
      *
      * @param implementationDelegate The implementation delegate to use by this method delegator.
      * @param parameterBinders       The parameter binders to use by this method delegator.
-     * @param defaultsProvider       The defaults provider to use by this method delegator.
      * @param terminationHandler     The termination handler to apply.
      * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
      * @param assigner               The assigner to be supplied by this method delegator.
      */
     protected MethodDelegation(ImplementationDelegate implementationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
-                               TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider,
                                TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                Assigner assigner) {
         this.implementationDelegate = implementationDelegate;
         this.parameterBinders = parameterBinders;
-        this.defaultsProvider = defaultsProvider;
         this.terminationHandler = terminationHandler;
         this.ambiguityResolver = ambiguityResolver;
         this.assigner = assigner;
@@ -237,7 +228,6 @@ public class MethodDelegation implements Implementation.Composable {
         }
         return new MethodDelegation(ImplementationDelegate.ForStaticMethod.of(typeDescription),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT);
@@ -421,7 +411,6 @@ public class MethodDelegation implements Implementation.Composable {
         }
         return new MethodDelegation(new ImplementationDelegate.ForInstance(delegate, fieldName, typeDescription, methodGraphCompiler),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT);
@@ -448,7 +437,6 @@ public class MethodDelegation implements Implementation.Composable {
     public static MethodDelegation toConstructor(TypeDescription typeDescription) {
         return new MethodDelegation(ImplementationDelegate.ForConstruction.of(typeDescription),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT);
@@ -501,7 +489,6 @@ public class MethodDelegation implements Implementation.Composable {
     public static MethodDelegation toField(String name, FieldLocator.Factory fieldLocatorFactory, MethodGraph.Compiler methodGraphCompiler) {
         return new MethodDelegation(new ImplementationDelegate.ForField(name, fieldLocatorFactory, methodGraphCompiler),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
                 MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 Assigner.DEFAULT);
@@ -516,7 +503,6 @@ public class MethodDelegation implements Implementation.Composable {
     public MethodDelegation appendParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder) {
         return new MethodDelegation(implementationDelegate,
                 CompoundList.of(parameterBinders, parameterBinder),
-                defaultsProvider,
                 terminationHandler,
                 ambiguityResolver,
                 assigner);
@@ -531,22 +517,6 @@ public class MethodDelegation implements Implementation.Composable {
     public MethodDelegation defineParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
         return new MethodDelegation(implementationDelegate,
                 Arrays.asList(parameterBinder),
-                defaultsProvider,
-                terminationHandler,
-                ambiguityResolver,
-                assigner);
-    }
-
-    /**
-     * A provider for annotation instances on values that are not explicitly annotated.
-     *
-     * @param defaultsProvider The defaults provider to use.
-     * @return A method delegation implementation that makes use of the given defaults provider.
-     */
-    public MethodDelegation withDefaultsProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider) {
-        return new MethodDelegation(implementationDelegate,
-                parameterBinders,
-                defaultsProvider,
                 terminationHandler,
                 ambiguityResolver,
                 assigner);
@@ -571,7 +541,6 @@ public class MethodDelegation implements Implementation.Composable {
     public MethodDelegation defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver... ambiguityResolver) {
         return new MethodDelegation(implementationDelegate,
                 parameterBinders,
-                defaultsProvider,
                 terminationHandler,
                 new MethodDelegationBinder.AmbiguityResolver.Chain(ambiguityResolver),
                 assigner);
@@ -586,7 +555,6 @@ public class MethodDelegation implements Implementation.Composable {
     public MethodDelegation withAssigner(Assigner assigner) {
         return new MethodDelegation(implementationDelegate,
                 parameterBinders,
-                defaultsProvider,
                 terminationHandler,
                 ambiguityResolver,
                 assigner);
@@ -601,7 +569,6 @@ public class MethodDelegation implements Implementation.Composable {
     public MethodDelegation filter(ElementMatcher<? super MethodDescription> methodMatcher) {
         return new MethodDelegation(implementationDelegate.filter(methodMatcher),
                 parameterBinders,
-                defaultsProvider,
                 terminationHandler,
                 ambiguityResolver,
                 assigner);
@@ -611,7 +578,6 @@ public class MethodDelegation implements Implementation.Composable {
     public Implementation andThen(Implementation implementation) {
         return new Compound(new MethodDelegation(implementationDelegate,
                 parameterBinders,
-                defaultsProvider,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.DROPPING,
                 ambiguityResolver,
                 assigner), implementation);
@@ -628,9 +594,8 @@ public class MethodDelegation implements Implementation.Composable {
         return new Appender(resolution.getPreparation(),
                 implementationTarget,
                 resolution.getCandidates(),
-                new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
+                new MethodDelegationBinder.Processor(TargetMethodAnnotationDrivenBinder.of(
                         parameterBinders,
-                        defaultsProvider,
                         terminationHandler,
                         assigner,
                         resolution.getMethodInvoker()), ambiguityResolver), resolution.isAllowStaticMethod());
@@ -643,7 +608,6 @@ public class MethodDelegation implements Implementation.Composable {
         MethodDelegation that = (MethodDelegation) other;
         return ambiguityResolver.equals(that.ambiguityResolver)
                 && assigner.equals(that.assigner)
-                && defaultsProvider.equals(that.defaultsProvider)
                 && terminationHandler.equals(that.terminationHandler)
                 && implementationDelegate.equals(that.implementationDelegate)
                 && parameterBinders.equals(that.parameterBinders);
@@ -653,7 +617,6 @@ public class MethodDelegation implements Implementation.Composable {
     public int hashCode() {
         int result = implementationDelegate.hashCode();
         result = 31 * result + parameterBinders.hashCode();
-        result = 31 * result + defaultsProvider.hashCode();
         result = 31 * result + terminationHandler.hashCode();
         result = 31 * result + ambiguityResolver.hashCode();
         result = 31 * result + assigner.hashCode();
@@ -665,7 +628,6 @@ public class MethodDelegation implements Implementation.Composable {
         return "MethodDelegation{" +
                 "implementationDelegate=" + implementationDelegate +
                 ", parameterBinders=" + parameterBinders +
-                ", defaultsProvider=" + defaultsProvider +
                 ", terminationHandler=" + terminationHandler +
                 ", ambiguityResolver=" + ambiguityResolver +
                 ", assigner=" + assigner +

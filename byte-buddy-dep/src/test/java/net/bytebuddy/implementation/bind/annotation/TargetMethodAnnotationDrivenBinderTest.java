@@ -19,13 +19,16 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-import org.mockito.stubbing.OngoingStubbing;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -38,9 +41,6 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @Mock
     private TargetMethodAnnotationDrivenBinder.ParameterBinder<?> firstParameterBinder, secondParameterBinder;
-
-    @Mock
-    private TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider;
 
     @Mock
     private TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler;
@@ -97,25 +97,6 @@ public class TargetMethodAnnotationDrivenBinderTest {
         return parameterBinding;
     }
 
-    @SuppressWarnings({"unchecked", "unused"})
-    private static Iterator<AnnotationDescription> prepareDefaultProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider,
-                                                                          List<? extends AnnotationDescription> defaultIteratorValues) {
-        Iterator<AnnotationDescription> annotationIterator = mock(Iterator.class);
-        when(defaultsProvider.makeIterator(any(Implementation.Target.class), any(MethodDescription.class), any(MethodDescription.class)))
-                .thenReturn((Iterator) annotationIterator);
-        OngoingStubbing<Boolean> iteratorConditionStubbing = when(annotationIterator.hasNext());
-        for (AnnotationDescription defaultIteratorValue : defaultIteratorValues) {
-            iteratorConditionStubbing = iteratorConditionStubbing.thenReturn(true);
-        }
-        iteratorConditionStubbing.thenReturn(false);
-        OngoingStubbing<AnnotationDescription> iteratorValueStubbing = when(annotationIterator.next());
-        for (AnnotationDescription defaultIteratorValue : defaultIteratorValues) {
-            iteratorValueStubbing = iteratorValueStubbing.thenReturn(defaultIteratorValue);
-        }
-        iteratorValueStubbing.thenThrow(NoSuchElementException.class);
-        return annotationIterator;
-    }
-
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
@@ -165,12 +146,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     public void testConflictingBinderBinding() throws Exception {
         doReturn(FirstPseudoAnnotation.class).when(firstParameterBinder).getHandledType();
         doReturn(FirstPseudoAnnotation.class).when(secondParameterBinder).getHandledType();
-        new TargetMethodAnnotationDrivenBinder(
-                Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
-                defaultsProvider,
-                terminationHandler,
-                assigner,
-                methodInvoker);
+        TargetMethodAnnotationDrivenBinder.of(Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder), terminationHandler, assigner, methodInvoker);
     }
 
     @Test
@@ -179,16 +155,14 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(ignoreForBinding.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(IgnoreForBinding.class));
         when(targetMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(Collections.singletonList(ignoreForBinding)));
         when(termination.isValid()).thenReturn(true);
-        MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
+        MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(
                 Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
-                defaultsProvider,
                 terminationHandler,
                 assigner,
                 methodInvoker);
-        assertThat(methodDelegationBinder.bind(implementationTarget, sourceMethod, targetMethod).isValid(), is(false));
+        assertThat(methodDelegationBinder.compile(targetMethod).bind(implementationTarget, sourceMethod).isValid(), is(false));
         verifyZeroInteractions(assigner);
         verifyZeroInteractions(implementationTarget);
-        verifyZeroInteractions(defaultsProvider);
         verifyZeroInteractions(sourceMethod);
     }
 
@@ -198,18 +172,18 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(methodInvocation.isValid()).thenReturn(true);
         when(termination.isValid()).thenReturn(false);
         when(targetMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
+        when(firstParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(secondParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(
                 Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
-                defaultsProvider,
                 terminationHandler,
                 assigner,
                 methodInvoker);
-        assertThat(methodDelegationBinder.bind(implementationTarget, sourceMethod, targetMethod).isValid(), is(false));
+        assertThat(methodDelegationBinder.compile(targetMethod).bind(implementationTarget, sourceMethod).isValid(), is(false));
         verify(terminationHandler).resolve(assigner, sourceMethod, targetMethod);
         verifyNoMoreInteractions(terminationHandler);
         verifyZeroInteractions(assigner);
         verifyZeroInteractions(methodInvoker);
-        verifyZeroInteractions(defaultsProvider);
     }
 
     @Test
@@ -230,19 +204,16 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 SecondPseudoAnnotation.class,
                 new Key(BAR),
                 true);
-        Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider, Collections.<AnnotationDescription>emptyList());
-        MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
+        MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
-                defaultsProvider,
                 terminationHandler,
                 assigner,
                 methodInvoker);
-        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(implementationTarget, sourceMethod, targetMethod);
+        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.compile(targetMethod).bind(implementationTarget, sourceMethod);
         assertThat(methodBinding.isValid(), is(false));
         verify(firstBinding).isValid();
         verify(secondBinding).isValid();
         verify(termination).isValid();
-        verifyZeroInteractions(defaultsIterator);
     }
 
     @Test
@@ -264,15 +235,12 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 SecondPseudoAnnotation.class,
                 new Key(BAR),
                 true);
-        Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider,
-                Arrays.asList(secondPseudoAnnotation, firstPseudoAnnotation));
-        MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
+        MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
-                defaultsProvider,
                 terminationHandler,
                 assigner,
                 methodInvoker);
-        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(implementationTarget, sourceMethod, targetMethod);
+        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.compile(targetMethod).bind(implementationTarget, sourceMethod);
         assertThat(methodBinding.isValid(), is(true));
         assertThat(methodBinding.getTarget(), is(targetMethod));
         assertThat(methodBinding.getTargetParameterIndex(new Key(FOO)), is(1));
@@ -303,63 +271,10 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 implementationTarget,
                 assigner);
         verifyNoMoreInteractions(secondParameterBinder);
-        verify(defaultsIterator, times(2)).hasNext();
-        verify(defaultsIterator, times(2)).next();
-        verifyNoMoreInteractions(defaultsIterator);
         verify(firstBinding, atLeast(1)).isValid();
         verify(firstBinding).getIdentificationToken();
         verify(secondBinding, atLeast(1)).isValid();
         verify(secondBinding).getIdentificationToken();
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testInsufficientDefaults() throws Exception {
-        when(assignmentBinding.isValid()).thenReturn(true);
-        when(methodInvocation.isValid()).thenReturn(true);
-        when(termination.isValid()).thenReturn(true);
-        when(targetMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        when(firstParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        when(secondParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        MethodDelegationBinder.ParameterBinding<?> firstBinding = prepareArgumentBinder(
-                firstParameterBinder,
-                FirstPseudoAnnotation.class,
-                new Key(FOO),
-                true);
-        MethodDelegationBinder.ParameterBinding<?> secondBinding = prepareArgumentBinder(
-                secondParameterBinder,
-                SecondPseudoAnnotation.class,
-                new Key(BAR),
-                true);
-        Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider,
-                Collections.singletonList(firstPseudoAnnotation));
-        MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
-                Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
-                defaultsProvider,
-                terminationHandler,
-                assigner,
-                methodInvoker);
-        assertThat(methodDelegationBinder.bind(implementationTarget, sourceMethod, targetMethod).isValid(), is(false));
-        verify(firstParameterBinder, atLeast(1)).getHandledType();
-        verify((TargetMethodAnnotationDrivenBinder.ParameterBinder) firstParameterBinder).bind(firstPseudoAnnotation,
-                sourceMethod,
-                firstParameter,
-                implementationTarget,
-                assigner);
-        verifyNoMoreInteractions(firstParameterBinder);
-        verify(secondParameterBinder, atLeast(1)).getHandledType();
-        verifyNoMoreInteractions(secondParameterBinder);
-        verify(defaultsIterator, times(2)).hasNext();
-        verify(defaultsIterator, times(1)).next();
-        verifyNoMoreInteractions(defaultsIterator);
-        verifyZeroInteractions(assigner);
-        verify(terminationHandler).resolve(assigner, sourceMethod, targetMethod);
-        verifyNoMoreInteractions(terminationHandler);
-        verifyZeroInteractions(methodInvoker);
-        verify(firstBinding, atLeast(1)).isValid();
-        verify(firstBinding).getIdentificationToken();
-        verifyNoMoreInteractions(firstBinding);
-        verifyZeroInteractions(secondBinding);
     }
 
     @Test
@@ -381,14 +296,12 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 SecondPseudoAnnotation.class,
                 new Key(BAR),
                 true);
-        Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider, Collections.<AnnotationDescription>emptyList());
-        MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
+        MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
-                defaultsProvider,
                 terminationHandler,
                 assigner,
                 methodInvoker);
-        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(implementationTarget, sourceMethod, targetMethod);
+        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.compile(targetMethod).bind(implementationTarget, sourceMethod);
         assertThat(methodBinding.isValid(), is(true));
         assertThat(methodBinding.getTarget(), is(targetMethod));
         assertThat(methodBinding.getTargetParameterIndex(new Key(FOO)), is(1));
@@ -419,7 +332,6 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 implementationTarget,
                 assigner);
         verifyNoMoreInteractions(secondParameterBinder);
-        verifyZeroInteractions(defaultsIterator);
         verify(firstBinding, atLeast(1)).isValid();
         verify(firstBinding).getIdentificationToken();
         verify(secondBinding, atLeast(1)).isValid();
@@ -445,15 +357,12 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 SecondPseudoAnnotation.class,
                 new Key(BAR),
                 true);
-        Iterator<AnnotationDescription> defaultsIterator = prepareDefaultProvider(defaultsProvider,
-                Collections.singletonList(secondPseudoAnnotation));
-        MethodDelegationBinder methodDelegationBinder = new TargetMethodAnnotationDrivenBinder(
+        MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(
                 Arrays.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>asList(firstParameterBinder, secondParameterBinder),
-                defaultsProvider,
                 terminationHandler,
                 assigner,
                 methodInvoker);
-        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.bind(implementationTarget, sourceMethod, targetMethod);
+        MethodDelegationBinder.MethodBinding methodBinding = methodDelegationBinder.compile(targetMethod).bind(implementationTarget, sourceMethod);
         assertThat(methodBinding.isValid(), is(true));
         assertThat(methodBinding.getTarget(), is(targetMethod));
         assertThat(methodBinding.getTargetParameterIndex(new Key(FOO)), is(1));
@@ -484,13 +393,22 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 implementationTarget,
                 assigner);
         verifyNoMoreInteractions(secondParameterBinder);
-        verify(defaultsIterator).hasNext();
-        verify(defaultsIterator).next();
-        verifyNoMoreInteractions(defaultsIterator);
         verify(firstBinding, atLeast(1)).isValid();
         verify(firstBinding).getIdentificationToken();
         verify(secondBinding, atLeast(1)).isValid();
         verify(secondBinding).getIdentificationToken();
+    }
+
+    @Test
+    public void testAnnotation() throws Exception {
+        Argument argument = new TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Unbound.DefaultArgument(0);
+        Argument sample = (Argument) Sample.class.getDeclaredMethod(FOO, Object.class).getParameterAnnotations()[0][0];
+        assertThat(argument.toString(), is(sample.toString()));
+        assertThat(argument.hashCode(), is(sample.hashCode()));
+        assertThat(argument, is(sample));
+        assertThat(argument, is(argument));
+        assertThat(argument, not(equalTo(null)));
+        assertThat(argument, not(new Object()));
     }
 
     @Test
@@ -513,12 +431,16 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 return Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>singletonList(parameterBinder);
             }
         }).apply();
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.class).apply();
-        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DefaultsProvider.Empty.EmptyIterator.class).apply();
+        ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.Compiled.class).apply();
         ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.TerminationHandler.class).apply();
         ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.class).apply();
         ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Bound.class).apply();
         ObjectPropertyAssertion.of(TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Unbound.class).apply();
+    }
+
+    private interface Sample {
+
+        void foo(@Argument(0) Object foo);
     }
 
     private @interface FirstPseudoAnnotation {

@@ -702,7 +702,7 @@ public class ByteBuddyTutorialExamplesTest {
     @SuppressWarnings("unused")
     public static class ChangingLoggerInterceptor {
 
-        public static List<String> log(@Super MemoryDatabase zuper, String info) {
+        public static List<String> log(String info, @Super MemoryDatabase zuper) { // TODO: Update info on implicit arguments
             println("Calling database");
             try {
                 return zuper.load(info + " (logged access)");

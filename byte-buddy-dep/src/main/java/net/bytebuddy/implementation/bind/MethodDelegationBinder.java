@@ -25,18 +25,29 @@ import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
  */
 public interface MethodDelegationBinder {
 
-    /**
-     * Attempts a binding of a source method to a given target method.
-     *
-     * @param implementationTarget The target of the current implementation onto which this binding
-     *                             is to be applied.
-     * @param source               The method that is to be bound to the {@code target} method.
-     * @param target               The method that is to be invoked as a delegate.
-     * @return A binding representing this attempt to bind the {@code source} method to the {@code target} method.
-     */
-    MethodBinding bind(Implementation.Target implementationTarget,
-                       MethodDescription source,
-                       MethodDescription target);
+    Compiled compile(MethodDescription target);
+
+    interface Compiled {
+
+        /**
+         * Attempts a binding of a source method to a given target method.
+         *
+         * @param implementationTarget The target of the current implementation onto which this binding is to be applied.
+         * @param source               The method that is to be bound to the {@code target} method.
+         * @return A binding representing this attempt to bind the {@code source} method to the {@code target} method.
+         */
+        MethodBinding bind(Implementation.Target implementationTarget, MethodDescription source);
+
+        enum Ignored implements Compiled {
+
+            INSTANCE;
+
+            @Override
+            public MethodBinding bind(Implementation.Target implementationTarget, MethodDescription source) {
+                return MethodBinding.Illegal.INSTANCE;
+            }
+        }
+    }
 
     /**
      * Implementations are used as delegates for invoking a method that was bound
@@ -454,16 +465,6 @@ public interface MethodDelegationBinder {
                         terminatingManipulation);
             }
 
-            /**
-             * Returns the current parameter index that will be bound on the next call of
-             * {@link Builder#append(net.bytebuddy.implementation.bind.MethodDelegationBinder.ParameterBinding)}.
-             *
-             * @return The next index to be bound.
-             */
-            public int getNextParameterIndex() {
-                return nextParameterIndex;
-            }
-
             @Override
             public String toString() {
                 return "MethodDelegationBinder.MethodBinding.Builder{" +
@@ -744,6 +745,7 @@ public interface MethodDelegationBinder {
 
             /**
              * Creates a new directional resolver.
+             *
              * @param left {@code true} if this instance should resolve to the left side.
              */
             Directional(boolean left) {
@@ -894,7 +896,7 @@ public interface MethodDelegationBinder {
         private List<MethodBinding> bind(Implementation.Target implementationTarget, MethodDescription source, MethodList<?> targetCandidates) {
             List<MethodBinding> possibleDelegations = new ArrayList<MethodBinding>();
             for (MethodDescription targetCandidate : targetCandidates.filter(isVisibleTo(implementationTarget.getInstrumentedType()))) {
-                MethodBinding methodBinding = methodDelegationBinder.bind(implementationTarget, source, targetCandidate);
+                MethodBinding methodBinding = methodDelegationBinder.compile(targetCandidate).bind(implementationTarget, source);
                 if (methodBinding.isValid()) {
                     possibleDelegations.add(methodBinding);
                 }

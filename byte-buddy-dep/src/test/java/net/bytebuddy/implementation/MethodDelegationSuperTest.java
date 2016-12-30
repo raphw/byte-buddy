@@ -196,7 +196,7 @@ public class MethodDelegationSuperTest {
 
     public static class GenericBaz {
 
-        public static String baz(@Super GenericBase<String> foo, String value) {
+        public static String baz(String value, @Super GenericBase<String> foo) {
             assertThat(foo, not(instanceOf(Serializable.class)));
             return foo.qux(value) + QUX;
         }

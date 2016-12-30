@@ -135,21 +135,9 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
     }
 
     @Test
-    public void testDefaultArgument() throws Exception {
-        Argument argument = new Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator.DefaultArgument(0);
-        Argument loadedArgument = (Argument) Carrier.class.getDeclaredMethod("method", Void.class).getParameterAnnotations()[0][0];
-        assertThat(argument, is(loadedArgument));
-        assertThat(argument.hashCode(), is(loadedArgument.hashCode()));
-        assertThat(argument.toString(), is(loadedArgument.toString()));
-    }
-
-    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Argument.Binder.class).apply();
         ObjectPropertyAssertion.of(Argument.BindingMechanic.class).apply();
-        ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.class).apply();
-        ObjectPropertyAssertion.of(Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator.class).applyBasic();
-
     }
 
     @SuppressWarnings("unused")

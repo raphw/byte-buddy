@@ -12,8 +12,10 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 
 import java.lang.annotation.*;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Parameters that are annotated with this annotation will be assigned the value of the parameter of the source method
@@ -170,165 +172,6 @@ public @interface Argument {
         @Override
         public String toString() {
             return "Argument.Binder." + name();
-        }
-    }
-
-    /**
-     * If this defaults provider is active, a non-annotated parameter is assumed to be implicitly bound to the next
-     * source method parameter that is not bound by any other target method parameter, i.e. a target method
-     * {@code bar(Object, String)} would be equivalent to a {@code bar(@Argument(0) Object, @Argument(1) String)}.
-     *
-     * @see TargetMethodAnnotationDrivenBinder.DefaultsProvider
-     */
-    enum NextUnboundAsDefaultsProvider implements TargetMethodAnnotationDrivenBinder.DefaultsProvider {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        /**
-         * Creates a list of all parameter indices of a source method that are not explicitly referenced
-         * by any {@link net.bytebuddy.implementation.bind.annotation.Argument} annotation on
-         * the target method.
-         *
-         * @param source The source method.
-         * @param target The target method.
-         * @return An iterator over all parameter indices of the source method that are not explicitly referenced
-         * by the target method in increasing order.
-         */
-        private static Iterator<Integer> makeFreeIndexList(MethodDescription source, MethodDescription target) {
-            LinkedHashSet<Integer> results = new LinkedHashSet<Integer>(source.getParameters().size());
-            for (int sourceIndex = 0; sourceIndex < source.getParameters().size(); sourceIndex++) {
-                results.add(sourceIndex);
-            }
-            for (ParameterDescription parameterDescription : target.getParameters()) {
-                AnnotationDescription.Loadable<Argument> annotation = parameterDescription.getDeclaredAnnotations().ofType(Argument.class);
-                if (annotation != null) {
-                    results.remove(annotation.loadSilent().value());
-                }
-            }
-            return results.iterator();
-        }
-
-        @Override
-        public Iterator<AnnotationDescription> makeIterator(Implementation.Target implementationTarget,
-                                                            MethodDescription source,
-                                                            MethodDescription target) {
-            return new NextUnboundArgumentIterator(makeFreeIndexList(source, target));
-        }
-
-        @Override
-        public String toString() {
-            return "Argument.NextUnboundAsDefaultsProvider." + name();
-        }
-
-        /**
-         * An iterator that creates {@link net.bytebuddy.implementation.bind.annotation.Argument}
-         * annotations for any non-referenced index of the source method.
-         */
-        protected static class NextUnboundArgumentIterator implements Iterator<AnnotationDescription> {
-
-            /**
-             * An iterator over all free indices.
-             */
-            private final Iterator<Integer> iterator;
-
-            /**
-             * Creates a new iterator for {@link net.bytebuddy.implementation.bind.annotation.Argument}
-             * annotations of non-referenced parameter indices of the source method.
-             *
-             * @param iterator An iterator of free indices of the source method.
-             */
-            protected NextUnboundArgumentIterator(Iterator<Integer> iterator) {
-                this.iterator = iterator;
-            }
-
-            @Override
-            public boolean hasNext() {
-                return iterator.hasNext();
-            }
-
-            @Override
-            public AnnotationDescription next() {
-                return AnnotationDescription.ForLoadedAnnotation.of(new DefaultArgument(iterator.next()));
-            }
-
-            @Override
-            public void remove() {
-                iterator.remove();
-            }
-
-            @Override
-            public String toString() {
-                return "Argument.NextUnboundAsDefaultsProvider.NextUnboundArgumentIterator{" +
-                        "iterator=" + iterator +
-                        '}';
-            }
-
-            /**
-             * A default implementation of an {@link net.bytebuddy.implementation.bind.annotation.Argument}
-             * annotation.
-             */
-            protected static class DefaultArgument implements Argument {
-
-                /**
-                 * The name of the value annotation parameter.
-                 */
-                private static final String VALUE = "value";
-
-                /**
-                 * The name of the value binding mechanic parameter.
-                 */
-                private static final String BINDING_MECHANIC = "bindingMechanic";
-
-                /**
-                 * The index of the source method parameter to be bound.
-                 */
-                private final int parameterIndex;
-
-                /**
-                 * Creates a new instance of an argument annotation.
-                 *
-                 * @param parameterIndex The index of the source method parameter to be bound.
-                 */
-                protected DefaultArgument(int parameterIndex) {
-                    this.parameterIndex = parameterIndex;
-                }
-
-                @Override
-                public int value() {
-                    return parameterIndex;
-                }
-
-                @Override
-                public BindingMechanic bindingMechanic() {
-                    return BindingMechanic.UNIQUE;
-                }
-
-                @Override
-                public Class<Argument> annotationType() {
-                    return Argument.class;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || other instanceof Argument && parameterIndex == ((Argument) other).value();
-                }
-
-                @Override
-                public int hashCode() {
-                    return ((127 * BINDING_MECHANIC.hashCode()) ^ BindingMechanic.UNIQUE.hashCode())
-                            + ((127 * VALUE.hashCode()) ^ parameterIndex);
-                }
-
-                @Override
-                public String toString() {
-                    return "@" + Argument.class.getName()
-                            + "(bindingMechanic=" + BindingMechanic.UNIQUE.toString()
-                            + ", value=" + parameterIndex + ")";
-                }
-            }
         }
     }
 }
