@@ -43,19 +43,23 @@ public class TestActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         TextView mavenInfo = (TextView) findViewById(R.id.maven_info);
-        String version = null;
-        InputStream inputStream = TestActivity.class.getResourceAsStream("/maven.properties");
-        if (inputStream != null) {
-            Properties properties = new Properties();
-            try {
-                properties.load(inputStream);
-                version = properties.getProperty("info.version");
-            } catch (IOException exception) {
-                Log.w(BYTE_BUDDY_TAG, "Could not load maven.properties", exception);
-                Toast.makeText(TestActivity.this, "Failure: Could not read version property. (" + exception.getMessage() + ")", Toast.LENGTH_SHORT).show();
+        String version = "n/a";
+        try {
+            InputStream inputStream = TestActivity.class.getClassLoader().getResourceAsStream("maven.properties");
+            if (inputStream != null) {
+                try {
+                    Properties properties = new Properties();
+                    properties.load(inputStream);
+                    version = properties.getProperty("version", version);
+                } finally {
+                    inputStream.close();
+                }
             }
+        } catch (Exception exception) {
+            Log.i(BYTE_BUDDY_TAG, "Could not read version", exception);
+            Toast.makeText(TestActivity.this, "Warning: Could not read version property. (" + exception.getMessage() + ")", Toast.LENGTH_SHORT).show();
         }
-        mavenInfo.setText(getResources().getString(R.string.version_info, version == null ? "(n/a)" : version));
+        mavenInfo.setText(getResources().getString(R.string.version_info, version));
         Button runTest = (Button) findViewById(R.id.run_test);
         runTest.setOnClickListener(new View.OnClickListener() {
             @Override

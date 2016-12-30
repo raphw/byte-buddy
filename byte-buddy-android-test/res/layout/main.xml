@@ -10,7 +10,7 @@
             android:text="@string/info"/>
     <TextView
             android:id="@+id/maven_info"
-            android:layout_margin_top="5pt"
+            android:layout_marginTop="5pt"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"/>
     <Button

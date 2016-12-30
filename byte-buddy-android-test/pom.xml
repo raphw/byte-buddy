@@ -19,9 +19,7 @@
 
     <properties>
         <version.maven.android>3.8.2</version.maven.android>
-        <version.maven.properties>1.0.0</version.maven.properties>
         <version.android.sdk.platform>4</version.android.sdk.platform>
-        <info.version>${project.version}</info.version>
     </properties>
 
     <!--
@@ -42,11 +40,17 @@
         <dependency>
             <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
-            <scope>provided</scope>
+            <scope>provided</scope>1
         </dependency>
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <!-- Build Android application from Maven. -->
             <plugin>
@@ -63,23 +67,6 @@
                     </sdk>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
                 </configuration>
-            </plugin>
-            <!-- Make properties available from test project to allow for some diagnostics. -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>properties-maven-plugin</artifactId>
-                <version>${version.plugin.properties}</version>
-                <executions>
-                    <execution>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>write-project-properties</goal>
-                        </goals>
-                        <configuration>
-                            <outputFile>${project.build.outputDirectory}/maven.properties</outputFile>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <!-- This artifact should not be deployed. -->
             <plugin>
@@ -98,6 +85,18 @@
                 <configuration>
                     <skip>true</skip>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.5</version>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>resources</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
