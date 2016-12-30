@@ -348,6 +348,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             }
 
             @Override
+            @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicitly user responsibility")
             public SynchronizationStrategy initialize() {
                 try {
                     method.setAccessible(true);
