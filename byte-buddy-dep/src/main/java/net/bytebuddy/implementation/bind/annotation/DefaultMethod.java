@@ -154,19 +154,7 @@ public @interface DefaultMethod {
 
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
-                    Implementation.SpecialMethodInvocation result = Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
-                    for (TypeDescription typeDescription : implementationTarget.getInstrumentedType().getInterfaces().asErasures()) {
-                        if (source.isSpecializableFor(typeDescription)) {
-                            Implementation.SpecialMethodInvocation invocation = implementationTarget.invokeDefault(typeDescription, source.asSignatureToken());
-                            if (invocation.isValid()) {
-                                if (result.isValid()) {
-                                    return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
-                                }
-                                result = invocation;
-                            }
-                        }
-                    }
-                    return result;
+                    return implementationTarget.invokeDefault(source.asSignatureToken());
                 }
 
                 @Override
@@ -199,7 +187,7 @@ public @interface DefaultMethod {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
-                    return implementationTarget.invokeDefault(TargetType.resolve(typeDescription, implementationTarget.getInstrumentedType()), source.asSignatureToken());
+                    return implementationTarget.invokeDefault(source.asSignatureToken(), TargetType.resolve(typeDescription, implementationTarget.getInstrumentedType()));
                 }
 
                 @Override

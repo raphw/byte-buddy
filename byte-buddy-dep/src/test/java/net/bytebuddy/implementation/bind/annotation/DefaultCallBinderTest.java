@@ -42,7 +42,8 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         super.setUp();
         when(target.getType()).thenReturn(genericTargetParameterType);
         when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType);
-        when(implementationTarget.invokeDefault(any(TypeDescription.class), eq(token))).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDefault(token)).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDefault(eq(token), any(TypeDescription.class))).thenReturn(specialMethodInvocation);
         when(firstGenericInterface.asErasure()).thenReturn(firstInterface);
         when(secondGenericInterface.asErasure()).thenReturn(secondInterface);
         when(firstInterface.asGenericType()).thenReturn(firstGenericInterface);
@@ -60,30 +61,10 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(specialMethodInvocation.isValid()).thenReturn(true, false);
         doReturn(VOID_TYPE).when(annotation).targetType();
         when(source.asSignatureToken()).thenReturn(token);
-        when(source.isSpecializableFor(firstInterface)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(firstInterface, secondInterface));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(implementationTarget).getInstrumentedType();
-        verify(implementationTarget).invokeDefault(firstInterface, token);
-        verifyNoMoreInteractions(implementationTarget);
-    }
-
-    @Test
-    public void testImplicitLookupIsAmbiguous() throws Exception {
-        when(targetParameterType.represents(any(Class.class))).thenReturn(true);
-        when(specialMethodInvocation.isValid()).thenReturn(true, false);
-        doReturn(VOID_TYPE).when(annotation).targetType();
-        when(source.asSignatureToken()).thenReturn(token);
-        when(source.isSpecializableFor(firstInterface)).thenReturn(true);
-        when(source.isSpecializableFor(secondInterface)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(firstInterface, secondInterface));
-        MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
-        assertThat(parameterBinding.isValid(), is(false));
-        verify(implementationTarget).getInstrumentedType();
-        verify(implementationTarget).invokeDefault(firstInterface, token);
+        verify(implementationTarget).invokeDefault(token);
         verifyNoMoreInteractions(implementationTarget);
     }
 
@@ -100,8 +81,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(implementationTarget).getInstrumentedType();
-        verify(implementationTarget).invokeDefault(firstInterface, token);
+        verify(implementationTarget).invokeDefault(token);
         verifyNoMoreInteractions(implementationTarget);
     }
 
@@ -114,7 +94,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(implementationTarget).invokeDefault(new TypeDescription.ForLoadedType(INTERFACE_TYPE), token);
+        verify(implementationTarget).invokeDefault(token, new TypeDescription.ForLoadedType(INTERFACE_TYPE));
         verifyNoMoreInteractions(implementationTarget);
     }
 

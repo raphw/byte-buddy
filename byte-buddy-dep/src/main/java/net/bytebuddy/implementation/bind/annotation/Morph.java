@@ -253,18 +253,7 @@ public @interface Morph {
 
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
-                    Implementation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : implementationTarget.getInstrumentedType().getInterfaces().asErasures()) {
-                        if (source.isSpecializableFor(candidate)) {
-                            if (specialMethodInvocation != null) {
-                                return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
-                            }
-                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asSignatureToken());
-                        }
-                    }
-                    return specialMethodInvocation != null
-                            ? specialMethodInvocation
-                            : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
+                    return implementationTarget.invokeDefault(source.asSignatureToken());
                 }
 
                 @Override
@@ -294,12 +283,11 @@ public @interface Morph {
                 }
 
                 @Override
-                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
-                                                                      MethodDescription source) {
+                public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
-                    return implementationTarget.invokeDefault(typeDescription, source.asSignatureToken());
+                    return implementationTarget.invokeDefault(source.asSignatureToken(), typeDescription);
                 }
 
                 @Override

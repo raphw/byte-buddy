@@ -263,10 +263,18 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * Creates a special method invocation for invoking the super method of the given method.
          *
          * @param token A token of the method that is to be invoked as a super method.
-         * @return The corresponding special method invocation which might be illegal if the requested invocation is
-         * not legal.
+         * @return The corresponding special method invocation which might be illegal if the requested invocation is not legal.
          */
         SpecialMethodInvocation invokeSuper(MethodDescription.SignatureToken token);
+
+        /**
+         * Creates a special method invocation for invoking a default method with the given token. The default method call must
+         * not be ambiguous or an illegal special method invocation is returned.
+         *
+         * @param token A token of the method that is to be invoked as a default method.
+         * @return The corresponding default method invocation which might be illegal if the requested invocation is not legal or ambiguous.
+         */
+        SpecialMethodInvocation invokeDefault(MethodDescription.SignatureToken token);
 
         /**
          * Creates a special method invocation for invoking a default method.
@@ -276,7 +284,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * @return The corresponding special method invocation which might be illegal if the requested invocation is
          * not legal.
          */
-        SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.SignatureToken token);
+        SpecialMethodInvocation invokeDefault(MethodDescription.SignatureToken token, TypeDescription targetType);
 
         /**
          * Invokes a dominant method, i.e. if the method token can be invoked as a super method invocation, this invocation is considered dominant.
@@ -343,25 +351,32 @@ public interface Implementation extends InstrumentedType.Prepareable {
             }
 
             @Override
-            public SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.SignatureToken token) {
+            public SpecialMethodInvocation invokeDefault(MethodDescription.SignatureToken token) {
+                SpecialMethodInvocation specialMethodInvocation = SpecialMethodInvocation.Illegal.INSTANCE;
+                for (TypeDescription interfaceType : instrumentedType.getInterfaces().asErasures()) {
+                    SpecialMethodInvocation invocation = invokeDefault(token, interfaceType);
+                    if (invocation.isValid()) {
+                        if (specialMethodInvocation.isValid()) {
+                            return SpecialMethodInvocation.Illegal.INSTANCE;
+                        } else {
+                            specialMethodInvocation = invocation;
+                        }
+                    }
+                }
+                return specialMethodInvocation;
+            }
+
+            @Override
+            public SpecialMethodInvocation invokeDefault(MethodDescription.SignatureToken token, TypeDescription targetType) {
                 return defaultMethodInvocation.apply(methodGraph.getInterfaceGraph(targetType).locate(token), targetType);
             }
 
             @Override
             public SpecialMethodInvocation invokeDominant(MethodDescription.SignatureToken token) {
                 SpecialMethodInvocation specialMethodInvocation = invokeSuper(token);
-                if (!specialMethodInvocation.isValid()) {
-                    Iterator<TypeDescription> iterator = instrumentedType.getInterfaces().asErasures().iterator();
-                    while (!specialMethodInvocation.isValid() && iterator.hasNext()) {
-                        specialMethodInvocation = invokeDefault(iterator.next(), token);
-                    }
-                    while (iterator.hasNext()) {
-                        if (invokeDefault(iterator.next(), token).isValid()) {
-                            return SpecialMethodInvocation.Illegal.INSTANCE;
-                        }
-                    }
-                }
-                return specialMethodInvocation;
+                return specialMethodInvocation.isValid()
+                        ? specialMethodInvocation
+                        : invokeDefault(token);
             }
 
             @Override
@@ -674,7 +689,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
          * A default implementation of an {@link Implementation.Context.ExtractableView}
          * which serves as its own {@link MethodAccessorFactory}.
          */
-        class Default extends ExtractableView.AbstractBase implements MethodAccessorFactory {
+        class Default extends ExtractableView.AbstractBase {
 
             /**
              * The name suffix to be appended to an accessor method.

@@ -2785,7 +2785,7 @@ public class MethodCall implements Implementation.Composable {
                 if (!invokedMethod.isInvokableOn(implementationTarget.getInstrumentedType())) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " as default method of " + implementationTarget.getInstrumentedType());
                 }
-                StackManipulation stackManipulation = implementationTarget.invokeDefault(invokedMethod.getDeclaringType().asErasure(), invokedMethod.asSignatureToken());
+                StackManipulation stackManipulation = implementationTarget.invokeDefault(invokedMethod.asSignatureToken(), invokedMethod.getDeclaringType().asErasure());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + implementationTarget.getInstrumentedType());
                 }

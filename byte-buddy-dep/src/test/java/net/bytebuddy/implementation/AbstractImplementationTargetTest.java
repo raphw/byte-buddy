@@ -86,7 +86,7 @@ public abstract class AbstractImplementationTargetTest {
 
     @Test
     public void testDefaultMethodInvocation() throws Exception {
-        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeDefault(defaultMethodDeclaringType, defaultToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeDefault(defaultToken, defaultMethodDeclaringType);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) defaultMethod));
         assertThat(specialMethodInvocation.getTypeDescription(), is(defaultMethodDeclaringType));
@@ -103,13 +103,13 @@ public abstract class AbstractImplementationTargetTest {
     @Test
     public void testDefaultMethodInvocationNotSupported() throws Exception {
         defaultMethodInvocation = Implementation.Target.AbstractBase.DefaultMethodInvocation.DISABLED;
-        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeDefault(defaultMethodDeclaringType, defaultToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = makeImplementationTarget().invokeDefault(defaultToken, defaultMethodDeclaringType);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 
     @Test
     public void testIllegalDefaultMethod() throws Exception {
-        assertThat(makeImplementationTarget().invokeDefault(defaultMethodDeclaringType, mock(MethodDescription.SignatureToken.class)).isValid(), is(false));
+        assertThat(makeImplementationTarget().invokeDefault(mock(MethodDescription.SignatureToken.class), defaultMethodDeclaringType).isValid(), is(false));
     }
 
     @Test

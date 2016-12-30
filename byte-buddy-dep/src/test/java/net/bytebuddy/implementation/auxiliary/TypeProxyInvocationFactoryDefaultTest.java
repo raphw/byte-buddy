@@ -50,10 +50,10 @@ public class TypeProxyInvocationFactoryDefaultTest {
 
     @Test
     public void testDefaultMethod() throws Exception {
-        when(implementationTarget.invokeDefault(typeDescription, token)).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDefault(token, typeDescription)).thenReturn(specialMethodInvocation);
         assertThat(TypeProxy.InvocationFactory.Default.DEFAULT_METHOD.invoke(implementationTarget, typeDescription, methodDescription),
                 is(specialMethodInvocation));
-        verify(implementationTarget).invokeDefault(typeDescription, token);
+        verify(implementationTarget).invokeDefault(token, typeDescription);
         verifyNoMoreInteractions(implementationTarget);
     }
 }

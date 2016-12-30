@@ -226,13 +226,13 @@ public class DefaultMethodCall implements Implementation {
             MethodDescription.SignatureToken methodToken = methodDescription.asSignatureToken();
             SpecialMethodInvocation specialMethodInvocation = SpecialMethodInvocation.Illegal.INSTANCE;
             for (TypeDescription typeDescription : prioritizedInterfaces) {
-                specialMethodInvocation = implementationTarget.invokeDefault(typeDescription, methodToken);
+                specialMethodInvocation = implementationTarget.invokeDefault(methodToken, typeDescription);
                 if (specialMethodInvocation.isValid()) {
                     return specialMethodInvocation;
                 }
             }
             for (TypeDescription typeDescription : nonPrioritizedInterfaces) {
-                SpecialMethodInvocation other = implementationTarget.invokeDefault(typeDescription, methodToken);
+                SpecialMethodInvocation other = implementationTarget.invokeDefault(methodToken, typeDescription);
                 if (specialMethodInvocation.isValid() && other.isValid()) {
                     throw new IllegalStateException(methodDescription + " has an ambiguous default method with "
                             + other.getMethodDescription() + " and " + specialMethodInvocation.getMethodDescription());

@@ -395,7 +395,7 @@ public class TypeProxy implements AuxiliaryType {
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
-                    return implementationTarget.invokeDefault(proxiedType, instrumentedMethod.asSignatureToken());
+                    return implementationTarget.invokeDefault(instrumentedMethod.asSignatureToken(), proxiedType);
                 }
             };
 

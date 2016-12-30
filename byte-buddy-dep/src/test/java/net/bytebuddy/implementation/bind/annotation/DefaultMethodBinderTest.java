@@ -1,6 +1,5 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -62,25 +61,11 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
     public void testBind() throws Exception {
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(true);
-        when(implementationTarget.invokeDefault(interfaceType, token)).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDefault(token)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(annotation.targetType()).thenReturn((Class) void.class);
-        when(source.isSpecializableFor(interfaceType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(binding.isValid(), is(true));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testBindNonSpecializable() throws Exception {
-        when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
-        when(source.isMethod()).thenReturn(true);
-        when(implementationTarget.invokeDefault(interfaceType, token)).thenReturn(specialMethodInvocation);
-        when(specialMethodInvocation.isValid()).thenReturn(true);
-        when(annotation.targetType()).thenReturn((Class) void.class);
-        when(source.isSpecializableFor(interfaceType)).thenReturn(false);
-        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
-        assertThat(binding.isValid(), is(false));
     }
 
     @Test
@@ -89,21 +74,8 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(true);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
+        when(implementationTarget.invokeDefault(token)).thenReturn(specialMethodInvocation);
         when(annotation.targetType()).thenReturn((Class) void.class);
-        when(source.isSpecializableFor(interfaceType)).thenReturn(false);
-        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
-        assertThat(binding.isValid(), is(false));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testBindAmbiguous() throws Exception {
-        when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
-        when(source.isMethod()).thenReturn(true);
-        when(implementationTarget.invokeDefault(interfaceType, token)).thenReturn(specialMethodInvocation);
-        when(specialMethodInvocation.isValid()).thenReturn(true);
-        when(annotation.targetType()).thenReturn((Class) void.class);
-        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(genericInterfaceType, genericInterfaceType));
         MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(binding.isValid(), is(false));
     }
@@ -113,7 +85,7 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
     public void testBindExplicit() throws Exception {
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(true);
-        when(implementationTarget.invokeDefault(new TypeDescription.ForLoadedType(Runnable.class), token)).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDefault(token, new TypeDescription.ForLoadedType(Runnable.class))).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(annotation.targetType()).thenReturn((Class) Runnable.class);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(genericInterfaceType, genericInterfaceType));
@@ -136,7 +108,7 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(true);
         when(annotation.nullIfImpossible()).thenReturn(true);
-        when(implementationTarget.invokeDefault(interfaceType, token)).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDefault(token)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(false);
         when(annotation.targetType()).thenReturn((Class) void.class);
         MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
