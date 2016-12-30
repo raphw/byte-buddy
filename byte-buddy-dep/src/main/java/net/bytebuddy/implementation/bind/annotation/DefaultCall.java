@@ -77,20 +77,20 @@ public @interface DefaultCall {
         /**
          * A reference to the target type method of the default call annotation.
          */
-        private static final MethodDescription.InDefinedShape TARGET_TYPE;
+        private final MethodDescription.InDefinedShape targetType;
 
         /**
          * A reference to the serializable proxy method of the default call annotation.
          */
-        private static final MethodDescription.InDefinedShape SERIALIZABLE_PROXY;
+        private final MethodDescription.InDefinedShape serializableProxy;
 
-        /*
-         * Finds references to the methods of the default call annotation.
-         */
-        static {
+        private final MethodDescription.InDefinedShape nullIfImpossible;
+
+        Binder() {
             MethodList<MethodDescription.InDefinedShape> annotationProperties = new TypeDescription.ForLoadedType(DefaultCall.class).getDeclaredMethods();
-            TARGET_TYPE = annotationProperties.filter(named("targetType")).getOnly();
-            SERIALIZABLE_PROXY = annotationProperties.filter(named("serializableProxy")).getOnly();
+            targetType= annotationProperties.filter(named("targetType")).getOnly();
+            serializableProxy = annotationProperties.filter(named("serializableProxy")).getOnly();
+            nullIfImpossible = annotationProperties.filter(named("nullIfImpossible")).getOnly();
         }
 
         @Override
@@ -108,17 +108,17 @@ public @interface DefaultCall {
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A default method call proxy can only be assigned to Runnable or Callable types: " + target);
             } else if (source.isConstructor()) {
-                return annotation.loadSilent().nullIfImpossible()
+                return annotation.getValue(nullIfImpossible).resolve(Boolean.class)
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(NullConstant.INSTANCE)
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            TypeDescription typeDescription = annotation.getValue(TARGET_TYPE).resolve(TypeDescription.class);
+            TypeDescription typeDescription = annotation.getValue(this.targetType).resolve(TypeDescription.class);
             Implementation.SpecialMethodInvocation specialMethodInvocation = (typeDescription.represents(void.class)
                     ? DefaultMethodLocator.Implicit.INSTANCE
                     : new DefaultMethodLocator.Explicit(typeDescription)).resolve(implementationTarget, source);
             StackManipulation stackManipulation;
             if (specialMethodInvocation.isValid()) {
-                stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.getValue(SERIALIZABLE_PROXY).resolve(Boolean.class));
+                stackManipulation = new MethodCallProxy.AssignableSignatureCall(specialMethodInvocation, annotation.getValue(serializableProxy).resolve(Boolean.class));
             } else if (annotation.loadSilent().nullIfImpossible()) {
                 stackManipulation = NullConstant.INSTANCE;
             } else {
@@ -162,18 +162,16 @@ public @interface DefaultCall {
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
                                                                       MethodDescription source) {
-                    Implementation.SpecialMethodInvocation specialMethodInvocation = null;
+                    Implementation.SpecialMethodInvocation specialMethodInvocation = Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
                     for (TypeDescription candidate : implementationTarget.getInstrumentedType().getInterfaces().asErasures()) {
                         if (source.isSpecializableFor(candidate)) {
-                            if (specialMethodInvocation != null) {
+                            if (specialMethodInvocation.isValid()) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
                             }
                             specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asSignatureToken());
                         }
                     }
-                    return specialMethodInvocation != null
-                            ? specialMethodInvocation
-                            : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
+                    return specialMethodInvocation;
                 }
 
                 @Override

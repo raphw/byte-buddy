@@ -444,7 +444,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
      * sensitive as calling a {@link org.objectweb.asm.MethodVisitor}. As such, an implementation context and a
      * {@link org.objectweb.asm.MethodVisitor} are complementary for creating an new Java type.
      */
-    interface Context {
+    interface Context extends MethodAccessorFactory {
 
         /**
          * Registers an auxiliary type as required for the current implementation. Registering a type will cause the
@@ -599,6 +599,21 @@ public interface Implementation extends InstrumentedType.Prepareable {
             @Override
             public TypeDescription register(AuxiliaryType auxiliaryType) {
                 throw new IllegalStateException("Registration of auxiliary types was disabled: " + auxiliaryType);
+            }
+
+            @Override
+            public MethodDescription.InDefinedShape registerAccessorFor(SpecialMethodInvocation specialMethodInvocation, AccessType accessType) {
+                throw new IllegalStateException("Registration of method accessors was disabled: " + specialMethodInvocation.getMethodDescription());
+            }
+
+            @Override
+            public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription, AccessType accessType) {
+                throw new IllegalStateException("Registration of field accessor was disabled: " + fieldDescription);
+            }
+
+            @Override
+            public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType) {
+                throw new IllegalStateException("Registration of field accessor was disabled: " + fieldDescription); // TODO: Test!
             }
 
             @Override
@@ -1288,6 +1303,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
                 /**
                  * Returns this delegation record with the minimal visibility represented by the supplied access type.
+                 *
                  * @param accessType The access type to enforce.
                  * @return A new version of this delegation record with the minimal implied visibility.
                  */

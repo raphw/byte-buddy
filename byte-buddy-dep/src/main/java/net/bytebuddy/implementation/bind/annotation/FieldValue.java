@@ -67,7 +67,7 @@ public @interface FieldValue {
         /**
          * The annotation method that for the defining type.
          */
-        private static final MethodDescription.InDefinedShape DEFINING_TYPE;
+        private static final MethodDescription.InDefinedShape DECLARING_TYPE;
 
         /**
          * The annotation method for the field's name.
@@ -79,7 +79,7 @@ public @interface FieldValue {
          */
         static {
             MethodList<MethodDescription.InDefinedShape> methodList = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
-            DEFINING_TYPE = methodList.filter(named("declaringType")).getOnly();
+            DECLARING_TYPE = methodList.filter(named("declaringType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
         }
 
@@ -152,7 +152,7 @@ public @interface FieldValue {
 
             @Override
             protected TypeDescription declaringType(AnnotationDescription.Loadable<FieldValue> annotation) {
-                return annotation.getValue(DEFINING_TYPE).resolve(TypeDescription.class);
+                return annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
             }
 
             @Override

@@ -3,8 +3,10 @@ package net.bytebuddy.test.utility;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.MethodAccessorFactory;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.pool.TypePool;
@@ -80,6 +82,21 @@ public class ClassFileExtraction {
 
         @Override
         public ClassFileVersion getClassFileVersion() {
+            throw new AssertionError("Did not expect method call");
+        }
+
+        @Override
+        public MethodDescription.InDefinedShape registerAccessorFor(Implementation.SpecialMethodInvocation specialMethodInvocation, AccessType accessType) {
+            throw new AssertionError("Did not expect method call");
+        }
+
+        @Override
+        public MethodDescription.InDefinedShape registerGetterFor(FieldDescription fieldDescription, AccessType accessType) {
+            throw new AssertionError("Did not expect method call");
+        }
+
+        @Override
+        public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType) {
             throw new AssertionError("Did not expect method call");
         }
     }

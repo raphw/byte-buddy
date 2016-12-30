@@ -81,7 +81,7 @@ public @interface FieldProxy {
         /**
          * A reference to the method that declares the field annotation's defining type property.
          */
-        private static final MethodDescription.InDefinedShape DEFINING_TYPE;
+        private static final MethodDescription.InDefinedShape DECLARING_TYPE;
 
         /**
          * A reference to the method that declares the field annotation's field name property.
@@ -98,7 +98,7 @@ public @interface FieldProxy {
          */
         static {
             MethodList<MethodDescription.InDefinedShape> methodList = new TypeDescription.ForLoadedType(FieldProxy.class).getDeclaredMethods();
-            DEFINING_TYPE = methodList.filter(named("declaringType")).getOnly();
+            DECLARING_TYPE = methodList.filter(named("declaringType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
         }
@@ -265,7 +265,7 @@ public @interface FieldProxy {
 
         @Override
         protected TypeDescription declaringType(AnnotationDescription.Loadable<FieldProxy> annotation) {
-            return annotation.getValue(DEFINING_TYPE).resolve(TypeDescription.class);
+            return annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
         }
 
         @Override

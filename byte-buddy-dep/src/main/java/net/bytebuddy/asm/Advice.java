@@ -3268,9 +3268,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (!declaringType.represents(TargetType.class) && !instrumentedType.isAssignableTo(declaringType)) {
                             throw new IllegalStateException(declaringType + " is no super type of " + instrumentedType);
                         }
-                        return new FieldLocator.ForExactType(declaringType.represents(TargetType.class)
-                                ? instrumentedType
-                                : declaringType);
+                        return new FieldLocator.ForExactType(TargetType.resolve(declaringType, instrumentedType));
                     }
 
                     @Override

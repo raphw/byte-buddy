@@ -159,6 +159,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 Default.Binder.INSTANCE,
                 SuperCall.Binder.INSTANCE,
                 DefaultCall.Binder.INSTANCE,
+                SuperMethod.Binder.INSTANCE,
+                DefaultMethod.Binder.INSTANCE,
                 FieldValue.Binder.INSTANCE,
                 StubValue.Binder.INSTANCE,
                 Empty.Binder.INSTANCE));
