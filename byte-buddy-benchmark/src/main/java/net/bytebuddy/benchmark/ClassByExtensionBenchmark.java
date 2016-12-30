@@ -7,6 +7,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.benchmark.specimen.ExampleClass;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bind.annotation.*;
@@ -66,6 +67,25 @@ public class ClassByExtensionBenchmark {
     }
 
     /**
+     * An implementation to be used by {@link ClassByExtensionBenchmark#benchmarkByteBuddyWithProxiesAndReusedDelegator()}.
+     */
+    private Implementation interceptor;
+
+    /**
+     * An implementation to be used by {@link ClassByExtensionBenchmark#benchmarkByteBuddyWithAccessorsAndReusedDelegator()}.
+     */
+    private Implementation accessInterceptor;
+
+    /**
+     * A setup method to create precomputed delegator.
+     */
+    @Setup
+    public void setup() {
+        interceptor = MethodDelegation.to(ByteBuddyInterceptor.class);
+        accessInterceptor = MethodDelegation.to(ByteBuddyAccessInterceptor.class);
+    }
+
+    /**
      * Creates a baseline for the benchmark.
      *
      * @return A simple object that is not transformed.
@@ -98,6 +118,28 @@ public class ClassByExtensionBenchmark {
 
     /**
      * Performs a benchmark of a class extension using Byte Buddy. This benchmark also uses the annotation-based approach
+     * but creates delegation methods which do not require the creation of additional classes. This benchmark reuses a
+     * precomputed delegator.
+     *
+     * @return The created instance, in order to avoid JIT removal.
+     * @throws Exception If the invocation causes an exception.
+     */
+    @Benchmark
+    public ExampleClass benchmarkByteBuddyWithProxiesAndReusedDelegator() throws Exception {
+        return new ByteBuddy()
+                .with(TypeValidation.DISABLED)
+                .ignore(none())
+                .subclass(baseClass)
+                .method(isDeclaredBy(ExampleClass.class)).intercept(interceptor)
+                .make()
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded()
+                .getDeclaredConstructor()
+                .newInstance();
+    }
+
+    /**
+     * Performs a benchmark of a class extension using Byte Buddy. This benchmark also uses the annotation-based approach
      * but creates delegation methods which do not require the creation of additional classes.
      *
      * @return The created instance, in order to avoid JIT removal.
@@ -110,6 +152,28 @@ public class ClassByExtensionBenchmark {
                 .ignore(none())
                 .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(MethodDelegation.to(ByteBuddyAccessInterceptor.class))
+                .make()
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded()
+                .getDeclaredConstructor()
+                .newInstance();
+    }
+
+    /**
+     * Performs a benchmark of a class extension using Byte Buddy. This benchmark also uses the annotation-based approach
+     * but creates delegation methods which do not require the creation of additional classes.T his benchmark reuses a
+     * precomputed delegator.
+     *
+     * @return The created instance, in order to avoid JIT removal.
+     * @throws Exception If the invocation causes an exception.
+     */
+    @Benchmark
+    public ExampleClass benchmarkByteBuddyWithAccessorsAndReusedDelegator() throws Exception {
+        return new ByteBuddy()
+                .with(TypeValidation.DISABLED)
+                .ignore(none())
+                .subclass(baseClass)
+                .method(isDeclaredBy(ExampleClass.class)).intercept(accessInterceptor)
                 .make()
                 .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded()

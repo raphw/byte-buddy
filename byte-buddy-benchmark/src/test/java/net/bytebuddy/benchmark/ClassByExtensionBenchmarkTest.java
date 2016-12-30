@@ -64,6 +64,7 @@ public class ClassByExtensionBenchmarkTest {
     @Before
     public void setUp() throws Exception {
         classByExtensionBenchmark = new ClassByExtensionBenchmark();
+        classByExtensionBenchmark.setup();
     }
 
     @Test
@@ -83,8 +84,26 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    public void testByteBuddyWithProxiesClassCreationCached() throws Exception {
+        ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithProxiesAndReusedDelegator();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
+        assertThat(classByExtensionBenchmark.benchmarkByteBuddyWithProxies().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
+        assertReturnValues(instance);
+    }
+
+    @Test
     public void testByteBuddyWithAccessorsClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAccessors();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
+        assertThat(classByExtensionBenchmark.benchmarkByteBuddyWithProxies().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
+        assertReturnValues(instance);
+    }
+
+    @Test
+    public void testByteBuddyWithAccessorsClassCreationCached() throws Exception {
+        ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAccessorsAndReusedDelegator();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
         assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
         assertThat(classByExtensionBenchmark.benchmarkByteBuddyWithProxies().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
