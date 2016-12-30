@@ -18,7 +18,6 @@ import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Proxy;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.isGetter;
@@ -136,10 +135,25 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          */
         private final MethodInvoker methodInvoker;
 
+        /**
+         * The target method.
+         */
         private final MethodDescription target;
 
+        /**
+         * A list of handlers for each parameter.
+         */
         private final List<DelegationProcessor.Handler> handlers;
 
+        /**
+         * Creates a default compiled method delegation binder.
+         *
+         * @param terminationHandler The termination handler to be applied.
+         * @param assigner           An user-supplied assigner to use for variable assignments.
+         * @param methodInvoker      A delegate for actually invoking a method.
+         * @param target             The target method.
+         * @param handlers           A list of handlers for each parameter.
+         */
         protected Compiled(TerminationHandler terminationHandler,
                            Assigner assigner,
                            MethodInvoker methodInvoker,
@@ -617,6 +631,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * Locates a handler which is responsible for processing the given parameter. If no explicit handler can
          * be located, a fallback handler is provided.
          *
+         * @param target The target parameter being handled.
          * @return A handler for processing the parameter with the given annotations.
          */
         protected Handler prepare(ParameterDescription target) {
@@ -655,6 +670,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          */
         protected interface Handler {
 
+            /**
+             * Indicates if this handler was explicitly bound.
+             *
+             * @return {@code true} if this handler was explicitly bound.
+             */
             boolean isBound();
 
             /**
@@ -673,8 +693,16 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              */
             class Unbound implements Handler {
 
+                /**
+                 * The target parameter being handled.
+                 */
                 private final ParameterDescription target;
 
+                /**
+                 * Creates a new unbound handler.
+                 *
+                 * @param target The target parameter being handled.
+                 */
                 protected Unbound(ParameterDescription target) {
                     this.target = target;
                 }
@@ -785,6 +813,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              */
             class Bound<T extends Annotation> implements Handler {
 
+                /**
+                 * The target parameter being handled.
+                 */
                 private final ParameterDescription target;
 
                 /**
@@ -800,6 +831,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 /**
                  * Creates a new bound handler.
                  *
+                 * @param target          The target parameter being handled.
                  * @param parameterBinder The parameter binder that is actually responsible for binding the parameter.
                  * @param annotation      The annotation value that lead to the binding of this handler.
                  */
@@ -812,15 +844,16 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 /**
                  * Creates a handler for a given annotation.
                  *
+                 * @param target          The target parameter being handled.
                  * @param parameterBinder The parameter binder that should process an annotation.
                  * @param annotation      An annotation instance that can be understood by this parameter binder.
                  * @return A handler for processing the given annotation.
                  */
                 @SuppressWarnings("unchecked")
-                protected static Handler of(ParameterDescription parameterDescription,
+                protected static Handler of(ParameterDescription target,
                                             ParameterBinder<?> parameterBinder,
                                             AnnotationDescription annotation) {
-                    return new Bound<Annotation>(parameterDescription,
+                    return new Bound<Annotation>(target,
                             (ParameterBinder<Annotation>) parameterBinder,
                             (AnnotationDescription.Loadable<Annotation>) annotation.prepare(parameterBinder.getHandledType()));
                 }

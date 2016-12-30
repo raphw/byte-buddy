@@ -12,10 +12,6 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 
 import java.lang.annotation.*;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * Parameters that are annotated with this annotation will be assigned the value of the parameter of the source method
@@ -109,8 +105,8 @@ public @interface Argument {
         /**
          * Creates a binding that corresponds to this binding mechanic.
          *
-         * @param source           The source type to be bound.
-         * @param target           The target type the {@code sourceType} is to be bound to.
+         * @param source               The source type to be bound.
+         * @param target               The target type the {@code sourceType} is to be bound to.
          * @param sourceParameterIndex The index of the source parameter.
          * @param assigner             The assigner that is used to perform the assignment.
          * @param typing               Indicates if dynamic type castings should be attempted for incompatible assignments.

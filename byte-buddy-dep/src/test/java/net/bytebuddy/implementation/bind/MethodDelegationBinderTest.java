@@ -40,8 +40,14 @@ public class MethodDelegationBinderTest {
     }
 
     @Test
+    public void testIgnored() throws Exception {
+        assertThat(MethodDelegationBinder.Compiled.Ignored.INSTANCE.bind(mock(Implementation.Target.class), mock(MethodDescription.class)).isValid(), is(false));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodDelegationBinder.Compiled.Ignored.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodInvoker.Simple.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodInvoker.Virtual.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.ParameterBinding.Illegal.class).apply();

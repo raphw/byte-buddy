@@ -25,12 +25,21 @@ import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
  */
 public interface MethodDelegationBinder {
 
+    /**
+     * Compiles this method delegation binder for a target method.
+     *
+     * @param target The target method to bind.
+     * @return A compiled target for binding.
+     */
     Compiled compile(MethodDescription target);
 
+    /**
+     * A method delegation that was compiled to a target method.
+     */
     interface Compiled {
 
         /**
-         * Attempts a binding of a source method to a given target method.
+         * Attempts a binding of a source method to this compiled target.
          *
          * @param implementationTarget The target of the current implementation onto which this binding is to be applied.
          * @param source               The method that is to be bound to the {@code target} method.
@@ -38,13 +47,24 @@ public interface MethodDelegationBinder {
          */
         MethodBinding bind(Implementation.Target implementationTarget, MethodDescription source);
 
+        /**
+         * A compiled method delegation binder that only yields illegal bindings.
+         */
         enum Ignored implements Compiled {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
             public MethodBinding bind(Implementation.Target implementationTarget, MethodDescription source) {
                 return MethodBinding.Illegal.INSTANCE;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodDelegationBinder.Compiled.Ignored." + name();
             }
         }
     }

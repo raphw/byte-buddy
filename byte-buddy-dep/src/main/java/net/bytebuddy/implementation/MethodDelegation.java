@@ -9,7 +9,6 @@ import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
-import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Duplication;
@@ -146,7 +145,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * it is never considered as a target for a method delegation.
  * </p>
  * <p>
- * <b>Important</b>: For invoking a method on another instance, use the {@link Forwarding} implementation. A method delegation
+ * <b>Important</b>: For invoking a method on another instance, use the {@link MethodCall} implementation. A method delegation
  * intends to bind a interceptor class and its resolution algorithm will not necessarily yield a delegation to the intercepted
  * method.
  * </p>
@@ -552,7 +551,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @param assigner The assigner to apply.
      * @return A method delegation implementation that makes use of the given designer.
      */
-    public MethodDelegation withAssigner(Assigner assigner) {
+    public Implementation.Composable withAssigner(Assigner assigner) {
         return new MethodDelegation(implementationDelegate,
                 parameterBinders,
                 terminationHandler,
