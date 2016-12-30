@@ -74,11 +74,20 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
-    public void testByteBuddyWithAnnotationsClassCreation() throws Exception {
-        ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAnnotations();
+    public void testByteBuddyWithProxiesClassCreation() throws Exception {
+        ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithProxies();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
         assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
-        assertThat(classByExtensionBenchmark.benchmarkByteBuddyWithAnnotations().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
+        assertThat(classByExtensionBenchmark.benchmarkByteBuddyWithProxies().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
+        assertReturnValues(instance);
+    }
+
+    @Test
+    public void testByteBuddyWithAccessorsClassCreation() throws Exception {
+        ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAccessors();
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
+        assertThat(classByExtensionBenchmark.benchmarkByteBuddyWithProxies().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
         assertReturnValues(instance);
     }
 

@@ -9,8 +9,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.SuperMethodCall;
-import net.bytebuddy.implementation.bind.annotation.RuntimeType;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.implementation.bind.annotation.*;
 import net.sf.cglib.proxy.*;
 import org.openjdk.jmh.annotations.*;
 
@@ -77,14 +76,14 @@ public class ClassByExtensionBenchmark {
     }
 
     /**
-     * Performs a benchmark of a class extension using Byte Buddy. This benchmark uses an annotation-based approach
-     * which is by its reflective nature more difficult to optimize by the JIT compiler.
+     * Performs a benchmark of a class extension using Byte Buddy. This benchmark creates proxy classes for the invocation
+     * of super methods which requires the creation of auxiliary classes.
      *
      * @return The created instance, in order to avoid JIT removal.
-     * @throws java.lang.Exception If the reflective invocation causes an exception.
+     * @throws java.lang.Exception If the invocation causes an exception.
      */
     @Benchmark
-    public ExampleClass benchmarkByteBuddyWithAnnotations() throws Exception {
+    public ExampleClass benchmarkByteBuddyWithProxies() throws Exception {
         return new ByteBuddy()
                 .with(TypeValidation.DISABLED)
                 .ignore(none())
@@ -98,11 +97,32 @@ public class ClassByExtensionBenchmark {
     }
 
     /**
+     * Performs a benchmark of a class extension using Byte Buddy. This benchmark also uses the annotation-based approach
+     * but creates delegation methods which do not require the creation of additional classes.
+     *
+     * @return The created instance, in order to avoid JIT removal.
+     * @throws Exception If the invocation causes an exception.
+     */
+    @Benchmark
+    public ExampleClass benchmarkByteBuddyWithAccessors() throws Exception {
+        return new ByteBuddy()
+                .with(TypeValidation.DISABLED)
+                .ignore(none())
+                .subclass(baseClass)
+                .method(isDeclaredBy(ExampleClass.class)).intercept(MethodDelegation.to(ByteBuddyAccessInterceptor.class))
+                .make()
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded()
+                .getDeclaredConstructor()
+                .newInstance();
+    }
+
+    /**
      * Performs a benchmark of a class extension using Byte Buddy. This benchmark uses a specialized interception
      * strategy which is easier to inline by the compiler.
      *
      * @return The created instance, in order to avoid JIT removal.
-     * @throws java.lang.Exception If the reflective invocation causes an exception.
+     * @throws java.lang.Exception If the invocation causes an exception.
      */
     @Benchmark
     public ExampleClass benchmarkByteBuddySpecialized() throws Exception {
@@ -158,7 +178,7 @@ public class ClassByExtensionBenchmark {
      * Performs a benchmark of a class extension using javassist proxies.
      *
      * @return The created instance, in order to avoid JIT removal.
-     * @throws java.lang.Exception If the reflective invocation causes an exception.
+     * @throws java.lang.Exception If the invocation causes an exception.
      */
     @Benchmark
     public ExampleClass benchmarkJavassist() throws Exception {
@@ -212,6 +232,34 @@ public class ClassByExtensionBenchmark {
         @RuntimeType
         public static Object intercept(@SuperCall Callable<?> zuper) throws Exception {
             return zuper.call();
+        }
+    }
+
+    /**
+     * Instead of using the {@link net.bytebuddy.implementation.SuperMethodCall} implementation, we are creating
+     * delegate methods that allow the invocation of the original code.
+     */
+    public static class ByteBuddyAccessInterceptor {
+
+        /**
+         * The interceptor's constructor is not supposed to be invoked.
+         */
+        private ByteBuddyAccessInterceptor() {
+            throw new UnsupportedOperationException();
+        }
+
+        /**
+         * Calls the super method.
+         *
+         * @param target    The target instance.
+         * @param arguments The arguments to the method.
+         * @param method    A method for invoking the original code.
+         * @return The return value of the method.
+         * @throws Exception If the super method call yields an exception.
+         */
+        @RuntimeType
+        public static Object intercept(@This Object target, @AllArguments Object[] arguments, @SuperMethod Method method) throws Exception {
+            return method.invoke(target, arguments);
         }
     }
 }
