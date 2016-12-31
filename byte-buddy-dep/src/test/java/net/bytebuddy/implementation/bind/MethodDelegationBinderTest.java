@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.MethodVisitor;
@@ -41,13 +42,17 @@ public class MethodDelegationBinderTest {
 
     @Test
     public void testIgnored() throws Exception {
-        assertThat(MethodDelegationBinder.Compiled.Ignored.INSTANCE.bind(mock(Implementation.Target.class), mock(MethodDescription.class)).isValid(), is(false));
+        assertThat(MethodDelegationBinder.Record.Illegal.INSTANCE.bind(mock(Implementation.Target.class),
+                mock(MethodDescription.class),
+                mock(MethodDelegationBinder.TerminationHandler.class),
+                mock(MethodDelegationBinder.MethodInvoker.class),
+                mock(Assigner.class)).isValid(), is(false));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDelegationBinder.Compiled.Ignored.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegationBinder.Record.Illegal.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodInvoker.Simple.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodInvoker.Virtual.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.ParameterBinding.Illegal.class).apply();

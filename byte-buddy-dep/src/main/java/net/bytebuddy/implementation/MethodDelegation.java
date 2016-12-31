@@ -24,6 +24,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -590,14 +591,18 @@ public class MethodDelegation implements Implementation.Composable {
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
         ImplementationDelegate.Resolution resolution = implementationDelegate.resolve(implementationTarget.getInstrumentedType());
-        return new Appender(resolution.getPreparation(),
-                implementationTarget,
-                resolution.getCandidates(),
-                new MethodDelegationBinder.Processor(TargetMethodAnnotationDrivenBinder.of(
-                        parameterBinders,
-                        terminationHandler,
-                        assigner,
-                        resolution.getMethodInvoker()), ambiguityResolver), resolution.isAllowStaticMethod());
+        MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(parameterBinders);
+        List<MethodDelegationBinder.Record> records = new ArrayList<MethodDelegationBinder.Record>(resolution.getCandidates().size());
+        for (MethodDescription candidate : resolution.getCandidates()) {
+            records.add(methodDelegationBinder.compile(candidate));
+        }
+        return new Appender(implementationTarget,
+                new MethodDelegationBinder.Processor(records, ambiguityResolver),
+                terminationHandler,
+                resolution.getMethodInvoker(),
+                assigner,
+                resolution.getPreparation(),
+                resolution.isAllowStaticMethod());
     }
 
     @Override
@@ -1182,20 +1187,9 @@ public class MethodDelegation implements Implementation.Composable {
     protected static class Appender implements ByteCodeAppender {
 
         /**
-         * The stack manipulation that is responsible for loading a potential target instance onto the stack
-         * on which the target method is invoked.
-         */
-        private final StackManipulation preparingStackAssignment;
-
-        /**
          * The implementation target of this implementation.
          */
         private final Target implementationTarget;
-
-        /**
-         * The method candidates to consider for delegating the invocation to.
-         */
-        private final MethodList targetCandidates;
 
         /**
          * The method delegation binder processor which is responsible for implementing the method delegation.
@@ -1203,29 +1197,56 @@ public class MethodDelegation implements Implementation.Composable {
         private final MethodDelegationBinder.Processor processor;
 
         /**
+         * A termination handler for a method delegation binder.
+         */
+        private final MethodDelegationBinder.TerminationHandler terminationHandler;
+
+        /**
+         * An invoker for a method delegation binder.
+         */
+        private final MethodDelegationBinder.MethodInvoker methodInvoker;
+
+        /**
+         * The assigner to use.
+         */
+        private final Assigner assigner;
+
+        /**
+         * The stack manipulation that is responsible for loading a potential target instance onto the stack
+         * on which the target method is invoked.
+         */
+        private final StackManipulation preparingStackAssignment;
+
+        /**
          * {@code true} if this appender permits delegation from static methods.
          */
         private final boolean allowStaticMethods;
 
         /**
-         * Creates a new appender.
+         * Creates an appender for a  method delegation.
          *
-         * @param preparingStackAssignment The stack manipulation that is responsible for loading a potential target
-         *                                 instance onto the stack on which the target method is invoked.
          * @param implementationTarget     The implementation target of this implementation.
-         * @param targetCandidates         The method candidates to consider for delegating the invocation to.
-         * @param processor                The method delegation binder processor which is responsible for implementing
+         * @param processor                The method delegation binder processor which is responsible for implementing the method delegation.
+         * @param terminationHandler       A termination handler for a method delegation binder.
+         * @param methodInvoker            An invoker for a method delegation binder.
+         * @param assigner                 The assigner to use.
+         * @param preparingStackAssignment The stack manipulation that is responsible for loading a potential target instance onto the stack
+         *                                 on which the target method is invoked.
          * @param allowStaticMethods       {@code true} if this appender permits delegation from static methods.
          */
-        protected Appender(StackManipulation preparingStackAssignment,
-                           Target implementationTarget,
-                           MethodList targetCandidates,
+        protected Appender(Target implementationTarget,
                            MethodDelegationBinder.Processor processor,
+                           MethodDelegationBinder.TerminationHandler terminationHandler,
+                           MethodDelegationBinder.MethodInvoker methodInvoker,
+                           Assigner assigner,
+                           StackManipulation preparingStackAssignment,
                            boolean allowStaticMethods) {
-            this.preparingStackAssignment = preparingStackAssignment;
             this.implementationTarget = implementationTarget;
-            this.targetCandidates = targetCandidates;
             this.processor = processor;
+            this.terminationHandler = terminationHandler;
+            this.methodInvoker = methodInvoker;
+            this.assigner = assigner;
+            this.preparingStackAssignment = preparingStackAssignment;
             this.allowStaticMethods = allowStaticMethods;
         }
 
@@ -1236,29 +1257,33 @@ public class MethodDelegation implements Implementation.Composable {
             }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     preparingStackAssignment,
-                    processor.process(implementationTarget, instrumentedMethod, targetCandidates)
+                    processor.bind(implementationTarget, instrumentedMethod, terminationHandler, methodInvoker, assigner)
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
         @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Appender that = (Appender) other;
-            return implementationTarget.equals(that.implementationTarget)
-                    && preparingStackAssignment.equals(that.preparingStackAssignment)
-                    && processor.equals(that.processor)
-                    && allowStaticMethods == that.allowStaticMethods
-                    && targetCandidates.equals(that.targetCandidates);
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            Appender appender = (Appender) object;
+            return allowStaticMethods == appender.allowStaticMethods
+                    && implementationTarget.equals(appender.implementationTarget)
+                    && processor.equals(appender.processor)
+                    && terminationHandler.equals(appender.terminationHandler)
+                    && methodInvoker.equals(appender.methodInvoker)
+                    && assigner.equals(appender.assigner)
+                    && preparingStackAssignment.equals(appender.preparingStackAssignment);
         }
 
         @Override
         public int hashCode() {
-            int result = preparingStackAssignment.hashCode();
-            result = 31 * result + implementationTarget.hashCode();
-            result = 31 * result + targetCandidates.hashCode();
+            int result = implementationTarget.hashCode();
             result = 31 * result + processor.hashCode();
+            result = 31 * result + terminationHandler.hashCode();
+            result = 31 * result + methodInvoker.hashCode();
+            result = 31 * result + assigner.hashCode();
+            result = 31 * result + preparingStackAssignment.hashCode();
             result = 31 * result + (allowStaticMethods ? 1 : 0);
             return result;
         }
@@ -1266,10 +1291,12 @@ public class MethodDelegation implements Implementation.Composable {
         @Override
         public String toString() {
             return "MethodDelegation.Appender{" +
-                    "preparingStackAssignment=" + preparingStackAssignment +
-                    ", implementationTarget=" + implementationTarget +
-                    ", targetCandidates=" + targetCandidates +
+                    "implementationTarget=" + implementationTarget +
                     ", processor=" + processor +
+                    ", terminationHandler=" + terminationHandler +
+                    ", methodInvoker=" + methodInvoker +
+                    ", assigner=" + assigner +
+                    ", preparingStackAssignment=" + preparingStackAssignment +
                     ", allowStaticMethods=" + allowStaticMethods +
                     '}';
         }

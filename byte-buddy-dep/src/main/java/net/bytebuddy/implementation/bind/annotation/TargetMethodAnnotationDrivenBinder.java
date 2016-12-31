@@ -35,57 +35,36 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     private final DelegationProcessor delegationProcessor;
 
     /**
-     * The termination handler to be applied.
+     * Creates a new target method annotation-driven binder.
+     *
+     * @param delegationProcessor The delegation proessor to use.
      */
-    private final TerminationHandler terminationHandler;
-
-    /**
-     * An user-supplied assigner to use for variable assignments.
-     */
-    private final Assigner assigner;
-
-    /**
-     * A delegate for actually invoking a method.
-     */
-    private final MethodInvoker methodInvoker;
-
-    public TargetMethodAnnotationDrivenBinder(DelegationProcessor delegationProcessor,
-                                              TerminationHandler terminationHandler,
-                                              Assigner assigner,
-                                              MethodInvoker methodInvoker) {
+    protected TargetMethodAnnotationDrivenBinder(DelegationProcessor delegationProcessor) {
         this.delegationProcessor = delegationProcessor;
-        this.terminationHandler = terminationHandler;
-        this.assigner = assigner;
-        this.methodInvoker = methodInvoker;
     }
 
     /**
      * Creates a new method delegation binder that binds method based on annotations found on the target method.
      *
-     * @param parameterBinders   A list of parameter binder delegates. Each such delegate is responsible for creating a
-     *                           {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.ParameterBinding}
-     *                           for a specific annotation.
-     * @param terminationHandler The termination handler to be applied.
-     * @param assigner           An assigner that is supplied to the {@code parameterBinders} and that is used for binding the return value.
-     * @param methodInvoker      A delegate for applying the actual method invocation of the target method.
+     * @param parameterBinders A list of parameter binder delegates. Each such delegate is responsible for creating a
+     *                         {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.ParameterBinding}
+     *                         for a specific annotation.
+     * @return An appropriate method delegation binder.
      */
-    public static MethodDelegationBinder of(List<ParameterBinder<?>> parameterBinders,
-                                            TerminationHandler terminationHandler,
-                                            Assigner assigner,
-                                            MethodInvoker methodInvoker) {
-        return new TargetMethodAnnotationDrivenBinder(DelegationProcessor.of(parameterBinders), terminationHandler, assigner, methodInvoker);
+    public static MethodDelegationBinder of(List<? extends ParameterBinder<?>> parameterBinders) {
+        return new TargetMethodAnnotationDrivenBinder(DelegationProcessor.of(parameterBinders));
     }
 
     @Override
-    public MethodDelegationBinder.Compiled compile(MethodDescription target) {
-        if (IgnoreForBinding.Verifier.check(target)) {
-            return MethodDelegationBinder.Compiled.Ignored.INSTANCE;
+    public MethodDelegationBinder.Record compile(MethodDescription candidate) {
+        if (IgnoreForBinding.Verifier.check(candidate)) {
+            return MethodDelegationBinder.Record.Illegal.INSTANCE;
         }
-        List<DelegationProcessor.Handler> handlers = new ArrayList<DelegationProcessor.Handler>(target.getParameters().size());
-        for (ParameterDescription parameterDescription : target.getParameters()) {
+        List<DelegationProcessor.Handler> handlers = new ArrayList<DelegationProcessor.Handler>(candidate.getParameters().size());
+        for (ParameterDescription parameterDescription : candidate.getParameters()) {
             handlers.add(delegationProcessor.prepare(parameterDescription));
         }
-        return new Compiled(terminationHandler, assigner, methodInvoker, target, handlers);
+        return new Record(candidate, handlers);
     }
 
     @Override
@@ -93,52 +72,30 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
         TargetMethodAnnotationDrivenBinder that = (TargetMethodAnnotationDrivenBinder) other;
-        return assigner.equals(that.assigner)
-                && terminationHandler.equals(that.terminationHandler)
-                && delegationProcessor.equals(that.delegationProcessor)
-                && methodInvoker.equals(that.methodInvoker);
+        return delegationProcessor.equals(that.delegationProcessor);
     }
 
     @Override
     public int hashCode() {
-        int result = delegationProcessor.hashCode();
-        result = 31 * result + terminationHandler.hashCode();
-        result = 31 * result + assigner.hashCode();
-        result = 31 * result + methodInvoker.hashCode();
-        return result;
+        return delegationProcessor.hashCode();
     }
 
     @Override
     public String toString() {
         return "TargetMethodAnnotationDrivenBinder{" +
                 "delegationProcessor=" + delegationProcessor +
-                ", terminationHandler=" + terminationHandler +
-                ", assigner=" + assigner +
-                ", methodInvoker=" + methodInvoker +
                 '}';
     }
 
-    protected static class Compiled implements MethodDelegationBinder.Compiled {
+    /**
+     * A compiled record of a target method annotation-driven binder.
+     */
+    protected static class Record implements MethodDelegationBinder.Record {
 
         /**
-         * The termination handler to be applied.
+         * The candidate method.
          */
-        private final TerminationHandler terminationHandler;
-
-        /**
-         * An user-supplied assigner to use for variable assignments.
-         */
-        private final Assigner assigner;
-
-        /**
-         * A delegate for actually invoking a method.
-         */
-        private final MethodInvoker methodInvoker;
-
-        /**
-         * The target method.
-         */
-        private final MethodDescription target;
+        private final MethodDescription candidate;
 
         /**
          * A list of handlers for each parameter.
@@ -148,31 +105,25 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         /**
          * Creates a default compiled method delegation binder.
          *
-         * @param terminationHandler The termination handler to be applied.
-         * @param assigner           An user-supplied assigner to use for variable assignments.
-         * @param methodInvoker      A delegate for actually invoking a method.
-         * @param target             The target method.
-         * @param handlers           A list of handlers for each parameter.
+         * @param candidate The candidate method.
+         * @param handlers  A list of handlers for each parameter.
          */
-        protected Compiled(TerminationHandler terminationHandler,
-                           Assigner assigner,
-                           MethodInvoker methodInvoker,
-                           MethodDescription target,
-                           List<DelegationProcessor.Handler> handlers) {
-            this.terminationHandler = terminationHandler;
-            this.assigner = assigner;
-            this.methodInvoker = methodInvoker;
-            this.target = target;
+        protected Record(MethodDescription candidate, List<DelegationProcessor.Handler> handlers) {
+            this.candidate = candidate;
             this.handlers = handlers;
         }
 
         @Override
-        public MethodBinding bind(Implementation.Target implementationTarget, MethodDescription source) {
-            StackManipulation methodTermination = terminationHandler.resolve(assigner, source, target);
+        public MethodBinding bind(Implementation.Target implementationTarget,
+                                  MethodDescription source,
+                                  MethodDelegationBinder.TerminationHandler terminationHandler,
+                                  MethodInvoker methodInvoker,
+                                  Assigner assigner) {
+            StackManipulation methodTermination = terminationHandler.resolve(assigner, source, candidate);
             if (!methodTermination.isValid()) {
                 return MethodBinding.Illegal.INSTANCE;
             }
-            MethodBinding.Builder methodDelegationBindingBuilder = new MethodBinding.Builder(methodInvoker, target);
+            MethodBinding.Builder methodDelegationBindingBuilder = new MethodBinding.Builder(methodInvoker, candidate);
             for (DelegationProcessor.Handler handler : handlers) {
                 ParameterBinding<?> parameterBinding = handler.bind(source, implementationTarget, assigner);
                 if (!parameterBinding.isValid() || !methodDelegationBindingBuilder.append(parameterBinding)) {
@@ -186,31 +137,22 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         public boolean equals(Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
-            Compiled compiled = (Compiled) object;
-            return terminationHandler == compiled.terminationHandler
-                    && assigner.equals(compiled.assigner)
-                    && methodInvoker.equals(compiled.methodInvoker)
-                    && target.equals(compiled.target)
-                    && handlers.equals(compiled.handlers);
+            Record record = (Record) object;
+            return candidate.equals(record.candidate)
+                    && handlers.equals(record.handlers);
         }
 
         @Override
         public int hashCode() {
-            int result = terminationHandler.hashCode();
-            result = 31 * result + assigner.hashCode();
-            result = 31 * result + methodInvoker.hashCode();
-            result = 31 * result + target.hashCode();
+            int result = candidate.hashCode();
             result = 31 * result + handlers.hashCode();
             return result;
         }
 
         @Override
         public String toString() {
-            return "TargetMethodAnnotationDrivenBinder.Compiled{" +
-                    "terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", methodInvoker=" + methodInvoker +
-                    ", target=" + target +
+            return "TargetMethodAnnotationDrivenBinder.Record{" +
+                    ", candidate=" + candidate +
                     ", handlers=" + handlers +
                     '}';
         }
@@ -542,14 +484,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      * Responsible for creating a {@link StackManipulation}
      * that is applied after the interception method is applied.
      */
-    public enum TerminationHandler {
+    public enum TerminationHandler implements MethodDelegationBinder.TerminationHandler {
 
         /**
          * A termination handler that returns the delegate method's return value.
          */
         RETURNING {
             @Override
-            protected StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
                 return new StackManipulation.Compound(assigner.assign(target.isConstructor()
                                 ? target.getDeclaringType().asGenericType()
                                 : target.getReturnType(),
@@ -563,22 +505,12 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          */
         DROPPING {
             @Override
-            protected StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
+            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
                 return Removal.of(target.isConstructor()
                         ? target.getDeclaringType()
                         : target.getReturnType());
             }
         };
-
-        /**
-         * Creates a stack manipulation that is to be applied after the method return.
-         *
-         * @param assigner The supplied assigner.
-         * @param source   The source method that is bound to the {@code target} method.
-         * @param target   The target method that is subject to be bound by the {@code source} method.
-         * @return A stack manipulation that is applied after the method return.
-         */
-        protected abstract StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
 
         @Override
         public String toString() {
@@ -598,14 +530,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * A map of registered annotation types to the binder that is responsible for binding a parameter
          * that is annotated with the given annotation.
          */
-        private final Map<TypeDescription, ParameterBinder<?>> parameterBinders;
+        private final Map<? extends TypeDescription, ? extends ParameterBinder<?>> parameterBinders;
 
         /**
          * Creates a new delegation processor.
          *
          * @param parameterBinders A mapping of parameter binders by their handling type.
          */
-        protected DelegationProcessor(Map<TypeDescription, ParameterBinder<?>> parameterBinders) {
+        protected DelegationProcessor(Map<? extends TypeDescription, ? extends ParameterBinder<?>> parameterBinders) {
             this.parameterBinders = parameterBinders;
         }
 
@@ -617,7 +549,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          *                         for a specific annotation.
          * @return A corresponding delegation processor.
          */
-        protected static DelegationProcessor of(List<ParameterBinder<?>> parameterBinders) {
+        protected static DelegationProcessor of(List<? extends ParameterBinder<?>> parameterBinders) {
             Map<TypeDescription, ParameterBinder<?>> parameterBinderMap = new HashMap<TypeDescription, ParameterBinder<?>>();
             for (ParameterBinder<?> parameterBinder : parameterBinders) {
                 if (parameterBinderMap.put(new TypeDescription.ForLoadedType(parameterBinder.getHandledType()), parameterBinder) != null) {
@@ -682,7 +614,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              *
              * @param source               The intercepted source method.
              * @param implementationTarget The target of the current implementation.
-             * @param assigner             An assigner that can be used for applying the binding.
+             * @param assigner             The assigner to use.
              * @return A parameter binding that reflects the given arguments.
              */
             ParameterBinding<?> bind(MethodDescription source, Implementation.Target implementationTarget, Assigner assigner);

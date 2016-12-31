@@ -2,17 +2,15 @@ package net.bytebuddy.implementation.bind;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.annotation.BindingPriority;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
-
-import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 
 /**
  * A method delegation binder is responsible for creating a method binding for a <i>source method</i> to a
@@ -28,29 +26,36 @@ public interface MethodDelegationBinder {
     /**
      * Compiles this method delegation binder for a target method.
      *
-     * @param target The target method to bind.
+     * @param candidate The target method to bind.
      * @return A compiled target for binding.
      */
-    Compiled compile(MethodDescription target);
+    Record compile(MethodDescription candidate);
 
     /**
      * A method delegation that was compiled to a target method.
      */
-    interface Compiled {
+    interface Record {
 
         /**
          * Attempts a binding of a source method to this compiled target.
          *
          * @param implementationTarget The target of the current implementation onto which this binding is to be applied.
          * @param source               The method that is to be bound to the {@code target} method.
+         * @param terminationHandler   Ther termination handler to apply.
+         * @param methodInvoker        The method invoker to use.
+         * @param assigner             The assigner to use.
          * @return A binding representing this attempt to bind the {@code source} method to the {@code target} method.
          */
-        MethodBinding bind(Implementation.Target implementationTarget, MethodDescription source);
+        MethodBinding bind(Implementation.Target implementationTarget,
+                           MethodDescription source,
+                           TerminationHandler terminationHandler,
+                           MethodInvoker methodInvoker,
+                           Assigner assigner);
 
         /**
          * A compiled method delegation binder that only yields illegal bindings.
          */
-        enum Ignored implements Compiled {
+        enum Illegal implements Record {
 
             /**
              * The singleton instance.
@@ -58,13 +63,17 @@ public interface MethodDelegationBinder {
             INSTANCE;
 
             @Override
-            public MethodBinding bind(Implementation.Target implementationTarget, MethodDescription source) {
+            public MethodBinding bind(Implementation.Target implementationTarget,
+                                      MethodDescription source,
+                                      TerminationHandler terminationHandler,
+                                      MethodInvoker methodInvoker,
+                                      Assigner assigner) {
                 return MethodBinding.Illegal.INSTANCE;
             }
 
             @Override
             public String toString() {
-                return "MethodDelegationBinder.Compiled.Ignored." + name();
+                return "MethodDelegationBinder.Record.Illegal." + name();
             }
         }
     }
@@ -424,7 +433,7 @@ public interface MethodDelegationBinder {
             /**
              * The target method that for which a binding is to be constructed by this builder..
              */
-            private final MethodDescription target;
+            private final MethodDescription candidate;
 
             /**
              * The current list of stack manipulations for loading values for each parameter onto the operand stack.
@@ -444,14 +453,13 @@ public interface MethodDelegationBinder {
             /**
              * Creates a new builder for the binding of a given method.
              *
-             * @param methodInvoker The method invoker that is used to create the method invocation of the {@code target}
-             *                      method.
-             * @param target        The target method that is target of the binding.
+             * @param methodInvoker The method invoker that is used to create the method invocation of the {@code target} method.
+             * @param candidate     The target method that is target of the binding.
              */
-            public Builder(MethodInvoker methodInvoker, MethodDescription target) {
+            public Builder(MethodInvoker methodInvoker, MethodDescription candidate) {
                 this.methodInvoker = methodInvoker;
-                this.target = target;
-                parameterStackManipulations = new ArrayList<StackManipulation>(target.getParameters().size());
+                this.candidate = candidate;
+                parameterStackManipulations = new ArrayList<StackManipulation>(candidate.getParameters().size());
                 registeredTargetIndices = new LinkedHashMap<Object, Integer>();
                 nextParameterIndex = 0;
             }
@@ -475,12 +483,12 @@ public interface MethodDelegationBinder {
              * @return A binding representing the parameter bindings collected by this builder.
              */
             public MethodBinding build(StackManipulation terminatingManipulation) {
-                if (target.getParameters().size() != nextParameterIndex) {
+                if (candidate.getParameters().size() != nextParameterIndex) {
                     throw new IllegalStateException("The number of parameters bound does not equal the target's number of parameters");
                 }
-                return new Build(target,
+                return new Build(candidate,
                         registeredTargetIndices,
-                        methodInvoker.invoke(target),
+                        methodInvoker.invoke(candidate),
                         parameterStackManipulations,
                         terminatingManipulation);
             }
@@ -489,7 +497,7 @@ public interface MethodDelegationBinder {
             public String toString() {
                 return "MethodDelegationBinder.MethodBinding.Builder{" +
                         "methodInvoker=" + methodInvoker +
-                        ", target=" + target +
+                        ", candidate=" + candidate +
                         ", parameterStackManipulations=" + parameterStackManipulations +
                         ", registeredTargetIndices=" + registeredTargetIndices +
                         ", nextParameterIndex=" + nextParameterIndex +
@@ -843,6 +851,22 @@ public interface MethodDelegationBinder {
     }
 
     /**
+     * A termination handler is responsible for terminating a method delegation.
+     */
+    interface TerminationHandler {
+
+        /**
+         * Creates a stack manipulation that is to be applied after the method return.
+         *
+         * @param assigner The supplied assigner.
+         * @param source   The source method that is bound to the {@code target} method.
+         * @param target   The target method that is subject to be bound by the {@code source} method.
+         * @return A stack manipulation that is applied after the method return.
+         */
+        StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
+    }
+
+    /**
      * A helper class that allows to identify a best binding for a given type and source method chosing from a list of given
      * target methods by using a given {@link net.bytebuddy.implementation.bind.MethodDelegationBinder}
      * and an {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}.
@@ -853,7 +877,7 @@ public interface MethodDelegationBinder {
      * <li>Find a best method among the successful bindings using the {@code AmbiguityResolver}.</li>
      * </ol>
      */
-    class Processor {
+    class Processor implements MethodDelegationBinder.Record {
 
         /**
          * Represents the index of the only value of two elements in a list.
@@ -871,9 +895,9 @@ public interface MethodDelegationBinder {
         private static final int RIGHT = 1;
 
         /**
-         * This processor's method delegation binder.
+         * The delegation records to consider.
          */
-        private final MethodDelegationBinder methodDelegationBinder;
+        private final List<? extends Record> records;
 
         /**
          * The processor's ambiguity resolver.
@@ -881,47 +905,33 @@ public interface MethodDelegationBinder {
         private final AmbiguityResolver ambiguityResolver;
 
         /**
-         * Creates a new processor for a method delegation binder.
+         * Creates a new processor.
          *
-         * @param methodDelegationBinder This processor's method delegation binder.
-         * @param ambiguityResolver      The processor's ambiguity resolver.
+         * @param records           The delegation records to consider.
+         * @param ambiguityResolver The ambiguity resolver to apply.
          */
-        public Processor(MethodDelegationBinder methodDelegationBinder, AmbiguityResolver ambiguityResolver) {
-            this.methodDelegationBinder = methodDelegationBinder;
+        public Processor(List<? extends Record> records, AmbiguityResolver ambiguityResolver) {
+            this.records = records;
             this.ambiguityResolver = ambiguityResolver;
         }
 
-        /**
-         * @param implementationTarget The implementation target for binding the {@code source} method to.
-         * @param source               The source method that is to be bound.
-         * @param targetCandidates     All possible targets for the delegation binding that are to be considered.
-         * @return The best binding that was identified. If no such binding can be identified, an exception is thrown.
-         */
-        public MethodBinding process(Implementation.Target implementationTarget, MethodDescription source, MethodList<?> targetCandidates) {
-            List<MethodBinding> possibleDelegations = bind(implementationTarget, source, targetCandidates);
-            if (possibleDelegations.isEmpty()) {
-                throw new IllegalArgumentException("None of " + targetCandidates + " allows for delegation from " + source);
-            }
-            return resolve(source, possibleDelegations);
-        }
-
-        /**
-         * Creates a list of method bindings for any legal target method.
-         *
-         * @param implementationTarget The implementation target for binding the {@code source} method to.
-         * @param source               The method that is to be bound to any {@code targets} method.
-         * @param targetCandidates     All possible targets for the delegation binding that are to be considered.
-         * @return A list of valid method bindings representing a subset of the given target methods.
-         */
-        private List<MethodBinding> bind(Implementation.Target implementationTarget, MethodDescription source, MethodList<?> targetCandidates) {
-            List<MethodBinding> possibleDelegations = new ArrayList<MethodBinding>();
-            for (MethodDescription targetCandidate : targetCandidates.filter(isVisibleTo(implementationTarget.getInstrumentedType()))) {
-                MethodBinding methodBinding = methodDelegationBinder.compile(targetCandidate).bind(implementationTarget, source);
+        @Override
+        public MethodBinding bind(Implementation.Target implementationTarget,
+                                  MethodDescription source,
+                                  TerminationHandler terminationHandler,
+                                  MethodInvoker methodInvoker,
+                                  Assigner assigner) {
+            List<MethodBinding> targets = new ArrayList<MethodBinding>();
+            for (Record record : records) {
+                MethodBinding methodBinding = record.bind(implementationTarget, source, terminationHandler, methodInvoker, assigner);
                 if (methodBinding.isValid()) {
-                    possibleDelegations.add(methodBinding);
+                    targets.add(methodBinding);
                 }
             }
-            return possibleDelegations;
+            if (targets.isEmpty()) {
+                throw new IllegalArgumentException("None of " + records + " allows for delegation from " + source);
+            }
+            return resolve(source, targets);
         }
 
         /**
@@ -976,7 +986,7 @@ public interface MethodDelegationBinder {
                                     throw new AssertionError();
                             }
                         default:
-                            throw new AssertionError();
+                            throw new IllegalStateException("Unexpected targets: " + targets);
                     }
                 }
             }
@@ -986,19 +996,20 @@ public interface MethodDelegationBinder {
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && ambiguityResolver.equals(((Processor) other).ambiguityResolver)
-                    && methodDelegationBinder.equals(((Processor) other).methodDelegationBinder);
+                    && records.equals(((Processor) other).records);
         }
 
         @Override
         public int hashCode() {
-            return 31 * methodDelegationBinder.hashCode() + ambiguityResolver.hashCode();
+            return 31 * records.hashCode() + ambiguityResolver.hashCode();
         }
 
         @Override
         public String toString() {
             return "MethodDelegationBinder.Processor{"
-                    + "methodDelegationBinder=" + methodDelegationBinder
-                    + ", ambiguityResolver=" + ambiguityResolver + '}';
+                    + "records=" + records
+                    + ", ambiguityResolver=" + ambiguityResolver
+                    + '}';
         }
     }
 }
