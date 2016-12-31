@@ -634,7 +634,7 @@ public interface MethodDelegationBinder {
         /**
          * The default ambiguity resolver to use.
          */
-        AmbiguityResolver DEFAULT = new MethodDelegationBinder.AmbiguityResolver.Chain(BindingPriority.Resolver.INSTANCE,
+        AmbiguityResolver DEFAULT = new MethodDelegationBinder.AmbiguityResolver.Compound(BindingPriority.Resolver.INSTANCE,
                 DeclaringTypeResolver.INSTANCE,
                 ArgumentTypeResolver.INSTANCE,
                 MethodNameEqualityResolver.INSTANCE,
@@ -797,19 +797,19 @@ public interface MethodDelegationBinder {
          * A chain of {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}s
          * that are applied in the given order until two bindings can be resolved.
          */
-        class Chain implements AmbiguityResolver {
+        class Compound implements AmbiguityResolver {
 
             /**
              * A list of ambiguity resolvers that are applied by this chain in their order of application.
              */
-            private final List<? extends AmbiguityResolver> ambiguityResolvers;
+            private final List<AmbiguityResolver> ambiguityResolvers;
 
             /**
              * Creates an immutable chain of ambiguity resolvers.
              *
              * @param ambiguityResolver The ambiguity resolvers to chain in the order of their application.
              */
-            public Chain(AmbiguityResolver... ambiguityResolver) {
+            public Compound(AmbiguityResolver... ambiguityResolver) {
                 this(Arrays.asList(ambiguityResolver));
             }
 
@@ -818,8 +818,15 @@ public interface MethodDelegationBinder {
              *
              * @param ambiguityResolvers The ambiguity resolvers to chain in the order of their application.
              */
-            public Chain(List<? extends AmbiguityResolver> ambiguityResolvers) {
-                this.ambiguityResolvers = ambiguityResolvers;
+            public Compound(List<? extends AmbiguityResolver> ambiguityResolvers) {
+                this.ambiguityResolvers = new ArrayList<AmbiguityResolver>();
+                for (AmbiguityResolver ambiguityResolver : ambiguityResolvers) {
+                    if (ambiguityResolver instanceof Compound) {
+                        this.ambiguityResolvers.addAll(((Compound) ambiguityResolver).ambiguityResolvers);
+                    } else {
+                        this.ambiguityResolvers.add(ambiguityResolver);
+                    }
+                }
             }
 
             @Override
@@ -835,7 +842,7 @@ public interface MethodDelegationBinder {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && ambiguityResolvers.equals(((Chain) other).ambiguityResolvers);
+                        && ambiguityResolvers.equals(((Compound) other).ambiguityResolvers);
             }
 
             @Override
@@ -845,7 +852,7 @@ public interface MethodDelegationBinder {
 
             @Override
             public String toString() {
-                return "MethodDelegationBinder.AmbiguityResolver.Chain{ambiguityResolvers=" + ambiguityResolvers + '}';
+                return "MethodDelegationBinder.AmbiguityResolver.Compound{ambiguityResolvers=" + ambiguityResolvers + '}';
             }
         }
     }

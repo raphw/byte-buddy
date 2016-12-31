@@ -20,8 +20,9 @@ public class MethodDelegationChainedTest {
         VoidInterceptor voidInterceptor = new VoidInterceptor();
         DynamicType.Loaded<Foo> dynamicType = new ByteBuddy().subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(voidInterceptor)
+                .intercept(MethodDelegation.withDefaultConfiguration()
                         .filter(isDeclaredBy(VoidInterceptor.class))
+                        .to(voidInterceptor)
                         .andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
@@ -35,8 +36,10 @@ public class MethodDelegationChainedTest {
 
         DynamicType.Loaded<Foo> dynamicType = new ByteBuddy().subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(nonVoidInterceptor)
+                .intercept(MethodDelegation.
+                        withDefaultConfiguration()
                         .filter(isDeclaredBy(NonVoidInterceptor.class))
+                        .to(nonVoidInterceptor)
                         .andThen(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE)))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);

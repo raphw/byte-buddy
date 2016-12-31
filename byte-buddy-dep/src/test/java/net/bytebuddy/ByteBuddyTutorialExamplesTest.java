@@ -330,8 +330,9 @@ public class ByteBuddyTutorialExamplesTest {
         MemoryDatabase loggingDatabase = new ByteBuddy()
                 .subclass(MemoryDatabase.class)
                 .method(named("load")).intercept(MethodDelegation
-                        .to(new ForwardingLoggerInterceptor(memoryDatabase))
-                        .appendParameterBinder(Pipe.Binder.install(Forwarder.class)))
+                        .withDefaultConfiguration()
+                        .withBinders(Pipe.Binder.install(Forwarder.class))
+                        .to(new ForwardingLoggerInterceptor(memoryDatabase))) // TODO : Update tutorial
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -423,8 +424,7 @@ public class ByteBuddyTutorialExamplesTest {
         assertThat(new ByteBuddy()
                 .subclass(Object.class)
                 .method(named("toString"))
-                .intercept(MethodDelegation.to(ToStringInterceptor.class)
-                        .defineParameterBinder(StringValueBinder.INSTANCE))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(StringValueBinder.INSTANCE).to(ToStringInterceptor.class)) // TODO: Update tutorial
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()

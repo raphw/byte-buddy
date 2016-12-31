@@ -26,6 +26,7 @@ import org.objectweb.asm.Opcodes;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -168,15 +169,15 @@ public class MethodDelegation implements Implementation.Composable {
     private final List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
 
     /**
-     * The termination handler to apply.
-     */
-    private final TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler;
-
-    /**
      * The {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}
      * to be used by this method delegation.
      */
     private final MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
+
+    /**
+     * The termination handler to apply.
+     */
+    private final TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler;
 
     /**
      * The {@link net.bytebuddy.implementation.bytecode.assign.Assigner} to be used by this method delegation.
@@ -188,15 +189,28 @@ public class MethodDelegation implements Implementation.Composable {
      *
      * @param implementationDelegate The implementation delegate to use by this method delegator.
      * @param parameterBinders       The parameter binders to use by this method delegator.
-     * @param terminationHandler     The termination handler to apply.
      * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
-     * @param assigner               The assigner to be supplied by this method delegator.
      */
     protected MethodDelegation(ImplementationDelegate implementationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
-                               TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler,
-                               MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
-                               Assigner assigner) {
+                               MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
+        this(implementationDelegate, parameterBinders, ambiguityResolver, TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING, Assigner.DEFAULT);
+    }
+
+    /**
+     * Creates a new method delegation.
+     *
+     * @param implementationDelegate The implementation delegate to use by this method delegator.
+     * @param parameterBinders       The parameter binders to use by this method delegator.
+     * @param ambiguityResolver      The ambiguity resolver to use by this method delegator.
+     * @param terminationHandler     The termination handler to apply.
+     * @param assigner               The assigner to be supplied by this method delegator.
+     */
+    private MethodDelegation(ImplementationDelegate implementationDelegate,
+                             List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
+                             MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
+                             TargetMethodAnnotationDrivenBinder.TerminationHandler terminationHandler,
+                             Assigner assigner) {
         this.implementationDelegate = implementationDelegate;
         this.parameterBinders = parameterBinders;
         this.terminationHandler = terminationHandler;
@@ -211,7 +225,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Class<?> type) {
-        return to(new TypeDescription.ForLoadedType(type));
+        return withDefaultConfiguration().to(type);
     }
 
     /**
@@ -221,16 +235,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(TypeDescription typeDescription) {
-        if (typeDescription.isArray()) {
-            throw new IllegalArgumentException("Cannot delegate to array " + typeDescription);
-        } else if (typeDescription.isPrimitive()) {
-            throw new IllegalArgumentException("Cannot delegate to primitive " + typeDescription);
-        }
-        return new MethodDelegation(ImplementationDelegate.ForStaticMethod.of(typeDescription),
-                TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
-                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
-                Assigner.DEFAULT);
+        return withDefaultConfiguration().to(typeDescription);
     }
 
     /**
@@ -244,13 +249,13 @@ public class MethodDelegation implements Implementation.Composable {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate A delegate instance which will be injected by a
-     *                 {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
-     *                 then delegated to this instance.
+     * @param target A delegate instance which will be injected by a
+     *               {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+     *               then delegated to this instance.
      * @return A method delegation implementation to the given instance methods.
      */
-    public static MethodDelegation to(Object delegate) {
-        return to(delegate, MethodGraph.Compiler.DEFAULT);
+    public static MethodDelegation to(Object target) {
+        return withDefaultConfiguration().to(target);
     }
 
     /**
@@ -264,14 +269,14 @@ public class MethodDelegation implements Implementation.Composable {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate            A delegate instance which will be injected by a
+     * @param target              A delegate instance which will be injected by a
      *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
      *                            then delegated to this instance.
      * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
      * @return A method delegation implementation to the given instance methods.
      */
-    public static MethodDelegation to(Object delegate, MethodGraph.Compiler methodGraphCompiler) {
-        return to(delegate, delegate.getClass(), methodGraphCompiler);
+    public static MethodDelegation to(Object target, MethodGraph.Compiler methodGraphCompiler) {
+        return withDefaultConfiguration().to(target, methodGraphCompiler);
     }
 
     /**
@@ -285,14 +290,14 @@ public class MethodDelegation implements Implementation.Composable {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate  A delegate instance which will be injected by a
+     * @param target    A delegate instance which will be injected by a
      *                  {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
      *                  then delegated to this instance.
      * @param fieldName The name of the field for storing the delegate instance.
      * @return A method delegation implementation to the given {@code static} methods.
      */
-    public static MethodDelegation to(Object delegate, String fieldName) {
-        return to(delegate, fieldName, MethodGraph.Compiler.DEFAULT);
+    public static MethodDelegation to(Object target, String fieldName) {
+        return withDefaultConfiguration().to(target, fieldName);
     }
 
     /**
@@ -306,15 +311,15 @@ public class MethodDelegation implements Implementation.Composable {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate            A delegate instance which will be injected by a
+     * @param target              A delegate instance which will be injected by a
      *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
      *                            then delegated to this instance.
      * @param fieldName           The name of the field for storing the delegate instance.
      * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
      * @return A method delegation implementation to the given {@code static} methods.
      */
-    public static MethodDelegation to(Object delegate, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
-        return to(delegate, delegate.getClass(), fieldName, methodGraphCompiler);
+    public static MethodDelegation to(Object target, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
+        return withDefaultConfiguration().to(target, fieldName, methodGraphCompiler);
     }
 
     /**
@@ -328,14 +333,14 @@ public class MethodDelegation implements Implementation.Composable {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate A delegate instance which will be injected by a
-     *                 {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
-     *                 then delegated to this instance.
-     * @param type     The type as which the delegate is treated for resolving its methods.
+     * @param target A delegate instance which will be injected by a
+     *               {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+     *               then delegated to this instance.
+     * @param type   The type as which the delegate is treated for resolving its methods.
      * @return A method delegation implementation to the given instance methods.
      */
-    public static MethodDelegation to(Object delegate, Type type) {
-        return to(delegate, type, MethodGraph.Compiler.DEFAULT);
+    public static MethodDelegation to(Object target, Type type) {
+        return withDefaultConfiguration().to(target, type);
     }
 
     /**
@@ -349,18 +354,15 @@ public class MethodDelegation implements Implementation.Composable {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate            A delegate instance which will be injected by a
+     * @param target              A delegate instance which will be injected by a
      *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
      *                            then delegated to this instance.
      * @param type                The type as which the delegate is treated for resolving its methods.
      * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
      * @return A method delegation implementation to the given instance methods.
      */
-    public static MethodDelegation to(Object delegate, Type type, MethodGraph.Compiler methodGraphCompiler) {
-        return to(delegate,
-                type,
-                String.format("%s$%s", ImplementationDelegate.FIELD_NAME_PREFIX, RandomString.hashOf(delegate.hashCode())),
-                methodGraphCompiler);
+    public static MethodDelegation to(Object target, Type type, MethodGraph.Compiler methodGraphCompiler) {
+        return withDefaultConfiguration().to(target, type, methodGraphCompiler);
     }
 
     /**
@@ -374,15 +376,15 @@ public class MethodDelegation implements Implementation.Composable {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate  A delegate instance which will be injected by a
+     * @param target    A delegate instance which will be injected by a
      *                  {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
      *                  then delegated to this instance.
      * @param type      The type as which the delegate is treated for resolving its methods.
      * @param fieldName The name of the field for storing the delegate instance.
      * @return A method delegation implementation to the given {@code static} methods.
      */
-    public static MethodDelegation to(Object delegate, Type type, String fieldName) {
-        return to(delegate, type, fieldName, MethodGraph.Compiler.DEFAULT);
+    public static MethodDelegation to(Object target, Type type, String fieldName) {
+        return withDefaultConfiguration().to(target, type, fieldName);
     }
 
     /**
@@ -396,7 +398,7 @@ public class MethodDelegation implements Implementation.Composable {
      * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
      * for delegation.
      *
-     * @param delegate            A delegate instance which will be injected by a
+     * @param target              A delegate instance which will be injected by a
      *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
      *                            then delegated to this instance.
      * @param type                The type as which the delegate is treated for resolving its methods.
@@ -404,16 +406,8 @@ public class MethodDelegation implements Implementation.Composable {
      * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
      * @return A method delegation implementation to the given {@code static} methods.
      */
-    public static MethodDelegation to(Object delegate, Type type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
-        TypeDescription.Generic typeDescription = TypeDefinition.Sort.describe(type);
-        if (!typeDescription.asErasure().isInstance(delegate)) {
-            throw new IllegalArgumentException(delegate + " is not an instance of " + type);
-        }
-        return new MethodDelegation(new ImplementationDelegate.ForInstance(delegate, fieldName, typeDescription, methodGraphCompiler),
-                TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
-                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
-                Assigner.DEFAULT);
+    public static MethodDelegation to(Object target, Type type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
+        return withDefaultConfiguration().to(target, type, fieldName, methodGraphCompiler);
     }
 
     /**
@@ -424,7 +418,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return An implementation that creates instances of the given type as its result.
      */
     public static MethodDelegation toConstructor(Class<?> type) {
-        return toConstructor(new TypeDescription.ForLoadedType(type));
+        return withDefaultConfiguration().toConstructor(type);
     }
 
     /**
@@ -435,11 +429,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return An implementation that creates instances of the given type as its result.
      */
     public static MethodDelegation toConstructor(TypeDescription typeDescription) {
-        return new MethodDelegation(ImplementationDelegate.ForConstruction.of(typeDescription),
-                TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
-                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
-                Assigner.DEFAULT);
+        return withDefaultConfiguration().toConstructor(typeDescription);
     }
 
     /**
@@ -450,7 +440,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation that invokes method's on a field's value.
      */
     public static MethodDelegation toField(String name) {
-        return toField(name, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
+        return withDefaultConfiguration().toField(name);
     }
 
     /**
@@ -462,7 +452,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation that invokes method's on a field's value.
      */
     public static MethodDelegation toField(String name, FieldLocator.Factory fieldLocatorFactory) {
-        return toField(name, fieldLocatorFactory, MethodGraph.Compiler.DEFAULT);
+        return withDefaultConfiguration().toField(name, fieldLocatorFactory);
     }
 
     /**
@@ -474,7 +464,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation that invokes method's on a field's value.
      */
     public static MethodDelegation toField(String name, MethodGraph.Compiler methodGraphCompiler) {
-        return toField(name, FieldLocator.ForClassHierarchy.Factory.INSTANCE, methodGraphCompiler);
+        return withDefaultConfiguration().toField(name, methodGraphCompiler);
     }
 
     /**
@@ -487,63 +477,19 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation that invokes method's on a field's value.
      */
     public static MethodDelegation toField(String name, FieldLocator.Factory fieldLocatorFactory, MethodGraph.Compiler methodGraphCompiler) {
-        return new MethodDelegation(new ImplementationDelegate.ForField(name, fieldLocatorFactory, methodGraphCompiler),
+        return withDefaultConfiguration().toField(name, fieldLocatorFactory, methodGraphCompiler);
+    }
+
+    public static WithCustomProperties withDefaultConfiguration() {
+        return new WithCustomProperties(MethodDelegationBinder.AmbiguityResolver.DEFAULT,
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING,
-                MethodDelegationBinder.AmbiguityResolver.DEFAULT,
-                Assigner.DEFAULT);
+                any());
     }
 
-    /**
-     * Defines an parameter binder to be appended to the already defined parameter binders.
-     *
-     * @param parameterBinder The parameter binder to append to the already defined parameter binders.
-     * @return A method delegation implementation that makes use of the given parameter binder.
-     */
-    public MethodDelegation appendParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder) {
-        return new MethodDelegation(implementationDelegate,
-                CompoundList.of(parameterBinders, parameterBinder),
-                terminationHandler,
-                ambiguityResolver,
-                assigner);
-    }
-
-    /**
-     * Defines a number of parameter binders to be appended to be used by this method delegation.
-     *
-     * @param parameterBinder The parameter binders to use by this parameter binders.
-     * @return A method delegation implementation that makes use of the given parameter binders.
-     */
-    public MethodDelegation defineParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
-        return new MethodDelegation(implementationDelegate,
-                Arrays.asList(parameterBinder),
-                terminationHandler,
-                ambiguityResolver,
-                assigner);
-    }
-
-    /**
-     * Defines an ambiguity resolver to be appended to the already defined ambiguity resolver for resolving binding conflicts.
-     *
-     * @param ambiguityResolver The ambiguity resolver to append to the already defined ambiguity resolvers.
-     * @return A method delegation implementation that makes use of the given ambiguity resolver.
-     */
-    public MethodDelegation appendAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
-        return defineAmbiguityResolver(new MethodDelegationBinder.AmbiguityResolver.Chain(this.ambiguityResolver, ambiguityResolver));
-    }
-
-    /**
-     * Defines an ambiguity resolver to be used for resolving binding conflicts.
-     *
-     * @param ambiguityResolver The ambiguity resolver to use exclusively.
-     * @return A method delegation implementation that makes use of the given ambiguity resolver.
-     */
-    public MethodDelegation defineAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver... ambiguityResolver) {
-        return new MethodDelegation(implementationDelegate,
-                parameterBinders,
-                terminationHandler,
-                new MethodDelegationBinder.AmbiguityResolver.Chain(ambiguityResolver),
-                assigner);
+    public static WithCustomProperties withEmptyConfiguration() {
+        return new WithCustomProperties(MethodDelegationBinder.AmbiguityResolver.NoOp.INSTANCE,
+                Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList(),
+                any());
     }
 
     /**
@@ -555,22 +501,8 @@ public class MethodDelegation implements Implementation.Composable {
     public Implementation.Composable withAssigner(Assigner assigner) {
         return new MethodDelegation(implementationDelegate,
                 parameterBinders,
-                terminationHandler,
                 ambiguityResolver,
-                assigner);
-    }
-
-    /**
-     * Applies a filter to target methods that are eligible for delegation.
-     *
-     * @param methodMatcher A filter where only methods that match the filter are considered for delegation.
-     * @return A method delegation with the filter applied.
-     */
-    public MethodDelegation filter(ElementMatcher<? super MethodDescription> methodMatcher) {
-        return new MethodDelegation(implementationDelegate.filter(methodMatcher),
-                parameterBinders,
                 terminationHandler,
-                ambiguityResolver,
                 assigner);
     }
 
@@ -578,8 +510,8 @@ public class MethodDelegation implements Implementation.Composable {
     public Implementation andThen(Implementation implementation) {
         return new Compound(new MethodDelegation(implementationDelegate,
                 parameterBinders,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.DROPPING,
                 ambiguityResolver,
+                TargetMethodAnnotationDrivenBinder.TerminationHandler.DROPPING,
                 assigner), implementation);
     }
 
@@ -590,19 +522,12 @@ public class MethodDelegation implements Implementation.Composable {
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        ImplementationDelegate.Resolution resolution = implementationDelegate.resolve(implementationTarget.getInstrumentedType());
-        MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(parameterBinders);
-        List<MethodDelegationBinder.Record> records = new ArrayList<MethodDelegationBinder.Record>(resolution.getCandidates().size());
-        for (MethodDescription candidate : resolution.getCandidates()) {
-            records.add(methodDelegationBinder.compile(candidate));
-        }
+        ImplementationDelegate.Compiled compiled = implementationDelegate.compile(implementationTarget.getInstrumentedType());
         return new Appender(implementationTarget,
-                new MethodDelegationBinder.Processor(records, ambiguityResolver),
+                new MethodDelegationBinder.Processor(compiled.getRecords(), ambiguityResolver),
                 terminationHandler,
-                resolution.getMethodInvoker(),
                 assigner,
-                resolution.getPreparation(),
-                resolution.isAllowStaticMethod());
+                compiled);
     }
 
     @Override
@@ -648,181 +573,114 @@ public class MethodDelegation implements Implementation.Composable {
          */
         String FIELD_NAME_PREFIX = "delegate";
 
-        /**
-         * Filters all methods that do not fit the supplied matcher from delegation.
-         *
-         * @param matcher The matcher to apply.
-         * @return A new version of this implementation delegate that does not apply methods that do not fit the supplied matcher.
-         */
-        ImplementationDelegate filter(ElementMatcher<? super MethodDescription> matcher);
+        Compiled compile(TypeDescription instrumentedType);
 
-        /**
-         * Resolves this implementation delegate.
-         *
-         * @param instrumentedType The instrumented type.
-         * @return A resolution of this delegate for the instrumented type.
-         */
-        Resolution resolve(TypeDescription instrumentedType);
+        interface Compiled {
 
-        /**
-         * A resolution of an implementation delegate for a given instrumented type.
-         */
-        class Resolution {
+            StackManipulation prepare(MethodDescription instrumentedMethod);
 
-            /**
-             * A list of all candidate methods.
-             */
-            private final MethodList<?> candidates;
+            MethodDelegationBinder.MethodInvoker invoke();
 
-            /**
-             * A stack manipulation that prepares the delegation before loading its arguments.
-             */
-            private final StackManipulation preparation;
+            List<MethodDelegationBinder.Record> getRecords();
 
-            /**
-             * A method invoker for calling the delegation method.
-             */
-            private final MethodDelegationBinder.MethodInvoker methodInvoker;
+            class ForStaticCall implements Compiled {
 
-            /**
-             * {@code true} if this resolution permits delegation from static methods.
-             */
-            private final boolean allowStaticMethods;
+                private final List<MethodDelegationBinder.Record> records;
 
-            /**
-             * Creates a new resolution.
-             *
-             * @param candidates A list of all candidate methods.
-             */
-            protected Resolution(MethodList<?> candidates) {
-                this(candidates, StackManipulation.Trivial.INSTANCE, MethodDelegationBinder.MethodInvoker.Simple.INSTANCE);
+                protected ForStaticCall(List<MethodDelegationBinder.Record> records) {
+                    this.records = records;
+                }
+
+                @Override
+                public StackManipulation prepare(MethodDescription instrumentedMethod) {
+                    return StackManipulation.Trivial.INSTANCE;
+                }
+
+                @Override
+                public MethodDelegationBinder.MethodInvoker invoke() {
+                    return MethodDelegationBinder.MethodInvoker.Simple.INSTANCE;
+                }
+
+                @Override
+                public List<MethodDelegationBinder.Record> getRecords() {
+                    return records;
+                }
             }
 
-            /**
-             * Creates a new resolution.
-             *
-             * @param candidates    A list of all candidate methods.
-             * @param preparation   A stack manipulation that prepares the delegation before loading its arguments.
-             * @param methodInvoker A method invoker for calling the delegation method.
-             */
-            protected Resolution(MethodList<?> candidates,
-                                 StackManipulation preparation,
-                                 MethodDelegationBinder.MethodInvoker methodInvoker) {
-                this(candidates, preparation, methodInvoker, true);
+            class ForField implements Compiled {
+
+                private final FieldDescription fieldDescription;
+
+                private final List<MethodDelegationBinder.Record> records;
+
+                protected ForField(FieldDescription fieldDescription, List<MethodDelegationBinder.Record> records) {
+                    this.fieldDescription = fieldDescription;
+                    this.records = records;
+                }
+
+                @Override
+                public StackManipulation prepare(MethodDescription instrumentedMethod) {
+                    if (instrumentedMethod.isStatic() && !fieldDescription.isStatic()) {
+                        throw new IllegalStateException();
+                    }
+                    return new StackManipulation.Compound(fieldDescription.isStatic()
+                            ? StackManipulation.Trivial.INSTANCE
+                            : MethodVariableAccess.loadThis(), FieldAccess.forField(fieldDescription).read());
+                }
+
+                @Override
+                public MethodDelegationBinder.MethodInvoker invoke() {
+                    return new MethodDelegationBinder.MethodInvoker.Virtual(fieldDescription.getType().asErasure());
+                }
+
+                @Override
+                public List<MethodDelegationBinder.Record> getRecords() {
+                    return records;
+                }
             }
 
-            /**
-             * Creates a new resolution.
-             *
-             * @param candidates         A list of all candidate methods.
-             * @param preparation        A stack manipulation that prepares the delegation before loading its arguments.
-             * @param methodInvoker      A method invoker for calling the delegation method.
-             * @param allowStaticMethods {@code true} if this resolution permits delegation from static methods.
-             */
-            protected Resolution(MethodList<?> candidates,
-                                 StackManipulation preparation,
-                                 MethodDelegationBinder.MethodInvoker methodInvoker,
-                                 boolean allowStaticMethods) {
-                this.candidates = candidates;
-                this.methodInvoker = methodInvoker;
-                this.preparation = preparation;
-                this.allowStaticMethods = allowStaticMethods;
-            }
+            class ForConstruction implements Compiled {
 
-            /**
-             * Returns a list of all candidate methods.
-             *
-             * @return A list of all candidate methods.
-             */
-            protected MethodList<?> getCandidates() {
-                return candidates;
-            }
+                private final TypeDescription typeDescription;
 
-            /**
-             * Return a stack manipulation that prepares the delegation before loading its arguments.
-             *
-             * @return A stack manipulation that prepares the delegation before loading its arguments.
-             */
-            protected StackManipulation getPreparation() {
-                return preparation;
-            }
+                private final List<MethodDelegationBinder.Record> records;
 
-            /**
-             * Return a method invoker for calling the delegation method.
-             *
-             * @return A method invoker for calling the delegation method.
-             */
-            protected MethodDelegationBinder.MethodInvoker getMethodInvoker() {
-                return methodInvoker;
-            }
+                protected ForConstruction(TypeDescription typeDescription, List<MethodDelegationBinder.Record> records) {
+                    this.typeDescription = typeDescription;
+                    this.records = records;
+                }
 
-            /**
-             * Returns {@code true} if this resolution permits delegation from static methods.
-             *
-             * @return {@code true} if this resolution permits delegation from static methods.
-             */
-            protected boolean isAllowStaticMethod() {
-                return allowStaticMethods;
-            }
+                @Override
+                public StackManipulation prepare(MethodDescription instrumentedMethod) {
+                    return new StackManipulation.Compound(TypeCreation.of(typeDescription), Duplication.SINGLE);
+                }
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Resolution that = (Resolution) object;
-                return allowStaticMethods == that.allowStaticMethods
-                        && candidates.equals(that.candidates)
-                        && preparation.equals(that.preparation)
-                        && methodInvoker.equals(that.methodInvoker);
-            }
+                @Override
+                public MethodDelegationBinder.MethodInvoker invoke() {
+                    return MethodDelegationBinder.MethodInvoker.Simple.INSTANCE;
+                }
 
-            @Override
-            public int hashCode() {
-                int result = candidates.hashCode();
-                result = 31 * result + preparation.hashCode();
-                result = 31 * result + methodInvoker.hashCode();
-                result = 31 * result + (allowStaticMethods ? 1 : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegation.ImplementationDelegate.Resolution{" +
-                        "candidates=" + candidates +
-                        ", preparation=" + preparation +
-                        ", methodInvoker=" + methodInvoker +
-                        ", allowStaticMethods=" + allowStaticMethods +
-                        '}';
+                @Override
+                public List<MethodDelegationBinder.Record> getRecords() {
+                    return records;
+                }
             }
         }
 
-        /**
-         * An implementation delegate for invoking a static method.
-         */
         class ForStaticMethod implements ImplementationDelegate {
 
-            /**
-             * The methods to consider.
-             */
-            private final MethodList<?> candidates;
+            private final List<MethodDelegationBinder.Record> records;
 
-            /**
-             * Creates a new implementation delegate for static methods.
-             *
-             * @param candidates The methods to consider.
-             */
-            protected ForStaticMethod(MethodList<?> candidates) {
-                this.candidates = candidates;
+            protected ForStaticMethod(List<MethodDelegationBinder.Record> records) {
+                this.records = records;
             }
 
-            /**
-             * Creates a new implementation delegate for the static methods of a given type.
-             *
-             * @param typeDescription The type to consider.
-             * @return An appropriate implementation delegate.
-             */
-            protected static ImplementationDelegate of(TypeDescription typeDescription) {
-                return new ForStaticMethod(typeDescription.getDeclaredMethods().filter(isStatic()));
+            protected static ImplementationDelegate of(MethodList<?> methods, MethodDelegationBinder methodDelegationBinder) {
+                List<MethodDelegationBinder.Record> records = new ArrayList<MethodDelegationBinder.Record>(methods.size());
+                for (MethodDescription methodDescription : methods) {
+                    records.add(methodDelegationBinder.compile(methodDescription));
+                }
+                return new ForStaticMethod(records);
             }
 
             @Override
@@ -831,90 +689,33 @@ public class MethodDelegation implements Implementation.Composable {
             }
 
             @Override
-            public ImplementationDelegate filter(ElementMatcher<? super MethodDescription> matcher) {
-                return new ForStaticMethod(candidates.filter(matcher));
-            }
-
-            @Override
-            public Resolution resolve(TypeDescription instrumentedType) {
-                return new Resolution(candidates.filter(isAccessibleTo(instrumentedType)));
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForStaticMethod that = (ForStaticMethod) object;
-                return candidates.equals(that.candidates);
-            }
-
-            @Override
-            public int hashCode() {
-                return candidates.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegation.ImplementationDelegate.ForStaticMethod{" +
-                        "candidates=" + candidates +
-                        '}';
+            public ImplementationDelegate.Compiled compile(TypeDescription instrumentedType) {
+                return new Compiled.ForStaticCall(records); // TODO: Filter invisible
             }
         }
 
-        /**
-         * An implementation delegate for loading a delegate from a field.
-         */
         class ForField implements ImplementationDelegate {
 
-            /**
-             * A matcher for filtering the methods of the given instance.
-             */
-            private final ElementMatcher<? super MethodDescription> matcher;
-
-            /**
-             * The name of the field for holding the delegate.
-             */
             private final String fieldName;
 
-            /**
-             * The field locator factory to use.
-             */
             private final FieldLocator.Factory fieldLocatorFactory;
 
-            /**
-             * The method graph compiler to use.
-             */
             private final MethodGraph.Compiler methodGraphCompiler;
 
-            /**
-             * Creates an implementation delegate for delegating to a field's value.
-             *
-             * @param fieldName           The name of the field for holding the delegate.
-             * @param fieldLocatorFactory The field locator factory to use.
-             * @param methodGraphCompiler The method graph compiler to use.
-             */
+            private final List<? extends TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
+
+            private final ElementMatcher<? super MethodDescription> matcher;
+
             protected ForField(String fieldName,
                                FieldLocator.Factory fieldLocatorFactory,
-                               MethodGraph.Compiler methodGraphCompiler) {
-                this(any(), fieldName, fieldLocatorFactory, methodGraphCompiler);
-            }
-
-            /**
-             * Creates an implementation delegate for delegating to a field's value.
-             *
-             * @param matcher             A matcher for filtering the methods of the given instance.
-             * @param fieldName           The name of the field for holding the delegate.
-             * @param fieldLocatorFactory The field locator factory to use.
-             * @param methodGraphCompiler The method graph compiler to use.
-             */
-            private ForField(ElementMatcher<? super MethodDescription> matcher,
-                             String fieldName,
-                             FieldLocator.Factory fieldLocatorFactory,
-                             MethodGraph.Compiler methodGraphCompiler) {
-                this.matcher = matcher;
+                               MethodGraph.Compiler methodGraphCompiler,
+                               List<? extends TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
+                               ElementMatcher<? super MethodDescription> matcher) {
                 this.fieldName = fieldName;
                 this.fieldLocatorFactory = fieldLocatorFactory;
                 this.methodGraphCompiler = methodGraphCompiler;
+                this.parameterBinders = parameterBinders;
+                this.matcher = matcher;
             }
 
             @Override
@@ -923,220 +724,103 @@ public class MethodDelegation implements Implementation.Composable {
             }
 
             @Override
-            public ImplementationDelegate filter(ElementMatcher<? super MethodDescription> matcher) {
-                return new ForField(new ElementMatcher.Junction.Conjunction<MethodDescription>(this.matcher, matcher),
-                        fieldName,
-                        fieldLocatorFactory,
-                        methodGraphCompiler);
-            }
-
-            @Override
-            public Resolution resolve(TypeDescription instrumentedType) {
+            public Compiled compile(TypeDescription instrumentedType) {
                 FieldLocator.Resolution resolution = fieldLocatorFactory.make(instrumentedType).locate(fieldName);
                 if (!resolution.isResolved()) {
-                    throw new IllegalStateException("Could not locate field '" + fieldName + "' for " + instrumentedType);
+                    throw new IllegalStateException();
                 } else if (!resolution.getField().getType().asErasure().isVisibleTo(instrumentedType)) {
-                    throw new IllegalStateException(resolution.getField() + " is not visible to " + instrumentedType);
+                    throw new IllegalStateException();
+                } else {
+                    MethodList<?> candidates = methodGraphCompiler.compile(resolution.getField().getType(), instrumentedType)
+                            .listNodes()
+                            .asMethodList()
+                            .filter(matcher);
+                    List<MethodDelegationBinder.Record> records = new ArrayList<MethodDelegationBinder.Record>(candidates.size());
+                    MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(parameterBinders);
+                    for (MethodDescription candidate : candidates) {
+                        records.add(methodDelegationBinder.compile(candidate));
+                    }
+                    return new Compiled.ForField(resolution.getField(), records);
                 }
-                return new Resolution(methodGraphCompiler.compile(resolution.getField().getType(), instrumentedType).listNodes().asMethodList().filter(matcher),
-                        new StackManipulation.Compound(resolution.getField().isStatic()
-                                ? StackManipulation.Trivial.INSTANCE
-                                : MethodVariableAccess.loadThis(), FieldAccess.forField(resolution.getField()).read()),
-                        new MethodDelegationBinder.MethodInvoker.Virtual(resolution.getField().getType().asErasure()),
-                        resolution.getField().isStatic());
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForField forField = (ForField) object;
-                return matcher.equals(forField.matcher)
-                        && fieldName.equals(forField.fieldName)
-                        && fieldLocatorFactory.equals(forField.fieldLocatorFactory)
-                        && methodGraphCompiler.equals(forField.methodGraphCompiler);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = matcher.hashCode();
-                result = 31 * result + fieldName.hashCode();
-                result = 31 * result + fieldLocatorFactory.hashCode();
-                result = 31 * result + methodGraphCompiler.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegation.ImplementationDelegate.ForField{" +
-                        "matcher=" + matcher +
-                        ", fieldName='" + fieldName + '\'' +
-                        ", fieldLocatorFactory=" + fieldLocatorFactory +
-                        ", methodGraphCompiler=" + methodGraphCompiler +
-                        '}';
             }
         }
 
-        /**
-         * An implementation delegate that defines a static field to contain a given instance.
-         */
         class ForInstance implements ImplementationDelegate {
 
-            /**
-             * A matcher for filtering the methods of the given instance.
-             */
-            private final ElementMatcher<? super MethodDescription> matcher;
+            private final Object target;
 
-            /**
-             * The delegate object.
-             */
-            private final Object delegate;
-
-            /**
-             * The name of the field for holding the delegate.
-             */
             private final String fieldName;
 
-            /**
-             * The type of the field to define.
-             */
             private final TypeDescription.Generic fieldType;
 
-            /**
-             * The method graph compiler to use.
-             */
             private final MethodGraph.Compiler methodGraphCompiler;
 
-            /**
-             * Creates a new implementation delegate for defining a static field to contain a given instance.
-             *
-             * @param delegate            The delegate object.
-             * @param fieldName           The name of the field for holding the delegate.
-             * @param fieldType           The type of the field to define.
-             * @param methodGraphCompiler The method graph compiler to use.
-             */
-            protected ForInstance(Object delegate,
+            private final List<? extends TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
+
+            private final ElementMatcher<? super MethodDescription> matcher;
+
+            protected ForInstance(Object target,
                                   String fieldName,
                                   TypeDescription.Generic fieldType,
-                                  MethodGraph.Compiler methodGraphCompiler) {
-                this(any(), delegate, fieldName, fieldType, methodGraphCompiler);
-            }
-
-            /**
-             * Creates a new implementation delegate for defining a static field to contain a given instance.
-             *
-             * @param matcher             A matcher for filtering the methods of the given instance.
-             * @param delegate            The delegate object.
-             * @param fieldName           The name of the field for holding the delegate.
-             * @param fieldType           The type of the field to define.
-             * @param methodGraphCompiler The method graph compiler to use.
-             */
-            private ForInstance(ElementMatcher<? super MethodDescription> matcher,
-                                Object delegate,
-                                String fieldName,
-                                TypeDescription.Generic fieldType,
-                                MethodGraph.Compiler methodGraphCompiler) {
-                this.matcher = matcher;
-                this.delegate = delegate;
+                                  MethodGraph.Compiler methodGraphCompiler,
+                                  List<? extends TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
+                                  ElementMatcher<? super MethodDescription> matcher) {
+                this.target = target;
                 this.fieldName = fieldName;
                 this.fieldType = fieldType;
                 this.methodGraphCompiler = methodGraphCompiler;
+                this.parameterBinders = parameterBinders;
+                this.matcher = matcher;
             }
 
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNTHETIC, fieldType))
-                        .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, delegate));
+                        .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
             }
 
             @Override
-            public ImplementationDelegate filter(ElementMatcher<? super MethodDescription> matcher) {
-                return new ForInstance(new ElementMatcher.Junction.Conjunction<MethodDescription>(this.matcher, matcher),
-                        delegate,
-                        fieldName,
-                        fieldType,
-                        methodGraphCompiler);
-            }
-
-            @Override
-            public Resolution resolve(TypeDescription instrumentedType) {
+            public Compiled compile(TypeDescription instrumentedType) {
                 if (!fieldType.asErasure().isVisibleTo(instrumentedType)) {
-                    throw new IllegalStateException(fieldType + " is not visible to " + instrumentedType);
+                    throw new IllegalStateException();
+                } else {
+                    FieldDescription fieldDescription = instrumentedType.getDeclaredFields()
+                            .filter(named(fieldName).and(fieldType(fieldType.asErasure())))
+                            .getOnly();
+                    MethodList<?> candidates = methodGraphCompiler.compile(fieldDescription.getType(), instrumentedType)
+                            .listNodes()
+                            .asMethodList()
+                            .filter(matcher);
+                    List<MethodDelegationBinder.Record> records = new ArrayList<MethodDelegationBinder.Record>(candidates.size());
+                    MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(parameterBinders);
+                    for (MethodDescription candidate : candidates) {
+                        records.add(methodDelegationBinder.compile(candidate));
+                    }
+                    return new Compiled.ForField(fieldDescription, records);
                 }
-                return new Resolution(methodGraphCompiler.compile(fieldType, instrumentedType).listNodes().asMethodList().filter(matcher),
-                        FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName).and(genericFieldType(fieldType))).getOnly()).read(),
-                        new MethodDelegationBinder.MethodInvoker.Virtual(fieldType.asErasure()));
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForInstance that = (ForInstance) object;
-                return matcher.equals(that.matcher)
-                        && delegate.equals(that.delegate)
-                        && fieldName.equals(that.fieldName)
-                        && fieldType.equals(that.fieldType)
-                        && methodGraphCompiler.equals(that.methodGraphCompiler);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = matcher.hashCode();
-                result = 31 * result + delegate.hashCode();
-                result = 31 * result + fieldName.hashCode();
-                result = 31 * result + fieldType.hashCode();
-                result = 31 * result + methodGraphCompiler.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegation.ImplementationDelegate.ForInstance{" +
-                        "matcher=" + matcher +
-                        ", delegate=" + delegate +
-                        ", fieldName='" + fieldName + '\'' +
-                        ", fieldType=" + fieldType +
-                        ", methodGraphCompiler=" + methodGraphCompiler +
-                        '}';
             }
         }
 
-        /**
-         * An implementation delegate that invokes a constructor.
-         */
         class ForConstruction implements ImplementationDelegate {
 
-            /**
-             * The type that declares the constructors.
-             */
             private final TypeDescription typeDescription;
 
-            /**
-             * The remaining candidate constructors.
-             */
-            private final MethodList<?> candidates;
+            private final List<MethodDelegationBinder.Record> records;
 
-            /**
-             * Creates an implementation delegate for invoking a constructor.
-             *
-             * @param typeDescription The type that declares the constructors.
-             * @param candidates      The remaining candidate constructors.
-             */
-            protected ForConstruction(TypeDescription typeDescription, MethodList<?> candidates) {
+            protected ForConstruction(TypeDescription typeDescription, List<MethodDelegationBinder.Record> records) {
                 this.typeDescription = typeDescription;
-                this.candidates = candidates;
+                this.records = records;
             }
 
-            /**
-             * Creates an implementation delegate for the constructors of a type.
-             *
-             * @param typeDescription The type for which to resolve the constructors.
-             * @return An appropriate implementation delegate.
-             */
-            protected static ImplementationDelegate of(TypeDescription typeDescription) {
-                return new ForConstruction(typeDescription, typeDescription.getDeclaredMethods().filter(isConstructor()));
+            protected static ImplementationDelegate of(TypeDescription typeDescription,
+                                                       MethodList<?> methods,
+                                                       MethodDelegationBinder methodDelegationBinder) {
+                List<MethodDelegationBinder.Record> records = new ArrayList<MethodDelegationBinder.Record>(methods.size());
+                for (MethodDescription methodDescription : methods) {
+                    records.add(methodDelegationBinder.compile(methodDescription));
+                }
+                return new ForConstruction(typeDescription, records);
             }
 
             @Override
@@ -1145,38 +829,8 @@ public class MethodDelegation implements Implementation.Composable {
             }
 
             @Override
-            public ImplementationDelegate filter(ElementMatcher<? super MethodDescription> matcher) {
-                return new ForConstruction(typeDescription, candidates.filter(matcher));
-            }
-
-            @Override
-            public Resolution resolve(TypeDescription instrumentedType) {
-                return new Resolution(candidates.filter(isAccessibleTo(instrumentedType)),
-                        new StackManipulation.Compound(TypeCreation.of(typeDescription), Duplication.SINGLE),
-                        MethodDelegationBinder.MethodInvoker.Simple.INSTANCE);
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForConstruction that = (ForConstruction) object;
-                return typeDescription.equals(that.typeDescription) && candidates.equals(that.candidates);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = typeDescription.hashCode();
-                result = 31 * result + candidates.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegation.ImplementationDelegate.ForConstruction{" +
-                        "typeDescription=" + typeDescription +
-                        ", candidates=" + candidates +
-                        '}';
+            public Compiled compile(TypeDescription instrumentedType) {
+                return new Compiled.ForConstruction(typeDescription, records);
             }
         }
     }
@@ -1202,103 +856,350 @@ public class MethodDelegation implements Implementation.Composable {
         private final MethodDelegationBinder.TerminationHandler terminationHandler;
 
         /**
-         * An invoker for a method delegation binder.
-         */
-        private final MethodDelegationBinder.MethodInvoker methodInvoker;
-
-        /**
          * The assigner to use.
          */
         private final Assigner assigner;
 
-        /**
-         * The stack manipulation that is responsible for loading a potential target instance onto the stack
-         * on which the target method is invoked.
-         */
-        private final StackManipulation preparingStackAssignment;
+        private final ImplementationDelegate.Compiled compiled;
 
-        /**
-         * {@code true} if this appender permits delegation from static methods.
-         */
-        private final boolean allowStaticMethods;
-
-        /**
-         * Creates an appender for a  method delegation.
-         *
-         * @param implementationTarget     The implementation target of this implementation.
-         * @param processor                The method delegation binder processor which is responsible for implementing the method delegation.
-         * @param terminationHandler       A termination handler for a method delegation binder.
-         * @param methodInvoker            An invoker for a method delegation binder.
-         * @param assigner                 The assigner to use.
-         * @param preparingStackAssignment The stack manipulation that is responsible for loading a potential target instance onto the stack
-         *                                 on which the target method is invoked.
-         * @param allowStaticMethods       {@code true} if this appender permits delegation from static methods.
-         */
         protected Appender(Target implementationTarget,
                            MethodDelegationBinder.Processor processor,
                            MethodDelegationBinder.TerminationHandler terminationHandler,
-                           MethodDelegationBinder.MethodInvoker methodInvoker,
                            Assigner assigner,
-                           StackManipulation preparingStackAssignment,
-                           boolean allowStaticMethods) {
+                           ImplementationDelegate.Compiled compiled) {
             this.implementationTarget = implementationTarget;
             this.processor = processor;
             this.terminationHandler = terminationHandler;
-            this.methodInvoker = methodInvoker;
             this.assigner = assigner;
-            this.preparingStackAssignment = preparingStackAssignment;
-            this.allowStaticMethods = allowStaticMethods;
+            this.compiled = compiled;
         }
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            if (!allowStaticMethods && instrumentedMethod.isStatic()) {
-                throw new IllegalStateException("Cannot read non-static delegation property from static method " + instrumentedMethod);
-            }
             StackManipulation.Size stackSize = new StackManipulation.Compound(
-                    preparingStackAssignment,
-                    processor.bind(implementationTarget, instrumentedMethod, terminationHandler, methodInvoker, assigner)
+                    compiled.prepare(instrumentedMethod),
+                    processor.bind(implementationTarget, instrumentedMethod, terminationHandler, compiled.invoke(), assigner)
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
+    }
 
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            Appender appender = (Appender) object;
-            return allowStaticMethods == appender.allowStaticMethods
-                    && implementationTarget.equals(appender.implementationTarget)
-                    && processor.equals(appender.processor)
-                    && terminationHandler.equals(appender.terminationHandler)
-                    && methodInvoker.equals(appender.methodInvoker)
-                    && assigner.equals(appender.assigner)
-                    && preparingStackAssignment.equals(appender.preparingStackAssignment);
+    public static class WithCustomProperties {
+
+        private final MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
+
+        private final List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
+
+        private final ElementMatcher<? super MethodDescription> matcher;
+
+        protected WithCustomProperties(MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
+                                       List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
+                                       ElementMatcher<? super MethodDescription> matcher) {
+            this.ambiguityResolver = ambiguityResolver;
+            this.parameterBinders = parameterBinders;
+            this.matcher = matcher;
         }
 
-        @Override
-        public int hashCode() {
-            int result = implementationTarget.hashCode();
-            result = 31 * result + processor.hashCode();
-            result = 31 * result + terminationHandler.hashCode();
-            result = 31 * result + methodInvoker.hashCode();
-            result = 31 * result + assigner.hashCode();
-            result = 31 * result + preparingStackAssignment.hashCode();
-            result = 31 * result + (allowStaticMethods ? 1 : 0);
-            return result;
+        public WithCustomProperties withResolvers(MethodDelegationBinder.AmbiguityResolver... ambiguityResolver) {
+            return withResolvers(Arrays.asList(ambiguityResolver));
         }
 
-        @Override
-        public String toString() {
-            return "MethodDelegation.Appender{" +
-                    "implementationTarget=" + implementationTarget +
-                    ", processor=" + processor +
-                    ", terminationHandler=" + terminationHandler +
-                    ", methodInvoker=" + methodInvoker +
-                    ", assigner=" + assigner +
-                    ", preparingStackAssignment=" + preparingStackAssignment +
-                    ", allowStaticMethods=" + allowStaticMethods +
-                    '}';
+        public WithCustomProperties withResolvers(List<? extends MethodDelegationBinder.AmbiguityResolver> ambiguityResolvers) {
+            return new WithCustomProperties(new MethodDelegationBinder.AmbiguityResolver.Compound(CompoundList.of(this.ambiguityResolver, ambiguityResolvers)), parameterBinders, matcher);
+        }
+
+        public WithCustomProperties withBinders(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
+            return withBinders(Arrays.asList(parameterBinder));
+        }
+
+        public WithCustomProperties withBinders(List<? extends TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinder) {
+            return new WithCustomProperties(ambiguityResolver, CompoundList.of(this.parameterBinders, parameterBinder), matcher);
+        }
+
+        public WithCustomProperties filter(ElementMatcher<? super MethodDescription> matcher) {
+            return new WithCustomProperties(ambiguityResolver, parameterBinders, new ElementMatcher.Junction.Conjunction<MethodDescription>(this.matcher, matcher));
+        }
+
+        /**
+         * Creates an implementation where only {@code static} methods of the given type are considered as binding targets.
+         *
+         * @param type The type containing the {@code static} methods for binding.
+         * @return A method delegation implementation to the given {@code static} methods.
+         */
+        public MethodDelegation to(Class<?> type) {
+            return to(new TypeDescription.ForLoadedType(type));
+        }
+
+        /**
+         * Creates an implementation where only {@code static} methods of the given type are considered as binding targets.
+         *
+         * @param typeDescription The type containing the {@code static} methods for binding.
+         * @return A method delegation implementation to the given {@code static} methods.
+         */
+        public MethodDelegation to(TypeDescription typeDescription) {
+            if (typeDescription.isArray()) {
+                throw new IllegalArgumentException("Cannot delegate to array " + typeDescription);
+            } else if (typeDescription.isPrimitive()) {
+                throw new IllegalArgumentException("Cannot delegate to primitive " + typeDescription);
+            }
+            return new MethodDelegation(ImplementationDelegate.ForStaticMethod.of(typeDescription.getDeclaredMethods().filter(isStatic().and(matcher)), TargetMethodAnnotationDrivenBinder.of(parameterBinders)),
+                    TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
+                    MethodDelegationBinder.AmbiguityResolver.DEFAULT);
+        }
+
+        /**
+         * Creates an implementation where only instance methods of the given object are considered as binding targets.
+         * This method will never bind to constructors but will consider methods that are defined in super types. Note
+         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+         * selection by explicitly selecting methods with calling the
+         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+         * method on the returned method delegation as for example:
+         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+         * for delegation.
+         *
+         * @param target A delegate instance which will be injected by a
+         *               {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+         *               then delegated to this instance.
+         * @return A method delegation implementation to the given instance methods.
+         */
+        public MethodDelegation to(Object target) {
+            return to(target, MethodGraph.Compiler.DEFAULT);
+        }
+
+        /**
+         * Creates an implementation where only instance methods of the given object are considered as binding targets.
+         * This method will never bind to constructors but will consider methods that are defined in super types. Note
+         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+         * selection by explicitly selecting methods with calling the
+         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+         * method on the returned method delegation as for example:
+         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+         * for delegation.
+         *
+         * @param target              A delegate instance which will be injected by a
+         *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+         *                            then delegated to this instance.
+         * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+         * @return A method delegation implementation to the given instance methods.
+         */
+        public MethodDelegation to(Object target, MethodGraph.Compiler methodGraphCompiler) {
+            return to(target, target.getClass(), methodGraphCompiler);
+        }
+
+        /**
+         * Creates an implementation where only instance methods of the given object are considered as binding targets.
+         * This method will never bind to constructors but will consider methods that are defined in super types. Note
+         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+         * selection by explicitly selecting methods with calling the
+         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+         * method on the returned method delegation as for example:
+         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+         * for delegation.
+         *
+         * @param target    A delegate instance which will be injected by a
+         *                  {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+         *                  then delegated to this instance.
+         * @param fieldName The name of the field for storing the delegate instance.
+         * @return A method delegation implementation to the given {@code static} methods.
+         */
+        public MethodDelegation to(Object target, String fieldName) {
+            return to(target, fieldName, MethodGraph.Compiler.DEFAULT);
+        }
+
+        /**
+         * Creates an implementation where only instance methods of the given object are considered as binding targets.
+         * This method will never bind to constructors but will consider methods that are defined in super types. Note
+         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+         * selection by explicitly selecting methods with calling the
+         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+         * method on the returned method delegation as for example:
+         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+         * for delegation.
+         *
+         * @param target              A delegate instance which will be injected by a
+         *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+         *                            then delegated to this instance.
+         * @param fieldName           The name of the field for storing the delegate instance.
+         * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+         * @return A method delegation implementation to the given {@code static} methods.
+         */
+        public MethodDelegation to(Object target, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
+            return to(target, target.getClass(), fieldName, methodGraphCompiler);
+        }
+
+        /**
+         * Creates an implementation where only instance methods of the given object are considered as binding targets.
+         * This method will never bind to constructors but will consider methods that are defined in super types. Note
+         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+         * selection by explicitly selecting methods with calling the
+         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+         * method on the returned method delegation as for example:
+         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+         * for delegation.
+         *
+         * @param target A delegate instance which will be injected by a
+         *               {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+         *               then delegated to this instance.
+         * @param type   The type as which the delegate is treated for resolving its methods.
+         * @return A method delegation implementation to the given instance methods.
+         */
+        public MethodDelegation to(Object target, Type type) {
+            return to(target, type, MethodGraph.Compiler.DEFAULT);
+        }
+
+        /**
+         * Creates an implementation where only instance methods of the given object are considered as binding targets.
+         * This method will never bind to constructors but will consider methods that are defined in super types. Note
+         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+         * selection by explicitly selecting methods with calling the
+         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+         * method on the returned method delegation as for example:
+         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+         * for delegation.
+         *
+         * @param target              A delegate instance which will be injected by a
+         *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+         *                            then delegated to this instance.
+         * @param type                The type as which the delegate is treated for resolving its methods.
+         * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+         * @return A method delegation implementation to the given instance methods.
+         */
+        public MethodDelegation to(Object target, Type type, MethodGraph.Compiler methodGraphCompiler) {
+            return to(target,
+                    type,
+                    String.format("%s$%s", ImplementationDelegate.FIELD_NAME_PREFIX, RandomString.hashOf(target.hashCode())),
+                    methodGraphCompiler);
+        }
+
+        /**
+         * Creates an implementation where only instance methods of the given object are considered as binding targets.
+         * This method will never bind to constructors but will consider methods that are defined in super types. Note
+         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+         * selection by explicitly selecting methods with calling the
+         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+         * method on the returned method delegation as for example:
+         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+         * for delegation.
+         *
+         * @param target    A delegate instance which will be injected by a
+         *                  {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+         *                  then delegated to this instance.
+         * @param type      The type as which the delegate is treated for resolving its methods.
+         * @param fieldName The name of the field for storing the delegate instance.
+         * @return A method delegation implementation to the given {@code static} methods.
+         */
+        public MethodDelegation to(Object target, Type type, String fieldName) {
+            return to(target, type, fieldName, MethodGraph.Compiler.DEFAULT);
+        }
+
+        /**
+         * Creates an implementation where only instance methods of the given object are considered as binding targets.
+         * This method will never bind to constructors but will consider methods that are defined in super types. Note
+         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
+         * selection by explicitly selecting methods with calling the
+         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
+         * method on the returned method delegation as for example:
+         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
+         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
+         * for delegation.
+         *
+         * @param target              A delegate instance which will be injected by a
+         *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
+         *                            then delegated to this instance.
+         * @param type                The type as which the delegate is treated for resolving its methods.
+         * @param fieldName           The name of the field for storing the delegate instance.
+         * @param methodGraphCompiler The method graph compiler to be used for locating methods to delegate to.
+         * @return A method delegation implementation to the given {@code static} methods.
+         */
+        public MethodDelegation to(Object target, Type type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
+            TypeDescription.Generic typeDescription = TypeDefinition.Sort.describe(type);
+            if (!typeDescription.asErasure().isInstance(target)) {
+                throw new IllegalArgumentException(target + " is not an instance of " + type);
+            }
+            return new MethodDelegation(new ImplementationDelegate.ForInstance(target, fieldName, typeDescription, methodGraphCompiler, parameterBinders, matcher),
+                    TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
+                    MethodDelegationBinder.AmbiguityResolver.DEFAULT);
+        }
+
+        /**
+         * Creates an implementation where method calls are delegated to constructor calls on the given type. As a result,
+         * the return values of all instrumented methods must be assignable to
+         *
+         * @param type The type that should be constructed by the instrumented methods.
+         * @return An implementation that creates instances of the given type as its result.
+         */
+        public MethodDelegation toConstructor(Class<?> type) {
+            return toConstructor(new TypeDescription.ForLoadedType(type));
+        }
+
+        /**
+         * Creates an implementation where method calls are delegated to constructor calls on the given type. As a result,
+         * the return values of all instrumented methods must be assignable to
+         *
+         * @param typeDescription The type that should be constructed by the instrumented methods.
+         * @return An implementation that creates instances of the given type as its result.
+         */
+        public MethodDelegation toConstructor(TypeDescription typeDescription) {
+            return new MethodDelegation(ImplementationDelegate.ForConstruction.of(typeDescription, typeDescription.getDeclaredMethods().filter(isConstructor().and(matcher)), TargetMethodAnnotationDrivenBinder.of(parameterBinders)),
+                    TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
+                    MethodDelegationBinder.AmbiguityResolver.DEFAULT);
+        }
+
+        /**
+         * Delegates invocations of any instrumented method to a field's value. The field must be defined in the instrumented type or in any super type.
+         * If the field is not static, the instrumentation cannot be used for instrumenting static methods.
+         *
+         * @param name The name of the field.
+         * @return A method delegation that invokes method's on a field's value.
+         */
+        public MethodDelegation toField(String name) {
+            return toField(name, FieldLocator.ForClassHierarchy.Factory.INSTANCE);
+        }
+
+        /**
+         * Delegates invocations of any instrumented method to a field's value. The field must be defined in the instrumented type or in any super type.
+         * If the field is not static, the instrumentation cannot be used for instrumenting static methods.
+         *
+         * @param name                The name of the field.
+         * @param fieldLocatorFactory A field locator factory to use for locating the field.
+         * @return A method delegation that invokes method's on a field's value.
+         */
+        public MethodDelegation toField(String name, FieldLocator.Factory fieldLocatorFactory) {
+            return toField(name, fieldLocatorFactory, MethodGraph.Compiler.DEFAULT);
+        }
+
+        /**
+         * Delegates invocations of any instrumented method to a field's value. The field must be defined in the instrumented type or in any super type.
+         * If the field is not static, the instrumentation cannot be used for instrumenting static methods.
+         *
+         * @param name                The name of the field.
+         * @param methodGraphCompiler The method graph compiler to use for locating methods of the field's value.
+         * @return A method delegation that invokes method's on a field's value.
+         */
+        public MethodDelegation toField(String name, MethodGraph.Compiler methodGraphCompiler) {
+            return toField(name, FieldLocator.ForClassHierarchy.Factory.INSTANCE, methodGraphCompiler);
+        }
+
+        /**
+         * Delegates invocations of any instrumented method to a field's value. The field must be defined in the instrumented type or in any super type.
+         * If the field is not static, the instrumentation cannot be used for instrumenting static methods.
+         *
+         * @param name                The name of the field.
+         * @param fieldLocatorFactory A field locator factory to use for locating the field.
+         * @param methodGraphCompiler The method graph compiler to use for locating methods of the field's value.
+         * @return A method delegation that invokes method's on a field's value.
+         */
+        public MethodDelegation toField(String name, FieldLocator.Factory fieldLocatorFactory, MethodGraph.Compiler methodGraphCompiler) {
+            return new MethodDelegation(new ImplementationDelegate.ForField(name, fieldLocatorFactory, methodGraphCompiler, parameterBinders, matcher),
+                    TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
+                    MethodDelegationBinder.AmbiguityResolver.DEFAULT);
         }
     }
 }

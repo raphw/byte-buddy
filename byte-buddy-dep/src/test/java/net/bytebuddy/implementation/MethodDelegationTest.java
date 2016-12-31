@@ -118,7 +118,9 @@ public class MethodDelegationTest<T extends CallTraceable> {
         DynamicType.Loaded<T> loaded = new ByteBuddy()
                 .subclass(sourceType)
                 .method(isDeclaredBy(sourceType))
-                .intercept(MethodDelegation.to(targetType.getDeclaredConstructor().newInstance()).filter(isDeclaredBy(targetType)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .filter(isDeclaredBy(targetType))
+                        .to(targetType.getDeclaredConstructor().newInstance()))
                 .make()
                 .load(sourceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -138,7 +140,9 @@ public class MethodDelegationTest<T extends CallTraceable> {
                 .subclass(sourceType)
                 .defineField(FIELD_NAME, targetType, Visibility.PUBLIC)
                 .method(isDeclaredBy(sourceType))
-                .intercept(MethodDelegation.toField(FIELD_NAME).filter(isDeclaredBy(targetType)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .filter(isDeclaredBy(targetType))
+                        .toField(FIELD_NAME))
                 .make()
                 .load(sourceType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));

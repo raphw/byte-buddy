@@ -28,7 +28,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<Explicit> loaded = new ByteBuddy()
                 .subclass(Explicit.class)
                 .method(isDeclaredBy(Explicit.class))
-                .intercept(MethodDelegation.to(Swap.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(Swap.class))
                 .make()
                 .load(Explicit.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -42,7 +42,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<Explicit> loaded = new ByteBuddy()
                 .subclass(Explicit.class)
                 .method(isDeclaredBy(Explicit.class))
-                .intercept(MethodDelegation.to(SwapDuplex.class).appendParameterBinder(FieldProxy.Binder.install(GetSet.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(GetSet.class)).to(SwapDuplex.class))
                 .make()
                 .load(Explicit.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -56,7 +56,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<Explicit> loaded = new ByteBuddy()
                 .subclass(Explicit.class)
                 .method(isDeclaredBy(Explicit.class))
-                .intercept(MethodDelegation.to(SwapSerializable.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(SwapSerializable.class))
                 .make()
                 .load(Explicit.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -70,7 +70,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<Explicit> loaded = new ByteBuddy()
                 .subclass(Explicit.class)
                 .method(isDeclaredBy(Explicit.class))
-                .intercept(MethodDelegation.to(SwapSerializableDuplex.class).appendParameterBinder(FieldProxy.Binder.install(GetSet.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(GetSet.class)).to(SwapSerializableDuplex.class))
                 .make()
                 .load(Explicit.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -84,7 +84,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<ExplicitStatic> loaded = new ByteBuddy()
                 .subclass(ExplicitStatic.class)
                 .method(isDeclaredBy(ExplicitStatic.class))
-                .intercept( MethodDelegation.to(Swap.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept( MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(Swap.class))
                 .make()
                 .load(ExplicitStatic.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ExplicitStatic explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -98,7 +98,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<ExplicitStatic> loaded = new ByteBuddy()
                 .subclass(ExplicitStatic.class)
                 .method(isDeclaredBy(ExplicitStatic.class))
-                .intercept(MethodDelegation.to(SwapDuplex.class).appendParameterBinder(FieldProxy.Binder.install(GetSet.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(GetSet.class)).to(SwapDuplex.class))
                 .make()
                 .load(ExplicitStatic.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ExplicitStatic explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -112,7 +112,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<ImplicitGetter> loaded = new ByteBuddy()
                 .subclass(ImplicitGetter.class)
                 .method(isDeclaredBy(ImplicitGetter.class))
-                .intercept(MethodDelegation.to(GetInterceptor.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(GetInterceptor.class))
                 .make()
                 .load(ImplicitGetter.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ImplicitGetter implicitGetter = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -126,7 +126,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<ImplicitSetter> loaded = new ByteBuddy()
                 .subclass(ImplicitSetter.class)
                 .method(isDeclaredBy(ImplicitSetter.class))
-                .intercept(MethodDelegation.to(SetInterceptor.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(SetInterceptor.class))
                 .make()
                 .load(ImplicitSetter.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ImplicitSetter implicitSetter = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -140,7 +140,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<ImplicitGetter> loaded = new ByteBuddy()
                 .subclass(ImplicitGetter.class)
                 .method(isDeclaredBy(ImplicitGetter.class))
-                .intercept(MethodDelegation.to(GetInterceptorDuplex.class).appendParameterBinder(FieldProxy.Binder.install(GetSet.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(GetSet.class)).to(GetInterceptorDuplex.class))
                 .make()
                 .load(ImplicitGetter.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ImplicitGetter implicitGetter = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -154,7 +154,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<ImplicitSetter> loaded = new ByteBuddy()
                 .subclass(ImplicitSetter.class)
                 .method(isDeclaredBy(ImplicitSetter.class))
-                .intercept( MethodDelegation.to(SetInterceptorDuplex.class).appendParameterBinder(FieldProxy.Binder.install(GetSet.class)))
+                .intercept( MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(GetSet.class)).to(SetInterceptorDuplex.class))
                 .make()
                 .load(ImplicitSetter.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ImplicitSetter implicitSetter = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -168,7 +168,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<ExplicitInherited> loaded = new ByteBuddy()
                 .subclass(ExplicitInherited.class)
                 .method(isDeclaredBy(ExplicitInherited.class))
-                .intercept(MethodDelegation.to(Swap.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(Swap.class))
                 .make()
                 .load(ExplicitInherited.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ExplicitInherited explicitInherited = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -184,7 +184,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<ExplicitInherited> loaded = new ByteBuddy()
                 .subclass(ExplicitInherited.class)
                 .method(isDeclaredBy(ExplicitInherited.class))
-                .intercept(MethodDelegation.to(SwapInherited.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(SwapInherited.class))
                 .make()
                 .load(ExplicitInherited.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         ExplicitInherited explicitInherited = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -200,7 +200,7 @@ public class MethodDelegationFieldProxyTest {
         new ByteBuddy()
                 .subclass(FinalField.class)
                 .method(isDeclaredBy(FinalField.class))
-                .intercept(MethodDelegation.to(Swap.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(Swap.class))
                 .make();
     }
 
@@ -209,7 +209,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<FinalField> loaded = new ByteBuddy()
                 .subclass(FinalField.class)
                 .method(isDeclaredBy(FinalField.class))
-                .intercept(MethodDelegation.to(SwapDuplex.class).appendParameterBinder(FieldProxy.Binder.install(GetSet.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(GetSet.class)).to(SwapDuplex.class))
                 .make()
                 .load(FinalField.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         loaded.getLoaded().getDeclaredConstructor().newInstance().method();
@@ -220,7 +220,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<Explicit> loaded = new ByteBuddy()
                 .subclass(Explicit.class)
                 .method(isDeclaredBy(Explicit.class))
-                .intercept( MethodDelegation.to(GetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept( MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(GetterIncompatible.class))
                 .make()
                 .load(Explicit.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -232,7 +232,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<Explicit> loaded = new ByteBuddy()
                 .subclass(Explicit.class)
                 .method(isDeclaredBy(Explicit.class))
-                .intercept(MethodDelegation.to(SetterIncompatible.class).appendParameterBinder(FieldProxy.Binder.install(Get.class, Set.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(Get.class, Set.class)).to(SetterIncompatible.class))
                 .make()
                 .load(Explicit.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -244,7 +244,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<Explicit> loaded = new ByteBuddy()
                 .subclass(Explicit.class)
                 .method(isDeclaredBy(Explicit.class))
-                .intercept(MethodDelegation.to(GetterIncompatibleDuplex.class).appendParameterBinder(FieldProxy.Binder.install(GetSet.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(GetSet.class)).to(GetterIncompatibleDuplex.class))
                 .make()
                 .load(Explicit.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -256,7 +256,7 @@ public class MethodDelegationFieldProxyTest {
         DynamicType.Loaded<Explicit> loaded = new ByteBuddy()
                 .subclass(Explicit.class)
                 .method(isDeclaredBy(Explicit.class))
-                .intercept(MethodDelegation.to(SetterIncompatibleDuplex.class).appendParameterBinder(FieldProxy.Binder.install(GetSet.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(FieldProxy.Binder.install(GetSet.class)).to(SetterIncompatibleDuplex.class))
                 .make()
                 .load(Explicit.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Explicit explicit = loaded.getLoaded().getDeclaredConstructor().newInstance();

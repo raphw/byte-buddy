@@ -20,7 +20,7 @@ public class MethodDelegationBinderAmbiguityResolverChainTest extends AbstractAm
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        chain = new MethodDelegationBinder.AmbiguityResolver.Chain(first, second);
+        chain = new MethodDelegationBinder.AmbiguityResolver.Compound(first, second);
     }
 
     @Test
@@ -44,7 +44,7 @@ public class MethodDelegationBinderAmbiguityResolverChainTest extends AbstractAm
     }
 
     @Test
-    public void testEqualsHashCode() throws Exception {
-        ObjectPropertyAssertion.of(MethodDelegationBinder.AmbiguityResolver.Chain.class).apply();
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(MethodDelegationBinder.AmbiguityResolver.Compound.class).apply();
     }
 }

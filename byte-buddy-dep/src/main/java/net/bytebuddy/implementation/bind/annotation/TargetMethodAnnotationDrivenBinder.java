@@ -119,6 +119,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                   MethodDelegationBinder.TerminationHandler terminationHandler,
                                   MethodInvoker methodInvoker,
                                   Assigner assigner) {
+            if (!candidate.isAccessibleTo(implementationTarget.getInstrumentedType())) {
+                return MethodBinding.Illegal.INSTANCE;
+            }
             StackManipulation methodTermination = terminationHandler.resolve(assigner, source, candidate);
             if (!methodTermination.isValid()) {
                 return MethodBinding.Illegal.INSTANCE;

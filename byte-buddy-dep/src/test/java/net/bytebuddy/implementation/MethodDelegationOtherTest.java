@@ -71,7 +71,9 @@ public class MethodDelegationOtherTest {
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForInstance.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForConstruction.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForStaticMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.Resolution.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.Compiled.ForStaticCall.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.Compiled.ForField.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.Compiled.ForConstruction.class).apply();
     }
 
     static class Foo {

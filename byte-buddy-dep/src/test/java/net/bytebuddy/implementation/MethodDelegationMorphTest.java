@@ -38,7 +38,9 @@ public class MethodDelegationMorphTest {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(new SimpleMorph(QUX)).appendParameterBinder(Morph.Binder.install(Morphing.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Morph.Binder.install(Morphing.class))
+                        .to(new SimpleMorph(QUX)))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -51,7 +53,9 @@ public class MethodDelegationMorphTest {
         DynamicType.Loaded<Bar> loaded = new ByteBuddy()
                 .subclass(Bar.class)
                 .method(isDeclaredBy(Bar.class))
-                .intercept(MethodDelegation.to(simpleMorph).appendParameterBinder(Morph.Binder.install(Morphing.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Morph.Binder.install(Morphing.class))
+                        .to(simpleMorph))
                 .make()
                 .load(Bar.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Bar instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -65,7 +69,9 @@ public class MethodDelegationMorphTest {
         DynamicType.Loaded<Qux> loaded = new ByteBuddy()
                 .subclass(Qux.class)
                 .method(isDeclaredBy(Qux.class))
-                .intercept(MethodDelegation.to(new PrimitiveMorph(BAZ)).appendParameterBinder(Morph.Binder.install(Morphing.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Morph.Binder.install(Morphing.class))
+                        .to(new PrimitiveMorph(BAZ)))
                 .make()
                 .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Qux instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -77,7 +83,9 @@ public class MethodDelegationMorphTest {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(SimpleMorphSerializable.class).appendParameterBinder(Morph.Binder.install(Morphing.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Morph.Binder.install(Morphing.class))
+                        .to(SimpleMorphSerializable.class))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -89,7 +97,9 @@ public class MethodDelegationMorphTest {
         new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(SimpleMorphIllegal.class).appendParameterBinder(Morph.Binder.install(Morphing.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Morph.Binder.install(Morphing.class))
+                        .to(SimpleMorphIllegal.class))
                 .make();
     }
 
@@ -98,7 +108,9 @@ public class MethodDelegationMorphTest {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(new SimpleMorph(new Object())).appendParameterBinder(Morph.Binder.install(Morphing.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Morph.Binder.install(Morphing.class))
+                        .to(new SimpleMorph(new Object())))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -107,27 +119,27 @@ public class MethodDelegationMorphTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testMorphTypeDoesNotDeclareCorrectMethodThrowsException() throws Exception {
-        MethodDelegation.to(new SimpleMorph(QUX)).defineParameterBinder(Morph.Binder.install(Serializable.class));
+        MethodDelegation.withEmptyConfiguration().withBinders(Morph.Binder.install(Serializable.class)).to(new SimpleMorph(QUX));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMorphTypeDoesInheritFromOtherTypeThrowsException() throws Exception {
-        MethodDelegation.to(new SimpleMorph(QUX)).defineParameterBinder(Morph.Binder.install(InheritingMorphingType.class));
+        MethodDelegation.withEmptyConfiguration().withBinders(Morph.Binder.install(InheritingMorphingType.class)).to(new SimpleMorph(QUX));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMorphTypeIsNotPublicThrowsException() throws Exception {
-        MethodDelegation.to(new SimpleMorph(QUX)).defineParameterBinder(Morph.Binder.install(PackagePrivateMorphing.class));
+        MethodDelegation.withEmptyConfiguration().withBinders(Morph.Binder.install(PackagePrivateMorphing.class)).to(new SimpleMorph(QUX));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testPipeTypeDoesNotDeclareCorrectMethodSignatureThrowsException() throws Exception {
-        MethodDelegation.to(new SimpleMorph(QUX)).defineParameterBinder(Morph.Binder.install(WrongParametersMorphing.class));
+        MethodDelegation.withDefaultConfiguration().withBinders(Morph.Binder.install(WrongParametersMorphing.class)).to(new SimpleMorph(QUX)); // TODO: Remove outside?
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testPipeTypeIsNotInterfaceThrowsException() throws Exception {
-        MethodDelegation.to(new SimpleMorph(QUX)).defineParameterBinder(Morph.Binder.install(Object.class));
+        MethodDelegation.withDefaultConfiguration().withBinders(Morph.Binder.install(Object.class)).to(new SimpleMorph(QUX));
     }
 
     @Test
@@ -136,7 +148,9 @@ public class MethodDelegationMorphTest {
         DynamicType.Loaded<Object> loaded = new ByteBuddy()
                 .subclass(Object.class)
                 .implement(Class.forName(DEFAULT_INTERFACE))
-                .intercept(MethodDelegation.to(Class.forName(DEFAULT_INTERFACE_TARGET_EXPLICIT)).appendParameterBinder(Morph.Binder.install(Morphing.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Morph.Binder.install(Morphing.class))
+                        .to(Class.forName(DEFAULT_INTERFACE_TARGET_EXPLICIT)))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -150,7 +164,9 @@ public class MethodDelegationMorphTest {
         DynamicType.Loaded<Object> loaded = new ByteBuddy()
                 .subclass(Object.class)
                 .implement(Class.forName(DEFAULT_INTERFACE))
-                .intercept(MethodDelegation.to(Class.forName(DEFAULT_INTERFACE_TARGET_IMPLICIT)).appendParameterBinder(Morph.Binder.install(Morphing.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Morph.Binder.install(Morphing.class))
+                        .to(Class.forName(DEFAULT_INTERFACE_TARGET_IMPLICIT)))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Object instance = loaded.getLoaded().getDeclaredConstructor().newInstance();

@@ -26,7 +26,9 @@ public class MethodDelegationPipeTest {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(new ForwardingInterceptor(new Foo(FOO))).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Pipe.Binder.install(ForwardingType.class))
+                        .to(new ForwardingInterceptor(new Foo(FOO))))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -38,7 +40,9 @@ public class MethodDelegationPipeTest {
         DynamicType.Loaded<Qux> loaded = new ByteBuddy()
                 .subclass(Qux.class)
                 .method(isDeclaredBy(Qux.class))
-                .intercept(MethodDelegation.to(new ForwardingInterceptor(new Qux())).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Pipe.Binder.install(ForwardingType.class))
+                        .to(new ForwardingInterceptor(new Qux())))
                 .make()
                 .load(Qux.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Qux instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -51,7 +55,9 @@ public class MethodDelegationPipeTest {
         DynamicType.Loaded<Baz> loaded = new ByteBuddy()
                 .subclass(Baz.class)
                 .method(isDeclaredBy(Baz.class))
-                .intercept(MethodDelegation.to(new PrimitiveForwardingInterceptor(new Baz())).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Pipe.Binder.install(ForwardingType.class))
+                        .to(new PrimitiveForwardingInterceptor(new Baz())))
                 .make()
                 .load(Baz.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Baz instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -64,7 +70,9 @@ public class MethodDelegationPipeTest {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(new ForwardingInterceptor(new Bar(FOO))).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Pipe.Binder.install(ForwardingType.class))
+                        .to(new ForwardingInterceptor(new Bar(FOO))))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -76,8 +84,9 @@ public class MethodDelegationPipeTest {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(new SerializableForwardingInterceptor(new Foo(FOO)))
-                        .defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Pipe.Binder.install(ForwardingType.class))
+                        .to(new SerializableForwardingInterceptor(new Foo(FOO))))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -89,7 +98,9 @@ public class MethodDelegationPipeTest {
         DynamicType.Loaded<Foo> loaded = new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(new ForwardingInterceptor(new Object())).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Pipe.Binder.install(ForwardingType.class))
+                        .to(new ForwardingInterceptor(new Object())))
                 .make()
                 .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
@@ -98,32 +109,37 @@ public class MethodDelegationPipeTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testPipeTypeDoesNotDeclareCorrectMethodThrowsException() throws Exception {
-        MethodDelegation.to(new ForwardingInterceptor(new Object()))
-                .defineParameterBinder(Pipe.Binder.install(Serializable.class));
+        MethodDelegation.withDefaultConfiguration()
+                .withBinders(Pipe.Binder.install(Serializable.class))
+                .to(new ForwardingInterceptor(new Object()));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testPipeTypeDoesInheritFromOtherTypeThrowsException() throws Exception {
-        MethodDelegation.to(new ForwardingInterceptor(new Object()))
-                .defineParameterBinder(Pipe.Binder.install(InheritingForwardingType.class));
+        MethodDelegation.withDefaultConfiguration()
+                .withBinders(Pipe.Binder.install(InheritingForwardingType.class))
+                .to(new ForwardingInterceptor(new Object()));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testPipeTypeIsNotPublicThrowsException() throws Exception {
-        MethodDelegation.to(new ForwardingInterceptor(new Object()))
-                .defineParameterBinder(Pipe.Binder.install(PackagePrivateForwardingType.class));
+        MethodDelegation.withDefaultConfiguration()
+                .withBinders(Pipe.Binder.install(PackagePrivateForwardingType.class))
+                .to(new ForwardingInterceptor(new Object()));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testPipeTypeDoesNotDeclareCorrectMethodSignatureThrowsException() throws Exception {
-        MethodDelegation.to(new ForwardingInterceptor(new Object()))
-                .defineParameterBinder(Pipe.Binder.install(WrongParametersForwardingType.class));
+        MethodDelegation.withDefaultConfiguration()
+                .withBinders(Pipe.Binder.install(WrongParametersForwardingType.class))
+                .to(new ForwardingInterceptor(new Object()));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testPipeTypeIsNotInterfaceThrowsException() throws Exception {
-        MethodDelegation.to(new ForwardingInterceptor(new Object()))
-                .defineParameterBinder(Pipe.Binder.install(Object.class));
+        MethodDelegation.withDefaultConfiguration()
+                .withBinders(Pipe.Binder.install(Object.class))
+                .to(new ForwardingInterceptor(new Object()));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -131,7 +147,9 @@ public class MethodDelegationPipeTest {
         new ByteBuddy()
                 .subclass(Foo.class)
                 .method(isDeclaredBy(Foo.class))
-                .intercept(MethodDelegation.to(WrongParameterTypeTarget.class).defineParameterBinder(Pipe.Binder.install(ForwardingType.class)))
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Pipe.Binder.install(ForwardingType.class))
+                        .to(WrongParameterTypeTarget.class))
                 .make();
     }
 

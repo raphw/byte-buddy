@@ -80,6 +80,5 @@ public class MethodDelegationBinderTest {
         }).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.AmbiguityResolver.Resolution.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.AmbiguityResolver.NoOp.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegationBinder.AmbiguityResolver.Chain.class).apply();
     }
 }
