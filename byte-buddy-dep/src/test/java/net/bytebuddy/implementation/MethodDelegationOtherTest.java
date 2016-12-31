@@ -6,11 +6,8 @@ import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
-import java.util.List;
-
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isToString;
-import static org.mockito.Mockito.when;
 
 public class MethodDelegationOtherTest {
 
@@ -60,20 +57,13 @@ public class MethodDelegationOtherTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDelegation.class).refine(new ObjectPropertyAssertion.Refinement<List<?>>() {
-            @Override
-            public void apply(List<?> mock) {
-                when(mock.size()).thenReturn(1);
-            }
-        }).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.WithCustomProperties.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.Appender.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForField.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForInstance.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForConstruction.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForStaticMethod.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.Compiled.ForStaticCall.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.Compiled.ForField.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.Compiled.ForConstruction.class).apply();
     }
 
     static class Foo {

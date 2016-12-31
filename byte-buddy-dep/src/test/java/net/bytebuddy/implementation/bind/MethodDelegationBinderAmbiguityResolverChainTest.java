@@ -5,6 +5,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -45,6 +48,11 @@ public class MethodDelegationBinderAmbiguityResolverChainTest extends AbstractAm
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDelegationBinder.AmbiguityResolver.Compound.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegationBinder.AmbiguityResolver.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                return Collections.singletonList(mock(MethodDelegationBinder.AmbiguityResolver.class));
+            }
+        }).apply();
     }
 }

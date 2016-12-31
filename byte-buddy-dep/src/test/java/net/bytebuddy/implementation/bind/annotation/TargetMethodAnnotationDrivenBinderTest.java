@@ -64,6 +64,9 @@ public class TargetMethodAnnotationDrivenBinderTest {
     private TypeDescription.Generic sourceTypeDescription, targetTypeDescription;
 
     @Mock
+    private TypeDescription instrumentedType;
+
+    @Mock
     private AnnotationDescription.ForLoadedAnnotation<FirstPseudoAnnotation> firstPseudoAnnotation;
 
     @Mock
@@ -133,6 +136,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(targetMethod.getReturnType()).thenReturn(targetTypeDescription);
         when(terminationHandler.resolve(assigner, sourceMethod, targetMethod)).thenReturn(termination);
         when(termination.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
+        when(implementationTarget.getInstrumentedType()).thenReturn(instrumentedType);
     }
 
     @After
@@ -149,6 +153,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @Test
     public void testIgnoreForBindingAnnotation() throws Exception {
+        when(targetMethod.isAccessibleTo(instrumentedType)).thenReturn(true);
         AnnotationDescription ignoreForBinding = mock(AnnotationDescription.class);
         when(ignoreForBinding.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(IgnoreForBinding.class));
         when(targetMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(Collections.singletonList(ignoreForBinding)));
@@ -165,7 +170,28 @@ public class TargetMethodAnnotationDrivenBinderTest {
     }
 
     @Test
+    public void testNonAccessible() throws Exception {
+        when(targetMethod.isAccessibleTo(instrumentedType)).thenReturn(false);
+        when(assignmentBinding.isValid()).thenReturn(true);
+        when(methodInvocation.isValid()).thenReturn(true);
+        when(termination.isValid()).thenReturn(true);
+        when(targetMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(firstParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(secondParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        MethodDelegationBinder methodDelegationBinder = TargetMethodAnnotationDrivenBinder.of(Collections.<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>>emptyList());
+        assertThat(methodDelegationBinder.compile(targetMethod).bind(implementationTarget,
+                sourceMethod,
+                terminationHandler,
+                methodInvoker,
+                assigner).isValid(), is(false));
+        verifyZeroInteractions(terminationHandler);
+        verifyZeroInteractions(assigner);
+        verifyZeroInteractions(methodInvoker);
+    }
+
+    @Test
     public void testTerminationBinderMismatch() throws Exception {
+        when(targetMethod.isAccessibleTo(instrumentedType)).thenReturn(true);
         when(assignmentBinding.isValid()).thenReturn(false);
         when(methodInvocation.isValid()).thenReturn(true);
         when(termination.isValid()).thenReturn(false);
@@ -186,6 +212,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
 
     @Test
     public void testDoNotBindOnIllegalMethodInvocation() throws Exception {
+        when(targetMethod.isAccessibleTo(instrumentedType)).thenReturn(true);
         when(assignmentBinding.isValid()).thenReturn(true);
         when(methodInvocation.isValid()).thenReturn(false);
         when(termination.isValid()).thenReturn(true);
@@ -215,6 +242,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testBindingByDefault() throws Exception {
+        when(targetMethod.isAccessibleTo(instrumentedType)).thenReturn(true);
         when(assignmentBinding.isValid()).thenReturn(true);
         when(methodInvocation.isValid()).thenReturn(true);
         when(termination.isValid()).thenReturn(true);
@@ -249,6 +277,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testBindingByParameterAnnotations() throws Exception {
+        when(targetMethod.isAccessibleTo(instrumentedType)).thenReturn(true);
         when(assignmentBinding.isValid()).thenReturn(true);
         when(methodInvocation.isValid()).thenReturn(true);
         when(termination.isValid()).thenReturn(true);
