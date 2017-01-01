@@ -60,8 +60,8 @@ public class MethodDelegationOtherTest {
         ObjectPropertyAssertion.of(MethodDelegation.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.WithCustomProperties.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.Appender.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForField.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForInstance.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForField.WithInstance.class).apply();
+        ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForField.WithLookup.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForConstruction.class).apply();
         ObjectPropertyAssertion.of(MethodDelegation.ImplementationDelegate.ForStaticMethod.class).apply();
     }
