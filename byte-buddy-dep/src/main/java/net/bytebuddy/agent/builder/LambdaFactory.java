@@ -73,7 +73,7 @@ public class LambdaFactory {
                 try {
                     return classFileTransformers.isEmpty();
                 } finally {
-                    classFileTransformers.put(classFileTransformer, new LambdaFactory(classFileFactory, classFileFactory.getClass().getDeclaredMethod("make",
+                    classFileTransformers.put(classFileTransformer, new LambdaFactory(classFileFactory, classFileFactory.getClass().getMethod("make",
                             Object.class,
                             String.class,
                             Object.class,

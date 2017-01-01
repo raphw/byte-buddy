@@ -289,10 +289,10 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                     try {
                         Class<?> executableType = Class.forName("java.lang.reflect.Executable");
                         Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
-                        return new Dispatcher.ForJava8CapableVm(executableType.getDeclaredMethod("getParameters"),
-                                parameterType.getDeclaredMethod("getName"),
-                                parameterType.getDeclaredMethod("isNamePresent"),
-                                parameterType.getDeclaredMethod("getModifiers"));
+                        return new Dispatcher.ForJava8CapableVm(executableType.getMethod("getParameters"),
+                                parameterType.getMethod("getName"),
+                                parameterType.getMethod("isNamePresent"),
+                                parameterType.getMethod("getModifiers"));
                     } catch (Exception ignored) {
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }

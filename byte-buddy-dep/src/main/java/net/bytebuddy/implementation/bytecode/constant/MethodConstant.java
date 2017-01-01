@@ -194,7 +194,7 @@ public abstract class MethodConstant implements StackManipulation {
         @Override
         protected MethodDescription accessorMethod() {
             try {
-                return new MethodDescription.ForLoadedMethod(Class.class.getDeclaredMethod("getDeclaredMethod", String.class, Class[].class));
+                return new MethodDescription.ForLoadedMethod(Class.class.getMethod("getDeclaredMethod", String.class, Class[].class));
             } catch (NoSuchMethodException exception) {
                 throw new IllegalStateException("Cannot locate Class::getDeclaredMethod", exception);
             }
@@ -230,7 +230,7 @@ public abstract class MethodConstant implements StackManipulation {
         @Override
         protected MethodDescription accessorMethod() {
             try {
-                return new MethodDescription.ForLoadedMethod(Class.class.getDeclaredMethod("getDeclaredConstructor", Class[].class));
+                return new MethodDescription.ForLoadedMethod(Class.class.getMethod("getDeclaredConstructor", Class[].class));
             } catch (NoSuchMethodException exception) {
                 throw new IllegalStateException("Cannot locate Class::getDeclaredConstructor", exception);
             }

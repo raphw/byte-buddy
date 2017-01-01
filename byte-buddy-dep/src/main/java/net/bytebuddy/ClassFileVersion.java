@@ -305,8 +305,8 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public VersionLocator run() {
                 try {
-                    return new VersionLocator.ForJava9CapableVm(Runtime.class.getDeclaredMethod("version"),
-                            Class.forName("java.lang.Runtime$Version").getDeclaredMethod("major"));
+                    return new VersionLocator.ForJava9CapableVm(Runtime.class.getMethod("version"),
+                            Class.forName("java.lang.Runtime$Version").getMethod("major"));
                 } catch (Exception ignored) {
                     return VersionLocator.ForLegacyVm.INSTANCE;
                 }

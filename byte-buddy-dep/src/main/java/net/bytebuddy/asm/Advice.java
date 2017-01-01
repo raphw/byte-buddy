@@ -34,7 +34,8 @@ import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Serializable;
 import java.lang.annotation.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -547,7 +548,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     public Advice withExceptionPrinting() {
         try {
-            return withExceptionHandler(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Throwable.class.getDeclaredMethod("printStackTrace"))));
+            return withExceptionHandler(MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Throwable.class.getMethod("printStackTrace"))));
         } catch (NoSuchMethodException exception) {
             throw new IllegalStateException("Cannot locate Throwable::printStackTrace");
         }
@@ -9070,50 +9071,34 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         class ForSerializedValue implements DynamicValue<Annotation> {
 
             /**
-             * A charset that does not change the supplied byte array upon encoding or decoding.
-             */
-            private static final String CHARSET = "ISO-8859-1";
-
-            /**
              * The represented type.
              */
             private final TypeDescription typeDescription;
 
             /**
-             * The string-representation of the serializable value.
+             * An instruction to deserialize the supplied string value.
              */
-            private final String value;
+            private final StackManipulation deserialization;
 
             /**
              * Creates a new dynamic value for representing a serializable value.
              *
              * @param typeDescription The represented type.
-             * @param value           The string-representation of the serializable value.
+             * @param deserialization An instruction to deserialize the supplied string value.
              */
-            protected ForSerializedValue(TypeDescription typeDescription, String value) {
+            protected ForSerializedValue(TypeDescription typeDescription, StackManipulation deserialization) {
                 this.typeDescription = typeDescription;
-                this.value = value;
+                this.deserialization = deserialization;
             }
 
             /**
-             * Creates a dynamic value for binding to an annotation for representing a serializable value.
+             * Creates a dynamic value for binding the serializable value.
              *
-             * @param value The value to represent.
-             * @return A dynamic value binding for the supplied serializable value.
+             * @param target The instance to load onto the stack.
+             * @return A dynamic value binding for the supplied value.
              */
-            protected static DynamicValue<Annotation> of(Serializable value) {
-                try {
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-                    try {
-                        objectOutputStream.writeObject(value);
-                    } finally {
-                        objectOutputStream.close();
-                    }
-                    return new ForSerializedValue(new TypeDescription.ForLoadedType(value.getClass()), byteArrayOutputStream.toString(CHARSET));
-                } catch (IOException exception) {
-                    throw new IllegalStateException("Cannot serialize " + value, exception);
-                }
+            protected static DynamicValue<Annotation> of(Serializable target) {
+                return new ForSerializedValue(new TypeDescription.ForLoadedType(target.getClass()), SerializedConstant.of(target));
             }
 
             @Override
@@ -9127,23 +9112,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (!assignment.isValid()) {
                     throw new IllegalStateException("Cannot assign " + typeDescription + " to " + target.getType());
                 }
-                try {
-                    return new StackManipulation.Compound(
-                            TypeCreation.of(new TypeDescription.ForLoadedType(ObjectInputStream.class)),
-                            Duplication.SINGLE,
-                            TypeCreation.of(new TypeDescription.ForLoadedType(ByteArrayInputStream.class)),
-                            Duplication.SINGLE,
-                            new TextConstant(value),
-                            new TextConstant(CHARSET),
-                            MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(String.class.getDeclaredMethod("getBytes", String.class))),
-                            MethodInvocation.invoke(new MethodDescription.ForLoadedConstructor(ByteArrayInputStream.class.getDeclaredConstructor(byte[].class))),
-                            MethodInvocation.invoke(new MethodDescription.ForLoadedConstructor(ObjectInputStream.class.getDeclaredConstructor(InputStream.class))),
-                            MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(ObjectInputStream.class.getDeclaredMethod("readObject"))),
-                            assignment
-                    );
-                } catch (NoSuchMethodException exception) {
-                    throw new IllegalStateException("Cannot locate method", exception);
-                }
+                return new StackManipulation.Compound(deserialization, assignment);
             }
 
             @Override
@@ -9151,13 +9120,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
                 ForSerializedValue that = (ForSerializedValue) object;
-                return typeDescription.equals(that.typeDescription) && value.equals(that.value);
+                return typeDescription.equals(that.typeDescription) && deserialization.equals(that.deserialization);
             }
 
             @Override
             public int hashCode() {
                 int result = typeDescription.hashCode();
-                result = 31 * result + value.hashCode();
+                result = 31 * result + deserialization.hashCode();
                 return result;
             }
 
@@ -9165,7 +9134,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public String toString() {
                 return "Advice.DynamicValue.ForSerializedValue{" +
                         "typeDescription=" + typeDescription +
-                        ", value='" + value + '\'' +
+                        ", deserialization=" + deserialization +
                         '}';
             }
         }

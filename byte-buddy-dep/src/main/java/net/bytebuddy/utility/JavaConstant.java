@@ -324,7 +324,7 @@ public interface JavaConstant {
                 public Dispatcher run() {
                     try {
                         Class<?> methodType = JavaType.METHOD_TYPE.load();
-                        return new Dispatcher.ForJava7CapableVm(methodType.getDeclaredMethod("returnType"), methodType.getDeclaredMethod("parameterArray"));
+                        return new Dispatcher.ForJava7CapableVm(methodType.getMethod("returnType"), methodType.getMethod("parameterArray"));
                     } catch (Exception ignored) {
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }
@@ -868,25 +868,25 @@ public interface JavaConstant {
                 public Initializable run() {
                     try {
                         try {
-                            return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
-                                    JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
-                                    JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
-                                    JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
-                                    JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
+                            return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getMethod("publicLookup"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getName"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getDeclaringClass"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getReferenceKind"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getMethodType"),
+                                    JavaType.METHOD_TYPE.load().getMethod("returnType"),
+                                    JavaType.METHOD_TYPE.load().getMethod("parameterArray"),
+                                    JavaType.METHOD_HANDLES_LOOKUP.load().getMethod("lookupClass"),
+                                    JavaType.METHOD_HANDLES_LOOKUP.load().getMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
                         } catch (Exception ignored) {
-                            return new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
-                                    JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
-                                    JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
-                                    JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
-                                    Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredConstructor(JavaType.METHOD_HANDLE.load()));
+                            return new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getMethod("publicLookup"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getName"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getDeclaringClass"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getReferenceKind"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getMethod("getMethodType"),
+                                    JavaType.METHOD_TYPE.load().getMethod("returnType"),
+                                    JavaType.METHOD_TYPE.load().getMethod("parameterArray"),
+                                    JavaType.METHOD_HANDLES_LOOKUP.load().getMethod("lookupClass"),
+                                    Class.forName("java.lang.invoke.MethodHandleInfo").getConstructor(JavaType.METHOD_HANDLE.load()));
                         }
                     } catch (Exception ignored) {
                         return Dispatcher.ForLegacyVm.INSTANCE;

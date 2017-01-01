@@ -138,23 +138,23 @@ public class NexusAccessor {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             try {
                 return new ByteCodeAppender.Simple(new StackManipulation.Compound(
-                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(ClassLoader.class.getDeclaredMethod("getSystemClassLoader"))),
+                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(ClassLoader.class.getMethod("getSystemClassLoader"))),
                         new TextConstant(Nexus.class.getName()),
-                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(ClassLoader.class.getDeclaredMethod("loadClass", String.class))),
+                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(ClassLoader.class.getMethod("loadClass", String.class))),
                         new TextConstant("initialize"),
                         ArrayFactory.forType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class))
                                 .withValues(Arrays.asList(
                                         ClassConstant.of(TypeDescription.CLASS),
                                         ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
-                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Class.class.getDeclaredMethod("getDeclaredMethod", String.class, Class[].class))),
+                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Class.class.getMethod("getMethod", String.class, Class[].class))),
                         NullConstant.INSTANCE,
                         ArrayFactory.forType(TypeDescription.Generic.OBJECT)
                                 .withValues(Arrays.asList(
                                         ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
                                         new StackManipulation.Compound(
                                                 IntegerConstant.forValue(identification),
-                                                MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Integer.class.getDeclaredMethod("valueOf", int.class)))))),
-                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Method.class.getDeclaredMethod("invoke", Object.class, Object[].class))),
+                                                MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Integer.class.getMethod("valueOf", int.class)))))),
+                        MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Method.class.getMethod("invoke", Object.class, Object[].class))),
                         Removal.SINGLE
                 )).apply(methodVisitor, implementationContext, instrumentedMethod);
             } catch (NoSuchMethodException exception) {
@@ -234,13 +234,13 @@ public class NexusAccessor {
                     Class<?> nexusType = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader(), Nexus.class.getProtectionDomain())
                             .inject(Collections.singletonMap(new TypeDescription.ForLoadedType(Nexus.class), ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
                             .get(new TypeDescription.ForLoadedType(Nexus.class));
-                    return new Dispatcher.Available(nexusType.getDeclaredMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
-                            nexusType.getDeclaredMethod("clean", Reference.class));
+                    return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
+                            nexusType.getMethod("clean", Reference.class));
                 } catch (Exception exception) {
                     try {
                         Class<?> nexusType = ClassLoader.getSystemClassLoader().loadClass(Nexus.class.getName());
-                        return new Dispatcher.Available(nexusType.getDeclaredMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
-                                nexusType.getDeclaredMethod("clean", Reference.class));
+                        return new Dispatcher.Available(nexusType.getMethod("register", String.class, ClassLoader.class, ReferenceQueue.class, int.class, Object.class),
+                                nexusType.getMethod("clean", Reference.class));
                     } catch (Exception ignored) {
                         return new Dispatcher.Unavailable(exception);
                     }

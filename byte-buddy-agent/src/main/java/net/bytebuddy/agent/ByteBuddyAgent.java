@@ -298,7 +298,7 @@ public class ByteBuddyAgent {
         try {
             Class<?> virtualMachineType = attachmentAccessor.getVirtualMachineType();
             Object virtualMachineInstance = virtualMachineType
-                    .getDeclaredMethod(ATTACH_METHOD_NAME, String.class)
+                    .getMethod(ATTACH_METHOD_NAME, String.class)
                     .invoke(STATIC_MEMBER, processId);
             try {
                 virtualMachineType
@@ -809,8 +809,8 @@ public class ByteBuddyAgent {
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public static ProcessProvider make() {
                     try {
-                        return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getDeclaredMethod("current"),
-                                Class.forName("java.lang.ProcessHandle").getDeclaredMethod("getPid"));
+                        return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getMethod("current"),
+                                Class.forName("java.lang.ProcessHandle").getMethod("getPid"));
                     } catch (Exception ignored) {
                         return ForLegacyVm.INSTANCE;
                     }

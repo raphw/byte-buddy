@@ -234,13 +234,13 @@ public class JavaModule implements NamedElement.WithOptionalName {
             public Dispatcher run() {
                 try {
                     Class<?> module = Class.forName("java.lang.reflect.Module");
-                    return new Dispatcher.Enabled(Class.class.getDeclaredMethod("getModule"),
-                            module.getDeclaredMethod("getClassLoader"),
-                            module.getDeclaredMethod("isNamed"),
-                            module.getDeclaredMethod("getName"),
-                            module.getDeclaredMethod("getResourceAsStream", String.class),
-                            module.getDeclaredMethod("canRead", module),
-                            Instrumentation.class.getDeclaredMethod("addModuleReads", module, module));
+                    return new Dispatcher.Enabled(Class.class.getMethod("getModule"),
+                            module.getMethod("getClassLoader"),
+                            module.getMethod("isNamed"),
+                            module.getMethod("getName"),
+                            module.getMethod("getResourceAsStream", String.class),
+                            module.getMethod("canRead", module),
+                            Instrumentation.class.getMethod("addModuleReads", module, module));
                 } catch (Exception ignored) {
                     return Dispatcher.Disabled.INSTANCE;
                 }

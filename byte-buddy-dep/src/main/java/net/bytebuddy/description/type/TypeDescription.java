@@ -2590,14 +2590,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     @Override
                     public Dispatcher run() {
                         try {
-                            return new ForJava8CapableVm(Class.class.getDeclaredMethod("getAnnotatedSuperclass"),
-                                    Class.class.getDeclaredMethod("getAnnotatedInterfaces"),
-                                    Field.class.getDeclaredMethod("getAnnotatedType"),
-                                    Method.class.getDeclaredMethod("getAnnotatedReturnType"),
-                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedParameterTypes"),
-                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedExceptionTypes"),
-                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedReceiverType"),
-                                    Class.forName("java.lang.reflect.AnnotatedType").getDeclaredMethod("getType"));
+                            return new ForJava8CapableVm(Class.class.getMethod("getAnnotatedSuperclass"),
+                                    Class.class.getMethod("getAnnotatedInterfaces"),
+                                    Field.class.getMethod("getAnnotatedType"),
+                                    Method.class.getMethod("getAnnotatedReturnType"),
+                                    Class.forName("java.lang.reflect.Executable").getMethod("getAnnotatedParameterTypes"),
+                                    Class.forName("java.lang.reflect.Executable").getMethod("getAnnotatedExceptionTypes"),
+                                    Class.forName("java.lang.reflect.Executable").getMethod("getAnnotatedReceiverType"),
+                                    Class.forName("java.lang.reflect.AnnotatedType").getMethod("getType"));
                         } catch (RuntimeException exception) {
                             throw exception;
                         } catch (Exception ignored) {
@@ -3543,7 +3543,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                         public Method run() {
                             try {
-                                return Class.forName(typeName).getDeclaredMethod(methodName);
+                                return Class.forName(typeName).getMethod(methodName);
                             } catch (Exception exception) {
                                 return NOT_AVAILABLE;
                             }

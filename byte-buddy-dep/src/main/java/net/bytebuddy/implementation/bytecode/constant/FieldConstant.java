@@ -50,7 +50,7 @@ public class FieldConstant implements StackManipulation {
             return new Compound(
                     ClassConstant.of(fieldDescription.getDeclaringType()),
                     new TextConstant(fieldDescription.getInternalName()),
-                    MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Class.class.getDeclaredMethod("getDeclaredField", String.class)))
+                    MethodInvocation.invoke(new MethodDescription.ForLoadedMethod(Class.class.getMethod("getDeclaredField", String.class)))
             ).apply(methodVisitor, implementationContext);
         } catch (NoSuchMethodException exception) {
             throw new IllegalStateException("Cannot locate Class::getDeclaredField", exception);

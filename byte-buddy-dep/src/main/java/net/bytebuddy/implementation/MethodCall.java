@@ -199,7 +199,7 @@ public class MethodCall implements Implementation.Composable {
      */
     public static Composable call(Callable<?> callable) {
         try {
-            return invoke(Callable.class.getDeclaredMethod("call")).on(callable, Callable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
+            return invoke(Callable.class.getMethod("call")).on(callable, Callable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
         } catch (NoSuchMethodException exception) {
             throw new IllegalStateException("Could not locate Callable::call method", exception);
         }
@@ -213,7 +213,7 @@ public class MethodCall implements Implementation.Composable {
      */
     public static Composable run(Runnable runnable) {
         try {
-            return invoke(Runnable.class.getDeclaredMethod("run")).on(runnable, Runnable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
+            return invoke(Runnable.class.getMethod("run")).on(runnable, Runnable.class).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
         } catch (NoSuchMethodException exception) {
             throw new IllegalStateException("Could not locate Runnable::run method", exception);
         }

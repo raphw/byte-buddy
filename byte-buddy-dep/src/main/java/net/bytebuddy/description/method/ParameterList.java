@@ -199,7 +199,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
                 public Dispatcher run() {
                     try {
-                        return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameterCount"));
+                        return new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.reflect.Executable").getMethod("getParameterCount"));
                     } catch (Exception ignored) {
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }

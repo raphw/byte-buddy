@@ -668,7 +668,7 @@ public interface AnnotationDescription {
                         ? ((MethodDescription.ForLoadedMethod) property).getLoadedMethod()
                         : null;
                 if (method == null || method.getDeclaringClass() != annotation.annotationType() || (!accessible && !method.isAccessible())) {
-                    method = annotation.annotationType().getDeclaredMethod(property.getName());
+                    method = annotation.annotationType().getMethod(property.getName());
                     if (!accessible) {
                         AccessController.doPrivileged(new SetAccessibleAction<Method>(method));
                     }
