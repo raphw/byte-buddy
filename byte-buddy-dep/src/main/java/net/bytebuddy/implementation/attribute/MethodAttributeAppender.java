@@ -98,7 +98,7 @@ public interface MethodAttributeAppender {
                 for (Factory factory : factories) {
                     if (factory instanceof Compound) {
                         this.factories.addAll(((Compound) factory).factories);
-                    } else {
+                    } else if (!(factory instanceof NoOp)) {
                         this.factories.add(factory);
                     }
                 }
@@ -492,7 +492,7 @@ public interface MethodAttributeAppender {
             for (MethodAttributeAppender methodAttributeAppender : methodAttributeAppenders) {
                 if (methodAttributeAppender instanceof Compound) {
                     this.methodAttributeAppenders.addAll(((Compound) methodAttributeAppender).methodAttributeAppenders);
-                } else {
+                } else if (!(methodAttributeAppender instanceof NoOp)) {
                     this.methodAttributeAppenders.add(methodAttributeAppender);
                 }
             }

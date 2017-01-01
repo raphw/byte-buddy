@@ -736,7 +736,7 @@ public interface AsmVisitorWrapper {
             for (AsmVisitorWrapper asmVisitorWrapper : asmVisitorWrappers) {
                 if (asmVisitorWrapper instanceof Compound) {
                     this.asmVisitorWrappers.addAll(((Compound) asmVisitorWrapper).asmVisitorWrappers);
-                } else {
+                } else if (!(asmVisitorWrapper instanceof NoOp)) {
                     this.asmVisitorWrappers.add(asmVisitorWrapper);
                 }
             }

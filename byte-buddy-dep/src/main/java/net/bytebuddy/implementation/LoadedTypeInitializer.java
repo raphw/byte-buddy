@@ -176,7 +176,7 @@ public interface LoadedTypeInitializer {
             for (LoadedTypeInitializer loadedTypeInitializer : loadedTypeInitializers) {
                 if (loadedTypeInitializer instanceof Compound) {
                     this.loadedTypeInitializers.addAll(((Compound) loadedTypeInitializer).loadedTypeInitializers);
-                } else {
+                } else if (!(loadedTypeInitializer instanceof NoOp)) {
                     this.loadedTypeInitializers.add(loadedTypeInitializer);
                 }
             }

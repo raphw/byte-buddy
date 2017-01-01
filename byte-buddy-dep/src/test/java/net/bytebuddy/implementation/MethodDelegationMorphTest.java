@@ -119,22 +119,22 @@ public class MethodDelegationMorphTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testMorphTypeDoesNotDeclareCorrectMethodThrowsException() throws Exception {
-        MethodDelegation.withEmptyConfiguration().withBinders(Morph.Binder.install(Serializable.class)).to(new SimpleMorph(QUX));
+        Morph.Binder.install(Serializable.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMorphTypeDoesInheritFromOtherTypeThrowsException() throws Exception {
-        MethodDelegation.withEmptyConfiguration().withBinders(Morph.Binder.install(InheritingMorphingType.class)).to(new SimpleMorph(QUX));
+        Morph.Binder.install(InheritingMorphingType.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMorphTypeIsNotPublicThrowsException() throws Exception {
-        MethodDelegation.withEmptyConfiguration().withBinders(Morph.Binder.install(PackagePrivateMorphing.class)).to(new SimpleMorph(QUX));
+        Morph.Binder.install(PackagePrivateMorphing.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testPipeTypeDoesNotDeclareCorrectMethodSignatureThrowsException() throws Exception {
-        MethodDelegation.withDefaultConfiguration().withBinders(Morph.Binder.install(WrongParametersMorphing.class)).to(new SimpleMorph(QUX)); // TODO: Remove outside?
+        Morph.Binder.install(WrongParametersMorphing.class);
     }
 
     @Test(expected = IllegalArgumentException.class)

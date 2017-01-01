@@ -199,7 +199,7 @@ public interface StackManipulation {
             for (StackManipulation stackManipulation : stackManipulations) {
                 if (stackManipulation instanceof Compound) {
                     this.stackManipulations.addAll(((Compound) stackManipulation).stackManipulations);
-                } else {
+                } else if (!(stackManipulation instanceof Trivial)) {
                     this.stackManipulations.add(stackManipulation);
                 }
             }

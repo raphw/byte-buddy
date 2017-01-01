@@ -253,7 +253,7 @@ public interface TypeAttributeAppender {
             for (TypeAttributeAppender typeAttributeAppender : typeAttributeAppenders) {
                 if (typeAttributeAppender instanceof Compound) {
                     this.typeAttributeAppenders.addAll(((Compound) typeAttributeAppender).typeAttributeAppenders);
-                } else {
+                } else if (!(typeAttributeAppender instanceof NoOp)) {
                     this.typeAttributeAppenders.add(typeAttributeAppender);
                 }
             }

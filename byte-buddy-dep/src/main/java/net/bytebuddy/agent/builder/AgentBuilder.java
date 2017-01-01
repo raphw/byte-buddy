@@ -1495,7 +1495,7 @@ public interface AgentBuilder {
                 for (Listener listener : listeners) {
                     if (listener instanceof Compound) {
                         this.listeners.addAll(((Compound) listener).listeners);
-                    } else {
+                    } else if (!(listener instanceof NoOp)) {
                         this.listeners.add(listener);
                     }
                 }
@@ -1880,7 +1880,7 @@ public interface AgentBuilder {
                 for (Transformer transformer : transformers) {
                     if (transformer instanceof Compound) {
                         this.transformers.addAll(((Compound) transformer).transformers);
-                    } else {
+                    } else if (!(transformer instanceof NoOp)) {
                         this.transformers.add(transformer);
                     }
                 }
@@ -3262,7 +3262,7 @@ public interface AgentBuilder {
                 for (LocationStrategy locationStrategy : locationStrategies) {
                     if (locationStrategy instanceof Compound) {
                         this.locationStrategies.addAll(((Compound) locationStrategy).locationStrategies);
-                    } else {
+                    } else if (!(locationStrategy instanceof NoOp)) {
                         this.locationStrategies.add(locationStrategy);
                     }
                 }
@@ -4497,7 +4497,7 @@ public interface AgentBuilder {
                     for (Listener listener : listeners) {
                         if (listener instanceof Compound) {
                             this.listeners.addAll(((Compound) listener).listeners);
-                        } else {
+                        } else if (!(listener instanceof NoOp)) {
                             this.listeners.add(listener);
                         }
                     }
@@ -8071,7 +8071,7 @@ public interface AgentBuilder {
                     for (Transformation transformation : transformations) {
                         if (transformation instanceof Compound) {
                             this.transformations.addAll(((Compound) transformation).transformations);
-                        } else {
+                        } else if (!(transformation instanceof Ignored)) {
                             this.transformations.add(transformation);
                         }
                     }

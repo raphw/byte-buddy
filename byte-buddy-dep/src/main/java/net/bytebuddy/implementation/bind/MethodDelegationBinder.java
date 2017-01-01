@@ -825,7 +825,7 @@ public interface MethodDelegationBinder {
                 for (AmbiguityResolver ambiguityResolver : ambiguityResolvers) {
                     if (ambiguityResolver instanceof Compound) {
                         this.ambiguityResolvers.addAll(((Compound) ambiguityResolver).ambiguityResolvers);
-                    } else {
+                    } else if (!(ambiguityResolver instanceof NoOp)) {
                         this.ambiguityResolvers.add(ambiguityResolver);
                     }
                 }

@@ -1772,7 +1772,7 @@ public interface ClassFileLocator extends Closeable {
             for (ClassFileLocator classFileLocator : classFileLocators) {
                 if (classFileLocator instanceof Compound) {
                     this.classFileLocators.addAll(((Compound) classFileLocator).classFileLocators);
-                } else {
+                } else if (!(classFileLocator instanceof NoOp)) {
                     this.classFileLocators.add(classFileLocator);
                 }
             }

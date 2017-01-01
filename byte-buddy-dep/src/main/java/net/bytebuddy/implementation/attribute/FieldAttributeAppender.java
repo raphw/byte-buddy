@@ -92,7 +92,7 @@ public interface FieldAttributeAppender {
                 for (Factory factory : factories) {
                     if (factory instanceof Compound) {
                         this.factories.addAll(((Compound) factory).factories);
-                    } else {
+                    } else if (!(factory instanceof NoOp)) {
                         this.factories.add(factory);
                     }
                 }
@@ -239,7 +239,7 @@ public interface FieldAttributeAppender {
             for (FieldAttributeAppender fieldAttributeAppender : fieldAttributeAppenders) {
                 if (fieldAttributeAppender instanceof Compound) {
                     this.fieldAttributeAppenders.addAll(((Compound) fieldAttributeAppender).fieldAttributeAppenders);
-                } else {
+                } else if (!(fieldAttributeAppender instanceof NoOp)) {
                     this.fieldAttributeAppenders.add(fieldAttributeAppender);
                 }
             }

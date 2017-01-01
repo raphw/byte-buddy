@@ -3,11 +3,15 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import static net.bytebuddy.matcher.ElementMatchers.any;
 import static net.bytebuddy.matcher.ElementMatchers.isToString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MethodDelegationOtherTest {
 
@@ -53,6 +57,13 @@ public class MethodDelegationOtherTest {
                 .defineMethod("bar", void.class, Ownership.STATIC)
                 .intercept(MethodDelegation.toField("foo"))
                 .make();
+    }
+
+    @Test
+    public void testEmptyConfiguration() throws Exception {
+        assertThat(MethodDelegation.withEmptyConfiguration()
+                .withBinders(TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS)
+                .withResolvers(MethodDelegationBinder.AmbiguityResolver.DEFAULT), is(MethodDelegation.withDefaultConfiguration()));
     }
 
     @Test

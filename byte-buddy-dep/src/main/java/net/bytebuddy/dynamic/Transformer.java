@@ -623,7 +623,7 @@ public interface Transformer<T> {
             for (Transformer<S> transformer : transformers) {
                 if (transformer instanceof Compound) {
                     this.transformers.addAll(((Compound<S>) transformer).transformers);
-                } else {
+                } else if (!(transformer instanceof NoOp)) {
                     this.transformers.add(transformer);
                 }
             }
