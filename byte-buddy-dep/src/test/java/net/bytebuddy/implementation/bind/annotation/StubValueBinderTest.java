@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,7 +43,8 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
                 source,
                 target,
                 implementationTarget,
-                assigner).isValid(), is(true));
+                assigner,
+                Assigner.Typing.STATIC).isValid(), is(true));
     }
 
     @Test
@@ -54,7 +56,8 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
                 source,
                 target,
                 implementationTarget,
-                assigner).isValid(), is(true));
+                assigner,
+                Assigner.Typing.STATIC).isValid(), is(true));
     }
 
     @Test
@@ -66,13 +69,14 @@ public class StubValueBinderTest extends AbstractAnnotationBinderTest<StubValue>
                 source,
                 target,
                 implementationTarget,
-                assigner).isValid(), is(false));
+                assigner,
+                Assigner.Typing.STATIC).isValid(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalParameter() throws Exception {
         when(target.getType()).thenReturn(genericType);
-        StubValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        StubValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test

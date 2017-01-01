@@ -9,11 +9,9 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
-import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
-import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 
@@ -64,7 +62,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         for (ParameterDescription parameterDescription : candidate.getParameters()) {
             handlers.add(delegationProcessor.prepare(parameterDescription));
         }
-        return new Record(candidate, handlers);
+        return new Record(candidate, handlers, RuntimeType.Verifier.check(candidate));
     }
 
     @Override
@@ -103,14 +101,21 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         private final List<DelegationProcessor.Handler> handlers;
 
         /**
+         * The typing to apply.
+         */
+        private final Assigner.Typing typing;
+
+        /**
          * Creates a default compiled method delegation binder.
          *
          * @param candidate The candidate method.
          * @param handlers  A list of handlers for each parameter.
+         * @param typing    The typing to apply.
          */
-        protected Record(MethodDescription candidate, List<DelegationProcessor.Handler> handlers) {
+        protected Record(MethodDescription candidate, List<DelegationProcessor.Handler> handlers, Assigner.Typing typing) {
             this.candidate = candidate;
             this.handlers = handlers;
+            this.typing = typing;
         }
 
         @Override
@@ -122,7 +127,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             if (!candidate.isAccessibleTo(implementationTarget.getInstrumentedType())) {
                 return MethodBinding.Illegal.INSTANCE;
             }
-            StackManipulation methodTermination = terminationHandler.resolve(assigner, source, candidate);
+            StackManipulation methodTermination = terminationHandler.resolve(assigner, typing, source, candidate);
             if (!methodTermination.isValid()) {
                 return MethodBinding.Illegal.INSTANCE;
             }
@@ -142,13 +147,15 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             if (object == null || getClass() != object.getClass()) return false;
             Record record = (Record) object;
             return candidate.equals(record.candidate)
-                    && handlers.equals(record.handlers);
+                    && handlers.equals(record.handlers)
+                    && typing.equals(record.typing);
         }
 
         @Override
         public int hashCode() {
             int result = candidate.hashCode();
             result = 31 * result + handlers.hashCode();
+            result = 31 * result + typing.hashCode();
             return result;
         }
 
@@ -157,6 +164,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             return "TargetMethodAnnotationDrivenBinder.Record{" +
                     ", candidate=" + candidate +
                     ", handlers=" + handlers +
+                    ", typing=" + typing +
                     '}';
         }
     }
@@ -204,13 +212,15 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          *                             intercepting the {@code source} method.
          * @param implementationTarget The target of the current implementation that is subject to this binding.
          * @param assigner             An assigner that can be used for applying the binding.
+         * @param typing               The typing to apply.
          * @return A parameter binding for the requested target method parameter.
          */
         ParameterBinding<?> bind(AnnotationDescription.Loadable<T> annotation,
                                  MethodDescription source,
                                  ParameterDescription target,
                                  Implementation.Target implementationTarget,
-                                 Assigner assigner);
+                                 Assigner assigner,
+                                 Assigner.Typing typing);
 
         /**
          * <p>
@@ -236,7 +246,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                             MethodDescription source,
                                             ParameterDescription target,
                                             Implementation.Target implementationTarget,
-                                            Assigner assigner) {
+                                            Assigner assigner,
+                                            Assigner.Typing typing) {
                 Object value = bind(annotation, source, target);
                 if (value == null) {
                     return new ParameterBinding.Anonymous(DefaultValue.of(target.getType()));
@@ -293,7 +304,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 }
                 return new ParameterBinding.Anonymous(new StackManipulation.Compound(
                         stackManipulation,
-                        assigner.assign(suppliedType.asGenericType(), target.getType(), Assigner.Typing.STATIC)
+                        assigner.assign(suppliedType.asGenericType(), target.getType(), typing)
                 ));
             }
 
@@ -427,7 +438,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                             MethodDescription source,
                                             ParameterDescription target,
                                             Implementation.Target implementationTarget,
-                                            Assigner assigner) {
+                                            Assigner assigner,
+                                            Assigner.Typing typing) {
                 if (!declaringType(annotation).represents(void.class)) {
                     if (declaringType(annotation).isPrimitive() || declaringType(annotation).isArray()) {
                         throw new IllegalStateException("A primitive type or array type cannot declare a field: " + source);
@@ -484,44 +496,6 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
     }
 
     /**
-     * Responsible for creating a {@link StackManipulation}
-     * that is applied after the interception method is applied.
-     */
-    public enum TerminationHandler implements MethodDelegationBinder.TerminationHandler {
-
-        /**
-         * A termination handler that returns the delegate method's return value.
-         */
-        RETURNING {
-            @Override
-            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
-                return new StackManipulation.Compound(assigner.assign(target.isConstructor()
-                                ? target.getDeclaringType().asGenericType()
-                                : target.getReturnType(),
-                        source.getReturnType(),
-                        RuntimeType.Verifier.check(target)), MethodReturn.of(source.getReturnType()));
-            }
-        },
-
-        /**
-         * A termination handler that drops the delegate method's return value.
-         */
-        DROPPING {
-            @Override
-            public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
-                return Removal.of(target.isConstructor()
-                        ? target.getDeclaringType()
-                        : target.getReturnType());
-            }
-        };
-
-        @Override
-        public String toString() {
-            return "TargetMethodAnnotationDrivenBinder.TerminationHandler." + name();
-        }
-    }
-
-    /**
      * A delegation processor is a helper class for a
      * {@link net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder}
      * for performing its actual logic. By outsourcing this logic to this helper class, a cleaner implementation
@@ -570,13 +544,14 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
          * @return A handler for processing the parameter with the given annotations.
          */
         protected Handler prepare(ParameterDescription target) {
-            Handler handler = new Handler.Unbound(target);
+            Assigner.Typing typing = RuntimeType.Verifier.check(target);
+            Handler handler = new Handler.Unbound(target, typing);
             for (AnnotationDescription annotation : target.getDeclaredAnnotations()) {
                 ParameterBinder<?> parameterBinder = parameterBinders.get(annotation.getAnnotationType());
                 if (parameterBinder != null && handler.isBound()) {
                     throw new IllegalStateException("Ambiguous binding for parameter annotated with two handled annotation types");
                 } else if (parameterBinder != null /* && !handler.isBound() */) {
-                    handler = Handler.Bound.of(target, parameterBinder, annotation);
+                    handler = Handler.Bound.of(target, parameterBinder, annotation, typing);
                 }
             }
             return handler;
@@ -634,12 +609,19 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 private final ParameterDescription target;
 
                 /**
+                 * The typing to apply.
+                 */
+                private final Assigner.Typing typing;
+
+                /**
                  * Creates a new unbound handler.
                  *
                  * @param target The target parameter being handled.
+                 * @param typing The typing to apply.
                  */
-                protected Unbound(ParameterDescription target) {
+                protected Unbound(ParameterDescription target, Assigner.Typing typing) {
                     this.target = target;
+                    this.typing = typing;
                 }
 
                 @Override
@@ -653,7 +635,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                             source,
                             target,
                             implementationTarget,
-                            assigner);
+                            assigner,
+                            typing);
                 }
 
                 @Override
@@ -661,18 +644,19 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     Unbound unbound = (Unbound) object;
-                    return target.equals(unbound.target);
+                    return target.equals(unbound.target) && typing.equals(unbound.typing);
                 }
 
                 @Override
                 public int hashCode() {
-                    return target.hashCode();
+                    return target.hashCode() + 31 * typing.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Unbound{" +
                             "target=" + target +
+                            ", typing=" + typing +
                             '}';
                 }
 
@@ -764,16 +748,26 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 private final AnnotationDescription.Loadable<T> annotation;
 
                 /**
+                 * The typing to apply.
+                 */
+                private final Assigner.Typing typing;
+
+                /**
                  * Creates a new bound handler.
                  *
                  * @param target          The target parameter being handled.
                  * @param parameterBinder The parameter binder that is actually responsible for binding the parameter.
                  * @param annotation      The annotation value that lead to the binding of this handler.
+                 * @param typing          The typing to apply.
                  */
-                protected Bound(ParameterDescription target, ParameterBinder<T> parameterBinder, AnnotationDescription.Loadable<T> annotation) {
+                protected Bound(ParameterDescription target,
+                                ParameterBinder<T> parameterBinder,
+                                AnnotationDescription.Loadable<T> annotation,
+                                Assigner.Typing typing) {
                     this.target = target;
                     this.parameterBinder = parameterBinder;
                     this.annotation = annotation;
+                    this.typing = typing;
                 }
 
                 /**
@@ -782,15 +776,18 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                  * @param target          The target parameter being handled.
                  * @param parameterBinder The parameter binder that should process an annotation.
                  * @param annotation      An annotation instance that can be understood by this parameter binder.
+                 * @param typing          The typing to apply.
                  * @return A handler for processing the given annotation.
                  */
                 @SuppressWarnings("unchecked")
                 protected static Handler of(ParameterDescription target,
                                             ParameterBinder<?> parameterBinder,
-                                            AnnotationDescription annotation) {
+                                            AnnotationDescription annotation,
+                                            Assigner.Typing typing) {
                     return new Bound<Annotation>(target,
                             (ParameterBinder<Annotation>) parameterBinder,
-                            (AnnotationDescription.Loadable<Annotation>) annotation.prepare(parameterBinder.getHandledType()));
+                            (AnnotationDescription.Loadable<Annotation>) annotation.prepare(parameterBinder.getHandledType()),
+                            typing);
                 }
 
                 @Override
@@ -804,7 +801,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                             source,
                             target,
                             implementationTarget,
-                            assigner);
+                            assigner,
+                            typing);
                 }
 
                 @Override
@@ -812,7 +810,8 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     return this == other || !(other == null || getClass() != other.getClass())
                             && parameterBinder.equals(((Bound<?>) other).parameterBinder)
                             && annotation.equals(((Bound<?>) other).annotation)
-                            && target.equals(((Bound<?>) other).target);
+                            && target.equals(((Bound<?>) other).target)
+                            && typing.equals(((Bound<?>) other).typing);
                 }
 
                 @Override
@@ -820,6 +819,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     int result = parameterBinder.hashCode();
                     result = 31 * result + target.hashCode();
                     result = 31 * result + annotation.hashCode();
+                    result = 31 * result + typing.hashCode();
                     return result;
                 }
 
@@ -829,6 +829,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                             "parameterBinder=" + parameterBinder +
                             ", annotation=" + annotation +
                             ", target=" + target +
+                            ", typing=" + typing +
                             '}';
                 }
             }

@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,13 +53,13 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     @Test(expected = IllegalStateException.class)
     public void testFieldOfArrayThrowsException() throws Exception {
         doReturn(Object[].class).when(annotation).declaringType();
-        FieldValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        FieldValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldOfPrimitiveThrowsException() throws Exception {
         doReturn(int.class).when(annotation).declaringType();
-        FieldValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        FieldValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test
@@ -74,7 +75,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -91,7 +93,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -109,7 +112,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -128,7 +132,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -141,7 +146,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -159,7 +165,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -174,7 +181,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -189,7 +197,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -204,7 +213,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -220,7 +230,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -236,7 +247,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -251,7 +263,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -272,7 +285,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -293,7 +307,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -314,7 +329,8 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 

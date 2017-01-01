@@ -194,7 +194,7 @@ public class MethodDelegation implements Implementation.Composable {
     protected MethodDelegation(ImplementationDelegate implementationDelegate,
                                List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
                                MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
-        this(implementationDelegate, parameterBinders, ambiguityResolver, TargetMethodAnnotationDrivenBinder.TerminationHandler.RETURNING, Assigner.DEFAULT);
+        this(implementationDelegate, parameterBinders, ambiguityResolver, MethodDelegationBinder.TerminationHandler.Default.RETURNING, Assigner.DEFAULT);
     }
 
     /**
@@ -511,7 +511,7 @@ public class MethodDelegation implements Implementation.Composable {
         return new Compound(new MethodDelegation(implementationDelegate,
                 parameterBinders,
                 ambiguityResolver,
-                TargetMethodAnnotationDrivenBinder.TerminationHandler.DROPPING,
+                MethodDelegationBinder.TerminationHandler.Default.DROPPING,
                 assigner), implementation);
     }
 
@@ -756,7 +756,7 @@ public class MethodDelegation implements Implementation.Composable {
 
             @Override
             public ImplementationDelegate.Compiled compile(TypeDescription instrumentedType) {
-                return new Compiled.ForStaticCall(records); // TODO: Filter invisible
+                return new Compiled.ForStaticCall(records);
             }
 
             @Override
@@ -1095,14 +1095,33 @@ public class MethodDelegation implements Implementation.Composable {
         }
     }
 
+    /**
+     * A {@link MethodDelegation} with custom configuration.
+     */
     public static class WithCustomProperties {
 
+        /**
+         * The ambiguity resolver to use.
+         */
         private final MethodDelegationBinder.AmbiguityResolver ambiguityResolver;
 
+        /**
+         * The parameter binders to use.
+         */
         private final List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders;
 
+        /**
+         * The matcher to use for filtering relevant methods.
+         */
         private final ElementMatcher<? super MethodDescription> matcher;
 
+        /**
+         * Creates a new method delegation with custom properties.
+         *
+         * @param ambiguityResolver The ambiguity resolver to use.
+         * @param parameterBinders  The parameter binders to use.
+         * @param matcher           The matcher to use for filtering relevant methods.
+         */
         protected WithCustomProperties(MethodDelegationBinder.AmbiguityResolver ambiguityResolver,
                                        List<TargetMethodAnnotationDrivenBinder.ParameterBinder<?>> parameterBinders,
                                        ElementMatcher<? super MethodDescription> matcher) {
@@ -1161,13 +1180,7 @@ public class MethodDelegation implements Implementation.Composable {
         /**
          * Creates an implementation where only instance methods of the given object are considered as binding targets.
          * This method will never bind to constructors but will consider methods that are defined in super types. Note
-         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
-         * selection by explicitly selecting methods with calling the
-         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
-         * method on the returned method delegation as for example:
-         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
-         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
-         * for delegation.
+         * that this includes methods that were defined by the {@link java.lang.Object} class.
          *
          * @param target A delegate instance which will be injected by a
          *               {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
@@ -1181,13 +1194,7 @@ public class MethodDelegation implements Implementation.Composable {
         /**
          * Creates an implementation where only instance methods of the given object are considered as binding targets.
          * This method will never bind to constructors but will consider methods that are defined in super types. Note
-         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
-         * selection by explicitly selecting methods with calling the
-         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
-         * method on the returned method delegation as for example:
-         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
-         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
-         * for delegation.
+         * that this includes methods that were defined by the {@link java.lang.Object} class.
          *
          * @param target              A delegate instance which will be injected by a
          *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
@@ -1202,13 +1209,7 @@ public class MethodDelegation implements Implementation.Composable {
         /**
          * Creates an implementation where only instance methods of the given object are considered as binding targets.
          * This method will never bind to constructors but will consider methods that are defined in super types. Note
-         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
-         * selection by explicitly selecting methods with calling the
-         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
-         * method on the returned method delegation as for example:
-         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
-         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
-         * for delegation.
+         * that this includes methods that were defined by the {@link java.lang.Object} class.
          *
          * @param target    A delegate instance which will be injected by a
          *                  {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
@@ -1223,13 +1224,7 @@ public class MethodDelegation implements Implementation.Composable {
         /**
          * Creates an implementation where only instance methods of the given object are considered as binding targets.
          * This method will never bind to constructors but will consider methods that are defined in super types. Note
-         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
-         * selection by explicitly selecting methods with calling the
-         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
-         * method on the returned method delegation as for example:
-         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
-         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
-         * for delegation.
+         * that this includes methods that were defined by the {@link java.lang.Object} class.
          *
          * @param target              A delegate instance which will be injected by a
          *                            {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are
@@ -1245,13 +1240,8 @@ public class MethodDelegation implements Implementation.Composable {
         /**
          * Creates an implementation where only instance methods of the given object are considered as binding targets.
          * This method will never bind to constructors but will consider methods that are defined in super types. Note
-         * that this includes methods that were defined by the {@link java.lang.Object} class. You can narrow this default
-         * selection by explicitly selecting methods with calling the
-         * {@link net.bytebuddy.implementation.MethodDelegation#filter(net.bytebuddy.matcher.ElementMatcher)}
-         * method on the returned method delegation as for example:
-         * <pre>MethodDelegation.to(new Foo()).filter(MethodMatchers.not(isDeclaredBy(Object.class)));</pre>
-         * which will result in a delegation to <code>Foo</code> where no methods of {@link java.lang.Object} are considered
-         * for delegation.
+         * that this includes methods that were defined by the {@link java.lang.Object} class unless the specified type is
+         * an interface type where those methods are not considered.
          *
          * @param target A delegate instance which will be injected by a
          *               {@link net.bytebuddy.implementation.LoadedTypeInitializer}. All intercepted method calls are

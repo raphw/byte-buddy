@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         when(stackManipulation.isValid()).thenReturn(true);
         when(instrumentedType.isAssignableTo(targetType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
         verify(instantiation).proxyFor(targetType, implementationTarget, annotationDescription);
     }
@@ -58,7 +59,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     public void testIllegalBindingForNonAssignableType() throws Exception {
         doReturn(void.class).when(annotation).proxyType();
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
     }
 
@@ -67,45 +68,45 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         doReturn(void.class).when(annotation).proxyType();
         when(source.isStatic()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Super.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveParameterType() throws Exception {
         when(genericTargetType.isPrimitive()).thenReturn(true);
-        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayParameterType() throws Exception {
         when(genericTargetType.isArray()).thenReturn(true);
-        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveProxyType() throws Exception {
         doReturn(int.class).when(annotation).proxyType();
-        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayProxyType() throws Exception {
         doReturn(Object[].class).when(annotation).proxyType();
-        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNonAssignableType() throws Exception {
         doReturn(Void.class).when(annotation).proxyType();
-        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFinalProxyType() throws Exception {
         doReturn(void.class).when(annotation).proxyType();
         when(targetType.isFinal()).thenReturn(true);
-        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test

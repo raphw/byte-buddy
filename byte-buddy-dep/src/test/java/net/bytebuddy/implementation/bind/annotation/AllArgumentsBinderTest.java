@@ -15,8 +15,6 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.lang.annotation.Annotation;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -62,7 +60,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     @Test
     public void testLegalStrictBindingRuntimeType() throws Exception {
         when(target.getIndex()).thenReturn(1);
-        testLegalStrictBinding(false);
+        testLegalStrictBinding(Assigner.Typing.STATIC);
     }
 
     @Test
@@ -71,10 +69,10 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(runtimeType));
-        testLegalStrictBinding(true, runtimeType);
+        testLegalStrictBinding(Assigner.Typing.DYNAMIC);
     }
 
-    private void testLegalStrictBinding(boolean dynamicallyTyped, Annotation... targetAnnotation) throws Exception {
+    private void testLegalStrictBinding(Assigner.Typing typing) throws Exception {
         when(annotation.value()).thenReturn(AllArguments.Assignment.STRICT);
         when(stackManipulation.isValid()).thenReturn(true);
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, firstSourceType, secondSourceType));
@@ -83,16 +81,15 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(target.getType()).thenReturn(targetType);
-        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(targetAnnotation));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, typing);
         assertThat(parameterBinding.isValid(), is(true));
         verify(source, atLeast(1)).getParameters();
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getType();
-        verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(firstSourceType, componentType, Assigner.Typing.of(dynamicallyTyped));
-        verify(assigner).assign(secondSourceType, componentType, Assigner.Typing.of(dynamicallyTyped));
+        verify(target, never()).getDeclaredAnnotations();
+        verify(assigner).assign(firstSourceType, componentType, typing);
+        verify(assigner).assign(secondSourceType, componentType, typing);
         verifyNoMoreInteractions(assigner);
     }
 
@@ -109,12 +106,12 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
         verify(source, atLeast(1)).getParameters();
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getType();
-        verify(target, atLeast(1)).getDeclaredAnnotations();
+        verify(target, never()).getDeclaredAnnotations();
         verify(assigner).assign(firstSourceType, componentType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
     }
@@ -133,7 +130,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(rawComponentType.getInternalName()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         StackManipulation.Size size = parameterBinding.apply(methodVisitor, implementationContext);
@@ -147,7 +144,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         verify(source, atLeast(1)).getParameters();
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getType();
-        verify(target, atLeast(1)).getDeclaredAnnotations();
+        verify(target, never()).getDeclaredAnnotations();
         verify(assigner).assign(firstSourceType, componentType, Assigner.Typing.STATIC);
         verify(assigner).assign(secondSourceType, componentType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
@@ -161,7 +158,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(targetType.asErasure()).thenReturn(rawTargetType);
         when(targetType.isArray()).thenReturn(false);
         when(target.getType()).thenReturn(targetType);
-        AllArguments.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        AllArguments.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test

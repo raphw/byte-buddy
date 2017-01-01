@@ -54,31 +54,25 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
 
     @Test
     public void testLegalBindingNoRuntimeTypeUnique() throws Exception {
-        assertBinding(false, Argument.BindingMechanic.UNIQUE);
+        assertBinding(Assigner.Typing.STATIC, Argument.BindingMechanic.UNIQUE);
     }
 
     @Test
     public void testLegalBindingRuntimeTypeUnique() throws Exception {
-        RuntimeType runtimeType = mock(RuntimeType.class);
-        doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        assertBinding(true, Argument.BindingMechanic.UNIQUE, runtimeType);
+        assertBinding(Assigner.Typing.DYNAMIC, Argument.BindingMechanic.UNIQUE);
     }
 
     @Test
     public void testLegalBindingNoRuntimeTypeAnonymous() throws Exception {
-        assertBinding(false, Argument.BindingMechanic.ANONYMOUS);
+        assertBinding(Assigner.Typing.STATIC, Argument.BindingMechanic.ANONYMOUS);
     }
 
     @Test
     public void testLegalBindingRuntimeTypeAnonymous() throws Exception {
-        RuntimeType runtimeType = mock(RuntimeType.class);
-        doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        assertBinding(true, Argument.BindingMechanic.ANONYMOUS, runtimeType);
+        assertBinding(Assigner.Typing.DYNAMIC, Argument.BindingMechanic.ANONYMOUS);
     }
 
-    private void assertBinding(boolean dynamicallyTyped,
-                               Argument.BindingMechanic bindingMechanic,
-                               Annotation... annotations) throws Exception {
+    private void assertBinding(Assigner.Typing typing, Argument.BindingMechanic bindingMechanic) throws Exception {
         final int sourceIndex = 2;
         when(stackManipulation.isValid()).thenReturn(true);
         when(annotation.value()).thenReturn(sourceIndex);
@@ -94,9 +88,8 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, typeDescriptions));
         when(source.isStatic()).thenReturn(false);
         when(target.getType()).thenReturn(genericTargetType);
-        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(annotations));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, typing);
         assertThat(parameterBinding.isValid(), is(true));
         Object expectedToken = new ArgumentTypeResolver.ParameterIndexToken(sourceIndex);
         if (bindingMechanic == Argument.BindingMechanic.UNIQUE) {
@@ -109,8 +102,8 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameters();
         verify(target, atLeast(1)).getType();
-        verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(genericSourceType, genericTargetType, Assigner.Typing.of(dynamicallyTyped));
+        verify(target, never()).getDeclaredAnnotations();
+        verify(assigner).assign(genericSourceType, genericTargetType, typing);
         verifyNoMoreInteractions(assigner);
     }
 
@@ -121,7 +114,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         when(target.getIndex()).thenReturn(targetIndex);
         when(source.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameters();
@@ -131,7 +124,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeAnnotationValue() throws Exception {
         when(annotation.value()).thenReturn(-1);
-        Argument.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        Argument.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test

@@ -101,7 +101,8 @@ public @interface DefaultMethod {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
             if (!target.getType().asErasure().isAssignableFrom(Method.class)) {
                 throw new IllegalStateException("Cannot assign Method type to " + target);
             } else if (source.isMethod()) {

@@ -7,6 +7,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +60,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     public void testIllegalType() throws Exception {
         when(target.getType()).thenReturn(genericMorphType);
         when(morphMethod.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-        new Morph.Binder(morphMethod).bind(annotationDescription, source, target, implementationTarget, assigner);
+        new Morph.Binder(morphMethod).bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test
@@ -69,7 +70,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         doReturn(void.class).when(annotation).defaultTarget();
         when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
         verify(specialMethodInvocation).isValid();
     }
@@ -82,7 +83,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
         verify(specialMethodInvocation).isValid();
     }
@@ -96,7 +97,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         doReturn(void.class).when(annotation).defaultTarget();
         when(implementationTarget.invokeDefault(morphToken)).thenReturn(specialMethodInvocation);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
         verify(specialMethodInvocation).isValid();
     }
@@ -111,7 +112,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         when(implementationTarget.invokeDefault(morphToken)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
         verify(specialMethodInvocation).isValid();
     }
@@ -127,7 +128,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         when(implementationTarget.invokeDefault(morphToken, new TypeDescription.ForLoadedType(Foo.class)))
                 .thenReturn(specialMethodInvocation);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
         verify(specialMethodInvocation).isValid();
     }
@@ -144,7 +145,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = new Morph.Binder(morphMethod)
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
         verify(specialMethodInvocation).isValid();
     }

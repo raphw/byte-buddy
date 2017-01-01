@@ -107,8 +107,9 @@ public @interface FieldValue {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
-            return delegate.bind(annotation, source, target, implementationTarget, assigner);
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
+            return delegate.bind(annotation, source, target, implementationTarget, assigner, typing);
         }
 
         @Override

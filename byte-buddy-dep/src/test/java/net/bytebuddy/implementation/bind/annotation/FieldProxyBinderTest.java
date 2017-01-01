@@ -69,13 +69,13 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
     @Test(expected = IllegalStateException.class)
     public void testFieldOfArrayThrowsException() throws Exception {
         doReturn(Object[].class).when(annotation).declaringType();
-        new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription, source, target, implementationTarget, assigner);
+        new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldOfPrimitiveThrowsException() throws Exception {
         doReturn(int.class).when(annotation).declaringType();
-        new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription, source, target, implementationTarget, assigner);
+        new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -87,7 +87,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(genericTargetType.asErasure()).thenReturn(targetType);
         when(target.getType()).thenReturn(genericTargetType);
         when(instrumentedType.isAssignableTo(new TypeDescription.ForLoadedType(Foo.class))).thenReturn(true);
-        new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription, source, target, implementationTarget, assigner);
+        new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test
@@ -106,7 +106,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -125,7 +126,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -146,7 +148,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -166,7 +169,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -185,7 +189,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -204,7 +209,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -225,7 +231,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -245,7 +252,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -258,7 +266,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -270,7 +279,8 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)

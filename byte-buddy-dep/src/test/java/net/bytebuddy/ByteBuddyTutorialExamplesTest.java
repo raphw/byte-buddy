@@ -514,7 +514,8 @@ public class ByteBuddyTutorialExamplesTest {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) { // TODO: Update tutorial
             if (!target.getType().asErasure().represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");
             }

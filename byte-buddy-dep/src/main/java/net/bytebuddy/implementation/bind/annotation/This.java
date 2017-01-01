@@ -56,7 +56,8 @@ public @interface This {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
             if (target.getType().isPrimitive()) {
                 throw new IllegalStateException(target + " uses a primitive type with a @This annotation");
             } else if (target.getType().isArray()) {
@@ -67,7 +68,7 @@ public @interface This {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(source.isStatic()
                     ? NullConstant.INSTANCE
                     : new StackManipulation.Compound(MethodVariableAccess.loadThis(),
-                    assigner.assign(implementationTarget.getInstrumentedType().asGenericType(), target.getType(), RuntimeType.Verifier.check(target))));
+                    assigner.assign(implementationTarget.getInstrumentedType().asGenericType(), target.getType(), typing)));
         }
 
         @Override

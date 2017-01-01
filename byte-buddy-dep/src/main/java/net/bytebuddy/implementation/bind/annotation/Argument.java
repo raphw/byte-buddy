@@ -150,7 +150,8 @@ public @interface Argument {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
             Argument argument = annotation.loadSilent();
             if (argument.value() < 0) {
                 throw new IllegalArgumentException("@Argument annotation on " + target + " specifies negative index");
@@ -161,7 +162,7 @@ public @interface Argument {
                     target.getType(),
                     argument.value(),
                     assigner,
-                    RuntimeType.Verifier.check(target),
+                    typing,
                     source.getParameters().get(argument.value()).getOffset());
         }
 

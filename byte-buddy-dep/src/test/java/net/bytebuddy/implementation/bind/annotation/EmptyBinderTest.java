@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -64,7 +65,8 @@ public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
                         source,
                         target,
                         implementationTarget,
-                        assigner);
+                        assigner,
+                        Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
         StackManipulation.Size size = binding.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(typeDescription.getStackSize().getSize()));

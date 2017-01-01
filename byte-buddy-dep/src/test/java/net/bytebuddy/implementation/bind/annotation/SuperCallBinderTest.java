@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +52,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verify(implementationTarget).invokeSuper(sourceToken);
         verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(true));
@@ -62,7 +63,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(false);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verify(implementationTarget).invokeSuper(sourceToken);
         verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(false));
@@ -74,7 +75,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(specialMethodInvocation.isValid()).thenReturn(false);
         when(annotation.nullIfImpossible()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verify(implementationTarget).invokeSuper(sourceToken);
         verifyNoMoreInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(true));
@@ -82,7 +83,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
 
     @Test(expected = IllegalStateException.class)
     public void testWrongTypeThrowsException() throws Exception {
-        SuperCall.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        SuperCall.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test
@@ -90,7 +91,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(source.isConstructor()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verifyZeroInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(false));
     }
@@ -101,7 +102,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
         when(source.isConstructor()).thenReturn(true);
         when(annotation.nullIfImpossible()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verifyZeroInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(true));
     }

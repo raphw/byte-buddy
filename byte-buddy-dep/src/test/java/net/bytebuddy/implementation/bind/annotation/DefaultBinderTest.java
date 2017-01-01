@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +54,7 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
         when(stackManipulation.isValid()).thenReturn(true);
         when(rawInterfaces.contains(targetType)).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Default.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -62,7 +63,7 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
         doReturn(void.class).when(annotation).proxyType();
         when(targetType.isInterface()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Default.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
     }
 
@@ -72,7 +73,7 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
         when(targetType.isInterface()).thenReturn(true);
         when(source.isStatic()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Default.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
     }
 
@@ -80,13 +81,13 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     public void testNonInterfaceProxyType() throws Exception {
         doReturn(void.class).when(annotation).proxyType();
         when(targetType.isInterface()).thenReturn(false);
-        Default.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        Default.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNonInterfaceExplicitType() throws Exception {
         doReturn(Void.class).when(annotation).proxyType();
-        Default.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        Default.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test

@@ -223,7 +223,8 @@ public @interface Super {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
             if (target.getType().isPrimitive() || target.getType().isArray()) {
                 throw new IllegalStateException(target + " uses the @Super annotation on an invalid type");
             }

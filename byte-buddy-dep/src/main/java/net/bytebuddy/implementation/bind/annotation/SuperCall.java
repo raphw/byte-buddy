@@ -77,7 +77,8 @@ public @interface SuperCall {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
             TypeDescription targetType = target.getType().asErasure();
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A super method call proxy can only be assigned to Runnable or Callable types: " + target);

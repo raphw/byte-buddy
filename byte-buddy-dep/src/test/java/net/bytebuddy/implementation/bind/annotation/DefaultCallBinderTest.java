@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         doReturn(VOID_TYPE).when(annotation).targetType();
         when(source.asSignatureToken()).thenReturn(token);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
         verify(implementationTarget).invokeDefault(token);
         verifyNoMoreInteractions(implementationTarget);
@@ -79,7 +80,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(firstInterface, secondInterface));
         when(annotation.nullIfImpossible()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
         verify(implementationTarget).invokeDefault(token);
         verifyNoMoreInteractions(implementationTarget);
@@ -92,7 +93,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         doReturn(INTERFACE_TYPE).when(annotation).targetType();
         when(source.asSignatureToken()).thenReturn(token);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
         verify(implementationTarget).invokeDefault(token, new TypeDescription.ForLoadedType(INTERFACE_TYPE));
         verifyNoMoreInteractions(implementationTarget);
@@ -102,12 +103,12 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     public void testNonInterfaceTarget() throws Exception {
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         doReturn(NON_INTERFACE_TYPE).when(annotation).targetType();
-        DefaultCall.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        DefaultCall.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalAnnotatedValue() throws Exception {
-        DefaultCall.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        DefaultCall.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test
@@ -115,7 +116,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(source.isConstructor()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verifyZeroInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(false));
     }
@@ -126,7 +127,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(source.isConstructor()).thenReturn(true);
         when(annotation.nullIfImpossible()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
-                .bind(annotationDescription, source, target, implementationTarget, assigner);
+                .bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
         verifyZeroInteractions(implementationTarget);
         assertThat(parameterBinding.isValid(), is(true));
     }

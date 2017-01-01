@@ -185,7 +185,8 @@ public @interface Pipe {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
             if (!target.getType().asErasure().equals(forwardingMethod.getDeclaringType())) {
                 throw new IllegalStateException("Illegal use of @Pipe for " + target + " which was installed for " + forwardingMethod.getDeclaringType());
             } else if (source.isStatic()) {

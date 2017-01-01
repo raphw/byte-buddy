@@ -49,14 +49,15 @@ public @interface StubValue {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
             if (!target.getType().represents(Object.class)) {
                 throw new IllegalStateException(target + " uses StubValue annotation on non-Object type");
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(source.getReturnType().represents(void.class)
                     ? NullConstant.INSTANCE
                     : new StackManipulation.Compound(DefaultValue.of(source.getReturnType().asErasure()),
-                    assigner.assign(source.getReturnType(), TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)));
+                    assigner.assign(source.getReturnType(), TypeDescription.Generic.OBJECT, typing)));
         }
 
         @Override

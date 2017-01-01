@@ -130,7 +130,8 @@ public @interface AllArguments {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
             if (!target.getType().isArray()) {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
@@ -142,7 +143,7 @@ public @interface AllArguments {
                     ? CompoundList.of(implementationTarget.getInstrumentedType().asGenericType(), source.getParameters().asTypeList())
                     : source.getParameters().asTypeList()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(MethodVariableAccess.of(sourceParameter).loadFrom(offset),
-                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), RuntimeType.Verifier.check(target)));
+                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), typing));
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);
                 } else if (annotation.loadSilent().value().isStrict()) {

@@ -85,7 +85,8 @@ public @interface Default {
                                                                MethodDescription source,
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+                                                               Assigner assigner,
+                                                               Assigner.Typing typing) {
             TypeDescription proxyType = TypeLocator.ForType.of(annotation.getValue(PROXY_TYPE).resolve(TypeDescription.class)).resolve(target.getType());
             if (!proxyType.isInterface()) {
                 throw new IllegalStateException(target + " uses the @Default annotation on an invalid type");

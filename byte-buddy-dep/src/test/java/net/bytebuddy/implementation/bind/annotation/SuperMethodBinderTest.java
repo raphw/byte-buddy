@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
 
     @Test(expected = IllegalStateException.class)
     public void testBindNoMethodParameter() throws Exception {
-        SuperMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        SuperMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner, Assigner.Typing.STATIC);
     }
 
     @Test
@@ -58,7 +59,12 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
         when(source.isMethod()).thenReturn(true);
         when(implementationTarget.invokeSuper(token)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -69,7 +75,12 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
         when(annotation.fallbackToDefault()).thenReturn(true);
         when(implementationTarget.invokeDominant(token)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -79,7 +90,12 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
         when(source.isMethod()).thenReturn(true);
         when(implementationTarget.invokeSuper(token)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(false);
-        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -90,7 +106,12 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
         when(annotation.nullIfImpossible()).thenReturn(true);
         when(implementationTarget.invokeSuper(token)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(false);
-        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -99,7 +120,12 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(false);
         when(annotation.nullIfImpossible()).thenReturn(false);
-        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -108,7 +134,12 @@ public class SuperMethodBinderTest extends AbstractAnnotationBinderTest<SuperMet
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(false);
         when(annotation.nullIfImpossible()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = SuperMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 

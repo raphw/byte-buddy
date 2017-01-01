@@ -5,9 +5,11 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.annotation.BindingPriority;
+import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
@@ -866,11 +868,50 @@ public interface MethodDelegationBinder {
          * Creates a stack manipulation that is to be applied after the method return.
          *
          * @param assigner The supplied assigner.
+         * @param typing   The typing to apply.
          * @param source   The source method that is bound to the {@code target} method.
          * @param target   The target method that is subject to be bound by the {@code source} method.
          * @return A stack manipulation that is applied after the method return.
          */
-        StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target);
+        StackManipulation resolve(Assigner assigner, Assigner.Typing typing, MethodDescription source, MethodDescription target);
+
+        /**
+         * Responsible for creating a {@link StackManipulation}
+         * that is applied after the interception method is applied.
+         */
+        enum Default implements TerminationHandler {
+
+            /**
+             * A termination handler that returns the delegate method's return value.
+             */
+            RETURNING {
+                @Override
+                public StackManipulation resolve(Assigner assigner, Assigner.Typing typing, MethodDescription source, MethodDescription target) {
+                    return new StackManipulation.Compound(assigner.assign(target.isConstructor()
+                                    ? target.getDeclaringType().asGenericType()
+                                    : target.getReturnType(),
+                            source.getReturnType(),
+                            typing), MethodReturn.of(source.getReturnType()));
+                }
+            },
+
+            /**
+             * A termination handler that drops the delegate method's return value.
+             */
+            DROPPING {
+                @Override
+                public StackManipulation resolve(Assigner assigner, Assigner.Typing typing, MethodDescription source, MethodDescription target) {
+                    return Removal.of(target.isConstructor()
+                            ? target.getDeclaringType()
+                            : target.getReturnType());
+                }
+            };
+
+            @Override
+            public String toString() {
+                return "MethodDelegationBinder.TerminationHandler.Default." + name();
+            }
+        }
     }
 
     /**

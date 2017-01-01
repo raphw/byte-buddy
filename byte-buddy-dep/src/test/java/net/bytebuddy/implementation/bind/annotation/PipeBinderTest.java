@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +52,8 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(true));
     }
 
@@ -63,7 +65,8 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(parameterBinding.isValid(), is(false));
     }
 
@@ -77,7 +80,8 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
                 source,
                 target,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
     }
 
     @Test

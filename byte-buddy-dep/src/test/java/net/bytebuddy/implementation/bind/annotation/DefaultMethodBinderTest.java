@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +54,12 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
 
     @Test(expected = IllegalStateException.class)
     public void testBindNoMethodParameter() throws Exception {
-        DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        DefaultMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
     }
 
     @Test
@@ -64,7 +70,12 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(implementationTarget.invokeDefault(token)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(annotation.targetType()).thenReturn((Class) void.class);
-        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -76,7 +87,12 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
         when(implementationTarget.invokeDefault(token)).thenReturn(specialMethodInvocation);
         when(annotation.targetType()).thenReturn((Class) void.class);
-        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -89,7 +105,12 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(specialMethodInvocation.isValid()).thenReturn(true);
         when(annotation.targetType()).thenReturn((Class) Runnable.class);
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(genericInterfaceType, genericInterfaceType));
-        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -99,7 +120,12 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(true);
         when(annotation.targetType()).thenReturn((Class) Void.class);
-        DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        DefaultMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
     }
 
     @Test
@@ -111,7 +137,12 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(implementationTarget.invokeDefault(token)).thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(false);
         when(annotation.targetType()).thenReturn((Class) void.class);
-        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 
@@ -120,7 +151,12 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(false);
         when(annotation.nullIfImpossible()).thenReturn(false);
-        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(false));
     }
 
@@ -129,7 +165,12 @@ public class DefaultMethodBinderTest extends AbstractAnnotationBinderTest<Defaul
         when(targetType.isAssignableFrom(Method.class)).thenReturn(true);
         when(source.isMethod()).thenReturn(false);
         when(annotation.nullIfImpossible()).thenReturn(true);
-        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+        MethodDelegationBinder.ParameterBinding<?> binding = DefaultMethod.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner,
+                Assigner.Typing.STATIC);
         assertThat(binding.isValid(), is(true));
     }
 

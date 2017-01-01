@@ -48,6 +48,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
     @Mock
     private Assigner assigner;
 
+    private Assigner.Typing typing = Assigner.Typing.STATIC;
+
     @Mock
     private StackManipulation assignmentBinding, methodInvocation, termination;
 
@@ -94,7 +96,8 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 any(MethodDescription.class),
                 any(ParameterDescription.class),
                 any(Implementation.Target.class),
-                any(Assigner.class)))
+                any(Assigner.class),
+                any(Assigner.Typing.class)))
                 .thenReturn(parameterBinding);
         return parameterBinding;
     }
@@ -134,7 +137,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(targetTypeDescription.getStackSize()).thenReturn(StackSize.ZERO);
         when(sourceMethod.getReturnType()).thenReturn(sourceTypeDescription);
         when(targetMethod.getReturnType()).thenReturn(targetTypeDescription);
-        when(terminationHandler.resolve(assigner, sourceMethod, targetMethod)).thenReturn(termination);
+        when(terminationHandler.resolve(assigner, typing, sourceMethod, targetMethod)).thenReturn(termination);
         when(termination.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
         when(implementationTarget.getInstrumentedType()).thenReturn(instrumentedType);
     }
@@ -204,7 +207,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 terminationHandler,
                 methodInvoker,
                 assigner).isValid(), is(false));
-        verify(terminationHandler).resolve(assigner, sourceMethod, targetMethod);
+        verify(terminationHandler).resolve(assigner, typing, sourceMethod, targetMethod);
         verifyNoMoreInteractions(terminationHandler);
         verifyZeroInteractions(assigner);
         verifyZeroInteractions(methodInvoker);
@@ -268,7 +271,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         verify(firstParameter, atLeast(1)).getDeclaredAnnotations();
         verify(secondParameter, atLeast(1)).getDeclaredAnnotations();
         verify(targetMethod, atLeast(1)).getDeclaredAnnotations();
-        verify(terminationHandler).resolve(assigner, sourceMethod, targetMethod);
+        verify(terminationHandler).resolve(assigner, typing, sourceMethod, targetMethod);
         verifyNoMoreInteractions(terminationHandler);
         verify(methodInvoker).invoke(targetMethod);
         verifyNoMoreInteractions(methodInvoker);
@@ -310,7 +313,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         verify(firstParameter, atLeast(1)).getDeclaredAnnotations();
         verify(secondParameter, atLeast(1)).getDeclaredAnnotations();
         verifyNoMoreInteractions(assigner);
-        verify(terminationHandler).resolve(assigner, sourceMethod, targetMethod);
+        verify(terminationHandler).resolve(assigner, typing, sourceMethod, targetMethod);
         verifyNoMoreInteractions(terminationHandler);
         verify(methodInvoker).invoke(targetMethod);
         verifyNoMoreInteractions(methodInvoker);
@@ -319,14 +322,16 @@ public class TargetMethodAnnotationDrivenBinderTest {
                 sourceMethod,
                 secondParameter,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         verifyNoMoreInteractions(firstParameterBinder);
         verify(secondParameterBinder, atLeast(1)).getHandledType();
         verify((TargetMethodAnnotationDrivenBinder.ParameterBinder) secondParameterBinder).bind(secondPseudoAnnotation,
                 sourceMethod,
                 firstParameter,
                 implementationTarget,
-                assigner);
+                assigner,
+                Assigner.Typing.STATIC);
         verifyNoMoreInteractions(secondParameterBinder);
         verify(firstBinding, atLeast(1)).isValid();
         verify(firstBinding).getIdentificationToken();
