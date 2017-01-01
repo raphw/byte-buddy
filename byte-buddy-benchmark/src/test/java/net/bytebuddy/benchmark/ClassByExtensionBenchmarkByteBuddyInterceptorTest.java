@@ -10,8 +10,20 @@ import static org.junit.Assert.fail;
 public class ClassByExtensionBenchmarkByteBuddyInterceptorTest {
 
     @Test(expected = UnsupportedOperationException.class)
-    public void testCannotInstantiateClass() throws Exception {
-        Constructor<?> constructor = ClassByExtensionBenchmark.ByteBuddyInterceptor.class.getDeclaredConstructor();
+    public void testProxyInterceptor() throws Exception {
+        Constructor<?> constructor = ClassByExtensionBenchmark.ByteBuddyProxyInterceptor.class.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        try {
+            constructor.newInstance();
+            fail();
+        } catch (InvocationTargetException exception) {
+            throw (UnsupportedOperationException) exception.getCause();
+        }
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testAccessorInterceptor() throws Exception {
+        Constructor<?> constructor = ClassByExtensionBenchmark.ByteBuddyAccessInterceptor.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         try {
             constructor.newInstance();
