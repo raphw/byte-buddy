@@ -11,6 +11,9 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.io.*;
 
+/**
+ * A constant that represents a value in its serialized form.
+ */
 public class SerializedConstant implements StackManipulation {
 
     /**
