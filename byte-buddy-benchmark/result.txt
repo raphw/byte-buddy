@@ -1,0 +1,34 @@
+Benchmark                                                                   Mode  Cnt     Score    Error  Units
+ClassByExtensionBenchmark.baseline                                          avgt  200     0,003 ±  0,001  us/op
+ClassByExtensionBenchmark.benchmarkByteBuddySpecialized                     avgt  200   707,334 ±  6,104  us/op
+ClassByExtensionBenchmark.benchmarkByteBuddyWithAccessor                    avgt  200  1803,221 ± 17,213  us/op
+ClassByExtensionBenchmark.benchmarkByteBuddyWithAccessorAndReusedDelegator  avgt  200  1739,410 ± 16,667  us/op
+ClassByExtensionBenchmark.benchmarkByteBuddyWithPrefix                      avgt  200   753,239 ±  5,758  us/op
+ClassByExtensionBenchmark.benchmarkByteBuddyWithPrefixAndReusedDelegator    avgt  200   740,982 ±  6,319  us/op
+ClassByExtensionBenchmark.benchmarkByteBuddyWithProxy                       avgt  200  3511,561 ± 42,849  us/op
+ClassByExtensionBenchmark.benchmarkByteBuddyWithProxyAndReusedDelegator     avgt  200  3530,712 ± 47,175  us/op
+ClassByExtensionBenchmark.benchmarkCglib                                    avgt  200  1052,087 ±  8,333  us/op
+ClassByExtensionBenchmark.benchmarkJavassist                                avgt  200   550,898 ±  5,262  us/op
+ClassByImplementationBenchmark.baseline                                     avgt  200     0,003 ±  0,001  us/op
+ClassByImplementationBenchmark.benchmarkByteBuddy                           avgt  200   929,258 ±  7,931  us/op
+ClassByImplementationBenchmark.benchmarkCglib                               avgt  200   777,752 ± 11,258  us/op
+ClassByImplementationBenchmark.benchmarkJavassist                           avgt  200   868,235 ± 54,211  us/op
+ClassByImplementationBenchmark.benchmarkJdkProxy                            avgt  200   831,841 ±  9,064  us/op
+StubInvocationBenchmark.baseline                                            avgt  200     0,002 ±  0,001  us/op
+StubInvocationBenchmark.benchmarkByteBuddy                                  avgt  200     0,002 ±  0,001  us/op
+StubInvocationBenchmark.benchmarkCglib                                      avgt  200     0,003 ±  0,001  us/op
+StubInvocationBenchmark.benchmarkJavassist                                  avgt  200     0,009 ±  0,001  us/op
+StubInvocationBenchmark.benchmarkJdkProxy                                   avgt  200     0,007 ±  0,001  us/op
+SuperClassInvocationBenchmark.baseline                                      avgt  200     0,003 ±  0,001  us/op
+SuperClassInvocationBenchmark.benchmarkByteBuddySpecialized                 avgt  200     0,003 ±  0,001  us/op
+SuperClassInvocationBenchmark.benchmarkByteBuddyWithAccessor                avgt  200     0,020 ±  0,001  us/op
+SuperClassInvocationBenchmark.benchmarkByteBuddyWithPrefix                  avgt  200     0,003 ±  0,001  us/op
+SuperClassInvocationBenchmark.benchmarkByteBuddyWithProxy                   avgt  200     0,003 ±  0,001  us/op
+SuperClassInvocationBenchmark.benchmarkCglib                                avgt  200     0,018 ±  0,001  us/op
+SuperClassInvocationBenchmark.benchmarkJavassist                            avgt  200     0,023 ±  0,001  us/op
+TrivialClassCreationBenchmark.baseline                                      avgt  200     0,003 ±  0,001  us/op
+TrivialClassCreationBenchmark.benchmarkByteBuddy                            avgt  200    97,950 ±  0,622  us/op
+TrivialClassCreationBenchmark.benchmarkCglib                                avgt  200   424,517 ± 21,662  us/op
+TrivialClassCreationBenchmark.benchmarkJavassist                            avgt  200   137,201 ±  2,149  us/op
+TrivialClassCreationBenchmark.benchmarkJdkProxy                             avgt  200    50,867 ±  0,404  us/op
+
