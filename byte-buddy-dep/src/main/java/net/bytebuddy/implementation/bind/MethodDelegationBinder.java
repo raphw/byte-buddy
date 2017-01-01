@@ -10,6 +10,7 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
@@ -582,12 +583,9 @@ public interface MethodDelegationBinder {
 
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                    Size size = new Size(0, 0);
-                    for (StackManipulation stackManipulation : parameterStackManipulations) {
-                        size = size.aggregate(stackManipulation.apply(methodVisitor, implementationContext));
-                    }
-                    size = size.aggregate(methodInvocation.apply(methodVisitor, implementationContext));
-                    return size.aggregate(terminatingStackManipulation.apply(methodVisitor, implementationContext));
+                    return new Compound(
+                            CompoundList.of(parameterStackManipulations, Arrays.asList(methodInvocation, terminatingStackManipulation))
+                    ).apply(methodVisitor, implementationContext);
                 }
 
                 @Override
