@@ -9097,8 +9097,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param target The instance to load onto the stack.
              * @return A dynamic value binding for the supplied value.
              */
-            protected static DynamicValue<Annotation> of(Serializable target) {
-                return new ForSerializedValue(new TypeDescription.ForLoadedType(target.getClass()), SerializedConstant.of(target));
+            protected static DynamicValue<Annotation> of(Serializable target, Class<?> type) {
+                if (!type.isInstance(target)) {
+                    throw new IllegalArgumentException(target + " is no instance of " + type);
+                }
+                return new ForSerializedValue(new TypeDescription.ForLoadedType(type), SerializedConstant.of(target));
             }
 
             @Override
@@ -9268,8 +9271,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          * @see DynamicValue.ForFixedValue
          */
+        @SuppressWarnings("unchecked")
         public <T extends Annotation> WithCustomMapping bindSerialized(Class<? extends T> type, Serializable value) {
-            return bind(type, DynamicValue.ForSerializedValue.of(value));
+            return bindSerialized(type, value, (Class<Serializable>) value.getClass());
+        }
+
+        /**
+         * Binds the supplied annotation to the supplied fixed value.
+         *
+         * @param type         The type of the annotation being bound.
+         * @param value        The value to bind to this annotation.
+         * @param instanceType The type of {@code value} as which the instance should be treated.
+         * @param <T>          The annotation type.
+         * @param <S>          The type of the serialized instance.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         * @see DynamicValue.ForFixedValue
+         */
+        public <T extends Annotation, S extends Serializable> WithCustomMapping bindSerialized(Class<? extends T> type, S value, Class<? super S> instanceType) {
+            return bind(type, DynamicValue.ForSerializedValue.of(value, instanceType));
         }
 
         /**
