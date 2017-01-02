@@ -60,7 +60,6 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
 
     @Before
     public void setUp() throws Exception {
-        when(instrumentedType.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(foo, bar));
         when(foo.getInternalName()).thenReturn(FOO);
         when(foo.getDescriptor()).thenReturn(QUX);
         when(bar.getInternalName()).thenReturn(BAR);
@@ -79,7 +78,7 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
                         implementationContext,
                         typePool,
                         new FieldList.Empty<FieldDescription.InDefinedShape>(),
-                        new MethodList.Empty<MethodDescription>(),
+                        new MethodList.Explicit<MethodDescription>(foo, bar),
                         FLAGS,
                         FLAGS * 2)
                 .visitMethod(MODIFIERS, FOO, QUX, BAZ, new String[]{QUX + BAZ}), is(wrappedVisitor));
@@ -99,7 +98,7 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
                         implementationContext,
                         typePool,
                         new FieldList.Empty<FieldDescription.InDefinedShape>(),
-                        new MethodList.Empty<MethodDescription>(),
+                        new MethodList.Explicit<MethodDescription>(foo, bar),
                         FLAGS,
                         FLAGS * 2)
                 .visitMethod(MODIFIERS, BAR, BAZ, BAZ, new String[]{QUX + BAZ}), is(methodVisitor));
@@ -118,7 +117,7 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
                         implementationContext,
                         typePool,
                         new FieldList.Empty<FieldDescription.InDefinedShape>(),
-                        new MethodList.Empty<MethodDescription>(),
+                        new MethodList.Explicit<MethodDescription>(foo, bar),
                         FLAGS,
                         FLAGS * 2)
                 .visitMethod(MODIFIERS, FOO + BAR, QUX, BAZ, new String[]{QUX + BAZ}), is(methodVisitor));
