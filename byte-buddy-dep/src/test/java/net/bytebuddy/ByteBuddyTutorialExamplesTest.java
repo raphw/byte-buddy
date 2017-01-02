@@ -332,7 +332,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .method(named("load")).intercept(MethodDelegation
                         .withDefaultConfiguration()
                         .withBinders(Pipe.Binder.install(Forwarder.class))
-                        .to(new ForwardingLoggerInterceptor(memoryDatabase))) // TODO : Update tutorial
+                        .to(new ForwardingLoggerInterceptor(memoryDatabase)))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -424,7 +424,9 @@ public class ByteBuddyTutorialExamplesTest {
         assertThat(new ByteBuddy()
                 .subclass(Object.class)
                 .method(named("toString"))
-                .intercept(MethodDelegation.withDefaultConfiguration().withBinders(StringValueBinder.INSTANCE).to(ToStringInterceptor.class)) // TODO: Update tutorial
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(StringValueBinder.INSTANCE)
+                        .to(ToStringInterceptor.class))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
@@ -515,7 +517,7 @@ public class ByteBuddyTutorialExamplesTest {
                                                                ParameterDescription target,
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner,
-                                                               Assigner.Typing typing) { // TODO: Update tutorial
+                                                               Assigner.Typing typing) {
             if (!target.getType().asErasure().represents(String.class)) {
                 throw new IllegalStateException(target + " makes wrong use of StringValue");
             }
@@ -703,7 +705,7 @@ public class ByteBuddyTutorialExamplesTest {
     @SuppressWarnings("unused")
     public static class ChangingLoggerInterceptor {
 
-        public static List<String> log(String info, @Super MemoryDatabase zuper) { // TODO: Update info on implicit arguments
+        public static List<String> log(String info, @Super MemoryDatabase zuper) {
             println("Calling database");
             try {
                 return zuper.load(info + " (logged access)");
