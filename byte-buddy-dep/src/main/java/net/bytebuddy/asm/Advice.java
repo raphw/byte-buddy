@@ -9095,6 +9095,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * Creates a dynamic value for binding the serializable value.
              *
              * @param target The instance to load onto the stack.
+             * @param type   The type of the target instance.
              * @return A dynamic value binding for the supplied value.
              */
             protected static DynamicValue<Annotation> of(Serializable target, Class<?> type) {
