@@ -2,6 +2,9 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.Implementation;
@@ -131,6 +134,8 @@ public class TypeWriterModifierPreservationTest {
                                      ClassVisitor classVisitor,
                                      Implementation.Context implementationContext,
                                      TypePool typePool,
+                                     FieldList<FieldDescription.InDefinedShape> fields,
+                                     MethodList<?> methods,
                                      int writerFlags,
                                      int readerFlags) {
                 return new TypeValidator(classVisitor, modifiers, inner);

@@ -1,5 +1,8 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
@@ -41,11 +44,17 @@ public class AsmVisitorWrapperCompoundTest {
     @Mock
     private TypePool typePool;
 
+    @Mock
+    private FieldList<FieldDescription.InDefinedShape> fields;
+
+    @Mock
+    private MethodList<?> methods;
+
     @Before
     public void setUp() throws Exception {
-        when(prepend.wrap(instrumentedType, prependVisitor, implementationContext, typePool, FLAGS, FLAGS * 2)).thenReturn(wrapperVisitor);
-        when(wrapper.wrap(instrumentedType, wrapperVisitor, implementationContext, typePool, FLAGS, FLAGS * 2)).thenReturn(appendVisitor);
-        when(append.wrap(instrumentedType, appendVisitor, implementationContext, typePool, FLAGS, FLAGS * 2)).thenReturn(resultVisitor);
+        when(prepend.wrap(instrumentedType, prependVisitor, implementationContext, typePool, fields, methods, FLAGS, FLAGS * 2)).thenReturn(wrapperVisitor);
+        when(wrapper.wrap(instrumentedType, wrapperVisitor, implementationContext, typePool, fields, methods, FLAGS, FLAGS * 2)).thenReturn(appendVisitor);
+        when(append.wrap(instrumentedType, appendVisitor, implementationContext, typePool, fields, methods, FLAGS, FLAGS * 2)).thenReturn(resultVisitor);
         when(prepend.mergeReader(FOO)).thenReturn(BAR);
         when(wrapper.mergeReader(BAR)).thenReturn(QUX);
         when(append.mergeReader(QUX)).thenReturn(BAZ);
@@ -57,12 +66,12 @@ public class AsmVisitorWrapperCompoundTest {
     @Test
     public void testWrapperChain() throws Exception {
         AsmVisitorWrapper.Compound compound = new AsmVisitorWrapper.Compound(prepend, wrapper, append);
-        assertThat(compound.wrap(instrumentedType, prependVisitor, implementationContext, typePool, FLAGS, FLAGS * 2), is(resultVisitor));
-        verify(prepend).wrap(instrumentedType, prependVisitor, implementationContext, typePool, FLAGS, FLAGS * 2);
+        assertThat(compound.wrap(instrumentedType, prependVisitor, implementationContext, typePool, fields, methods, FLAGS, FLAGS * 2), is(resultVisitor));
+        verify(prepend).wrap(instrumentedType, prependVisitor, implementationContext, typePool, fields, methods, FLAGS, FLAGS * 2);
         verifyNoMoreInteractions(prepend);
-        verify(wrapper).wrap(instrumentedType, wrapperVisitor, implementationContext, typePool, FLAGS, FLAGS * 2);
+        verify(wrapper).wrap(instrumentedType, wrapperVisitor, implementationContext, typePool, fields, methods, FLAGS, FLAGS * 2);
         verifyNoMoreInteractions(wrapper);
-        verify(append).wrap(instrumentedType, appendVisitor, implementationContext, typePool, FLAGS, FLAGS * 2);
+        verify(append).wrap(instrumentedType, appendVisitor, implementationContext, typePool, fields, methods, FLAGS, FLAGS * 2);
         verifyNoMoreInteractions(append);
     }
 

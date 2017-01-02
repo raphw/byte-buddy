@@ -3,7 +3,9 @@ package net.bytebuddy.test.utility;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodAccessorFactory;
@@ -40,6 +42,8 @@ public class ClassFileExtraction {
                 classWriter,
                 new IllegalContext(),
                 TypePool.Empty.INSTANCE,
+                new FieldList.Empty<FieldDescription.InDefinedShape>(),
+                new MethodList.Empty<MethodDescription>(),
                 AsmVisitorWrapper.NO_FLAGS,
                 AsmVisitorWrapper.NO_FLAGS), AsmVisitorWrapper.NO_FLAGS);
         return classWriter.toByteArray();

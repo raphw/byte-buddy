@@ -433,6 +433,36 @@ public interface MethodGraph {
         MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint);
 
         /**
+         * A flat compiler that simply returns the methods that are declared by the instrumented type.
+         */
+        enum ForDeclaredMethods implements Compiler {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Linked compile(TypeDescription typeDescription) {
+                return compile(typeDescription, typeDescription);
+            }
+
+            @Override
+            public Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
+                LinkedHashMap<MethodDescription.SignatureToken, Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, Node>();
+                for (MethodDescription methodDescription : typeDefinition.getDeclaredMethods().filter(isVisibleTo(viewPoint))) {
+                    nodes.put(methodDescription.asSignatureToken(), new Node.Simple(methodDescription));
+                }
+                return new Linked.Delegation(new MethodGraph.Simple(nodes), Empty.INSTANCE, Collections.<TypeDescription, MethodGraph>emptyMap());
+            }
+
+            @Override
+            public String toString() {
+                return "MethodGraph.Compiler.ForDeclaredMethods." + name();
+            }
+        }
+
+        /**
          * An abstract base implementation of a method graph compiler.
          */
         abstract class AbstractBase implements Compiler {

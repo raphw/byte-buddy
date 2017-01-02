@@ -595,15 +595,13 @@ public class TypeWriterDefaultTest {
             @SuppressWarnings("unchecked")
             public TypeWriter.Default.ForInlining<?> create() {
                 TypeWriter.Default.ForInlining<?> inlining = mock(TypeWriter.Default.ForInlining.class);
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
                 try {
-                    Field instrumentedMethods = TypeWriter.Default.class.getDeclaredField("instrumentedMethods");
-                    Field instrumentedType = TypeWriter.Default.class.getDeclaredField("instrumentedType");
-                    instrumentedMethods.setAccessible(true);
-                    instrumentedType.setAccessible(true);
-                    instrumentedMethods.set(inlining, new MethodList.Empty<MethodDescription>());
-                    instrumentedType.set(inlining, typeDescription);
+                    Field fields = TypeWriter.Default.class.getDeclaredField("fields");
+                    Field methods = TypeWriter.Default.class.getDeclaredField("instrumentedMethods");
+                    fields.setAccessible(true);
+                    fields.set(inlining, new FieldList.Empty<FieldDescription.InDefinedShape>());
+                    methods.setAccessible(true);
+                    methods.set(inlining, new MethodList.Empty<MethodDescription>());
                     return inlining;
                 } catch (Exception ignored) {
                     throw new AssertionError();

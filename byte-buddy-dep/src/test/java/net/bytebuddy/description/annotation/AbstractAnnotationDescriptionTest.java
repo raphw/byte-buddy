@@ -3,7 +3,10 @@ package net.bytebuddy.description.annotation;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
@@ -716,6 +719,8 @@ public abstract class AbstractAnnotationDescriptionTest {
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
                                  TypePool typePool,
+                                 FieldList<FieldDescription.InDefinedShape> fields,
+                                 MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
             return new BreakingClassVisitor(classVisitor);

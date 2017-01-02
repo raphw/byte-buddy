@@ -2,6 +2,9 @@ package net.bytebuddy.asm;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
@@ -42,6 +45,8 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
                              ClassVisitor classVisitor,
                              Implementation.Context implementationContext,
                              TypePool typePool,
+                             FieldList<FieldDescription.InDefinedShape> fields,
+                             MethodList<?> methods,
                              int writerFlags,
                              int readerFlags) {
         return new TypeConstantDissolvingClassVisitor(classVisitor);

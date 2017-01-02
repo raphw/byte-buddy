@@ -1,5 +1,7 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -33,7 +35,7 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private ElementMatcher<? super MethodDescription.InDefinedShape> matcher;
+    private ElementMatcher<? super MethodDescription> matcher;
 
     @Mock
     private AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper methodVisitorWrapper;
@@ -72,7 +74,14 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public void testMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods()
                 .method(matcher, methodVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, implementationContext, typePool, FLAGS, FLAGS * 2)
+                .wrap(instrumentedType,
+                        classVisitor,
+                        implementationContext,
+                        typePool,
+                        new FieldList.Empty<FieldDescription.InDefinedShape>(),
+                        new MethodList.Empty<MethodDescription>(),
+                        FLAGS,
+                        FLAGS * 2)
                 .visitMethod(MODIFIERS, FOO, QUX, BAZ, new String[]{QUX + BAZ}), is(wrappedVisitor));
         verify(matcher).matches(foo);
         verifyNoMoreInteractions(matcher);
@@ -85,7 +94,14 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public void testNotMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods()
                 .method(matcher, methodVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, implementationContext, typePool, FLAGS, FLAGS * 2)
+                .wrap(instrumentedType,
+                        classVisitor,
+                        implementationContext,
+                        typePool,
+                        new FieldList.Empty<FieldDescription.InDefinedShape>(),
+                        new MethodList.Empty<MethodDescription>(),
+                        FLAGS,
+                        FLAGS * 2)
                 .visitMethod(MODIFIERS, BAR, BAZ, BAZ, new String[]{QUX + BAZ}), is(methodVisitor));
         verify(matcher).matches(bar);
         verifyNoMoreInteractions(matcher);
@@ -97,7 +113,14 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public void testUnknown() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods()
                 .method(matcher, methodVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, implementationContext, typePool, FLAGS, FLAGS * 2)
+                .wrap(instrumentedType,
+                        classVisitor,
+                        implementationContext,
+                        typePool,
+                        new FieldList.Empty<FieldDescription.InDefinedShape>(),
+                        new MethodList.Empty<MethodDescription>(),
+                        FLAGS,
+                        FLAGS * 2)
                 .visitMethod(MODIFIERS, FOO + BAR, QUX, BAZ, new String[]{QUX + BAZ}), is(methodVisitor));
         verifyZeroInteractions(matcher);
         verifyZeroInteractions(methodVisitorWrapper);
@@ -118,10 +141,10 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredMethods.class).apply();
         ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredMethods.Entry.class).apply();
-        ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredMethods.DispatchingVisitor.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+        ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredMethods.DispatchingVisitor.class).create(new ObjectPropertyAssertion.Creator<MethodList<?>>() {
             @Override
-            public void apply(TypeDescription mock) {
-                when(mock.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Mockito.mock(MethodDescription.InDefinedShape.class)));
+            public MethodList<?> create() {
+                return new MethodList.Explicit<MethodDescription>(mock(MethodDescription.class));
             }
         }).applyBasic();
     }

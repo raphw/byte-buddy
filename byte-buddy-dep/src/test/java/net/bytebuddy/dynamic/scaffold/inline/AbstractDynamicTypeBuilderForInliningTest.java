@@ -3,7 +3,9 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.MethodManifestation;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
@@ -377,12 +379,15 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testReaderHint() throws Exception {
         AsmVisitorWrapper asmVisitorWrapper = mock(AsmVisitorWrapper.class);
         when(asmVisitorWrapper.wrap(any(TypeDescription.class),
                 any(ClassVisitor.class),
                 any(Implementation.Context.class),
                 any(TypePool.class),
+                any(FieldList.class),
+                any(MethodList.class),
                 anyInt(),
                 anyInt())).then(new Answer<ClassVisitor>() {
             @Override
@@ -409,6 +414,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 any(ClassVisitor.class),
                 any(Implementation.Context.class),
                 any(TypePool.class),
+                any(FieldList.class),
+                any(MethodList.class),
                 anyInt(),
                 anyInt());
         verifyNoMoreInteractions(asmVisitorWrapper);

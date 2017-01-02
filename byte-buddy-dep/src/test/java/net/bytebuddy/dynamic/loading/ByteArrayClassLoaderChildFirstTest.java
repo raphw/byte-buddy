@@ -2,6 +2,9 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
@@ -224,6 +227,8 @@ public class ByteArrayClassLoaderChildFirstTest {
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
                                  TypePool typePool,
+                                 FieldList<FieldDescription.InDefinedShape> fields,
+                                 MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
             return new ClassRemapper(classVisitor, new SimpleRemapper(oldName, newName));

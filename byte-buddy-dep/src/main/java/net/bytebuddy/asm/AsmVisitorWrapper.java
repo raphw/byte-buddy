@@ -1,7 +1,9 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -54,6 +56,8 @@ public interface AsmVisitorWrapper {
      *                              {@link net.bytebuddy.dynamic.DynamicType} is written to.
      * @param implementationContext The implementation context of the current instrumentation.
      * @param typePool              The type pool that was provided for the class creation.
+     * @param fields                The instrumented type's fields.
+     * @param methods               The instrumented type's methods non-ingored declared and virtually inherited methods.
      * @param writerFlags           The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
      * @param readerFlags           The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
      * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.
@@ -62,6 +66,8 @@ public interface AsmVisitorWrapper {
                       ClassVisitor classVisitor,
                       Implementation.Context implementationContext,
                       TypePool typePool,
+                      FieldList<FieldDescription.InDefinedShape> fields,
+                      MethodList<?> methods,
                       int writerFlags,
                       int readerFlags);
 
@@ -90,6 +96,8 @@ public interface AsmVisitorWrapper {
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
                                  TypePool typePool,
+                                 FieldList<FieldDescription.InDefinedShape> fields,
+                                 MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
             return classVisitor;
@@ -172,9 +180,11 @@ public interface AsmVisitorWrapper {
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
                                  TypePool typePool,
+                                 FieldList<FieldDescription.InDefinedShape> fields,
+                                 MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
-            return new DispatchingVisitor(classVisitor, instrumentedType);
+            return new DispatchingVisitor(classVisitor, instrumentedType, fields);
         }
 
         @Override
@@ -286,29 +296,30 @@ public interface AsmVisitorWrapper {
             private final TypeDescription instrumentedType;
 
             /**
-             * A mapping of fields by their name.
+             * A mapping of fields by their name and descriptor key-combination.
              */
-            private final Map<String, FieldDescription.InDefinedShape> fieldsByName;
+            private final Map<String, FieldDescription.InDefinedShape> knownFields;
 
             /**
              * Creates a new dispatching visitor.
              *
              * @param classVisitor     The underlying class visitor.
              * @param instrumentedType The instrumented type.
+             * @param fields           The instrumented type's declared fields.
              */
-            protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType) {
+            protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType, FieldList<FieldDescription.InDefinedShape> fields) {
                 super(Opcodes.ASM5, classVisitor);
                 this.instrumentedType = instrumentedType;
-                fieldsByName = new HashMap<String, FieldDescription.InDefinedShape>();
-                for (FieldDescription.InDefinedShape fieldDescription : instrumentedType.getDeclaredFields()) {
-                    fieldsByName.put(fieldDescription.getInternalName(), fieldDescription);
+                knownFields = new HashMap<String, FieldDescription.InDefinedShape>();
+                for (FieldDescription.InDefinedShape fieldDescription : fields) {
+                    knownFields.put(fieldDescription.getInternalName() + fieldDescription.getDescriptor(), fieldDescription);
                 }
             }
 
             @Override
             public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
                 FieldVisitor fieldVisitor = super.visitField(modifiers, internalName, descriptor, signature, defaultValue);
-                FieldDescription.InDefinedShape fieldDescription = fieldsByName.get(internalName);
+                FieldDescription.InDefinedShape fieldDescription = knownFields.get(internalName + descriptor);
                 for (Entry entry : entries) {
                     if (entry.matches(fieldDescription)) {
                         fieldVisitor = entry.wrap(instrumentedType, fieldDescription, fieldVisitor);
@@ -317,39 +328,11 @@ public interface AsmVisitorWrapper {
                 return fieldVisitor;
             }
 
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private ForDeclaredFields getOuter() {
-                return ForDeclaredFields.this;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                DispatchingVisitor that = ((DispatchingVisitor) other);
-                return instrumentedType.equals(that.instrumentedType)
-                        && cv.equals(that.cv)
-                        && getOuter().equals(that.getOuter());
-            }
-
-            @Override
-            public int hashCode() {
-                int result = getOuter().hashCode();
-                result = 31 * result + instrumentedType.hashCode();
-                result = 31 * result + cv.hashCode();
-                return result;
-            }
-
             @Override
             public String toString() {
                 return "AsmVisitorWrapper.ForDeclaredFields.DispatchingVisitor{" +
-                        "outer=" + getOuter() +
-                        ", instrumentedType=" + instrumentedType +
-                        ", fieldsByName=" + fieldsByName +
+                        "instrumentedType=" + instrumentedType +
+                        ", knownFields=" + knownFields +
                         '}';
             }
         }
@@ -408,7 +391,7 @@ public interface AsmVisitorWrapper {
          * @param methodVisitorWrapper The method visitor wrapper to be applied if the given matcher is matched.
          * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
          */
-        public ForDeclaredMethods method(ElementMatcher<? super MethodDescription.InDefinedShape> matcher, MethodVisitorWrapper... methodVisitorWrapper) {
+        public ForDeclaredMethods method(ElementMatcher<? super MethodDescription> matcher, MethodVisitorWrapper... methodVisitorWrapper) {
             return method(matcher, Arrays.asList(methodVisitorWrapper));
         }
 
@@ -420,7 +403,7 @@ public interface AsmVisitorWrapper {
          * @param methodVisitorWrappers The method visitor wrapper to be applied if the given matcher is matched.
          * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
          */
-        public ForDeclaredMethods method(ElementMatcher<? super MethodDescription.InDefinedShape> matcher, List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
+        public ForDeclaredMethods method(ElementMatcher<? super MethodDescription> matcher, List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
             return new ForDeclaredMethods(CompoundList.of(entries, new Entry(matcher, methodVisitorWrappers)), writerFlags, readerFlags);
         }
 
@@ -459,12 +442,15 @@ public interface AsmVisitorWrapper {
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
                                  TypePool typePool,
+                                 FieldList<FieldDescription.InDefinedShape> fields,
+                                 MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
             return new DispatchingVisitor(classVisitor,
                     instrumentedType,
                     implementationContext,
                     typePool,
+                    methods,
                     writerFlags,
                     readerFlags);
         }
@@ -512,7 +498,7 @@ public interface AsmVisitorWrapper {
              * @return The wrapped method visitor.
              */
             MethodVisitor wrap(TypeDescription instrumentedType,
-                               MethodDescription.InDefinedShape instrumentedMethod,
+                               MethodDescription instrumentedMethod,
                                MethodVisitor methodVisitor,
                                Implementation.Context implementationContext,
                                TypePool typePool,
@@ -523,12 +509,12 @@ public interface AsmVisitorWrapper {
         /**
          * An entry describing a method visitor wrapper paired with a matcher for fields to be wrapped.
          */
-        protected static class Entry implements ElementMatcher<MethodDescription.InDefinedShape>, MethodVisitorWrapper {
+        protected static class Entry implements ElementMatcher<MethodDescription>, MethodVisitorWrapper {
 
             /**
              * The matcher to identify methods to be wrapped.
              */
-            private final ElementMatcher<? super MethodDescription.InDefinedShape> matcher;
+            private final ElementMatcher<? super MethodDescription> matcher;
 
             /**
              * The method visitor wrapper to be applied if the given matcher is matched.
@@ -541,19 +527,19 @@ public interface AsmVisitorWrapper {
              * @param matcher               The matcher to identify methods to be wrapped.
              * @param methodVisitorWrappers The method visitor wrapper to be applied if the given matcher is matched.
              */
-            protected Entry(ElementMatcher<? super MethodDescription.InDefinedShape> matcher, List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
+            protected Entry(ElementMatcher<? super MethodDescription> matcher, List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
                 this.matcher = matcher;
                 this.methodVisitorWrappers = methodVisitorWrappers;
             }
 
             @Override
-            public boolean matches(MethodDescription.InDefinedShape target) {
+            public boolean matches(MethodDescription target) {
                 return target != null && matcher.matches(target);
             }
 
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,
-                                      MethodDescription.InDefinedShape instrumentedMethod,
+                                      MethodDescription instrumentedMethod,
                                       MethodVisitor methodVisitor,
                                       Implementation.Context implementationContext,
                                       TypePool typePool,
@@ -629,7 +615,7 @@ public interface AsmVisitorWrapper {
             /**
              * A mapping of fields by their name.
              */
-            private final Map<String, MethodDescription.InDefinedShape> methodsByName;
+            private final Map<String, MethodDescription> knownMethods;
 
             /**
              * Creates a new dispatching visitor.
@@ -638,6 +624,7 @@ public interface AsmVisitorWrapper {
              * @param instrumentedType      The instrumented type.
              * @param implementationContext The implementation context to use.
              * @param typePool              The type pool to use.
+             * @param methods               The methods that are declared by the instrumented type or virtually inherited.
              * @param writerFlags           The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
              * @param readerFlags           The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
              */
@@ -645,6 +632,7 @@ public interface AsmVisitorWrapper {
                                          TypeDescription instrumentedType,
                                          Implementation.Context implementationContext,
                                          TypePool typePool,
+                                         MethodList<?> methods,
                                          int writerFlags,
                                          int readerFlags) {
                 super(Opcodes.ASM5, classVisitor);
@@ -653,16 +641,16 @@ public interface AsmVisitorWrapper {
                 this.typePool = typePool;
                 this.writerFlags = writerFlags;
                 this.readerFlags = readerFlags;
-                methodsByName = new HashMap<String, MethodDescription.InDefinedShape>();
-                for (MethodDescription.InDefinedShape methodDescription : instrumentedType.getDeclaredMethods()) {
-                    methodsByName.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
+                knownMethods = new HashMap<String, MethodDescription>();
+                for (MethodDescription methodDescription : methods) {
+                    knownMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
                 }
             }
 
             @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exceptions) {
                 MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, signature, exceptions);
-                MethodDescription.InDefinedShape methodDescription = methodsByName.get(internalName + descriptor);
+                MethodDescription methodDescription = knownMethods.get(internalName + descriptor);
                 for (Entry entry : entries) {
                     if (entry.matches(methodDescription)) {
                         methodVisitor = entry.wrap(instrumentedType,
@@ -677,21 +665,11 @@ public interface AsmVisitorWrapper {
                 return methodVisitor;
             }
 
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private ForDeclaredMethods getOuter() {
-                return ForDeclaredMethods.this;
-            }
-
             @Override
             public String toString() {
                 return "AsmVisitorWrapper.ForDeclaredMethods.DispatchingVisitor{" +
-                        "outer=" + getOuter() +
-                        ", instrumentedType=" + instrumentedType +
-                        ", methodsByName=" + methodsByName +
+                        "instrumentedType=" + instrumentedType +
+                        ", knownMethods=" + knownMethods +
                         ", implementationContext=" + implementationContext +
                         ", typePool=" + typePool +
                         ", writerFlags=" + writerFlags +
@@ -763,10 +741,19 @@ public interface AsmVisitorWrapper {
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
                                  TypePool typePool,
+                                 FieldList<FieldDescription.InDefinedShape> fields,
+                                 MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
             for (AsmVisitorWrapper asmVisitorWrapper : asmVisitorWrappers) {
-                classVisitor = asmVisitorWrapper.wrap(instrumentedType, classVisitor, implementationContext, typePool, writerFlags, readerFlags);
+                classVisitor = asmVisitorWrapper.wrap(instrumentedType,
+                        classVisitor,
+                        implementationContext,
+                        typePool,
+                        fields,
+                        methods,
+                        writerFlags,
+                        readerFlags);
             }
             return classVisitor;
         }

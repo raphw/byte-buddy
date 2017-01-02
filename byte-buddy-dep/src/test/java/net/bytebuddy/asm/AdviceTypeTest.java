@@ -1,12 +1,14 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.pool.TypePool;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -1923,6 +1925,8 @@ public class AdviceTypeTest {
                                  ClassVisitor classVisitor,
                                  Implementation.Context implementationContext,
                                  TypePool typePool,
+                                 FieldList<FieldDescription.InDefinedShape> fields,
+                                 MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
             return new SerializationClassVisitor(classVisitor);

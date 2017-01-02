@@ -2,6 +2,8 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -58,9 +60,10 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
 
     @Before
     public void setUp() throws Exception {
-        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(foo, bar));
         when(foo.getInternalName()).thenReturn(FOO);
+        when(foo.getDescriptor()).thenReturn(QUX);
         when(bar.getInternalName()).thenReturn(BAR);
+        when(bar.getDescriptor()).thenReturn(QUX);
         when(classVisitor.visitField(eq(MODIFIERS), any(String.class), eq(QUX), eq(BAZ), eq(QUX + BAZ))).thenReturn(fieldVisitor);
         when(fieldVisitorWrapper.wrap(instrumentedType, foo, fieldVisitor)).thenReturn(wrappedVisitor);
         when(matcher.matches(foo)).thenReturn(true);
@@ -70,7 +73,14 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredFields()
                 .field(matcher, fieldVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, implementationContext, typePool, IRRELEVANT, IRRELEVANT)
+                .wrap(instrumentedType,
+                        classVisitor,
+                        implementationContext,
+                        typePool,
+                        new FieldList.Explicit<FieldDescription.InDefinedShape>(foo, bar),
+                        new MethodList.Empty<MethodDescription>(),
+                        IRRELEVANT,
+                        IRRELEVANT)
                 .visitField(MODIFIERS, FOO, QUX, BAZ, QUX + BAZ), is(wrappedVisitor));
         verify(matcher).matches(foo);
         verifyNoMoreInteractions(matcher);
@@ -82,7 +92,14 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testNotMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredFields()
                 .field(matcher, fieldVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, implementationContext, typePool, IRRELEVANT, IRRELEVANT)
+                .wrap(instrumentedType,
+                        classVisitor,
+                        implementationContext,
+                        typePool,
+                        new FieldList.Explicit<FieldDescription.InDefinedShape>(foo, bar),
+                        new MethodList.Empty<MethodDescription>(),
+                        IRRELEVANT,
+                        IRRELEVANT)
                 .visitField(MODIFIERS, BAR, QUX, BAZ, QUX + BAZ), is(fieldVisitor));
         verify(matcher).matches(bar);
         verifyNoMoreInteractions(matcher);
@@ -93,7 +110,14 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testUnknown() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredFields()
                 .field(matcher, fieldVisitorWrapper)
-                .wrap(instrumentedType, classVisitor, implementationContext, typePool, IRRELEVANT, IRRELEVANT)
+                .wrap(instrumentedType,
+                        classVisitor,
+                        implementationContext,
+                        typePool,
+                        new FieldList.Explicit<FieldDescription.InDefinedShape>(foo, bar),
+                        new MethodList.Empty<MethodDescription>(),
+                        IRRELEVANT,
+                        IRRELEVANT)
                 .visitField(MODIFIERS, FOO + BAR, QUX, BAZ, QUX + BAZ), is(fieldVisitor));
         verifyZeroInteractions(matcher);
         verifyZeroInteractions(fieldVisitorWrapper);
@@ -103,11 +127,11 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredFields.class).apply();
         ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredFields.Entry.class).apply();
-        ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredFields.DispatchingVisitor.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+        ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredFields.DispatchingVisitor.class).create(new ObjectPropertyAssertion.Creator<FieldList<?>>() {
             @Override
-            public void apply(TypeDescription mock) {
-                when(mock.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Mockito.mock(FieldDescription.InDefinedShape.class)));
+            public FieldList<?> create() {
+                return new FieldList.Explicit<FieldDescription.InDefinedShape>(mock(FieldDescription.InDefinedShape.class));
             }
-        }).apply();
+        }).applyBasic();
     }
 }

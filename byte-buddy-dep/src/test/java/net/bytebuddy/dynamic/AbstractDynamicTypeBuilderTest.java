@@ -1,11 +1,12 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.asm.AsmVisitorWrapper;
-import net.bytebuddy.description.annotation.AbstractAnnotationDescriptionTest;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -345,12 +346,15 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testWriterHint() throws Exception {
         AsmVisitorWrapper asmVisitorWrapper = mock(AsmVisitorWrapper.class);
         when(asmVisitorWrapper.wrap(any(TypeDescription.class),
                 any(ClassVisitor.class),
                 any(Implementation.Context.class),
                 any(TypePool.class),
+                any(FieldList.class),
+                any(MethodList.class),
                 anyInt(),
                 anyInt())).then(new Answer<ClassVisitor>() {
             @Override
@@ -381,6 +385,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 any(ClassVisitor.class),
                 any(Implementation.Context.class),
                 any(TypePool.class),
+                any(FieldList.class),
+                any(MethodList.class),
                 anyInt(),
                 anyInt());
         verifyNoMoreInteractions(asmVisitorWrapper);

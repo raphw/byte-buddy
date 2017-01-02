@@ -353,6 +353,13 @@ public interface MethodRegistry {
         TypeDescription getInstrumentedType();
 
         /**
+         * Returns the declared or virtually inherited methods of this type.
+         *
+         * @return The declared or virtually inherited methods of this type.
+         */
+        MethodList<?> getMethods();
+
+        /**
          * Returns a list of all methods that should be instrumented.
          *
          * @return A list of all methods that should be instrumented.
@@ -396,11 +403,18 @@ public interface MethodRegistry {
         TypeDescription getInstrumentedType();
 
         /**
+         * Returns the declared or virtually inherited methods of this type.
+         *
+         * @return The declared or virtually inherited methods of this type.
+         */
+        MethodList<?> getMethods();
+
+        /**
          * Returns a list of all methods that should be instrumented.
          *
          * @return A list of all methods that should be instrumented.
          */
-        MethodList getInstrumentedMethods();
+        MethodList<?> getInstrumentedMethods();
 
         /**
          * Returns the loaded type initializer of the instrumented type.
@@ -483,6 +497,7 @@ public interface MethodRegistry {
                     .and(returns(isVisibleTo(instrumentedType)))
                     .and(hasParameters(whereNone(hasType(not(isVisibleTo(instrumentedType))))))
                     .and(ignoredMethods.resolve(instrumentedType));
+            List<MethodDescription> methods = new ArrayList<MethodDescription>();
             for (MethodGraph.Node node : methodGraph.listNodes()) {
                 MethodDescription methodDescription = node.getRepresentative();
                 boolean visibilityBridge = instrumentedType.isPublic() && !instrumentedType.isInterface();
@@ -506,6 +521,7 @@ public interface MethodRegistry {
                     // Visibility bridges are required for public classes that inherit a public method from a package-private class.
                     implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription, node.getVisibility()));
                 }
+                methods.add(methodDescription);
             }
             for (MethodDescription methodDescription : CompoundList.of(
                     instrumentedType.getDeclaredMethods().filter(not(isVirtual()).and(relevanceMatcher)),
@@ -516,6 +532,7 @@ public interface MethodRegistry {
                         break;
                     }
                 }
+                methods.add(methodDescription);
             }
             return new Prepared(implementations,
                     instrumentedType.getLoadedTypeInitializer(),
@@ -523,7 +540,8 @@ public interface MethodRegistry {
                     typeValidation.isEnabled()
                             ? instrumentedType.validated()
                             : instrumentedType,
-                    methodGraph);
+                    methodGraph,
+                    new MethodList.Explicit<MethodDescription>(methods));
         }
 
         @Override
@@ -712,6 +730,11 @@ public interface MethodRegistry {
             private final MethodGraph.Linked methodGraph;
 
             /**
+             * The declared or virtually inherited methods of this type.
+             */
+            private final MethodList<?> methods;
+
+            /**
              * Creates a prepared version of a default method registry.
              *
              * @param implementations       A map of all method descriptions mapped to their handling entries.
@@ -719,17 +742,20 @@ public interface MethodRegistry {
              * @param typeInitializer       The type initializer of the instrumented type.
              * @param instrumentedType      The instrumented type.
              * @param methodGraph           A method graph describing the instrumented type.
+             * @param methods               The declared or virtually inherited methods of this type.
              */
             protected Prepared(LinkedHashMap<MethodDescription, Entry> implementations,
                                LoadedTypeInitializer loadedTypeInitializer,
                                TypeInitializer typeInitializer,
                                TypeDescription instrumentedType,
-                               MethodGraph.Linked methodGraph) {
+                               MethodGraph.Linked methodGraph,
+                               MethodList<?> methods) {
                 this.implementations = implementations;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
                 this.instrumentedType = instrumentedType;
                 this.methodGraph = methodGraph;
+                this.methods = methods;
             }
 
             @Override
@@ -745,6 +771,11 @@ public interface MethodRegistry {
             @Override
             public TypeInitializer getTypeInitializer() {
                 return typeInitializer;
+            }
+
+            @Override
+            public MethodList<?> getMethods() {
+                return methods;
             }
 
             @Override
@@ -776,7 +807,12 @@ public interface MethodRegistry {
                             entry.getValue().getVisibility(),
                             entry.getValue().isBridgeMethod()));
                 }
-                return new Compiled(instrumentedType, loadedTypeInitializer, typeInitializer, entries, classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5));
+                return new Compiled(instrumentedType,
+                        loadedTypeInitializer,
+                        typeInitializer,
+                        methods,
+                        entries,
+                        classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5));
             }
 
             @Override
@@ -788,7 +824,8 @@ public interface MethodRegistry {
                         && loadedTypeInitializer.equals(prepared.loadedTypeInitializer)
                         && typeInitializer.equals(prepared.typeInitializer)
                         && instrumentedType.equals(prepared.instrumentedType)
-                        && methodGraph.equals(prepared.methodGraph);
+                        && methodGraph.equals(prepared.methodGraph)
+                        && methods.equals(prepared.methods);
             }
 
             @Override
@@ -798,6 +835,7 @@ public interface MethodRegistry {
                 result = 31 * result + typeInitializer.hashCode();
                 result = 31 * result + instrumentedType.hashCode();
                 result = 31 * result + methodGraph.hashCode();
+                result = 31 * result + methods.hashCode();
                 return result;
             }
 
@@ -809,6 +847,7 @@ public interface MethodRegistry {
                         ", typeInitializer=" + typeInitializer +
                         ", instrumentedType=" + instrumentedType +
                         ", methodGraph=" + methodGraph +
+                        ", methods=" + methods +
                         '}';
             }
 
@@ -1002,6 +1041,11 @@ public interface MethodRegistry {
             private final TypeInitializer typeInitializer;
 
             /**
+             * The declared or virtually inherited methods of this type.
+             */
+            private final MethodList<?> methods;
+
+            /**
              * A map of all method descriptions mapped to their handling entries.
              */
             private final LinkedHashMap<MethodDescription, Entry> implementations;
@@ -1017,17 +1061,20 @@ public interface MethodRegistry {
              * @param instrumentedType      The instrumented type.
              * @param loadedTypeInitializer The loaded type initializer of the instrumented type.
              * @param typeInitializer       The type initializer of the instrumented type.
+             * @param methods               The declared or virtually inherited methods of this type.
              * @param implementations       A map of all method descriptions mapped to their handling entries.
              * @param supportsBridges       {@code true} if the created type supports bridge methods.
              */
             protected Compiled(TypeDescription instrumentedType,
                                LoadedTypeInitializer loadedTypeInitializer,
                                TypeInitializer typeInitializer,
+                               MethodList<?> methods,
                                LinkedHashMap<MethodDescription, Entry> implementations,
                                boolean supportsBridges) {
                 this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
                 this.typeInitializer = typeInitializer;
+                this.methods = methods;
                 this.implementations = implementations;
                 this.supportsBridges = supportsBridges;
             }
@@ -1045,6 +1092,11 @@ public interface MethodRegistry {
             @Override
             public TypeInitializer getTypeInitializer() {
                 return typeInitializer;
+            }
+
+            @Override
+            public MethodList<?> getMethods() {
+                return methods;
             }
 
             @Override
@@ -1068,6 +1120,7 @@ public interface MethodRegistry {
                 return instrumentedType.equals(compiled.instrumentedType)
                         && loadedTypeInitializer.equals(compiled.loadedTypeInitializer)
                         && typeInitializer.equals(compiled.typeInitializer)
+                        && methods.equals(compiled.methods)
                         && implementations.equals(compiled.implementations)
                         && supportsBridges == compiled.supportsBridges;
             }
@@ -1077,6 +1130,7 @@ public interface MethodRegistry {
                 int result = instrumentedType.hashCode();
                 result = 31 * result + loadedTypeInitializer.hashCode();
                 result = 31 * result + typeInitializer.hashCode();
+                result = 31 * result + methods.hashCode();
                 result = 31 * result + implementations.hashCode();
                 result = 31 * result + (supportsBridges ? 1 : 0);
                 return result;
@@ -1088,6 +1142,7 @@ public interface MethodRegistry {
                         "instrumentedType=" + instrumentedType +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
                         ", typeInitializer=" + typeInitializer +
+                        ", methods=" + methods +
                         ", implementations=" + implementations +
                         ", supportsBridges=" + supportsBridges +
                         '}';

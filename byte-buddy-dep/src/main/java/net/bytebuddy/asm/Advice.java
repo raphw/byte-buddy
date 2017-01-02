@@ -446,13 +446,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param matcher The matcher identifying methods to apply the advice to.
      * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
      */
-    public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
+    public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription> matcher) {
         return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this);
     }
 
     @Override
     public MethodVisitor wrap(TypeDescription instrumentedType,
-                              MethodDescription.InDefinedShape instrumentedMethod,
+                              MethodDescription instrumentedMethod,
                               MethodVisitor methodVisitor,
                               Implementation.Context implementationContext,
                               TypePool typePool,

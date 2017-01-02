@@ -1,5 +1,9 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.pool.TypePool;
@@ -23,6 +27,8 @@ public class AsmVisitorWrapperNoOpTest {
                 classVisitor,
                 mock(Implementation.Context.class),
                 mock(TypePool.class),
+                new FieldList.Empty<FieldDescription.InDefinedShape>(),
+                new MethodList.Empty<MethodDescription>(),
                 IGNORED,
                 IGNORED), is(classVisitor));
         verifyZeroInteractions(classVisitor);

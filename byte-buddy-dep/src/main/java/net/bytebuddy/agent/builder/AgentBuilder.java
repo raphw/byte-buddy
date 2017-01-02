@@ -5901,7 +5901,7 @@ public interface AgentBuilder {
 
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,
-                                      MethodDescription.InDefinedShape instrumentedMethod,
+                                      MethodDescription instrumentedMethod,
                                       MethodVisitor methodVisitor,
                                       Implementation.Context implementationContext,
                                       TypePool typePool,
@@ -6112,7 +6112,7 @@ public interface AgentBuilder {
 
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,
-                                      MethodDescription.InDefinedShape instrumentedMethod,
+                                      MethodDescription instrumentedMethod,
                                       MethodVisitor methodVisitor,
                                       Implementation.Context implementationContext,
                                       TypePool typePool,

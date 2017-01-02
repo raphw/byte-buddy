@@ -6,6 +6,7 @@ import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -1529,6 +1530,16 @@ public interface TypeWriter<T> {
         protected final List<? extends DynamicType> auxiliaryTypes;
 
         /**
+         * The instrumented type's declared fields.
+         */
+        protected final FieldList<FieldDescription.InDefinedShape> fields;
+
+        /**
+         * The instrumented type's methods that are declared or inherited.
+         */
+        protected final MethodList<?> methods;
+
+        /**
          * The instrumented methods relevant to this type creation.
          */
         protected final MethodList<?> instrumentedMethods;
@@ -1590,6 +1601,8 @@ public interface TypeWriter<T> {
          * @param classFileVersion             The class file specified by the user.
          * @param fieldPool                    The field pool to use.
          * @param auxiliaryTypes               The explicit auxiliary types to add to the created type.
+         * @param fields                       The instrumented type's declared fields.
+         * @param methods                      The instrumented type's declared and virtually inhertied methods.
          * @param instrumentedMethods          The instrumented methods relevant to this type creation.
          * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
          * @param typeInitializer              The type initializer to include in the created type's type initializer.
@@ -1606,6 +1619,8 @@ public interface TypeWriter<T> {
                           ClassFileVersion classFileVersion,
                           FieldPool fieldPool,
                           List<? extends DynamicType> auxiliaryTypes,
+                          FieldList<FieldDescription.InDefinedShape> fields,
+                          MethodList<?> methods,
                           MethodList<?> instrumentedMethods,
                           LoadedTypeInitializer loadedTypeInitializer,
                           TypeInitializer typeInitializer,
@@ -1621,6 +1636,8 @@ public interface TypeWriter<T> {
             this.classFileVersion = classFileVersion;
             this.fieldPool = fieldPool;
             this.auxiliaryTypes = auxiliaryTypes;
+            this.fields = fields;
+            this.methods = methods;
             this.instrumentedMethods = instrumentedMethods;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.typeInitializer = typeInitializer;
@@ -1667,6 +1684,8 @@ public interface TypeWriter<T> {
                     fieldPool,
                     methodRegistry,
                     Collections.<DynamicType>emptyList(),
+                    methodRegistry.getInstrumentedType().getDeclaredFields(),
+                    methodRegistry.getMethods(),
                     methodRegistry.getInstrumentedMethods(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
@@ -1718,6 +1737,8 @@ public interface TypeWriter<T> {
                     methodRegistry,
                     SubclassImplementationTarget.Factory.LEVEL_TYPE,
                     Collections.<DynamicType>emptyList(),
+                    methodRegistry.getInstrumentedType().getDeclaredFields(),
+                    methodRegistry.getMethods(),
                     methodRegistry.getInstrumentedMethods(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
@@ -1774,6 +1795,8 @@ public interface TypeWriter<T> {
                     methodRegistry,
                     new RebaseImplementationTarget.Factory(methodRebaseResolver),
                     methodRebaseResolver.getAuxiliaryTypes(),
+                    methodRegistry.getInstrumentedType().getDeclaredFields(),
+                    methodRegistry.getMethods(),
                     methodRegistry.getInstrumentedMethods(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
@@ -1821,6 +1844,8 @@ public interface TypeWriter<T> {
                     && classFileVersion.equals(aDefault.classFileVersion)
                     && fieldPool.equals(aDefault.fieldPool)
                     && auxiliaryTypes.equals(aDefault.auxiliaryTypes)
+                    && fields.equals(aDefault.fields)
+                    && methods.equals(aDefault.methods)
                     && instrumentedMethods.equals(aDefault.instrumentedMethods)
                     && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer)
                     && typeInitializer.equals(aDefault.typeInitializer)
@@ -1840,6 +1865,8 @@ public interface TypeWriter<T> {
             result = 31 * result + classFileVersion.hashCode();
             result = 31 * result + fieldPool.hashCode();
             result = 31 * result + auxiliaryTypes.hashCode();
+            result = 31 * result + fields.hashCode();
+            result = 31 * result + methods.hashCode();
             result = 31 * result + instrumentedMethods.hashCode();
             result = 31 * result + loadedTypeInitializer.hashCode();
             result = 31 * result + typeInitializer.hashCode();
@@ -3137,6 +3164,8 @@ public interface TypeWriter<T> {
              * @param methodRegistry               The method registry to use.
              * @param implementationTargetFactory  The implementation target factory to use.
              * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
+             * @param fields                       The instrumented type's declared fields.
+             * @param methods                      The instrumented type's declared or virtually inherited methods.
              * @param instrumentedMethods          The instrumented methods relevant to this type creation.
              * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
              * @param typeInitializer              The type initializer to include in the created type's type initializer.
@@ -3158,6 +3187,8 @@ public interface TypeWriter<T> {
                                   MethodRegistry.Prepared methodRegistry,
                                   Implementation.Target.Factory implementationTargetFactory,
                                   List<DynamicType> explicitAuxiliaryTypes,
+                                  FieldList<FieldDescription.InDefinedShape> fields,
+                                  MethodList<?> methods,
                                   MethodList<?> instrumentedMethods,
                                   LoadedTypeInitializer loadedTypeInitializer,
                                   TypeInitializer typeInitializer,
@@ -3176,6 +3207,8 @@ public interface TypeWriter<T> {
                         classFileVersion,
                         fieldPool,
                         explicitAuxiliaryTypes,
+                        fields,
+                        methods,
                         instrumentedMethods,
                         loadedTypeInitializer,
                         typeInitializer,
@@ -3265,6 +3298,7 @@ public interface TypeWriter<T> {
                         ", fieldPool=" + fieldPool +
                         ", methodRegistry=" + methodRegistry +
                         ", auxiliaryTypes=" + auxiliaryTypes +
+                        ", fields=" + fields +
                         ", instrumentedMethods=" + instrumentedMethods +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
                         ", typeInitializer=" + typeInitializer +
@@ -3770,12 +3804,12 @@ public interface TypeWriter<T> {
                 /**
                  * A mapping of fields to write by their names.
                  */
-                private final Map<String, FieldDescription> declaredFields;
+                private final LinkedHashMap<String, FieldDescription> declarableFields;
 
                 /**
                  * A mapping of methods to write by a concatenation of internal name and descriptor.
                  */
-                private final Map<String, MethodDescription> declarableMethods;
+                private final LinkedHashMap<String, MethodDescription> declarableMethods;
 
                 /**
                  * The method pool to use or {@code null} if the pool was not yet initialized.
@@ -3811,12 +3845,11 @@ public interface TypeWriter<T> {
                     this.contextRegistry = contextRegistry;
                     this.writerFlags = writerFlags;
                     this.readerFlags = readerFlags;
-                    List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
-                    declaredFields = new HashMap<String, FieldDescription>();
-                    for (FieldDescription fieldDescription : fieldDescriptions) {
-                        declaredFields.put(fieldDescription.getInternalName() + fieldDescription.getDescriptor(), fieldDescription);
+                    declarableFields = new LinkedHashMap<String, FieldDescription>();
+                    for (FieldDescription fieldDescription : fields) {
+                        declarableFields.put(fieldDescription.getInternalName() + fieldDescription.getDescriptor(), fieldDescription);
                     }
-                    declarableMethods = new HashMap<String, MethodDescription>();
+                    declarableMethods = new LinkedHashMap<String, MethodDescription>();
                     for (MethodDescription methodDescription : instrumentedMethods) {
                         declarableMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
                     }
@@ -3838,7 +3871,14 @@ public interface TypeWriter<T> {
                             classFileVersion,
                             ForInlining.this.classFileVersion);
                     contextRegistry.setImplementationContext(implementationContext);
-                    cv = asmVisitorWrapper.wrap(instrumentedType, cv, implementationContext, typePool, writerFlags, readerFlags);
+                    cv = asmVisitorWrapper.wrap(instrumentedType,
+                            cv,
+                            implementationContext,
+                            typePool,
+                            fields,
+                            methods,
+                            writerFlags,
+                            readerFlags);
                     super.visit(classFileVersionNumber,
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface())
                                     // Anonymous types might not preserve their class file's final modifier via their inner class modifier.
@@ -3880,7 +3920,7 @@ public interface TypeWriter<T> {
                                                String descriptor,
                                                String genericSignature,
                                                Object defaultValue) {
-                    FieldDescription fieldDescription = declaredFields.remove(internalName + descriptor);
+                    FieldDescription fieldDescription = declarableFields.remove(internalName + descriptor);
                     if (fieldDescription != null) {
                         FieldPool.Record record = fieldPool.target(fieldDescription);
                         if (!record.isImplicit()) {
@@ -3959,7 +3999,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void visitEnd() {
-                    for (FieldDescription fieldDescription : declaredFields.values()) {
+                    for (FieldDescription fieldDescription : declarableFields.values()) {
                         fieldPool.target(fieldDescription).apply(cv, annotationValueFilterFactory);
                     }
                     for (MethodDescription methodDescription : declarableMethods.values()) {
@@ -3978,7 +4018,7 @@ public interface TypeWriter<T> {
                             ", readerFlags=" + readerFlags +
                             ", writerFlags=" + writerFlags +
                             ", implementationContext=" + implementationContext +
-                            ", declaredFields=" + declaredFields +
+                            ", declarableFields=" + declarableFields +
                             ", declarableMethods=" + declarableMethods +
                             ", methodPool=" + methodPool +
                             ", initializationHandler=" + initializationHandler +
@@ -4228,6 +4268,8 @@ public interface TypeWriter<T> {
              * @param fieldPool                    The field pool to use.
              * @param methodPool                   The method pool to use.
              * @param auxiliaryTypes               A list of auxiliary types to add to the created type.
+             * @param fields                       The instrumented type's declared fields.
+             * @param methods                      The instrumented type's declared and virtually inherited methods.
              * @param instrumentedMethods          The instrumented methods relevant to this type creation.
              * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
              * @param typeInitializer              The type initializer to include in the created type's type initializer.
@@ -4245,6 +4287,8 @@ public interface TypeWriter<T> {
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
                                   List<? extends DynamicType> auxiliaryTypes,
+                                  FieldList<FieldDescription.InDefinedShape> fields,
+                                  MethodList<?> methods,
                                   MethodList<?> instrumentedMethods,
                                   LoadedTypeInitializer loadedTypeInitializer,
                                   TypeInitializer typeInitializer,
@@ -4260,6 +4304,8 @@ public interface TypeWriter<T> {
                         classFileVersion,
                         fieldPool,
                         auxiliaryTypes,
+                        fields,
+                        methods,
                         instrumentedMethods,
                         loadedTypeInitializer,
                         typeInitializer,
@@ -4287,6 +4333,8 @@ public interface TypeWriter<T> {
                         ValidatingClassVisitor.of(classWriter, typeValidation),
                         implementationContext,
                         typePool,
+                        fields,
+                        methods,
                         writerFlags,
                         asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS));
                 classVisitor.visit(classFileVersion.getMinorMajorVersion(),
@@ -4298,7 +4346,7 @@ public interface TypeWriter<T> {
                                 : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
-                for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
+                for (FieldDescription fieldDescription : fields) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);
                 }
                 for (MethodDescription methodDescription : instrumentedMethods) {
@@ -4334,6 +4382,8 @@ public interface TypeWriter<T> {
                         ", fieldPool=" + fieldPool +
                         ", methodPool=" + methodPool +
                         ", auxiliaryTypes=" + auxiliaryTypes +
+                        ", fields=" + fields +
+                        ", methods=" + methods +
                         ", instrumentedMethods=" + instrumentedMethods +
                         ", loadedTypeInitializer=" + loadedTypeInitializer +
                         ", typeInitializer=" + typeInitializer +
