@@ -1269,30 +1269,27 @@ class Target {
     configuration principle which is open for change if the defaults do not fit the actual requirements. In reality,
     the <code>MethodDelegation</code> implementation works with annotations where a parameter's annotation decides
     what value should be assigned to it. However, if no annotation is found, Byte Buddy treats a parameter as if
-    it was annotated with a default annotation which is <code>@Annotation(n)</code>. When observing such an
-    <code>@Argument(n)</code> annotation, Byte Buddy assigns the <code>n + 1</code>-th argument of the source method
-    to the annotated parameter. In case that the source method has less than <code>n + 1</code> parameters, it simply
-    considers this particular target method as incompatible and moves on to the next possible candidate. When
-    defining a default for a non-annotated parameter, Byte Buddy chooses the <i>next free</i> parameter that
-    cannot be discovered on another parameter. According to this rule, Byte Buddy would treat
+    it was annotated with <code>@Argument</code>. This latter annotation causes Byte Buddy to assign the <code>n</code>-th
+    argument of the source method to the annotated target. When the annotation is not added explicitly, the value
+    of <code>n</code> is set to the annotated parameter's index. According to this rule, Byte Buddy treats
 </p>
 
 <pre class="prettyprint">
-void foo(Object o1, @Argument(0) Object o2, Object o3)
+void foo(Object o1, Object o2)
 </pre>
 
 <p>
-    as if the <code>o1</code> parameter was annotated by <code>@Argument(1)</code> and the <code>o3</code>
-    parameter was annotated by <code>@Argument(2)</code>. As previously announced, the <code>n = 0</code> value
-    is not considered for an implicit assignment because the <code>o2</code> parameter is already assigned this
-    parameter explicitly.
+    as if the all parameters were annotated as:
 </p>
 
+<pre class="prettyprint">
+void foo(@Argument(0) Object o1, @Argument(1) Object o2)
+</pre>
+
 <p>
-    Beyond, even the described behavior for treating non-annotated parameters can be adjusted to custom needs. Any
-    <code>MethodDelegation</code> uses a <code>DefaultsProvider</code> for obtaining an annotation value whenever no
-    explicit annotation is discovered on a target method's parameter. Such a customized <code>DefaultsProvider</code>
-    can be set by passing an instance by invoking <code>defaultsProvider</code> on any <code>MethodDelegation</code>.
+    As a result, the first and the second argument of the instrumented method are assigned to the interceptor. If the
+    intercepted method does not declare at least two parameters or if the annotated parameter types are not assignable
+    from the instrumented method's parameter types, the interceptor method in question is discarded.
 </p>
 
 <p>
@@ -1430,7 +1427,7 @@ class LoggingMemoryDatabase extends MemoryDatabase {
 
 <pre class="prettyprint">
 class ChangingLoggerInterceptor {
-  public static List&lt;String&gt; log(@Super MemoryDatabase zuper, String info) {
+  public static List&lt;String&gt; log(String info, @Super MemoryDatabase zuper) {
     System.out.println("Calling database");
     try {
       return zuper.load(info + " (logged access)");
@@ -1575,9 +1572,9 @@ class ForwardingLoggerInterceptor {
 
 MemoryDatabase loggingDatabase = new ByteBuddy()
   .subclass(MemoryDatabase.class)
-  .method(named("load")).intercept(MethodDelegation
+  .method(named("load")).intercept(MethodDelegation.withDefaultConfiguration()
+    .withBinders(Pipe.Binder.install(Forwarder.class)))
     .to(new ForwardingLoggerInterceptor(new MemoryDatabase()))
-    .appendParameterBinder(Pipe.Binder.install(Forwarder.class)))
   .make()
   .load(getClass().getClassLoader())
   .getLoaded()
@@ -1615,7 +1612,7 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
     <li><span>
         If two methods bind the same parameters of a source method by using <code>@Argument</code>, the method with
         the most specific parameter types is considered. In this context, it does not matter if a the annotation
-        is provided explicitly or implicitly by a <code>DefaultsProvider</code>. The resolution algorithm works similar
+        is provided explicitly or implicitly by not annotating a parameter. The resolution algorithm works similar
         to the Java compiler's algorithm for resolving calls to overloaded methods. If two types are equally
         specific, the method that binds more arguments is considered as a target. If a parameter should be
         assigned an argument without considering the parameter type at this resolution stage, this is possible
@@ -1706,6 +1703,12 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
         all arguments. If you want to invoke a specific super method, consider using the <code>@Super</code>
         annotation for creating a type-safe proxy. Before this annotation can be used, it needs to be installed and
         registered explicitly, similarly to the <code>@Pipe</code> annotation.
+    </span></li>
+    <li><span>
+        <code>@SuperMethod</code>: This annotation can only be used on parameter types that are assignable from
+        <code>Method</code>. The assigned method is set to be a synthetic accessor method that allows for the invocation
+        of the original code. Note that using this annotation causes a public accessor to be created for the proxy class
+        that allows for the outside invocation of the super method without passing a security manager.
     </span></li>
 </ul>
 
@@ -2590,7 +2593,8 @@ enum StringValueBinder
                                                          MethodDescription source,
                                                          ParameterDescription target,
                                                          Implementation.Target implementationTarget,
-                                                         Assigner assigner) {
+                                                         Assigner assigner,
+                                                         Assigner.Typing typing) {
     if (!target.getType().asErasure().represents(String.class)) {
       throw new IllegalStateException(target + " makes illegal use of @StringValue");
     }
@@ -2632,8 +2636,9 @@ class ToStringInterceptor {
 new ByteBuddy()
   .subclass(Object.class)
   .method(named("toString"))
-    .intercept(MethodDelegation.to(ToStringInterceptor.class)
-      .defineParameterBinder(StringValueBinder.INSTANCE))
+    .intercept(MethodDelegation.withDefaultConfiguration()
+      .withBinders(StringValueBinder.INSTANCE)
+      .to(ToStringInterceptor.class))
   .make()
 </pre>
 
