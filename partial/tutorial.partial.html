@@ -1710,6 +1710,11 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
         of the original code. Note that using this annotation causes a public accessor to be created for the proxy class
         that allows for the outside invocation of the super method without passing a security manager.
     </span></li>
+    <li><span>
+        <code>@DefaultMethod</code>: Similar to <code>@SuperMethod</code> but for a default method call. The default
+        method is invoked on a unique type if there is only one possibility for a default method invocation. Otherwise,
+        a type can be specified explicitly as an annotation property.
+    </span></li>
 </ul>
 
 
