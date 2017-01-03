@@ -491,6 +491,9 @@ public @interface Pipe {
 
                 @Override
                 public ByteCodeAppender appender(Target implementationTarget) {
+                    if (!redirectedMethod.isAccessibleTo(implementationTarget.getInstrumentedType())) {
+                        throw new IllegalStateException("Cannot invoke " + redirectedMethod + " from outside of class via @Pipe proxy");
+                    }
                     return new Appender(implementationTarget.getInstrumentedType());
                 }
 

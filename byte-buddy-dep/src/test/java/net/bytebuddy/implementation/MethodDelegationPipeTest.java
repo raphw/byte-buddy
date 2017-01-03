@@ -5,12 +5,14 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bind.annotation.Pipe;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.CallTraceable;
 import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.concurrent.Callable;
 
+import static net.bytebuddy.matcher.ElementMatchers.isClone;
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -150,6 +152,17 @@ public class MethodDelegationPipeTest {
                 .intercept(MethodDelegation.withDefaultConfiguration()
                         .withBinders(Pipe.Binder.install(ForwardingType.class))
                         .to(WrongParameterTypeTarget.class))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPipeToPreotectedMethod() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .method(isClone())
+                .intercept(MethodDelegation.withDefaultConfiguration()
+                        .withBinders(Pipe.Binder.install(ForwardingType.class))
+                        .to(new ForwardingInterceptor(new Object())))
                 .make();
     }
 
