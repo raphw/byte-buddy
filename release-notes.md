@@ -1,6 +1,16 @@
 Byte Buddy release notes
 ------------------------
 
+### 2. January 2017: version 1.6.0
+
+- Added `InjectingClassLoader` with class loading strategy that allows for reflection-free loading.
+- Added proper class loader locking to injection strategy.
+- Fixed method lookup to not use *declared* accessors unless necessary to avoid security manager check.
+- Added `@SuperMethod` and `@DefaultMethod` annotations for `MethodDelegation`.
+- Refactored `AsmVisitorWrapper` to accept a list of fields and methods that are intercepted. This allows to use the wrapper also for methods that are overridden.
+- Added a `MethodGraph.Compiler.ForDeclaredMethods` to avoid processing full type hierarchy if only type enhancement should be done without declaring new methods on a type. This should be used in combination with `Advice` instead of `MethodGraph.Empty` as those methods are supplied to the ASM visitor wrappers.
+- Refactored `MethodDelegation` to precomile records for all candidates to avoid duplicate annotation processing.
+
 ### 29. December 2016: version 1.5.13
 
 - Updates to ASM 5.2
