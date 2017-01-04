@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.io.ByteArrayInputStream;
@@ -321,6 +322,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * A synchronization engine for a VM that is aware of parallel-capable class loaders.
          */
+        @EqualsAndHashCode
         class ForJava7CapableVm implements SynchronizationStrategy, Initializable {
 
             /**
@@ -357,17 +359,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 } catch (Exception ignored) {
                     return ForLegacyVm.INSTANCE;
                 }
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && method.equals(((ForJava7CapableVm) other).method);
-            }
-
-            @Override
-            public int hashCode() {
-                return method.hashCode();
             }
 
             @Override
@@ -529,6 +520,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * A package lookup strategy for Java 9 or newer.
          */
+        @EqualsAndHashCode
         class ForJava9CapableVm implements PackageLookupStrategy {
 
             /**
@@ -554,19 +546,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 } catch (InvocationTargetException exception) {
                     throw new IllegalStateException("Cannot invoke " + getDefinedPackage, exception.getCause());
                 }
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForJava9CapableVm that = (ForJava9CapableVm) object;
-                return getDefinedPackage.equals(that.getDefinedPackage);
-            }
-
-            @Override
-            public int hashCode() {
-                return getDefinedPackage.hashCode();
             }
 
             @Override
@@ -679,6 +658,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * An action to define a URL that represents a class file.
          */
+        @EqualsAndHashCode
         protected static class UrlDefinitionAction implements PrivilegedAction<URL> {
 
             /**
@@ -733,21 +713,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             }
 
             @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                UrlDefinitionAction that = (UrlDefinitionAction) other;
-                return typeName.equals(that.typeName) && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = typeName.hashCode();
-                result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                return result;
-            }
-
-            @Override
             public String toString() {
                 return "ByteArrayClassLoader.PersistenceHandler.UrlDefinitionAction{" +
                         "typeName='" + typeName + '\'' +
@@ -758,6 +723,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * A stream handler that returns the given binary representation.
              */
+            @EqualsAndHashCode(callSuper = false)
             protected static class ByteArrayUrlStreamHandler extends URLStreamHandler {
 
                 /**
@@ -777,19 +743,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 @Override
                 protected URLConnection openConnection(URL url) throws IOException {
                     return new ByteArrayUrlConnection(url, new ByteArrayInputStream(binaryRepresentation));
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ByteArrayUrlStreamHandler that = (ByteArrayUrlStreamHandler) other;
-                    return Arrays.equals(binaryRepresentation, that.binaryRepresentation);
-                }
-
-                @Override
-                public int hashCode() {
-                    return Arrays.hashCode(binaryRepresentation);
                 }
 
                 @Override

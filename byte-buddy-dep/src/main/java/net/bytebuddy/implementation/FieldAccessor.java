@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -34,6 +35,7 @@ import java.lang.reflect.Field;
  * value can be specified explicitly when {@code void} is not returned.
  * </p>
  */
+@EqualsAndHashCode
 public abstract class FieldAccessor implements Implementation {
 
     /**
@@ -169,24 +171,6 @@ public abstract class FieldAccessor implements Implementation {
         return instrumentedType;
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        FieldAccessor that = (FieldAccessor) object;
-        return fieldLocation.equals(that.fieldLocation)
-                && assigner.equals(that.assigner)
-                && typing == that.typing;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = fieldLocation.hashCode();
-        result = 31 * result + assigner.hashCode();
-        result = 31 * result + typing.hashCode();
-        return result;
-    }
-
     /**
      * A field location represents an identified field description which depends on the instrumented type and method.
      */
@@ -225,6 +209,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * An absolute field description representing a previously resolved field.
          */
+        @EqualsAndHashCode
         class Absolute implements FieldLocation, Prepared {
 
             /**
@@ -262,19 +247,6 @@ public abstract class FieldAccessor implements Implementation {
             }
 
             @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Absolute absolute = (Absolute) object;
-                return fieldDescription.equals(absolute.fieldDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return fieldDescription.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "FieldAccessor.FieldLocation.Absolute{" +
                         "fieldDescription=" + fieldDescription +
@@ -285,6 +257,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * A relative field location where a field is located dynamically.
          */
+        @EqualsAndHashCode
         class Relative implements FieldLocation {
 
             /**
@@ -328,21 +301,6 @@ public abstract class FieldAccessor implements Implementation {
             }
 
             @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Relative relative = (Relative) object;
-                return fieldNameExtractor.equals(relative.fieldNameExtractor) && fieldLocatorFactory.equals(relative.fieldLocatorFactory);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = fieldNameExtractor.hashCode();
-                result = 31 * result + fieldLocatorFactory.hashCode();
-                return result;
-            }
-
-            @Override
             public String toString() {
                 return "FieldAccessor.FieldLocation.Relative{" +
                         "fieldNameExtractor=" + fieldNameExtractor +
@@ -353,6 +311,7 @@ public abstract class FieldAccessor implements Implementation {
             /**
              * A prepared version of a field location.
              */
+            @EqualsAndHashCode
             protected static class Prepared implements FieldLocation.Prepared {
 
                 /**
@@ -383,21 +342,6 @@ public abstract class FieldAccessor implements Implementation {
                         throw new IllegalStateException("Cannot resolve field for " + instrumentedMethod + " using " + fieldLocator);
                     }
                     return resolution.getField();
-                }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Prepared prepared = (Prepared) object;
-                    return fieldNameExtractor.equals(prepared.fieldNameExtractor) && fieldLocator.equals(prepared.fieldLocator);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = fieldNameExtractor.hashCode();
-                    result = 31 * result + fieldLocator.hashCode();
-                    return result;
                 }
 
                 @Override
@@ -463,6 +407,7 @@ public abstract class FieldAccessor implements Implementation {
         /**
          * A field name extractor that returns a fixed value.
          */
+        @EqualsAndHashCode
         class ForFixedValue implements FieldNameExtractor {
 
             /**
@@ -482,19 +427,6 @@ public abstract class FieldAccessor implements Implementation {
             @Override
             public String resolve(MethodDescription methodDescription) {
                 return name;
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForFixedValue that = (ForFixedValue) object;
-                return name.equals(that.name);
-            }
-
-            @Override
-            public int hashCode() {
-                return name.hashCode();
             }
 
             @Override
@@ -707,6 +639,7 @@ public abstract class FieldAccessor implements Implementation {
     /**
      * A field accessor that sets a parameters value of a given index.
      */
+    @EqualsAndHashCode(callSuper = true)
     protected static class ForParameterSetter extends FieldAccessor implements Implementation.Composable {
 
         /**
@@ -757,23 +690,6 @@ public abstract class FieldAccessor implements Implementation {
                     assigner,
                     typing,
                     index, TerminationHandler.NON_OPERATIONAL), implementation);
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            if (!super.equals(object)) return false;
-            ForParameterSetter that = (ForParameterSetter) object;
-            return index == that.index && terminationHandler == that.terminationHandler;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = super.hashCode();
-            result = 31 * result + index;
-            result = 31 * result + terminationHandler.hashCode();
-            return result;
         }
 
         @Override

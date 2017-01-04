@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 
 import java.io.File;
@@ -143,6 +144,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * A class loading strategy which applies a class loader injection while applying a given
          * {@link java.security.ProtectionDomain} on class injection.
          */
+        @EqualsAndHashCode
         protected static class InjectionDispatcher implements ClassLoadingStrategy.Configurable<ClassLoader> {
 
             /**
@@ -206,24 +208,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             }
 
             @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                InjectionDispatcher that = (InjectionDispatcher) other;
-                return !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
-                        && forbidExisting == that.forbidExisting
-                        && packageDefinitionStrategy.equals(that.packageDefinitionStrategy);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = protectionDomain != null ? protectionDomain.hashCode() : 0;
-                result = 31 * result + packageDefinitionStrategy.hashCode();
-                result = 31 * result + (forbidExisting ? 1 : 0);
-                return result;
-            }
-
-            @Override
             public String toString() {
                 return "ClassLoadingStrategy.Default.InjectionDispatcher{" +
                         "protectionDomain=" + protectionDomain +
@@ -237,6 +221,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
          * A class loading strategy which creates a wrapping class loader while applying a given
          * {@link java.security.ProtectionDomain} on class loading.
          */
+        @EqualsAndHashCode
         protected static class WrappingDispatcher implements ClassLoadingStrategy.Configurable<ClassLoader> {
 
             /**
@@ -336,28 +321,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             }
 
             @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                WrappingDispatcher that = (WrappingDispatcher) other;
-                return childFirst == that.childFirst
-                        && forbidExisting == that.forbidExisting
-                        && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
-                        && persistenceHandler == that.persistenceHandler
-                        && packageDefinitionStrategy.equals(that.packageDefinitionStrategy);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = protectionDomain != null ? protectionDomain.hashCode() : 0;
-                result = 31 * result + persistenceHandler.hashCode();
-                result = 31 * result + packageDefinitionStrategy.hashCode();
-                result = 31 * result + (childFirst ? 1 : 0);
-                result = 31 * result + (forbidExisting ? 1 : 0);
-                return result;
-            }
-
-            @Override
             public String toString() {
                 return "ClassLoadingStrategy.Default.WrappingDispatcher{" +
                         "packageDefinitionStrategy=" + packageDefinitionStrategy +
@@ -406,6 +369,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
      * A class loading strategy which allows class injection into the bootstrap class loader if
      * appropriate.
      */
+    @EqualsAndHashCode
     class ForBootstrapInjection implements ClassLoadingStrategy<ClassLoader> {
 
         /**
@@ -435,22 +399,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
                     ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
                     : new ClassInjector.UsingReflection(classLoader);
             return classInjector.inject(types);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ForBootstrapInjection that = (ForBootstrapInjection) other;
-            return folder.equals(that.folder)
-                    && instrumentation.equals(that.instrumentation);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = instrumentation.hashCode();
-            result = 31 * result + folder.hashCode();
-            return result;
         }
 
         @Override

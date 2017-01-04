@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -75,6 +76,7 @@ public enum SuperMethodCall implements Implementation.Composable {
     /**
      * An appender for implementing a {@link net.bytebuddy.implementation.SuperMethodCall}.
      */
+    @EqualsAndHashCode
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -110,18 +112,6 @@ public enum SuperMethodCall implements Implementation.Composable {
                     terminationHandler.of(instrumentedMethod)
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && implementationTarget.equals(((Appender) other).implementationTarget)
-                    && terminationHandler.equals(((Appender) other).terminationHandler);
-        }
-
-        @Override
-        public int hashCode() {
-            return implementationTarget.hashCode() + 31 * terminationHandler.hashCode();
         }
 
         @Override

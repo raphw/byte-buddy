@@ -1,6 +1,7 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import org.objectweb.asm.ClassReader;
@@ -17,6 +18,7 @@ import java.security.PrivilegedAction;
  * A wrapper object for representing a validated class file version in the format that is specified by the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
  */
+@EqualsAndHashCode
 public class ClassFileVersion implements Comparable<ClassFileVersion> {
 
     /**
@@ -264,17 +266,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && versionNumber == ((ClassFileVersion) other).versionNumber;
-    }
-
-    @Override
-    public int hashCode() {
-        return versionNumber;
-    }
-
-    @Override
     public String toString() {
         return "ClassFileVersion{versionNumber=" + versionNumber + '}';
     }
@@ -321,6 +312,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         /**
          * A version locator for a JVM of at least version 9.
          */
+        @EqualsAndHashCode
         class ForJava9CapableVm implements VersionLocator {
 
             /**
@@ -358,21 +350,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Could not access VM version lookup", exception);
                 }
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForJava9CapableVm that = (ForJava9CapableVm) object;
-                return current.equals(that.current) && major.equals(that.major);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = current.hashCode();
-                result = 31 * result + major.hashCode();
-                return result;
             }
 
             @Override

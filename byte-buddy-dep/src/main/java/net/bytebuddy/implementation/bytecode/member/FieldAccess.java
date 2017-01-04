@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -127,6 +128,7 @@ public enum FieldAccess {
     /**
      * A dispatcher for implementing a generic read or write access on a field.
      */
+    @EqualsAndHashCode
     protected static class OfGenericField implements Defined {
 
         /**
@@ -169,21 +171,6 @@ public enum FieldAccess {
         @Override
         public StackManipulation write() {
             return defined.write();
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            OfGenericField that = (OfGenericField) other;
-            return targetType.equals(that.targetType) && defined.equals(that.defined);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = targetType.hashCode();
-            result = 31 * result + defined.hashCode();
-            return result;
         }
 
         @Override

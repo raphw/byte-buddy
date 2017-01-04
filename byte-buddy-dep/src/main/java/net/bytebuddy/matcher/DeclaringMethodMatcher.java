@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -9,6 +10,7 @@ import net.bytebuddy.description.type.TypeDefinition;
  *
  * @param <T> The exact type of the annotated element that is matched.
  */
+@EqualsAndHashCode(callSuper = false)
 public class DeclaringMethodMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -28,17 +30,6 @@ public class DeclaringMethodMatcher<T extends TypeDefinition> extends ElementMat
     @Override
     public boolean matches(T target) {
         return matcher.matches(target.getDeclaredMethods());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((DeclaringMethodMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override

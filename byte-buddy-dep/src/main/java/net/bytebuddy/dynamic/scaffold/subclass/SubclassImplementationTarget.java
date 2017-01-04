@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -17,6 +18,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 /**
  * An implementation target for creating a subclass of a given type.
  */
+@EqualsAndHashCode(callSuper = true)
 public class SubclassImplementationTarget extends Implementation.Target.AbstractBase {
 
     /**
@@ -89,22 +91,6 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     @Override
     public TypeDefinition getOriginType() {
         return originTypeResolver.identify(instrumentedType);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && super.equals(other)
-                && superConstructors.equals(((SubclassImplementationTarget) other).superConstructors)
-                && originTypeResolver == ((SubclassImplementationTarget) other).originTypeResolver;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + superConstructors.hashCode();
-        result = 31 * result + originTypeResolver.hashCode();
-        return result;
     }
 
     @Override

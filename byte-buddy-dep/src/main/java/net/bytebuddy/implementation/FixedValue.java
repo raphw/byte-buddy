@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -27,6 +28,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  *
  * @see FieldAccessor
  */
+@EqualsAndHashCode
 public abstract class FixedValue implements Implementation {
 
     /**
@@ -215,18 +217,6 @@ public abstract class FixedValue implements Implementation {
                 MethodReturn.of(instrumentedMethod.getReturnType())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && typing == ((FixedValue) other).typing
-                && assigner.equals(((FixedValue) other).assigner);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * assigner.hashCode() + typing.hashCode();
     }
 
     /**
@@ -437,6 +427,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * A byte code appender for returning {@code this}.
          */
+        @EqualsAndHashCode
         protected static class Appender implements ByteCodeAppender {
 
             /**
@@ -465,19 +456,6 @@ public abstract class FixedValue implements Implementation {
             }
 
             @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Appender appender = (Appender) object;
-                return instrumentedType.equals(appender.instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "FixedValue.ForThisValue.Appender{" +
                         "instrumentedType=" + instrumentedType +
@@ -489,6 +467,7 @@ public abstract class FixedValue implements Implementation {
     /**
      * A fixed value implementation that returns a method's argument.
      */
+    @EqualsAndHashCode(callSuper = true)
     protected static class ForArgument extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
@@ -551,22 +530,6 @@ public abstract class FixedValue implements Implementation {
         }
 
         @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            if (!super.equals(object)) return false;
-            ForArgument that = (ForArgument) object;
-            return index == that.index;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = super.hashCode();
-            result = 31 * result + index;
-            return result;
-        }
-
-        @Override
         public String toString() {
             return "FixedValue.ForArgument{" +
                     "index=" + index +
@@ -580,6 +543,7 @@ public abstract class FixedValue implements Implementation {
      * A fixed value implementation that represents its fixed value as a value that is written to the instrumented
      * class's constant pool.
      */
+    @EqualsAndHashCode(callSuper = true)
     protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
@@ -651,22 +615,6 @@ public abstract class FixedValue implements Implementation {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && super.equals(other)
-                    && loadedType.equals(((ForPoolValue) other).loadedType)
-                    && valueLoadInstruction.equals(((ForPoolValue) other).valueLoadInstruction);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = super.hashCode();
-            result = 31 * result + valueLoadInstruction.hashCode();
-            result = 31 * result + loadedType.hashCode();
-            return result;
-        }
-
-        @Override
         public String toString() {
             return "FixedValue.ForPoolValue{" +
                     "valueLoadInstruction=" + valueLoadInstruction +
@@ -680,6 +628,7 @@ public abstract class FixedValue implements Implementation {
     /**
      * A fixed value implementation that represents its fixed value as a static field of the instrumented class.
      */
+    @EqualsAndHashCode(callSuper = true, exclude = "fieldType")
     protected static class ForValue extends FixedValue implements AssignerConfigurable {
 
         /**
@@ -756,19 +705,6 @@ public abstract class FixedValue implements Implementation {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && fieldName.equals(((ForValue) other).fieldName)
-                    && value.equals(((ForValue) other).value)
-                    && super.equals(other);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * 31 * super.hashCode() + 31 * fieldName.hashCode() + value.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "FixedValue.ForValue{" +
                     "fieldName='" + fieldName + '\'' +
@@ -782,6 +718,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * A byte code appender for returning the fixed value that was stored in a static field.
          */
+        @EqualsAndHashCode
         private class StaticFieldByteCodeAppender implements ByteCodeAppender {
 
             /**
@@ -801,17 +738,6 @@ public abstract class FixedValue implements Implementation {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 return ForValue.this.apply(methodVisitor, implementationContext, instrumentedMethod, fieldType, fieldGetAccess);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && fieldGetAccess.equals(((StaticFieldByteCodeAppender) other).fieldGetAccess);
-            }
-
-            @Override
-            public int hashCode() {
-                return fieldGetAccess.hashCode();
             }
 
             @Override

@@ -1,11 +1,13 @@
 package net.bytebuddy.build.maven;
 
+import lombok.EqualsAndHashCode;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 
 /**
  * A Maven coordinate.
  */
+@EqualsAndHashCode
 public class MavenCoordinate {
 
     /**
@@ -43,24 +45,6 @@ public class MavenCoordinate {
      */
     public Artifact asArtifact() {
         return new DefaultArtifact(groupId, artifactId, "jar", version);
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        MavenCoordinate that = (MavenCoordinate) object;
-        return groupId.equals(that.groupId)
-                && artifactId.equals(that.artifactId)
-                && version.equals(that.version);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = groupId.hashCode();
-        result = 31 * result + artifactId.hashCode();
-        result = 31 * result + version.hashCode();
-        return result;
     }
 
     @Override

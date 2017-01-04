@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -73,6 +74,7 @@ public interface LatentMatcher<T> {
      *
      * @param <S> The type of the matched element.
      */
+    @EqualsAndHashCode
     class Resolved<S> implements LatentMatcher<S> {
 
         /**
@@ -95,17 +97,6 @@ public interface LatentMatcher<T> {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && matcher.equals(((Resolved) other).matcher);
-        }
-
-        @Override
-        public int hashCode() {
-            return matcher.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "LatentMatcher.Resolved{" +
                     "matcher=" + matcher +
@@ -116,6 +107,7 @@ public interface LatentMatcher<T> {
     /**
      * A latent matcher where the field token is being attached to the supplied type description before matching.
      */
+    @EqualsAndHashCode
     class ForFieldToken implements LatentMatcher<FieldDescription> {
 
         /**
@@ -138,17 +130,6 @@ public interface LatentMatcher<T> {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && token.equals(((ForFieldToken) other).token);
-        }
-
-        @Override
-        public int hashCode() {
-            return token.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "LatentMatcher.ForFieldToken{" +
                     "token=" + token +
@@ -158,6 +139,7 @@ public interface LatentMatcher<T> {
         /**
          * A resolved matcher of a latent field matcher for a field token.
          */
+        @EqualsAndHashCode
         protected static class ResolvedMatcher implements ElementMatcher<FieldDescription> {
 
             /**
@@ -180,17 +162,6 @@ public interface LatentMatcher<T> {
             }
 
             @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && signatureToken.equals(((ResolvedMatcher) other).signatureToken);
-            }
-
-            @Override
-            public int hashCode() {
-                return signatureToken.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "LatentMatcher.ForFieldToken.ResolvedMatcher{" +
                         "signatureToken=" + signatureToken +
@@ -202,6 +173,7 @@ public interface LatentMatcher<T> {
     /**
      * A latent matcher where the method token is being attached to the supplied type description before matching.
      */
+    @EqualsAndHashCode
     class ForMethodToken implements LatentMatcher<MethodDescription> {
 
         /**
@@ -224,17 +196,6 @@ public interface LatentMatcher<T> {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && token.equals(((ForMethodToken) other).token);
-        }
-
-        @Override
-        public int hashCode() {
-            return token.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "LatentMatcher.ForMethodToken{" +
                     "token=" + token +
@@ -244,6 +205,7 @@ public interface LatentMatcher<T> {
         /**
          * A resolved matcher of a latent method matcher for a method token.
          */
+        @EqualsAndHashCode
         protected static class ResolvedMatcher implements ElementMatcher<MethodDescription> {
 
             /**
@@ -266,17 +228,6 @@ public interface LatentMatcher<T> {
             }
 
             @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && signatureToken.equals(((ResolvedMatcher) other).signatureToken);
-            }
-
-            @Override
-            public int hashCode() {
-                return signatureToken.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "LatentMatcher.ForMethodToken.ResolvedMatcher{" +
                         "signatureToken=" + signatureToken +
@@ -290,6 +241,7 @@ public interface LatentMatcher<T> {
      *
      * @param <S> The type of the matched element.
      */
+    @EqualsAndHashCode
     class Conjunction<S> implements LatentMatcher<S> {
 
         /**
@@ -326,17 +278,6 @@ public interface LatentMatcher<T> {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && matchers.equals(((Conjunction) other).matchers);
-        }
-
-        @Override
-        public int hashCode() {
-            return matchers.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "LatentMatcher.Conjunction{" +
                     "matchers=" + matchers +
@@ -349,6 +290,7 @@ public interface LatentMatcher<T> {
      *
      * @param <S> The type of the matched element.
      */
+    @EqualsAndHashCode
     class Disjunction<S> implements LatentMatcher<S> {
 
         /**
@@ -382,17 +324,6 @@ public interface LatentMatcher<T> {
                 matcher = matcher.or(latentMatcher.resolve(typeDescription));
             }
             return matcher;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && matchers.equals(((Disjunction) other).matchers);
-        }
-
-        @Override
-        public int hashCode() {
-            return matchers.hashCode();
         }
 
         @Override

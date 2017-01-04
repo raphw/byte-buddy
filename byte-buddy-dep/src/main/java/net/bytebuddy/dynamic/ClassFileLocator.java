@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.JavaModule;
@@ -66,6 +67,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * A canonical representation of an illegal binary representation.
          */
+        @EqualsAndHashCode
         class Illegal implements Resolution {
 
             /**
@@ -93,19 +95,6 @@ public interface ClassFileLocator extends Closeable {
             }
 
             @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Illegal illegal = (Illegal) object;
-                return typeName.equals(illegal.typeName);
-            }
-
-            @Override
-            public int hashCode() {
-                return typeName.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "ClassFileLocator.Resolution.Illegal{" +
                         "typeName='" + typeName + '\'' +
@@ -116,6 +105,7 @@ public interface ClassFileLocator extends Closeable {
         /**
          * Represents a byte array as binary data.
          */
+        @EqualsAndHashCode
         class Explicit implements Resolution {
 
             /**
@@ -142,17 +132,6 @@ public interface ClassFileLocator extends Closeable {
             @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "The array is not to be modified by contract")
             public byte[] resolve() {
                 return binaryRepresentation;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && Arrays.equals(binaryRepresentation, ((Explicit) other).binaryRepresentation);
-            }
-
-            @Override
-            public int hashCode() {
-                return Arrays.hashCode(binaryRepresentation);
             }
 
             @Override
@@ -193,6 +172,7 @@ public interface ClassFileLocator extends Closeable {
     /**
      * A simple class file locator that returns class files from a selection of given types.
      */
+    @EqualsAndHashCode
     class Simple implements ClassFileLocator {
 
         /**
@@ -246,17 +226,6 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && classFiles.equals(((Simple) other).classFiles);
-        }
-
-        @Override
-        public int hashCode() {
-            return classFiles.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "ClassFileLocator.Simple{" +
                     "classFiles=" + classFiles +
@@ -273,6 +242,7 @@ public interface ClassFileLocator extends Closeable {
      * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
      * </p>
      */
+    @EqualsAndHashCode
     class ForClassLoader implements ClassFileLocator {
 
         /**
@@ -359,17 +329,6 @@ public interface ClassFileLocator extends Closeable {
             } else {
                 return new Resolution.Illegal(typeName);
             }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && classLoader.equals(((ForClassLoader) other).classLoader);
-        }
-
-        @Override
-        public int hashCode() {
-            return classLoader.hashCode();
         }
 
         @Override
@@ -468,6 +427,7 @@ public interface ClassFileLocator extends Closeable {
      * class loader is closed if it implements the {@link Closeable} interface as this is typically not intended.
      * </p>
      */
+    @EqualsAndHashCode
     class ForModule implements ClassFileLocator {
 
         /**
@@ -550,19 +510,6 @@ public interface ClassFileLocator extends Closeable {
         @Override
         public void close() throws IOException {
             /* do nothing */
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            ForModule forModule = (ForModule) object;
-            return module.equals(forModule.module);
-        }
-
-        @Override
-        public int hashCode() {
-            return module.hashCode();
         }
 
         @Override
@@ -656,6 +603,7 @@ public interface ClassFileLocator extends Closeable {
     /**
      * A class file locator that locates classes within a Java <i>jar</i> file.
      */
+    @EqualsAndHashCode
     class ForJarFile implements ClassFileLocator {
 
         /**
@@ -767,17 +715,6 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || other instanceof ForJarFile
-                    && jarFile.equals(((ForJarFile) other).jarFile);
-        }
-
-        @Override
-        public int hashCode() {
-            return jarFile.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "ClassFileLocator.ForJarFile{" +
                     "jarFile=" + jarFile +
@@ -789,6 +726,7 @@ public interface ClassFileLocator extends Closeable {
      * A class file locator that locates classes within a Java <i>jmod</i> file. This class file locator should not be used
      * for reading modular jar files for which {@link ForJarFile} is appropriate.
      */
+    @EqualsAndHashCode
     class ForModuleFile implements ClassFileLocator {
 
         /**
@@ -964,19 +902,6 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            ForModuleFile that = (ForModuleFile) object;
-            return zipFile.equals(that.zipFile);
-        }
-
-        @Override
-        public int hashCode() {
-            return zipFile.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "ClassFileLocator.ForModuleFile{" +
                     "zipFile=" + zipFile +
@@ -989,6 +914,7 @@ public interface ClassFileLocator extends Closeable {
      * folders donating packages and class files being saved as {@code <classname>.class} files
      * within their package folder.
      */
+    @EqualsAndHashCode
     class ForFolder implements ClassFileLocator {
 
         /**
@@ -1026,17 +952,6 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || other instanceof ForFolder
-                    && folder.equals(((ForFolder) other).folder);
-        }
-
-        @Override
-        public int hashCode() {
-            return folder.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "ClassFileLocator.ForFolder{" +
                     "folder=" + folder +
@@ -1049,6 +964,7 @@ public interface ClassFileLocator extends Closeable {
      * locator causes a class to be loaded in order to look up its class file. Also, this locator does deliberately not
      * support the look-up of classes that represent lambda expressions.
      */
+    @EqualsAndHashCode
     class AgentBased implements ClassFileLocator {
 
         /**
@@ -1162,18 +1078,6 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && classLoadingDelegate.equals(((AgentBased) other).classLoadingDelegate)
-                    && instrumentation.equals(((AgentBased) other).instrumentation);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * instrumentation.hashCode() + classLoadingDelegate.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "ClassFileLocator.AgentBased{" +
                     "instrumentation=" + instrumentation +
@@ -1205,6 +1109,7 @@ public interface ClassFileLocator extends Closeable {
             /**
              * A default implementation of a class loading delegate.
              */
+            @EqualsAndHashCode
             class Default implements ClassLoadingDelegate {
 
                 /**
@@ -1241,19 +1146,6 @@ public interface ClassFileLocator extends Closeable {
                 @Override
                 public ClassLoader getClassLoader() {
                     return classLoader;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Default aDefault = (Default) other;
-                    return !(classLoader != null ? !classLoader.equals(aDefault.classLoader) : aDefault.classLoader != null);
-                }
-
-                @Override
-                public int hashCode() {
-                    return classLoader != null ? classLoader.hashCode() : 0;
                 }
 
                 @Override
@@ -1383,6 +1275,7 @@ public interface ClassFileLocator extends Closeable {
                     /**
                      * Represents a field that could be located.
                      */
+                    @EqualsAndHashCode
                     class Resolved implements Dispatcher, Initializable, PrivilegedAction<Dispatcher> {
 
                         /**
@@ -1421,17 +1314,6 @@ public interface ClassFileLocator extends Closeable {
                         }
 
                         @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && field.equals(((Resolved) other).field);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return field.hashCode();
-                        }
-
-                        @Override
                         public String toString() {
                             return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Resolved{" +
                                     "field=" + field +
@@ -1442,6 +1324,7 @@ public interface ClassFileLocator extends Closeable {
                     /**
                      * Represents a field that could not be located.
                      */
+                    @EqualsAndHashCode
                     class Unresolved implements Initializable {
 
                         /**
@@ -1464,17 +1347,6 @@ public interface ClassFileLocator extends Closeable {
                         }
 
                         @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && exception.equals(((Unresolved) other).exception);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return exception.hashCode();
-                        }
-
-                        @Override
                         public String toString() {
                             return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Unresolved{" +
                                     "exception=" + exception +
@@ -1489,6 +1361,7 @@ public interface ClassFileLocator extends Closeable {
              * be located by a class loader directly. This allows for locating classes that are loaded by
              * an anonymous class loader which does not register its classes in a system dictionary.
              */
+            @EqualsAndHashCode
             class Explicit implements ClassLoadingDelegate {
 
                 /**
@@ -1549,20 +1422,6 @@ public interface ClassFileLocator extends Closeable {
                 @Override
                 public ClassLoader getClassLoader() {
                     return fallbackDelegate.getClassLoader();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fallbackDelegate.equals(((Explicit) other).fallbackDelegate)
-                            && types.equals(((Explicit) other).types);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = fallbackDelegate.hashCode();
-                    result = 31 * result + types.hashCode();
-                    return result;
                 }
 
                 @Override
@@ -1653,6 +1512,7 @@ public interface ClassFileLocator extends Closeable {
     /**
      * A class file locator that discriminates by a type's package.
      */
+    @EqualsAndHashCode
     class PackageDiscriminating implements ClassFileLocator {
 
         /**
@@ -1688,19 +1548,6 @@ public interface ClassFileLocator extends Closeable {
         }
 
         @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            PackageDiscriminating that = (PackageDiscriminating) object;
-            return classFileLocators.equals(that.classFileLocators);
-        }
-
-        @Override
-        public int hashCode() {
-            return classFileLocators.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "ClassFileLocator.PackageDiscriminating{" +
                     "classFileLocators=" + classFileLocators +
@@ -1713,6 +1560,7 @@ public interface ClassFileLocator extends Closeable {
      * Any class file locator is queried in the supplied order until one locator is able to provide an input
      * stream of the class file.
      */
+    @EqualsAndHashCode
     class Compound implements ClassFileLocator, Closeable {
 
         /**
@@ -1764,17 +1612,6 @@ public interface ClassFileLocator extends Closeable {
             for (ClassFileLocator classFileLocator : classFileLocators) {
                 classFileLocator.close();
             }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && classFileLocators.equals(((Compound) other).classFileLocators);
-        }
-
-        @Override
-        public int hashCode() {
-            return classFileLocators.hashCode();
         }
 
         @Override

@@ -1,5 +1,7 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
+
 import java.util.Iterator;
 
 /**
@@ -8,6 +10,7 @@ import java.util.Iterator;
  *
  * @param <T> The type of the elements contained by the collection.
  */
+@EqualsAndHashCode(callSuper = false)
 public class CollectionElementMatcher<T> extends ElementMatcher.Junction.AbstractBase<Iterable<? extends T>> {
 
     /**
@@ -42,18 +45,6 @@ public class CollectionElementMatcher<T> extends ElementMatcher.Junction.Abstrac
             }
         }
         return iterator.hasNext() && matcher.matches(iterator.next());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && index == ((CollectionElementMatcher<?>) other).index
-                && matcher.equals(((CollectionElementMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode() + 31 * index;
     }
 
     @Override

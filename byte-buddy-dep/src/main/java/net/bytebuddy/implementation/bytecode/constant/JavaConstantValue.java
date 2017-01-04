@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -9,6 +10,7 @@ import org.objectweb.asm.MethodVisitor;
 /**
  * A constant representing a {@link JavaConstant}.
  */
+@EqualsAndHashCode
 public class JavaConstantValue implements StackManipulation {
 
     /**
@@ -34,17 +36,6 @@ public class JavaConstantValue implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitLdcInsn(javaConstant.asConstantPoolValue());
         return StackSize.SINGLE.toIncreasingSize();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && javaConstant.equals(((JavaConstantValue) other).javaConstant);
-    }
-
-    @Override
-    public int hashCode() {
-        return javaConstant.hashCode();
     }
 
     @Override

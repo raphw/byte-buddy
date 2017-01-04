@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -79,6 +80,7 @@ public interface FieldLocator {
         /**
          * A simple implementation for a field resolution.
          */
+        @EqualsAndHashCode
         class Simple implements Resolution {
 
             /**
@@ -103,19 +105,6 @@ public interface FieldLocator {
             @Override
             public FieldDescription getField() {
                 return fieldDescription;
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Simple simple = (Simple) object;
-                return fieldDescription.equals(simple.fieldDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return fieldDescription.hashCode();
             }
 
             @Override
@@ -175,6 +164,7 @@ public interface FieldLocator {
     /**
      * An abstract base implementation of a field locator.
      */
+    @EqualsAndHashCode
     abstract class AbstractBase implements FieldLocator {
 
         /**
@@ -214,24 +204,12 @@ public interface FieldLocator {
          * @return A list of fields that match the specified matcher.
          */
         protected abstract FieldList<?> locate(ElementMatcher<? super FieldDescription> matcher);
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            AbstractBase that = (AbstractBase) object;
-            return accessingType.equals(that.accessingType);
-        }
-
-        @Override
-        public int hashCode() {
-            return accessingType.hashCode();
-        }
     }
 
     /**
      * A field locator that only looks up fields that are declared by a specific type.
      */
+    @EqualsAndHashCode(callSuper = true)
     class ForExactType extends AbstractBase {
 
         /**
@@ -265,22 +243,6 @@ public interface FieldLocator {
         }
 
         @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            if (!super.equals(object)) return false;
-            ForExactType that = (ForExactType) object;
-            return typeDescription.equals(that.typeDescription);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = super.hashCode();
-            result = 31 * result + typeDescription.hashCode();
-            return result;
-        }
-
-        @Override
         public String toString() {
             return "FieldLocator.ForExactType{" +
                     "accessingType=" + accessingType +
@@ -291,6 +253,7 @@ public interface FieldLocator {
         /**
          * A factory for creating a {@link ForExactType}.
          */
+        @EqualsAndHashCode
         public static class Factory implements FieldLocator.Factory {
 
             /**
@@ -313,19 +276,6 @@ public interface FieldLocator {
             }
 
             @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Factory factory = (Factory) object;
-                return typeDescription.equals(factory.typeDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return typeDescription.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "FieldLocator.ForExactType.Factory{" +
                         "typeDescription=" + typeDescription +
@@ -337,6 +287,7 @@ public interface FieldLocator {
     /**
      * A field locator that looks up fields that are declared within a class's class hierarchy.
      */
+    @EqualsAndHashCode(callSuper = true)
     class ForClassHierarchy extends AbstractBase {
 
         /**
@@ -373,22 +324,6 @@ public interface FieldLocator {
                 }
             }
             return new FieldList.Empty<FieldDescription>();
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            if (!super.equals(object)) return false;
-            ForClassHierarchy that = (ForClassHierarchy) object;
-            return typeDescription.equals(that.typeDescription);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = super.hashCode();
-            result = 31 * result + typeDescription.hashCode();
-            return result;
         }
 
         @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
 
@@ -8,6 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T>The type of the matched entity.
  */
+@EqualsAndHashCode(callSuper = false)
 public class AccessibilityMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -27,17 +29,6 @@ public class AccessibilityMatcher<T extends ByteCodeElement> extends ElementMatc
     @Override
     public boolean matches(T target) {
         return target.isAccessibleTo(typeDescription);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && typeDescription.equals(((AccessibilityMatcher) other).typeDescription);
-    }
-
-    @Override
-    public int hashCode() {
-        return typeDescription.hashCode();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -167,6 +168,7 @@ public @interface DefaultMethod {
             /**
              * A method locator for an explicit target type.
              */
+            @EqualsAndHashCode
             class ForExplicitType implements MethodLocator {
 
                 /**
@@ -192,19 +194,6 @@ public @interface DefaultMethod {
                 }
 
                 @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForExplicitType that = (ForExplicitType) object;
-                    return typeDescription.equals(that.typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
                 public String toString() {
                     return "DefaultMethod.Binder.MethodLocator.ForExplicitType{" +
                             "typeDescription=" + typeDescription +
@@ -216,6 +205,7 @@ public @interface DefaultMethod {
         /**
          * Loads the delegation method constant onto the stack.
          */
+        @EqualsAndHashCode
         protected static class DelegationMethod implements StackManipulation {
 
             /**
@@ -251,21 +241,6 @@ public @interface DefaultMethod {
                 return (cached
                         ? FieldAccess.forField(implementationContext.cache(stackManipulation, new TypeDescription.ForLoadedType(Method.class))).read()
                         : stackManipulation).apply(methodVisitor, implementationContext);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                DelegationMethod that = (DelegationMethod) other;
-                return cached == that.cached && specialMethodInvocation.equals(that.specialMethodInvocation);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = specialMethodInvocation.hashCode();
-                result = 31 * result + (cached ? 1 : 0);
-                return result;
             }
 
             @Override

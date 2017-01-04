@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -84,6 +85,7 @@ public enum FloatConstant implements StackManipulation {
     /**
      * A stack manipulation for loading a {@code float} value from a class's constant pool onto the operand stack.
      */
+    @EqualsAndHashCode
     protected static class ConstantPool implements StackManipulation {
 
         /**
@@ -109,17 +111,6 @@ public enum FloatConstant implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitLdcInsn(value);
             return SIZE;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && Float.compare(((ConstantPool) other).value, value) == 0;
-        }
-
-        @Override
-        public int hashCode() {
-            return (value != +0.0f ? Float.floatToIntBits(value) : 0);
         }
 
         @Override

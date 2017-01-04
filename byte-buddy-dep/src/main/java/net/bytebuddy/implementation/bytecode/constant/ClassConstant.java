@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -138,6 +139,7 @@ public enum ClassConstant implements StackManipulation {
     /**
      * A class constant for a non-primitive {@link java.lang.Class}.
      */
+    @EqualsAndHashCode
     protected static class ForReferenceType implements StackManipulation {
 
         /**
@@ -168,17 +170,6 @@ public enum ClassConstant implements StackManipulation {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
             }
             return SIZE;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && typeDescription.equals(((ForReferenceType) other).typeDescription);
-        }
-
-        @Override
-        public int hashCode() {
-            return typeDescription.hashCode();
         }
 
         @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -8,6 +9,7 @@ import org.objectweb.asm.MethodVisitor;
 /**
  * Represents a {@link java.lang.String} value that is stored in a type's constant pool.
  */
+@EqualsAndHashCode
 public class TextConstant implements StackManipulation {
 
     /**
@@ -33,17 +35,6 @@ public class TextConstant implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitLdcInsn(text);
         return StackSize.SINGLE.toIncreasingSize();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && text.equals(((TextConstant) other).text);
-    }
-
-    @Override
-    public int hashCode() {
-        return text.hashCode();
     }
 
     @Override

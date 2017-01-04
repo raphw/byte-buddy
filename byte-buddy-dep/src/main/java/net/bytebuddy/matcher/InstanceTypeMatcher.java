@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 
 /**
@@ -7,6 +8,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T> The exact type of the object that is matched.
  */
+@EqualsAndHashCode(callSuper = false)
 public class InstanceTypeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -26,19 +28,6 @@ public class InstanceTypeMatcher<T> extends ElementMatcher.Junction.AbstractBase
     @Override
     public boolean matches(T target) {
         return target != null && matcher.matches(new TypeDescription.ForLoadedType(target.getClass()));
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        InstanceTypeMatcher<?> that = (InstanceTypeMatcher<?>) object;
-        return matcher.equals(that.matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override

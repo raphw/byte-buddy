@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.method.MethodDescription;
@@ -138,6 +139,7 @@ public interface MethodRegistry {
             /**
              * A compiled handler for a visibility bridge handler.
              */
+            @EqualsAndHashCode
             protected static class Compiled implements Handler.Compiled {
 
                 /**
@@ -157,17 +159,6 @@ public interface MethodRegistry {
                 @Override
                 public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                     return TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && instrumentedType.equals(((Compiled) other).instrumentedType);
-                }
-
-                @Override
-                public int hashCode() {
-                    return instrumentedType.hashCode();
                 }
 
                 @Override
@@ -198,6 +189,7 @@ public interface MethodRegistry {
         /**
          * A handler for a method that is implemented as byte code.
          */
+        @EqualsAndHashCode
         class ForImplementation implements Handler {
 
             /**
@@ -225,17 +217,6 @@ public interface MethodRegistry {
             }
 
             @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && implementation.equals(((ForImplementation) other).implementation);
-            }
-
-            @Override
-            public int hashCode() {
-                return implementation.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "MethodRegistry.Handler.ForImplementation{" +
                         "implementation=" + implementation +
@@ -245,6 +226,7 @@ public interface MethodRegistry {
             /**
              * A compiled handler for implementing a method.
              */
+            @EqualsAndHashCode
             protected static class Compiled implements Handler.Compiled {
 
                 /**
@@ -267,17 +249,6 @@ public interface MethodRegistry {
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && byteCodeAppender.equals(((Compiled) other).byteCodeAppender);
-                }
-
-                @Override
-                public int hashCode() {
-                    return byteCodeAppender.hashCode();
-                }
-
-                @Override
                 public String toString() {
                     return "MethodRegistry.Handler.ForImplementation.Compiled{" +
                             "byteCodeAppender=" + byteCodeAppender +
@@ -289,6 +260,7 @@ public interface MethodRegistry {
         /**
          * A handler for defining a default annotation value for a method.
          */
+        @EqualsAndHashCode
         class ForAnnotationValue implements Handler, Compiled {
 
             /**
@@ -318,17 +290,6 @@ public interface MethodRegistry {
             @Override
             public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                 return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription, annotationValue, attributeAppender);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && annotationValue.equals(((ForAnnotationValue) other).annotationValue);
-            }
-
-            @Override
-            public int hashCode() {
-                return annotationValue.hashCode();
             }
 
             @Override
@@ -434,6 +395,7 @@ public interface MethodRegistry {
     /**
      * A default implementation of a method registry.
      */
+    @EqualsAndHashCode
     class Default implements MethodRegistry {
 
         /**
@@ -545,18 +507,6 @@ public interface MethodRegistry {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && entries.equals(((Default) other).entries);
-
-        }
-
-        @Override
-        public int hashCode() {
-            return entries.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "MethodRegistry.Default{" +
                     "entries=" + entries +
@@ -566,6 +516,7 @@ public interface MethodRegistry {
         /**
          * An entry of a default method registry.
          */
+        @EqualsAndHashCode
         protected static class Entry implements LatentMatcher<MethodDescription> {
 
             /**
@@ -669,26 +620,6 @@ public interface MethodRegistry {
             }
 
             @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Entry entry = (Entry) other;
-                return matcher.equals(entry.matcher)
-                        && handler.equals(entry.handler)
-                        && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
-                        && transformer.equals(entry.transformer);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = matcher.hashCode();
-                result = 31 * result + handler.hashCode();
-                result = 31 * result + attributeAppenderFactory.hashCode();
-                result = 31 * result + transformer.hashCode();
-                return result;
-            }
-
-            @Override
             public String toString() {
                 return "MethodRegistry.Default.Entry{" +
                         "matcher=" + matcher +
@@ -702,6 +633,7 @@ public interface MethodRegistry {
         /**
          * A prepared version of a default method registry.
          */
+        @EqualsAndHashCode
         protected static class Prepared implements MethodRegistry.Prepared {
 
             /**
@@ -816,30 +748,6 @@ public interface MethodRegistry {
             }
 
             @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Prepared prepared = (Prepared) other;
-                return implementations.equals(prepared.implementations)
-                        && loadedTypeInitializer.equals(prepared.loadedTypeInitializer)
-                        && typeInitializer.equals(prepared.typeInitializer)
-                        && instrumentedType.equals(prepared.instrumentedType)
-                        && methodGraph.equals(prepared.methodGraph)
-                        && methods.equals(prepared.methods);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = implementations.hashCode();
-                result = 31 * result + loadedTypeInitializer.hashCode();
-                result = 31 * result + typeInitializer.hashCode();
-                result = 31 * result + instrumentedType.hashCode();
-                result = 31 * result + methodGraph.hashCode();
-                result = 31 * result + methods.hashCode();
-                return result;
-            }
-
-            @Override
             public String toString() {
                 return "MethodRegistry.Default.Prepared{" +
                         "implementations=" + implementations +
@@ -854,6 +762,7 @@ public interface MethodRegistry {
             /**
              * An entry of a prepared method registry.
              */
+            @EqualsAndHashCode
             protected static class Entry {
 
                 /**
@@ -983,30 +892,6 @@ public interface MethodRegistry {
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Entry entry = (Entry) other;
-                    return handler.equals(entry.handler)
-                            && bridgeMethod == entry.bridgeMethod
-                            && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
-                            && methodDescription.equals(entry.methodDescription)
-                            && typeTokens.equals(entry.typeTokens)
-                            && visibility.equals(entry.visibility);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = handler.hashCode();
-                    result = 31 * result + (bridgeMethod ? 1 : 0);
-                    result = 31 * result + attributeAppenderFactory.hashCode();
-                    result = 31 * result + methodDescription.hashCode();
-                    result = 31 * result + typeTokens.hashCode();
-                    result = 31 * result + visibility.hashCode();
-                    return result;
-                }
-
-                @Override
                 public String toString() {
                     return "MethodRegistry.Default.Prepared.Entry{" +
                             "handler=" + handler +
@@ -1023,6 +908,7 @@ public interface MethodRegistry {
         /**
          * A compiled version of a default method registry.
          */
+        @EqualsAndHashCode
         protected static class Compiled implements MethodRegistry.Compiled {
 
             /**
@@ -1113,30 +999,6 @@ public interface MethodRegistry {
             }
 
             @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Compiled compiled = (Compiled) other;
-                return instrumentedType.equals(compiled.instrumentedType)
-                        && loadedTypeInitializer.equals(compiled.loadedTypeInitializer)
-                        && typeInitializer.equals(compiled.typeInitializer)
-                        && methods.equals(compiled.methods)
-                        && implementations.equals(compiled.implementations)
-                        && supportsBridges == compiled.supportsBridges;
-            }
-
-            @Override
-            public int hashCode() {
-                int result = instrumentedType.hashCode();
-                result = 31 * result + loadedTypeInitializer.hashCode();
-                result = 31 * result + typeInitializer.hashCode();
-                result = 31 * result + methods.hashCode();
-                result = 31 * result + implementations.hashCode();
-                result = 31 * result + (supportsBridges ? 1 : 0);
-                return result;
-            }
-
-            @Override
             public String toString() {
                 return "MethodRegistry.Default.Compiled{" +
                         "instrumentedType=" + instrumentedType +
@@ -1151,6 +1013,7 @@ public interface MethodRegistry {
             /**
              * An entry of a compiled method registry.
              */
+            @EqualsAndHashCode
             protected static class Entry {
 
                 /**
@@ -1222,30 +1085,6 @@ public interface MethodRegistry {
                     return supportsBridges
                             ? TypeWriter.MethodPool.Record.AccessBridgeWrapper.of(record, instrumentedType, methodDescription, bridgeTypes, attributeAppender)
                             : record;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Entry entry = (Entry) other;
-                    return handler.equals(entry.handler)
-                            && bridgeMethod == entry.bridgeMethod
-                            && attributeAppender.equals(entry.attributeAppender)
-                            && methodDescription.equals(entry.methodDescription)
-                            && bridgeTypes.equals(entry.bridgeTypes)
-                            && visibility.equals(entry.visibility);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = handler.hashCode();
-                    result = 31 * result + (bridgeMethod ? 1 : 0);
-                    result = 31 * result + attributeAppender.hashCode();
-                    result = 31 * result + methodDescription.hashCode();
-                    result = 31 * result + bridgeTypes.hashCode();
-                    result = 31 * result + visibility.hashCode();
-                    return result;
                 }
 
                 @Override

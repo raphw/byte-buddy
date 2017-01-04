@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 
@@ -11,6 +12,7 @@ import java.util.List;
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode(callSuper = false)
 public class CollectionRawTypeMatcher<T extends Iterable<? extends TypeDefinition>> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -34,17 +36,6 @@ public class CollectionRawTypeMatcher<T extends Iterable<? extends TypeDefinitio
             typeDescriptions.add(typeDefinition.asErasure());
         }
         return matcher.matches(typeDescriptions);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((CollectionRawTypeMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override

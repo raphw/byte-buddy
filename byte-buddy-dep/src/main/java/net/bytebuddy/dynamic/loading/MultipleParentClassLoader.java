@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.matcher.ElementMatcher;
 
 import java.io.IOException;
@@ -172,6 +173,7 @@ public class MultipleParentClassLoader extends ClassLoader {
      * of the bootstrap class loader which is represented by {@code null} and which is an implicit parent of any
      * class loader.
      */
+    @EqualsAndHashCode
     public static class Builder {
 
         /**
@@ -324,19 +326,6 @@ public class MultipleParentClassLoader extends ClassLoader {
         @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
         private ClassLoader doBuild(ClassLoader parent) {
             return new MultipleParentClassLoader(parent, classLoaders);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Builder builder = (Builder) other;
-            return classLoaders.equals(builder.classLoaders);
-        }
-
-        @Override
-        public int hashCode() {
-            return classLoaders.hashCode();
         }
 
         @Override

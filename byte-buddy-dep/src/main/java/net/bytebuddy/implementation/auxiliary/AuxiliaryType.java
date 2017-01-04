@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.auxiliary;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.modifier.SyntheticState;
@@ -56,6 +57,7 @@ public interface AuxiliaryType {
          * A naming strategy for an auxiliary type which returns the instrumented type's name with a fixed extension
          * and a random number as a suffix. All generated names will be in the same package as the instrumented type.
          */
+        @EqualsAndHashCode(of = "suffix")
         class SuffixingRandom implements NamingStrategy {
 
             /**
@@ -81,17 +83,6 @@ public interface AuxiliaryType {
             @Override
             public String name(TypeDescription instrumentedType) {
                 return String.format("%s$%s$%s", instrumentedType.getName(), suffix, randomString.nextString());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && suffix.equals(((SuffixingRandom) other).suffix);
-            }
-
-            @Override
-            public int hashCode() {
-                return suffix.hashCode();
             }
 
             @Override

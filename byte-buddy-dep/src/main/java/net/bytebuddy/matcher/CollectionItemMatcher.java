@@ -1,11 +1,14 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * A list item matcher matches any element of a collection to a given matcher and assures that at least one
  * element matches the supplied iterable condition.
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode(callSuper = false)
 public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBase<Iterable<? extends T>> {
 
     /**
@@ -30,17 +33,6 @@ public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBa
             }
         }
         return false;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((CollectionItemMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override

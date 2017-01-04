@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -54,6 +55,7 @@ public interface TypeInitializer extends ByteCodeAppender {
         /**
          * A default implementation of a type initializer drain that creates a initializer method.
          */
+        @EqualsAndHashCode
         class Default implements Drain {
 
             /**
@@ -91,24 +93,6 @@ public interface TypeInitializer extends ByteCodeAppender {
                 typeInitializer.wrap(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType))).apply(classVisitor,
                         implementationContext,
                         annotationValueFilterFactory);
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Default aDefault = (Default) object;
-                return instrumentedType.equals(aDefault.instrumentedType)
-                        && methodPool.equals(aDefault.methodPool)
-                        && annotationValueFilterFactory.equals(aDefault.annotationValueFilterFactory);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = instrumentedType.hashCode();
-                result = 31 * result + methodPool.hashCode();
-                result = 31 * result + annotationValueFilterFactory.hashCode();
-                return result;
             }
 
             @Override
@@ -161,6 +145,7 @@ public interface TypeInitializer extends ByteCodeAppender {
     /**
      * A simple, defined type initializer that executes a given {@link ByteCodeAppender}.
      */
+    @EqualsAndHashCode
     class Simple implements TypeInitializer {
 
         /**
@@ -195,17 +180,6 @@ public interface TypeInitializer extends ByteCodeAppender {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             return byteCodeAppender.apply(methodVisitor, implementationContext, instrumentedMethod);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && byteCodeAppender.equals(((TypeInitializer.Simple) other).byteCodeAppender);
-        }
-
-        @Override
-        public int hashCode() {
-            return byteCodeAppender.hashCode();
         }
 
         @Override

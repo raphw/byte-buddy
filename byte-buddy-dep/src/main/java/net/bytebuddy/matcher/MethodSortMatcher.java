@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 
 /**
@@ -8,6 +9,7 @@ import net.bytebuddy.description.method.MethodDescription;
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode(callSuper = false)
 public class MethodSortMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -27,17 +29,6 @@ public class MethodSortMatcher<T extends MethodDescription> extends ElementMatch
     @Override
     public boolean matches(T target) {
         return sort.isSort(target);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && sort == ((MethodSortMatcher) other).sort;
-    }
-
-    @Override
-    public int hashCode() {
-        return sort.hashCode();
     }
 
     @Override

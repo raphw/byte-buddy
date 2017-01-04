@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -18,6 +19,7 @@ import java.util.List;
  * Represents the creation of a {@link java.lang.reflect.Method} value which can be created from a given
  * set of constant pool values and can therefore be considered a constant in the broader meaning.
  */
+@EqualsAndHashCode
 public abstract class MethodConstant implements StackManipulation {
 
     /**
@@ -109,17 +111,6 @@ public abstract class MethodConstant implements StackManipulation {
         return methodDescription.isConstructor()
                 ? new CachedConstructor(this)
                 : new CachedMethod(this);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && methodDescription.equals(((MethodConstant) other).methodDescription);
-    }
-
-    @Override
-    public int hashCode() {
-        return methodDescription.hashCode();
     }
 
     /**
@@ -245,6 +236,7 @@ public abstract class MethodConstant implements StackManipulation {
     /**
      * Represents a cached method for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
      */
+    @EqualsAndHashCode
     protected static class CachedMethod implements StackManipulation {
 
         /**
@@ -279,17 +271,6 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && methodConstant.equals(((CachedMethod) other).methodConstant);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * methodConstant.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "MethodConstant.CachedMethod{methodConstant=" + methodConstant + '}';
         }
@@ -298,6 +279,7 @@ public abstract class MethodConstant implements StackManipulation {
     /**
      * Represents a cached constructor for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
      */
+    @EqualsAndHashCode
     protected static class CachedConstructor implements StackManipulation {
 
         /**
@@ -329,17 +311,6 @@ public abstract class MethodConstant implements StackManipulation {
             return FieldAccess.forField(implementationContext.cache(constructorConstant, CONSTRUCTOR_TYPE))
                     .read()
                     .apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && constructorConstant.equals(((CachedConstructor) other).constructorConstant);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * constructorConstant.hashCode();
         }
 
         @Override

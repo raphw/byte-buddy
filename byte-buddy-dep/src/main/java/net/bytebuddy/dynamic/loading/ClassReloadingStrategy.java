@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 
@@ -28,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * recommended to use this {@link ClassLoadingStrategy} with arbitrary classes.
  * </p>
  */
+@EqualsAndHashCode
 public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader> {
 
     /**
@@ -240,26 +242,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             preregisteredTypes.put(TypeDescription.ForLoadedType.getName(aType), aType);
         }
         return new ClassReloadingStrategy(instrumentation, strategy, bootstrapInjection, preregisteredTypes);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        ClassReloadingStrategy that = (ClassReloadingStrategy) other;
-        return instrumentation.equals(that.instrumentation)
-                && strategy == that.strategy
-                && bootstrapInjection.equals(that.bootstrapInjection)
-                && preregisteredTypes.equals(that.preregisteredTypes);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = instrumentation.hashCode();
-        result = 31 * result + strategy.hashCode();
-        result = 31 * result + bootstrapInjection.hashCode();
-        result = 31 * result + preregisteredTypes.hashCode();
-        return result;
     }
 
     @Override
@@ -540,6 +522,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
         /**
          * An enabled bootstrap class loader injection strategy.
          */
+        @EqualsAndHashCode
         class Enabled implements BootstrapInjection {
 
             /**
@@ -559,17 +542,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             @Override
             public ClassInjector make(Instrumentation instrumentation) {
                 return ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && folder.equals(((Enabled) other).folder);
-            }
-
-            @Override
-            public int hashCode() {
-                return folder.hashCode();
             }
 
             @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -128,6 +129,7 @@ public interface AsmVisitorWrapper {
     /**
      * An ASM visitor wrapper that allows to wrap declared fields of the instrumented type with a {@link FieldVisitorWrapper}.
      */
+    @EqualsAndHashCode(callSuper = false)
     class ForDeclaredFields extends AbstractBase {
 
         /**
@@ -188,17 +190,6 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && entries.equals(((ForDeclaredFields) other).entries);
-        }
-
-        @Override
-        public int hashCode() {
-            return entries.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "AsmVisitorWrapper.ForDeclaredFields{" +
                     "entries=" + entries +
@@ -224,6 +215,7 @@ public interface AsmVisitorWrapper {
         /**
          * An entry describing a field visitor wrapper paired with a matcher for fields to be wrapped.
          */
+        @EqualsAndHashCode
         protected static class Entry implements ElementMatcher<FieldDescription.InDefinedShape>, FieldVisitorWrapper {
 
             /**
@@ -258,22 +250,6 @@ public interface AsmVisitorWrapper {
                     fieldVisitor = fieldVisitorWrapper.wrap(instrumentedType, fieldDescription, fieldVisitor);
                 }
                 return fieldVisitor;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Entry entry = (Entry) other;
-                return matcher.equals(entry.matcher)
-                        && fieldVisitorWrappers.equals(entry.fieldVisitorWrappers);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = matcher.hashCode();
-                result = 31 * result + fieldVisitorWrappers.hashCode();
-                return result;
             }
 
             @Override
@@ -346,6 +322,7 @@ public interface AsmVisitorWrapper {
      * Note: Inherited methods are <b>not</b> matched by this visitor, even if they are intercepted by a normal interception.
      * </p>
      */
+    @EqualsAndHashCode
     class ForDeclaredMethods implements AsmVisitorWrapper {
 
         /**
@@ -456,22 +433,6 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && writerFlags == ((ForDeclaredMethods) other).writerFlags
-                    && readerFlags == ((ForDeclaredMethods) other).readerFlags
-                    && entries.equals(((ForDeclaredMethods) other).entries);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = entries.hashCode();
-            result = 31 * result + writerFlags;
-            result = 31 * result + readerFlags;
-            return result;
-        }
-
-        @Override
         public String toString() {
             return "AsmVisitorWrapper.ForDeclaredMethods{" +
                     "entries=" + entries +
@@ -509,6 +470,7 @@ public interface AsmVisitorWrapper {
         /**
          * An entry describing a method visitor wrapper paired with a matcher for fields to be wrapped.
          */
+        @EqualsAndHashCode
         protected static class Entry implements ElementMatcher<MethodDescription>, MethodVisitorWrapper {
 
             /**
@@ -555,22 +517,6 @@ public interface AsmVisitorWrapper {
                             readerFlags);
                 }
                 return methodVisitor;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Entry entry = (Entry) other;
-                return matcher.equals(entry.matcher)
-                        && methodVisitorWrappers.equals(entry.methodVisitorWrappers);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = matcher.hashCode();
-                result = 31 * result + methodVisitorWrappers.hashCode();
-                return result;
             }
 
             @Override
@@ -682,6 +628,7 @@ public interface AsmVisitorWrapper {
     /**
      * An ordered, immutable chain of {@link AsmVisitorWrapper}s.
      */
+    @EqualsAndHashCode
     class Compound implements AsmVisitorWrapper {
 
         /**
@@ -756,17 +703,6 @@ public interface AsmVisitorWrapper {
                         readerFlags);
             }
             return classVisitor;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && asmVisitorWrappers.equals(((Compound) other).asmVisitorWrappers);
-        }
-
-        @Override
-        public int hashCode() {
-            return asmVisitorWrappers.hashCode();
         }
 
         @Override

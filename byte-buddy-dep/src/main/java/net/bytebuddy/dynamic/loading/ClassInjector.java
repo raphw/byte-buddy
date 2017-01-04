@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.modifier.Visibility;
@@ -58,6 +59,7 @@ public interface ClassInjector {
     /**
      * A class injector that uses reflective method calls.
      */
+    @EqualsAndHashCode
     class UsingReflection implements ClassInjector {
 
         /**
@@ -186,26 +188,6 @@ public interface ClassInjector {
                 }
             }
             return loadedTypes;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            UsingReflection that = (UsingReflection) other;
-            return classLoader.equals(that.classLoader)
-                    && forbidExisting == that.forbidExisting
-                    && packageDefinitionStrategy.equals(that.packageDefinitionStrategy)
-                    && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = classLoader.hashCode();
-            result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
-            result = 31 * result + (forbidExisting ? 1 : 0);
-            result = 31 * result + packageDefinitionStrategy.hashCode();
-            return result;
         }
 
         @Override
@@ -531,6 +513,7 @@ public interface ClassInjector {
                 /**
                  * A resolved class dispatcher for a class injector on a VM running at least Java 7.
                  */
+                @EqualsAndHashCode(callSuper = true)
                 protected static class ForJava7CapableVm extends Direct {
 
                     /**
@@ -571,22 +554,6 @@ public interface ClassInjector {
                     @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
                     protected void onInitialization() {
                         getClassLoadingLock.setAccessible(true);
-                    }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        if (!super.equals(object)) return false;
-                        ForJava7CapableVm that = (ForJava7CapableVm) object;
-                        return getClassLoadingLock.equals(that.getClassLoadingLock);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + getClassLoadingLock.hashCode();
-                        return result;
                     }
 
                     @Override
@@ -896,6 +863,7 @@ public interface ClassInjector {
             /**
              * Represents an unsuccessfully loaded method lookup.
              */
+            @EqualsAndHashCode
             class Unavailable implements Dispatcher, Initializable {
 
                 /**
@@ -957,17 +925,6 @@ public interface ClassInjector {
                                              String implementationVendor,
                                              URL sealBase) {
                     throw new UnsupportedOperationException("Cannot define package using injection", exception);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && exception.equals(((Unavailable) other).exception);
-                }
-
-                @Override
-                public int hashCode() {
-                    return exception.hashCode();
                 }
 
                 @Override
@@ -1296,6 +1253,7 @@ public interface ClassInjector {
      * A class injector using a {@link java.lang.instrument.Instrumentation} to append to either the boot classpath
      * or the system class path.
      */
+    @EqualsAndHashCode
     class UsingInstrumentation implements ClassInjector {
 
         /**
@@ -1385,26 +1343,6 @@ public interface ClassInjector {
             } catch (ClassNotFoundException exception) {
                 throw new IllegalStateException("Cannot load injected class", exception);
             }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            UsingInstrumentation that = (UsingInstrumentation) other;
-            return folder.equals(that.folder)
-                    && instrumentation.equals(that.instrumentation)
-                    && target == that.target
-                    && randomString.equals(that.randomString);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = instrumentation.hashCode();
-            result = 31 * result + target.hashCode();
-            result = 31 * result + folder.hashCode();
-            result = 31 * result + randomString.hashCode();
-            return result;
         }
 
         @Override

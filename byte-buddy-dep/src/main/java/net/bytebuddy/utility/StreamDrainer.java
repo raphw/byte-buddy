@@ -1,5 +1,7 @@
 package net.bytebuddy.utility;
 
+import lombok.EqualsAndHashCode;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -8,6 +10,7 @@ import java.util.List;
 /**
  * A utility for draining the contents of an {@link java.io.InputStream} into a {@code byte} array.
  */
+@EqualsAndHashCode
 public class StreamDrainer {
 
     /**
@@ -79,17 +82,6 @@ public class StreamDrainer {
         }
         System.arraycopy(currentArray, FROM_BEGINNING, result, arrayIndex * bufferSize, currentIndex);
         return result;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && bufferSize == ((StreamDrainer) other).bufferSize;
-    }
-
-    @Override
-    public int hashCode() {
-        return bufferSize;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -21,6 +22,7 @@ import java.util.Map;
  * virtually or they are invoked directly via the {@code INVOKESPECIAL} invocation to explicitly forbid a virtual
  * dispatch.
  */
+@EqualsAndHashCode(callSuper = true)
 public class RebaseImplementationTarget extends Implementation.Target.AbstractBase {
 
     /**
@@ -95,20 +97,6 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     @Override
     public TypeDescription getOriginType() {
         return instrumentedType;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && super.equals(other)
-                && rebaseableMethods.equals(((RebaseImplementationTarget) other).rebaseableMethods);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + rebaseableMethods.hashCode();
-        return result;
     }
 
     @Override
@@ -201,6 +189,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     /**
      * A factory for creating a {@link RebaseImplementationTarget}.
      */
+    @EqualsAndHashCode
     public static class Factory implements Implementation.Target.Factory {
 
         /**
@@ -220,17 +209,6 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         @Override
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion) {
             return RebaseImplementationTarget.of(instrumentedType, methodGraph, classFileVersion, methodRebaseResolver);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && methodRebaseResolver.equals(((Factory) other).methodRebaseResolver);
-        }
-
-        @Override
-        public int hashCode() {
-            return methodRebaseResolver.hashCode();
         }
 
         @Override

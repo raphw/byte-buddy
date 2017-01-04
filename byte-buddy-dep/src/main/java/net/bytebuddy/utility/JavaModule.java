@@ -1,6 +1,7 @@
 package net.bytebuddy.utility;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.NamedElement;
 
 import java.io.InputStream;
@@ -258,6 +259,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         /**
          * A dispatcher for a VM that does support the {@code java.lang.reflect.Module} API.
          */
+        @EqualsAndHashCode
         class Enabled implements Dispatcher {
 
             /**
@@ -407,32 +409,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 } catch (InvocationTargetException exception) {
                     throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
                 }
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Enabled enabled = (Enabled) object;
-                return getModule.equals(enabled.getModule)
-                        && getClassLoader.equals(enabled.getClassLoader)
-                        && getResourceAsStream.equals(enabled.getResourceAsStream)
-                        && isNamed.equals(enabled.isNamed)
-                        && getName.equals(enabled.getName)
-                        && canRead.equals(enabled.canRead)
-                        && redefineModule.equals(enabled.redefineModule);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = getModule.hashCode();
-                result = 31 * result + getClassLoader.hashCode();
-                result = 31 * result + getResourceAsStream.hashCode();
-                result = 31 * result + isNamed.hashCode();
-                result = 31 * result + getName.hashCode();
-                result = 31 * result + canRead.hashCode();
-                result = 31 * result + redefineModule.hashCode();
-                return result;
             }
 
             @Override

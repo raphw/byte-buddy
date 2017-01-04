@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeInitializer;
@@ -92,6 +93,7 @@ public interface TypeResolutionStrategy {
      * A type resolution strategy that applies all {@link LoadedTypeInitializer} as a part of class loading using reflection. This implies that the initializers
      * are executed <b>before</b> (as a first action of) a type initializer is executed.
      */
+    @EqualsAndHashCode
     class Active implements TypeResolutionStrategy {
 
         /**
@@ -122,19 +124,6 @@ public interface TypeResolutionStrategy {
         }
 
         @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            Active active = (Active) object;
-            return nexusAccessor.equals(active.nexusAccessor);
-        }
-
-        @Override
-        public int hashCode() {
-            return nexusAccessor.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "TypeResolutionStrategy.Active{" +
                     "nexusAccessor=" + nexusAccessor +
@@ -144,6 +133,7 @@ public interface TypeResolutionStrategy {
         /**
          * A resolved version of an active type resolution strategy.
          */
+        @EqualsAndHashCode
         protected static class Resolved implements TypeResolutionStrategy.Resolved {
 
             /**
@@ -187,19 +177,6 @@ public interface TypeResolutionStrategy {
                     entry.getValue().onLoad(types.get(entry.getKey()));
                 }
                 return types;
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Resolved resolved = (Resolved) object;
-                return identification == resolved.identification && nexusAccessor.equals(resolved.nexusAccessor);
-            }
-
-            @Override
-            public int hashCode() {
-                return identification + 31 * nexusAccessor.hashCode();
             }
 
             @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -76,6 +77,7 @@ public @interface FieldProxy {
     /**
      * A binder for the {@link FieldProxy} annotation.
      */
+    @EqualsAndHashCode(callSuper = false)
     class Binder extends TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFieldBinding<FieldProxy> {
 
         /**
@@ -288,19 +290,6 @@ public @interface FieldProxy {
         }
 
         @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            Binder binder = (Binder) object;
-            return fieldResolverFactory.equals(binder.fieldResolverFactory);
-        }
-
-        @Override
-        public int hashCode() {
-            return fieldResolverFactory.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "FieldProxy.Binder{" +
                     "fieldResolverFactory=" + fieldResolverFactory +
@@ -357,6 +346,7 @@ public @interface FieldProxy {
                 /**
                  * A duplex factory for a type that both sets and gets a field value.
                  */
+                @EqualsAndHashCode
                 class Duplex implements Factory {
 
                     /**
@@ -399,24 +389,6 @@ public @interface FieldProxy {
                     }
 
                     @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        Duplex duplex = (Duplex) object;
-                        return proxyType.equals(duplex.proxyType)
-                                && getterMethod.equals(duplex.getterMethod)
-                                && setterMethod.equals(duplex.setterMethod);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = proxyType.hashCode();
-                        result = 31 * result + getterMethod.hashCode();
-                        result = 31 * result + setterMethod.hashCode();
-                        return result;
-                    }
-
-                    @Override
                     public String toString() {
                         return "FieldProxy.Binder.FieldResolver.Factory.Duplex{" +
                                 "proxyType=" + proxyType +
@@ -429,6 +401,7 @@ public @interface FieldProxy {
                 /**
                  * A simplex factory where field getters and setters both have their own type.
                  */
+                @EqualsAndHashCode
                 class Simplex implements Factory {
 
                     /**
@@ -463,21 +436,6 @@ public @interface FieldProxy {
                         } else {
                             throw new IllegalStateException("Cannot use @FieldProxy on a non-installed type");
                         }
-                    }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        Simplex simplex = (Simplex) object;
-                        return getterMethod.equals(simplex.getterMethod) && setterMethod.equals(simplex.setterMethod);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = getterMethod.hashCode();
-                        result = 31 * result + setterMethod.hashCode();
-                        return result;
                     }
 
                     @Override
@@ -527,6 +485,7 @@ public @interface FieldProxy {
             /**
              * A field resolver for a getter accessor.
              */
+            @EqualsAndHashCode
             class ForGetter implements FieldResolver {
 
                 /**
@@ -562,19 +521,6 @@ public @interface FieldProxy {
                 }
 
                 @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForGetter forGetter = (ForGetter) object;
-                    return getterMethod.equals(forGetter.getterMethod);
-                }
-
-                @Override
-                public int hashCode() {
-                    return getterMethod.hashCode();
-                }
-
-                @Override
                 public String toString() {
                     return "FieldProxy.Binder.FieldResolver.ForGetter{" +
                             "getterMethod=" + getterMethod +
@@ -585,6 +531,7 @@ public @interface FieldProxy {
             /**
              * A field resolver for a setter accessor.
              */
+            @EqualsAndHashCode
             class ForSetter implements FieldResolver {
 
                 /**
@@ -620,19 +567,6 @@ public @interface FieldProxy {
                 }
 
                 @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForSetter forSetter = (ForSetter) object;
-                    return setterMethod.equals(forSetter.setterMethod);
-                }
-
-                @Override
-                public int hashCode() {
-                    return setterMethod.hashCode();
-                }
-
-                @Override
                 public String toString() {
                     return "FieldProxy.Binder.FieldResolver.ForSetter{" +
                             "setterMethod=" + setterMethod +
@@ -643,6 +577,7 @@ public @interface FieldProxy {
             /**
              * A field resolver for an accessor that both gets and sets a field value.
              */
+            @EqualsAndHashCode
             class ForGetterSetterPair implements FieldResolver {
 
                 /**
@@ -698,24 +633,6 @@ public @interface FieldProxy {
                 }
 
                 @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForGetterSetterPair that = (ForGetterSetterPair) object;
-                    return proxyType.equals(that.proxyType)
-                            && getterMethod.equals(that.getterMethod)
-                            && setterMethod.equals(that.setterMethod);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = proxyType.hashCode();
-                    result = 31 * result + getterMethod.hashCode();
-                    result = 31 * result + setterMethod.hashCode();
-                    return result;
-                }
-
-                @Override
                 public String toString() {
                     return "FieldProxy.Binder.FieldResolver.ForGetterSetterPair{" +
                             "proxyType=" + proxyType +
@@ -767,6 +684,7 @@ public @interface FieldProxy {
         /**
          * Represents an implementation for implementing a proxy type constructor when a non-static field is accessed.
          */
+        @EqualsAndHashCode
         protected static class InstanceFieldConstructor implements Implementation {
 
             /**
@@ -797,17 +715,6 @@ public @interface FieldProxy {
             }
 
             @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((InstanceFieldConstructor) other).instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "FieldProxy.Binder.InstanceFieldConstructor{" +
                         "instrumentedType=" + instrumentedType +
@@ -818,6 +725,7 @@ public @interface FieldProxy {
              * An appender for implementing an
              * {@link FieldProxy.Binder.InstanceFieldConstructor}.
              */
+            @EqualsAndHashCode
             protected static class Appender implements ByteCodeAppender {
 
                 /**
@@ -852,17 +760,6 @@ public @interface FieldProxy {
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldDescription.equals(((Appender) other).fieldDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return fieldDescription.hashCode();
-                }
-
-                @Override
                 public String toString() {
                     return "FieldProxy.Binder.InstanceFieldConstructor.Appender{" +
                             "fieldDescription=" + fieldDescription +
@@ -874,6 +771,7 @@ public @interface FieldProxy {
         /**
          * Implementation for a getter method.
          */
+        @EqualsAndHashCode
         protected static class FieldGetter implements Implementation {
 
             /**
@@ -914,24 +812,6 @@ public @interface FieldProxy {
             @Override
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new Appender(implementationTarget);
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                FieldGetter that = (FieldGetter) object;
-                return fieldDescription.equals(that.fieldDescription)
-                        && assigner.equals(that.assigner)
-                        && methodAccessorFactory.equals(that.methodAccessorFactory);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = fieldDescription.hashCode();
-                result = 31 * result + assigner.hashCode();
-                result = 31 * result + methodAccessorFactory.hashCode();
-                return result;
             }
 
             @Override
@@ -1015,6 +895,7 @@ public @interface FieldProxy {
         /**
          * Implementation for a setter method.
          */
+        @EqualsAndHashCode
         protected static class FieldSetter implements Implementation {
 
             /**
@@ -1055,24 +936,6 @@ public @interface FieldProxy {
             @Override
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new Appender(implementationTarget);
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                FieldSetter that = (FieldSetter) object;
-                return fieldDescription.equals(that.fieldDescription)
-                        && assigner.equals(that.assigner)
-                        && methodAccessorFactory.equals(that.methodAccessorFactory);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = fieldDescription.hashCode();
-                result = 31 * result + assigner.hashCode();
-                result = 31 * result + methodAccessorFactory.hashCode();
-                return result;
             }
 
             @Override

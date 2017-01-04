@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
 
@@ -84,6 +85,7 @@ public interface StackManipulation {
      * A description of the size change that is imposed by some
      * {@link StackManipulation}.
      */
+    @EqualsAndHashCode
     class Size {
 
         /**
@@ -153,18 +155,6 @@ public interface StackManipulation {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && maximalSize == ((Size) other).maximalSize
-                    && sizeImpact == ((Size) other).sizeImpact;
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * sizeImpact + maximalSize;
-        }
-
-        @Override
         public String toString() {
             return "StackManipulation.Size{sizeImpact=" + sizeImpact + ", maximalSize=" + maximalSize + '}';
         }
@@ -173,6 +163,7 @@ public interface StackManipulation {
     /**
      * An immutable stack manipulation that aggregates a sequence of other stack manipulations.
      */
+    @EqualsAndHashCode
     class Compound implements StackManipulation {
 
         /**
@@ -222,17 +213,6 @@ public interface StackManipulation {
                 size = size.aggregate(stackManipulation.apply(methodVisitor, implementationContext));
             }
             return size;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && stackManipulations.equals(((Compound) other).stackManipulations);
-        }
-
-        @Override
-        public int hashCode() {
-            return stackManipulations.hashCode();
         }
 
         @Override

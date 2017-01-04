@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -9,8 +10,6 @@ import org.objectweb.asm.*;
 
 import java.lang.reflect.Array;
 import java.util.List;
-
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Annotation appenders are capable of writing annotations to a specified target.
@@ -70,6 +69,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java type.
          */
+        @EqualsAndHashCode
         class OnType implements Target {
 
             /**
@@ -97,17 +97,6 @@ public interface AnnotationAppender {
             }
 
             @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && classVisitor.equals(((OnType) other).classVisitor);
-            }
-
-            @Override
-            public int hashCode() {
-                return classVisitor.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "AnnotationAppender.Target.OnType{classVisitor=" + classVisitor + '}';
             }
@@ -116,6 +105,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java method or constructor.
          */
+        @EqualsAndHashCode
         class OnMethod implements Target {
 
             /**
@@ -143,17 +133,6 @@ public interface AnnotationAppender {
             }
 
             @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && methodVisitor.equals(((OnMethod) other).methodVisitor);
-            }
-
-            @Override
-            public int hashCode() {
-                return methodVisitor.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "AnnotationAppender.Target.OnMethod{methodVisitor=" + methodVisitor + '}';
             }
@@ -162,6 +141,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java method or constructor parameter.
          */
+        @EqualsAndHashCode
         class OnMethodParameter implements Target {
 
             /**
@@ -196,18 +176,6 @@ public interface AnnotationAppender {
             }
 
             @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && parameterIndex == ((OnMethodParameter) other).parameterIndex
-                        && methodVisitor.equals(((OnMethodParameter) other).methodVisitor);
-            }
-
-            @Override
-            public int hashCode() {
-                return methodVisitor.hashCode() + 31 * parameterIndex;
-            }
-
-            @Override
             public String toString() {
                 return "AnnotationAppender.Target.OnMethodParameter{" +
                         "methodVisitor=" + methodVisitor +
@@ -219,6 +187,7 @@ public interface AnnotationAppender {
         /**
          * Target for an annotation that is written to a Java field.
          */
+        @EqualsAndHashCode
         class OnField implements Target {
 
             /**
@@ -246,17 +215,6 @@ public interface AnnotationAppender {
             }
 
             @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && fieldVisitor.equals(((OnField) other).fieldVisitor);
-            }
-
-            @Override
-            public int hashCode() {
-                return fieldVisitor.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "AnnotationAppender.Target.OnField{" +
                         "fieldVisitor=" + fieldVisitor +
@@ -269,6 +227,7 @@ public interface AnnotationAppender {
      * A default implementation for an annotation appender that writes annotations to a given byte consumer
      * represented by an ASM {@link org.objectweb.asm.AnnotationVisitor}.
      */
+    @EqualsAndHashCode
     class Default implements AnnotationAppender {
 
         /**
@@ -392,17 +351,6 @@ public interface AnnotationAppender {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && target.equals(((Default) other).target);
-        }
-
-        @Override
-        public int hashCode() {
-            return target.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "AnnotationAppender.Default{target=" + target + '}';
         }
@@ -412,6 +360,7 @@ public interface AnnotationAppender {
      * A type visitor that visits all type annotations of a generic type and writes any discovered annotation to a
      * supplied {@link AnnotationAppender}.
      */
+    @EqualsAndHashCode
     class ForTypeAnnotations implements TypeDescription.Generic.Visitor<AnnotationAppender> {
 
         /**
@@ -721,26 +670,6 @@ public interface AnnotationAppender {
                 annotationAppender = annotationAppender.append(annotationDescription, annotationValueFilter, typeReference, typePath);
             }
             return annotationAppender;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ForTypeAnnotations that = (ForTypeAnnotations) other;
-            return typeReference == that.typeReference
-                    && annotationAppender.equals(that.annotationAppender)
-                    && annotationValueFilter.equals(that.annotationValueFilter)
-                    && typePath.equals(that.typePath);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = annotationAppender.hashCode();
-            result = 31 * result + annotationValueFilter.hashCode();
-            result = 31 * result + typeReference;
-            result = 31 * result + typePath.hashCode();
-            return result;
         }
 
         @Override

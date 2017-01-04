@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -315,6 +316,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
         /**
          * An abstract base implementation for an {@link Implementation.Target}.
          */
+        @EqualsAndHashCode
         abstract class AbstractBase implements Target {
 
             /**
@@ -377,24 +379,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 return specialMethodInvocation.isValid()
                         ? specialMethodInvocation
                         : invokeDefault(token);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                AbstractBase that = (AbstractBase) other;
-                return instrumentedType.equals(that.instrumentedType)
-                        && methodGraph.equals(that.methodGraph)
-                        && defaultMethodInvocation == that.defaultMethodInvocation;
-            }
-
-            @Override
-            public int hashCode() {
-                int result = instrumentedType.hashCode();
-                result = 31 * result + methodGraph.hashCode();
-                result = 31 * result + defaultMethodInvocation.hashCode();
-                return result;
             }
 
             /**
@@ -527,6 +511,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An abstract base implementation of an extractable view of an implementation context.
              */
+            @EqualsAndHashCode
             abstract class AbstractBase implements ExtractableView {
 
                 /**
@@ -634,18 +619,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
             @Override
             public FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType) {
                 throw new IllegalStateException("Field values caching was disabled: " + fieldType);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Disabled) other).instrumentedType)
-                        && classFileVersion.equals(((Disabled) other).classFileVersion);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode() + 31 * classFileVersion.hashCode();
             }
 
             @Override
@@ -954,6 +927,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * A field cache entry for uniquely identifying a cached field. A cached field is described by the stack
              * manipulation that loads the field's value onto the operand stack and the type of the field.
              */
+            @EqualsAndHashCode
             protected static class FieldCacheEntry implements StackManipulation {
 
                 /**
@@ -1004,18 +978,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 @Override
                 public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
                     return fieldValue.apply(methodVisitor, implementationContext);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldType.equals(((FieldCacheEntry) other).fieldType)
-                            && fieldValue.equals(((FieldCacheEntry) other).fieldValue);
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31 * fieldValue.hashCode() + fieldType.hashCode();
                 }
 
                 @Override
@@ -1293,6 +1255,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An abstract method pool entry that delegates the implementation of a method to itself.
              */
+            @EqualsAndHashCode(callSuper = false)
             protected abstract static class DelegationRecord extends TypeWriter.MethodPool.Record.ForDefinedMethod implements ByteCodeAppender {
 
                 /**
@@ -1365,24 +1328,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 public TypeWriter.MethodPool.Record prepend(ByteCodeAppender byteCodeAppender) {
                     throw new UnsupportedOperationException("Cannot prepend code to a delegation for " + methodDescription);
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && methodDescription.equals(((DelegationRecord) other).methodDescription)
-                            && visibility.equals(((DelegationRecord) other).visibility);
-                }
-
-                @Override
-                public int hashCode() {
-                    return methodDescription.hashCode() + 31 * visibility.hashCode();
-                }
             }
 
             /**
              * An implementation of a {@link TypeWriter.MethodPool.Record} for implementing
              * an accessor method.
              */
+            @EqualsAndHashCode(callSuper = true)
             protected static class AccessorMethodDelegation extends DelegationRecord {
 
                 /**
@@ -1437,18 +1389,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && super.equals(other)
-                            && accessorMethodInvocation.equals(((AccessorMethodDelegation) other).accessorMethodInvocation);
-                }
-
-                @Override
-                public int hashCode() {
-                    return accessorMethodInvocation.hashCode() + 31 * super.hashCode();
-                }
-
-                @Override
                 public String toString() {
                     return "Implementation.Context.Default.AccessorMethodDelegation{" +
                             "accessorMethodInvocation=" + accessorMethodInvocation +
@@ -1461,6 +1401,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An implementation for a field getter.
              */
+            @EqualsAndHashCode(callSuper = true)
             protected static class FieldGetterDelegation extends DelegationRecord {
 
                 /**
@@ -1509,19 +1450,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                 }
 
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && super.equals(other)
-                            && fieldDescription.equals(((FieldGetterDelegation) other).fieldDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return fieldDescription.hashCode() + 31 * super.hashCode();
-                }
-
                 @Override
                 public String toString() {
                     return "Implementation.Context.Default.FieldGetterDelegation{" +
@@ -1535,6 +1463,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An implementation for a field setter.
              */
+            @EqualsAndHashCode(callSuper = true)
             protected static class FieldSetterDelegation extends DelegationRecord {
 
                 /**
@@ -1579,18 +1508,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
                             MethodReturn.VOID
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && super.equals(other)
-                            && fieldDescription.equals(((FieldSetterDelegation) other).fieldDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return fieldDescription.hashCode() + 31 * super.hashCode();
                 }
 
                 @Override
@@ -1639,6 +1556,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
      *
      * @see Implementation
      */
+    @EqualsAndHashCode
     class Compound implements Implementation {
 
         /**
@@ -1690,17 +1608,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && implementations.equals(((Compound) other).implementations);
-        }
-
-        @Override
-        public int hashCode() {
-            return implementations.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "Implementation.Compound{implementations=" + implementations + '}';
         }
@@ -1709,6 +1616,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
     /**
      * A simple implementation that does not register any members with the instrumented type.
      */
+    @EqualsAndHashCode
     class Simple implements Implementation {
 
         /**
@@ -1743,17 +1651,6 @@ public interface Implementation extends InstrumentedType.Prepareable {
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return byteCodeAppender;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && byteCodeAppender.equals(((Simple) other).byteCodeAppender);
-        }
-
-        @Override
-        public int hashCode() {
-            return byteCodeAppender.hashCode();
         }
 
         @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -29,6 +30,7 @@ import java.util.*;
  * implemented by the instrumented type. The Java runtime only requires the second condition to be fulfilled which
  * is why this implementation only checks the later condition, as well.
  */
+@EqualsAndHashCode
 public class DefaultMethodCall implements Implementation {
 
     /**
@@ -153,17 +155,6 @@ public class DefaultMethodCall implements Implementation {
     }
 
     @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && prioritizedInterfaces.equals(((DefaultMethodCall) other).prioritizedInterfaces);
-    }
-
-    @Override
-    public int hashCode() {
-        return prioritizedInterfaces.hashCode();
-    }
-
-    @Override
     public String toString() {
         return "DefaultMethodCall{prioritizedInterfaces=" + prioritizedInterfaces + '}';
     }
@@ -171,6 +162,7 @@ public class DefaultMethodCall implements Implementation {
     /**
      * The appender for implementing a {@link net.bytebuddy.implementation.DefaultMethodCall}.
      */
+    @EqualsAndHashCode(exclude = "nonPrioritizedInterfaces")
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -240,18 +232,6 @@ public class DefaultMethodCall implements Implementation {
                 specialMethodInvocation = other;
             }
             return specialMethodInvocation;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && prioritizedInterfaces.equals(((Appender) other).prioritizedInterfaces)
-                    && implementationTarget.equals(((Appender) other).implementationTarget);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * implementationTarget.hashCode() + prioritizedInterfaces.hashCode();
         }
 
         @Override

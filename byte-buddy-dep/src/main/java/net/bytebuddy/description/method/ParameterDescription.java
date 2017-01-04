@@ -1,6 +1,7 @@
 package net.bytebuddy.description.method;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -307,6 +308,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             /**
              * A dispatcher for VMs that support the {@code java.lang.reflect.Parameter} API for Java 8+.
              */
+            @EqualsAndHashCode
             class ForJava8CapableVm implements Dispatcher {
 
                 /**
@@ -392,26 +394,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getParameters", exception.getCause());
                     }
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForJava8CapableVm legal = (ForJava8CapableVm) other;
-                    return getParameters.equals(legal.getParameters)
-                            && getName.equals(legal.getName)
-                            && isNamePresent.equals(legal.isNamePresent)
-                            && getModifiers.equals(legal.getModifiers);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = getParameters.hashCode();
-                    result = 31 * result + getName.hashCode();
-                    result = 31 * result + isNamePresent.hashCode();
-                    result = 31 * result + getModifiers.hashCode();
-                    return result;
                 }
 
                 @Override

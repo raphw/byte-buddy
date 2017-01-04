@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
@@ -21,6 +22,7 @@ import net.bytebuddy.pool.TypePool;
  *
  * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */
+@EqualsAndHashCode(callSuper = true)
 public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
     /**
@@ -90,22 +92,4 @@ public abstract class AbstractInliningDynamicTypeBuilder<T> extends DynamicType.
         return make(typeResolutionStrategy, TypePool.Default.of(classFileLocator));
     }
 
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        if (!super.equals(other)) return false;
-        AbstractInliningDynamicTypeBuilder<?> that = (AbstractInliningDynamicTypeBuilder<?>) other;
-        return originalType.equals(that.originalType)
-                && classFileLocator.equals(that.classFileLocator);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + originalType.hashCode();
-        result = 31 * result + classFileLocator.hashCode();
-        return result;
-    }
 }

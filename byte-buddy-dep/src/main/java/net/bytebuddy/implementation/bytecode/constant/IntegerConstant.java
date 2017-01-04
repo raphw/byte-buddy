@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -133,6 +134,7 @@ public enum IntegerConstant implements StackManipulation {
      * A stack manipulation that loads a JVM-integer value by a {@code BIPUSH} operation which is
      * legal for single byte integer values.
      */
+    @EqualsAndHashCode
     protected static class SingleBytePush implements StackManipulation {
 
         /**
@@ -161,17 +163,6 @@ public enum IntegerConstant implements StackManipulation {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && value == ((SingleBytePush) other).value;
-        }
-
-        @Override
-        public int hashCode() {
-            return (int) value;
-        }
-
-        @Override
         public String toString() {
             return "IntegerConstant.SingleBytePush{value=" + value + '}';
         }
@@ -181,6 +172,7 @@ public enum IntegerConstant implements StackManipulation {
      * A stack manipulation that loads a JVM-integer value by a {@code SIPUSH} operation which is
      * legal for up to two byte integer values.
      */
+    @EqualsAndHashCode
     protected static class TwoBytePush implements StackManipulation {
 
         /**
@@ -209,17 +201,6 @@ public enum IntegerConstant implements StackManipulation {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && value == ((TwoBytePush) other).value;
-        }
-
-        @Override
-        public int hashCode() {
-            return (int) value;
-        }
-
-        @Override
         public String toString() {
             return "IntegerConstant.TwoBytePush{value=" + value + '}';
         }
@@ -228,6 +209,7 @@ public enum IntegerConstant implements StackManipulation {
     /**
      * A stack manipulation that loads a JVM-integer value from a constant pool value onto the operand stack.
      */
+    @EqualsAndHashCode
     protected static class ConstantPool implements StackManipulation {
 
         /**
@@ -253,17 +235,6 @@ public enum IntegerConstant implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitLdcInsn(value);
             return SIZE;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && value == ((ConstantPool) other).value;
-        }
-
-        @Override
-        public int hashCode() {
-            return value;
         }
 
         @Override

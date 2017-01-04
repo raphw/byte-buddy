@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ByteCodeElement;
 
 /**
@@ -8,6 +9,7 @@ import net.bytebuddy.description.ByteCodeElement;
  * @param <T> The type of the matched entity.
  * @param <S> The type of the defined shape of the matched entity.
  */
+@EqualsAndHashCode(callSuper = false)
 public class DefinedShapeMatcher<T extends ByteCodeElement.TypeDependant<S, ?>, S extends ByteCodeElement.TypeDependant<?, ?>>
         extends ElementMatcher.Junction.AbstractBase<T> {
 
@@ -28,17 +30,6 @@ public class DefinedShapeMatcher<T extends ByteCodeElement.TypeDependant<S, ?>, 
     @Override
     public boolean matches(T target) {
         return matcher.matches(target.asDefined());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((DefinedShapeMatcher<?, ?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override

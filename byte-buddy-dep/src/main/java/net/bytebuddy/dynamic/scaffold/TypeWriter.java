@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -144,6 +145,7 @@ public interface TypeWriter<T> {
             /**
              * A record for a simple field without a default value where all of the field's declared annotations are appended.
              */
+            @EqualsAndHashCode
             class ForImplicitField implements Record {
 
                 /**
@@ -199,17 +201,6 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldDescription.equals(((ForImplicitField) other).fieldDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return fieldDescription.hashCode();
-                }
-
-                @Override
                 public String toString() {
                     return "TypeWriter.FieldPool.Record.ForImplicitField{" +
                             "fieldDescription=" + fieldDescription +
@@ -220,6 +211,7 @@ public interface TypeWriter<T> {
             /**
              * A record for a rich field with attributes and a potential default value.
              */
+            @EqualsAndHashCode
             class ForExplicitField implements Record {
 
                 /**
@@ -286,24 +278,6 @@ public interface TypeWriter<T> {
                 @Override
                 public void apply(FieldVisitor fieldVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     attributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilterFactory.on(fieldDescription));
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForExplicitField that = (ForExplicitField) other;
-                    return attributeAppender.equals(that.attributeAppender)
-                            && !(defaultValue != null ? !defaultValue.equals(that.defaultValue) : that.defaultValue != null)
-                            && fieldDescription.equals(that.fieldDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = attributeAppender.hashCode();
-                    result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
-                    result = 31 * result + fieldDescription.hashCode();
-                    return result;
                 }
 
                 @Override
@@ -482,6 +456,7 @@ public interface TypeWriter<T> {
             /**
              * A canonical implementation of a method that is not declared but inherited by the instrumented type.
              */
+            @EqualsAndHashCode
             class ForNonImplementedMethod implements Record {
 
                 /**
@@ -545,19 +520,6 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForNonImplementedMethod that = (ForNonImplementedMethod) object;
-                    return methodDescription.equals(that.methodDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return methodDescription.hashCode();
-                }
-
-                @Override
                 public String toString() {
                     return "TypeWriter.MethodPool.Record.ForNonImplementedMethod{" +
                             "methodDescription=" + methodDescription +
@@ -591,6 +553,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method as byte code.
                  */
+                @EqualsAndHashCode(callSuper = false)
                 public static class WithBody extends ForDefinedMethod {
 
                     /**
@@ -688,26 +651,6 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        WithBody withBody = (WithBody) other;
-                        return methodDescription.equals(withBody.methodDescription)
-                                && byteCodeAppender.equals(withBody.byteCodeAppender)
-                                && methodAttributeAppender.equals(withBody.methodAttributeAppender)
-                                && visibility.equals(withBody.visibility);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = methodDescription.hashCode();
-                        result = 31 * result + byteCodeAppender.hashCode();
-                        result = 31 * result + methodAttributeAppender.hashCode();
-                        result = 31 * result + visibility.hashCode();
-                        return result;
-                    }
-
-                    @Override
                     public String toString() {
                         return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody{" +
                                 "methodDescription=" + methodDescription +
@@ -721,6 +664,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method but without byte code and without an annotation value.
                  */
+                @EqualsAndHashCode(callSuper = false)
                 public static class WithoutBody extends ForDefinedMethod {
 
                     /**
@@ -792,24 +736,6 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        WithoutBody that = (WithoutBody) other;
-                        return methodDescription.equals(that.methodDescription)
-                                && methodAttributeAppender.equals(that.methodAttributeAppender)
-                                && visibility.equals(that.visibility);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = methodDescription.hashCode();
-                        result = 31 * result + methodAttributeAppender.hashCode();
-                        result = 31 * result + visibility.hashCode();
-                        return result;
-                    }
-
-                    @Override
                     public String toString() {
                         return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody{" +
                                 "methodDescription=" + methodDescription +
@@ -822,6 +748,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method with a default annotation value.
                  */
+                @EqualsAndHashCode(callSuper = false)
                 public static class WithAnnotationDefaultValue extends ForDefinedMethod {
 
                     /**
@@ -903,24 +830,6 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        WithAnnotationDefaultValue that = (WithAnnotationDefaultValue) other;
-                        return methodDescription.equals(that.methodDescription)
-                                && annotationValue.equals(that.annotationValue)
-                                && methodAttributeAppender.equals(that.methodAttributeAppender);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = methodDescription.hashCode();
-                        result = 31 * result + annotationValue.hashCode();
-                        result = 31 * result + methodAttributeAppender.hashCode();
-                        return result;
-                    }
-
-                    @Override
                     public String toString() {
                         return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue{" +
                                 "methodDescription=" + methodDescription +
@@ -933,6 +842,7 @@ public interface TypeWriter<T> {
                 /**
                  * A record for a visibility bridge.
                  */
+                @EqualsAndHashCode(callSuper = false)
                 public static class OfVisibilityBridge extends ForDefinedMethod implements ByteCodeAppender {
 
                     /**
@@ -1044,26 +954,6 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        OfVisibilityBridge that = (OfVisibilityBridge) other;
-                        return visibilityBridge.equals(that.visibilityBridge)
-                                && bridgeTarget.equals(that.bridgeTarget)
-                                && superClass.equals(that.superClass)
-                                && attributeAppender.equals(that.attributeAppender);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = visibilityBridge.hashCode();
-                        result = 31 * result + bridgeTarget.hashCode();
-                        result = 31 * result + superClass.hashCode();
-                        result = 31 * result + attributeAppender.hashCode();
-                        return result;
-                    }
-
-                    @Override
                     public String toString() {
                         return "TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge{" +
                                 "visibilityBridge=" + visibilityBridge +
@@ -1152,6 +1042,7 @@ public interface TypeWriter<T> {
              * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record#apply(ClassVisitor, Implementation.Context, AnnotationValueFilter.Factory)}
              * is invoked such that bridges are not appended for methods that are rebased or redefined as such types already have bridge methods in place.
              */
+            @EqualsAndHashCode
             class AccessBridgeWrapper implements Record {
 
                 /**
@@ -1294,28 +1185,6 @@ public interface TypeWriter<T> {
                 @Override
                 public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                     return delegate.applyCode(methodVisitor, implementationContext);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    AccessBridgeWrapper that = (AccessBridgeWrapper) other;
-                    return delegate.equals(that.delegate)
-                            && instrumentedType.equals(that.instrumentedType)
-                            && bridgeTarget.equals(that.bridgeTarget)
-                            && bridgeTypes.equals(that.bridgeTypes)
-                            && attributeAppender.equals(that.attributeAppender);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = delegate.hashCode();
-                    result = 31 * result + instrumentedType.hashCode();
-                    result = 31 * result + bridgeTarget.hashCode();
-                    result = 31 * result + bridgeTypes.hashCode();
-                    result = 31 * result + attributeAppender.hashCode();
-                    return result;
                 }
 
                 @Override
@@ -1488,6 +1357,7 @@ public interface TypeWriter<T> {
      *
      * @param <S> The best known loaded type for the dynamically created type.
      */
+    @EqualsAndHashCode
     abstract class Default<S> implements TypeWriter<S> {
 
         /**
@@ -1834,52 +1704,6 @@ public interface TypeWriter<T> {
          * @return An unresolved type.
          */
         protected abstract UnresolvedType create(TypeInitializer typeInitializer);
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            Default<?> aDefault = (Default<?>) object;
-            return instrumentedType.equals(aDefault.instrumentedType)
-                    && classFileVersion.equals(aDefault.classFileVersion)
-                    && fieldPool.equals(aDefault.fieldPool)
-                    && auxiliaryTypes.equals(aDefault.auxiliaryTypes)
-                    && fields.equals(aDefault.fields)
-                    && methods.equals(aDefault.methods)
-                    && instrumentedMethods.equals(aDefault.instrumentedMethods)
-                    && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer)
-                    && typeInitializer.equals(aDefault.typeInitializer)
-                    && typeAttributeAppender.equals(aDefault.typeAttributeAppender)
-                    && asmVisitorWrapper.equals(aDefault.asmVisitorWrapper)
-                    && annotationValueFilterFactory.equals(aDefault.annotationValueFilterFactory)
-                    && annotationRetention == aDefault.annotationRetention
-                    && auxiliaryTypeNamingStrategy.equals(aDefault.auxiliaryTypeNamingStrategy)
-                    && implementationContextFactory.equals(aDefault.implementationContextFactory)
-                    && typeValidation == aDefault.typeValidation
-                    && typePool.equals(aDefault.typePool);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = instrumentedType.hashCode();
-            result = 31 * result + classFileVersion.hashCode();
-            result = 31 * result + fieldPool.hashCode();
-            result = 31 * result + auxiliaryTypes.hashCode();
-            result = 31 * result + fields.hashCode();
-            result = 31 * result + methods.hashCode();
-            result = 31 * result + instrumentedMethods.hashCode();
-            result = 31 * result + loadedTypeInitializer.hashCode();
-            result = 31 * result + typeInitializer.hashCode();
-            result = 31 * result + typeAttributeAppender.hashCode();
-            result = 31 * result + asmVisitorWrapper.hashCode();
-            result = 31 * result + annotationValueFilterFactory.hashCode();
-            result = 31 * result + annotationRetention.hashCode();
-            result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
-            result = 31 * result + implementationContextFactory.hashCode();
-            result = 31 * result + typeValidation.hashCode();
-            result = 31 * result + typePool.hashCode();
-            return result;
-        }
 
         /**
          * An unresolved type.
@@ -2660,6 +2484,7 @@ public interface TypeWriter<T> {
                 /**
                  * Represents the constraint implied by a class file version.
                  */
+                @EqualsAndHashCode
                 class ForClassFileVersion implements Constraint {
 
                     /**
@@ -2771,17 +2596,6 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && classFileVersion.equals(((ForClassFileVersion) other).classFileVersion);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return classFileVersion.hashCode();
-                    }
-
-                    @Override
                     public String toString() {
                         return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClassFileVersion{" +
                                 "classFileVersion=" + classFileVersion +
@@ -2792,6 +2606,7 @@ public interface TypeWriter<T> {
                 /**
                  * A constraint implementation that summarizes several constraints.
                  */
+                @EqualsAndHashCode
                 class Compound implements Constraint {
 
                     /**
@@ -2913,17 +2728,6 @@ public interface TypeWriter<T> {
                         for (Constraint constraint : constraints) {
                             constraint.assertSubRoutine();
                         }
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && constraints.equals(((Compound) other).constraints);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return constraints.hashCode();
                     }
 
                     @Override
@@ -3113,6 +2917,7 @@ public interface TypeWriter<T> {
          *
          * @param <U> The best known loaded type for the dynamically created type.
          */
+        @EqualsAndHashCode(callSuper = true)
         public static class ForInlining<U> extends Default<U> {
 
             /**
@@ -3265,30 +3070,6 @@ public interface TypeWriter<T> {
                 return originalType.getName().equals(instrumentedType.getName())
                         ? classVisitor
                         : new ClassRemapper(classVisitor, new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                if (!super.equals(object)) return false;
-                ForInlining<?> that = (ForInlining<?>) object;
-                return methodRegistry.equals(that.methodRegistry)
-                        && implementationTargetFactory.equals(that.implementationTargetFactory)
-                        && originalType.equals(that.originalType)
-                        && classFileLocator.equals(that.classFileLocator)
-                        && methodRebaseResolver.equals(that.methodRebaseResolver);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + methodRegistry.hashCode();
-                result = 31 * result + implementationTargetFactory.hashCode();
-                result = 31 * result + originalType.hashCode();
-                result = 31 * result + classFileLocator.hashCode();
-                result = 31 * result + methodRebaseResolver.hashCode();
-                return result;
             }
 
             @Override
@@ -4253,6 +4034,7 @@ public interface TypeWriter<T> {
          *
          * @param <U> The best known loaded type for the dynamically created type.
          */
+        @EqualsAndHashCode(callSuper = true)
         public static class ForCreation<U> extends Default<U> {
 
             /**
@@ -4360,22 +4142,6 @@ public interface TypeWriter<T> {
             }
 
             @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                if (!super.equals(object)) return false;
-                ForCreation<?> that = (ForCreation<?>) object;
-                return methodPool.equals(that.methodPool);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = super.hashCode();
-                result = 31 * result + methodPool.hashCode();
-                return result;
-            }
-
-            @Override
             public String toString() {
                 return "TypeWriter.Default.ForCreation{" +
                         "instrumentedType=" + instrumentedType +
@@ -4403,6 +4169,7 @@ public interface TypeWriter<T> {
         /**
          * An action to write a class file to the dumping location.
          */
+        @EqualsAndHashCode
         protected static class ClassDumpAction implements PrivilegedExceptionAction<Void> {
 
             /**
@@ -4447,24 +4214,6 @@ public interface TypeWriter<T> {
                 } finally {
                     outputStream.close();
                 }
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ClassDumpAction that = (ClassDumpAction) object;
-                return instrumentedType.equals(that.instrumentedType)
-                        && target.equals(that.target)
-                        && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = instrumentedType.hashCode();
-                result = 31 * result + target.hashCode();
-                result = 31 * result + Arrays.hashCode(binaryRepresentation);
-                return result;
             }
 
             @Override

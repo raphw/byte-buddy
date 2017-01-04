@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.utility.RandomString;
 
@@ -22,6 +23,7 @@ public interface MethodNameTransformer {
     /**
      * A method name transformer that adds a fixed suffix to an original method name, separated by a {@code $}.
      */
+    @EqualsAndHashCode
     class Suffixing implements MethodNameTransformer {
 
         /**
@@ -58,17 +60,6 @@ public interface MethodNameTransformer {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && suffix.equals(((Suffixing) other).suffix);
-        }
-
-        @Override
-        public int hashCode() {
-            return suffix.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "MethodNameTransformer.Suffixing{" +
                     "suffix='" + suffix + '\'' +
@@ -79,6 +70,7 @@ public interface MethodNameTransformer {
     /**
      * A method name transformer that adds a fixed prefix to an original method name.
      */
+    @EqualsAndHashCode
     class Prefixing implements MethodNameTransformer {
 
         /**
@@ -110,17 +102,6 @@ public interface MethodNameTransformer {
         @Override
         public String transform(MethodDescription methodDescription) {
             return String.format("%s%s", prefix, methodDescription.getInternalName());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && prefix.equals(((Prefixing) other).prefix);
-        }
-
-        @Override
-        public int hashCode() {
-            return prefix.hashCode();
         }
 
         @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.build.gradle;
 
+import lombok.EqualsAndHashCode;
 import org.gradle.api.Project;
 
 import java.util.logging.Handler;
@@ -10,6 +11,7 @@ import java.util.logging.SimpleFormatter;
 /**
  * A log handler for only printing Byte Buddy specific log-messages if debug logging is enabled for a plugin.
  */
+@EqualsAndHashCode(callSuper = false)
 public class ByteBuddyLogHandler extends Handler {
 
     /**
@@ -86,24 +88,6 @@ public class ByteBuddyLogHandler extends Handler {
     @Override
     public void close() {
         /* do nothing */
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        ByteBuddyLogHandler that = (ByteBuddyLogHandler) object;
-        return useParentHandlers == that.useParentHandlers
-                && logger.equals(that.logger)
-                && project.equals(that.project);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = project.hashCode();
-        result = 31 * result + logger.hashCode();
-        result = 31 * result + (useParentHandlers ? 1 : 0);
-        return result;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -77,6 +78,7 @@ public enum DoubleConstant implements StackManipulation {
     /**
      * A stack manipulation for loading a {@code double} value from a class's constant pool onto the operand stack.
      */
+    @EqualsAndHashCode
     protected static class ConstantPool implements StackManipulation {
 
         /**
@@ -102,18 +104,6 @@ public enum DoubleConstant implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitLdcInsn(value);
             return SIZE;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && Double.compare(((ConstantPool) other).value, value) == 0;
-        }
-
-        @Override
-        public int hashCode() {
-            long temp = Double.doubleToLongBits(value);
-            return (int) (temp ^ (temp >>> 32));
         }
 
         @Override

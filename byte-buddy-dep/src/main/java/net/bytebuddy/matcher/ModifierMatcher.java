@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ModifierReviewable;
 import org.objectweb.asm.Opcodes;
 
@@ -8,6 +9,7 @@ import org.objectweb.asm.Opcodes;
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode(callSuper = false)
 public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -27,17 +29,6 @@ public class ModifierMatcher<T extends ModifierReviewable> extends ElementMatche
     @Override
     public boolean matches(T target) {
         return (mode.getModifiers() & target.getModifiers()) != 0;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && mode == ((ModifierMatcher) other).mode;
-    }
-
-    @Override
-    public int hashCode() {
-        return mode.hashCode();
     }
 
     @Override

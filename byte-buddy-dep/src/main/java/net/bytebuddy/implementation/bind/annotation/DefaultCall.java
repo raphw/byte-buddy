@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -180,6 +181,7 @@ public @interface DefaultCall {
             /**
              * An explicit default method locator attempts to look up a default method in the specified interface type.
              */
+            @EqualsAndHashCode
             class Explicit implements DefaultMethodLocator {
 
                 /**
@@ -203,17 +205,6 @@ public @interface DefaultCall {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
                     return implementationTarget.invokeDefault(source.asSignatureToken(), typeDescription);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((Explicit) other).typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
                 }
 
                 @Override

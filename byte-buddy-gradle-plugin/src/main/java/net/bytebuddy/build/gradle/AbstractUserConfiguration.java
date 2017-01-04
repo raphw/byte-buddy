@@ -1,5 +1,7 @@
 package net.bytebuddy.build.gradle;
 
+import lombok.EqualsAndHashCode;
+
 import java.io.File;
 import java.util.Iterator;
 
@@ -38,6 +40,7 @@ public class AbstractUserConfiguration {
     /**
      * An iterable with a single {@link File} element prepended.
      */
+    @EqualsAndHashCode
     protected static class PrefixIterable implements Iterable<File> {
 
         /**
@@ -62,21 +65,6 @@ public class AbstractUserConfiguration {
         @Override
         public Iterator<File> iterator() {
             return new PrefixIterator(file, files.iterator());
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            PrefixIterable files1 = (PrefixIterable) object;
-            return file.equals(files1.file) && files.equals(files1.files);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = file.hashCode();
-            result = 31 * result + files.hashCode();
-            return result;
         }
 
         @Override

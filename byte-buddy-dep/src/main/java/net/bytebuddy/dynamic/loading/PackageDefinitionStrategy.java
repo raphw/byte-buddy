@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -440,6 +441,7 @@ public interface PackageDefinitionStrategy {
     /**
      * A package definer that reads a class loader's manifest file.
      */
+    @EqualsAndHashCode
     class ManifestReading implements PackageDefinitionStrategy {
 
         /**
@@ -527,17 +529,6 @@ public interface PackageDefinitionStrategy {
             } else {
                 return Definition.Trivial.INSTANCE;
             }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && sealBaseLocator.equals(((ManifestReading) other).sealBaseLocator);
-        }
-
-        @Override
-        public int hashCode() {
-            return sealBaseLocator.hashCode();
         }
 
         @Override
@@ -629,6 +620,7 @@ public interface PackageDefinitionStrategy {
              * A seal base locator that imitates the behavior of a {@link java.net.URLClassLoader}, i.e. tries
              * to deduct the base from a class's resource URL.
              */
+            @EqualsAndHashCode
             class ForTypeResourceUrl implements SealBaseLocator {
 
                 /**
@@ -700,17 +692,6 @@ public interface PackageDefinitionStrategy {
                         }
                     }
                     return fallback.findSealBase(classLoader, typeName);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fallback.equals(((ForTypeResourceUrl) other).fallback);
-                }
-
-                @Override
-                public int hashCode() {
-                    return fallback.hashCode();
                 }
 
                 @Override

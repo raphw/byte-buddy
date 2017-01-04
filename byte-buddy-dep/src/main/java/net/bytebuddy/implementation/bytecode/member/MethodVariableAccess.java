@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -188,6 +189,7 @@ public enum MethodVariableAccess {
     /**
      * A stack manipulation that loads all parameters of a given method onto the operand stack.
      */
+    @EqualsAndHashCode
     public static class MethodLoading implements StackManipulation {
 
         /**
@@ -251,21 +253,6 @@ public enum MethodVariableAccess {
         }
 
         @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            MethodLoading that = (MethodLoading) other;
-            return methodDescription.equals(that.methodDescription) && typeCastingHandler.equals(that.typeCastingHandler);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = methodDescription.hashCode();
-            result = 31 * result + typeCastingHandler.hashCode();
-            return result;
-        }
-
-        @Override
         public String toString() {
             return "MethodVariableAccess.MethodLoading{" +
                     "methodDescription=" + methodDescription +
@@ -312,6 +299,7 @@ public enum MethodVariableAccess {
              * A type casting handler that casts all parameters of a method to the parameter types of a compatible method
              * with covariant parameter types. This allows a convenient implementation of bridge methods.
              */
+            @EqualsAndHashCode
             class ForBridgeTarget implements TypeCastingHandler {
 
                 /**
@@ -334,19 +322,6 @@ public enum MethodVariableAccess {
                     return parameterType.equals(targetType)
                             ? Trivial.INSTANCE
                             : TypeCasting.to(targetType);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForBridgeTarget that = (ForBridgeTarget) other;
-                    return bridgeTarget.equals(that.bridgeTarget);
-                }
-
-                @Override
-                public int hashCode() {
-                    return bridgeTarget.hashCode();
                 }
 
                 @Override
@@ -480,6 +455,7 @@ public enum MethodVariableAccess {
     /**
      * A stack manipulation that increments an integer variable.
      */
+    @EqualsAndHashCode
     protected static class OffsetIncrementing implements StackManipulation {
 
         /**
@@ -512,21 +488,6 @@ public enum MethodVariableAccess {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitIincInsn(offset, value);
             return new Size(0, 0);
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            OffsetIncrementing that = (OffsetIncrementing) object;
-            return offset == that.offset && value == that.value;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = offset;
-            result = 31 * result + value;
-            return result;
         }
 
         @Override

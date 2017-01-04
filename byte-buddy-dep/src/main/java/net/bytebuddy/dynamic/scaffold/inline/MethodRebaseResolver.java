@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
@@ -116,6 +117,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a non-rebased method.
          */
+        @EqualsAndHashCode
         class Preserved implements Resolution {
 
             /**
@@ -149,17 +151,6 @@ public interface MethodRebaseResolver {
             }
 
             @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && methodDescription.equals(((Preserved) other).methodDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return methodDescription.hashCode();
-            }
-
-            @Override
             public String toString() {
                 return "MethodRebaseResolver.Resolution.Preserved{methodDescription=" + methodDescription + '}';
             }
@@ -168,6 +159,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a rebased method.
          */
+        @EqualsAndHashCode
         class ForRebasedMethod implements Resolution {
 
             /**
@@ -208,17 +200,6 @@ public interface MethodRebaseResolver {
             @Override
             public StackManipulation getAdditionalArguments() {
                 return StackManipulation.Trivial.INSTANCE;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && methodDescription.equals(((ForRebasedMethod) other).methodDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return methodDescription.hashCode();
             }
 
             @Override
@@ -305,6 +286,7 @@ public interface MethodRebaseResolver {
         /**
          * A {@link MethodRebaseResolver.Resolution} of a rebased constructor.
          */
+        @EqualsAndHashCode
         class ForRebasedConstructor implements Resolution {
 
             /**
@@ -345,17 +327,6 @@ public interface MethodRebaseResolver {
             @Override
             public StackManipulation getAdditionalArguments() {
                 return NullConstant.INSTANCE;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && methodDescription.equals(((ForRebasedConstructor) other).methodDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return methodDescription.hashCode();
             }
 
             @Override
@@ -440,6 +411,7 @@ public interface MethodRebaseResolver {
     /**
      * A default implementation of a method rebase resolver.
      */
+    @EqualsAndHashCode
     class Default implements MethodRebaseResolver {
 
         /**
@@ -521,18 +493,6 @@ public interface MethodRebaseResolver {
                 tokenMap.put(entry.getKey().asSignatureToken(), entry.getValue());
             }
             return tokenMap;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && resolutions.equals(((Default) other).resolutions)
-                    && dynamicTypes.equals(((Default) other).dynamicTypes);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * resolutions.hashCode() + dynamicTypes.hashCode();
         }
 
         @Override

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -72,6 +73,7 @@ public interface MethodAttributeAppender {
          * A method attribute appender factory that combines several method attribute appender factories to be
          * represented as a single factory.
          */
+        @EqualsAndHashCode
         class Compound implements Factory {
 
             /**
@@ -111,17 +113,6 @@ public interface MethodAttributeAppender {
                     methodAttributeAppenders.add(factory.make(typeDescription));
                 }
                 return new MethodAttributeAppender.Compound(methodAttributeAppenders);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && factories.equals(((Compound) other).factories);
-            }
-
-            @Override
-            public int hashCode() {
-                return factories.hashCode();
             }
 
             @Override
@@ -237,6 +228,7 @@ public interface MethodAttributeAppender {
      * Appends an annotation to a method or method parameter. The visibility of the annotation is determined by the
      * annotation type's {@link java.lang.annotation.RetentionPolicy} annotation.
      */
+    @EqualsAndHashCode
     class Explicit implements MethodAttributeAppender, Factory {
 
         /**
@@ -310,18 +302,6 @@ public interface MethodAttributeAppender {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && annotations.equals(((Explicit) other).annotations)
-                    && target.equals(((Explicit) other).target);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * annotations.hashCode() + target.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "MethodAttributeAppender.Explicit{" +
                     "annotations=" + annotations +
@@ -369,6 +349,7 @@ public interface MethodAttributeAppender {
             /**
              * A method attribute appender target for writing annotations onto a given method parameter.
              */
+            @EqualsAndHashCode
             class OnMethodParameter implements Target {
 
                 /**
@@ -394,17 +375,6 @@ public interface MethodAttributeAppender {
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && parameterIndex == ((OnMethodParameter) other).parameterIndex;
-                }
-
-                @Override
-                public int hashCode() {
-                    return parameterIndex;
-                }
-
-                @Override
                 public String toString() {
                     return "MethodAttributeAppender.Explicit.Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
                 }
@@ -415,6 +385,7 @@ public interface MethodAttributeAppender {
     /**
      * A method attribute appender that writes a receiver type.
      */
+    @EqualsAndHashCode
     class ForReceiverType implements MethodAttributeAppender, Factory {
 
         /**
@@ -442,17 +413,6 @@ public interface MethodAttributeAppender {
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && receiverType.equals(((ForReceiverType) other).receiverType);
-        }
-
-        @Override
-        public int hashCode() {
-            return receiverType.hashCode();
-        }
-
-        @Override
         public String toString() {
             return "MethodAttributeAppender.ForReceiverType{" +
                     "receiverType=" + receiverType +
@@ -464,6 +424,7 @@ public interface MethodAttributeAppender {
      * A method attribute appender that combines several method attribute appenders to be represented as a single
      * method attribute appender.
      */
+    @EqualsAndHashCode
     class Compound implements MethodAttributeAppender {
 
         /**
@@ -503,17 +464,6 @@ public interface MethodAttributeAppender {
             for (MethodAttributeAppender methodAttributeAppender : methodAttributeAppenders) {
                 methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
             }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && methodAttributeAppenders.equals(((Compound) other).methodAttributeAppenders);
-        }
-
-        @Override
-        public int hashCode() {
-            return methodAttributeAppenders.hashCode();
         }
 
         @Override

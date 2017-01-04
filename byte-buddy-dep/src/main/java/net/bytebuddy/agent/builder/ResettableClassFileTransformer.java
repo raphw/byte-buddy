@@ -1,5 +1,7 @@
 package net.bytebuddy.agent.builder;
 
+import lombok.EqualsAndHashCode;
+
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.util.Collections;
@@ -161,6 +163,7 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
         /**
          * A result with a map of errors.
          */
+        @EqualsAndHashCode
         class WithErrors implements Reset {
 
             /**
@@ -197,19 +200,6 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
             @Override
             public Map<Class<?>, Throwable> getErrors() {
                 return failures;
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                WithErrors that = (WithErrors) object;
-                return failures.equals(that.failures);
-            }
-
-            @Override
-            public int hashCode() {
-                return failures.hashCode();
             }
 
             @Override

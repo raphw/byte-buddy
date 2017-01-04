@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bytecode.assign;
 
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -12,6 +13,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * A stack manipulation for a type down casting. Such castings are not implicit but must be performed explicitly.
  */
+@EqualsAndHashCode
 public class TypeCasting implements StackManipulation {
 
     /**
@@ -50,17 +52,6 @@ public class TypeCasting implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, typeDescription.getInternalName());
         return StackSize.ZERO.toIncreasingSize();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && typeDescription.equals(((TypeCasting) other).typeDescription);
-    }
-
-    @Override
-    public int hashCode() {
-        return typeDescription.hashCode();
     }
 
     @Override

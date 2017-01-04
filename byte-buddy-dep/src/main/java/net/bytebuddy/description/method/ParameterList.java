@@ -1,6 +1,7 @@
 package net.bytebuddy.description.method;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -245,6 +246,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             /**
              * A dispatcher for a legacy VM that does support the {@code java.lang.reflect.Parameter} type.
              */
+            @EqualsAndHashCode
             class ForJava8CapableVm implements Dispatcher {
 
                 /**
@@ -280,17 +282,6 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
                     return new OfMethod(method);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && getParameterCount.equals(((ForJava8CapableVm) other).getParameterCount);
-                }
-
-                @Override
-                public int hashCode() {
-                    return getParameterCount.hashCode();
                 }
 
                 @Override

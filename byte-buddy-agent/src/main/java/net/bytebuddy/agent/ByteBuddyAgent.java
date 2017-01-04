@@ -1,6 +1,7 @@
 package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -416,6 +417,7 @@ public class ByteBuddyAgent {
             /**
              * A simple implementation of an accessible accessor.
              */
+            @EqualsAndHashCode
             class Simple implements Accessor {
 
                 /**
@@ -479,19 +481,6 @@ public class ByteBuddyAgent {
                 @Override
                 public Class<?> getVirtualMachineType() {
                     return virtualMachineType;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Simple simple = (Simple) other;
-                    return virtualMachineType.equals(simple.virtualMachineType);
-                }
-
-                @Override
-                public int hashCode() {
-                    return virtualMachineType.hashCode();
                 }
 
                 @Override
@@ -638,6 +627,7 @@ public class ByteBuddyAgent {
          * none of the providers of this compound provider is capable of providing a valid accessor, an
          * non-available accessor is returned.
          */
+        @EqualsAndHashCode
         class Compound implements AttachmentProvider {
 
             /**
@@ -679,19 +669,6 @@ public class ByteBuddyAgent {
                     }
                 }
                 return Accessor.Unavailable.INSTANCE;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Compound compound = (Compound) other;
-                return attachmentProviders.equals(compound.attachmentProviders);
-            }
-
-            @Override
-            public int hashCode() {
-                return attachmentProviders.hashCode();
             }
 
             @Override
@@ -777,6 +754,7 @@ public class ByteBuddyAgent {
             /**
              * A process provider for a Java 9 capable VM with access to the introduced process API.
              */
+            @EqualsAndHashCode
             protected static class ForJava9CapableVm implements ProcessProvider {
 
                 /**
@@ -825,21 +803,6 @@ public class ByteBuddyAgent {
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error when accessing Java 9 process API", exception.getCause());
                     }
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForJava9CapableVm that = (ForJava9CapableVm) other;
-                    return current.equals(that.current) && getPid.equals(that.getPid);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = current.hashCode();
-                    result = 31 * result + getPid.hashCode();
-                    return result;
                 }
 
                 @Override
@@ -929,6 +892,7 @@ public class ByteBuddyAgent {
         /**
          * An agent provider that supplies an existing agent that is not deleted after attachment.
          */
+        @EqualsAndHashCode
         class ForExistingAgent implements AgentProvider {
 
             /**
@@ -948,19 +912,6 @@ public class ByteBuddyAgent {
             @Override
             public File resolve() {
                 return agent;
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForExistingAgent that = (ForExistingAgent) object;
-                return agent.equals(that.agent);
-            }
-
-            @Override
-            public int hashCode() {
-                return agent.hashCode();
             }
 
             @Override

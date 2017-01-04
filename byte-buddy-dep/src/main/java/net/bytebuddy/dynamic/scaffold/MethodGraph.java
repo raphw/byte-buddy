@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.Visibility;
@@ -105,6 +106,7 @@ public interface MethodGraph {
         /**
          * A simple implementation of a linked method graph that exposes views by delegation to given method graphs.
          */
+        @EqualsAndHashCode
         class Delegation implements Linked {
 
             /**
@@ -156,24 +158,6 @@ public interface MethodGraph {
             @Override
             public NodeList listNodes() {
                 return methodGraph.listNodes();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Delegation that = (Delegation) other;
-                return methodGraph.equals(that.methodGraph)
-                        && superClassGraph.equals(that.superClassGraph)
-                        && interfaceGraphs.equals(that.interfaceGraphs);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = methodGraph.hashCode();
-                result = 31 * result + superClassGraph.hashCode();
-                result = 31 * result + interfaceGraphs.hashCode();
-                return result;
             }
 
             @Override
@@ -347,6 +331,7 @@ public interface MethodGraph {
         /**
          * A simple implementation of a resolved node of a method without bridges.
          */
+        @EqualsAndHashCode
         class Simple implements Node {
 
             /**
@@ -381,17 +366,6 @@ public interface MethodGraph {
             @Override
             public Visibility getVisibility() {
                 return methodDescription.getVisibility();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && methodDescription.equals(((Simple) other).methodDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return methodDescription.hashCode();
             }
 
             @Override
@@ -477,6 +451,7 @@ public interface MethodGraph {
          *
          * @param <T> The type of the harmonizer token to be used for linking methods of different types.
          */
+        @EqualsAndHashCode(callSuper = false)
         class Default<T> extends AbstractBase {
 
             /**
@@ -617,18 +592,6 @@ public interface MethodGraph {
                     store = store.registerTopLevel(methodDescription, harmonizer);
                 }
                 return store;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && harmonizer.equals(((Default<?>) other).harmonizer)
-                        && merger.equals(((Default<?>) other).merger);
-            }
-
-            @Override
-            public int hashCode() {
-                return harmonizer.hashCode() + 31 * merger.hashCode();
             }
 
             @Override
@@ -1034,6 +997,7 @@ public interface MethodGraph {
                  *
                  * @param <V> The type of the token used for deciding on method equality.
                  */
+                @EqualsAndHashCode
                 protected static class Store<V> {
 
                     /**
@@ -1186,17 +1150,6 @@ public interface MethodGraph {
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && entries.equals(((Store<?>) other).entries);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return entries.hashCode();
-                    }
-
-                    @Override
                     public String toString() {
                         return "MethodGraph.Compiler.Default.Key.Store{" +
                                 "entries=" + entries +
@@ -1333,6 +1286,7 @@ public interface MethodGraph {
                          *
                          * @param <U> The type of the harmonized key to determine method equality.
                          */
+                        @EqualsAndHashCode
                         class Resolved<U> implements Entry<U> {
 
                             /**
@@ -1433,26 +1387,6 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public boolean equals(Object other) {
-                                if (this == other) return true;
-                                if (other == null || getClass() != other.getClass()) return false;
-                                Resolved<?> resolved = (Resolved<?>) other;
-                                return madeVisible == resolved.madeVisible
-                                        && key.equals(resolved.key)
-                                        && methodDescription.equals(resolved.methodDescription)
-                                        && visibility.equals(resolved.visibility);
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                int result = key.hashCode();
-                                result = 31 * result + methodDescription.hashCode();
-                                result = 31 * result + visibility.hashCode();
-                                result = 31 * result + (madeVisible ? 1 : 0);
-                                return result;
-                            }
-
-                            @Override
                             public String toString() {
                                 return "MethodGraph.Compiler.Default.Key.Store.Entry.Resolved{" +
                                         "key=" + key +
@@ -1465,6 +1399,7 @@ public interface MethodGraph {
                             /**
                              * A node implementation representing a non-ambiguous method.
                              */
+                            @EqualsAndHashCode
                             protected static class Node implements MethodGraph.Node {
 
                                 /**
@@ -1525,26 +1460,6 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public boolean equals(Object other) {
-                                    if (this == other) return true;
-                                    if (other == null || getClass() != other.getClass()) return false;
-                                    Node node = (Node) other;
-                                    return visible == node.visible
-                                            && key.equals(node.key)
-                                            && visibility.equals(node.visibility)
-                                            && methodDescription.equals(node.methodDescription);
-                                }
-
-                                @Override
-                                public int hashCode() {
-                                    int result = key.hashCode();
-                                    result = 31 * result + methodDescription.hashCode();
-                                    result = 31 * result + visibility.hashCode();
-                                    result = 31 * result + (visible ? 1 : 0);
-                                    return result;
-                                }
-
-                                @Override
                                 public String toString() {
                                     return "MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.Node{" +
                                             "key=" + key +
@@ -1561,6 +1476,7 @@ public interface MethodGraph {
                          *
                          * @param <U> The type of the harmonized key to determine method equality.
                          */
+                        @EqualsAndHashCode
                         class Ambiguous<U> implements Entry<U> {
 
                             /**
@@ -1666,24 +1582,6 @@ public interface MethodGraph {
                             }
 
                             @Override
-                            public boolean equals(Object other) {
-                                if (this == other) return true;
-                                if (other == null || getClass() != other.getClass()) return false;
-                                Ambiguous<?> ambiguous = (Ambiguous<?>) other;
-                                return key.equals(ambiguous.key)
-                                        && methodDescriptions.equals(ambiguous.methodDescriptions)
-                                        && visibility.equals(ambiguous.visibility);
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                int result = key.hashCode();
-                                result = 31 * result + methodDescriptions.hashCode();
-                                result = 31 * result + visibility.hashCode();
-                                return result;
-                            }
-
-                            @Override
                             public String toString() {
                                 return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous{" +
                                         "key=" + key +
@@ -1695,6 +1593,7 @@ public interface MethodGraph {
                             /**
                              * A node implementation representing an ambiguous method resolution.
                              */
+                            @EqualsAndHashCode
                             protected static class Node implements MethodGraph.Node {
 
                                 /**
@@ -1744,24 +1643,6 @@ public interface MethodGraph {
                                 }
 
                                 @Override
-                                public boolean equals(Object other) {
-                                    if (this == other) return true;
-                                    if (other == null || getClass() != other.getClass()) return false;
-                                    Node node = (Node) other;
-                                    return key.equals(node.key)
-                                            && visibility.equals(node.visibility)
-                                            && methodDescription.equals(node.methodDescription);
-                                }
-
-                                @Override
-                                public int hashCode() {
-                                    int result = key.hashCode();
-                                    result = 31 * result + methodDescription.hashCode();
-                                    result = 31 * result + visibility.hashCode();
-                                    return result;
-                                }
-
-                                @Override
                                 public String toString() {
                                     return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.Node{" +
                                             "key=" + key +
@@ -1776,6 +1657,7 @@ public interface MethodGraph {
                     /**
                      * A graph implementation based on a key store.
                      */
+                    @EqualsAndHashCode
                     protected static class Graph implements MethodGraph {
 
                         /**
@@ -1803,17 +1685,6 @@ public interface MethodGraph {
                         @Override
                         public NodeList listNodes() {
                             return new NodeList(new ArrayList<Node>(entries.values()));
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && entries.equals(((Graph) other).entries);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return entries.hashCode();
                         }
 
                         @Override
@@ -1879,6 +1750,7 @@ public interface MethodGraph {
     /**
      * A simple implementation of a method graph.
      */
+    @EqualsAndHashCode
     class Simple implements MethodGraph {
 
         /**
@@ -1920,17 +1792,6 @@ public interface MethodGraph {
         @Override
         public NodeList listNodes() {
             return new NodeList(new ArrayList<Node>(nodes.values()));
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && nodes.equals(((Simple) other).nodes);
-        }
-
-        @Override
-        public int hashCode() {
-            return nodes.hashCode();
         }
 
         @Override

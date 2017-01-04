@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationList;
 
@@ -8,6 +9,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
  *
  * @param <T> The actual matched type of this matcher.
  */
+@EqualsAndHashCode(callSuper = false)
 public class DeclaringAnnotationMatcher<T extends AnnotatedCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -27,17 +29,6 @@ public class DeclaringAnnotationMatcher<T extends AnnotatedCodeElement> extends 
     @Override
     public boolean matches(T target) {
         return matcher.matches(target.getDeclaredAnnotations());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((DeclaringAnnotationMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override

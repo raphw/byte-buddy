@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -17,6 +18,7 @@ import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
  * assigner.</li>
  * </ol>
  */
+@EqualsAndHashCode
 public class VoidAwareAssigner implements Assigner {
 
     /**
@@ -47,17 +49,6 @@ public class VoidAwareAssigner implements Assigner {
         } else /* source != void.class && target != void.class */ {
             return chained.assign(source, target, typing);
         }
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && chained.equals(((VoidAwareAssigner) other).chained);
-    }
-
-    @Override
-    public int hashCode() {
-        return chained.hashCode();
     }
 
     @Override

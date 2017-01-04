@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -14,6 +15,7 @@ import java.io.*;
 /**
  * A constant that represents a value in its serialized form.
  */
+@EqualsAndHashCode
 public class SerializedConstant implements StackManipulation {
 
     /**
@@ -82,19 +84,6 @@ public class SerializedConstant implements StackManipulation {
         } catch (NoSuchMethodException exception) {
             throw new IllegalStateException("Could not locate Java API method", exception);
         }
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        SerializedConstant that = (SerializedConstant) object;
-        return serialization.equals(that.serialization);
-    }
-
-    @Override
-    public int hashCode() {
-        return serialization.hashCode();
     }
 
     @Override
