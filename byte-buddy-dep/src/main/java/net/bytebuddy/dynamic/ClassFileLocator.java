@@ -353,19 +353,6 @@ public interface ClassFileLocator extends Closeable {
          * @throws IOException If reading the class file causes an exception.
          */
         protected static Resolution locate(ClassLoader classLoader, String typeName) throws IOException {
-            // Java 9 does not allow for an easy way to locate such resources. For now, the following lookup serves as a work-around.
-            if (JavaModule.isSupported()) {
-                int packageIndex = typeName.lastIndexOf('.');
-                ClassFileLocator classFileLocator = ForModule.BOOT_MODULES.get(packageIndex == -1
-                        ? NamedElement.EMPTY_NAME
-                        : typeName.substring(0, packageIndex));
-                if (classFileLocator != null && !(classFileLocator instanceof ForClassLoader || classFileLocator instanceof WeaklyReferenced)) {
-                    Resolution resolution = classFileLocator.locate(typeName);
-                    if (resolution.isResolved()) {
-                        return resolution;
-                    }
-                }
-            }
             InputStream inputStream = classLoader.getResourceAsStream(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (inputStream != null) {
                 try {
@@ -488,33 +475,6 @@ public interface ClassFileLocator extends Closeable {
     class ForModule implements ClassFileLocator {
 
         /**
-         * A map of all boot layer's packages to a class file locator for this module.
-         */
-        private static final Map<String, ClassFileLocator> BOOT_MODULES = bootModules();
-
-        /**
-         * Extracts the boot layer package's names and maps them to a class file locator for that package's module.
-         *
-         * @return A mapping of package names to class file locators.
-         */
-        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-        private static Map<String, ClassFileLocator> bootModules() {
-            try {
-                Map<String, ClassFileLocator> bootModules = new HashMap<String, ClassFileLocator>();
-                Class<?> layerType = Class.forName("java.lang.reflect.Layer");
-                for (Object rawModule : (Set<?>) layerType.getMethod("modules").invoke(layerType.getMethod("boot").invoke(null))) {
-                    ClassFileLocator classFileLocator = ForModule.of(JavaModule.of(rawModule));
-                    for (String packageName : (String[]) JavaType.MODULE.load().getMethod("getPackages").invoke(rawModule)) {
-                        bootModules.put(packageName, classFileLocator);
-                    }
-                }
-                return bootModules;
-            } catch (Exception ignored) {
-                return Collections.emptyMap();
-            }
-        }
-
-        /**
          * The represented Java module.
          */
         private final JavaModule module;
@@ -535,7 +495,19 @@ public interface ClassFileLocator extends Closeable {
          * @return A class file locator that locates classes of the boot layer.
          */
         public static ClassFileLocator ofBootLayer() {
-            return new PackageDiscriminating(BOOT_MODULES);
+            try {
+                Map<String, ClassFileLocator> bootModules = new HashMap<String, ClassFileLocator>();
+                Class<?> layerType = Class.forName("java.lang.reflect.Layer");
+                for (Object rawModule : (Set<?>) layerType.getMethod("modules").invoke(layerType.getMethod("boot").invoke(null))) {
+                    ClassFileLocator classFileLocator = ForModule.of(JavaModule.of(rawModule));
+                    for (String packageName : (String[]) JavaType.MODULE.load().getMethod("getPackages").invoke(rawModule)) {
+                        bootModules.put(packageName, classFileLocator);
+                    }
+                }
+                return new PackageDiscriminating(bootModules);
+            } catch (Exception exception) {
+                throw new IllegalStateException("Cannot process boot layer", exception);
+            }
         }
 
         /**
