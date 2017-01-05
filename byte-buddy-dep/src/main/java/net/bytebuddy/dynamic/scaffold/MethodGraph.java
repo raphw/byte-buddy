@@ -12,8 +12,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.isVirtual;
-import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A method graph represents a view on a set of methods as they are seen from a given type. Any method is represented as a node that represents
@@ -450,7 +449,7 @@ public interface MethodGraph {
             @Override
             public Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
                 LinkedHashMap<MethodDescription.SignatureToken, Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, Node>();
-                for (MethodDescription methodDescription : typeDefinition.getDeclaredMethods().filter(isVisibleTo(viewPoint))) {
+                for (MethodDescription methodDescription : typeDefinition.getDeclaredMethods().filter(not(isBridge()).<MethodDescription>and(isVisibleTo(viewPoint)))) {
                     nodes.put(methodDescription.asSignatureToken(), new Node.Simple(methodDescription));
                 }
                 return new Linked.Delegation(new MethodGraph.Simple(nodes), Empty.INSTANCE, Collections.<TypeDescription, MethodGraph>emptyMap());
