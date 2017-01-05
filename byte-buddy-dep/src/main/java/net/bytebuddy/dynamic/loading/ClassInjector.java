@@ -958,6 +958,11 @@ public interface ClassInjector {
         private static final Dispatcher.Initializable DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
         /**
+         * A lock for the bootstrap loader when injecting code.
+         */
+        private static final Object BOOTSTRAP_LOADER_LOCK = new Object();
+
+        /**
          * The class loader to inject classes into or {@code null} for the bootstrap loader.
          */
         private final ClassLoader classLoader;
@@ -1010,7 +1015,7 @@ public interface ClassInjector {
             Dispatcher dispatcher = DISPATCHER.initialize();
             Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
             synchronized (classLoader == null
-                    ? this
+                    ? BOOTSTRAP_LOADER_LOCK
                     : classLoader) {
                 for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
                     try {
