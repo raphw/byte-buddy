@@ -9,6 +9,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Type-safe representation of a {@code java.lang.reflect.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
@@ -240,7 +243,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
                             module.getMethod("getName"),
                             module.getMethod("getResourceAsStream", String.class),
                             module.getMethod("canRead", module),
-                            Instrumentation.class.getMethod("addModuleReads", module, module));
+                            Instrumentation.class.getMethod("redefineModule", module, Set.class, Map.class, Map.class, Set.class, Map.class));
                 } catch (Exception ignored) {
                     return Dispatcher.Disabled.INSTANCE;
                 }
@@ -288,9 +291,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
             private final Method canRead;
 
             /**
-             * The {@code java.lang.instrument.Instrumentation#addModuleReads(Module, Module)} method.
+             * The {@code java.lang.instrument.Instrumentation#redefineModule} method.
              */
-            private final Method addModuleReads;
+            private final Method redefineModule;
 
             /**
              * Creates an enabled dispatcher.
@@ -301,7 +304,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
              * @param getName             The {@code java.lang.reflect.Module#getName()} method.
              * @param getResourceAsStream The {@code java.lang.reflect.Module#getResourceAsStream(String)} method.
              * @param canRead             The {@code java.lang.reflect.Module#canRead(Module)} method.
-             * @param addModuleReads      The {@code java.lang.instrument.Instrumentation#addModuleReads(Module, Module)} method.
+             * @param redefineModule      The {@code java.lang.instrument.Instrumentation#redefineModule} method.
              */
             protected Enabled(Method getModule,
                               Method getClassLoader,
@@ -309,14 +312,14 @@ public class JavaModule implements NamedElement.WithOptionalName {
                               Method getName,
                               Method getResourceAsStream,
                               Method canRead,
-                              Method addModuleReads) {
+                              Method redefineModule) {
                 this.getModule = getModule;
                 this.getClassLoader = getClassLoader;
                 this.isNamed = isNamed;
                 this.getName = getName;
                 this.getResourceAsStream = getResourceAsStream;
                 this.canRead = canRead;
-                this.addModuleReads = addModuleReads;
+                this.redefineModule = redefineModule;
             }
 
             @Override
@@ -393,11 +396,16 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public void addReads(Instrumentation instrumentation, Object source, Object target) {
                 try {
-                    addModuleReads.invoke(instrumentation, source, target);
+                    redefineModule.invoke(instrumentation, source,
+                            Collections.singleton(target),
+                            Collections.emptyMap(),
+                            Collections.emptyMap(),
+                            Collections.emptySet(),
+                            Collections.emptyMap());
                 } catch (IllegalAccessException exception) {
-                    throw new IllegalStateException("Cannot access " + addModuleReads, exception);
+                    throw new IllegalStateException("Cannot access " + redefineModule, exception);
                 } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Cannot invoke " + addModuleReads, exception.getCause());
+                    throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
                 }
             }
 
@@ -412,7 +420,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
                         && isNamed.equals(enabled.isNamed)
                         && getName.equals(enabled.getName)
                         && canRead.equals(enabled.canRead)
-                        && addModuleReads.equals(enabled.addModuleReads);
+                        && redefineModule.equals(enabled.redefineModule);
             }
 
             @Override
@@ -423,7 +431,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 result = 31 * result + isNamed.hashCode();
                 result = 31 * result + getName.hashCode();
                 result = 31 * result + canRead.hashCode();
-                result = 31 * result + addModuleReads.hashCode();
+                result = 31 * result + redefineModule.hashCode();
                 return result;
             }
 
@@ -436,7 +444,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
                         ", isNamed=" + isNamed +
                         ", getName=" + getName +
                         ", canRead=" + canRead +
-                        ", addModuleReads=" + addModuleReads +
+                        ", redefineModule=" + redefineModule +
                         '}';
             }
         }
