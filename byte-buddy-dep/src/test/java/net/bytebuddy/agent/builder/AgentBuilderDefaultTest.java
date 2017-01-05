@@ -2118,6 +2118,7 @@ public class AgentBuilderDefaultTest {
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Resolution.Unresolved.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Resolution.Sort.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Unsafe.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
             @Override
