@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static net.bytebuddy.dynamic.loading.ClassInjector.DEFAULT_PROTECTION_DOMAIN;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -72,12 +71,12 @@ public class AgentBuilderDefaultApplicationRedefineTest {
     public void setUp() throws Exception {
         simpleTypeLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(SimpleType.class),
-                DEFAULT_PROTECTION_DOMAIN,
+                ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         optionalTypeLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(SimpleOptionalType.class),
-                DEFAULT_PROTECTION_DOMAIN,
+                ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
     }

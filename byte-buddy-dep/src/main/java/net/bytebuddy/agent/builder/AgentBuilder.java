@@ -235,6 +235,13 @@ public interface AgentBuilder {
     AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder);
 
     /**
+     * Enables class injection of auxiliary classes into the bootstrap class loader which relies on {@code sun.misc.Unsafe}.
+     *
+     * @return An agent builder with bootstrap class loader class injection enabled.
+     */
+    AgentBuilder enableUnsafeBootstrapInjection();
+
+    /**
      * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
      * applied when preserving non-native methods. The use of this prefix is also registered when installing the
      * final agent with an {@link java.lang.instrument.Instrumentation}.
@@ -6961,6 +6968,28 @@ public interface AgentBuilder {
         }
 
         @Override
+        public AgentBuilder enableUnsafeBootstrapInjection() {
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    BootstrapInjectionStrategy.Unsafe.INSTANCE,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    installationStrategy,
+                    fallbackStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
         public AgentBuilder disableBootstrapInjection() {
             return new Default(byteBuddy,
                     listener,
@@ -7285,6 +7314,27 @@ public interface AgentBuilder {
                 @Override
                 public String toString() {
                     return "AgentBuilder.Default.BootstrapInjectionStrategy.Disabled." + name();
+                }
+            }
+
+            /**
+             * A bootstrap injection strategy relying on {@code sun.misc.Unsafe}.
+             */
+            enum Unsafe implements BootstrapInjectionStrategy {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public ClassInjector make(ProtectionDomain protectionDomain) {
+                    return new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER, protectionDomain);
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.BootstrapInjectionStrategy.Unsafe." + name();
                 }
             }
 
@@ -9088,6 +9138,11 @@ public interface AgentBuilder {
             @Override
             public AgentBuilder enableBootstrapInjection(Instrumentation instrumentation, File folder) {
                 return materialize().enableBootstrapInjection(instrumentation, folder);
+            }
+
+            @Override
+            public AgentBuilder enableUnsafeBootstrapInjection() {
+                return materialize().enableUnsafeBootstrapInjection();
             }
 
             @Override

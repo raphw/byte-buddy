@@ -20,6 +20,11 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     ClassLoader BOOTSTRAP_LOADER = null;
 
     /**
+     * An undefined protection domain.
+     */
+    ProtectionDomain NO_PROTECTION_DOMAIN = null;
+
+    /**
      * Loads a given collection of classes given their binary representation.
      *
      * @param classLoader The class loader to used for loading the classes.
@@ -91,11 +96,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         INJECTION(new InjectionDispatcher());
 
         /**
-         * A convenience reference that references the default protection domain which is {@code null}.
-         */
-        private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
-
-        /**
          * The default behavior when attempting to load a type that was already loaded.
          */
         private static final boolean DEFAULT_FORBID_EXISTING = true;
@@ -164,7 +164,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
              * Creates a new injection dispatcher.
              */
             protected InjectionDispatcher() {
-                this(DEFAULT_PROTECTION_DOMAIN, PackageDefinitionStrategy.NoOp.INSTANCE, DEFAULT_FORBID_EXISTING);
+                this(NO_PROTECTION_DOMAIN, PackageDefinitionStrategy.NoOp.INSTANCE, DEFAULT_FORBID_EXISTING);
             }
 
             /**
@@ -281,7 +281,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
              * @param childFirst         {@code true} if the created class loader should apply child-first semantics.
              */
             protected WrappingDispatcher(ByteArrayClassLoader.PersistenceHandler persistenceHandler, boolean childFirst) {
-                this(DEFAULT_PROTECTION_DOMAIN,
+                this(NO_PROTECTION_DOMAIN,
                         PackageDefinitionStrategy.Trivial.INSTANCE,
                         persistenceHandler,
                         childFirst,
@@ -458,6 +458,58 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             return "ClassLoadingStrategy.ForBootstrapInjection{" +
                     "instrumentation=" + instrumentation +
                     ", folder=" + folder +
+                    '}';
+        }
+    }
+
+    /**
+     * A class loading strategy that injects a class using {@code sun.misc.Unsafe}.
+     */
+    class ForUnsafeInjection implements ClassLoadingStrategy<ClassLoader> {
+
+        /**
+         * The protection domain to use.
+         */
+        private final ProtectionDomain protectionDomain;
+
+        /**
+         * Creates a new class loading strategy for unsafe injection with a default protection domain.
+         */
+        public ForUnsafeInjection() {
+            this(NO_PROTECTION_DOMAIN);
+        }
+
+        /**
+         * Creates a new class loading strategy for unsafe injection.
+         *
+         * @param protectionDomain The protection domain to use.
+         */
+        public ForUnsafeInjection(ProtectionDomain protectionDomain) {
+            this.protectionDomain = protectionDomain;
+        }
+
+        @Override
+        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            ForUnsafeInjection that = (ForUnsafeInjection) object;
+            return protectionDomain != null ? protectionDomain.equals(that.protectionDomain) : that.protectionDomain == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return protectionDomain != null ? protectionDomain.hashCode() : 0;
+        }
+
+        @Override
+        public String toString() {
+            return "ClassLoadingStrategy.ForUnsafeInjection{" +
+                    "protectionDomain=" + protectionDomain +
                     '}';
         }
     }
