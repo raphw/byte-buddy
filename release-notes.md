@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 5. January 2017: version 1.6.1
+
+- Added check to `@Pipe` for method invokability.
+- Added unsafe `ClassInjector` and class loading strategy.
+- Improved reflection-based class injector on Java 9.
+- Removed uneccessary class file location using modules on Java 9.
+- Improved fail-safety for type variable resolution to allow processing incorrectly declared type variables.
+
 ### 2. January 2017: version 1.6.0
 
 - Added `InjectingClassLoader` with class loading strategy that allows for reflection-free loading.
