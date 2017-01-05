@@ -852,8 +852,8 @@ public interface TypePool {
              * @param values                 A list of all values of this annotation.
              */
             public RawDescriptionArray(TypePool typePool,
-                                   ComponentTypeReference componentTypeReference,
-                                   List<AnnotationValue<?, ?>> values) {
+                                       ComponentTypeReference componentTypeReference,
+                                       List<AnnotationValue<?, ?>> values) {
                 this.typePool = typePool;
                 this.values = values;
                 this.componentTypeReference = componentTypeReference;
@@ -4559,7 +4559,7 @@ public interface TypePool {
                      *
                      * @param name The name of the represented type.
                      */
-                    public ForRawType(String name) {
+                    protected ForRawType(String name) {
                         this.name = name;
                     }
 
@@ -4619,18 +4619,16 @@ public interface TypePool {
                      *
                      * @param symbol This type variable's nominal symbol.
                      */
-                    public ForTypeVariable(String symbol) {
+                    protected ForTypeVariable(String symbol) {
                         this.symbol = symbol;
                     }
 
                     @Override
                     public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
                         Generic typeVariable = typeVariableSource.findVariable(symbol);
-                        if (typeVariable == null) {
-                            throw new IllegalStateException("Cannot resolve type variable '" + symbol + "' for " + typeVariableSource);
-                        } else {
-                            return new AnnotatedTypeVariable(typePool, annotationTokens.get(typePath), typeVariable);
-                        }
+                        return typeVariable == null
+                                ? new UnresolvedTypeVariable(typeVariableSource, typePool, symbol, annotationTokens.get(typePath))
+                                : new AnnotatedTypeVariable(typePool, annotationTokens.get(typePath), typeVariable);
                     }
 
                     @Override
@@ -4715,9 +4713,74 @@ public interface TypePool {
                     }
 
                     /**
+                     * Represents a type variable that a type references but that does not exist. Such type variables are only emitted by wrongful
+                     * compilation either due to the isolated recompilation of outer classes or due to bugs in compilers.
+                     */
+                    protected static class UnresolvedTypeVariable extends Generic.OfTypeVariable {
+
+                        /**
+                         * The undeclared type variable's source.
+                         */
+                        private final TypeVariableSource typeVariableSource;
+
+                        /**
+                         * The type pool to use.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * The type variable's symbol.
+                         */
+                        private final String symbol;
+
+                        /**
+                         * The type variable's annotation tokens.
+                         */
+                        private final List<AnnotationToken> annotationTokens;
+
+                        /**
+                         * Creates an unresolved type variable.
+                         *
+                         * @param typeVariableSource The undeclared type variable's source.
+                         * @param typePool           The type pool to use.
+                         * @param symbol             The type variable's symbol.
+                         * @param annotationTokens   The type variable's annotation tokens.
+                         */
+                        protected UnresolvedTypeVariable(TypeVariableSource typeVariableSource,
+                                                         TypePool typePool,
+                                                         String symbol,
+                                                         List<AnnotationToken> annotationTokens) {
+                            this.typeVariableSource = typeVariableSource;
+                            this.typePool = typePool;
+                            this.symbol = symbol;
+                            this.annotationTokens = annotationTokens;
+                        }
+
+                        @Override
+                        public TypeList.Generic getUpperBounds() {
+                            throw new IllegalStateException("Cannot resolve bounds of unresolved type variable " + this + " by " + typeVariableSource);
+                        }
+
+                        @Override
+                        public TypeVariableSource getTypeVariableSource() {
+                            return typeVariableSource;
+                        }
+
+                        @Override
+                        public String getSymbol() {
+                            return symbol;
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens);
+                        }
+                    }
+
+                    /**
                      * A generic type token that represent a formal type variable, i.e. a type variable including its upper bounds.
                      */
-                    public static class Formal implements GenericTypeToken.OfFormalTypeVariable {
+                    protected static class Formal implements GenericTypeToken.OfFormalTypeVariable {
 
                         /**
                          * This type variable's nominal symbol.
@@ -4735,7 +4798,7 @@ public interface TypePool {
                          * @param symbol          This type variable's nominal symbol.
                          * @param boundTypeTokens A list of tokens that represent this type variable's upper bounds.
                          */
-                        public Formal(String symbol, List<GenericTypeToken> boundTypeTokens) {
+                        protected Formal(String symbol, List<GenericTypeToken> boundTypeTokens) {
                             this.symbol = symbol;
                             this.boundTypeTokens = boundTypeTokens;
                         }
@@ -4936,7 +4999,7 @@ public interface TypePool {
                      *
                      * @param componentTypeToken The array's component type.
                      */
-                    public ForGenericArray(GenericTypeToken componentTypeToken) {
+                    protected ForGenericArray(GenericTypeToken componentTypeToken) {
                         this.componentTypeToken = componentTypeToken;
                     }
 
@@ -5051,7 +5114,7 @@ public interface TypePool {
                      *
                      * @param boundTypeToken A token that represents the wildcard's lower bound.
                      */
-                    public ForLowerBoundWildcard(GenericTypeToken boundTypeToken) {
+                    protected ForLowerBoundWildcard(GenericTypeToken boundTypeToken) {
                         this.boundTypeToken = boundTypeToken;
                     }
 
@@ -5171,7 +5234,7 @@ public interface TypePool {
                      *
                      * @param boundTypeToken A token that represents the wildcard's upper bound.
                      */
-                    public ForUpperBoundWildcard(GenericTypeToken boundTypeToken) {
+                    protected ForUpperBoundWildcard(GenericTypeToken boundTypeToken) {
                         this.boundTypeToken = boundTypeToken;
                     }
 
@@ -5300,7 +5363,7 @@ public interface TypePool {
                      * @param name                The name of the parameterized type's erasure.
                      * @param parameterTypeTokens A list of tokens that represent the parameters of the represented type.
                      */
-                    public ForParameterizedType(String name, List<GenericTypeToken> parameterTypeTokens) {
+                    protected ForParameterizedType(String name, List<GenericTypeToken> parameterTypeTokens) {
                         this.name = name;
                         this.parameterTypeTokens = parameterTypeTokens;
                     }
@@ -5367,7 +5430,7 @@ public interface TypePool {
                          * @param parameterTypeTokens A list of tokens that represent the parameters of the represented type.
                          * @param ownerTypeToken      A token that describes the described parameterized type's owner type.
                          */
-                        public Nested(String name, List<GenericTypeToken> parameterTypeTokens, GenericTypeToken ownerTypeToken) {
+                        protected Nested(String name, List<GenericTypeToken> parameterTypeTokens, GenericTypeToken ownerTypeToken) {
                             this.name = name;
                             this.parameterTypeTokens = parameterTypeTokens;
                             this.ownerTypeToken = ownerTypeToken;
