@@ -76,14 +76,6 @@ public class ClassFileLocatorForModuleTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 8, sort = JavaVersionRule.Sort.AT_MOST)
-    public void testBootPathLegacy() throws Exception {
-        ClassFileLocator classFileLocator = ClassFileLocator.ForModule.ofBootLayer();
-        assertThat(classFileLocator.locate(Object.class.getName()).isResolved(), is(false));
-        assertThat(classFileLocator.locate(getClass().getName()).isResolved(), is(false));
-    }
-
-    @Test
     @JavaVersionRule.Enforce(9)
     public void testBootPath() throws Exception {
         ClassFileLocator classFileLocator = ClassFileLocator.ForModule.ofBootLayer();
