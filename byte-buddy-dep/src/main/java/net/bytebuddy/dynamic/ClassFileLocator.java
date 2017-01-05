@@ -12,6 +12,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
@@ -493,9 +494,10 @@ public interface ClassFileLocator extends Closeable {
             try {
                 Map<String, ClassFileLocator> bootModules = new HashMap<String, ClassFileLocator>();
                 Class<?> layerType = Class.forName("java.lang.reflect.Layer");
+                Method getPackages = JavaType.MODULE.load().getMethod("getPackages");
                 for (Object rawModule : (Set<?>) layerType.getMethod("modules").invoke(layerType.getMethod("boot").invoke(null))) {
                     ClassFileLocator classFileLocator = ForModule.of(JavaModule.of(rawModule));
-                    for (String packageName : (String[]) JavaType.MODULE.load().getMethod("getPackages").invoke(rawModule)) {
+                    for (String packageName : (String[]) getPackages.invoke(rawModule)) {
                         bootModules.put(packageName, classFileLocator);
                     }
                 }
