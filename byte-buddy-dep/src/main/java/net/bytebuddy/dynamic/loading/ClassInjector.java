@@ -992,7 +992,7 @@ public interface ClassInjector {
          *
          * @return A class injector for the bootstrap loader.
          */
-        public ClassInjector ofBootstrapLoader() {
+        public static ClassInjector ofBootstrapLoader() {
             return new UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER);
         }
 
@@ -1001,7 +1001,7 @@ public interface ClassInjector {
          *
          * @return A class injector for the system class loader.
          */
-        public ClassInjector ofClassPath() {
+        public static ClassInjector ofClassPath() {
             return new UsingUnsafe(ClassLoader.getSystemClassLoader());
         }
 

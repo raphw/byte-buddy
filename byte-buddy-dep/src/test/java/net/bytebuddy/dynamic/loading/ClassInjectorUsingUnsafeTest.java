@@ -36,6 +36,12 @@ public class ClassInjectorUsingUnsafeTest {
     }
 
     @Test
+    public void testHelperMethods() throws Exception {
+        assertThat(ClassInjector.UsingUnsafe.ofBootstrapLoader(), is((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER)));
+        assertThat(ClassInjector.UsingUnsafe.ofClassPath(), is((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader())));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassInjector.UsingUnsafe.class).apply();
         ObjectPropertyAssertion.of(ClassInjector.UsingUnsafe.Dispatcher.CreationAction.class).apply();
