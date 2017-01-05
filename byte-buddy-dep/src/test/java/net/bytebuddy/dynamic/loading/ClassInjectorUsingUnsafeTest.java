@@ -36,6 +36,17 @@ public class ClassInjectorUsingUnsafeTest {
     }
 
     @Test
+    public void testAvailability() throws Exception {
+        assertThat(ClassInjector.UsingUnsafe.isAvailable(), is(true));
+        assertThat(new ClassInjector.UsingUnsafe.Dispatcher.Disabled(null).isAvailable(), is(false));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testUnavailableThrowsException() throws Exception {
+        new ClassInjector.UsingUnsafe.Dispatcher.Disabled(new RuntimeException()).initialize();
+    }
+
+    @Test
     public void testHelperMethods() throws Exception {
         assertThat(ClassInjector.UsingUnsafe.ofBootstrapLoader(), is((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoadingStrategy.BOOTSTRAP_LOADER)));
         assertThat(ClassInjector.UsingUnsafe.ofClassPath(), is((ClassInjector) new ClassInjector.UsingUnsafe(ClassLoader.getSystemClassLoader())));

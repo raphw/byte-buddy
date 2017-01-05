@@ -153,6 +153,12 @@ public class ClassInjectorUsingReflectionTest {
     }
 
     @Test
+    public void testAvailability() throws Exception {
+        assertThat(ClassInjector.UsingReflection.isAvailable(), is(true));
+        assertThat(new ClassInjector.UsingReflection.Dispatcher.Unavailable(null).isAvailable(), is(false));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassInjector.UsingReflection.class).apply();
         final Iterator<Method> methods = Arrays.asList(String.class.getDeclaredMethods()).iterator();

@@ -131,6 +131,15 @@ public interface ClassInjector {
         }
 
         /**
+         * Indicates if this class injection is available on the current VM.
+         *
+         * @return {@code true} if this class injection is available.
+         */
+        public static boolean isAvailable() {
+            return DISPATCHER.isAvailable();
+        }
+
+        /**
          * Creates a class injector for the system class loader.
          *
          * @return A class injector for the system class loader.
@@ -285,6 +294,13 @@ public interface ClassInjector {
              * Initializes a dispatcher to make non-accessible APIs accessible.
              */
             interface Initializable {
+
+                /**
+                 * Indicates if this dispatcher is available.
+                 *
+                 * @return {@code true} if this dispatcher is available.
+                 */
+                boolean isAvailable();
 
                 /**
                  * Initializes this dispatcher.
@@ -463,6 +479,11 @@ public interface ClassInjector {
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.ClassLoader#findClass", exception.getCause());
                     }
+                }
+
+                @Override
+                public boolean isAvailable() {
+                    return true;
                 }
 
                 @Override
@@ -688,6 +709,11 @@ public interface ClassInjector {
                     this.getClassLoadingLock = getClassLoadingLock;
                 }
 
+                @Override
+                public boolean isAvailable() {
+                    return true;
+                }
+
                 /**
                  * Creates an indirect dispatcher.
                  *
@@ -887,6 +913,11 @@ public interface ClassInjector {
                 }
 
                 @Override
+                public boolean isAvailable() {
+                    return false;
+                }
+
+                @Override
                 public Dispatcher initialize() {
                     return this;
                 }
@@ -993,6 +1024,15 @@ public interface ClassInjector {
         }
 
         /**
+         * Checks if unsafe class injection is available on the current VM.
+         *
+         * @return {@code true} if unsafe class injection is available on the current VM.
+         */
+        public static boolean isAvailable() {
+            return DISPATCHER.isAvailable();
+        }
+
+        /**
          * Returns an unsafe class injector for the bootstrap class loader.
          *
          * @return A class injector for the bootstrap loader.
@@ -1074,6 +1114,13 @@ public interface ClassInjector {
             interface Initializable {
 
                 /**
+                 * Checks if unsafe class injection is available on the current VM.
+                 *
+                 * @return {@code true} if unsafe class injection is available.
+                 */
+                boolean isAvailable();
+
+                /**
                  * Initializes the dispatcher.
                  *
                  * @return The initialized dispatcher.
@@ -1141,6 +1188,11 @@ public interface ClassInjector {
                 }
 
                 @Override
+                public boolean isAvailable() {
+                    return true;
+                }
+
+                @Override
                 @SuppressFBWarnings(value = "DP_DO_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit caller responsibility")
                 public Dispatcher initialize() {
                     theUnsafe.setAccessible(true);
@@ -1205,6 +1257,11 @@ public interface ClassInjector {
                  */
                 protected Disabled(Exception exception) {
                     this.exception = exception;
+                }
+
+                @Override
+                public boolean isAvailable() {
+                    return false;
                 }
 
                 @Override
