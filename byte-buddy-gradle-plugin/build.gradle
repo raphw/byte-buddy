@@ -17,8 +17,6 @@ repositories {
     mavenCentral()
 }
 
-def extras = Boolean.getBoolean('net.bytebuddy.misc.extras');
-
 dependencies {
     compile gradleApi()
     // At this point, it is not given that any artifact from the Maven build can be found in a repository.
@@ -36,7 +34,7 @@ dependencies {
 }
 
 // Without the extras property, creating a javadoc artifact is not necessary.
-if (extras) {
+if (Boolean.getBoolean('net.bytebuddy.misc.extras')) {
     task javadocJar(type: Jar, dependsOn: javadoc) {
         classifier = 'javadoc'
         from javadoc.destinationDir
