@@ -81,6 +81,8 @@
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.7</version.plugin.clirr>
         <version.android.sdk>4.1.1.4</version.android.sdk>
+        <version.plugin.javac-errorprone>2.8</version.plugin.javac-errorprone>
+        <version.plugin.errorprone>2.0.9</version.plugin.errorprone>
     </properties>
 
     <licenses>
@@ -284,7 +286,24 @@
                         <source>${code.level}</source>
                         <target>${code.level}</target>
                         <encoding>${project.build.sourceEncoding}</encoding>
+                        <compilerId>javac-with-errorprone</compilerId>
+                        <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                        <showWarnings>true</showWarnings>
+                        <showDeprecation>true</showDeprecation>
+                        <compilerArgument>-XepDisableWarningsInGeneratedCode</compilerArgument>
                     </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.codehaus.plexus</groupId>
+                            <artifactId>plexus-compiler-javac-errorprone</artifactId>
+                            <version>${version.plugin.javac-errorprone}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>com.google.errorprone</groupId>
+                            <artifactId>error_prone_core</artifactId>
+                            <version>${version.plugin.errorprone}</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
             </plugins>
         </pluginManagement>
