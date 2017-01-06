@@ -8,7 +8,7 @@ import net.bytebuddy.description.NamedElement;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class IsNamedMatcher<T extends NamedElement.WithOptionalName> extends ElementMatcher.Junction.AbstractBase<T> {
 
     @Override

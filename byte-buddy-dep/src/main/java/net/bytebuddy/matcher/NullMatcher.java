@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class NullMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     @Override

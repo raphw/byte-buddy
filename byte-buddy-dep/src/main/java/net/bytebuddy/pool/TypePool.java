@@ -2132,7 +2132,7 @@ public interface TypePool {
                 /**
                  * An incomplete token representing a generic type without an outer type.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 class ForTopLevelType extends AbstractBase {
 
                     /**
@@ -2170,7 +2170,7 @@ public interface TypePool {
                 /**
                  * An incomplete generic type token representing a type with an outer type.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 class ForInnerClass extends AbstractBase {
 
                     /**
@@ -7490,7 +7490,7 @@ public interface TypePool {
     /**
      * A lazy facade of a type pool that delegates any lookups to another type pool only if another value than the type's name is looked up.
      */
-    @EqualsAndHashCode
+    @EqualsAndHashCode(callSuper = false)
     class LazyFacade extends AbstractBase {
 
         /**

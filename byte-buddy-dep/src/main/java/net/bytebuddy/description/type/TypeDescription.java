@@ -876,7 +876,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a non-generic type.
                      */
-                    @EqualsAndHashCode
+                    @EqualsAndHashCode(callSuper = false)
                     class ForNonGenericType extends AbstractBase {
 
                         /**
@@ -941,7 +941,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a type variable.
                      */
-                    @EqualsAndHashCode
+                    @EqualsAndHashCode(callSuper = false)
                     class ForTypeVariable extends AbstractBase {
 
                         /**
@@ -995,7 +995,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a parameterized type.
                      */
-                    @EqualsAndHashCode
+                    @EqualsAndHashCode(callSuper = false)
                     class ForParameterizedType extends AbstractBase {
 
                         /**
@@ -1211,7 +1211,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a generic array type.
                      */
-                    @EqualsAndHashCode
+                    @EqualsAndHashCode(callSuper = false)
                     class ForGenericArray extends AbstractBase {
 
                         /**
@@ -1717,7 +1717,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * A substitutor that attaches type variables to a type variable source and replaces representations of
                  * {@link TargetType} with a given declaring type.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 public static class ForAttachment extends Substitutor {
 
                     /**
@@ -1814,7 +1814,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * detaching type variables and by replacing the declaring type which is identified by a provided {@link ElementMatcher}
                  * with {@link TargetType}.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 public static class ForDetachment extends Substitutor {
 
                     /**
@@ -1857,7 +1857,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A visitor for binding type variables to their values.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 public static class ForTypeVariableBinding extends WithoutTypeSubstitution {
 
                     /**
@@ -2002,7 +2002,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A substitutor that normalizes a token to represent all {@link TargetType} by a given type and that symbolizes all type variables.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 public static class ForTokenNormalization extends Substitutor {
 
                     /**
@@ -2493,7 +2493,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A delegator for an existing {@code java.lang.reflect.Annotatedelement}.
                      */
-                    @EqualsAndHashCode
+                    @EqualsAndHashCode(callSuper = false)
                     protected static class Resolved extends Delegator {
 
                         /**
@@ -2519,7 +2519,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A delegating annotation reader for an annotated type variable.
                      */
-                    @EqualsAndHashCode
+                    @EqualsAndHashCode(callSuper = false)
                     protected static class AnnotatedTypeVariableType extends Delegator {
 
                         /**
@@ -3009,7 +3009,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A chained delegator that bases its result on an underlying annotation reader.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 protected abstract static class Chained extends Delegator {
 
                     /**
@@ -3031,6 +3031,22 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         this.annotationReader = annotationReader;
                     }
 
+                    /**
+                     * Resolves the method to invoke or returns {@code null} if the method does not exist on the current VM.
+                     *
+                     * @param typeName   The declaring type's name.
+                     * @param methodName The method's name.
+                     * @return The resolved method or {@code null}.
+                     */
+                    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                    protected static Method of(String typeName, String methodName) {
+                        try {
+                            return Class.forName(typeName).getMethod(methodName);
+                        } catch (Exception exception) {
+                            return NOT_AVAILABLE;
+                        }
+                    }
+
                     @Override
                     public AnnotatedElement resolve() {
                         return resolve(annotationReader.resolve());
@@ -3043,55 +3059,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                      * @return The resolved annotated element.
                      */
                     protected abstract AnnotatedElement resolve(AnnotatedElement annotatedElement);
-
-                    /**
-                     * A privileged action for lookup up a getter method.
-                     */
-                    @EqualsAndHashCode
-                    protected static class MethodLookupAction implements PrivilegedAction<Method> {
-
-                        /**
-                         * The declaring type's name.
-                         */
-                        private final String typeName;
-
-                        /**
-                         * The method's name.
-                         */
-                        private final String methodName;
-
-                        /**
-                         * Creates a method lookup action.
-                         *
-                         * @param typeName   The declaring type's name.
-                         * @param methodName The method's name.
-                         */
-                        private MethodLookupAction(String typeName, String methodName) {
-                            this.typeName = typeName;
-                            this.methodName = methodName;
-                        }
-
-                        /**
-                         * Resolves the method in a privileged block.
-                         *
-                         * @param typeName   The declaring type's name.
-                         * @param methodName The method's name.
-                         * @return The resolved method.
-                         */
-                        protected static Method of(String typeName, String methodName) {
-                            return AccessController.doPrivileged(new MethodLookupAction(typeName, methodName));
-                        }
-
-                        @Override
-                        @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
-                        public Method run() {
-                            try {
-                                return Class.forName(typeName).getMethod(methodName);
-                            } catch (Exception exception) {
-                                return NOT_AVAILABLE;
-                            }
-                        }
-                    }
                 }
             }
 
@@ -3104,7 +3071,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds} method.
                  */
-                private static final Method GET_ANNOTATED_UPPER_BOUNDS = MethodLookupAction.of("java.lang.reflect.AnnotatedWildcardType", "getAnnotatedUpperBounds");
+                private static final Method GET_ANNOTATED_UPPER_BOUNDS = of("java.lang.reflect.AnnotatedWildcardType", "getAnnotatedUpperBounds");
 
                 /**
                  * The wildcard bound's index.
@@ -3148,7 +3115,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds} method.
                  */
-                private static final Method GET_ANNOTATED_LOWER_BOUNDS = MethodLookupAction.of("java.lang.reflect.AnnotatedWildcardType", "getAnnotatedLowerBounds");
+                private static final Method GET_ANNOTATED_LOWER_BOUNDS = of("java.lang.reflect.AnnotatedWildcardType", "getAnnotatedLowerBounds");
 
                 /**
                  * The wildcard bound's index.
@@ -3189,7 +3156,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds} method.
                  */
-                private static final Method GET_ANNOTATED_BOUNDS = MethodLookupAction.of("java.lang.reflect.AnnotatedTypeVariable", "getAnnotatedBounds");
+                private static final Method GET_ANNOTATED_BOUNDS = of("java.lang.reflect.AnnotatedTypeVariable", "getAnnotatedBounds");
 
                 /**
                  * The type variable's index.
@@ -3223,13 +3190,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A chained annotation reader for reading a formal type variable's type argument.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 protected static class OfFormalTypeVariable extends Delegator {
 
                     /**
                      * The {@code java.lang.reflect.TypeVariable#getAnnotatedBounds} method.
                      */
-                    private static final Method GET_ANNOTATED_BOUNDS = MethodLookupAction.of(TypeVariable.class.getName(), "getAnnotatedBounds");
+                    private static final Method GET_ANNOTATED_BOUNDS = of(TypeVariable.class.getName(), "getAnnotatedBounds");
 
                     /**
                      * The represented type variable.
@@ -3274,7 +3241,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments} method.
                  */
-                private static final Method GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = MethodLookupAction.of("java.lang.reflect.AnnotatedParameterizedType", "getAnnotatedActualTypeArguments");
+                private static final Method GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = of("java.lang.reflect.AnnotatedParameterizedType", "getAnnotatedActualTypeArguments");
 
                 /**
                  * The type argument's index.
@@ -3314,7 +3281,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType} method.
                  */
-                private static final Method GET_ANNOTATED_GENERIC_COMPONENT_TYPE = MethodLookupAction.of("java.lang.reflect.AnnotatedArrayType", "getAnnotatedGenericComponentType");
+                private static final Method GET_ANNOTATED_GENERIC_COMPONENT_TYPE = of("java.lang.reflect.AnnotatedArrayType", "getAnnotatedGenericComponentType");
 
                 /**
                  * Creates a chained annotation reader for reading a component type.
@@ -3347,7 +3314,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * The {@code java.lang.reflect.AnnotatedType#getAnnotatedOwnerType} method.
                  */
-                private static final Method GET_ANNOTATED_OWNER_TYPE = MethodLookupAction.of("java.lang.reflect.AnnotatedType", "getAnnotatedOwnerType");
+                private static final Method GET_ANNOTATED_OWNER_TYPE = of("java.lang.reflect.AnnotatedType", "getAnnotatedOwnerType");
 
                 /**
                  * Creates a chained annotation reader for reading an owner type if it is accessible. This method checks if annotated

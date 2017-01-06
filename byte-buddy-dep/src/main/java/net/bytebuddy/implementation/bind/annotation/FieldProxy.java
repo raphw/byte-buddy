@@ -77,7 +77,7 @@ public @interface FieldProxy {
     /**
      * A binder for the {@link FieldProxy} annotation.
      */
-    @EqualsAndHashCode
+    @EqualsAndHashCode(callSuper = false)
     class Binder extends TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFieldBinding<FieldProxy> {
 
         /**

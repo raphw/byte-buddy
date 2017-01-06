@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class CollectionItemMatcher<T> extends ElementMatcher.Junction.AbstractBase<Iterable<? extends T>> {
 
     /**

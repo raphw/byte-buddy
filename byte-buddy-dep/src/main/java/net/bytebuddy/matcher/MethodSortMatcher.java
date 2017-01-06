@@ -9,7 +9,7 @@ import net.bytebuddy.description.method.MethodDescription;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class MethodSortMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

@@ -10,7 +10,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class RawTypeMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

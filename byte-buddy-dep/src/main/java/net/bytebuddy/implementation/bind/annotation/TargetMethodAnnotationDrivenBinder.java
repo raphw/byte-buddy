@@ -287,7 +287,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              *
              * @param <U> The bound annotation's type.
              */
-            @EqualsAndHashCode
+            @EqualsAndHashCode(callSuper = false)
             public static class OfConstant<U extends Annotation> extends ForFixedValue<U> {
 
                 /**

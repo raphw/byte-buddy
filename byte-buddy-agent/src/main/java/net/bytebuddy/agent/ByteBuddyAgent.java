@@ -119,9 +119,9 @@ public class ByteBuddyAgent {
     private static final String DETACH_METHOD_NAME = "detach";
 
     /**
-     * The name of this class'S {@code instrumentation} field.
+     * The name of the method for reading the installer's instrumentation.
      */
-    private static final String INSTRUMENTATION_FIELD_NAME = "instrumentation";
+    private static final String INSTRUMENTATION_METHOD = "getInstrumentation";
 
     /**
      * An indicator variable to express that no instrumentation is available.
@@ -328,8 +328,8 @@ public class ByteBuddyAgent {
         try {
             return (Instrumentation) ClassLoader.getSystemClassLoader()
                     .loadClass(Installer.class.getName())
-                    .getDeclaredField(INSTRUMENTATION_FIELD_NAME)
-                    .get(STATIC_MEMBER);
+                    .getMethod(INSTRUMENTATION_METHOD)
+                    .invoke(STATIC_MEMBER);
         } catch (Exception ignored) {
             return UNAVAILABLE;
         }

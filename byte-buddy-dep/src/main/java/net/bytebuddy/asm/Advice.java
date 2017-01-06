@@ -7775,7 +7775,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A fixed value binding for a constant pool value.
              */
-            @EqualsAndHashCode
+            @EqualsAndHashCode(callSuper = false)
             protected static class OfConstant extends ForFixedValue<Annotation> {
 
                 /**
@@ -7816,7 +7816,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A dynamic value binding for an annotation property of an annotation on the bound parameter.
              */
-            @EqualsAndHashCode
+            @EqualsAndHashCode(callSuper = false)
             protected static class OfAnnotationProperty extends ForFixedValue<Annotation> {
 
                 /**

@@ -658,7 +658,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * A stream handler that returns the given binary representation.
              */
-            @EqualsAndHashCode
+            @EqualsAndHashCode(callSuper = false)
             protected static class ByteArrayUrlStreamHandler extends URLStreamHandler {
 
                 /**

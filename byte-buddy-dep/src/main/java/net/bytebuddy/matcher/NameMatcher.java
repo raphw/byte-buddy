@@ -15,7 +15,7 @@ import net.bytebuddy.description.NamedElement;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class NameMatcher<T extends NamedElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

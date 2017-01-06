@@ -9,7 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T> The exact type of the annotation description that is matched.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class AnnotationTypeMatcher<T extends AnnotationDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

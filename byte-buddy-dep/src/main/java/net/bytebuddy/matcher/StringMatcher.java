@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
  * An element matcher that compares two strings by a given pattern which is characterized by a
  * {@link net.bytebuddy.matcher.StringMatcher.Mode}.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> {
 
     /**

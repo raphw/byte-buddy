@@ -9,10 +9,7 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -70,9 +67,15 @@ public class InstallerTest {
     }
 
     @Test
-    public void testAgentInstallerStoreIsPublic() throws Exception {
+    public void testAgentInstallerStoreIsPrivate() throws Exception {
         Field field = Installer.class.getDeclaredField("instrumentation");
-        assertThat(Modifier.isPublic(field.getModifiers()), is(true));
+        assertThat(Modifier.isPrivate(field.getModifiers()), is(true));
+    }
+
+    @Test
+    public void testAgentInstallerGetterIsPublic() throws Exception {
+        Method method = Installer.class.getDeclaredMethod("getInstrumentation");
+        assertThat(Modifier.isPublic(method.getModifiers()), is(true));
     }
 
     @Test(expected = UnsupportedOperationException.class)

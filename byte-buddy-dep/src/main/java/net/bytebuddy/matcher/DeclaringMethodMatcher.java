@@ -10,7 +10,7 @@ import net.bytebuddy.description.type.TypeDefinition;
  *
  * @param <T> The exact type of the annotated element that is matched.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class DeclaringMethodMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

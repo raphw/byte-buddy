@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
  *
  * @param <T> The exact type of the class loader that is matched.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class ClassLoaderParentMatcher<T extends ClassLoader> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

@@ -1262,7 +1262,7 @@ public interface AgentBuilder {
         /**
          * A listener that adds read-edges to any module of an instrumented class upon its transformation.
          */
-        @EqualsAndHashCode
+        @EqualsAndHashCode(callSuper = false)
         class ModuleReadEdgeCompleting extends Listener.Adapter {
 
             /**
@@ -3640,7 +3640,7 @@ public interface AgentBuilder {
              * allocator must not resubmit batches that previously failed as an identical outcome is likely.
              * </p>
              */
-            @EqualsAndHashCode
+            @EqualsAndHashCode(callSuper = false)
             class BatchReallocator extends Adapter {
 
                 /**
@@ -3677,7 +3677,7 @@ public interface AgentBuilder {
             /**
              * A listener that invokes {@link Thread#sleep(long)} prior to every batch but the first batch.
              */
-            @EqualsAndHashCode
+            @EqualsAndHashCode(callSuper = false)
             class Pausing extends Adapter {
 
                 /**
@@ -5402,14 +5402,14 @@ public interface AgentBuilder {
         private static final String INSTALLER_TYPE = "net.bytebuddy.agent.Installer";
 
         /**
-         * The name of the {@code net.bytebuddy.agent.Installer} field containing an installed {@link Instrumentation}.
+         * The name of the {@code net.bytebuddy.agent.Installer} getter for reading an installed {@link Instrumentation}.
          */
-        private static final String INSTRUMENTATION_FIELD = "instrumentation";
+        private static final String INSTRUMENTATION_GETTER = "getInstrumentation";
 
         /**
          * Indicator for access to a static member via reflection to make the code more readable.
          */
-        private static final Object STATIC_FIELD = null;
+        private static final Object STATIC_MEMBER = null;
 
         /**
          * The value that is to be returned from a {@link java.lang.instrument.ClassFileTransformer} to indicate
@@ -6222,14 +6222,10 @@ public interface AgentBuilder {
         @Override
         public ResettableClassFileTransformer installOnByteBuddyAgent() {
             try {
-                Instrumentation instrumentation = (Instrumentation) ClassLoader.getSystemClassLoader()
+                return installOn((Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
-                        .getDeclaredField(INSTRUMENTATION_FIELD)
-                        .get(STATIC_FIELD);
-                if (instrumentation == null) {
-                    throw new IllegalStateException("The Byte Buddy agent is not installed");
-                }
-                return installOn(instrumentation);
+                        .getMethod(INSTRUMENTATION_GETTER)
+                        .invoke(STATIC_MEMBER));
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {
@@ -7704,7 +7700,7 @@ public interface AgentBuilder {
             /**
              * A listener that adds all discovered errors to a map.
              */
-            @EqualsAndHashCode
+            @EqualsAndHashCode(callSuper = false)
             protected static class FailureCollectingListener extends RedefinitionStrategy.Listener.Adapter {
 
                 /**

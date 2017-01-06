@@ -10,7 +10,7 @@ import java.util.Iterator;
  *
  * @param <T> The type of the elements contained by the collection.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class CollectionElementMatcher<T> extends ElementMatcher.Junction.AbstractBase<Iterable<? extends T>> {
 
     /**

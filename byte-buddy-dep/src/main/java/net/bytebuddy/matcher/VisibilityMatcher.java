@@ -9,7 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T>The type of the matched entity.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class VisibilityMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

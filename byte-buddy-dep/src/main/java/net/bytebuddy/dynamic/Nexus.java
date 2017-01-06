@@ -1,7 +1,5 @@
 package net.bytebuddy.dynamic;
 
-import lombok.EqualsAndHashCode;
-
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -24,7 +22,6 @@ import java.util.logging.Logger;
  * system class loader in its hierarchy.
  * </p>
  */
-@EqualsAndHashCode
 public class Nexus extends WeakReference<ClassLoader> {
 
     /**
@@ -159,5 +156,34 @@ public class Nexus extends WeakReference<ClassLoader> {
      */
     public static void clean(Reference<? super ClassLoader> reference) {
         TYPE_INITIALIZERS.remove(reference);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        Nexus nexus = (Nexus) object;
+        return classLoaderHashCode == nexus.classLoaderHashCode
+                && identification == nexus.identification
+                && name.equals(nexus.name)
+                && get() == nexus.get();
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + classLoaderHashCode;
+        result = 31 * result + identification;
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Nexus{" +
+                "name='" + name + '\'' +
+                ", classLoaderHashCode=" + classLoaderHashCode +
+                ", identification=" + identification +
+                ", classLoader=" + get() +
+                '}';
     }
 }

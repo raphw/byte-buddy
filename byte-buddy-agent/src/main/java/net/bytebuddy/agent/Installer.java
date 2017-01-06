@@ -15,13 +15,37 @@ public class Installer {
      * loader.
      */
     @SuppressWarnings("unused")
-    public static volatile Instrumentation instrumentation;
+    private static volatile Instrumentation instrumentation;
 
     /**
      * The installer provides only {@code static} hook-in methods and should not be instantiated.
      */
     private Installer() {
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * <p>
+     * Returns the instrumentation that was loaded by the Byte Buddy agent. When a security manager is active,
+     * the {@link RuntimePermission} for {@code getInstrumentation} is required by the caller.
+     * </p>
+     * <p>
+     * <b>Important</b>: This method must only be invoked via the {@link ClassLoader#getSystemClassLoader()} where any
+     * Java agent is loaded. It is possible that two versions of this class exist for different class loaders.
+     * </p>
+     *
+     * @return The instrumentation instance of the Byte Buddy agent.
+     */
+    public static Instrumentation getInstrumentation() {
+        SecurityManager securityManager = System.getSecurityManager();
+        if (securityManager != null) {
+            securityManager.checkPermission(new RuntimePermission("getInstrumentation"));
+        }
+        Instrumentation instrumentation = Installer.instrumentation;
+        if (instrumentation == null) {
+            throw new IllegalStateException("The Byte Buddy agent is not loaded or this method is not called via the system class loader");
+        }
+        return instrumentation;
     }
 
     /**

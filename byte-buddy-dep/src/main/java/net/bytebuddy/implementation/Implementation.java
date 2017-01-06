@@ -1197,7 +1197,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * An abstract method pool entry that delegates the implementation of a method to itself.
              */
-            @EqualsAndHashCode
+            @EqualsAndHashCode(callSuper = false)
             protected abstract static class DelegationRecord extends TypeWriter.MethodPool.Record.ForDefinedMethod implements ByteCodeAppender {
 
                 /**

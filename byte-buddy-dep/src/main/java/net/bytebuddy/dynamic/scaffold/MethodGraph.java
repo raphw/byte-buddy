@@ -414,7 +414,7 @@ public interface MethodGraph {
          *
          * @param <T> The type of the harmonizer token to be used for linking methods of different types.
          */
-        @EqualsAndHashCode
+        @EqualsAndHashCode(callSuper = false)
         class Default<T> extends AbstractBase {
 
             /**

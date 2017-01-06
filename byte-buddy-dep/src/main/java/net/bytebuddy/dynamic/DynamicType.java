@@ -1190,7 +1190,7 @@ public interface DynamicType {
                          *
                          * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                          */
-                        @EqualsAndHashCode
+                        @EqualsAndHashCode(callSuper = false)
                         protected abstract static class Adapter<V> extends Optional.Valuable.AbstractBase<V> {
 
                             /**
@@ -2262,7 +2262,7 @@ public interface DynamicType {
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 protected abstract static class Adapter<V> extends MethodDefinition.ReceiverTypeDefinition.AbstractBase<V> {
 
                     /**
@@ -2666,7 +2666,7 @@ public interface DynamicType {
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
-            @EqualsAndHashCode
+            @EqualsAndHashCode(callSuper = false)
             public abstract static class Adapter<U> extends AbstractBase<U> {
 
                 /**

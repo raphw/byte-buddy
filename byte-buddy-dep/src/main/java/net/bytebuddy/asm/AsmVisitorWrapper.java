@@ -124,7 +124,7 @@ public interface AsmVisitorWrapper {
     /**
      * An ASM visitor wrapper that allows to wrap declared fields of the instrumented type with a {@link FieldVisitorWrapper}.
      */
-    @EqualsAndHashCode
+    @EqualsAndHashCode(callSuper = false)
     class ForDeclaredFields extends AbstractBase {
 
         /**

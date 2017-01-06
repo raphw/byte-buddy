@@ -896,14 +896,14 @@ public interface ClassFileLocator extends Closeable {
         private static final String INSTALLER_TYPE = "net.bytebuddy.agent.Installer";
 
         /**
-         * The name of the {@code net.bytebuddy.agent.Installer} field containing an installed {@link Instrumentation}.
+         * The name of the {@code net.bytebuddy.agent.Installer} getter for reading an installed {@link Instrumentation}.
          */
-        private static final String INSTRUMENTATION_FIELD = "instrumentation";
+        private static final String INSTRUMENTATION_GETTER = "getInstrumentation";
 
         /**
-         * Indicator for accessing a field using reflection to make the code more readable.
+         * Indicator for access to a static member via reflection to make the code more readable.
          */
-        private static final Object STATIC_FIELD = null;
+        private static final Object STATIC_MEMBER = null;
 
         /**
          * The instrumentation instance to use for looking up the binary format of a type.
@@ -948,14 +948,10 @@ public interface ClassFileLocator extends Closeable {
          */
         public static ClassFileLocator fromInstalledAgent(ClassLoader classLoader) {
             try {
-                Instrumentation instrumentation = (Instrumentation) ClassLoader.getSystemClassLoader()
+                return new AgentBased((Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
-                        .getDeclaredField(INSTRUMENTATION_FIELD)
-                        .get(STATIC_FIELD);
-                if (instrumentation == null) {
-                    throw new IllegalStateException("The Byte Buddy agent is not installed");
-                }
-                return new AgentBased(instrumentation, classLoader);
+                        .getMethod(INSTRUMENTATION_GETTER)
+                        .invoke(STATIC_MEMBER), classLoader);
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {

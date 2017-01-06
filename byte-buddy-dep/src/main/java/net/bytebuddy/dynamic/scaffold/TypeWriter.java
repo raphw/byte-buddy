@@ -525,7 +525,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method as byte code.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 public static class WithBody extends ForDefinedMethod {
 
                     /**
@@ -626,7 +626,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method but without byte code and without an annotation value.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 public static class WithoutBody extends ForDefinedMethod {
 
                     /**
@@ -701,7 +701,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method with a default annotation value.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 public static class WithAnnotationDefaultValue extends ForDefinedMethod {
 
                     /**
@@ -786,7 +786,7 @@ public interface TypeWriter<T> {
                 /**
                  * A record for a visibility bridge.
                  */
-                @EqualsAndHashCode
+                @EqualsAndHashCode(callSuper = false)
                 public static class OfVisibilityBridge extends ForDefinedMethod implements ByteCodeAppender {
 
                     /**
