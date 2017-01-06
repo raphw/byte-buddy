@@ -7,6 +7,7 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Opcodes;
 
@@ -449,7 +450,7 @@ public interface MethodGraph {
             @Override
             public Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
                 LinkedHashMap<MethodDescription.SignatureToken, Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, Node>();
-                for (MethodDescription methodDescription : typeDefinition.getDeclaredMethods().filter(not(isBridge()).<MethodDescription>and(isVisibleTo(viewPoint)))) {
+                for (MethodDescription methodDescription : typeDefinition.getDeclaredMethods().filter(isVirtual().and(not(isBridge())).and(isVisibleTo(viewPoint)))) {
                     nodes.put(methodDescription.asSignatureToken(), new Node.Simple(methodDescription));
                 }
                 return new Linked.Delegation(new MethodGraph.Simple(nodes), Empty.INSTANCE, Collections.<TypeDescription, MethodGraph>emptyMap());
