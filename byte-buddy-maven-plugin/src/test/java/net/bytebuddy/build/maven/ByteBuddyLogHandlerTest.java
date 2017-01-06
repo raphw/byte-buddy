@@ -1,7 +1,6 @@
 package net.bytebuddy.build.maven;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.apache.maven.plugin.logging.Log;
 import org.junit.Rule;
 import org.junit.Test;
@@ -57,10 +56,5 @@ public class ByteBuddyLogHandlerTest {
     @Test
     public void testInitialization() throws Exception {
         ByteBuddyLogHandler.initialize(log).reset();
-    }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ByteBuddyLogHandler.class).apply();
     }
 }
