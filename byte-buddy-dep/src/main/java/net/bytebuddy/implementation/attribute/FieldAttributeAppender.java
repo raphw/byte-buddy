@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -42,11 +43,6 @@ public interface FieldAttributeAppender {
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.NoOp." + name();
-        }
     }
 
     /**
@@ -66,6 +62,7 @@ public interface FieldAttributeAppender {
          * A field attribute appender factory that combines several field attribute appender factories to be
          * represented as a single factory.
          */
+        @EqualsAndHashCode
         class Compound implements Factory {
 
             /**
@@ -106,22 +103,6 @@ public interface FieldAttributeAppender {
                 }
                 return new FieldAttributeAppender.Compound(fieldAttributeAppenders);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && factories.equals(((Compound) other).factories);
-            }
-
-            @Override
-            public int hashCode() {
-                return factories.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "FieldAttributeAppender.Factory.Compound{factories=" + factories + '}';
-            }
         }
     }
 
@@ -148,17 +129,13 @@ public interface FieldAttributeAppender {
         public FieldAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.ForInstrumentedField." + name();
-        }
     }
 
     /**
      * Appends an annotation to a field. The visibility of the annotation is determined by the annotation type's
      * {@link java.lang.annotation.RetentionPolicy} annotation.
      */
+    @EqualsAndHashCode
     class Explicit implements FieldAttributeAppender, Factory {
 
         /**
@@ -187,30 +164,13 @@ public interface FieldAttributeAppender {
         public FieldAttributeAppender make(TypeDescription typeDescription) {
             return this;
         }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && annotations.equals(((Explicit) other).annotations);
-        }
-
-        @Override
-        public int hashCode() {
-            return annotations.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.Explicit{" +
-                    "annotations=" + annotations +
-                    '}';
-        }
     }
 
     /**
      * A field attribute appender that combines several method attribute appenders to be represented as a single
      * field attribute appender.
      */
+    @EqualsAndHashCode
     class Compound implements FieldAttributeAppender {
 
         /**
@@ -250,22 +210,6 @@ public interface FieldAttributeAppender {
             for (FieldAttributeAppender fieldAttributeAppender : fieldAttributeAppenders) {
                 fieldAttributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilter);
             }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && fieldAttributeAppenders.equals(((Compound) other).fieldAttributeAppenders);
-        }
-
-        @Override
-        public int hashCode() {
-            return fieldAttributeAppenders.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.Compound{fieldAttributeAppenders=" + fieldAttributeAppenders + '}';
         }
     }
 }

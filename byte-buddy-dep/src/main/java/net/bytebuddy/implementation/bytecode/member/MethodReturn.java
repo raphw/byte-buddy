@@ -97,9 +97,4 @@ public enum MethodReturn implements StackManipulation {
         methodVisitor.visitInsn(returnOpcode);
         return size;
     }
-
-    @Override
-    public String toString() {
-        return "MethodReturn." + name();
-    }
 }

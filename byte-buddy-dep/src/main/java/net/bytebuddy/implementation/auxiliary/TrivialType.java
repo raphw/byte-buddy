@@ -54,9 +54,4 @@ public enum TrivialType implements AuxiliaryType {
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .make();
     }
-
-    @Override
-    public String toString() {
-        return "TrivialType." + name();
-    }
 }

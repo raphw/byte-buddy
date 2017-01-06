@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -41,11 +42,6 @@ public enum SuperMethodCall implements Implementation.Composable {
         return new Compound(WithoutReturn.INSTANCE, implementation);
     }
 
-    @Override
-    public String toString() {
-        return "SuperMethodCall." + name();
-    }
-
     /**
      * A super method invocation where the return value is dropped instead of returning from the method.
      */
@@ -65,16 +61,12 @@ public enum SuperMethodCall implements Implementation.Composable {
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget, Appender.TerminationHandler.DROPPING);
         }
-
-        @Override
-        public String toString() {
-            return "SuperMethodCall.WithoutReturn." + name();
-        }
     }
 
     /**
      * An appender for implementing a {@link net.bytebuddy.implementation.SuperMethodCall}.
      */
+    @EqualsAndHashCode
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -112,26 +104,6 @@ public enum SuperMethodCall implements Implementation.Composable {
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && implementationTarget.equals(((Appender) other).implementationTarget)
-                    && terminationHandler.equals(((Appender) other).terminationHandler);
-        }
-
-        @Override
-        public int hashCode() {
-            return implementationTarget.hashCode() + 31 * terminationHandler.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "SuperMethodCall.Appender{" +
-                    "implementationTarget=" + implementationTarget +
-                    ", terminationHandler=" + terminationHandler +
-                    '}';
-        }
-
         /**
          * A handler that determines how to handle the method return value.
          */
@@ -165,11 +137,6 @@ public enum SuperMethodCall implements Implementation.Composable {
              * @return The stack manipulation that implements this handler.
              */
             protected abstract StackManipulation of(MethodDescription methodDescription);
-
-            @Override
-            public String toString() {
-                return "SuperMethodCall.Appender.TerminationHandler." + name();
-            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -190,11 +191,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         return size;
     }
 
-    @Override
-    public String toString() {
-        return "PrimitiveUnboxingDelegate." + name();
-    }
-
     /**
      * An explicitly types unboxing responsible is applied for directly unboxing a wrapper type.
      */
@@ -260,11 +256,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
                     primitiveUnboxingDelegate,
                     PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
         }
-
-        @Override
-        public String toString() {
-            return "PrimitiveUnboxingDelegate.ExplicitlyTypedUnboxingResponsible." + name();
-        }
     }
 
     /**
@@ -290,6 +281,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
      * were not found to be of a given wrapper type. Instead, this unboxing responsible tries to assign the
      * source type to the primitive target type's wrapper type before performing an unboxing operation.
      */
+    @EqualsAndHashCode
     protected static class ImplicitlyTypedUnboxingResponsible implements UnboxingResponsible {
 
         /**
@@ -312,22 +304,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
             return new Compound(
                     assigner.assign(originalType, primitiveUnboxingDelegate.getWrapperType(), typing),
                     primitiveUnboxingDelegate);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && originalType.equals(((ImplicitlyTypedUnboxingResponsible) other).originalType);
-        }
-
-        @Override
-        public int hashCode() {
-            return originalType.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "PrimitiveUnboxingDelegate.ImplicitlyTypedUnboxingResponsible{originalType=" + originalType + '}';
         }
     }
 }

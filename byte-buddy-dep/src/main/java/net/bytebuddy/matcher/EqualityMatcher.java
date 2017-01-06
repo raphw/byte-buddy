@@ -1,10 +1,13 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * An element matcher that checks an object's equality to another object.
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode
 public class EqualityMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -24,17 +27,6 @@ public class EqualityMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
     @Override
     public boolean matches(T target) {
         return value.equals(target);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && value.equals(((EqualityMatcher) other).value);
-    }
-
-    @Override
-    public int hashCode() {
-        return value.hashCode();
     }
 
     @Override

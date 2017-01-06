@@ -100,11 +100,6 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
             public TypeVariableSource onMethod(MethodDescription.InDefinedShape methodDescription) {
                 return methodDescription;
             }
-
-            @Override
-            public String toString() {
-                return "TypeVariableSource.Visitor.NoOp." + name();
-            }
         }
     }
 

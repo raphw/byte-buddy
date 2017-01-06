@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -99,11 +100,6 @@ public enum MethodInvocation {
                 : OfGenericMethod.of(methodDescription, invoke(declaredMethod));
     }
 
-    @Override
-    public String toString() {
-        return "MethodInvocation." + name();
-    }
-
     /**
      * An illegal implicit method invocation.
      */
@@ -145,11 +141,6 @@ public enum MethodInvocation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return Illegal.INSTANCE.apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.IllegalInvocation." + name();
         }
     }
 
@@ -203,6 +194,7 @@ public enum MethodInvocation {
     /**
      * A method invocation of a generically resolved method.
      */
+    @EqualsAndHashCode
     protected static class OfGenericMethod implements WithImplicitInvocationTargetType {
 
         /**
@@ -265,29 +257,6 @@ public enum MethodInvocation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return new Compound(invocation, TypeCasting.to(targetType)).apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            OfGenericMethod that = (OfGenericMethod) other;
-            return targetType.equals(that.targetType) && invocation.equals(that.invocation);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = targetType.hashCode();
-            result = 31 * result + invocation.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.OfGenericMethod{" +
-                    "targetType=" + targetType +
-                    ", invocation=" + invocation +
-                    '}';
         }
     }
 
@@ -385,7 +354,7 @@ public enum MethodInvocation {
             return MethodInvocation.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
@@ -395,20 +364,12 @@ public enum MethodInvocation {
                     && typeDescription.equals(that.typeDescription);
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             int result = typeDescription.hashCode();
             result = 31 * result + MethodInvocation.this.hashCode();
             result = 31 * result + methodDescription.asSignatureToken().hashCode();
             return result;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.Invocation{" +
-                    "typeDescription=" + typeDescription +
-                    ", methodDescription=" + methodDescription +
-                    '}';
         }
     }
 
@@ -519,23 +480,12 @@ public enum MethodInvocation {
             result = 31 * result + arguments.hashCode();
             return result;
         }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.DynamicInvocation{" +
-                    "methodInvocation=" + MethodInvocation.this +
-                    ", methodName='" + methodName + '\'' +
-                    ", returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    ", bootstrapMethod=" + bootstrapMethod +
-                    ", arguments=" + arguments +
-                    '}';
-        }
     }
 
     /**
      * Performs a method invocation on a method handle with a polymorphic type signature.
      */
+    @EqualsAndHashCode
     protected static class HandleInvocation implements StackManipulation {
 
         /**
@@ -581,29 +531,6 @@ public enum MethodInvocation {
             int parameterSize = 1 + methodDescription.getStackSize(), returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
             return new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            HandleInvocation that = (HandleInvocation) object;
-            return methodDescription.equals(that.methodDescription) && type == that.type;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = methodDescription.hashCode();
-            result = 31 * result + type.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.HandleInvocation{" +
-                    "methodDescription=" + methodDescription +
-                    ", type=" + type +
-                    '}';
-        }
     }
 
     /**
@@ -642,11 +569,6 @@ public enum MethodInvocation {
          */
         protected String getMethodName() {
             return methodName;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.HandleType." + name();
         }
     }
 }

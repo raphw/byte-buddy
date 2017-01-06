@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -80,6 +81,7 @@ public @interface Morph {
     /**
      * A binder for the {@link net.bytebuddy.implementation.bind.annotation.Morph} annotation.
      */
+    @EqualsAndHashCode
     class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> {
 
         /**
@@ -209,22 +211,6 @@ public @interface Morph {
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && forwardingMethod.equals(((Binder) other).forwardingMethod);
-        }
-
-        @Override
-        public int hashCode() {
-            return forwardingMethod.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "Morph.Binder{forwardingMethod=" + forwardingMethod + '}';
-        }
-
         /**
          * A default method locator is responsible for looking up a default method to a given source method.
          */
@@ -256,16 +242,12 @@ public @interface Morph {
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     return implementationTarget.invokeDefault(source.asSignatureToken());
                 }
-
-                @Override
-                public String toString() {
-                    return "Morph.Binder.DefaultMethodLocator.Implicit." + name();
-                }
             }
 
             /**
              * An explicit default method locator attempts to look up a default method in the specified interface type.
              */
+            @EqualsAndHashCode
             class Explicit implements DefaultMethodLocator {
 
                 /**
@@ -290,28 +272,13 @@ public @interface Morph {
                     }
                     return implementationTarget.invokeDefault(source.asSignatureToken(), typeDescription);
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((Explicit) other).typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Morph.Binder.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
-                }
             }
         }
 
         /**
          * A proxy that implements the installed interface in order to allow for a morphed super method invocation.
          */
+        @EqualsAndHashCode
         protected static class RedirectionProxy implements AuxiliaryType, StackManipulation {
 
             /**
@@ -405,39 +372,6 @@ public @interface Morph {
                 ).apply(methodVisitor, implementationContext);
             }
 
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                RedirectionProxy that = (RedirectionProxy) other;
-                return serializableProxy == that.serializableProxy
-                        && assigner.equals(that.assigner)
-                        && instrumentedType.equals(that.instrumentedType)
-                        && morphingType.equals(that.morphingType)
-                        && specialMethodInvocation.equals(that.specialMethodInvocation);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = morphingType.hashCode();
-                result = 31 * result + specialMethodInvocation.hashCode();
-                result = 31 * result + assigner.hashCode();
-                result = 31 * result + instrumentedType.hashCode();
-                result = 31 * result + (serializableProxy ? 1 : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "Morph.Binder.RedirectionProxy{" +
-                        "morphingType=" + morphingType +
-                        ", specialMethodInvocation=" + specialMethodInvocation +
-                        ", assigner=" + assigner +
-                        ", serializableProxy=" + serializableProxy +
-                        ", instrumentedType=" + instrumentedType +
-                        '}';
-            }
-
             /**
              * Creates an instance of the proxy when instrumenting a static method.
              */
@@ -471,16 +405,12 @@ public @interface Morph {
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new ByteCodeAppender.Simple(MethodVariableAccess.loadThis(), MethodInvocation.invoke(objectTypeDefaultConstructor), MethodReturn.VOID);
                 }
-
-                @Override
-                public String toString() {
-                    return "Morph.Binder.RedirectionProxy.StaticFieldConstructor." + name();
-                }
             }
 
             /**
              * Creates an instance of the proxy when instrumenting an instance method.
              */
+            @EqualsAndHashCode
             protected static class InstanceFieldConstructor implements Implementation {
 
                 /**
@@ -509,27 +439,10 @@ public @interface Morph {
                     return new Appender(implementationTarget);
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && instrumentedType.equals(((InstanceFieldConstructor) other).instrumentedType);
-                }
-
-                @Override
-                public int hashCode() {
-                    return instrumentedType.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Morph.Binder.RedirectionProxy.InstanceFieldConstructor{" +
-                            "instrumentedType=" + instrumentedType +
-                            '}';
-                }
-
                 /**
                  * The byte code appender that implements the constructor.
                  */
+                @EqualsAndHashCode
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -562,30 +475,13 @@ public @interface Morph {
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && fieldDescription.equals(((Appender) other).fieldDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return fieldDescription.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Morph.Binder.RedirectionProxy.InstanceFieldConstructor.Appender{" +
-                                "fieldDescription=" + fieldDescription +
-                                '}';
-                    }
                 }
             }
 
             /**
              * Implements a the method call of the morphing method.
              */
+            @EqualsAndHashCode
             protected static class MethodCall implements Implementation {
 
                 /**
@@ -617,26 +513,6 @@ public @interface Morph {
                 @Override
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new Appender(implementationTarget);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && accessorMethod.equals(((MethodCall) other).accessorMethod)
-                            && assigner.equals(((MethodCall) other).assigner);
-                }
-
-                @Override
-                public int hashCode() {
-                    return accessorMethod.hashCode() + 31 * assigner.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Morph.Binder.RedirectionProxy.MethodCall{" +
-                            "accessorMethod=" + accessorMethod +
-                            ", assigner=" + assigner +
-                            '}';
                 }
 
                 /**
@@ -697,24 +573,16 @@ public @interface Morph {
                         return MethodCall.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && MethodCall.this.equals(((Appender) other).getMethodCall())
                                 && typeDescription.equals(((Appender) other).typeDescription);
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         return typeDescription.hashCode() + 31 * MethodCall.this.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Morph.Binder.RedirectionProxy.MethodCall.Appender{" +
-                                "typeDescription=" + typeDescription +
-                                ", methodCall=" + MethodCall.this +
-                                '}';
                     }
                 }
             }

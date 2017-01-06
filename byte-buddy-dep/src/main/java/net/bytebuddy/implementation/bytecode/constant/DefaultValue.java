@@ -89,9 +89,4 @@ public enum DefaultValue implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         return stackManipulation.apply(methodVisitor, implementationContext);
     }
-
-    @Override
-    public String toString() {
-        return "DefaultValue." + name();
-    }
 }

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.collection;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -15,6 +16,7 @@ import java.util.List;
  * A {@link net.bytebuddy.implementation.bytecode.collection.CollectionFactory} that is capable of
  * creating an array of a given type with any number of given values.
  */
+@EqualsAndHashCode(of = {"componentType", "arrayCreator"})
 public class ArrayFactory implements CollectionFactory {
 
     /**
@@ -100,27 +102,6 @@ public class ArrayFactory implements CollectionFactory {
     @Override
     public TypeDescription.Generic getComponentType() {
         return componentType;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && componentType.equals(((ArrayFactory) other).componentType)
-                && arrayCreator.equals(((ArrayFactory) other).arrayCreator);
-    }
-
-    @Override
-    public int hashCode() {
-        return componentType.hashCode() + 31 * arrayCreator.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "ArrayFactory{" +
-                "componentType=" + componentType +
-                ", arrayCreator=" + arrayCreator +
-                ", sizeDecrease=" + sizeDecrease +
-                '}';
     }
 
     /**
@@ -223,16 +204,12 @@ public class ArrayFactory implements CollectionFactory {
             public int getStorageOpcode() {
                 return storageOpcode;
             }
-
-            @Override
-            public String toString() {
-                return "ArrayFactory.ArrayCreator.ForPrimitiveType." + name();
-            }
         }
 
         /**
          * An array creator implementation for reference types.
          */
+        @EqualsAndHashCode
         class ForReferenceType implements ArrayCreator {
 
             /**
@@ -263,24 +240,6 @@ public class ArrayFactory implements CollectionFactory {
             @Override
             public int getStorageOpcode() {
                 return Opcodes.AASTORE;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && internalTypeName.equals(((ForReferenceType) other).internalTypeName);
-            }
-
-            @Override
-            public int hashCode() {
-                return internalTypeName.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "ArrayFactory.ArrayCreator.ForReferenceType{" +
-                        "internalTypeName='" + internalTypeName + '\'' +
-                        '}';
             }
         }
     }
@@ -340,24 +299,16 @@ public class ArrayFactory implements CollectionFactory {
             return ArrayFactory.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && ArrayFactory.this.equals(((ArrayStackManipulation) other).getArrayFactory())
                     && stackManipulations.equals(((ArrayStackManipulation) other).stackManipulations);
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return stackManipulations.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "ArrayFactory.ArrayStackManipulation{" +
-                    "arrayFactory=" + ArrayFactory.this +
-                    "stackManipulations=" + stackManipulations +
-                    '}';
         }
     }
 }

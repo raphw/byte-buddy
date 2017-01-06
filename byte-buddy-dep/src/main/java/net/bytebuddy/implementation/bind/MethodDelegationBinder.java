@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -73,11 +74,6 @@ public interface MethodDelegationBinder {
                                       Assigner assigner) {
                 return MethodBinding.Illegal.INSTANCE;
             }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.Record.Illegal." + name();
-            }
         }
     }
 
@@ -110,16 +106,12 @@ public interface MethodDelegationBinder {
             public StackManipulation invoke(MethodDescription methodDescription) {
                 return MethodInvocation.invoke(methodDescription);
             }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.MethodInvoker.Simple." + name();
-            }
         }
 
         /**
          * A method invocation that enforces a virtual invocation that is dispatched on a given type.
          */
+        @EqualsAndHashCode
         class Virtual implements MethodInvoker {
 
             /**
@@ -139,22 +131,6 @@ public interface MethodDelegationBinder {
             @Override
             public StackManipulation invoke(MethodDescription methodDescription) {
                 return MethodInvocation.invoke(methodDescription).virtual(typeDescription);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && typeDescription.equals(((Virtual) other).typeDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return typeDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.MethodInvoker.Virtual{typeDescription=" + typeDescription + '}';
             }
         }
     }
@@ -202,16 +178,12 @@ public interface MethodDelegationBinder {
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 throw new IllegalStateException("An illegal parameter binding must not be applied");
             }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.ParameterBinding.Illegal." + name();
-            }
         }
 
         /**
          * An anonymous binding of a target method parameter.
          */
+        @EqualsAndHashCode(of = "delegate")
         class Anonymous implements ParameterBinding<Object> {
 
             /**
@@ -249,25 +221,6 @@ public interface MethodDelegationBinder {
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 return delegate.apply(methodVisitor, implementationContext);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && delegate.equals(((Anonymous) other).delegate);
-            }
-
-            @Override
-            public int hashCode() {
-                return 31 * delegate.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.ParameterBinding.Anonymous{" +
-                        "anonymousToken=" + anonymousToken +
-                        ", delegate=" + delegate +
-                        '}';
-            }
         }
 
         /**
@@ -278,6 +231,7 @@ public interface MethodDelegationBinder {
          * @param <T> The type of the identification token.
          * @see net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver
          */
+        @EqualsAndHashCode
         class Unique<T> implements ParameterBinding<T> {
 
             /**
@@ -326,29 +280,6 @@ public interface MethodDelegationBinder {
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 return delegate.apply(methodVisitor, implementationContext);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Unique<?> unique = (Unique<?>) other;
-                return identificationToken.equals(unique.identificationToken) && delegate.equals(unique.delegate);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = identificationToken.hashCode();
-                result = 31 * result + delegate.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.ParameterBinding.Unique{" +
-                        "identificationToken=" + identificationToken +
-                        ", delegate=" + delegate +
-                        '}';
             }
         }
     }
@@ -413,11 +344,6 @@ public interface MethodDelegationBinder {
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 throw new IllegalStateException("Cannot delegate to an unbound method");
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.MethodBinding.Illegal." + name();
             }
         }
 
@@ -496,21 +422,11 @@ public interface MethodDelegationBinder {
                         terminatingManipulation);
             }
 
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.MethodBinding.Builder{" +
-                        "methodInvoker=" + methodInvoker +
-                        ", candidate=" + candidate +
-                        ", parameterStackManipulations=" + parameterStackManipulations +
-                        ", registeredTargetIndices=" + registeredTargetIndices +
-                        ", nextParameterIndex=" + nextParameterIndex +
-                        '}';
-            }
-
             /**
              * A method binding that was created by a
              * {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.MethodBinding.Builder}.
              */
+            @EqualsAndHashCode
             protected static class Build implements MethodBinding {
 
                 /**
@@ -586,39 +502,6 @@ public interface MethodDelegationBinder {
                     return new Compound(
                             CompoundList.of(parameterStackManipulations, Arrays.asList(methodInvocation, terminatingStackManipulation))
                     ).apply(methodVisitor, implementationContext);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Build build = (Build) other;
-                    return methodInvocation.equals(build.methodInvocation)
-                            && parameterStackManipulations.equals(build.parameterStackManipulations)
-                            && registeredTargetIndices.equals(build.registeredTargetIndices)
-                            && terminatingStackManipulation.equals(build.terminatingStackManipulation)
-                            && target.equals(build.target);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = target.hashCode();
-                    result = 31 * result + registeredTargetIndices.hashCode();
-                    result = 31 * result + methodInvocation.hashCode();
-                    result = 31 * result + parameterStackManipulations.hashCode();
-                    result = 31 * result + terminatingStackManipulation.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegationBinder.MethodBinding.Builder.Build{" +
-                            "target=" + target +
-                            ", registeredTargetIndices=" + registeredTargetIndices +
-                            ", methodInvocation=" + methodInvocation +
-                            ", parameterStackManipulations=" + parameterStackManipulations +
-                            ", terminatingStackManipulation=" + terminatingStackManipulation +
-                            '}';
                 }
             }
         }
@@ -721,11 +604,6 @@ public interface MethodDelegationBinder {
                         throw new AssertionError();
                 }
             }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.AmbiguityResolver.Resolution." + name();
-            }
         }
 
         /**
@@ -741,11 +619,6 @@ public interface MethodDelegationBinder {
             @Override
             public Resolution resolve(MethodDescription source, MethodBinding left, MethodBinding right) {
                 return Resolution.UNKNOWN;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.AmbiguityResolver.NoOp." + name();
             }
         }
 
@@ -786,17 +659,13 @@ public interface MethodDelegationBinder {
                         ? Resolution.LEFT
                         : Resolution.RIGHT;
             }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.AmbiguityResolver.Directional." + name();
-            }
         }
 
         /**
          * A chain of {@link net.bytebuddy.implementation.bind.MethodDelegationBinder.AmbiguityResolver}s
          * that are applied in the given order until two bindings can be resolved.
          */
+        @EqualsAndHashCode
         class Compound implements AmbiguityResolver {
 
             /**
@@ -837,22 +706,6 @@ public interface MethodDelegationBinder {
                     resolution = iterator.next().resolve(source, left, right);
                 }
                 return resolution;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && ambiguityResolvers.equals(((Compound) other).ambiguityResolvers);
-            }
-
-            @Override
-            public int hashCode() {
-                return ambiguityResolvers.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.AmbiguityResolver.Compound{ambiguityResolvers=" + ambiguityResolvers + '}';
             }
         }
     }
@@ -904,11 +757,6 @@ public interface MethodDelegationBinder {
                             : target.getReturnType());
                 }
             };
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.TerminationHandler.Default." + name();
-            }
         }
     }
 
@@ -923,6 +771,7 @@ public interface MethodDelegationBinder {
      * <li>Find a best method among the successful bindings using the {@code AmbiguityResolver}.</li>
      * </ol>
      */
+    @EqualsAndHashCode
     class Processor implements MethodDelegationBinder.Record {
 
         /**
@@ -1036,26 +885,6 @@ public interface MethodDelegationBinder {
                     }
                 }
             }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && ambiguityResolver.equals(((Processor) other).ambiguityResolver)
-                    && records.equals(((Processor) other).records);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * records.hashCode() + ambiguityResolver.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDelegationBinder.Processor{"
-                    + "records=" + records
-                    + ", ambiguityResolver=" + ambiguityResolver
-                    + '}';
         }
     }
 }

@@ -140,9 +140,4 @@ public enum StackSize {
                 throw new AssertionError();
         }
     }
-
-    @Override
-    public String toString() {
-        return "StackSize." + name();
-    }
 }

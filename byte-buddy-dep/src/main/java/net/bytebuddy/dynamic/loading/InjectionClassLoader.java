@@ -55,10 +55,5 @@ public abstract class InjectionClassLoader extends ClassLoader {
             }
             return loadedTypes;
         }
-
-        @Override
-        public String toString() {
-            return "InjectionClassLoader.Strategy." + name();
-        }
     }
 }

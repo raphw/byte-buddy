@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.utility.privilege.SetAccessibleAction;
 
 import java.io.Serializable;
@@ -53,16 +54,12 @@ public interface LoadedTypeInitializer {
         public boolean isAlive() {
             return false;
         }
-
-        @Override
-        public String toString() {
-            return "LoadedTypeInitializer.NoOp." + name();
-        }
     }
 
     /**
      * A type initializer for setting a value for a static field.
      */
+    @EqualsAndHashCode
     class ForStaticField implements LoadedTypeInitializer, Serializable {
 
         /**
@@ -115,36 +112,13 @@ public interface LoadedTypeInitializer {
         public boolean isAlive() {
             return true;
         }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            ForStaticField that = (ForStaticField) other;
-            return fieldName.equals(that.fieldName)
-                    && value.equals(that.value);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = fieldName.hashCode();
-            result = 31 * result + value.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "LoadedTypeInitializer.ForStaticField{" +
-                    "fieldName='" + fieldName + '\'' +
-                    ", value=" + value +
-                    '}';
-        }
     }
 
     /**
      * A compound loaded type initializer that combines several type initializers.
      */
     @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "Serialization is considered opt-in for a rare use case")
+    @EqualsAndHashCode
     class Compound implements LoadedTypeInitializer, Serializable {
 
         /**
@@ -197,22 +171,6 @@ public interface LoadedTypeInitializer {
                 }
             }
             return false;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && loadedTypeInitializers.equals(((Compound) other).loadedTypeInitializers);
-        }
-
-        @Override
-        public int hashCode() {
-            return loadedTypeInitializers.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "LoadedTypeInitializer.Compound{loadedTypeInitializers=" + loadedTypeInitializers + '}';
         }
     }
 }

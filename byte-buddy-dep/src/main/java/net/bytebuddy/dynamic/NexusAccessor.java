@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassInjector;
@@ -30,6 +31,7 @@ import java.util.Collections;
  * The Nexus accessor is creating a VM-global singleton {@link Nexus} such that it can be seen by all class loaders of
  * a virtual machine. Furthermore, it provides an API to access this global instance.
  */
+@EqualsAndHashCode
 public class NexusAccessor {
 
     /**
@@ -95,29 +97,10 @@ public class NexusAccessor {
         }
     }
 
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        NexusAccessor that = (NexusAccessor) object;
-        return referenceQueue != null ? referenceQueue.equals(that.referenceQueue) : that.referenceQueue == null;
-    }
-
-    @Override
-    public int hashCode() {
-        return referenceQueue != null ? referenceQueue.hashCode() : 0;
-    }
-
-    @Override
-    public String toString() {
-        return "NexusAccessor{" +
-                "referenceQueue=" + referenceQueue +
-                '}';
-    }
-
     /**
      * An initialization appender that looks up a loaded type initializer from Byte Buddy's {@link Nexus}.
      */
+    @EqualsAndHashCode
     public static class InitializationAppender implements ByteCodeAppender {
 
         /**
@@ -160,26 +143,6 @@ public class NexusAccessor {
             } catch (NoSuchMethodException exception) {
                 throw new IllegalStateException("Cannot locate method", exception);
             }
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            InitializationAppender that = (InitializationAppender) object;
-            return identification == that.identification;
-        }
-
-        @Override
-        public int hashCode() {
-            return identification;
-        }
-
-        @Override
-        public String toString() {
-            return "NexusAccessor.InitializationAppender{" +
-                    "identification=" + identification +
-                    '}';
         }
     }
 
@@ -246,16 +209,12 @@ public class NexusAccessor {
                     }
                 }
             }
-
-            @Override
-            public String toString() {
-                return "NexusAccessor.Dispatcher.CreationAction." + name();
-            }
         }
 
         /**
          * An enabled dispatcher for registering a type initializer in a {@link Nexus}.
          */
+        @EqualsAndHashCode
         class Available implements Dispatcher {
 
             /**
@@ -314,31 +273,12 @@ public class NexusAccessor {
                     throw new IllegalStateException("Cannot invoke: " + register, exception.getCause());
                 }
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && register.equals(((Available) other).register)
-                        && clean.equals(((Available) other).clean);
-            }
-
-            @Override
-            public int hashCode() {
-                return register.hashCode() + 31 * clean.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "NexusAccessor.Dispatcher.Available{" +
-                        "register=" + register +
-                        ", clean=" + clean +
-                        '}';
-            }
         }
 
         /**
          * A disabled dispatcher where a {@link Nexus} is not available.
          */
+        @EqualsAndHashCode
         class Unavailable implements Dispatcher {
 
             /**
@@ -372,24 +312,6 @@ public class NexusAccessor {
                                  int identification,
                                  LoadedTypeInitializer loadedTypeInitializer) {
                 throw new IllegalStateException("Could not initialize Nexus accessor", exception);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && exception.equals(((Unavailable) other).exception);
-            }
-
-            @Override
-            public int hashCode() {
-                return exception.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "NexusAccessor.Dispatcher.Unavailable{" +
-                        "exception=" + exception +
-                        '}';
             }
         }
     }

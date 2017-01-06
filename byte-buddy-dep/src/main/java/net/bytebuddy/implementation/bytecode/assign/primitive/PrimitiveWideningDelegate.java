@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -243,14 +244,10 @@ public enum PrimitiveWideningDelegate {
         }
     }
 
-    @Override
-    public String toString() {
-        return "PrimitiveWideningDelegate." + name();
-    }
-
     /**
      * A stack manipulation that widens a primitive type into a more general primitive type.
      */
+    @EqualsAndHashCode
     protected static class WideningStackManipulation implements StackManipulation {
 
         /**
@@ -283,26 +280,6 @@ public enum PrimitiveWideningDelegate {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(conversionOpcode);
             return size;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && conversionOpcode == ((WideningStackManipulation) other).conversionOpcode
-                    && size.equals(((WideningStackManipulation) other).size);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * conversionOpcode + size.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "PrimitiveWideningDelegate.WideningStackManipulation{" +
-                    "conversionOpcode=" + conversionOpcode +
-                    ", size=" + size +
-                    '}';
         }
     }
 }

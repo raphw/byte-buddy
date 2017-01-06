@@ -40,9 +40,4 @@ public enum NullConstant implements StackManipulation {
         methodVisitor.visitInsn(Opcodes.ACONST_NULL);
         return size;
     }
-
-    @Override
-    public String toString() {
-        return "NullConstant." + name();
-    }
 }

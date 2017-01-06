@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -134,11 +135,6 @@ public @interface DefaultCall {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation);
         }
 
-        @Override
-        public String toString() {
-            return "DefaultCall.Binder." + name();
-        }
-
         /**
          * A default method locator is responsible for looking up a default method to a given source method.
          */
@@ -170,16 +166,12 @@ public @interface DefaultCall {
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     return implementationTarget.invokeDefault(source.asSignatureToken());
                 }
-
-                @Override
-                public String toString() {
-                    return "DefaultCall.Binder.DefaultMethodLocator.Implicit." + name();
-                }
             }
 
             /**
              * An explicit default method locator attempts to look up a default method in the specified interface type.
              */
+            @EqualsAndHashCode
             class Explicit implements DefaultMethodLocator {
 
                 /**
@@ -203,22 +195,6 @@ public @interface DefaultCall {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
                     return implementationTarget.invokeDefault(source.asSignatureToken(), typeDescription);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((Explicit) other).typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "DefaultCall.Binder.DefaultMethodLocator.Explicit{typeDescription=" + typeDescription + '}';
                 }
             }
         }

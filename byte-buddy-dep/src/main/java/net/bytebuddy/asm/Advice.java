@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
@@ -127,6 +128,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * @see OnMethodEnter
  * @see OnMethodExit
  */
+@EqualsAndHashCode
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper, Implementation {
 
     /**
@@ -575,39 +577,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return new Advice(methodEnter, methodExit, assigner, exceptionHandler, implementation);
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        Advice advice = (Advice) other;
-        return methodEnter.equals(advice.methodEnter)
-                && methodExit.equals(advice.methodExit)
-                && assigner.equals(advice.assigner)
-                && exceptionHandler.equals(advice.exceptionHandler)
-                && delegate.equals(advice.delegate);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = methodEnter.hashCode();
-        result = 31 * result + methodExit.hashCode();
-        result = 31 * result + assigner.hashCode();
-        result = 31 * result + exceptionHandler.hashCode();
-        result = 31 * result + delegate.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "Advice{" +
-                "methodEnter=" + methodEnter +
-                ", methodExit=" + methodExit +
-                ", assigner=" + assigner +
-                ", exceptionHandler=" + exceptionHandler +
-                ", delegate=" + delegate +
-                '}';
-    }
-
     /**
      * A handler for computing the instrumented method's size.
      */
@@ -742,11 +711,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public void recordPadding(int padding) {
                 /* do nothing */
             }
-
-            @Override
-            public String toString() {
-                return "Advice.MethodSizeHandler.NoOp." + name();
-            }
         }
 
         /**
@@ -841,17 +805,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 this.localVariableLength = Math.max(this.localVariableLength, localVariableLength);
             }
 
-            @Override
-            public String toString() {
-                return "Advice.MethodSizeHandler.Default{" +
-                        "instrumentedMethod=" + instrumentedMethod +
-                        ", requiredTypes=" + requiredTypes +
-                        ", yieldedTypes=" + yieldedTypes +
-                        ", stackSize=" + stackSize +
-                        ", localVariableLength=" + localVariableLength +
-                        '}';
-            }
-
             /**
              * A method size handler for an advice method.
              */
@@ -914,16 +867,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void recordPadding(int padding) {
                     this.padding = Math.max(this.padding, padding);
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.MethodSizeHandler.Default.ForAdvice{" +
-                            "adviceMethod=" + adviceMethod +
-                            ", requiredTypes=" + requiredTypes +
-                            ", yieldedTypes=" + yieldedTypes +
-                            ", padding=" + padding +
-                            '}';
                 }
             }
         }
@@ -1053,11 +996,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
                 /* do nothing */
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.StackMapFrameHandler.NoOp." + name();
             }
         }
 
@@ -1338,18 +1276,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 currentFrameDivergence = 0;
             }
 
-            @Override
-            public String toString() {
-                return "Advice.StackMapFrameHandler.Default{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", instrumentedMethod=" + instrumentedMethod +
-                        ", requiredTypes=" + requiredTypes +
-                        ", yieldedTypes=" + yieldedTypes +
-                        ", expandFrames=" + expandFrames +
-                        ", currentFrameDivergence=" + currentFrameDivergence +
-                        '}';
-            }
-
             /**
              * A translation mode that determines how the fixed frames of the instrumented method are written.
              */
@@ -1431,11 +1357,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodDescription methodDescription,
                                             Object[] localVariable,
                                             Object[] translated);
-
-                @Override
-                public String toString() {
-                    return "Advice.StackMapFrameHandler.Default.TranslationMode." + name();
-                }
             }
 
             /**
@@ -1540,16 +1461,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else {
                         injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.<TypeDescription>emptyList());
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.StackMapFrameHandler.Default.ForAdvice{" +
-                            "adviceMethod=" + adviceMethod +
-                            ", requiredTypes=" + requiredTypes +
-                            ", yieldedTypes=" + yieldedTypes +
-                            ", translationMode=" + translationMode +
-                            '}';
                 }
             }
         }
@@ -1698,11 +1609,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int getPadding() {
                         return StackSize.ZERO.getSize();
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry." + name();
-                    }
                 }
 
                 /**
@@ -1767,11 +1673,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int getPadding() {
                         return stackSize.getSize();
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Context.ForMethodExit." + name();
-                    }
                 }
             }
 
@@ -1806,6 +1707,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A target for an offset mapping that represents a non-operational value. All writes are discarded and a value's
                  * default value is returned upon every read.
                  */
+                @EqualsAndHashCode
                 abstract class ForDefaultValue implements Target {
 
                     /**
@@ -1832,21 +1734,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public StackManipulation resolveRead() {
                         return new StackManipulation.Compound(DefaultValue.of(typeDefinition), readAssignment);
-                    }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForDefaultValue that = (ForDefaultValue) object;
-                        return typeDefinition.equals(that.typeDefinition) && readAssignment.equals(that.readAssignment);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = typeDefinition.hashCode();
-                        result = 31 * result + readAssignment.hashCode();
-                        return result;
                     }
 
                     /**
@@ -1881,14 +1768,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public StackManipulation resolveIncrement(int value) {
                             throw new IllegalStateException("Cannot write to read-only default value");
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.ReadOnly{" +
-                                    "typeDefinition=" + typeDefinition +
-                                    ", readAssignment=" + readAssignment +
-                                    "}";
                         }
                     }
 
@@ -1925,20 +1804,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public StackManipulation resolveIncrement(int value) {
                             return StackManipulation.Trivial.INSTANCE;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.ReadWrite{" +
-                                    "typeDefinition=" + typeDefinition +
-                                    ", readAssignment=" + readAssignment +
-                                    "}";
-                        }
                     }
                 }
 
                 /**
                  * A target for an offset mapping that represents a local variable.
                  */
+                @EqualsAndHashCode
                 abstract class ForVariable implements Target {
 
                     /**
@@ -1972,24 +1844,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public StackManipulation resolveRead() {
                         return new StackManipulation.Compound(MethodVariableAccess.of(typeDefinition).loadFrom(offset), readAssignment);
-                    }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForVariable that = (ForVariable) object;
-                        return offset == that.offset
-                                && typeDefinition.equals(that.typeDefinition)
-                                && readAssignment.equals(that.readAssignment);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = typeDefinition.hashCode();
-                        result = 31 * result + offset;
-                        result = 31 * result + readAssignment.hashCode();
-                        return result;
                     }
 
                     /**
@@ -2027,20 +1881,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public StackManipulation resolveIncrement(int value) {
                             throw new IllegalStateException("Cannot write to read-only variable " + typeDefinition + " at " + offset);
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForVariable.ReadOnly{" +
-                                    "typeDefinition=" + typeDefinition +
-                                    ", offset=" + offset +
-                                    ", readAssignment=" + readAssignment +
-                                    "}";
-                        }
                     }
 
                     /**
                      * A target for a writable mapping of a local variable.
                      */
+                    @EqualsAndHashCode(callSuper = true)
                     protected static class ReadWrite extends ForVariable {
 
                         /**
@@ -2083,38 +1929,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     ? MethodVariableAccess.of(typeDefinition).increment(offset, value)
                                     : new StackManipulation.Compound(resolveRead(), IntegerConstant.forValue(1), Addition.INTEGER, resolveWrite());
                         }
-
-                        @Override
-                        public boolean equals(Object object) {
-                            if (this == object) return true;
-                            if (object == null || getClass() != object.getClass()) return false;
-                            if (!super.equals(object)) return false;
-                            ReadWrite readWrite = (ReadWrite) object;
-                            return writeAssignment.equals(readWrite.writeAssignment);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = super.hashCode();
-                            result = 31 * result + writeAssignment.hashCode();
-                            return result;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForVariable.ReadWrite{" +
-                                    "typeDefinition=" + typeDefinition +
-                                    ", offset=" + offset +
-                                    ", readAssignment=" + readAssignment +
-                                    ", writeAssignment=" + writeAssignment +
-                                    "}";
-                        }
                     }
                 }
 
                 /**
                  * A target mapping for an array of all local variables.
                  */
+                @EqualsAndHashCode
                 abstract class ForArray implements Target {
 
                     /**
@@ -2148,21 +1969,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException("Cannot increment read-only array value");
                     }
 
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForArray forArray = (ForArray) object;
-                        return target.equals(forArray.target) && valueReads.equals(forArray.valueReads);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = target.hashCode();
-                        result = 31 * result + valueReads.hashCode();
-                        return result;
-                    }
-
                     /**
                      * A target mapping for a read-only target mapping for an array of local variables.
                      */
@@ -2182,19 +1988,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public StackManipulation resolveWrite() {
                             throw new IllegalStateException("Cannot write to read-only array value");
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForArray.ReadOnly{" +
-                                    "target=" + target +
-                                    ", valueReads=" + valueReads +
-                                    '}';
-                        }
                     }
 
                     /**
                      * A target mapping for a writable target mapping for an array of local variables.
                      */
+                    @EqualsAndHashCode(callSuper = true)
                     protected static class ReadWrite extends ForArray {
 
                         /**
@@ -2218,37 +2017,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public StackManipulation resolveWrite() {
                             return ArrayAccess.of(target).forEach(valueWrites);
                         }
-
-                        @Override
-                        public boolean equals(Object object) {
-                            if (this == object) return true;
-                            if (object == null || getClass() != object.getClass()) return false;
-                            if (!super.equals(object)) return false;
-                            ReadWrite readWrite = (ReadWrite) object;
-                            return valueWrites.equals(readWrite.valueWrites);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = super.hashCode();
-                            result = 31 * result + valueWrites.hashCode();
-                            return result;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForArray.ReadWrite{" +
-                                    "target=" + target +
-                                    ", valueReads=" + valueReads +
-                                    ", valueWrites=" + valueWrites +
-                                    '}';
-                        }
                     }
                 }
 
                 /**
                  * A target for an offset mapping that loads a field value.
                  */
+                @EqualsAndHashCode
                 abstract class ForField implements Target {
 
                     /**
@@ -2279,21 +2054,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : MethodVariableAccess.loadThis(), FieldAccess.forField(fieldDescription).read(), readAssignment);
                     }
 
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForField forField = (ForField) object;
-                        return fieldDescription.equals(forField.fieldDescription) && readAssignment.equals(forField.readAssignment);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = fieldDescription.hashCode();
-                        result = 31 * result + readAssignment.hashCode();
-                        return result;
-                    }
-
                     /**
                      * A read-only mapping for a field value.
                      */
@@ -2318,19 +2078,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public StackManipulation resolveIncrement(int value) {
                             throw new IllegalStateException("Cannot write to read-only field value");
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForField.ReadOnly{" +
-                                    "fieldDescription=" + fieldDescription +
-                                    ", readAssignment=" + readAssignment +
-                                    '}';
-                        }
                     }
 
                     /**
                      * A mapping for a writable field.
                      */
+                    @EqualsAndHashCode(callSuper = true)
                     static class ReadWrite extends ForField {
 
                         /**
@@ -2374,37 +2127,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     resolveWrite()
                             );
                         }
-
-                        @Override
-                        public boolean equals(Object object) {
-                            if (this == object) return true;
-                            if (object == null || getClass() != object.getClass()) return false;
-                            if (!super.equals(object)) return false;
-                            ReadWrite readWrite = (ReadWrite) object;
-                            return writeAssignment.equals(readWrite.writeAssignment);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = super.hashCode();
-                            result = 31 * result + writeAssignment.hashCode();
-                            return result;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForField.ReadWrite{" +
-                                    "fieldDescription=" + fieldDescription +
-                                    ", readAssignment=" + readAssignment +
-                                    ", writeAssignment=" + writeAssignment +
-                                    '}';
-                        }
                     }
                 }
 
                 /**
                  * A target for an offset mapping that represents a read-only stack manipulation.
                  */
+                @EqualsAndHashCode
                 class ForStackManipulation implements Target {
 
                     /**
@@ -2495,26 +2224,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public StackManipulation resolveIncrement(int value) {
                         throw new IllegalStateException("Cannot write to constant value: " + stackManipulation);
                     }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForStackManipulation that = (ForStackManipulation) object;
-                        return stackManipulation.equals(that.stackManipulation);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return stackManipulation.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForStackManipulation{" +
-                                "stackManipulation=" + stackManipulation +
-                                '}';
-                    }
                 }
             }
 
@@ -2540,6 +2249,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * An offset mapping for a given parameter of the instrumented method.
              */
+            @EqualsAndHashCode
             class ForArgument implements OffsetMapping {
 
                 /**
@@ -2618,36 +2328,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForArgument that = (ForArgument) object;
-                    return index == that.index
-                            && readOnly == that.readOnly
-                            && target.equals(that.target)
-                            && typing == that.typing;
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = target.hashCode();
-                    result = 31 * result + index;
-                    result = 31 * result + (readOnly ? 1 : 0);
-                    result = 31 * result + typing.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForArgument{" +
-                            "target=" + target +
-                            ", index=" + index +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for a mapping of a parameter of the instrumented method.
                  */
@@ -2688,17 +2368,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return new ForArgument(parameterDescription.getType(), annotation.loadSilent());
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForArgument.Factory." + name();
-                    }
                 }
             }
 
             /**
              * An offset mapping that provides access to the {@code this} reference of the instrumented method.
              */
+            @EqualsAndHashCode
             class ForThisReference implements OffsetMapping {
 
                 /**
@@ -2776,36 +2452,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForThisReference that = (ForThisReference) object;
-                    return readOnly == that.readOnly
-                            && optional == that.optional
-                            && target.equals(that.target)
-                            && typing == that.typing;
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = target.hashCode();
-                    result = 31 * result + (readOnly ? 1 : 0);
-                    result = 31 * result + typing.hashCode();
-                    result = 31 * result + (optional ? 1 : 0);
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForThisReference{" +
-                            "target=" + target +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            ", optional=" + optional +
-                            '}';
-                }
-
                 /**
                  * A factory for creating a {@link ForThisReference} offset mapping.
                  */
@@ -2846,17 +2492,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return new ForThisReference(parameterDescription.getType(), annotation.loadSilent());
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForThisReference.Factory." + name();
-                    }
                 }
             }
 
             /**
              * An offset mapping that maps an array containing all arguments of the instrumented method.
              */
+            @EqualsAndHashCode
             class ForAllArguments implements OffsetMapping {
 
                 /**
@@ -2922,31 +2564,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForAllArguments that = (ForAllArguments) object;
-                    return readOnly == that.readOnly && target.equals(that.target) && typing == that.typing;
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = target.hashCode();
-                    result = 31 * result + (readOnly ? 1 : 0);
-                    result = 31 * result + typing.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForAllArguments{" +
-                            "target=" + target +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for an offset mapping that maps all arguments values of the instrumented method.
                  */
@@ -2989,11 +2606,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return new ForAllArguments(parameterDescription.getType().getComponentType(), annotation.loadSilent());
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForAllArguments.Factory." + name();
-                    }
                 }
             }
 
@@ -3010,11 +2622,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
                     return Target.ForStackManipulation.of(instrumentedType);
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForInstrumentedType." + name();
                 }
             }
 
@@ -3068,11 +2675,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return {@code true} if this method is representable.
                  */
                 protected abstract boolean isRepresentable(MethodDescription instrumentedMethod);
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForInstrumentedMethod." + name();
-                }
             }
 
             /**
@@ -3212,22 +2814,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
                         return new FieldLocator.ForClassHierarchy(instrumentedType);
                     }
-
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForField.WithImplicitType{" +
-                                "target=" + target +
-                                ", name=" + name +
-                                ", readOnly=" + readOnly +
-                                ", typing=" + typing +
-                                '}';
-                    }
                 }
 
                 /**
                  * An offset mapping for a field with an explicit declaring type.
                  */
+                @EqualsAndHashCode(callSuper = true)
                 protected static class WithExplicitType extends ForField {
 
                     /**
@@ -3270,30 +2862,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException(declaringType + " is no super type of " + instrumentedType);
                         }
                         return new FieldLocator.ForExactType(TargetType.resolve(declaringType, instrumentedType));
-                    }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        WithExplicitType that = (WithExplicitType) object;
-                        return declaringType.equals(that.declaringType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return declaringType.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForField.WithExplicitType{" +
-                                "target=" + target +
-                                ", name=" + name +
-                                ", readOnly=" + readOnly +
-                                ", typing=" + typing +
-                                ", declaringType=" + declaringType +
-                                '}';
                     }
                 }
 
@@ -3340,17 +2908,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     : new WithExplicitType(parameterDescription.getType(), annotation, declaringType);
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForField.Factory." + name();
-                    }
                 }
             }
 
             /**
              * An offset mapping for the {@link Advice.Origin} annotation.
              */
+            @EqualsAndHashCode
             class ForOrigin implements OffsetMapping {
 
                 /**
@@ -3433,26 +2997,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return Target.ForStackManipulation.of(stringBuilder.toString());
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForOrigin forOrigin = (ForOrigin) other;
-                    return renderers.equals(forOrigin.renderers);
-                }
-
-                @Override
-                public int hashCode() {
-                    return renderers.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForOrigin{" +
-                            "renderers=" + renderers +
-                            '}';
-                }
-
                 /**
                  * A renderer for an origin pattern element.
                  */
@@ -3486,11 +3030,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedMethod.getInternalName();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForMethodName." + name();
-                        }
                     }
 
                     /**
@@ -3512,11 +3051,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedType.getName();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForTypeName." + name();
-                        }
                     }
 
                     /**
@@ -3537,11 +3071,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedMethod.getDescriptor();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForDescriptor." + name();
                         }
                     }
 
@@ -3574,11 +3103,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                             return stringBuilder.append(')').toString();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForJavaSignature." + name();
-                        }
                     }
 
                     /**
@@ -3600,11 +3124,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedMethod.getReturnType().asErasure().getName();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName." + name();
-                        }
                     }
 
                     /**
@@ -3621,16 +3140,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedMethod.toString();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation." + name();
-                        }
                     }
 
                     /**
                      * A renderer for a constant value.
                      */
+                    @EqualsAndHashCode
                     class ForConstantValue implements Renderer {
 
                         /**
@@ -3650,26 +3165,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return value;
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            ForConstantValue that = (ForConstantValue) other;
-                            return value.equals(that.value);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return value.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForConstantValue{" +
-                                    "value='" + value + '\'' +
-                                    '}';
                         }
                     }
                 }
@@ -3703,17 +3198,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Non-supported type " + parameterDescription.getType() + " for @Origin annotation");
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForOrigin.Factory." + name();
-                    }
                 }
             }
 
             /**
              * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
              */
+            @EqualsAndHashCode
             class ForUnusedValue implements OffsetMapping {
 
                 /**
@@ -3735,26 +3226,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return new Target.ForDefaultValue.ReadWrite(target);
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForUnusedValue that = (ForUnusedValue) object;
-                    return target.equals(that.target);
-                }
-
-                @Override
-                public int hashCode() {
-                    return target.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForUnusedValue{" +
-                            "target=" + target +
-                            '}';
-                }
-
                 /**
                  * A factory for an offset mapping for an unused value.
                  */
@@ -3770,11 +3241,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Unused.class)
                                 ? new ForUnusedValue(parameterDescription.getType())
                                 : UNDEFINED;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForUnusedValue.Factory." + name();
                     }
                 }
             }
@@ -3807,16 +3273,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return this;
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForStubValue." + name();
-                }
             }
 
             /**
              * An offset mapping that provides access to the value that is returned by the enter advice.
              */
+            @EqualsAndHashCode
             class ForEnterValue implements OffsetMapping {
 
                 /**
@@ -3881,39 +3343,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForEnterValue that = (ForEnterValue) object;
-                    return readOnly == that.readOnly
-                            && target.equals(that.target)
-                            && enterType.equals(that.enterType)
-                            && typing == that.typing;
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = target.hashCode();
-                    result = 31 * result + enterType.hashCode();
-                    result = 31 * result + (readOnly ? 1 : 0);
-                    result = 31 * result + typing.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForEnterValue{" +
-                            "target=" + target +
-                            ", enterType=" + enterType +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for creating a {@link ForEnterValue} offset mapping.
                  */
+                @EqualsAndHashCode
                 protected static class Factory implements OffsetMapping.Factory {
 
                     /**
@@ -3946,35 +3379,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return UNDEFINED;
                         }
                     }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        Factory factory = (Factory) other;
-                        return readOnly == factory.readOnly && enterType.equals(factory.enterType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = enterType.hashCode();
-                        result = 31 * result + (readOnly ? 1 : 0);
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForEnterValue.Factory{" +
-                                "enterType=" + enterType +
-                                "m readOnly=" + readOnly +
-                                '}';
-                    }
                 }
             }
 
             /**
              * An offset mapping that provides access to the value that is returned by the instrumented method.
              */
+            @EqualsAndHashCode
             class ForReturnValue implements OffsetMapping {
 
                 /**
@@ -4036,33 +3447,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForReturnValue that = (ForReturnValue) object;
-                    return readOnly == that.readOnly
-                            && target.equals(that.target)
-                            && typing == that.typing;
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = target.hashCode();
-                    result = 31 * result + (readOnly ? 1 : 0);
-                    result = 31 * result + typing.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForReturnValue{" +
-                            "target=" + target +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for creating a {@link ForReturnValue} offset mapping.
                  */
@@ -4103,17 +3487,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return new ForReturnValue(parameterDescription.getType(), annotation.loadSilent());
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForReturnValue.Factory." + name();
-                    }
                 }
             }
 
             /**
              * An offset mapping for accessing a {@link Throwable} of the instrumented method.
              */
+            @EqualsAndHashCode
             class ForThrowable implements OffsetMapping {
 
                 /**
@@ -4171,36 +3551,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForThrowable that = (ForThrowable) object;
-                    return readOnly == that.readOnly
-                            && target.equals(that.target)
-                            && typing == that.typing;
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = target.hashCode();
-                    result = 31 * result + (readOnly ? 1 : 0);
-                    result = 31 * result + typing.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForThrowable{" +
-                            "target=" + target +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for accessing an exception that was thrown by the instrumented method.
                  */
+                @EqualsAndHashCode
                 protected static class Factory implements OffsetMapping.Factory {
 
                     /**
@@ -4244,26 +3598,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return new ForThrowable(parameterDescription.getType(), annotation.loadSilent());
                         }
                     }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        Factory factory = (Factory) object;
-                        return readOnly == factory.readOnly;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return (readOnly ? 1 : 0);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForThrowable.Factory{" +
-                                "readOnly=" + readOnly +
-                                '}';
-                    }
                 }
             }
 
@@ -4272,6 +3606,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param <T> The mapped annotation type.
              */
+            @EqualsAndHashCode
             class ForUserValue<T extends Annotation> implements OffsetMapping {
 
                 /**
@@ -4314,38 +3649,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             context.isInitialized()));
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForUserValue that = (ForUserValue) other;
-                    return target.equals(that.target)
-                            && annotation.equals(that.annotation)
-                            && dynamicValue.equals(that.dynamicValue);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = target.hashCode();
-                    result = 31 * result + annotation.hashCode();
-                    result = 31 * result + dynamicValue.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForUserValue{" +
-                            "target=" + target +
-                            ", annotation=" + annotation +
-                            ", dynamicValue=" + dynamicValue +
-                            '}';
-                }
-
                 /**
                  * A factory for mapping a user-defined dynamic value.
                  *
                  * @param <S> The mapped annotation type.
                  */
+                @EqualsAndHashCode
                 protected static class Factory<S extends Annotation> implements OffsetMapping.Factory {
 
                     /**
@@ -4388,35 +3697,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ? UNDEFINED
                                 : new ForUserValue<S>(parameterDescription, annotation, dynamicValue);
                     }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        Factory factory = (Factory) other;
-                        return type.equals(factory.type) && dynamicValue.equals(factory.dynamicValue);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = type.hashCode();
-                        result = 31 * result + dynamicValue.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForUserValue.Factory{" +
-                                "type=" + type +
-                                ", dynamicValue=" + dynamicValue +
-                                '}';
-                    }
                 }
             }
 
             /**
              * Represents a factory that throws an exception for a given set of illegal parameter annotations.
              */
+            @EqualsAndHashCode
             class Illegal implements Factory {
 
                 /**
@@ -4451,26 +3738,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
                     return UNDEFINED;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Illegal illegal = (Illegal) other;
-                    return annotations.equals(illegal.annotations);
-                }
-
-                @Override
-                public int hashCode() {
-                    return annotations.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.Illegal{" +
-                            "annotations=" + annotations +
-                            '}';
                 }
             }
         }
@@ -4594,16 +3861,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                          ReturnValueProducer returnValueProducer) {
                     /* do nothing */
                 }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.SuppressionHandler.NoOp." + name();
-                }
             }
 
             /**
              * A suppression handler that suppresses a given throwable type.
              */
+            @EqualsAndHashCode
             class Suppressing implements SuppressionHandler {
 
                 /**
@@ -4635,26 +3898,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public SuppressionHandler.Bound bind(StackManipulation exceptionHandler) {
                     return new Bound(suppressedType, exceptionHandler);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Suppressing that = (Suppressing) other;
-                    return suppressedType.equals(that.suppressedType);
-                }
-
-                @Override
-                public int hashCode() {
-                    return suppressedType.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.SuppressionHandler.Suppressing{" +
-                            "suppressedType=" + suppressedType +
-                            '}';
                 }
 
                 /**
@@ -4727,16 +3970,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
                         onEnd(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, returnValueProducer);
                         methodVisitor.visitLabel(endOfHandler);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.SuppressionHandler.Suppressing.Bound{" +
-                                "suppressedType=" + suppressedType +
-                                "exceptionHandler=" + exceptionHandler +
-                                ", startOfMethod=" + startOfMethod +
-                                ", endOfMethod=" + endOfMethod +
-                                '}';
                     }
                 }
             }
@@ -4837,11 +4070,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           MethodDescription instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
                             /* do nothing */
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.Disabled." + name();
                         }
                     }
 
@@ -5014,11 +4242,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return new Inverted();
                         }
 
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue." + name();
-                        }
-
                         /**
                          * An inverted version of a value-based skipped dispatcher that triggers upon observing a non-default value.
                          */
@@ -5042,28 +4265,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 return ForValue.this;
                             }
 
-                            @Override
+                            @Override // HE: Remove when Lombok support for getOuter is added.
                             public int hashCode() {
                                 return ForValue.this.hashCode();
                             }
 
-                            @Override
+                            @Override // HE: Remove when Lombok support for getOuter is added.
                             public boolean equals(Object other) {
-                                if (other == this) {
-                                    return true;
-                                }
-                                if (!(other instanceof Inverted)) {
-                                    return false;
-                                }
+                                if (other == this) return true;
+                                if (other == null || other.getClass() != getClass()) return false;
                                 Inverted inverted = (Inverted) other;
                                 return inverted.getOuter().equals(ForValue.this);
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue.Inverted{" +
-                                        "outer=" + ForValue.this +
-                                        "}";
                             }
                         }
                     }
@@ -5071,6 +4283,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A skip dispatcher that skips a value if it is of a given instance.
                      */
+                    @EqualsAndHashCode
                     class ForType implements SkipDispatcher {
 
                         /**
@@ -5134,26 +4347,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             skipHandler.apply(methodVisitor);
                             methodVisitor.visitLabel(noSkip);
                             stackMapFrameHandler.injectCompletionFrame(methodVisitor, true);
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            ForType forType = (ForType) other;
-                            return typeDescription.equals(forType.typeDescription);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return typeDescription.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForType{" +
-                                    "typeDescription=" + typeDescription +
-                                    '}';
                         }
                     }
                 }
@@ -5307,16 +4500,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                  StackManipulation exceptionHandler) {
                 return this;
             }
-
-            @Override
-            public String toString() {
-                return "Advice.Dispatcher.Inactive." + name();
-            }
         }
 
         /**
          * A dispatcher for an advice method that is being inlined into the instrumented method.
          */
+        @EqualsAndHashCode
         class Inlining implements Unresolved {
 
             /**
@@ -5354,23 +4543,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                     ClassReader classReader,
                                                                     Dispatcher.Resolved.ForMethodEnter dispatcher) {
                 return Resolved.ForMethodExit.of(adviceMethod, userFactories, classReader, dispatcher.getEnterType());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass()) && adviceMethod.equals(((Inlining) other).adviceMethod);
-            }
-
-            @Override
-            public int hashCode() {
-                return adviceMethod.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.Dispatcher.Inlining{" +
-                        "adviceMethod=" + adviceMethod +
-                        '}';
             }
 
             /**
@@ -5464,18 +4636,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                        MethodDescription instrumentedMethod,
                                                        SuppressionHandler.Bound suppressionHandler);
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Inlining.Resolved resolved = (Inlining.Resolved) other;
-                    return adviceMethod.equals(resolved.adviceMethod) && offsetMappings.equals(resolved.offsetMappings);
+                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Inlining.Resolved resolved = (Inlining.Resolved) object;
+                    return adviceMethod.equals(resolved.adviceMethod)
+                            && offsetMappings.equals(resolved.offsetMappings)
+                            && suppressionHandler.equals(resolved.suppressionHandler);
                 }
 
-                @Override
+                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                 public int hashCode() {
                     int result = adviceMethod.hashCode();
                     result = 31 * result + offsetMappings.hashCode();
+                    result = 31 * result + suppressionHandler.hashCode();
                     return result;
                 }
 
@@ -5614,13 +4789,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     ? new ExceptionTableCollector(methodVisitor)
                                     : IGNORE_METHOD;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableExtractor{" +
-                                    "methodVisitor=" + methodVisitor +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -5653,13 +4821,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public AnnotationVisitor visitTryCatchAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                             return methodVisitor.visitTryCatchAnnotation(typeReference, typePath, descriptor, visible);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableCollector{" +
-                                    "methodVisitor=" + methodVisitor +
-                                    '}';
                         }
                     }
 
@@ -5751,15 +4912,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return substitution == null
                                     ? label
                                     : substitution;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableSubstitutor{" +
-                                    "methodVisitor=" + methodVisitor +
-                                    ", substitutions=" + substitutions +
-                                    ", index=" + index +
-                                    '}';
                         }
                     }
                 }
@@ -5862,31 +5014,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 suppressionHandler);
                     }
 
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        if (!super.equals(other)) return false;
-                        Inlining.Resolved.ForMethodEnter that = (Inlining.Resolved.ForMethodEnter) other;
-                        return skipDispatcher == that.skipDispatcher && prependLineNumber == that.prependLineNumber;
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        Inlining.Resolved.ForMethodEnter that = (Inlining.Resolved.ForMethodEnter) object;
+                        return prependLineNumber == that.prependLineNumber && skipDispatcher.equals(that.skipDispatcher);
                     }
 
-                    @Override
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + skipDispatcher.hashCode();
                         result = 31 * result + (prependLineNumber ? 1 : 0);
                         return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Inlining.Resolved.ForMethodEnter{" +
-                                "adviceMethod=" + adviceMethod +
-                                ", offsetMappings=" + offsetMappings +
-                                ", skipDispatcher=" + skipDispatcher +
-                                ", prependLineNumber=" + prependLineNumber +
-                                '}';
                     }
 
                     /**
@@ -5942,21 +5084,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     methodSizeHandler.bindEntry(adviceMethod),
                                     stackMapFrameHandler.bindEntry(adviceMethod),
                                     instrumentedMethod, skipHandler);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodEnter.AdviceMethodInliner{" +
-                                    "instrumentedType=" + instrumentedType +
-                                    ", instrumentedMethod=" + instrumentedMethod +
-                                    ", methodVisitor=" + methodVisitor +
-                                    ", methodSizeHandler=" + methodSizeHandler +
-                                    ", stackMapFrameHandler=" + stackMapFrameHandler +
-                                    ", suppressionHandler=" + suppressionHandler +
-                                    ", classReader=" + classReader +
-                                    ", labels=" + labels +
-                                    ", skipDispatcher=" + skipDispatcher +
-                                    '}';
                         }
                     }
                 }
@@ -6078,20 +5205,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected abstract StackSize getPadding();
 
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && super.equals(other)
-                                && enterType == ((Inlining.Resolved.ForMethodExit) other).enterType;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + enterType.hashCode();
-                        return result;
-                    }
-
                     /**
                      * An advice method inliner for a method exit.
                      */
@@ -6134,25 +5247,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public void apply() {
                             doApply();
                         }
+                    }
 
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.AdviceMethodInliner{" +
-                                    "instrumentedType=" + instrumentedType +
-                                    ", instrumentedMethod=" + instrumentedMethod +
-                                    ", methodVisitor=" + methodVisitor +
-                                    ", methodSizeHandler=" + methodSizeHandler +
-                                    ", stackMapFrameHandler=" + stackMapFrameHandler +
-                                    ", suppressionHandler=" + suppressionHandler +
-                                    ", classReader=" + classReader +
-                                    ", labels=" + labels +
-                                    '}';
-                        }
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        Inlining.Resolved.ForMethodExit that = (Inlining.Resolved.ForMethodExit) object;
+                        return enterType.equals(that.enterType);
+                    }
+
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + enterType.hashCode();
+                        return result;
                     }
 
                     /**
                      * Implementation of exit advice that handles exceptions.
                      */
+                    @EqualsAndHashCode(callSuper = true)
                     protected static class WithExceptionHandler extends Inlining.Resolved.ForMethodExit {
 
                         /**
@@ -6188,15 +5304,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public TypeDescription getThrowable() {
                             return throwable;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithExceptionHandler{" +
-                                    "adviceMethod=" + adviceMethod +
-                                    ", offsetMappings=" + offsetMappings +
-                                    ", throwable=" + throwable +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -6228,14 +5335,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public TypeDescription getThrowable() {
                             return NoExceptionHandler.DESCRIPTION;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithoutExceptionHandler{" +
-                                    "adviceMethod=" + adviceMethod +
-                                    ", offsetMappings=" + offsetMappings +
-                                    '}';
                         }
                     }
                 }
@@ -6551,15 +5650,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize());
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodEnter{" +
-                                "instrumentedMethod=" + instrumentedMethod +
-                                ", adviceMethod=" + adviceMethod +
-                                ", doesReturn=" + doesReturn +
-                                '}';
-                    }
                 }
 
                 /**
@@ -6641,15 +5731,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected void onMethodReturn() {
                         /* do nothing */
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodExit{" +
-                                "instrumentedMethod=" + instrumentedMethod +
-                                ", adviceMethod=" + adviceMethod +
-                                ", padding=" + padding +
-                                '}';
-                    }
                 }
             }
         }
@@ -6657,6 +5738,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A dispatcher for an advice method that is being invoked from the instrumented method.
          */
+        @EqualsAndHashCode
         class Delegating implements Unresolved {
 
             /**
@@ -6694,23 +5776,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                     ClassReader classReader,
                                                                     Dispatcher.Resolved.ForMethodEnter dispatcher) {
                 return Resolved.ForMethodExit.of(adviceMethod, userFactories, dispatcher.getEnterType());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass()) && adviceMethod.equals(((Delegating) other).adviceMethod);
-            }
-
-            @Override
-            public int hashCode() {
-                return adviceMethod.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.Dispatcher.Delegating{" +
-                        "adviceMethod=" + adviceMethod +
-                        '}';
             }
 
             /**
@@ -6818,18 +5883,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                              StackManipulation exceptionHandler);
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Delegating.Resolved resolved = (Delegating.Resolved) other;
-                    return adviceMethod.equals(resolved.adviceMethod) && offsetMappings.equals(resolved.offsetMappings);
+                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Delegating.Resolved<?> resolved = (Delegating.Resolved<?>) object;
+                    return adviceMethod.equals(resolved.adviceMethod)
+                            && offsetMappings.equals(resolved.offsetMappings)
+                            && suppressionHandler.equals(resolved.suppressionHandler);
                 }
 
-                @Override
+                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                 public int hashCode() {
                     int result = adviceMethod.hashCode();
                     result = 31 * result + offsetMappings.hashCode();
+                    result = 31 * result + suppressionHandler.hashCode();
                     return result;
                 }
 
@@ -6947,17 +6015,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected abstract void onMethodReturn();
 
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Delegating.Resolved.AdviceMethodWriter{" +
-                                "instrumentedMethod=" + instrumentedMethod +
-                                ", methodVisitor=" + methodVisitor +
-                                ", methodSizeHandler=" + methodSizeHandler +
-                                ", stackMapFrameHandler=" + stackMapFrameHandler +
-                                ", suppressionHandler=" + suppressionHandler +
-                                '}';
-                    }
-
                     /**
                      * An advice method writer for a method entry.
                      */
@@ -7049,14 +6106,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
                             }
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.AdviceMethodWriter.ForMethodEnter{" +
-                                    "instrumentedMethod=" + instrumentedMethod +
-                                    ", adviceMethod=" + adviceMethod +
-                                    "}";
-                        }
                     }
 
                     /**
@@ -7118,14 +6167,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public void onDefaultValue(MethodVisitor methodVisitor) {
                             /* do nothing */
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.AdviceMethodWriter.ForMethodExit{" +
-                                    "instrumentedMethod=" + instrumentedMethod +
-                                    ", adviceMethod=" + adviceMethod +
-                                    "}";
                         }
                     }
                 }
@@ -7204,31 +6245,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 skipDispatcher);
                     }
 
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        if (!super.equals(other)) return false;
-                        Delegating.Resolved.ForMethodEnter that = (Delegating.Resolved.ForMethodEnter) other;
-                        return skipDispatcher == that.skipDispatcher && prependLineNumber == that.prependLineNumber;
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        Delegating.Resolved.ForMethodEnter that = (Delegating.Resolved.ForMethodEnter) object;
+                        return prependLineNumber == that.prependLineNumber && skipDispatcher.equals(that.skipDispatcher);
                     }
 
-                    @Override
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + skipDispatcher.hashCode();
                         result = 31 * result + (prependLineNumber ? 1 : 0);
                         return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Delegating.Resolved.ForMethodEnter{" +
-                                "adviceMethod=" + adviceMethod +
-                                ", offsetMappings=" + offsetMappings +
-                                ", skipDispatcher=" + skipDispatcher +
-                                ", prependLineNumber=" + prependLineNumber +
-                                '}';
                     }
                 }
 
@@ -7315,14 +6346,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 suppressionHandler.bind(exceptionHandler));
                     }
 
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && super.equals(other)
-                                && enterType == ((Delegating.Resolved.ForMethodExit) other).enterType;
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        Delegating.Resolved.ForMethodExit that = (Delegating.Resolved.ForMethodExit) object;
+                        return enterType.equals(that.enterType);
                     }
 
-                    @Override
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + enterType.hashCode();
@@ -7332,6 +6365,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Implementation of exit advice that handles exceptions.
                      */
+                    @EqualsAndHashCode(callSuper = true)
                     protected static class WithExceptionHandler extends Delegating.Resolved.ForMethodExit {
 
                         /**
@@ -7360,15 +6394,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public TypeDescription getThrowable() {
                             return throwable;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.ForMethodExit.WithExceptionHandler{" +
-                                    "adviceMethod=" + adviceMethod +
-                                    ", offsetMappings=" + offsetMappings +
-                                    ", throwable=" + throwable +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -7393,14 +6418,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public TypeDescription getThrowable() {
                             return NoExceptionHandler.DESCRIPTION;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.ForMethodExit.WithoutExceptionHandler{" +
-                                    "adviceMethod=" + adviceMethod +
-                                    ", offsetMappings=" + offsetMappings +
-                                    '}';
                         }
                     }
                 }
@@ -7701,13 +6718,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodVisitor.visitInsn(Opcodes.ARETURN);
                 }
             }
-
-            @Override
-            public String toString() {
-                return "Advice.AdviceVisitor.WithoutExitAdvice{" +
-                        ", instrumentedMethod=" + instrumentedMethod +
-                        "}";
-            }
         }
 
         /**
@@ -7913,14 +6923,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected void onExitAdviceReturn() {
                     /* empty */
                 }
-
-                @Override
-                public String toString() {
-                    return "Advice.AdviceVisitor.WithExitAdvice.WithoutExceptionHandling{" +
-                            "instrumentedMethod=" + instrumentedMethod +
-                            ", doesReturn=" + doesReturn +
-                            "}";
-                }
             }
 
             /**
@@ -8051,15 +7053,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         variable(Opcodes.ASTORE);
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "Advice.AdviceVisitor.WithExitAdvice.WithExceptionHandling{" +
-                            "instrumentedMethod=" + instrumentedMethod +
-                            ", throwable=" + throwable +
-                            ", doesReturn=" + doesReturn +
-                            "}";
-                }
             }
         }
     }
@@ -8067,6 +7060,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A byte code appender for implementing {@link Advice}.
      */
+    @EqualsAndHashCode
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -8107,33 +7101,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     AsmVisitorWrapper.NO_FLAGS,
                     AsmVisitorWrapper.NO_FLAGS);
             return emulatingMethodVisitor.resolve(methodVisitor, implementationContext, instrumentedMethod);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Appender appender = (Appender) other;
-            return advice.equals(appender.advice)
-                    && delegate.equals(appender.delegate)
-                    && implementationTarget.equals(appender.implementationTarget);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = advice.hashCode();
-            result = 31 * result + implementationTarget.hashCode();
-            result = 31 * result + delegate.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "Advice.Appender{" +
-                    "advice=" + advice +
-                    ", implementationTarget=" + implementationTarget +
-                    ", delegate=" + delegate +
-                    '}';
         }
 
         /**
@@ -8200,15 +7167,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public void visitEnd() {
                 /* do nothing */
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.Appender.EmulatingMethodVisitor{" +
-                        "delegate=" + delegate +
-                        ", stackSize=" + stackSize +
-                        ", localVariableLength=" + localVariableLength +
-                        '}';
             }
         }
     }
@@ -8817,6 +7775,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A fixed value binding for a constant pool value.
              */
+            @EqualsAndHashCode
             protected static class OfConstant extends ForFixedValue<Annotation> {
 
                 /**
@@ -8852,31 +7811,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return value;
                     }
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    OfConstant that = (OfConstant) object;
-                    return value.equals(that.value);
-                }
-
-                @Override
-                public int hashCode() {
-                    return value.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.DynamicValue.ForFixedValue.OfConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * A dynamic value binding for an annotation property of an annotation on the bound parameter.
              */
+            @EqualsAndHashCode
             protected static class OfAnnotationProperty extends ForFixedValue<Annotation> {
 
                 /**
@@ -8915,32 +7855,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            boolean initialized) {
                     return annotation.getValue(property).resolve();
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    OfAnnotationProperty that = (OfAnnotationProperty) object;
-                    return property.equals(that.property);
-                }
-
-                @Override
-                public int hashCode() {
-                    return property.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.DynamicValue.ForFixedValue.OfAnnotationProperty{" +
-                            "property=" + property +
-                            '}';
-                }
             }
         }
 
         /**
          * A dynamic value binding for a field value.
          */
+        @EqualsAndHashCode
         class ForFieldValue implements DynamicValue<Annotation> {
 
             /**
@@ -8986,31 +7907,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         assignment
                 );
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForFieldValue that = (ForFieldValue) object;
-                return fieldDescription.equals(that.fieldDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return fieldDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.DynamicValue.ForFieldValue{" +
-                        "fieldDescription=" + fieldDescription +
-                        '}';
-            }
         }
 
         /**
          * A dynamic value binding for a method parameter.
          */
+        @EqualsAndHashCode
         class ForParameterValue implements DynamicValue<Annotation> {
 
             /**
@@ -9043,31 +7945,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
                 return new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), assignment);
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForParameterValue that = (ForParameterValue) object;
-                return parameterDescription.equals(that.parameterDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return parameterDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.DynamicValue.ForParameterValue{" +
-                        "parameterDescription=" + parameterDescription +
-                        '}';
-            }
         }
 
         /**
          * A dynamic value binding that serializes the value as a string and deserializes this string on demand.
          */
+        @EqualsAndHashCode
         class ForSerializedValue implements DynamicValue<Annotation> {
 
             /**
@@ -9118,35 +8001,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
                 return new StackManipulation.Compound(deserialization, assignment);
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForSerializedValue that = (ForSerializedValue) object;
-                return typeDescription.equals(that.typeDescription) && deserialization.equals(that.deserialization);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = typeDescription.hashCode();
-                result = 31 * result + deserialization.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.DynamicValue.ForSerializedValue{" +
-                        "typeDescription=" + typeDescription +
-                        ", deserialization=" + deserialization +
-                        '}';
-            }
         }
     }
 
     /**
      * A builder step for creating an {@link Advice} that uses custom mappings of annotations to constant pool values.
      */
+    @EqualsAndHashCode
     public static class WithCustomMapping {
 
         /**
@@ -9414,26 +8275,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 userFactories.add(Dispatcher.OffsetMapping.ForUserValue.Factory.of(entry.getKey(), entry.getValue()));
             }
             return Advice.to(enterAdvice, exitAdvice, classFileLocator, userFactories);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            WithCustomMapping that = (WithCustomMapping) other;
-            return dynamicValues.equals(that.dynamicValues);
-        }
-
-        @Override
-        public int hashCode() {
-            return dynamicValues.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "Advice.WithCustomMapping{" +
-                    "dynamicValues=" + dynamicValues +
-                    '}';
         }
     }
 

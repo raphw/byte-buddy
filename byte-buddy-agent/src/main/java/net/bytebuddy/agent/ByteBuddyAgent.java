@@ -1,6 +1,7 @@
 package net.bytebuddy.agent;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -406,16 +407,12 @@ public class ByteBuddyAgent {
                 public Class<?> getVirtualMachineType() {
                     throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
                 }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.AttachmentProvider.Accessor.Unavailable." + name();
-                }
             }
 
             /**
              * A simple implementation of an accessible accessor.
              */
+            @EqualsAndHashCode
             class Simple implements Accessor {
 
                 /**
@@ -480,26 +477,6 @@ public class ByteBuddyAgent {
                 public Class<?> getVirtualMachineType() {
                     return virtualMachineType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Simple simple = (Simple) other;
-                    return virtualMachineType.equals(simple.virtualMachineType);
-                }
-
-                @Override
-                public int hashCode() {
-                    return virtualMachineType.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.AttachmentProvider.Accessor.Simple{" +
-                            "virtualMachineType=" + virtualMachineType +
-                            '}';
-                }
             }
         }
 
@@ -517,11 +494,6 @@ public class ByteBuddyAgent {
             public Accessor attempt() {
                 return Accessor.Simple.of(ClassLoader.getSystemClassLoader());
             }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.ForJigsawVm." + name();
-            }
         }
 
         /**
@@ -538,11 +510,6 @@ public class ByteBuddyAgent {
             @Override
             public Accessor attempt() {
                 return Accessor.Simple.ofJ9();
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.ForJ9Vm." + name();
             }
         }
 
@@ -601,11 +568,6 @@ public class ByteBuddyAgent {
                     throw new IllegalStateException("Could not represent " + toolsJar + " as URL");
                 }
             }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.ForToolsJarVm." + name();
-            }
         }
 
         /**
@@ -626,11 +588,6 @@ public class ByteBuddyAgent {
                     return Accessor.Unavailable.INSTANCE;
                 }
             }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.ForUnixHotSpotVm." + name();
-            }
         }
 
         /**
@@ -638,6 +595,7 @@ public class ByteBuddyAgent {
          * none of the providers of this compound provider is capable of providing a valid accessor, an
          * non-available accessor is returned.
          */
+        @EqualsAndHashCode
         class Compound implements AttachmentProvider {
 
             /**
@@ -679,26 +637,6 @@ public class ByteBuddyAgent {
                     }
                 }
                 return Accessor.Unavailable.INSTANCE;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Compound compound = (Compound) other;
-                return attachmentProviders.equals(compound.attachmentProviders);
-            }
-
-            @Override
-            public int hashCode() {
-                return attachmentProviders.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.Compound{" +
-                        "attachmentProviders=" + attachmentProviders +
-                        '}';
             }
         }
     }
@@ -742,11 +680,6 @@ public class ByteBuddyAgent {
                 return dispatcher.resolve();
             }
 
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.ProcessProvider.ForCurrentVm." + name();
-            }
-
             /**
              * A process provider for a legacy VM that reads the process id from its JMX properties.
              */
@@ -767,16 +700,12 @@ public class ByteBuddyAgent {
                         return runtimeName.substring(0, processIdIndex);
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.ProcessProvider.ForCurrentVm.ForLegacyVm." + name();
-                }
             }
 
             /**
              * A process provider for a Java 9 capable VM with access to the introduced process API.
              */
+            @EqualsAndHashCode
             protected static class ForJava9CapableVm implements ProcessProvider {
 
                 /**
@@ -825,29 +754,6 @@ public class ByteBuddyAgent {
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error when accessing Java 9 process API", exception.getCause());
                     }
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForJava9CapableVm that = (ForJava9CapableVm) other;
-                    return current.equals(that.current) && getPid.equals(that.getPid);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = current.hashCode();
-                    result = 31 * result + getPid.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.ProcessProvider.ForCurrentVm.ForJava9CapableVm{" +
-                            "current=" + current +
-                            ", getPid=" + getPid +
-                            '}';
                 }
             }
         }
@@ -919,16 +825,12 @@ public class ByteBuddyAgent {
                 }
                 return agentJar;
             }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AgentProvider.ForByteBuddyAgent." + name();
-            }
         }
 
         /**
          * An agent provider that supplies an existing agent that is not deleted after attachment.
          */
+        @EqualsAndHashCode
         class ForExistingAgent implements AgentProvider {
 
             /**
@@ -948,26 +850,6 @@ public class ByteBuddyAgent {
             @Override
             public File resolve() {
                 return agent;
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForExistingAgent that = (ForExistingAgent) object;
-                return agent.equals(that.agent);
-            }
-
-            @Override
-            public int hashCode() {
-                return agent.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AgentProvider.ForExistingAgent{" +
-                        "agent='" + agent + '\'' +
-                        '}';
             }
         }
     }

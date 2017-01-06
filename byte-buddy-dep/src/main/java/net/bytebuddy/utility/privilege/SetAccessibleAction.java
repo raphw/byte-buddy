@@ -1,5 +1,7 @@
 package net.bytebuddy.utility.privilege;
 
+import lombok.EqualsAndHashCode;
+
 import java.lang.reflect.AccessibleObject;
 import java.security.PrivilegedAction;
 
@@ -8,6 +10,7 @@ import java.security.PrivilegedAction;
  *
  * @param <T> The type of the accessible object.
  */
+@EqualsAndHashCode
 public class SetAccessibleAction<T extends AccessibleObject> implements PrivilegedAction<T> {
 
     /**
@@ -28,23 +31,5 @@ public class SetAccessibleAction<T extends AccessibleObject> implements Privileg
     public T run() {
         accessibleObject.setAccessible(true);
         return accessibleObject;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && accessibleObject.equals(((SetAccessibleAction<?>) other).accessibleObject);
-    }
-
-    @Override
-    public int hashCode() {
-        return accessibleObject.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "SetAccessibleAction{" +
-                "accessibleObject=" + accessibleObject +
-                '}';
     }
 }

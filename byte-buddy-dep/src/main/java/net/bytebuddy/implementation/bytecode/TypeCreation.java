@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
@@ -8,6 +9,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * A stack manipulation for creating an <i>undefined</i> type on which a constructor is to be called.
  */
+@EqualsAndHashCode
 public class TypeCreation implements StackManipulation {
 
     /**
@@ -46,21 +48,5 @@ public class TypeCreation implements StackManipulation {
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitTypeInsn(Opcodes.NEW, typeDescription.getInternalName());
         return new Size(1, 1);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && typeDescription.equals(((TypeCreation) other).typeDescription);
-    }
-
-    @Override
-    public int hashCode() {
-        return typeDescription.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "TypeCreation{typeDescription=" + typeDescription + '}';
     }
 }

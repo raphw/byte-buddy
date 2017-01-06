@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -161,6 +162,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * @see MethodCall
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue
  */
+@EqualsAndHashCode
 public class MethodDelegation implements Implementation.Composable {
 
     /**
@@ -524,39 +526,6 @@ public class MethodDelegation implements Implementation.Composable {
                 compiled);
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        MethodDelegation that = (MethodDelegation) other;
-        return ambiguityResolver.equals(that.ambiguityResolver)
-                && assigner.equals(that.assigner)
-                && terminationHandler.equals(that.terminationHandler)
-                && implementationDelegate.equals(that.implementationDelegate)
-                && parameterBinders.equals(that.parameterBinders);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = implementationDelegate.hashCode();
-        result = 31 * result + parameterBinders.hashCode();
-        result = 31 * result + terminationHandler.hashCode();
-        result = 31 * result + ambiguityResolver.hashCode();
-        result = 31 * result + assigner.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "MethodDelegation{" +
-                "implementationDelegate=" + implementationDelegate +
-                ", parameterBinders=" + parameterBinders +
-                ", terminationHandler=" + terminationHandler +
-                ", ambiguityResolver=" + ambiguityResolver +
-                ", assigner=" + assigner +
-                '}';
-    }
-
     /**
      * An implementation delegate is responsible for executing the actual method delegation and for resolving the target methods.
      */
@@ -605,6 +574,7 @@ public class MethodDelegation implements Implementation.Composable {
             /**
              * A compiled implementation delegate for invoking a static method.
              */
+            @EqualsAndHashCode
             class ForStaticCall implements Compiled {
 
                 /**
@@ -635,31 +605,12 @@ public class MethodDelegation implements Implementation.Composable {
                 public List<MethodDelegationBinder.Record> getRecords() {
                     return records;
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForStaticCall that = (ForStaticCall) object;
-                    return records.equals(that.records);
-                }
-
-                @Override
-                public int hashCode() {
-                    return records.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.Compiled.ForStaticCall{" +
-                            "records=" + records +
-                            '}';
-                }
             }
 
             /**
              * A compiled implementation delegate that invokes methods on a field.
              */
+            @EqualsAndHashCode
             class ForField implements Compiled {
 
                 /**
@@ -702,34 +653,12 @@ public class MethodDelegation implements Implementation.Composable {
                 public List<MethodDelegationBinder.Record> getRecords() {
                     return records;
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForField forField = (ForField) object;
-                    return fieldDescription.equals(forField.fieldDescription) && records.equals(forField.records);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = fieldDescription.hashCode();
-                    result = 31 * result + records.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.Compiled.ForField{" +
-                            "fieldDescription=" + fieldDescription +
-                            ", records=" + records +
-                            '}';
-                }
             }
 
             /**
              * A compiled implementation delegate for a constructor delegation.
              */
+            @EqualsAndHashCode
             class ForConstruction implements Compiled {
 
                 /**
@@ -767,35 +696,13 @@ public class MethodDelegation implements Implementation.Composable {
                 public List<MethodDelegationBinder.Record> getRecords() {
                     return records;
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForConstruction that = (ForConstruction) object;
-                    return typeDescription.equals(that.typeDescription) && records.equals(that.records);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = typeDescription.hashCode();
-                    result = 31 * result + records.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.Compiled.ForConstruction{" +
-                            "typeDescription=" + typeDescription +
-                            ", records=" + records +
-                            '}';
-                }
             }
         }
 
         /**
          * An implementation delegate for a static method delegation.
          */
+        @EqualsAndHashCode
         class ForStaticMethod implements ImplementationDelegate {
 
             /**
@@ -836,31 +743,12 @@ public class MethodDelegation implements Implementation.Composable {
             public ImplementationDelegate.Compiled compile(TypeDescription instrumentedType) {
                 return new Compiled.ForStaticCall(records);
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForStaticMethod that = (ForStaticMethod) object;
-                return records.equals(that.records);
-            }
-
-            @Override
-            public int hashCode() {
-                return records.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegation.ImplementationDelegate.ForStaticMethod{" +
-                        "records=" + records +
-                        '}';
-            }
         }
 
         /**
          * An implementation delegate for invoking methods on a field that is declared by the instrumented type or a super type.
          */
+        @EqualsAndHashCode
         abstract class ForField implements ImplementationDelegate {
 
             /**
@@ -928,29 +816,10 @@ public class MethodDelegation implements Implementation.Composable {
              */
             protected abstract FieldDescription resolve(TypeDescription instrumentedType);
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForField forField = (ForField) object;
-                return fieldName.equals(forField.fieldName)
-                        && methodGraphCompiler.equals(forField.methodGraphCompiler)
-                        && parameterBinders.equals(forField.parameterBinders)
-                        && matcher.equals(forField.matcher);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = fieldName.hashCode();
-                result = 31 * result + methodGraphCompiler.hashCode();
-                result = 31 * result + parameterBinders.hashCode();
-                result = 31 * result + matcher.hashCode();
-                return result;
-            }
-
             /**
              * An implementation target for a static field that is declared by the instrumented type and that is assigned an instance.
              */
+            @EqualsAndHashCode(callSuper = true)
             protected static class WithInstance extends ForField {
 
                 /**
@@ -1001,41 +870,13 @@ public class MethodDelegation implements Implementation.Composable {
                                 .getOnly();
                     }
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    if (!super.equals(object)) return false;
-                    WithInstance that = (WithInstance) object;
-                    return target.equals(that.target) && fieldType.equals(that.fieldType);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = super.hashCode();
-                    result = 31 * result + target.hashCode();
-                    result = 31 * result + fieldType.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.ForField.WithInstance{" +
-                            "fieldName='" + fieldName + "'" +
-                            ", parameterBinders=" + parameterBinders +
-                            ", matcher=" + matcher +
-                            ", methodGraphCompiler=" + methodGraphCompiler +
-                            ", target=" + target +
-                            ", fieldType=" + fieldType +
-                            '}';
-                }
             }
 
 
             /**
              * An implementation target for a field that is declared by the instrumented type or a super type.
              */
+            @EqualsAndHashCode(callSuper = true)
             protected static class WithLookup extends ForField {
 
                 /**
@@ -1075,39 +916,13 @@ public class MethodDelegation implements Implementation.Composable {
                         return resolution.getField();
                     }
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    if (!super.equals(object)) return false;
-                    WithLookup that = (WithLookup) object;
-                    return fieldLocatorFactory.equals(that.fieldLocatorFactory);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = super.hashCode();
-                    result = 31 * result + fieldLocatorFactory.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.ForField.WithLookup{" +
-                            "fieldName='" + fieldName + "'" +
-                            ", parameterBinders=" + parameterBinders +
-                            ", matcher=" + matcher +
-                            ", methodGraphCompiler=" + methodGraphCompiler +
-                            ", fieldLocatorFactory=" + fieldLocatorFactory +
-                            '}';
-                }
             }
         }
 
         /**
          * An implementation delegate for constructing an instance.
          */
+        @EqualsAndHashCode
         class ForConstruction implements ImplementationDelegate {
 
             /**
@@ -1158,35 +973,13 @@ public class MethodDelegation implements Implementation.Composable {
             public Compiled compile(TypeDescription instrumentedType) {
                 return new Compiled.ForConstruction(typeDescription, records);
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForConstruction that = (ForConstruction) object;
-                return typeDescription.equals(that.typeDescription) && records.equals(that.records);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = typeDescription.hashCode();
-                result = 31 * result + records.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegation.ImplementationDelegate.ForConstruction{" +
-                        "typeDescription=" + typeDescription +
-                        ", records=" + records +
-                        '}';
-            }
         }
     }
 
     /**
      * The appender for implementing a {@link net.bytebuddy.implementation.MethodDelegation}.
      */
+    @EqualsAndHashCode
     protected static class Appender implements ByteCodeAppender {
 
         /**
@@ -1243,44 +1036,12 @@ public class MethodDelegation implements Implementation.Composable {
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            Appender appender = (Appender) object;
-            return implementationTarget.equals(appender.implementationTarget)
-                    && processor.equals(appender.processor)
-                    && terminationHandler.equals(appender.terminationHandler)
-                    && assigner.equals(appender.assigner)
-                    && compiled.equals(appender.compiled);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = implementationTarget.hashCode();
-            result = 31 * result + processor.hashCode();
-            result = 31 * result + terminationHandler.hashCode();
-            result = 31 * result + assigner.hashCode();
-            result = 31 * result + compiled.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDelegation.Appender{" +
-                    "implementationTarget=" + implementationTarget +
-                    ", processor=" + processor +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", compiled=" + compiled +
-                    '}';
-        }
     }
 
     /**
      * A {@link MethodDelegation} with custom configuration.
      */
+    @EqualsAndHashCode
     public static class WithCustomProperties {
 
         /**
@@ -1636,33 +1397,6 @@ public class MethodDelegation implements Implementation.Composable {
             return new MethodDelegation(new ImplementationDelegate.ForField.WithLookup(name, methodGraphCompiler, parameterBinders, matcher, fieldLocatorFactory),
                     TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                     MethodDelegationBinder.AmbiguityResolver.DEFAULT);
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            WithCustomProperties that = (WithCustomProperties) object;
-            return ambiguityResolver.equals(that.ambiguityResolver)
-                    && parameterBinders.equals(that.parameterBinders)
-                    && matcher.equals(that.matcher);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = ambiguityResolver.hashCode();
-            result = 31 * result + parameterBinders.hashCode();
-            result = 31 * result + matcher.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDelegation.WithCustomProperties{" +
-                    "ambiguityResolver=" + ambiguityResolver +
-                    ", parameterBinders=" + parameterBinders +
-                    ", matcher=" + matcher +
-                    '}';
         }
     }
 }

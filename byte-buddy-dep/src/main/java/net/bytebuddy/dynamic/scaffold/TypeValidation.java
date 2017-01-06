@@ -59,9 +59,4 @@ public enum TypeValidation {
     public boolean isEnabled() {
         return enabled;
     }
-
-    @Override
-    public String toString() {
-        return "TypeValidation." + name();
-    }
 }

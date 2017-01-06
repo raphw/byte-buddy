@@ -1,6 +1,7 @@
 package net.bytebuddy.agent.builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
@@ -16,6 +17,7 @@ import java.util.concurrent.Callable;
  * singleton and for becoming reachable from the JVM's meta factory. This class keeps a reference to all registered transformers which need
  * to be explicitly deregistered in order to avoid a memory leak.
  */
+@EqualsAndHashCode
 public class LambdaFactory {
 
     /**
@@ -196,28 +198,5 @@ public class LambdaFactory {
                 markerInterfaces,
                 additionalBridges,
                 CLASS_FILE_TRANSFORMERS.keySet());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        LambdaFactory that = (LambdaFactory) other;
-        return target.equals(that.target) && dispatcher.equals(that.dispatcher);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = target.hashCode();
-        result = 31 * result + dispatcher.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "LambdaFactory{" +
-                "target=" + target +
-                ", dispatcher=" + dispatcher +
-                '}';
     }
 }

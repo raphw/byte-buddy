@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -94,14 +95,10 @@ public @interface SuperMethod {
             }
         }
 
-        @Override
-        public String toString() {
-            return "SuperMethod.Binder." + name();
-        }
-
         /**
          * Loads the delegation method constant onto the stack.
          */
+        @EqualsAndHashCode
         protected static class DelegationMethod implements StackManipulation {
 
             /**
@@ -137,29 +134,6 @@ public @interface SuperMethod {
                 return (cached
                         ? FieldAccess.forField(implementationContext.cache(stackManipulation, new TypeDescription.ForLoadedType(Method.class))).read()
                         : stackManipulation).apply(methodVisitor, implementationContext);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                DelegationMethod that = (DelegationMethod) other;
-                return cached == that.cached && specialMethodInvocation.equals(that.specialMethodInvocation);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = specialMethodInvocation.hashCode();
-                result = 31 * result + (cached ? 1 : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "SuperMethod.Binder.DelegationMethod{" +
-                        "specialMethodInvocation=" + specialMethodInvocation +
-                        ", cached=" + cached +
-                        '}';
             }
         }
     }

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -100,11 +101,6 @@ public @interface Default {
             }
         }
 
-        @Override
-        public String toString() {
-            return "Default.Binder." + name();
-        }
-
         /**
          * Locates the type which should be the base type of the created proxy.
          */
@@ -132,16 +128,12 @@ public @interface Default {
                 public TypeDescription resolve(TypeDescription.Generic parameterType) {
                     return parameterType.asErasure();
                 }
-
-                @Override
-                public String toString() {
-                    return "Default.Binder.TypeLocator.ForParameterType." + name();
-                }
             }
 
             /**
              * A type locator that returns a given type.
              */
+            @EqualsAndHashCode
             class ForType implements TypeLocator {
 
                 /**
@@ -180,26 +172,6 @@ public @interface Default {
                         throw new IllegalStateException("Impossible to assign " + typeDescription + " to parameter of type " + parameterType);
                     }
                     return typeDescription;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForType forType = (ForType) other;
-                    return typeDescription.equals(forType.typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Default.Binder.TypeLocator.ForType{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
                 }
             }
         }

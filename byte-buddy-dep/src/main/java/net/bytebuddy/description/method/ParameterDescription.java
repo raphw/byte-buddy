@@ -1,6 +1,7 @@
 package net.bytebuddy.description.method;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -153,11 +154,8 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            } else if (!(other instanceof ParameterDescription)) {
-                return false;
-            }
+            if (this == other) return true;
+            if (!(other instanceof ParameterDescription)) return false;
             ParameterDescription parameterDescription = (ParameterDescription) other;
             return getDeclaringMethod().equals(parameterDescription.getDeclaringMethod())
                     && getIndex() == parameterDescription.getIndex();
@@ -297,16 +295,12 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "ParameterDescription.ForLoadedParameter.Dispatcher.CreationAction." + name();
-                }
             }
 
             /**
              * A dispatcher for VMs that support the {@code java.lang.reflect.Parameter} API for Java 8+.
              */
+            @EqualsAndHashCode
             class ForJava8CapableVm implements Dispatcher {
 
                 /**
@@ -393,36 +387,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                         throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getParameters", exception.getCause());
                     }
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForJava8CapableVm legal = (ForJava8CapableVm) other;
-                    return getParameters.equals(legal.getParameters)
-                            && getName.equals(legal.getName)
-                            && isNamePresent.equals(legal.isNamePresent)
-                            && getModifiers.equals(legal.getModifiers);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = getParameters.hashCode();
-                    result = 31 * result + getName.hashCode();
-                    result = 31 * result + isNamePresent.hashCode();
-                    result = 31 * result + getModifiers.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "ParameterDescription.ForLoadedParameter.Dispatcher.ForJava8CapableVm{" +
-                            "getParameters=" + getParameters +
-                            ", getName=" + getName +
-                            ", isNamePresent=" + isNamePresent +
-                            ", getModifiers=" + getModifiers +
-                            '}';
-                }
             }
 
             /**
@@ -449,11 +413,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 @Override
                 public String getName(AccessibleObject executable, int index) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
-                }
-
-                @Override
-                public String toString() {
-                    return "ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm." + name();
                 }
             }
         }
@@ -1049,7 +1008,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof Token)) return false;
             Token token = (Token) other;
             return type.equals(token.type)
                     && annotations.equals(token.annotations)
@@ -1071,7 +1030,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             return "ParameterDescription.Token{" +
                     "type=" + type +
                     ", annotations=" + annotations +
-                    ", name=" + (name == null ? null : "'" + name + '\'') +
+                    ", name='" + name + '\'' +
                     ", modifiers=" + modifiers +
                     '}';
         }

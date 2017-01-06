@@ -1,6 +1,5 @@
 package net.bytebuddy.test.utility;
 
-import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
@@ -43,26 +42,18 @@ public class ObjectPropertyAssertion<T> {
 
     private final String optionalToStringRegex;
 
-    private final boolean skipToString;
-
-    private final Set<String> ignoredFields;
-
     private ObjectPropertyAssertion(Class<T> type,
                                     ApplicableGenerator generator,
                                     ApplicableRefinement refinement,
                                     ApplicableCreator creator,
                                     boolean skipSynthetic,
-                                    boolean skipToString,
-                                    String optionalToStringRegex,
-                                    Set<String> ignoredFields) {
+                                    String optionalToStringRegex) {
         this.type = type;
         this.generator = generator;
         this.refinement = refinement;
         this.creator = creator;
         this.skipSynthetic = skipSynthetic;
-        this.skipToString = skipToString;
         this.optionalToStringRegex = optionalToStringRegex;
-        this.ignoredFields = ignoredFields;
     }
 
     public static <S> ObjectPropertyAssertion<S> of(Class<S> type) {
@@ -71,9 +62,7 @@ public class ObjectPropertyAssertion<T> {
                 new ApplicableRefinement(),
                 new ApplicableCreator(),
                 false,
-                false,
-                null,
-                new HashSet<String>());
+                null);
     }
 
     public ObjectPropertyAssertion<T> refine(Refinement<?> refinement) {
@@ -82,9 +71,7 @@ public class ObjectPropertyAssertion<T> {
                 this.refinement.with(refinement),
                 creator,
                 skipSynthetic,
-                skipToString,
-                optionalToStringRegex,
-                ignoredFields);
+                optionalToStringRegex);
     }
 
     public ObjectPropertyAssertion<T> generate(Generator<?> generator) {
@@ -93,9 +80,7 @@ public class ObjectPropertyAssertion<T> {
                 refinement,
                 creator,
                 skipSynthetic,
-                skipToString,
-                optionalToStringRegex,
-                ignoredFields);
+                optionalToStringRegex);
     }
 
     public ObjectPropertyAssertion<T> create(Creator<?> creator) {
@@ -104,35 +89,19 @@ public class ObjectPropertyAssertion<T> {
                 refinement,
                 this.creator.with(creator),
                 skipSynthetic,
-                skipToString,
-                optionalToStringRegex,
-                ignoredFields);
+                optionalToStringRegex);
     }
 
     public ObjectPropertyAssertion<T> skipSynthetic() {
-        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, true, skipToString, optionalToStringRegex, ignoredFields);
-    }
-
-    public ObjectPropertyAssertion<T> skipToString() {
-        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, true, optionalToStringRegex, ignoredFields);
+        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, true, optionalToStringRegex);
     }
 
     public ObjectPropertyAssertion<T> specificToString(String stringRegex) {
-        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, skipToString, stringRegex, ignoredFields);
-    }
-
-    public ObjectPropertyAssertion<T> ignoreFields(String... field) {
-        Set<String> ignoredFields = new HashSet<String>(this.ignoredFields);
-        ignoredFields.addAll(Arrays.asList(field));
-        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, skipToString, optionalToStringRegex, ignoredFields);
+        return new ObjectPropertyAssertion<T>(type, generator, refinement, creator, skipSynthetic, stringRegex);
     }
 
     public void apply() throws IllegalAccessException, InvocationTargetException, InstantiationException {
         if (type.isEnum()) {
-            for (T instance : type.getEnumConstants()) {
-                assertThat(instance.toString(), is(type.getCanonicalName()
-                        .substring(type.getPackage().getName().length() + 1) + "." + ((Enum<?>) instance).name()));
-            }
             return;
         }
         for (Constructor<?> constructor : type.getDeclaredConstructors()) {
@@ -156,11 +125,7 @@ public class ObjectPropertyAssertion<T> {
             Object similarInstance = constructor.newInstance(actualArguments);
             assertThat(instance.hashCode(), is(similarInstance.hashCode()));
             assertThat(instance, is(similarInstance));
-            if (skipToString) {
-                assertThat(instance.toString(), notNullValue());
-            } else if (optionalToStringRegex == null) {
-                checkString(instance);
-            } else {
+            if (optionalToStringRegex != null) {
                 assertThat(instance.toString(), new RegexMatcher(optionalToStringRegex));
             }
             for (Object otherArgument : otherArguments) {
@@ -182,20 +147,6 @@ public class ObjectPropertyAssertion<T> {
         }
     }
 
-    private void checkString(T instance) {
-        assertThat(instance.toString(), CoreMatchers.startsWith(type.getCanonicalName()
-                .substring(type.getPackage().getName().length() + 1) + "{"));
-        assertThat(instance.toString(), endsWith("}"));
-        Class<?> currentType = type;
-        do {
-            for (Field field : type.getDeclaredFields()) {
-                if (!field.isSynthetic() && !Modifier.isStatic(field.getModifiers()) && !ignoredFields.contains(field.getName())) {
-                    assertThat(instance.toString(), containsString(field.getName()));
-                }
-            }
-        } while ((currentType = currentType.getSuperclass()) != Object.class);
-    }
-
     public void applyBasic() throws IllegalAccessException, InvocationTargetException, InstantiationException {
         for (Constructor<?> constructor : type.getDeclaredConstructors()) {
             if (constructor.isSynthetic() && skipSynthetic) {
@@ -211,7 +162,6 @@ public class ObjectPropertyAssertion<T> {
             }
             @SuppressWarnings("unchecked")
             T instance = (T) constructor.newInstance(actualArguments);
-            checkString(instance);
             assertThat(instance, is(instance));
             assertThat(instance, not(is((Object) null)));
             assertThat(instance, not(is(new Object())));

@@ -99,11 +99,6 @@ public @interface AllArguments {
         protected boolean isStrict() {
             return strict;
         }
-
-        @Override
-        public String toString() {
-            return "AllArguments.Assignment." + name();
-        }
     }
 
     /**
@@ -152,11 +147,6 @@ public @interface AllArguments {
                 offset += sourceParameter.getStackSize().getSize();
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(arrayFactory.withValues(stackManipulations));
-        }
-
-        @Override
-        public String toString() {
-            return "AllArguments.Binder." + name();
         }
     }
 }

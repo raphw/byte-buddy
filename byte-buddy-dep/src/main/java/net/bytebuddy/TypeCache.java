@@ -1,6 +1,7 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.ref.Reference;
@@ -177,14 +178,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         cache.clear();
     }
 
-    @Override
-    public String toString() {
-        return "TypeCache{" +
-                "sort=" + sort +
-                ", cache=" + cache +
-                '}';
-    }
-
     /**
      * Determines the storage format for a cached type.
      */
@@ -217,11 +210,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
          * @return The reference that represents the type.
          */
         protected abstract Reference<Class<?>> wrap(Class<?> type);
-
-        @Override
-        public String toString() {
-            return "TypeCache.Sort." + name();
-        }
     }
 
     /**
@@ -260,14 +248,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             return (other instanceof LookupKey && ((LookupKey) other).classLoader == classLoader)
                     || (other instanceof StorageKey && ((StorageKey) other).hashCode == hashCode && ((StorageKey) other).get() == classLoader);
         }
-
-        @Override
-        public String toString() {
-            return "TypeCache.LookupKey{" +
-                    "classLoader=" + classLoader +
-                    ", hashCode=" + hashCode +
-                    '}';
-        }
     }
 
     /**
@@ -301,14 +281,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
         public boolean equals(Object other) {
             return (other instanceof LookupKey && ((LookupKey) other).hashCode == hashCode && ((LookupKey) other).classLoader == get())
                     || (other instanceof StorageKey && ((StorageKey) other).get() == get());
-        }
-
-        @Override
-        public String toString() {
-            return "TypeCache.StorageKey{" +
-                    "classLoader=" + get() +
-                    ", hashCode=" + hashCode +
-                    '}';
         }
     }
 
@@ -366,19 +338,12 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
                 expungeStaleEntries();
             }
         }
-
-        @Override
-        public String toString() {
-            return "TypeCache.WithInlineExpunction{" +
-                    "sort=" + sort +
-                    ", cache=" + cache +
-                    '}';
-        }
     }
 
     /**
      * A simple key based on a collection of types where no type is strongly referenced.
      */
+    @EqualsAndHashCode
     public static class SimpleKey {
 
         /**
@@ -416,26 +381,6 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
             for (Class<?> type : types) {
                 this.types.add(type.getName());
             }
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            SimpleKey simpleKey = (SimpleKey) object;
-            return types.equals(simpleKey.types);
-        }
-
-        @Override
-        public int hashCode() {
-            return types.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "TypeCache.SimpleKey{" +
-                    "types=" + types +
-                    '}';
         }
     }
 }

@@ -133,11 +133,6 @@ public enum PrimitiveBoxingDelegate {
         return new BoxingStackManipulation(chainedAssigner.assign(wrapperType.asGenericType(), target, typing));
     }
 
-    @Override
-    public String toString() {
-        return "PrimitiveBoxingDelegate." + name();
-    }
-
     /**
      * A stack manipulation for boxing a primitive type into its wrapper type.
      */

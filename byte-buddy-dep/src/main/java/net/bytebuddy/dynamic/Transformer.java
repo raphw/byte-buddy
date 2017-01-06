@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
@@ -59,16 +60,12 @@ public interface Transformer<T> {
         public Object transform(TypeDescription instrumentedType, Object target) {
             return target;
         }
-
-        @Override
-        public String toString() {
-            return "Transformer.NoOp." + name();
-        }
     }
 
     /**
      * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.field.FieldDescription.Token}.
      */
+    @EqualsAndHashCode
     class ForField implements Transformer<FieldDescription> {
 
         /**
@@ -103,27 +100,10 @@ public interface Transformer<T> {
                     fieldDescription.asDefined());
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && transformer.equals(((ForField) other).transformer);
-        }
-
-        @Override
-        public int hashCode() {
-            return transformer.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "Transformer.ForField{" +
-                    "transformer=" + transformer +
-                    '}';
-        }
-
         /**
          * A transformer for a field's modifiers.
          */
+        @EqualsAndHashCode
         protected static class FieldModifierTransformer implements Transformer<FieldDescription.Token> {
 
             /**
@@ -146,24 +126,6 @@ public interface Transformer<T> {
                         ModifierContributor.Resolver.of(modifierContributors).resolve(target.getModifiers()),
                         target.getType(),
                         target.getAnnotations());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && modifierContributors.equals(((FieldModifierTransformer) other).modifierContributors);
-            }
-
-            @Override
-            public int hashCode() {
-                return modifierContributors.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Transformer.ForField.FieldModifierTransformer{" +
-                        "modifierContributors=" + modifierContributors +
-                        '}';
             }
         }
 
@@ -245,6 +207,7 @@ public interface Transformer<T> {
     /**
      * A transformer for a field that delegates to another transformer that transforms a {@link net.bytebuddy.description.method.MethodDescription.Token}.
      */
+    @EqualsAndHashCode
     class ForMethod implements Transformer<MethodDescription> {
 
         /**
@@ -280,27 +243,10 @@ public interface Transformer<T> {
                     methodDescription.asDefined());
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && transformer.equals(((ForMethod) other).transformer);
-        }
-
-        @Override
-        public int hashCode() {
-            return transformer.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "Transformer.ForMethod{" +
-                    "transformer=" + transformer +
-                    '}';
-        }
-
         /**
          * A transformer for a method's modifiers.
          */
+        @EqualsAndHashCode
         protected static class MethodModifierTransformer implements Transformer<MethodDescription.Token> {
 
             /**
@@ -328,24 +274,6 @@ public interface Transformer<T> {
                         target.getAnnotations(),
                         target.getDefaultValue(),
                         target.getReceiverType());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && modifierContributors.equals(((MethodModifierTransformer) other).modifierContributors);
-            }
-
-            @Override
-            public int hashCode() {
-                return modifierContributors.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "Transformer.ForMethod.MethodModifierTransformer{" +
-                        "modifierContributors=" + modifierContributors +
-                        '}';
             }
         }
 
@@ -580,13 +508,6 @@ public interface Transformer<T> {
                 private TransformedMethod getOuter() {
                     return TransformedMethod.this;
                 }
-
-                @Override
-                public String toString() {
-                    return "Transformer.ForMethod.TransformedMethod.AttachmentVisitor{" +
-                            "outer=" + TransformedMethod.this +
-                            '}';
-                }
             }
         }
     }
@@ -596,6 +517,7 @@ public interface Transformer<T> {
      *
      * @param <S> The type of the transformed instance.
      */
+    @EqualsAndHashCode
     class Compound<S> implements Transformer<S> {
 
         /**
@@ -635,24 +557,6 @@ public interface Transformer<T> {
                 target = transformer.transform(instrumentedType, target);
             }
             return target;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || other != null && getClass() == other.getClass()
-                    && transformers.equals(((Compound) other).transformers);
-        }
-
-        @Override
-        public int hashCode() {
-            return transformers.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "Transformer.Compound{" +
-                    "transformers=" + transformers +
-                    '}';
         }
     }
 }

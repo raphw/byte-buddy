@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
@@ -23,6 +24,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  *
  * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */
+@EqualsAndHashCode(callSuper = true)
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
     /**
@@ -187,45 +189,10 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         return instrumentedType;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        if (!super.equals(other)) return false;
-        SubclassDynamicTypeBuilder<?> that = (SubclassDynamicTypeBuilder<?>) other;
-        return constructorStrategy.equals(that.constructorStrategy);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + constructorStrategy.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "SubclassDynamicTypeBuilder{" +
-                "instrumentedType=" + instrumentedType +
-                ", fieldRegistry=" + fieldRegistry +
-                ", methodRegistry=" + methodRegistry +
-                ", typeAttributeAppender=" + typeAttributeAppender +
-                ", asmVisitorWrapper=" + asmVisitorWrapper +
-                ", classFileVersion=" + classFileVersion +
-                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                ", annotationRetention=" + annotationRetention +
-                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                ", implementationContextFactory=" + implementationContextFactory +
-                ", methodGraphCompiler=" + methodGraphCompiler +
-                ", typeValidation=" + typeValidation +
-                ", ignoredMethods=" + ignoredMethods +
-                ", constructorStrategy=" + constructorStrategy +
-                '}';
-    }
-
     /**
      * A matcher that locates all methods that are overridable and not ignored or that are directly defined on the instrumented type.
      */
+    @EqualsAndHashCode
     protected static class InstrumentableMatcher implements LatentMatcher<MethodDescription> {
 
         /**
@@ -249,24 +216,6 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     .and(isVisibleTo(typeDescription))
                     .and(not(ignoredMethods.resolve(typeDescription)))
                     .or(isDeclaredBy(typeDescription));
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && ignoredMethods.equals(((InstrumentableMatcher) other).ignoredMethods);
-        }
-
-        @Override
-        public int hashCode() {
-            return ignoredMethods.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "SubclassDynamicTypeBuilder.InstrumentableMatcher{" +
-                    "ignoredMethods=" + ignoredMethods +
-                    '}';
         }
     }
 }

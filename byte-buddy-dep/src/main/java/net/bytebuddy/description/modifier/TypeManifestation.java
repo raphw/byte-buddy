@@ -96,9 +96,4 @@ public enum TypeManifestation implements ModifierContributor.ForType {
     public boolean isAnnotation() {
         return (mask & Opcodes.ACC_ANNOTATION) != 0;
     }
-
-    @Override
-    public String toString() {
-        return "TypeManifestation." + name();
-    }
 }

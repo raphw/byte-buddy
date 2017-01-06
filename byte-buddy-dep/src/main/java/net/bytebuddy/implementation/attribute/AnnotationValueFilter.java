@@ -90,10 +90,5 @@ public interface AnnotationValueFilter {
         public AnnotationValueFilter on(MethodDescription methodDescription) {
             return this;
         }
-
-        @Override
-        public String toString() {
-            return "AnnotationValueFilter.Default." + name();
-        }
     }
 }

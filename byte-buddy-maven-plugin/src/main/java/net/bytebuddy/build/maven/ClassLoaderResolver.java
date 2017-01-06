@@ -128,15 +128,4 @@ public class ClassLoaderResolver implements Closeable {
             }
         }
     }
-
-    @Override
-    public String toString() {
-        return "ClassLoaderResolver{" +
-                "log=" + log +
-                ", repositorySystem=" + repositorySystem +
-                ", repositorySystemSession=" + repositorySystemSession +
-                ", remoteRepositories=" + remoteRepositories +
-                ", classLoaders=" + classLoaders +
-                '}';
-    }
 }

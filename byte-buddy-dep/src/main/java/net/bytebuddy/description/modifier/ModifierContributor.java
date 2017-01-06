@@ -1,5 +1,6 @@
 package net.bytebuddy.description.modifier;
 
+import lombok.EqualsAndHashCode;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
@@ -99,6 +100,7 @@ public interface ModifierContributor {
      *
      * @param <T> The type of the {@link ModifierContributor}s being resolved.
      */
+    @EqualsAndHashCode
     class Resolver<T extends ModifierContributor> {
 
         /**
@@ -186,24 +188,6 @@ public interface ModifierContributor {
                 modifiers = (modifiers & ~modifierContributor.getRange()) | modifierContributor.getMask();
             }
             return modifiers;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && modifierContributors.equals(((Resolver<?>) other).modifierContributors);
-        }
-
-        @Override
-        public int hashCode() {
-            return modifierContributors.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "ModifierContributor.Resolver{" +
-                    "modifierContributors=" + modifierContributors +
-                    '}';
         }
     }
 }

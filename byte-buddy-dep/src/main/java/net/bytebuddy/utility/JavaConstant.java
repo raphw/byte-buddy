@@ -1,6 +1,7 @@
 package net.bytebuddy.utility;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -267,7 +268,7 @@ public interface JavaConstant {
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof MethodType)) return false;
             MethodType that = (MethodType) other;
             return parameterTypes.equals(that.parameterTypes) && returnType.equals(that.returnType);
 
@@ -278,14 +279,6 @@ public interface JavaConstant {
             int result = returnType.hashCode();
             result = 31 * result + parameterTypes.hashCode();
             return result;
-        }
-
-        @Override
-        public String toString() {
-            return "JavaConstant.MethodType{" +
-                    "returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    '}';
         }
 
         /**
@@ -329,16 +322,12 @@ public interface JavaConstant {
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodType.Dispatcher.CreationAction." + name();
-                }
             }
 
             /**
              * A dispatcher for virtual machines that are aware of the {@code java.lang.invoke.MethodType} type that was added in Java version 7.
              */
+            @EqualsAndHashCode
             class ForJava7CapableVm implements Dispatcher {
 
                 /**
@@ -383,29 +372,6 @@ public interface JavaConstant {
                         throw new IllegalStateException("Error invoking java.lang.invoke.MethodType#parameterArray", exception.getCause());
                     }
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForJava7CapableVm that = (ForJava7CapableVm) other;
-                    return returnType.equals(that.returnType) && parameterArray.equals(that.parameterArray);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = returnType.hashCode();
-                    result = 31 * result + parameterArray.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodType.Dispatcher.ForJava7CapableVm{" +
-                            "returnType=" + returnType +
-                            ", parameterArray=" + parameterArray +
-                            '}';
-                }
             }
 
             /**
@@ -426,11 +392,6 @@ public interface JavaConstant {
                 @Override
                 public Class<?>[] parameterArray(Object methodType) {
                     throw new IllegalStateException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
-                }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodType.Dispatcher.ForLegacyVm." + name();
                 }
             }
         }
@@ -723,7 +684,7 @@ public interface JavaConstant {
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof MethodHandle)) return false;
             MethodHandle aDefault = (MethodHandle) other;
             return handleType == aDefault.handleType
                     && name.equals(aDefault.name)
@@ -740,17 +701,6 @@ public interface JavaConstant {
             result = 31 * result + returnType.hashCode();
             result = 31 * result + parameterTypes.hashCode();
             return result;
-        }
-
-        @Override
-        public String toString() {
-            return "JavaConstant.MethodHandle{" +
-                    "handleType=" + handleType +
-                    ", ownerType=" + ownerType +
-                    ", name='" + name + '\'' +
-                    ", returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    '}';
         }
 
         /**
@@ -892,16 +842,12 @@ public interface JavaConstant {
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodHandle.Dispatcher.CreationAction." + name();
-                }
             }
 
             /**
              * An abstract base impleementation of a dispatcher.
              */
+            @EqualsAndHashCode
             abstract class AbstractBase implements Dispatcher, Initializable {
 
                 /**
@@ -1061,40 +1007,13 @@ public interface JavaConstant {
                         throw new IllegalStateException("Error invoking java.lang.reflect.MethodHandles.Lookup#lookupClass", exception.getCause());
                     }
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    AbstractBase that = (AbstractBase) other;
-                    return publicLookup.equals(that.publicLookup)
-                            && getName.equals(that.getName)
-                            && getDeclaringClass.equals(that.getDeclaringClass)
-                            && getReferenceKind.equals(that.getReferenceKind)
-                            && getMethodType.equals(that.getMethodType)
-                            && returnType.equals(that.returnType)
-                            && parameterArray.equals(that.parameterArray)
-                            && lookupClass.equals(that.lookupClass);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = publicLookup.hashCode();
-                    result = 31 * result + getName.hashCode();
-                    result = 31 * result + getDeclaringClass.hashCode();
-                    result = 31 * result + getReferenceKind.hashCode();
-                    result = 31 * result + getMethodType.hashCode();
-                    result = 31 * result + returnType.hashCode();
-                    result = 31 * result + parameterArray.hashCode();
-                    result = 31 * result + lookupClass.hashCode();
-                    return result;
-                }
             }
 
             /**
              * A dispatcher for introspecting a {@code java.lang.invoke.MethodHandle} instance on a virtual machine that officially supports this
              * introspection, i.e. Java versions 8+.
              */
+            @EqualsAndHashCode(callSuper = true)
             class ForJava8CapableVm extends AbstractBase {
 
                 /**
@@ -1143,42 +1062,12 @@ public interface JavaConstant {
                 public Dispatcher initialize() {
                     return this;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    if (!super.equals(other)) return false;
-                    ForJava8CapableVm that = (ForJava8CapableVm) other;
-                    return revealDirect.equals(that.revealDirect);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = super.hashCode();
-                    result = 31 * result + revealDirect.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodHandle.Dispatcher.ForJava8CapableVm{" +
-                            "publicLookup=" + publicLookup +
-                            ", getName=" + getName +
-                            ", getDeclaringClass=" + getDeclaringClass +
-                            ", getReferenceKind=" + getReferenceKind +
-                            ", getMethodType=" + getMethodType +
-                            ", returnType=" + returnType +
-                            ", parameterArray=" + parameterArray +
-                            ", lookupClass=" + lookupClass +
-                            ", revealDirect=" + revealDirect +
-                            '}';
-                }
             }
 
             /**
              * A dispatcher that extracts the information of a method handle by using private APIs that are available in Java 7+.
              */
+            @EqualsAndHashCode(callSuper = true)
             class ForJava7CapableVm extends AbstractBase implements PrivilegedAction<Dispatcher> {
 
                 /**
@@ -1241,37 +1130,6 @@ public interface JavaConstant {
                         throw new IllegalStateException("Error constructing java.lang.invoke.MethodInfo", exception);
                     }
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    if (!super.equals(other)) return false;
-                    ForJava7CapableVm that = (ForJava7CapableVm) other;
-                    return methodInfo.equals(that.methodInfo);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = super.hashCode();
-                    result = 31 * result + methodInfo.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodHandle.Dispatcher.ForJava7CapableVm{" +
-                            "publicLookup=" + publicLookup +
-                            ", getName=" + getName +
-                            ", getDeclaringClass=" + getDeclaringClass +
-                            ", getReferenceKind=" + getReferenceKind +
-                            ", getMethodType=" + getMethodType +
-                            ", returnType=" + returnType +
-                            ", parameterArray=" + parameterArray +
-                            ", lookupClass=" + lookupClass +
-                            ", methodInfo=" + methodInfo +
-                            '}';
-                }
             }
 
             /**
@@ -1297,11 +1155,6 @@ public interface JavaConstant {
                 @Override
                 public Class<?> lookupType(Object lookup) {
                     throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
-                }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodHandle.Dispatcher.ForLegacyVm." + name();
                 }
             }
         }
@@ -1451,11 +1304,6 @@ public interface JavaConstant {
              */
             public int getIdentifier() {
                 return identifier;
-            }
-
-            @Override
-            public String toString() {
-                return "JavaConstant.MethodHandle.HandleType." + name();
             }
         }
     }

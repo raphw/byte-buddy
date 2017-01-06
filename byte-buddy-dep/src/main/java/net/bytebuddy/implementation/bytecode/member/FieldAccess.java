@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
@@ -99,11 +100,6 @@ public enum FieldAccess {
                 : OfGenericField.of(fieldDescription, forField(declaredField));
     }
 
-    @Override
-    public String toString() {
-        return "FieldAccess." + name();
-    }
-
     /**
      * Representation of a field access for which a getter and a setter can be created.
      */
@@ -127,6 +123,7 @@ public enum FieldAccess {
     /**
      * A dispatcher for implementing a generic read or write access on a field.
      */
+    @EqualsAndHashCode
     protected static class OfGenericField implements Defined {
 
         /**
@@ -170,29 +167,6 @@ public enum FieldAccess {
         public StackManipulation write() {
             return defined.write();
         }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            OfGenericField that = (OfGenericField) other;
-            return targetType.equals(that.targetType) && defined.equals(that.defined);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = targetType.hashCode();
-            result = 31 * result + defined.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAccess.OfGenericField{" +
-                    "targetType=" + targetType +
-                    ", defined=" + defined +
-                    '}';
-        }
     }
 
     /**
@@ -224,24 +198,16 @@ public enum FieldAccess {
             return new FieldPutInstruction();
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && FieldAccess.this.equals(((AccessDispatcher) other).getFieldAccess())
                     && fieldDescription.equals(((AccessDispatcher) other).fieldDescription);
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return fieldDescription.hashCode() + 31 * FieldAccess.this.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAccess.AccessDispatcher{" +
-                    "fieldAccess=" + FieldAccess.this +
-                    ", fieldDescription=" + fieldDescription +
-                    '}';
         }
 
         /**
@@ -304,20 +270,15 @@ public enum FieldAccess {
                 return new Size(sizeChange, sizeChange);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && getAccessDispatcher().equals(((FieldGetInstruction) other).getAccessDispatcher());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return getAccessDispatcher().hashCode() + 7;
-            }
-
-            @Override
-            public String toString() {
-                return "FieldAccess.AccessDispatcher.FieldGetInstruction{fieldDescription=" + fieldDescription + '}';
             }
 
             /**
@@ -345,20 +306,15 @@ public enum FieldAccess {
                 return new Size(-1 * (fieldSize.getSize() + targetSizeChange), 0);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && getAccessDispatcher().equals(((FieldPutInstruction) other).getAccessDispatcher());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return getAccessDispatcher().hashCode() + 14;
-            }
-
-            @Override
-            public String toString() {
-                return "FieldAccess.AccessDispatcher.FieldPutInstruction{fieldDescription=" + fieldDescription + '}';
             }
 
             /**

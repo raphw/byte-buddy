@@ -54,9 +54,4 @@ public enum ParameterManifestation implements ModifierContributor.ForParameter {
     public boolean isFinal() {
         return this == FINAL;
     }
-
-    @Override
-    public String toString() {
-        return "ParameterManifestation." + name();
-    }
 }

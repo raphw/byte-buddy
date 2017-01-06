@@ -59,10 +59,5 @@ public @interface StubValue {
                     : new StackManipulation.Compound(DefaultValue.of(source.getReturnType().asErasure()),
                     assigner.assign(source.getReturnType(), TypeDescription.Generic.OBJECT, typing)));
         }
-
-        @Override
-        public String toString() {
-            return "StubValue.Binder." + name();
-        }
     }
 }

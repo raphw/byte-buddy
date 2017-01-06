@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -1189,6 +1190,7 @@ public interface DynamicType {
                          *
                          * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                          */
+                        @EqualsAndHashCode
                         protected abstract static class Adapter<V> extends Optional.Valuable.AbstractBase<V> {
 
                             /**
@@ -1248,24 +1250,6 @@ public interface DynamicType {
                             protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                                                        Transformer<FieldDescription> transformer,
                                                                                        Object defaultValue);
-
-                            @Override
-                            public boolean equals(Object other) {
-                                if (this == other) return true;
-                                if (other == null || getClass() != other.getClass()) return false;
-                                Adapter<?> adapter = (Adapter<?>) other;
-                                return fieldAttributeAppenderFactory.equals(adapter.fieldAttributeAppenderFactory)
-                                        && transformer.equals(adapter.transformer)
-                                        && (defaultValue != null ? defaultValue.equals(adapter.defaultValue) : adapter.defaultValue == null);
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                int result = fieldAttributeAppenderFactory.hashCode();
-                                result = 31 * result + transformer.hashCode();
-                                result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
-                                return result;
-                            }
                         }
                     }
                 }
@@ -2278,6 +2262,7 @@ public interface DynamicType {
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
+                @EqualsAndHashCode
                 protected abstract static class Adapter<V> extends MethodDefinition.ReceiverTypeDefinition.AbstractBase<V> {
 
                     /**
@@ -2332,24 +2317,6 @@ public interface DynamicType {
                     protected abstract MethodDefinition<V> materialize(MethodRegistry.Handler handler,
                                                                        MethodAttributeAppender.Factory methodAttributeAppenderFactory,
                                                                        Transformer<MethodDescription> transformer);
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        Adapter<?> adapter = (Adapter<?>) other;
-                        return handler.equals(adapter.handler)
-                                && methodAttributeAppenderFactory.equals(adapter.methodAttributeAppenderFactory)
-                                && transformer.equals(adapter.transformer);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = handler.hashCode();
-                        result = 31 * result + methodAttributeAppenderFactory.hashCode();
-                        result = 31 * result + transformer.hashCode();
-                        return result;
-                    }
                 }
             }
         }
@@ -2699,6 +2666,7 @@ public interface DynamicType {
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
              */
+            @EqualsAndHashCode
             public abstract static class Adapter<U> extends AbstractBase<U> {
 
                 /**
@@ -3049,44 +3017,6 @@ public interface DynamicType {
                                                           TypeValidation typeValidation,
                                                           LatentMatcher<? super MethodDescription> ignoredMethods);
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Adapter<?> adapter = (Adapter<?>) other;
-                    return instrumentedType.equals(adapter.instrumentedType)
-                            && fieldRegistry.equals(adapter.fieldRegistry)
-                            && methodRegistry.equals(adapter.methodRegistry)
-                            && typeAttributeAppender.equals(adapter.typeAttributeAppender)
-                            && asmVisitorWrapper.equals(adapter.asmVisitorWrapper)
-                            && classFileVersion.equals(adapter.classFileVersion)
-                            && annotationValueFilterFactory.equals(adapter.annotationValueFilterFactory)
-                            && annotationRetention == adapter.annotationRetention
-                            && auxiliaryTypeNamingStrategy.equals(adapter.auxiliaryTypeNamingStrategy)
-                            && implementationContextFactory.equals(adapter.implementationContextFactory)
-                            && methodGraphCompiler.equals(adapter.methodGraphCompiler)
-                            && typeValidation.equals(adapter.typeValidation)
-                            && ignoredMethods.equals(adapter.ignoredMethods);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = instrumentedType.hashCode();
-                    result = 31 * result + fieldRegistry.hashCode();
-                    result = 31 * result + methodRegistry.hashCode();
-                    result = 31 * result + typeAttributeAppender.hashCode();
-                    result = 31 * result + asmVisitorWrapper.hashCode();
-                    result = 31 * result + classFileVersion.hashCode();
-                    result = 31 * result + annotationValueFilterFactory.hashCode();
-                    result = 31 * result + annotationRetention.hashCode();
-                    result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
-                    result = 31 * result + implementationContextFactory.hashCode();
-                    result = 31 * result + methodGraphCompiler.hashCode();
-                    result = 31 * result + typeValidation.hashCode();
-                    result = 31 * result + ignoredMethods.hashCode();
-                    return result;
-                }
-
                 /**
                  * An adapter for defining a new type variable for the instrumented type.
                  */
@@ -3139,7 +3069,7 @@ public interface DynamicType {
                         return Builder.AbstractBase.Adapter.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     @SuppressWarnings("unchecked")
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
@@ -3147,19 +3077,11 @@ public interface DynamicType {
                                 && token.equals(((TypeVariableDefinitionAdapter) other).token);
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         int result = getOuter().hashCode();
                         result = 31 * result + token.hashCode();
                         return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.TypeVariableDefinitionAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", token=" + token +
-                                '}';
                     }
                 }
 
@@ -3242,7 +3164,7 @@ public interface DynamicType {
                         return Builder.AbstractBase.Adapter.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     @SuppressWarnings("unchecked")
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
@@ -3251,23 +3173,12 @@ public interface DynamicType {
                                 && token.equals(((FieldDefinitionAdapter) other).token);
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + getOuter().hashCode();
                         result = 31 * result + token.hashCode();
                         return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.FieldDefinitionAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
-                                ", transformer=" + transformer +
-                                ", defaultValue=" + defaultValue +
-                                ", token=" + token +
-                                '}';
                     }
                 }
 
@@ -3347,7 +3258,7 @@ public interface DynamicType {
                         return Builder.AbstractBase.Adapter.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     @SuppressWarnings("unchecked")
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
@@ -3356,23 +3267,12 @@ public interface DynamicType {
                                 && matcher.equals(((FieldMatchAdapter) other).matcher);
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + getOuter().hashCode();
                         result = 31 * result + matcher.hashCode();
                         return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.FieldMatchAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
-                                ", transformer=" + transformer +
-                                ", defaultValue=" + defaultValue +
-                                ", matcher=" + matcher +
-                                '}';
                     }
                 }
 
@@ -3473,7 +3373,7 @@ public interface DynamicType {
                         return Adapter.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     @SuppressWarnings("unchecked")
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
@@ -3481,17 +3381,9 @@ public interface DynamicType {
                                 && getOuter().equals(((MethodDefinitionAdapter) other).getOuter());
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         return 31 * getOuter().hashCode() + token.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", token=" + token +
-                                '}';
                     }
 
                     /**
@@ -3542,7 +3434,7 @@ public interface DynamicType {
                             return MethodDefinitionAdapter.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         @SuppressWarnings("unchecked")
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
@@ -3550,17 +3442,9 @@ public interface DynamicType {
                                     && getOuter().equals(((TypeVariableAnnotationAdapter) other).getOuter());
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return 31 * getOuter().hashCode() + token.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.TypeVariableAnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", token=" + token +
-                                    '}';
                         }
                     }
 
@@ -3613,7 +3497,7 @@ public interface DynamicType {
                             return MethodDefinitionAdapter.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         @SuppressWarnings("unchecked")
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
@@ -3621,17 +3505,9 @@ public interface DynamicType {
                                     && getOuter().equals(((ParameterAnnotationAdapter) other).getOuter());
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return 31 * getOuter().hashCode() + token.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.ParameterAnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", token=" + token +
-                                    '}';
                         }
                     }
 
@@ -3684,7 +3560,7 @@ public interface DynamicType {
                             return MethodDefinitionAdapter.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         @SuppressWarnings("unchecked")
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
@@ -3692,17 +3568,9 @@ public interface DynamicType {
                                     && getOuter().equals(((SimpleParameterAnnotationAdapter) other).getOuter());
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return 31 * getOuter().hashCode() + token.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.SimpleParameterAnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", token=" + token +
-                                    '}';
                         }
                     }
 
@@ -3827,16 +3695,6 @@ public interface DynamicType {
                         public int hashCode() {
                             return super.hashCode() + getOuter().hashCode();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.AnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", handler=" + handler +
-                                    ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
-                                    ", transformer=" + transformer +
-                                    '}';
-                        }
                     }
                 }
 
@@ -3893,7 +3751,7 @@ public interface DynamicType {
                         return Adapter.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     @SuppressWarnings("unchecked")
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
@@ -3901,17 +3759,9 @@ public interface DynamicType {
                                 && getOuter().equals(((MethodMatchAdapter) other).getOuter());
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         return 31 * getOuter().hashCode() + matcher.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", matcher=" + matcher +
-                                '}';
                     }
 
                     /**
@@ -3995,7 +3845,7 @@ public interface DynamicType {
                             return MethodMatchAdapter.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         @SuppressWarnings("unchecked")
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
@@ -4003,19 +3853,9 @@ public interface DynamicType {
                                     && getOuter().equals(((AnnotationAdapter) other).getOuter());
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return super.hashCode() + getOuter().hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter.AnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", handler=" + handler +
-                                    ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
-                                    ", transformer=" + transformer +
-                                    '}';
                         }
                     }
                 }
@@ -4098,7 +3938,7 @@ public interface DynamicType {
                         return Builder.AbstractBase.Adapter.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     @SuppressWarnings("unchecked")
                     public boolean equals(Object other) {
                         if (this == other) return true;
@@ -4108,17 +3948,9 @@ public interface DynamicType {
                                 && getOuter().equals(that.getOuter());
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         return 31 * getOuter().hashCode() + interfaces.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.OptionalMethodMatchAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", interfaces=" + interfaces +
-                                '}';
                     }
                 }
             }
@@ -4448,12 +4280,10 @@ public interface DynamicType {
             return file;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for shadowed types is added.
         public boolean equals(Object other) {
-            if (this == other)
-                return true;
-            if (other == null || getClass() != other.getClass())
-                return false;
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
             Default aDefault = (Default) other;
             return auxiliaryTypes.equals(aDefault.auxiliaryTypes)
                     && Arrays.equals(binaryRepresentation, aDefault.binaryRepresentation)
@@ -4462,23 +4292,13 @@ public interface DynamicType {
 
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for shadowed types is added.
         public int hashCode() {
             int result = typeDescription.hashCode();
             result = 31 * result + Arrays.hashCode(binaryRepresentation);
             result = 31 * result + loadedTypeInitializer.hashCode();
             result = 31 * result + auxiliaryTypes.hashCode();
             return result;
-        }
-
-        @Override
-        public String toString() {
-            return "DynamicType.Default{" +
-                    "typeDescription='" + typeDescription + '\'' +
-                    ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                    ", loadedTypeInitializer=" + loadedTypeInitializer +
-                    ", auxiliaryTypes=" + auxiliaryTypes +
-                    '}';
         }
 
         /**
@@ -4546,7 +4366,7 @@ public interface DynamicType {
                         typeResolutionStrategy);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for shadowed types is added.
             public boolean equals(Object object) {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
@@ -4555,22 +4375,11 @@ public interface DynamicType {
                 return typeResolutionStrategy.equals(unloaded.typeResolutionStrategy);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for shadowed types is added.
             public int hashCode() {
                 int result = super.hashCode();
                 result = 31 * result + typeResolutionStrategy.hashCode();
                 return result;
-            }
-
-            @Override
-            public String toString() {
-                return "DynamicType.Default.Unloaded{" +
-                        "typeDescription='" + typeDescription + '\'' +
-                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                        ", typeInitializer=" + loadedTypeInitializer +
-                        ", auxiliaryTypes=" + auxiliaryTypes +
-                        ", typeResolutionStrategy=" + typeResolutionStrategy +
-                        '}';
             }
         }
 
@@ -4619,26 +4428,15 @@ public interface DynamicType {
                 return loadedAuxiliaryTypes;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for shadowed types is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && super.equals(other) && loadedTypes.equals(((Default.Loaded) other).loadedTypes);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for shadowed types is added.
             public int hashCode() {
                 return 31 * super.hashCode() + loadedTypes.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "DynamicType.Default.Loaded{" +
-                        "typeDescription='" + typeDescription + '\'' +
-                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                        ", typeInitializer=" + loadedTypeInitializer +
-                        ", auxiliaryTypes=" + auxiliaryTypes +
-                        ", loadedTypes=" + loadedTypes +
-                        '}';
             }
         }
     }

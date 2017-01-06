@@ -1,11 +1,13 @@
 package net.bytebuddy.matcher;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 
 /**
  * An element matcher that compares two strings by a given pattern which is characterized by a
  * {@link net.bytebuddy.matcher.StringMatcher.Mode}.
  */
+@EqualsAndHashCode
 public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> {
 
     /**
@@ -32,18 +34,6 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
     @Override
     public boolean matches(String target) {
         return mode.matches(value, target);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && mode == ((StringMatcher) other).mode
-                && value.equals(((StringMatcher) other).value);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * value.hashCode() + mode.hashCode();
     }
 
     @Override
@@ -182,10 +172,5 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
          * @return {@code true} if the source matches the target.
          */
         protected abstract boolean matches(String expected, String actual);
-
-        @Override
-        public String toString() {
-            return "StringMatcher.Mode." + name();
-        }
     }
 }

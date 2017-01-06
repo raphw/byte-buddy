@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
@@ -28,6 +29,7 @@ import static net.bytebuddy.matcher.ElementMatchers.is;
  *
  * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */
+@EqualsAndHashCode(callSuper = true)
 public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuilder<T> {
 
     /**
@@ -198,47 +200,10 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 methodRebaseResolver).make(typeResolutionStrategy.resolve());
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        if (!super.equals(other)) return false;
-        RebaseDynamicTypeBuilder<?> that = (RebaseDynamicTypeBuilder<?>) other;
-        return methodNameTransformer.equals(that.methodNameTransformer);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + methodNameTransformer.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "RebaseDynamicTypeBuilder{" +
-                "instrumentedType=" + instrumentedType +
-                ", fieldRegistry=" + fieldRegistry +
-                ", methodRegistry=" + methodRegistry +
-                ", typeAttributeAppender=" + typeAttributeAppender +
-                ", asmVisitorWrapper=" + asmVisitorWrapper +
-                ", classFileVersion=" + classFileVersion +
-                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                ", annotationRetention=" + annotationRetention +
-                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                ", implementationContextFactory=" + implementationContextFactory +
-                ", methodGraphCompiler=" + methodGraphCompiler +
-                ", typeValidation=" + typeValidation +
-                ", ignoredMethods=" + ignoredMethods +
-                ", originalType=" + originalType +
-                ", classFileLocator=" + classFileLocator +
-                ", methodNameTransformer=" + methodNameTransformer +
-                '}';
-    }
-
     /**
      * A matcher that filters any method that should not be rebased, i.e. that is not already defined by the original type.
      */
+    @EqualsAndHashCode
     protected static class RebaseableMatcher implements ElementMatcher<MethodDescription> {
 
         /**
@@ -276,30 +241,6 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
         @Override
         public boolean matches(MethodDescription target) {
             return instrumentedMethodTokens.contains(target.asToken(is(instrumentedType)));
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            RebaseableMatcher that = (RebaseableMatcher) other;
-            return instrumentedType.equals(that.instrumentedType)
-                    && instrumentedMethodTokens.equals(that.instrumentedMethodTokens);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = instrumentedType.hashCode();
-            result = 31 * result + instrumentedMethodTokens.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "RebaseDynamicTypeBuilder.RebaseableMatcher{" +
-                    "instrumentedType=" + instrumentedType +
-                    ", instrumentedMethodTokens=" + instrumentedMethodTokens +
-                    '}';
         }
     }
 }

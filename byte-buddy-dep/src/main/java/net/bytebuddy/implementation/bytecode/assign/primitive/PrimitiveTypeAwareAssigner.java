@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -19,6 +20,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
  * assigner.</li>
  * </ol>
  */
+@EqualsAndHashCode
 public class PrimitiveTypeAwareAssigner implements Assigner {
 
     /**
@@ -48,21 +50,5 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
         } else /* !source.isPrimitive() && !target.isPrimitive()) */ {
             return referenceTypeAwareAssigner.assign(source, target, typing);
         }
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && referenceTypeAwareAssigner.equals(((PrimitiveTypeAwareAssigner) other).referenceTypeAwareAssigner);
-    }
-
-    @Override
-    public int hashCode() {
-        return referenceTypeAwareAssigner.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "PrimitiveTypeAwareAssigner{referenceTypeAwareAssigner=" + referenceTypeAwareAssigner + '}';
     }
 }

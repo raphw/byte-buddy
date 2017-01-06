@@ -70,11 +70,6 @@ public @interface This {
                     : new StackManipulation.Compound(MethodVariableAccess.loadThis(),
                     assigner.assign(implementationTarget.getInstrumentedType().asGenericType(), target.getType(), typing)));
         }
-
-        @Override
-        public String toString() {
-            return "This.Binder." + name();
-        }
     }
 }
 

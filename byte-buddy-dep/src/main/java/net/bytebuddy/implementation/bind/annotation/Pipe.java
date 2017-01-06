@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -98,6 +99,7 @@ public @interface Pipe {
      * A {@link net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder}
      * for binding the {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
      */
+    @EqualsAndHashCode
     class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> {
 
         /**
@@ -198,26 +200,11 @@ public @interface Pipe {
                     annotation.loadSilent().serializableProxy()));
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && forwardingMethod.equals(((Binder) other).forwardingMethod);
-        }
-
-        @Override
-        public int hashCode() {
-            return forwardingMethod.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "Pipe.Binder{forwardingMethod=" + forwardingMethod + '}';
-        }
-
         /**
          * An auxiliary type for performing the redirection of a method invocation as requested by the
          * {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
          */
+        @EqualsAndHashCode
         protected static class Redirection implements AuxiliaryType, StackManipulation {
 
             /**
@@ -326,36 +313,6 @@ public @interface Pipe {
                 ).apply(methodVisitor, implementationContext);
             }
 
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Redirection that = (Redirection) other;
-                return serializableProxy == that.serializableProxy
-                        && assigner.equals(that.assigner)
-                        && forwardingType.equals(that.forwardingType)
-                        && sourceMethod.equals(that.sourceMethod);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = forwardingType.hashCode();
-                result = 31 * result + sourceMethod.hashCode();
-                result = 31 * result + assigner.hashCode();
-                result = 31 * result + (serializableProxy ? 1 : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "Pipe.Binder.Redirection{" +
-                        "forwardingType=" + forwardingType +
-                        ", sourceMethod=" + sourceMethod +
-                        ", assigner=" + assigner +
-                        ", serializableProxy=" + serializableProxy +
-                        '}';
-            }
-
             /**
              * The implementation to implement a
              * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
@@ -391,15 +348,11 @@ public @interface Pipe {
                     return new Appender(implementationTarget.getInstrumentedType());
                 }
 
-                @Override
-                public String toString() {
-                    return "Pipe.Binder.Redirection.ConstructorCall." + name();
-                }
-
                 /**
                  * The appender for implementing the
                  * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection.ConstructorCall}.
                  */
+                @EqualsAndHashCode
                 private static class Appender implements ByteCodeAppender {
 
                     /**
@@ -437,22 +390,6 @@ public @interface Pipe {
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && instrumentedType.equals(((Appender) other).instrumentedType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return instrumentedType.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Pipe.Binder.Redirection.ConstructorCall.Appender{instrumentedType=" + instrumentedType + '}';
-                    }
                 }
             }
 
@@ -461,6 +398,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
              * forwarding method.
              */
+            @EqualsAndHashCode
             protected static class MethodCall implements Implementation {
 
                 /**
@@ -495,26 +433,6 @@ public @interface Pipe {
                         throw new IllegalStateException("Cannot invoke " + redirectedMethod + " from outside of class via @Pipe proxy");
                     }
                     return new Appender(implementationTarget.getInstrumentedType());
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && redirectedMethod.equals(((MethodCall) other).redirectedMethod)
-                            && assigner.equals(((MethodCall) other).assigner);
-                }
-
-                @Override
-                public int hashCode() {
-                    return redirectedMethod.hashCode() + 31 * assigner.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "Pipe.Binder.Redirection.MethodCall{" +
-                            "redirectedMethod=" + redirectedMethod +
-                            ", assigner=" + assigner +
-                            '}';
                 }
 
                 /**
@@ -568,24 +486,16 @@ public @interface Pipe {
                         return MethodCall.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && instrumentedType.equals(((Appender) other).instrumentedType)
                                 && MethodCall.this.equals(((Appender) other).getMethodCall());
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         return 31 * MethodCall.this.hashCode() + instrumentedType.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Pipe.Binder.Redirection.MethodCall.Appender{" +
-                                "methodCall=" + MethodCall.this +
-                                ", instrumentedType=" + instrumentedType +
-                                '}';
                     }
                 }
             }

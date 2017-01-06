@@ -57,9 +57,4 @@ public enum SyntheticState implements ModifierContributor.ForType,
     public boolean isSynthetic() {
         return this == SYNTHETIC;
     }
-
-    @Override
-    public String toString() {
-        return "SyntheticState." + name();
-    }
 }

@@ -119,11 +119,6 @@ public @interface Argument {
                                                                                   Assigner assigner,
                                                                                   Assigner.Typing typing,
                                                                                   int parameterOffset);
-
-        @Override
-        public String toString() {
-            return "Argument.BindingMechanic." + name();
-        }
     }
 
     /**
@@ -164,11 +159,6 @@ public @interface Argument {
                     assigner,
                     typing,
                     source.getParameters().get(argument.value()).getOffset());
-        }
-
-        @Override
-        public String toString() {
-            return "Argument.Binder." + name();
         }
     }
 }

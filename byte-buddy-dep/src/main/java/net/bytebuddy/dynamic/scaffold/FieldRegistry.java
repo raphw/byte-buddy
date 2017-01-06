@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.Transformer;
@@ -62,17 +63,13 @@ public interface FieldRegistry {
             public Record target(FieldDescription fieldDescription) {
                 return new Record.ForImplicitField(fieldDescription);
             }
-
-            @Override
-            public String toString() {
-                return "FieldRegistry.Compiled.NoOp." + name();
-            }
         }
     }
 
     /**
      * An immutable default implementation of a field registry.
      */
+    @EqualsAndHashCode
     class Default implements FieldRegistry {
 
         /**
@@ -122,25 +119,10 @@ public interface FieldRegistry {
             return new Compiled(instrumentedType, entries);
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && entries.equals(((Default) other).entries);
-        }
-
-        @Override
-        public int hashCode() {
-            return entries.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "FieldRegistry.Default{entries=" + entries + '}';
-        }
-
         /**
          * An entry of the default field registry.
          */
+        @EqualsAndHashCode
         protected static class Entry implements LatentMatcher<FieldDescription> {
 
             /**
@@ -212,41 +194,12 @@ public interface FieldRegistry {
             public ElementMatcher<? super FieldDescription> resolve(TypeDescription typeDescription) {
                 return matcher.resolve(typeDescription);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Entry entry = (Entry) other;
-                return matcher.equals(entry.matcher)
-                        && fieldAttributeAppenderFactory.equals(entry.fieldAttributeAppenderFactory)
-                        && !(defaultValue != null ? !defaultValue.equals(entry.defaultValue) : entry.defaultValue != null)
-                        && transformer.equals(entry.transformer);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = matcher.hashCode();
-                result = 31 * result + fieldAttributeAppenderFactory.hashCode();
-                result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
-                result = 31 * result + transformer.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "FieldRegistry.Default.Entry{" +
-                        "matcher=" + matcher +
-                        ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
-                        ", defaultValue=" + defaultValue +
-                        ", transformer=" + transformer +
-                        '}';
-            }
         }
 
         /**
          * A compiled default field registry.
          */
+        @EqualsAndHashCode
         protected static class Compiled implements FieldRegistry.Compiled {
 
             /**
@@ -280,29 +233,10 @@ public interface FieldRegistry {
                 return new Record.ForImplicitField(fieldDescription);
             }
 
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && entries.equals(((Compiled) other).entries)
-                        && instrumentedType.equals(((Compiled) other).instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return 31 * instrumentedType.hashCode() + entries.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "FieldRegistry.Default.Compiled{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", entries=" + entries +
-                        '}';
-            }
-
             /**
              * An entry of a compiled field registry.
              */
+            @EqualsAndHashCode
             protected static class Entry implements ElementMatcher<FieldDescription> {
 
                 /**
@@ -357,36 +291,6 @@ public interface FieldRegistry {
                 @Override
                 public boolean matches(FieldDescription target) {
                     return matcher.matches(target);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Entry entry = (Entry) other;
-                    return matcher.equals(entry.matcher)
-                            && fieldAttributeAppender.equals(entry.fieldAttributeAppender)
-                            && !(defaultValue != null ? !defaultValue.equals(entry.defaultValue) : entry.defaultValue != null)
-                            && transformer.equals(entry.transformer);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = matcher.hashCode();
-                    result = 31 * result + fieldAttributeAppender.hashCode();
-                    result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
-                    result = 31 * result + transformer.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldRegistry.Default.Compiled.Entry{" +
-                            "matcher=" + matcher +
-                            ", fieldAttributeAppender=" + fieldAttributeAppender +
-                            ", defaultValue=" + defaultValue +
-                            ", transformer=" + transformer +
-                            '}';
                 }
             }
         }

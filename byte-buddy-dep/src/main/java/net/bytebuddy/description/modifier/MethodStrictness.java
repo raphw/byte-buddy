@@ -54,9 +54,4 @@ public enum MethodStrictness implements ModifierContributor.ForMethod {
     public boolean isStrict() {
         return this == STRICT;
     }
-
-    @Override
-    public String toString() {
-        return "MethodStrictness." + name();
-    }
 }

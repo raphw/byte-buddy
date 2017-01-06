@@ -1,5 +1,6 @@
 package net.bytebuddy;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
 
@@ -79,6 +80,7 @@ public interface NamingStrategy {
      * necessary as it is illegal to define non-bootstrap classes in this name space. The same strategy is applied
      * when subclassing a signed type which is equally illegal.
      */
+    @EqualsAndHashCode(callSuper = false, exclude = "randomString")
     class SuffixingRandom extends AbstractBase {
 
         /**
@@ -179,34 +181,6 @@ public interface NamingStrategy {
             return String.format("%s$%s$%s", baseName, suffix, randomString.nextString());
         }
 
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            SuffixingRandom that = (SuffixingRandom) other;
-            return javaLangPackagePrefix.equals(that.javaLangPackagePrefix)
-                    && suffix.equals(that.suffix)
-                    && baseNameResolver.equals(that.baseNameResolver);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = suffix.hashCode();
-            result = 31 * result + javaLangPackagePrefix.hashCode();
-            result = 31 * result + baseNameResolver.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "NamingStrategy.SuffixingRandom{" +
-                    "suffix='" + suffix + '\'' +
-                    ", javaLangPackagePrefix='" + javaLangPackagePrefix + '\'' +
-                    ", baseNameResolver=" + baseNameResolver +
-                    ", randomString=" + randomString +
-                    '}';
-        }
-
         /**
          * A base name resolver is responsible for resolving a name onto which the suffix is appended.
          */
@@ -234,16 +208,12 @@ public interface NamingStrategy {
                 public String resolve(TypeDescription typeDescription) {
                     return typeDescription.getName();
                 }
-
-                @Override
-                public String toString() {
-                    return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForUnnamedType." + name();
-                }
             }
 
             /**
              * Uses a specific type's name as the resolved name.
              */
+            @EqualsAndHashCode
             class ForGivenType implements BaseNameResolver {
 
                 /**
@@ -264,29 +234,12 @@ public interface NamingStrategy {
                 public String resolve(TypeDescription typeDescription) {
                     return this.typeDescription.getName();
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((ForGivenType) other).typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
-                }
             }
 
             /**
              * A base name resolver that simply returns a fixed value.
              */
+            @EqualsAndHashCode
             class ForFixedValue implements BaseNameResolver {
 
                 /**
@@ -307,24 +260,6 @@ public interface NamingStrategy {
                 public String resolve(TypeDescription typeDescription) {
                     return name;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && name.equals(((ForFixedValue) other).name);
-                }
-
-                @Override
-                public int hashCode() {
-                    return name.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForFixedValue{" +
-                            "name='" + name + '\'' +
-                            '}';
-                }
             }
         }
     }
@@ -333,6 +268,7 @@ public interface NamingStrategy {
      * A naming strategy that creates a name by prefixing a given class and its package with another package and
      * by appending a random number to the class's simple name.
      */
+    @EqualsAndHashCode(callSuper = false, of = "prefix")
     class PrefixingRandom extends AbstractBase {
 
         /**
@@ -358,25 +294,6 @@ public interface NamingStrategy {
         @Override
         protected String name(TypeDescription superClass) {
             return String.format("%s.%s$%s", prefix, superClass.getName(), randomString.nextString());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && prefix.equals(((PrefixingRandom) other).prefix);
-        }
-
-        @Override
-        public int hashCode() {
-            return prefix.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "NamingStrategy.PrefixingRandom{" +
-                    "prefix='" + prefix + '\'' +
-                    ", randomString=" + randomString +
-                    '}';
         }
     }
 }

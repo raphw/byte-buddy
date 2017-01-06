@@ -84,11 +84,6 @@ public interface MethodAccessorFactory {
         public Visibility getVisibility() {
             return visibility;
         }
-
-        @Override
-        public String toString() {
-            return "MethodAccessorFactory.AccessType." + name();
-        }
     }
 
     /**
@@ -114,11 +109,6 @@ public interface MethodAccessorFactory {
         @Override
         public MethodDescription.InDefinedShape registerSetterFor(FieldDescription fieldDescription, AccessType accessType) {
             throw new IllegalStateException("It is illegal to register a field setter for this type");
-        }
-
-        @Override
-        public String toString() {
-            return "MethodAccessorFactory.Illegal." + name();
         }
     }
 }

@@ -1,6 +1,7 @@
 package net.bytebuddy.utility;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.NamedElement;
 
 import java.io.InputStream;
@@ -134,10 +135,10 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        JavaModule that = (JavaModule) object;
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (!(other instanceof JavaModule)) return false;
+        JavaModule that = (JavaModule) other;
         return module.equals(that.module);
     }
 
@@ -248,16 +249,12 @@ public class JavaModule implements NamedElement.WithOptionalName {
                     return Dispatcher.Disabled.INSTANCE;
                 }
             }
-
-            @Override
-            public String toString() {
-                return "JavaModule.Dispatcher.CreationAction." + name();
-            }
         }
 
         /**
          * A dispatcher for a VM that does support the {@code java.lang.reflect.Module} API.
          */
+        @EqualsAndHashCode
         class Enabled implements Dispatcher {
 
             /**
@@ -408,45 +405,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
                     throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
                 }
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Enabled enabled = (Enabled) object;
-                return getModule.equals(enabled.getModule)
-                        && getClassLoader.equals(enabled.getClassLoader)
-                        && getResourceAsStream.equals(enabled.getResourceAsStream)
-                        && isNamed.equals(enabled.isNamed)
-                        && getName.equals(enabled.getName)
-                        && canRead.equals(enabled.canRead)
-                        && redefineModule.equals(enabled.redefineModule);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = getModule.hashCode();
-                result = 31 * result + getClassLoader.hashCode();
-                result = 31 * result + getResourceAsStream.hashCode();
-                result = 31 * result + isNamed.hashCode();
-                result = 31 * result + getName.hashCode();
-                result = 31 * result + canRead.hashCode();
-                result = 31 * result + redefineModule.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "JavaModule.Dispatcher.Enabled{" +
-                        "getModule=" + getModule +
-                        ", getClassLoader=" + getClassLoader +
-                        ", getResourceAsStream=" + getResourceAsStream +
-                        ", isNamed=" + isNamed +
-                        ", getName=" + getName +
-                        ", canRead=" + canRead +
-                        ", redefineModule=" + redefineModule +
-                        '}';
-            }
         }
 
         /**
@@ -497,11 +455,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public void addReads(Instrumentation instrumentation, Object source, Object target) {
                 throw new IllegalStateException("Current VM does not support modules");
-            }
-
-            @Override
-            public String toString() {
-                return "JavaModule.Dispatcher.Disabled." + name();
             }
         }
     }

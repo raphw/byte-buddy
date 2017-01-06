@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -10,6 +11,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T> The exact type of the element being matched.
  */
+@EqualsAndHashCode
 public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -30,17 +32,6 @@ public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatch
     public boolean matches(T target) {
         TypeDefinition declaringType = target.getDeclaringType();
         return declaringType != null && matcher.matches(declaringType.asGenericType());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((DeclaringTypeMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override

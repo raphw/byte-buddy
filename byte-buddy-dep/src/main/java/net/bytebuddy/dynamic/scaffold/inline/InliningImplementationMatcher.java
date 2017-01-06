@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -11,6 +12,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 /**
  * A latent method matcher that identifies methods to instrument when redefining or rebasing a type.
  */
+@EqualsAndHashCode
 public class InliningImplementationMatcher implements LatentMatcher<MethodDescription> {
 
     /**
@@ -62,25 +64,5 @@ public class InliningImplementationMatcher implements LatentMatcher<MethodDescri
         return (ElementMatcher<? super MethodDescription>) not(ignoredMethods.resolve(typeDescription))
                 .and(isVirtual().and(not(isFinal())).or(isDeclaredBy(typeDescription)))
                 .or(isDeclaredBy(typeDescription).and(not(predefinedMethodSignatures)));
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && ignoredMethods.equals(((InliningImplementationMatcher) other).ignoredMethods)
-                && predefinedMethodSignatures.equals(((InliningImplementationMatcher) other).predefinedMethodSignatures);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * ignoredMethods.hashCode() + predefinedMethodSignatures.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "InliningImplementationMatcher{" +
-                "ignoredMethods=" + ignoredMethods +
-                ", predefinedMethodSignatures=" + predefinedMethodSignatures +
-                '}';
     }
 }

@@ -95,9 +95,4 @@ public enum JavaType {
     public Class<?> load() throws ClassNotFoundException {
         return Class.forName(typeDescription.getName());
     }
-
-    @Override
-    public String toString() {
-        return "JavaType." + name();
-    }
 }

@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,11 +42,6 @@ public interface PackageDefinitionStrategy {
         public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             return Definition.Undefined.INSTANCE;
         }
-
-        @Override
-        public String toString() {
-            return "PackageDefinitionStrategy.NoOp." + name();
-        }
     }
 
     /**
@@ -61,11 +57,6 @@ public interface PackageDefinitionStrategy {
         @Override
         public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             return Definition.Trivial.INSTANCE;
-        }
-
-        @Override
-        public String toString() {
-            return "PackageDefinitionStrategy.Trivial." + name();
         }
     }
 
@@ -199,12 +190,6 @@ public interface PackageDefinitionStrategy {
             public boolean isCompatibleTo(Package definedPackage) {
                 throw new IllegalStateException("Cannot check compatibility to undefined package");
             }
-
-
-            @Override
-            public String toString() {
-                return "PackageDefinitionStrategy.Definition.Undefined." + name();
-            }
         }
 
         /**
@@ -270,11 +255,6 @@ public interface PackageDefinitionStrategy {
             @Override
             public boolean isCompatibleTo(Package definedPackage) {
                 return true;
-            }
-
-            @Override
-            public String toString() {
-                return "PackageDefinitionStrategy.Definition.Trivial." + name();
             }
         }
 
@@ -421,25 +401,13 @@ public interface PackageDefinitionStrategy {
                 result = 31 * result + (sealBase != null ? sealBase.hashCode() : 0);
                 return result;
             }
-
-            @Override
-            public String toString() {
-                return "PackageDefinitionStrategy.Definition.Simple{" +
-                        "specificationTitle='" + specificationTitle + '\'' +
-                        ", specificationVersion='" + specificationVersion + '\'' +
-                        ", specificationVendor='" + specificationVendor + '\'' +
-                        ", implementationTitle='" + implementationTitle + '\'' +
-                        ", implementationVersion='" + implementationVersion + '\'' +
-                        ", implementationVendor='" + implementationVendor + '\'' +
-                        ", sealBase=" + sealBase +
-                        '}';
-            }
         }
     }
 
     /**
      * A package definer that reads a class loader's manifest file.
      */
+    @EqualsAndHashCode
     class ManifestReading implements PackageDefinitionStrategy {
 
         /**
@@ -529,22 +497,6 @@ public interface PackageDefinitionStrategy {
             }
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && sealBaseLocator.equals(((ManifestReading) other).sealBaseLocator);
-        }
-
-        @Override
-        public int hashCode() {
-            return sealBaseLocator.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "PackageDefinitionStrategy.ManifestReading{sealBaseLocator=" + sealBaseLocator + '}';
-        }
-
         /**
          * A locator for a seal base URL.
          */
@@ -572,11 +524,6 @@ public interface PackageDefinitionStrategy {
                 @Override
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return NOT_SEALED;
-                }
-
-                @Override
-                public String toString() {
-                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.NonSealing." + name();
                 }
             }
 
@@ -616,19 +563,13 @@ public interface PackageDefinitionStrategy {
                 public int hashCode() {
                     return sealBase.hashCode();
                 }
-
-                @Override
-                public String toString() {
-                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForFixedValue{" +
-                            "sealBase=" + sealBase +
-                            '}';
-                }
             }
 
             /**
              * A seal base locator that imitates the behavior of a {@link java.net.URLClassLoader}, i.e. tries
              * to deduct the base from a class's resource URL.
              */
+            @EqualsAndHashCode
             class ForTypeResourceUrl implements SealBaseLocator {
 
                 /**
@@ -700,24 +641,6 @@ public interface PackageDefinitionStrategy {
                         }
                     }
                     return fallback.findSealBase(classLoader, typeName);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fallback.equals(((ForTypeResourceUrl) other).fallback);
-                }
-
-                @Override
-                public int hashCode() {
-                    return fallback.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl{" +
-                            "fallback=" + fallback +
-                            '}';
                 }
             }
         }

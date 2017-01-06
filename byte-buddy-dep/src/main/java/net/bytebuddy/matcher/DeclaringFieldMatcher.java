@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -9,6 +10,7 @@ import net.bytebuddy.description.type.TypeDefinition;
  *
  * @param <T> The exact type of the annotated element that is matched.
  */
+@EqualsAndHashCode
 public class DeclaringFieldMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -28,17 +30,6 @@ public class DeclaringFieldMatcher<T extends TypeDefinition> extends ElementMatc
     @Override
     public boolean matches(T target) {
         return matcher.matches(target.getDeclaredFields());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((DeclaringFieldMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override

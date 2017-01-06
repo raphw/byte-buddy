@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -16,6 +17,7 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
  * Be aware that the Java Virtual machine does not care about exception declarations and will throw any
  * {@link java.lang.Throwable} from any method even if the method does not declared a checked exception.
  */
+@EqualsAndHashCode
 public class ExceptionMethod implements Implementation, ByteCodeAppender {
 
     /**
@@ -118,26 +120,6 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
 
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && constructionDelegate.equals(((ExceptionMethod) other).constructionDelegate)
-                && throwableType.equals(((ExceptionMethod) other).throwableType);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * throwableType.hashCode() + constructionDelegate.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "ExceptionMethod{" +
-                "throwableType=" + throwableType +
-                ", constructionDelegate=" + constructionDelegate +
-                '}';
-    }
-
     /**
      * A construction delegate is responsible for calling a Throwable's constructor.
      */
@@ -154,6 +136,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         /**
          * A construction delegate that calls the default constructor.
          */
+        @EqualsAndHashCode
         class ForDefaultConstructor implements ConstructionDelegate {
 
             /**
@@ -184,30 +167,12 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
                         Duplication.SINGLE,
                         MethodInvocation.invoke(targetConstructor));
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && exceptionType.equals(((ForDefaultConstructor) other).exceptionType);
-            }
-
-            @Override
-            public int hashCode() {
-                return exceptionType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "ExceptionMethod.ConstructionDelegate.ForDefaultConstructor{" +
-                        "exceptionType=" + exceptionType +
-                        ", targetConstructor=" + targetConstructor +
-                        '}';
-            }
         }
 
         /**
          * A construction delegate that calls a constructor that takes a single string as its argument.
          */
+        @EqualsAndHashCode
         class ForStringConstructor implements ConstructionDelegate {
 
             /**
@@ -245,27 +210,6 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
                         Duplication.SINGLE,
                         new TextConstant(message),
                         MethodInvocation.invoke(targetConstructor));
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && message.equals(((ForStringConstructor) other).message)
-                        && exceptionType.equals(((ForStringConstructor) other).exceptionType);
-            }
-
-            @Override
-            public int hashCode() {
-                return 31 * exceptionType.hashCode() + message.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "ExceptionMethod.ConstructionDelegate.ForStringConstructor{" +
-                        "exceptionType=" + exceptionType +
-                        ", targetConstructor=" + targetConstructor +
-                        ", message='" + message + '\'' +
-                        '}';
             }
         }
     }

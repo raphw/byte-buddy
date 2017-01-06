@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -25,6 +26,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isSetter;
  * This {@link net.bytebuddy.implementation.bind.MethodDelegationBinder} binds
  * method by analyzing annotations found on the <i>target</i> method that is subject to a method binding.
  */
+@EqualsAndHashCode
 public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinder {
 
     /**
@@ -65,29 +67,10 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
         return new Record(candidate, handlers, RuntimeType.Verifier.check(candidate));
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        TargetMethodAnnotationDrivenBinder that = (TargetMethodAnnotationDrivenBinder) other;
-        return delegationProcessor.equals(that.delegationProcessor);
-    }
-
-    @Override
-    public int hashCode() {
-        return delegationProcessor.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "TargetMethodAnnotationDrivenBinder{" +
-                "delegationProcessor=" + delegationProcessor +
-                '}';
-    }
-
     /**
      * A compiled record of a target method annotation-driven binder.
      */
+    @EqualsAndHashCode
     protected static class Record implements MethodDelegationBinder.Record {
 
         /**
@@ -139,33 +122,6 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 }
             }
             return methodDelegationBindingBuilder.build(methodTermination);
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            Record record = (Record) object;
-            return candidate.equals(record.candidate)
-                    && handlers.equals(record.handlers)
-                    && typing.equals(record.typing);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = candidate.hashCode();
-            result = 31 * result + handlers.hashCode();
-            result = 31 * result + typing.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "TargetMethodAnnotationDrivenBinder.Record{" +
-                    ", candidate=" + candidate +
-                    ", handlers=" + handlers +
-                    ", typing=" + typing +
-                    '}';
         }
     }
 
@@ -331,6 +287,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              *
              * @param <U> The bound annotation's type.
              */
+            @EqualsAndHashCode
             public static class OfConstant<U extends Annotation> extends ForFixedValue<U> {
 
                 /**
@@ -374,30 +331,6 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 @Override
                 protected Object bind(AnnotationDescription.Loadable<U> annotation, MethodDescription source, ParameterDescription target) {
                     return value;
-                }
-
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    OfConstant<?> that = (OfConstant<?>) object;
-                    return type.equals(that.type) && (value != null ? value.equals(that.value) : that.value == null);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = type.hashCode();
-                    result = 31 * result + (value != null ? value.hashCode() : 0);
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue.OfConstant{" +
-                            "type=" + type +
-                            ", value=" + value +
-                            '}';
                 }
             }
         }
@@ -501,6 +434,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
      * for performing its actual logic. By outsourcing this logic to this helper class, a cleaner implementation
      * can be provided.
      */
+    @EqualsAndHashCode
     protected static class DelegationProcessor {
 
         /**
@@ -557,24 +491,6 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             return handler;
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && parameterBinders.equals(((DelegationProcessor) other).parameterBinders);
-        }
-
-        @Override
-        public int hashCode() {
-            return parameterBinders.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "TargetMethodAnnotationDrivenBinder.DelegationProcessor{" +
-                    "parameterBinders=" + parameterBinders +
-                    '}';
-        }
-
         /**
          * A handler is responsible for processing a parameter's binding.
          */
@@ -601,6 +517,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              * An unbound handler is a fallback for returning an illegal binding for parameters for which no parameter
              * binder could be located.
              */
+            @EqualsAndHashCode
             class Unbound implements Handler {
 
                 /**
@@ -637,27 +554,6 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                             implementationTarget,
                             assigner,
                             typing);
-                }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Unbound unbound = (Unbound) object;
-                    return target.equals(unbound.target) && typing.equals(unbound.typing);
-                }
-
-                @Override
-                public int hashCode() {
-                    return target.hashCode() + 31 * typing.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Unbound{" +
-                            "target=" + target +
-                            ", typing=" + typing +
-                            '}';
                 }
 
                 /**
@@ -730,6 +626,7 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
              *
              * @param <T> The annotation type of a given handler.
              */
+            @EqualsAndHashCode
             class Bound<T extends Annotation> implements Handler {
 
                 /**
@@ -803,34 +700,6 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                             implementationTarget,
                             assigner,
                             typing);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && parameterBinder.equals(((Bound<?>) other).parameterBinder)
-                            && annotation.equals(((Bound<?>) other).annotation)
-                            && target.equals(((Bound<?>) other).target)
-                            && typing.equals(((Bound<?>) other).typing);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = parameterBinder.hashCode();
-                    result = 31 * result + target.hashCode();
-                    result = 31 * result + annotation.hashCode();
-                    result = 31 * result + typing.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "TargetMethodAnnotationDrivenBinder.DelegationProcessor.Handler.Bound{" +
-                            "parameterBinder=" + parameterBinder +
-                            ", annotation=" + annotation +
-                            ", target=" + target +
-                            ", typing=" + typing +
-                            '}';
                 }
             }
         }

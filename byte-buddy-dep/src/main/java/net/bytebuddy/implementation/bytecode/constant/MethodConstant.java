@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.constant;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -18,6 +19,7 @@ import java.util.List;
  * Represents the creation of a {@link java.lang.reflect.Method} value which can be created from a given
  * set of constant pool values and can therefore be considered a constant in the broader meaning.
  */
+@EqualsAndHashCode
 public abstract class MethodConstant implements StackManipulation {
 
     /**
@@ -111,17 +113,6 @@ public abstract class MethodConstant implements StackManipulation {
                 : new CachedMethod(this);
     }
 
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && methodDescription.equals(((MethodConstant) other).methodDescription);
-    }
-
-    @Override
-    public int hashCode() {
-        return methodDescription.hashCode();
-    }
-
     /**
      * Represents a method constant that cannot be represented by Java's reflection API.
      */
@@ -145,11 +136,6 @@ public abstract class MethodConstant implements StackManipulation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return Illegal.INSTANCE.apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.CanCacheIllegal." + name();
         }
     }
 
@@ -199,11 +185,6 @@ public abstract class MethodConstant implements StackManipulation {
                 throw new IllegalStateException("Cannot locate Class::getDeclaredMethod", exception);
             }
         }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.ForMethod{methodDescription=" + methodDescription + '}';
-        }
     }
 
     /**
@@ -235,16 +216,12 @@ public abstract class MethodConstant implements StackManipulation {
                 throw new IllegalStateException("Cannot locate Class::getDeclaredConstructor", exception);
             }
         }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.ForConstructor{methodDescription=" + methodDescription + '}';
-        }
     }
 
     /**
      * Represents a cached method for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
      */
+    @EqualsAndHashCode
     protected static class CachedMethod implements StackManipulation {
 
         /**
@@ -277,27 +254,12 @@ public abstract class MethodConstant implements StackManipulation {
                     .read()
                     .apply(methodVisitor, implementationContext);
         }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && methodConstant.equals(((CachedMethod) other).methodConstant);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * methodConstant.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.CachedMethod{methodConstant=" + methodConstant + '}';
-        }
     }
 
     /**
      * Represents a cached constructor for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
      */
+    @EqualsAndHashCode
     protected static class CachedConstructor implements StackManipulation {
 
         /**
@@ -329,22 +291,6 @@ public abstract class MethodConstant implements StackManipulation {
             return FieldAccess.forField(implementationContext.cache(constructorConstant, CONSTRUCTOR_TYPE))
                     .read()
                     .apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && constructorConstant.equals(((CachedConstructor) other).constructorConstant);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * constructorConstant.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.CachedConstructor{constructorConstant=" + constructorConstant + '}';
         }
     }
 }

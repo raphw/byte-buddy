@@ -1,6 +1,7 @@
 package net.bytebuddy.agent.builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
@@ -905,16 +906,12 @@ public interface AgentBuilder {
                                    ProtectionDomain protectionDomain) {
                 return classBeingRedefined == null == unloaded;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.RawMatcher.ForLoadState." + name();
-            }
         }
 
         /**
          * A conjunction of two raw matchers.
          */
+        @EqualsAndHashCode
         class Conjunction implements RawMatcher {
 
             /**
@@ -947,34 +944,12 @@ public interface AgentBuilder {
                 return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                         && right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Conjunction that = (Conjunction) object;
-                return left.equals(that.left) && right.equals(that.right);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = left.hashCode();
-                result = 31 * result + right.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.RawMatcher.Conjunction{" +
-                        "left=" + left +
-                        ", right=" + right +
-                        '}';
-            }
         }
 
         /**
          * A disjunction of two raw matchers.
          */
+        @EqualsAndHashCode
         class Disjunction implements RawMatcher {
 
             /**
@@ -1007,29 +982,6 @@ public interface AgentBuilder {
                 return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                         || right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Disjunction that = (Disjunction) object;
-                return left.equals(that.left) && right.equals(that.right);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = left.hashCode();
-                result = 31 * result + right.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.RawMatcher.Disjunction{" +
-                        "left=" + left +
-                        ", right=" + right +
-                        '}';
-            }
         }
 
         /**
@@ -1037,6 +989,7 @@ public interface AgentBuilder {
          * and its {@link java.lang.ClassLoader} against two suitable matchers in order to determine if the matched
          * type should be instrumented.
          */
+        @EqualsAndHashCode
         class ForElementMatchers implements RawMatcher {
 
             /**
@@ -1078,31 +1031,6 @@ public interface AgentBuilder {
                                    Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 return moduleMatcher.matches(module) && classLoaderMatcher.matches(classLoader) && typeMatcher.matches(typeDescription);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && classLoaderMatcher.equals(((ForElementMatchers) other).classLoaderMatcher)
-                        && moduleMatcher.equals(((ForElementMatchers) other).moduleMatcher)
-                        && typeMatcher.equals(((ForElementMatchers) other).typeMatcher);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = typeMatcher.hashCode();
-                result = 31 * result + classLoaderMatcher.hashCode();
-                result = 31 * result + moduleMatcher.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.RawMatcher.ForElementMatchers{" +
-                        "typeMatcher=" + typeMatcher +
-                        ", classLoaderMatcher=" + classLoaderMatcher +
-                        ", moduleMatcher=" + moduleMatcher +
-                        '}';
             }
         }
     }
@@ -1179,11 +1107,6 @@ public interface AgentBuilder {
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
                 /* do nothing */
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.NoOp." + name();
-            }
         }
 
         /**
@@ -1216,6 +1139,7 @@ public interface AgentBuilder {
          * A listener that writes events to a {@link PrintStream}. This listener prints a line per event, including the event type and
          * the name of the type in question.
          */
+        @EqualsAndHashCode
         class StreamWriting implements Listener {
 
             /**
@@ -1277,29 +1201,12 @@ public interface AgentBuilder {
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
                 printStream.printf(PREFIX + " COMPLETE %s [%s, %s]%n", typeName, classLoader, module);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && printStream.equals(((StreamWriting) other).printStream);
-            }
-
-            @Override
-            public int hashCode() {
-                return printStream.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.StreamWriting{" +
-                        "printStream=" + printStream +
-                        '}';
-            }
         }
 
         /**
          * A listener that filters types with a given name from being logged.
          */
+        @EqualsAndHashCode
         class Filtering implements Listener {
 
             /**
@@ -1350,34 +1257,12 @@ public interface AgentBuilder {
                     delegate.onComplete(typeName, classLoader, module);
                 }
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Filtering filtering = (Filtering) object;
-                return matcher.equals(filtering.matcher) && delegate.equals(filtering.delegate);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = matcher.hashCode();
-                result = 31 * result + delegate.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.Filtering{" +
-                        "matcher=" + matcher +
-                        ", delegate=" + delegate +
-                        '}';
-            }
         }
 
         /**
          * A listener that adds read-edges to any module of an instrumented class upon its transformation.
          */
+        @EqualsAndHashCode
         class ModuleReadEdgeCompleting extends Listener.Adapter {
 
             /**
@@ -1444,38 +1329,12 @@ public interface AgentBuilder {
                     }
                 }
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ModuleReadEdgeCompleting that = (ModuleReadEdgeCompleting) object;
-                return instrumentation.equals(that.instrumentation)
-                        && addTargetEdge == that.addTargetEdge
-                        && modules.equals(that.modules);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = instrumentation.hashCode();
-                result = 31 * result + modules.hashCode();
-                result = 31 * result + (addTargetEdge ? 1 : 0);
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.ModuleReadEdgeCompleting{" +
-                        "instrumentation=" + instrumentation +
-                        ", addTargetEdge=" + addTargetEdge +
-                        ", modules=" + modules +
-                        '}';
-            }
         }
 
         /**
          * A compound listener that allows to group several listeners in one instance.
          */
+        @EqualsAndHashCode
         class Compound implements Listener {
 
             /**
@@ -1535,24 +1394,6 @@ public interface AgentBuilder {
                     listener.onComplete(typeName, classLoader, module);
                 }
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && listeners.equals(((Compound) other).listeners);
-            }
-
-            @Override
-            public int hashCode() {
-                return listeners.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.Compound{" +
-                        "listeners=" + listeners +
-                        '}';
-            }
         }
     }
 
@@ -1595,11 +1436,6 @@ public interface AgentBuilder {
             public void release() {
                         /* do nothing */
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.CircularityLock.Inactive." + name();
-            }
         }
 
         /**
@@ -1626,11 +1462,6 @@ public interface AgentBuilder {
             @Override
             public void release() {
                 set(NOT_ACQUIRED);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.CircularityLock.Default{acquired=" + (get() != NOT_ACQUIRED) + "}";
             }
         }
     }
@@ -1717,16 +1548,12 @@ public interface AgentBuilder {
                     return byteBuddy.redefine(typeDescription, classFileLocator).ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);
                 }
             };
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.TypeStrategy.Default." + name();
-            }
         }
 
         /**
          * A type strategy that applies a build {@link EntryPoint}.
          */
+        @EqualsAndHashCode
         class ForBuildEntryPoint implements TypeStrategy {
 
             /**
@@ -1749,26 +1576,6 @@ public interface AgentBuilder {
                                                   ClassFileLocator classFileLocator,
                                                   MethodNameTransformer methodNameTransformer) {
                 return entryPoint.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForBuildEntryPoint that = (ForBuildEntryPoint) object;
-                return entryPoint.equals(that.entryPoint);
-            }
-
-            @Override
-            public int hashCode() {
-                return entryPoint.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.TypeStrategy.ForBuildEntryPoint{" +
-                        "entryPoint=" + entryPoint +
-                        '}';
             }
         }
     }
@@ -1805,16 +1612,12 @@ public interface AgentBuilder {
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
                 return builder;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Transformer.NoOp." + name();
-            }
         }
 
         /**
          * A transformer that applies a build {@link Plugin}.
          */
+        @EqualsAndHashCode
         class ForBuildPlugin implements Transformer {
 
             /**
@@ -1835,32 +1638,13 @@ public interface AgentBuilder {
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
                 return plugin.apply(builder, typeDescription);
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForBuildPlugin that = (ForBuildPlugin) object;
-                return plugin.equals(that.plugin);
-            }
-
-            @Override
-            public int hashCode() {
-                return plugin.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Transformer.ForBuildPlugin{" +
-                        "plugin=" + plugin +
-                        '}';
-            }
         }
 
         /**
          * A compound transformer that allows to group several
          * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s as a single transformer.
          */
+        @EqualsAndHashCode
         class Compound implements Transformer {
 
             /**
@@ -1899,24 +1683,6 @@ public interface AgentBuilder {
                     builder = transformer.transform(builder, typeDescription, classLoader);
                 }
                 return builder;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && transformers.equals(((Compound) other).transformers);
-            }
-
-            @Override
-            public int hashCode() {
-                return transformers.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Transformer.Compound{" +
-                        "transformers=" + transformers +
-                        '}';
             }
         }
     }
@@ -1980,11 +1746,6 @@ public interface AgentBuilder {
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.PoolStrategy.Default." + name();
-            }
         }
 
         /**
@@ -2031,11 +1792,6 @@ public interface AgentBuilder {
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.PoolStrategy.Eager." + name();
             }
         }
 
@@ -2085,11 +1841,6 @@ public interface AgentBuilder {
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return TypePool.ClassLoading.of(classLoader, new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode));
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.PoolStrategy.ClassLoading." + name();
-            }
         }
 
         /**
@@ -2103,6 +1854,7 @@ public interface AgentBuilder {
          * All types that are returned by the locator's type pool are resolved lazily.
          * </p>
          */
+        @EqualsAndHashCode
         abstract class WithTypePoolCache implements PoolStrategy {
 
             /**
@@ -2132,23 +1884,11 @@ public interface AgentBuilder {
              */
             protected abstract TypePool.CacheProvider locate(ClassLoader classLoader);
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                WithTypePoolCache that = (WithTypePoolCache) object;
-                return readerMode == that.readerMode;
-            }
-
-            @Override
-            public int hashCode() {
-                return readerMode.hashCode();
-            }
-
             /**
              * An implementation of a type locator {@link WithTypePoolCache} (note documentation of the linked class) that is based on a
              * {@link ConcurrentMap}. It is the responsibility of the type locator's user to avoid the type locator from leaking memory.
              */
+            @EqualsAndHashCode(callSuper = true)
             public static class Simple extends WithTypePoolCache {
 
                 /**
@@ -2207,29 +1947,6 @@ public interface AgentBuilder {
                  */
                 protected ClassLoader getBootstrapMarkerLoader() {
                     return ClassLoader.getSystemClassLoader();
-                }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    if (!super.equals(object)) return false;
-                    Simple simple = (Simple) object;
-                    return cacheProviders.equals(simple.cacheProviders);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = super.hashCode();
-                    result = 31 * result + cacheProviders.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.PoolStrategy.WithTypePoolCache.Simple{" +
-                            "cacheProviders=" + cacheProviders +
-                            '}';
                 }
             }
         }
@@ -2309,11 +2026,6 @@ public interface AgentBuilder {
             public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
                 /* do nothing */
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.InitializationStrategy.NoOp." + name();
-            }
         }
 
         /**
@@ -2355,17 +2067,13 @@ public interface AgentBuilder {
                     }
                 }
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.InitializationStrategy.Minimal." + name();
-            }
         }
 
         /**
          * An initialization strategy that adds a code block to an instrumented type's type initializer which
          * then calls a specific class that is responsible for the explicit initialization.
          */
+        @EqualsAndHashCode
         abstract class SelfInjection implements InitializationStrategy {
 
             /**
@@ -2396,22 +2104,10 @@ public interface AgentBuilder {
              */
             protected abstract InitializationStrategy.Dispatcher dispatcher(int identification);
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                SelfInjection that = (SelfInjection) object;
-                return nexusAccessor.equals(that.nexusAccessor);
-            }
-
-            @Override
-            public int hashCode() {
-                return nexusAccessor.hashCode();
-            }
-
             /**
              * A dispatcher for a self-initialization strategy.
              */
+            @EqualsAndHashCode
             protected abstract static class Dispatcher implements InitializationStrategy.Dispatcher {
 
                 /**
@@ -2440,21 +2136,10 @@ public interface AgentBuilder {
                     return builder.initializer(new NexusAccessor.InitializationAppender(identification));
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && identification == ((Dispatcher) other).identification
-                            && nexusAccessor == ((Dispatcher) other).nexusAccessor;
-                }
-
-                @Override
-                public int hashCode() {
-                    return identification + 31 * nexusAccessor.hashCode();
-                }
-
                 /**
                  * A type initializer that injects all auxiliary types of the instrumented type.
                  */
+                @EqualsAndHashCode
                 protected static class InjectingInitializer implements LoadedTypeInitializer {
 
                     /**
@@ -2508,36 +2193,6 @@ public interface AgentBuilder {
                     public boolean isAlive() {
                         return true;
                     }
-
-                    @Override
-                    public boolean equals(Object o) {
-                        if (this == o) return true;
-                        if (o == null || getClass() != o.getClass()) return false;
-                        InjectingInitializer that = (InjectingInitializer) o;
-                        return classInjector.equals(that.classInjector)
-                                && instrumentedType.equals(that.instrumentedType)
-                                && rawAuxiliaryTypes.equals(that.rawAuxiliaryTypes)
-                                && loadedTypeInitializers.equals(that.loadedTypeInitializers);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = instrumentedType.hashCode();
-                        result = 31 * result + rawAuxiliaryTypes.hashCode();
-                        result = 31 * result + loadedTypeInitializers.hashCode();
-                        result = 31 * result + classInjector.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitializer{" +
-                                "instrumentedType=" + instrumentedType +
-                                ", rawAuxiliaryTypes=" + rawAuxiliaryTypes +
-                                ", loadedTypeInitializers=" + loadedTypeInitializers +
-                                ", classInjector=" + classInjector +
-                                '}';
-                    }
                 }
             }
 
@@ -2567,13 +2222,6 @@ public interface AgentBuilder {
                 @Override
                 protected InitializationStrategy.Dispatcher dispatcher(int identification) {
                     return new Dispatcher(nexusAccessor, identification);
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.InitializationStrategy.SelfInjection.Split{" +
-                            "nexusAccessor=" + nexusAccessor +
-                            "}";
                 }
 
                 /**
@@ -2621,14 +2269,6 @@ public interface AgentBuilder {
                         }
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher{" +
-                                "nexusAccessor=" + nexusAccessor +
-                                ", identification=" + identification +
-                                "}";
-                    }
                 }
             }
 
@@ -2658,13 +2298,6 @@ public interface AgentBuilder {
                     return new Dispatcher(nexusAccessor, identification);
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.InitializationStrategy.SelfInjection.Lazy{" +
-                            "nexusAccessor=" + nexusAccessor +
-                            "}";
-                }
-
                 /**
                  * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Lazy} strategy.
                  */
@@ -2687,14 +2320,6 @@ public interface AgentBuilder {
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
                                 : new Dispatcher.InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectorFactory.resolve());
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher{" +
-                                "nexusAccessor=" + nexusAccessor +
-                                ", identification=" + identification +
-                                "}";
                     }
                 }
             }
@@ -2725,13 +2350,6 @@ public interface AgentBuilder {
                     return new Dispatcher(nexusAccessor, identification);
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.InitializationStrategy.SelfInjection.Eager{" +
-                            "nexusAccessor=" + nexusAccessor +
-                            "}";
-                }
-
                 /**
                  * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Eager} strategy.
                  */
@@ -2758,14 +2376,6 @@ public interface AgentBuilder {
                         }
                         LoadedTypeInitializer loadedTypeInitializer = loadedTypeInitializers.get(dynamicType.getTypeDescription());
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher{" +
-                                "nexusAccessor=" + nexusAccessor +
-                                ", identification=" + identification +
-                                "}";
                     }
                 }
             }
@@ -2908,16 +2518,12 @@ public interface AgentBuilder {
             public boolean isLoadedFirst() {
                 return loadedFirst;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.DescriptionStrategy.Default." + name();
-            }
         }
 
         /**
          * Creates a description strategy that enforces the loading of any super type of a type description.
          */
+        @EqualsAndHashCode
         class SuperTypeLoading implements DescriptionStrategy {
 
             /**
@@ -2952,29 +2558,10 @@ public interface AgentBuilder {
                 return delegate.isLoadedFirst();
             }
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                SuperTypeLoading that = (SuperTypeLoading) object;
-                return delegate.equals(that.delegate);
-            }
-
-            @Override
-            public int hashCode() {
-                return delegate.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.DescriptionStrategy.SuperTypeLoading{" +
-                        "delegate=" + delegate +
-                        '}';
-            }
-
             /**
              * A class loading delegate that unlocks the circularity lock during class loading.
              */
+            @EqualsAndHashCode
             protected static class UnlockingClassLoadingDelegate implements TypeDescription.SuperTypeLoading.ClassLoadingDelegate {
 
                 /**
@@ -2999,26 +2586,6 @@ public interface AgentBuilder {
                     } finally {
                         circularityLock.acquire();
                     }
-                }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    UnlockingClassLoadingDelegate that = (UnlockingClassLoadingDelegate) object;
-                    return circularityLock.equals(that.circularityLock);
-                }
-
-                @Override
-                public int hashCode() {
-                    return circularityLock.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.DescriptionStrategy.SuperTypeLoading.UnlockingClassLoadingDelegate{" +
-                            "circularityLock=" + circularityLock +
-                            '}';
                 }
             }
         }
@@ -3071,11 +2638,6 @@ public interface AgentBuilder {
                     return classFileTransformer;
                 }
             };
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.InstallationStrategy.Default." + name();
-            }
         }
     }
 
@@ -3106,11 +2668,6 @@ public interface AgentBuilder {
             @Override
             public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
                 return ClassFileLocator.NoOp.INSTANCE;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LocationStrategy.NoOp." + name();
             }
         }
 
@@ -3188,16 +2745,12 @@ public interface AgentBuilder {
                 allLocationStrategies.addAll(locationStrategies);
                 return new Compound(allLocationStrategies);
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LocationStrategy.ForClassLoader." + name();
-            }
         }
 
         /**
          * A simple location strategy that queries a given class file locator.
          */
+        @EqualsAndHashCode
         class Simple implements LocationStrategy {
 
             /**
@@ -3218,31 +2771,12 @@ public interface AgentBuilder {
             public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
                 return classFileLocator;
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Simple simple = (Simple) object;
-                return classFileLocator.equals(simple.classFileLocator);
-            }
-
-            @Override
-            public int hashCode() {
-                return classFileLocator.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LocationStrategy.Simple{" +
-                        "classFileLocator=" + classFileLocator +
-                        '}';
-            }
         }
 
         /**
          * A compound location strategy that applies a list of location strategies.
          */
+        @EqualsAndHashCode
         class Compound implements LocationStrategy {
 
             /**
@@ -3282,26 +2816,6 @@ public interface AgentBuilder {
                     classFileLocators.add(locationStrategy.classFileLocator(classLoader, module));
                 }
                 return new ClassFileLocator.Compound(classFileLocators);
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Compound compound = (Compound) object;
-                return locationStrategies.equals(compound.locationStrategies);
-            }
-
-            @Override
-            public int hashCode() {
-                return locationStrategies.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LocationStrategy.Compound{" +
-                        "locationStrategies=" + locationStrategies +
-                        '}';
             }
         }
     }
@@ -3357,16 +2871,12 @@ public interface AgentBuilder {
             public boolean isFallback(Class<?> type, Throwable throwable) {
                 return enabled;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.FallbackStrategy.Simple." + name();
-            }
         }
 
         /**
          * A fallback strategy that discriminates by the type of the {@link Throwable} that triggered a request.
          */
+        @EqualsAndHashCode
         class ByThrowableType implements FallbackStrategy {
 
             /**
@@ -3411,26 +2921,6 @@ public interface AgentBuilder {
                     }
                 }
                 return false;
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ByThrowableType byType = (ByThrowableType) object;
-                return types.equals(byType.types);
-            }
-
-            @Override
-            public int hashCode() {
-                return types.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.FallbackStrategy.ByThrowableType{" +
-                        "types=" + types +
-                        '}';
             }
         }
     }
@@ -3564,11 +3054,6 @@ public interface AgentBuilder {
          */
         protected abstract Collector make(Default.Transformation transformation);
 
-        @Override
-        public String toString() {
-            return "AgentBuilder.RedefinitionStrategy." + name();
-        }
-
         /**
          * A batch allocator which is responsible for applying a redefinition in a batches. A class redefinition or
          * retransformation can be a time-consuming operation rendering a JVM non-responsive. In combination with a
@@ -3601,16 +3086,12 @@ public interface AgentBuilder {
                             ? Collections.<List<Class<?>>>emptySet()
                             : Collections.singleton(types);
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal." + name();
-                }
             }
 
             /**
              * A batch allocator that creates chunks with a fixed size as batch jobs.
              */
+            @EqualsAndHashCode
             class ForFixedSize implements BatchAllocator {
 
                 /**
@@ -3651,31 +3132,12 @@ public interface AgentBuilder {
                     }
                     return batches;
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForFixedSize that = (ForFixedSize) object;
-                    return size == that.size;
-                }
-
-                @Override
-                public int hashCode() {
-                    return size;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize{" +
-                            "size=" + size +
-                            '}';
-                }
             }
 
             /**
              * A batch allocator that groups all batches by discriminating types using a type matcher.
              */
+            @EqualsAndHashCode
             class ForMatchedGrouping implements BatchAllocator {
 
                 /**
@@ -3766,31 +3228,12 @@ public interface AgentBuilder {
                     }
                     return batches;
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForMatchedGrouping that = (ForMatchedGrouping) object;
-                    return matchers.equals(that.matchers);
-                }
-
-                @Override
-                public int hashCode() {
-                    return matchers.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping{" +
-                            "matchers=" + matchers +
-                            '}';
-                }
             }
 
             /**
              * A slicing batch allocator that assures that any batch is within a certain size range.
              */
+            @EqualsAndHashCode
             class Slicing implements BatchAllocator {
 
                 /**
@@ -3865,33 +3308,6 @@ public interface AgentBuilder {
                     return new SlicingIterable(minimum, maximum, batchAllocator.batch(types));
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Slicing slicing = (Slicing) object;
-                    return minimum == slicing.minimum
-                            && maximum == slicing.maximum
-                            && batchAllocator.equals(slicing.batchAllocator);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = minimum;
-                    result = 31 * result + maximum;
-                    result = 31 * result + batchAllocator.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing{" +
-                            "minimum=" + minimum +
-                            ", maximum=" + maximum +
-                            ", batchAllocator=" + batchAllocator +
-                            '}';
-                }
-
                 /**
                  * An iterable that slices batches into parts of a minimum and maximum size.
                  */
@@ -3928,15 +3344,6 @@ public interface AgentBuilder {
                     @Override
                     public Iterator<List<Class<?>>> iterator() {
                         return new SlicingIterator(minimum, maximum, iterable.iterator());
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable{" +
-                                "minimum=" + minimum +
-                                ", maximum=" + maximum +
-                                ", iterable=" + iterable +
-                                '}';
                     }
 
                     /**
@@ -4010,16 +3417,6 @@ public interface AgentBuilder {
                         public void remove() {
                             throw new UnsupportedOperationException("remove");
                         }
-
-                        @Override
-                        public String toString() {
-                            return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable.SlicingIterator{" +
-                                    "minimum=" + minimum +
-                                    ", maximum=" + maximum +
-                                    ", iterator=" + iterator +
-                                    ", buffer=" + buffer +
-                                    '}';
-                        }
                     }
                 }
             }
@@ -4027,6 +3424,7 @@ public interface AgentBuilder {
             /**
              * A partitioning batch allocator that splits types for redefinition into a fixed amount of parts.
              */
+            @EqualsAndHashCode
             class Partitioning implements BatchAllocator {
 
                 /**
@@ -4073,26 +3471,6 @@ public interface AgentBuilder {
                             return batches;
                         }
                     }
-                }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Partitioning that = (Partitioning) object;
-                    return parts == that.parts;
-                }
-
-                @Override
-                public int hashCode() {
-                    return parts;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning{" +
-                            "parts=" + parts +
-                            '}';
                 }
             }
         }
@@ -4156,11 +3534,6 @@ public interface AgentBuilder {
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.NoOp." + name();
-                }
             }
 
             /**
@@ -4188,11 +3561,6 @@ public interface AgentBuilder {
                 @Override
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.Yielding." + name();
                 }
             }
 
@@ -4237,16 +3605,12 @@ public interface AgentBuilder {
                 public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
                     /* do nothing */
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating." + name();
-                }
             }
 
             /**
              * A listener adapter that offers non-operational implementations of all listener methods.
              */
+            @EqualsAndHashCode
             abstract class Adapter implements Listener {
 
                 @Override
@@ -4276,6 +3640,7 @@ public interface AgentBuilder {
              * allocator must not resubmit batches that previously failed as an identical outcome is likely.
              * </p>
              */
+            @EqualsAndHashCode
             class BatchReallocator extends Adapter {
 
                 /**
@@ -4307,31 +3672,12 @@ public interface AgentBuilder {
                             ? Collections.<List<Class<?>>>emptyList()
                             : batchAllocator.batch(batch);
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    BatchReallocator that = (BatchReallocator) object;
-                    return batchAllocator.equals(that.batchAllocator);
-                }
-
-                @Override
-                public int hashCode() {
-                    return batchAllocator.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator{" +
-                            "batchAllocator=" + batchAllocator +
-                            '}';
-                }
             }
 
             /**
              * A listener that invokes {@link Thread#sleep(long)} prior to every batch but the first batch.
              */
+            @EqualsAndHashCode
             class Pausing extends Adapter {
 
                 /**
@@ -4376,31 +3722,12 @@ public interface AgentBuilder {
                         }
                     }
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Pausing pausing = (Pausing) object;
-                    return value == pausing.value;
-                }
-
-                @Override
-                public int hashCode() {
-                    return (int) (value ^ (value >>> 32));
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.Pausing{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * A listener that writes events to a {@link PrintStream}.
              */
+            @EqualsAndHashCode
             class StreamWriting implements Listener {
 
                 /**
@@ -4453,31 +3780,12 @@ public interface AgentBuilder {
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE COMPLETE #%d batch(es) containing %d types [%d failed batch(es)]%n", amount, types.size(), failures.size());
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    StreamWriting streamWriting = (StreamWriting) object;
-                    return printStream.equals(streamWriting.printStream);
-                }
-
-                @Override
-                public int hashCode() {
-                    return printStream.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.StreamWriting{" +
-                            "printStream=" + printStream +
-                            '}';
-                }
             }
 
             /**
              * A compound listener that delegates events to several listeners.
              */
+            @EqualsAndHashCode
             class Compound implements Listener {
 
                 /**
@@ -4533,29 +3841,10 @@ public interface AgentBuilder {
                     }
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Compound compound = (Compound) object;
-                    return listeners.equals(compound.listeners);
-                }
-
-                @Override
-                public int hashCode() {
-                    return listeners.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.Compound{" +
-                            "listeners=" + listeners +
-                            '}';
-                }
-
                 /**
                  * A compound iterable.
                  */
+                @EqualsAndHashCode
                 protected static class CompoundIterable implements Iterable<List<Class<?>>> {
 
                     /**
@@ -4575,26 +3864,6 @@ public interface AgentBuilder {
                     @Override
                     public Iterator<List<Class<?>>> iterator() {
                         return new CompoundIterator(new ArrayList<Iterable<? extends List<Class<?>>>>(iterables));
-                    }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        CompoundIterable lists = (CompoundIterable) object;
-                        return iterables.equals(lists.iterables);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return iterables.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable{" +
-                                "iterables=" + iterables +
-                                '}';
                     }
 
                     /**
@@ -4652,14 +3921,6 @@ public interface AgentBuilder {
                         @Override
                         public void remove() {
                             throw new UnsupportedOperationException("remove");
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable.CompoundIterator{" +
-                                    "current=" + current +
-                                    ", backlog=" + backlog +
-                                    '}';
                         }
                     }
                 }
@@ -4797,14 +4058,6 @@ public interface AgentBuilder {
                                             LocationStrategy locationStrategy,
                                             AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
 
-            @Override
-            public String toString() {
-                return " AgentBuilder.RedefinitionStrategy.Collector." + getClass().getSimpleName() + "{" +
-                        "transformation=" + transformation +
-                        ", types=" + types +
-                        '}';
-            }
-
             /**
              * An iterator that allows prepending of iterables to be applied previous to another iterator.
              */
@@ -4862,14 +4115,6 @@ public interface AgentBuilder {
                 public void remove() {
                     throw new UnsupportedOperationException("remove");
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Collector.PrependableIterator{" +
-                            "current=" + current +
-                            ", backlog=" + backlog +
-                            '}';
-                }
             }
 
             /**
@@ -4920,14 +4165,6 @@ public interface AgentBuilder {
                         }
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition{" +
-                            "transformation=" + transformation +
-                            ", types=" + types +
-                            "}";
-                }
             }
 
             /**
@@ -4958,14 +4195,6 @@ public interface AgentBuilder {
                             circularityLock.acquire();
                         }
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Collector.ForRetransformation{" +
-                            "transformation=" + transformation +
-                            ", types=" + types +
-                            "}";
                 }
             }
         }
@@ -5101,11 +4330,6 @@ public interface AgentBuilder {
          */
         protected abstract boolean isInstrumented(Class<?> type);
 
-        @Override
-        public String toString() {
-            return "AgentBuilder.LambdaInstrumentationStrategy." + name();
-        }
-
         /**
          * An injector for injecting the lambda class dispatcher to the system class path.
          */
@@ -5123,16 +4347,12 @@ public interface AgentBuilder {
                         .inject(Collections.singletonMap(lambdaFactory, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
                         .get(lambdaFactory);
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector." + name();
-            }
         }
 
         /**
          * A factory that creates instances that represent lambda expressions.
          */
+        @EqualsAndHashCode
         protected static class LambdaInstanceFactory {
 
             /**
@@ -5273,24 +4493,6 @@ public interface AgentBuilder {
                 return classFile;
             }
 
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && byteBuddy.equals(((LambdaInstanceFactory) other).byteBuddy);
-            }
-
-            @Override
-            public int hashCode() {
-                return byteBuddy.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory{" +
-                        "byteBuddy=" + byteBuddy +
-                        '}';
-            }
-
             /**
              * Implements a lambda class's executing transformer.
              */
@@ -5324,14 +4526,10 @@ public interface AgentBuilder {
                     return instrumentedType;
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.ConstructorImplementation." + name();
-                }
-
                 /**
                  * An appender to implement the executing transformer.
                  */
+                @EqualsAndHashCode
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -5363,24 +4561,6 @@ public interface AgentBuilder {
                                 MethodReturn.VOID
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && declaredFields.equals(((Appender) other).declaredFields);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return declaredFields.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.ConstructorImplementation.Appender{" +
-                                "declaredFields=" + declaredFields +
-                                '}';
-                    }
                 }
             }
 
@@ -5404,14 +4584,10 @@ public interface AgentBuilder {
                     return instrumentedType;
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation." + name();
-                }
-
                 /**
                  * An appender for a lambda expression factory.
                  */
+                @EqualsAndHashCode
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -5438,30 +4614,13 @@ public interface AgentBuilder {
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && instrumentedType.equals(((Appender) other).instrumentedType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return instrumentedType.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation.Appender{" +
-                                "instrumentedType=" + instrumentedType +
-                                '}';
-                    }
                 }
             }
 
             /**
              * Implements a lambda expression's functional method.
              */
+            @EqualsAndHashCode
             protected static class LambdaMethodImplementation implements Implementation {
 
                 /**
@@ -5502,33 +4661,10 @@ public interface AgentBuilder {
                     return instrumentedType;
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    LambdaMethodImplementation that = (LambdaMethodImplementation) other;
-                    return targetMethod.equals(that.targetMethod)
-                            && specializedLambdaMethod.equals(that.specializedLambdaMethod);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = targetMethod.hashCode();
-                    result = 31 * result + specializedLambdaMethod.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation{" +
-                            "targetMethod=" + targetMethod +
-                            ", specializedLambdaMethod=" + specializedLambdaMethod +
-                            '}';
-                }
-
                 /**
                  * An appender for a lambda expression's functional method.
                  */
+                @EqualsAndHashCode
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -5582,39 +4718,13 @@ public interface AgentBuilder {
                                 MethodReturn.of(targetMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        Appender appender = (Appender) other;
-                        return targetMethod.equals(appender.targetMethod)
-                                && declaredFields.equals(appender.declaredFields)
-                                && specializedLambdaMethod.equals(appender.specializedLambdaMethod);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = targetMethod.hashCode();
-                        result = 31 * result + declaredFields.hashCode();
-                        result = 31 * result + specializedLambdaMethod.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation.Appender{" +
-                                "targetMethod=" + targetMethod +
-                                ", specializedLambdaMethod=" + specializedLambdaMethod +
-                                ", declaredFields=" + declaredFields +
-                                '}';
-                    }
                 }
             }
 
             /**
              * Implements the {@code writeReplace} method for serializable lambda expressions.
              */
+            @EqualsAndHashCode
             protected static class SerializationImplementation implements Implementation {
 
                 /**
@@ -5707,47 +4817,12 @@ public interface AgentBuilder {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    SerializationImplementation that = (SerializationImplementation) other;
-                    return targetType.equals(that.targetType)
-                            && lambdaType.equals(that.lambdaType)
-                            && lambdaMethodName.equals(that.lambdaMethodName)
-                            && lambdaMethod.equals(that.lambdaMethod)
-                            && targetMethod.equals(that.targetMethod)
-                            && specializedMethod.equals(that.specializedMethod);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = targetType.hashCode();
-                    result = 31 * result + lambdaType.hashCode();
-                    result = 31 * result + lambdaMethodName.hashCode();
-                    result = 31 * result + lambdaMethod.hashCode();
-                    result = 31 * result + targetMethod.hashCode();
-                    result = 31 * result + specializedMethod.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.SerializationImplementation{" +
-                            "targetType=" + targetType +
-                            ", lambdaType=" + lambdaType +
-                            ", lambdaMethodName='" + lambdaMethodName + '\'' +
-                            ", lambdaMethod=" + lambdaMethod +
-                            ", targetMethod=" + targetMethod +
-                            ", specializedMethod=" + specializedMethod +
-                            '}';
-                }
             }
 
             /**
              * Implements an explicit bridge method for a lambda expression.
              */
+            @EqualsAndHashCode
             protected static class BridgeMethodImplementation implements Implementation {
 
                 /**
@@ -5783,32 +4858,10 @@ public interface AgentBuilder {
                     return instrumentedType;
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    BridgeMethodImplementation that = (BridgeMethodImplementation) other;
-                    return lambdaMethodName.equals(that.lambdaMethodName) && lambdaMethod.equals(that.lambdaMethod);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = lambdaMethodName.hashCode();
-                    result = 31 * result + lambdaMethod.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.BridgeMethodImplementation{" +
-                            "lambdaMethodName='" + lambdaMethodName + '\'' +
-                            ", lambdaMethod=" + lambdaMethod +
-                            '}';
-                }
-
                 /**
                  * An appender for implementing a bridge method for a lambda expression.
                  */
+                @EqualsAndHashCode
                 protected static class Appender implements ByteCodeAppender {
 
                     /**
@@ -5838,24 +4891,6 @@ public interface AgentBuilder {
                                 MethodReturn.of(instrumentedMethod.getReturnType())
 
                         )).apply(methodVisitor, implementationContext, instrumentedMethod);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && bridgeTargetInvocation.equals(((Appender) other).bridgeTargetInvocation);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return bridgeTargetInvocation.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.BridgeMethodImplementation.Appender{" +
-                                "bridgeTargetInvocation=" + bridgeTargetInvocation +
-                                '}';
                     }
                 }
             }
@@ -6046,11 +5081,6 @@ public interface AgentBuilder {
                 methodVisitor.visitMaxs(8, 8);
                 methodVisitor.visitEnd();
                 return IGNORE_ORIGINAL;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LambdaInstrumentationStrategy.MetaFactoryRedirection." + name();
             }
         }
 
@@ -6350,11 +5380,6 @@ public interface AgentBuilder {
                 methodVisitor.visitEnd();
                 return IGNORE_ORIGINAL;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LambdaInstrumentationStrategy.AlternativeMetaFactoryRedirection." + name();
-            }
         }
     }
 
@@ -6368,6 +5393,7 @@ public interface AgentBuilder {
      * {@link AgentBuilder#disableBootstrapInjection()}). All types are parsed without their debugging information ({@link PoolStrategy.Default#FAST}).
      * </p>
      */
+    @EqualsAndHashCode
     class Default implements AgentBuilder {
 
         /**
@@ -7211,78 +6237,6 @@ public interface AgentBuilder {
             }
         }
 
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Default aDefault = (Default) other;
-            return byteBuddy.equals(aDefault.byteBuddy)
-                    && listener.equals(aDefault.listener)
-                    && circularityLock.equals(aDefault.circularityLock)
-                    && poolStrategy.equals(aDefault.poolStrategy)
-                    && nativeMethodStrategy.equals(aDefault.nativeMethodStrategy)
-                    && typeStrategy.equals(aDefault.typeStrategy)
-                    && locationStrategy.equals(aDefault.locationStrategy)
-                    && initializationStrategy.equals(aDefault.initializationStrategy)
-                    && redefinitionStrategy == aDefault.redefinitionStrategy
-                    && redefinitionBatchAllocator.equals(aDefault.redefinitionBatchAllocator)
-                    && redefinitionListener.equals(aDefault.redefinitionListener)
-                    && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
-                    && lambdaInstrumentationStrategy.equals(aDefault.lambdaInstrumentationStrategy)
-                    && descriptionStrategy.equals(aDefault.descriptionStrategy)
-                    && installationStrategy.equals(aDefault.installationStrategy)
-                    && fallbackStrategy.equals(aDefault.fallbackStrategy)
-                    && ignoredTypeMatcher.equals(aDefault.ignoredTypeMatcher)
-                    && transformation.equals(aDefault.transformation);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = byteBuddy.hashCode();
-            result = 31 * result + listener.hashCode();
-            result = 31 * result + circularityLock.hashCode();
-            result = 31 * result + poolStrategy.hashCode();
-            result = 31 * result + typeStrategy.hashCode();
-            result = 31 * result + locationStrategy.hashCode();
-            result = 31 * result + nativeMethodStrategy.hashCode();
-            result = 31 * result + initializationStrategy.hashCode();
-            result = 31 * result + redefinitionStrategy.hashCode();
-            result = 31 * result + redefinitionBatchAllocator.hashCode();
-            result = 31 * result + redefinitionListener.hashCode();
-            result = 31 * result + bootstrapInjectionStrategy.hashCode();
-            result = 31 * result + lambdaInstrumentationStrategy.hashCode();
-            result = 31 * result + descriptionStrategy.hashCode();
-            result = 31 * result + installationStrategy.hashCode();
-            result = 31 * result + fallbackStrategy.hashCode();
-            result = 31 * result + ignoredTypeMatcher.hashCode();
-            result = 31 * result + transformation.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "AgentBuilder.Default{" +
-                    "byteBuddy=" + byteBuddy +
-                    ", listener=" + listener +
-                    ", circularityLock=" + circularityLock +
-                    ", poolStrategy=" + poolStrategy +
-                    ", typeStrategy=" + typeStrategy +
-                    ", locationStrategy=" + locationStrategy +
-                    ", nativeMethodStrategy=" + nativeMethodStrategy +
-                    ", initializationStrategy=" + initializationStrategy +
-                    ", redefinitionStrategy=" + redefinitionStrategy +
-                    ", redefinitionBatchAllocator=" + redefinitionBatchAllocator +
-                    ", redefinitionListener=" + redefinitionListener +
-                    ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                    ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
-                    ", descriptionStrategy=" + descriptionStrategy +
-                    ", installationStrategy=" + installationStrategy +
-                    ", fallbackStrategy=" + fallbackStrategy +
-                    ", ignoredTypeMatcher=" + ignoredTypeMatcher +
-                    ", transformation=" + transformation +
-                    '}';
-        }
-
         /**
          * An injection strategy for injecting classes into the bootstrap class loader.
          */
@@ -7310,11 +6264,6 @@ public interface AgentBuilder {
                 public ClassInjector make(ProtectionDomain protectionDomain) {
                     throw new IllegalStateException("Injecting classes into the bootstrap class loader was not enabled");
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.BootstrapInjectionStrategy.Disabled." + name();
-                }
             }
 
             /**
@@ -7341,6 +6290,7 @@ public interface AgentBuilder {
             /**
              * An enabled bootstrap injection strategy.
              */
+            @EqualsAndHashCode
             class Enabled implements BootstrapInjectionStrategy {
 
                 /**
@@ -7369,30 +6319,6 @@ public interface AgentBuilder {
                     return ClassInjector.UsingInstrumentation.of(folder,
                             ClassInjector.UsingInstrumentation.Target.BOOTSTRAP,
                             instrumentation);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Enabled enabled = (Enabled) other;
-                    return folder.equals(enabled.folder)
-                            && instrumentation.equals(enabled.instrumentation);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = folder.hashCode();
-                    result = 31 * result + instrumentation.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.BootstrapInjectionStrategy.Enabled{" +
-                            "folder=" + folder +
-                            ", instrumentation=" + instrumentation +
-                            '}';
                 }
             }
         }
@@ -7448,16 +6374,12 @@ public interface AgentBuilder {
                 public String getPrefix() {
                     throw new IllegalStateException("A disabled native method strategy does not define a method name prefix");
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.NativeMethodStrategy.Disabled." + name();
-                }
             }
 
             /**
              * A native method strategy that prefixes method names with a fixed value for supporting rebasing of native methods.
              */
+            @EqualsAndHashCode
             class ForPrefix implements NativeMethodStrategy {
 
                 /**
@@ -7503,23 +6425,6 @@ public interface AgentBuilder {
                 @Override
                 public String getPrefix() {
                     return prefix;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass()) && prefix.equals(((ForPrefix) other).prefix);
-                }
-
-                @Override
-                public int hashCode() {
-                    return prefix.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.NativeMethodStrategy.ForPrefix{" +
-                            "prefix='" + prefix + '\'' +
-                            '}';
                 }
             }
         }
@@ -7640,11 +6545,6 @@ public interface AgentBuilder {
                     protected boolean isAlive() {
                         return alive;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.Transformation.Resolution.Sort." + name();
-                    }
                 }
 
                 /**
@@ -7664,6 +6564,7 @@ public interface AgentBuilder {
                 /**
                  * A canonical implementation of a non-resolved resolution.
                  */
+                @EqualsAndHashCode
                 class Unresolved implements Resolution {
 
                     /**
@@ -7721,33 +6622,6 @@ public interface AgentBuilder {
                         listener.onIgnored(typeDescription, classLoader, module);
                         return NO_TRANSFORMATION;
                     }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        Unresolved that = (Unresolved) object;
-                        return typeDescription.equals(that.typeDescription)
-                                && (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null)
-                                && (module != null ? module.equals(that.module) : that.module == null);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = typeDescription.hashCode();
-                        result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
-                        result = 31 * result + (module != null ? module.hashCode() : 0);
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.Transformation.Resolution.Unresolved{" +
-                                "typeDescription=" + typeDescription +
-                                ", classLoader=" + classLoader +
-                                ", module=" + module +
-                                '}';
-                    }
                 }
             }
 
@@ -7779,16 +6653,12 @@ public interface AgentBuilder {
                                           TypePool typePool) {
                     return new Resolution.Unresolved(typeDescription, classLoader, module);
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.Transformation.Ignored." + name();
-                }
             }
 
             /**
              * A simple, active transformation.
              */
+            @EqualsAndHashCode
             class Simple implements Transformation {
 
                 /**
@@ -7840,34 +6710,10 @@ public interface AgentBuilder {
                             : new Transformation.Resolution.Unresolved(typeDescription, classLoader, module);
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && decorator == ((Simple) other).decorator
-                            && rawMatcher.equals(((Simple) other).rawMatcher)
-                            && transformer.equals(((Simple) other).transformer);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = rawMatcher.hashCode();
-                    result = 31 * result + (decorator ? 1 : 0);
-                    result = 31 * result + transformer.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.Transformation.Simple{" +
-                            "rawMatcher=" + rawMatcher +
-                            ", transformer=" + transformer +
-                            ", decorator=" + decorator +
-                            '}';
-                }
-
                 /**
                  * A resolution that performs a type transformation.
                  */
+                @EqualsAndHashCode
                 protected static class Resolution implements Transformation.Resolution.Decoratable {
 
                     /**
@@ -7981,48 +6827,10 @@ public interface AgentBuilder {
                         return dynamicType.getBytes();
                     }
 
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        Resolution that = (Resolution) other;
-                        return typeDescription.equals(that.typeDescription)
-                                && decorator == that.decorator
-                                && !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null)
-                                && !(module != null ? !module.equals(that.module) : that.module != null)
-                                && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null)
-                                && typePool.equals(that.typePool)
-                                && transformer.equals(that.transformer);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = typeDescription.hashCode();
-                        result = 31 * result + (decorator ? 1 : 0);
-                        result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
-                        result = 31 * result + (module != null ? module.hashCode() : 0);
-                        result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
-                        result = 31 * result + transformer.hashCode();
-                        result = 31 * result + typePool.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.Transformation.Simple.Resolution{" +
-                                "typeDescription=" + typeDescription +
-                                ", classLoader=" + classLoader +
-                                ", module=" + module +
-                                ", protectionDomain=" + protectionDomain +
-                                ", typePool=" + typePool +
-                                ", transformer=" + transformer +
-                                ", decorator=" + decorator +
-                                '}';
-                    }
-
                     /**
                      * An injector factory that resolves to a bootstrap class loader injection if this is necessary and enabled.
                      */
+                    @EqualsAndHashCode
                     protected static class BootstrapClassLoaderCapableInjectorFactory implements InitializationStrategy.Dispatcher.InjectorFactory {
 
                         /**
@@ -8061,33 +6869,6 @@ public interface AgentBuilder {
                                     ? bootstrapInjectionStrategy.make(protectionDomain)
                                     : new ClassInjector.UsingReflection(classLoader, protectionDomain);
                         }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            BootstrapClassLoaderCapableInjectorFactory that = (BootstrapClassLoaderCapableInjectorFactory) other;
-                            return bootstrapInjectionStrategy.equals(that.bootstrapInjectionStrategy)
-                                    && !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null)
-                                    && !(protectionDomain != null ? !protectionDomain.equals(that.protectionDomain) : that.protectionDomain != null);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = bootstrapInjectionStrategy.hashCode();
-                            result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
-                            result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
-                            return result;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory{" +
-                                    "bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                                    ", classLoader=" + classLoader +
-                                    ", protectionDomain=" + protectionDomain +
-                                    '}';
-                        }
                     }
                 }
             }
@@ -8095,6 +6876,7 @@ public interface AgentBuilder {
             /**
              * A compound transformation that applied several transformation in the given order and applies the first active transformation.
              */
+            @EqualsAndHashCode
             class Compound implements Transformation {
 
                 /**
@@ -8169,24 +6951,6 @@ public interface AgentBuilder {
                         }
                     }
                     return current;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && transformations.equals(((Compound) other).transformations);
-                }
-
-                @Override
-                public int hashCode() {
-                    return transformations.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.Transformation.Compound{" +
-                            "transformations=" + transformations +
-                            '}';
                 }
             }
         }
@@ -8542,27 +7306,6 @@ public interface AgentBuilder {
 
             /* does not implement hashCode and equals in order to align with identity treatment of the JVM */
 
-            @Override
-            public String toString() {
-                return "AgentBuilder.Default." + getClass().getSimpleName() + "{" +
-                        "byteBuddy=" + byteBuddy +
-                        ", listener=" + listener +
-                        ", poolStrategy=" + poolStrategy +
-                        ", typeStrategy=" + typeStrategy +
-                        ", locationStrategy=" + locationStrategy +
-                        ", initializationStrategy=" + initializationStrategy +
-                        ", nativeMethodStrategy=" + nativeMethodStrategy +
-                        ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                        ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
-                        ", descriptionStrategy=" + descriptionStrategy +
-                        ", fallbackStrategy=" + fallbackStrategy +
-                        ", ignoredTypeMatcher=" + ignoredTypeMatcher +
-                        ", transformation=" + transformation +
-                        ", circularityLock=" + circularityLock +
-                        ", accessControlContext=" + accessControlContext +
-                        '}';
-            }
-
             /**
              * A factory for creating a {@link ClassFileTransformer} for the current VM.
              */
@@ -8649,17 +7392,13 @@ public interface AgentBuilder {
                             return Factory.ForLegacyVm.INSTANCE;
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.ExecutingTransformer.Factory.CreationAction." + name();
-                    }
                 }
 
                 /**
                  * A factory for a class file transformer on a JVM that supports the {@code java.lang.reflect.Module} API to override
                  * the newly added method of the {@link ClassFileTransformer} to capture an instrumented class's module.
                  */
+                @EqualsAndHashCode
                 class ForJava9CapableVm implements Factory {
 
                     /**
@@ -8716,26 +7455,6 @@ public interface AgentBuilder {
                             throw new IllegalStateException("Cannot invoke " + executingTransformer, exception.getCause());
                         }
                     }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForJava9CapableVm that = (ForJava9CapableVm) object;
-                        return executingTransformer.equals(that.executingTransformer);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return executingTransformer.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.ExecutingTransformer.Factory.ForJava9CapableVm{" +
-                                "executingTransformer=" + executingTransformer +
-                                '}';
-                    }
                 }
 
                 /**
@@ -8777,11 +7496,6 @@ public interface AgentBuilder {
                                 ignoredTypeMatcher,
                                 transformation,
                                 circularityLock);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.ExecutingTransformer.Factory.ForLegacyVm." + name();
                     }
                 }
             }
@@ -8856,7 +7570,7 @@ public interface AgentBuilder {
                     return ExecutingTransformer.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object object) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
@@ -8869,7 +7583,7 @@ public interface AgentBuilder {
                             && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     int result = classLoader != null ? classLoader.hashCode() : 0;
                     result = 31 * result + (internalTypeName != null ? internalTypeName.hashCode() : 0);
@@ -8878,18 +7592,6 @@ public interface AgentBuilder {
                     result = 31 * result + ExecutingTransformer.this.hashCode();
                     result = 31 * result + Arrays.hashCode(binaryRepresentation);
                     return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.LegacyVmDispatcher{" +
-                            "outer=" + ExecutingTransformer.this +
-                            ", classLoader=" + classLoader +
-                            ", internalTypeName='" + internalTypeName + '\'' +
-                            ", classBeingRedefined=" + classBeingRedefined +
-                            ", protectionDomain=" + protectionDomain +
-                            ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                            '}';
                 }
             }
 
@@ -8972,7 +7674,7 @@ public interface AgentBuilder {
                     return ExecutingTransformer.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object object) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
@@ -8986,7 +7688,7 @@ public interface AgentBuilder {
                             && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     int result = rawModule.hashCode();
                     result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
@@ -8997,24 +7699,12 @@ public interface AgentBuilder {
                     result = 31 * result + Arrays.hashCode(binaryRepresentation);
                     return result;
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher{" +
-                            "outer=" + ExecutingTransformer.this +
-                            ", rawModule=" + rawModule +
-                            ", classLoader=" + classLoader +
-                            ", internalTypeName='" + internalTypeName + '\'' +
-                            ", classBeingRedefined=" + classBeingRedefined +
-                            ", protectionDomain=" + protectionDomain +
-                            ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                            '}';
-                }
             }
 
             /**
              * A listener that adds all discovered errors to a map.
              */
+            @EqualsAndHashCode
             protected static class FailureCollectingListener extends RedefinitionStrategy.Listener.Adapter {
 
                 /**
@@ -9037,26 +7727,6 @@ public interface AgentBuilder {
                         failures.put(type, throwable);
                     }
                     return Collections.emptyList();
-                }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    FailureCollectingListener that = (FailureCollectingListener) object;
-                    return failures.equals(that.failures);
-                }
-
-                @Override
-                public int hashCode() {
-                    return failures.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.FailureCollectingListener{" +
-                            "failures=" + failures +
-                            '}';
                 }
             }
         }
@@ -9316,26 +7986,18 @@ public interface AgentBuilder {
                 return Default.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && rawMatcher.equals(((Ignoring) other).rawMatcher)
                         && Default.this.equals(((Ignoring) other).getOuter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 int result = rawMatcher.hashCode();
                 result = 31 * result + Default.this.hashCode();
                 return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Default.Ignoring{" +
-                        "rawMatcher=" + rawMatcher +
-                        ", agentBuilder=" + Default.this +
-                        '}';
             }
         }
 
@@ -9448,29 +8110,6 @@ public interface AgentBuilder {
                         ignoredTypeMatcher,
                         transformation);
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Default.Redefining{" +
-                        "byteBuddy=" + byteBuddy +
-                        ", listener=" + listener +
-                        ", poolStrategy=" + poolStrategy +
-                        ", typeStrategy=" + typeStrategy +
-                        ", locationStrategy=" + locationStrategy +
-                        ", nativeMethodStrategy=" + nativeMethodStrategy +
-                        ", initializationStrategy=" + initializationStrategy +
-                        ", redefinitionStrategy=" + redefinitionStrategy +
-                        ", redefinitionBatchAllocator=" + redefinitionBatchAllocator +
-                        ", redefinitionListener=" + redefinitionListener +
-                        ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                        ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
-                        ", descriptionStrategy=" + descriptionStrategy +
-                        ", installationStrategy=" + installationStrategy +
-                        ", fallbackStrategy=" + fallbackStrategy +
-                        ", ignoredTypeMatcher=" + ignoredTypeMatcher +
-                        ", transformation=" + transformation +
-                        '}';
-            }
         }
 
         /**
@@ -9559,7 +8198,7 @@ public interface AgentBuilder {
                 return Default.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && decorator == ((Transforming) other).decorator
@@ -9568,23 +8207,13 @@ public interface AgentBuilder {
                         && Default.this.equals(((Transforming) other).getOuter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 int result = rawMatcher.hashCode();
                 result = 31 * result + (decorator ? 1 : 0);
                 result = 31 * result + transformer.hashCode();
                 result = 31 * result + Default.this.hashCode();
                 return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Default.Transforming{" +
-                        "rawMatcher=" + rawMatcher +
-                        ", transformer=" + transformer +
-                        ", decorator=" + decorator +
-                        ", agentBuilder=" + Default.this +
-                        '}';
             }
         }
     }

@@ -1,5 +1,6 @@
 package net.bytebuddy;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.*;
@@ -80,6 +81,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  *
  * @see net.bytebuddy.agent.builder.AgentBuilder
  */
+@EqualsAndHashCode
 public class ByteBuddy {
 
     /**
@@ -939,54 +941,10 @@ public class ByteBuddy {
                 ignoredMethods);
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        ByteBuddy byteBuddy = (ByteBuddy) other;
-        return classFileVersion.equals(byteBuddy.classFileVersion)
-                && annotationValueFilterFactory.equals(byteBuddy.annotationValueFilterFactory)
-                && annotationRetention == byteBuddy.annotationRetention
-                && namingStrategy.equals(byteBuddy.namingStrategy)
-                && auxiliaryTypeNamingStrategy.equals(byteBuddy.auxiliaryTypeNamingStrategy)
-                && implementationContextFactory.equals(byteBuddy.implementationContextFactory)
-                && methodGraphCompiler.equals(byteBuddy.methodGraphCompiler)
-                && typeValidation.equals(byteBuddy.typeValidation)
-                && ignoredMethods.equals(byteBuddy.ignoredMethods);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = classFileVersion.hashCode();
-        result = 31 * result + annotationValueFilterFactory.hashCode();
-        result = 31 * result + annotationRetention.hashCode();
-        result = 31 * result + namingStrategy.hashCode();
-        result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
-        result = 31 * result + implementationContextFactory.hashCode();
-        result = 31 * result + methodGraphCompiler.hashCode();
-        result = 31 * result + typeValidation.hashCode();
-        result = 31 * result + ignoredMethods.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "ByteBuddy{" +
-                "classFileVersion=" + classFileVersion +
-                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                ", annotationRetention=" + annotationRetention +
-                ", namingStrategy=" + namingStrategy +
-                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                ", implementationContextFactory=" + implementationContextFactory +
-                ", methodGraphCompiler=" + methodGraphCompiler +
-                ", typeValidation=" + typeValidation +
-                ", ignoredMethods=" + ignoredMethods +
-                '}';
-    }
-
     /**
      * An implementation fo the {@code values} method of an enumeration type.
      */
+    @EqualsAndHashCode
     protected static class EnumerationImplementation implements Implementation {
 
         /**
@@ -1047,27 +1005,10 @@ public class ByteBuddy {
             return new ValuesMethodAppender(implementationTarget.getInstrumentedType());
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && values.equals(((EnumerationImplementation) other).values);
-        }
-
-        @Override
-        public int hashCode() {
-            return values.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "ByteBuddy.EnumerationImplementation{" +
-                    "values=" + values +
-                    '}';
-        }
-
         /**
          * A byte code appender for the {@code values} method of any enumeration type.
          */
+        @EqualsAndHashCode
         protected static class ValuesMethodAppender implements ByteCodeAppender {
 
             /**
@@ -1095,29 +1036,12 @@ public class ByteBuddy {
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((ValuesMethodAppender) other).instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddy.EnumerationImplementation.ValuesMethodAppender{" +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
-            }
         }
 
         /**
          * A byte code appender for the type initializer of any enumeration type.
          */
+        @EqualsAndHashCode
         protected static class InitializationAppender implements ByteCodeAppender {
 
             /**
@@ -1164,24 +1088,6 @@ public class ByteBuddy {
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly()).write()
                 );
                 return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && values.equals(((InitializationAppender) other).values);
-            }
-
-            @Override
-            public int hashCode() {
-                return values.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddy.EnumerationImplementation.InitializationAppender{" +
-                        "values=" + values +
-                        '}';
             }
         }
     }

@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -40,6 +41,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * This {@link Implementation} allows the invocation of a specified method while
  * providing explicit arguments to this method.
  */
+@EqualsAndHashCode
 public class MethodCall implements Implementation.Composable {
 
     /**
@@ -588,45 +590,6 @@ public class MethodCall implements Implementation.Composable {
         return new Appender(implementationTarget);
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (!(other instanceof MethodCall)) return false;
-        MethodCall that = (MethodCall) other;
-        return typing == that.typing
-                && argumentLoaders.equals(that.argumentLoaders)
-                && assigner.equals(that.assigner)
-                && methodInvoker.equals(that.methodInvoker)
-                && methodLocator.equals(that.methodLocator)
-                && targetHandler.equals(that.targetHandler)
-                && terminationHandler.equals(that.terminationHandler);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = methodLocator.hashCode();
-        result = 31 * result + targetHandler.hashCode();
-        result = 31 * result + argumentLoaders.hashCode();
-        result = 31 * result + methodInvoker.hashCode();
-        result = 31 * result + terminationHandler.hashCode();
-        result = 31 * result + assigner.hashCode();
-        result = 31 * result + typing.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "MethodCall{" +
-                "methodLocator=" + methodLocator +
-                ", targetHandler=" + targetHandler +
-                ", argumentLoaders=" + argumentLoaders +
-                ", methodInvoker=" + methodInvoker +
-                ", terminationHandler=" + terminationHandler +
-                ", assigner=" + assigner +
-                ", typing=" + typing +
-                '}';
-    }
-
     /**
      * A method locator is responsible for identifying the method that is to be invoked
      * by a {@link net.bytebuddy.implementation.MethodCall}.
@@ -656,16 +619,12 @@ public class MethodCall implements Implementation.Composable {
             public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return instrumentedMethod;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodLocator.ForInstrumentedMethod." + name();
-            }
         }
 
         /**
          * Invokes a given method.
          */
+        @EqualsAndHashCode
         class ForExplicitMethod implements MethodLocator {
 
             /**
@@ -686,29 +645,12 @@ public class MethodCall implements Implementation.Composable {
             public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return methodDescription;
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && methodDescription.equals(((ForExplicitMethod) other).methodDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return methodDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodLocator.ForExplicitMethod{" +
-                        "methodDescription=" + methodDescription +
-                        '}';
-            }
         }
 
         /**
          * A method locator that identifies a unique virtual method.
          */
+        @EqualsAndHashCode
         class ForElementMatcher implements MethodLocator {
 
             /**
@@ -740,29 +682,6 @@ public class MethodCall implements Implementation.Composable {
                 } else {
                     throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method for " + matcher);
                 }
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForElementMatcher that = (ForElementMatcher) object;
-                return matcher.equals(that.matcher) && methodGraphCompiler.equals(that.methodGraphCompiler);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = matcher.hashCode();
-                result = 31 * result + methodGraphCompiler.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodLocator.ForElementMatcher{" +
-                        "matcher=" + matcher +
-                        ", methodGraphCompiler=" + methodGraphCompiler +
-                        '}';
             }
         }
     }
@@ -816,11 +735,6 @@ public class MethodCall implements Implementation.Composable {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForSelfOrStaticInvocation." + name();
-            }
         }
 
         /**
@@ -842,16 +756,12 @@ public class MethodCall implements Implementation.Composable {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForConstructingInvocation." + name();
-            }
         }
 
         /**
          * A target handler that invokes a method on an instance that is stored in a static field.
          */
+        @EqualsAndHashCode(exclude = "name")
         class ForValue implements TargetHandler {
 
             /**
@@ -908,32 +818,12 @@ public class MethodCall implements Implementation.Composable {
                         .withField(new FieldDescription.Token(name, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(name, target));
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && target.equals(((ForValue) other).target)
-                        && fieldType.equals(((ForValue) other).fieldType);
-            }
-
-            @Override
-            public int hashCode() {
-                return target.hashCode() + 31 * fieldType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForValue{" +
-                        "target=" + target +
-                        ", fieldType=" + fieldType +
-                        ", name='" + name + '\'' +
-                        '}';
-            }
         }
 
         /**
          * Creates a target handler that stores the instance to invoke a method on in an instance field.
          */
+        @EqualsAndHashCode
         class ForField implements TargetHandler {
 
             /**
@@ -979,33 +869,12 @@ public class MethodCall implements Implementation.Composable {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && name.equals(((ForField) other).name)
-                        && fieldLocatorFactory.equals(((ForField) other).fieldLocatorFactory);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = name.hashCode();
-                result = 31 * result + fieldLocatorFactory.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForField{" +
-                        "name='" + name + '\'' +
-                        ", fieldLocatorFactory=" + fieldLocatorFactory +
-                        '}';
-            }
         }
 
         /**
          * A target handler that loads the parameter of the given index as the target object.
          */
+        @EqualsAndHashCode
         class ForMethodParameter implements TargetHandler {
 
             /**
@@ -1042,23 +911,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass()) && index == ((ForMethodParameter) other).index;
-            }
-
-            @Override
-            public int hashCode() {
-                return index;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForMethodParameter{" +
-                        "index=" + index +
-                        '}';
             }
         }
     }
@@ -1130,16 +982,12 @@ public class MethodCall implements Implementation.Composable {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForNullConstant." + name();
-            }
         }
 
         /**
          * An argument loader that assigns the {@code this} reference to a parameter.
          */
+        @EqualsAndHashCode
         class ForThisReference implements ArgumentLoader {
 
             /**
@@ -1167,26 +1015,6 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForThisReference that = (ForThisReference) object;
-                return instrumentedType.equals(that.instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForThisReference{" +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
-            }
-
             /**
              * A factory for an argument loader that supplies the {@code this} value as an argument.
              */
@@ -1209,17 +1037,13 @@ public class MethodCall implements Implementation.Composable {
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForThisReference(instrumentedType));
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForThisReference.Factory." + name();
-                }
             }
         }
 
         /**
          * Loads the instrumented type onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForInstrumentedType implements ArgumentLoader {
 
             /**
@@ -1247,26 +1071,6 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForInstrumentedType that = (ForInstrumentedType) object;
-                return instrumentedType.equals(that.instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForInstrumentedType{" +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
-            }
-
             /**
              * A factory for an argument loader that supplies the instrumented type as an argument.
              */
@@ -1286,17 +1090,13 @@ public class MethodCall implements Implementation.Composable {
                 public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForInstrumentedType(instrumentedType));
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForInstrumentedType.Factory." + name();
-                }
             }
         }
 
         /**
          * Loads a parameter of the instrumented method onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForMethodParameter implements ArgumentLoader {
 
             /**
@@ -1332,30 +1132,6 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForMethodParameter that = (ForMethodParameter) object;
-                if (index != that.index) return false;
-                return instrumentedMethod.equals(that.instrumentedMethod);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = index;
-                result = 31 * result + instrumentedMethod.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForMethodParameter{" +
-                        "index=" + index +
-                        ", instrumentedMethod=" + instrumentedMethod +
-                        '}';
-            }
-
             /**
              * A factory for argument loaders that supplies all arguments of the instrumented method as arguments.
              */
@@ -1379,16 +1155,12 @@ public class MethodCall implements Implementation.Composable {
                     }
                     return argumentLoaders;
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForMethodParameter.OfInstrumentedMethod." + name();
-                }
             }
 
             /**
              * A factory for an argument loader that supplies a method parameter as an argument.
              */
+            @EqualsAndHashCode
             protected static class Factory implements ArgumentLoader.Factory {
 
                 /**
@@ -1417,32 +1189,13 @@ public class MethodCall implements Implementation.Composable {
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForMethodParameter(index, instrumentedMethod));
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Factory factory = (Factory) object;
-                    return index == factory.index;
-                }
-
-                @Override
-                public int hashCode() {
-                    return index;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForMethodParameter.Factory{" +
-                            "index=" + index +
-                            '}';
-                }
             }
         }
 
         /**
          * Loads a value onto the operand stack that is stored in a static field.
          */
+        @EqualsAndHashCode
         class ForInstance implements ArgumentLoader {
 
             /**
@@ -1470,29 +1223,10 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForInstance that = (ForInstance) object;
-                return fieldDescription.equals(that.fieldDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return fieldDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForInstance{" +
-                        "fieldDescription=" + fieldDescription +
-                        '}';
-            }
-
             /**
              * A factory that supplies the value of a static field as an argument.
              */
+            @EqualsAndHashCode(exclude = "name")
             protected static class Factory implements ArgumentLoader.Factory {
 
                 /**
@@ -1573,33 +1307,13 @@ public class MethodCall implements Implementation.Composable {
                 public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForInstance(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()));
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Factory factory = (Factory) object;
-                    return value.equals(factory.value);
-                }
-
-                @Override
-                public int hashCode() {
-                    return value.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForInstance.Factory{" +
-                            "value=" + value +
-                            ", name='" + name + '\'' +
-                            '}';
-                }
             }
         }
 
         /**
          * Loads the value of an existing field onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForField implements ArgumentLoader {
 
             /**
@@ -1641,32 +1355,10 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForField that = (ForField) object;
-                return fieldDescription.equals(that.fieldDescription) && instrumentedMethod.equals(that.instrumentedMethod);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = fieldDescription.hashCode();
-                result = 31 * result + instrumentedMethod.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForField{" +
-                        "fieldDescription=" + fieldDescription +
-                        ", instrumentedMethod=" + instrumentedMethod +
-                        '}';
-            }
-
             /**
              * A factory for an argument loaded that loads the value of an existing field as an argument.
              */
+            @EqualsAndHashCode
             protected static class Factory implements ArgumentLoader.Factory {
 
                 /**
@@ -1703,33 +1395,13 @@ public class MethodCall implements Implementation.Composable {
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForField(resolution.getField(), instrumentedMethod));
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Factory factory = (Factory) object;
-                    return name.equals(factory.name) && fieldLocatorFactory.equals(factory.fieldLocatorFactory);
-                }
-
-                @Override
-                public int hashCode() {
-                    return name.hashCode() + 31 * fieldLocatorFactory.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForField.Factory{" +
-                            "name='" + name + '\'' +
-                            ", fieldLocatorFactory=" + fieldLocatorFactory +
-                            '}';
-                }
             }
         }
 
         /**
          * An argument loader that loads an element of a parameter of an array type.
          */
+        @EqualsAndHashCode
         class ForMethodParameterArray implements ArgumentLoader {
 
             /**
@@ -1767,32 +1439,10 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                ForMethodParameterArray that = (ForMethodParameterArray) object;
-                return index == that.index && parameterDescription.equals(that.parameterDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = parameterDescription.hashCode();
-                result = 31 * result + index;
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForMethodParameterArray{" +
-                        "parameterDescription=" + parameterDescription +
-                        ", index=" + index +
-                        '}';
-            }
-
             /**
              * Creates an argument loader for an array element that of a specific parameter.
              */
+            @EqualsAndHashCode
             protected static class OfParameter implements ArgumentLoader.Factory {
 
                 /**
@@ -1830,34 +1480,12 @@ public class MethodCall implements Implementation.Composable {
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArray(instrumentedMethod.getParameters().get(index), arrayIndex));
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    OfParameter that = (OfParameter) object;
-                    return index == that.index && arrayIndex == that.arrayIndex;
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = index;
-                    result = 31 * result + arrayIndex;
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForMethodParameterArray.OfParameter{" +
-                            "index=" + index +
-                            ", arrayIndex=" + arrayIndex +
-                            '}';
-                }
             }
 
             /**
              * An argument loader factory that loads an array element from a parameter for each argument of the invoked method.
              */
+            @EqualsAndHashCode
             protected static class OfInvokedMethod implements ArgumentLoader.Factory {
 
                 /**
@@ -1892,32 +1520,13 @@ public class MethodCall implements Implementation.Composable {
                     }
                     return argumentLoaders;
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    OfInvokedMethod that = (OfInvokedMethod) object;
-                    return index == that.index;
-                }
-
-                @Override
-                public int hashCode() {
-                    return index;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForMethodParameterArray.OfInvokedMethod{" +
-                            "index=" + index +
-                            '}';
-                }
             }
         }
 
         /**
          * Loads a {@code boolean} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForBooleanConstant implements ArgumentLoader, Factory {
 
             /**
@@ -1954,27 +1563,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && value == ((ForBooleanConstant) other).value;
-            }
-
-            @Override
-            public int hashCode() {
-                return (value ? 1 : 0);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForBooleanConstant{value=" + value + '}';
-            }
         }
 
         /**
          * Loads a {@code byte} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForByteConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2011,27 +1605,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && value == ((ForByteConstant) other).value;
-            }
-
-            @Override
-            public int hashCode() {
-                return value;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForByteConstant{value=" + value + '}';
-            }
         }
 
         /**
          * Loads a {@code short} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForShortConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2068,27 +1647,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && value == ((ForShortConstant) other).value;
-            }
-
-            @Override
-            public int hashCode() {
-                return value;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForShortConstant{value=" + value + '}';
-            }
         }
 
         /**
          * Loads a {@code char} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForCharacterConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2125,27 +1689,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && value == ((ForCharacterConstant) other).value;
-            }
-
-            @Override
-            public int hashCode() {
-                return value;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForCharacterConstant{value=" + value + '}';
-            }
         }
 
         /**
          * Loads an {@code int} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForIntegerConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2182,27 +1731,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && value == ((ForIntegerConstant) other).value;
-            }
-
-            @Override
-            public int hashCode() {
-                return value;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForIntegerConstant{value=" + value + '}';
-            }
         }
 
         /**
          * Loads a {@code long} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForLongConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2239,29 +1773,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && value == ((ForLongConstant) other).value;
-            }
-
-            @Override
-            public int hashCode() {
-                return (int) (value ^ (value >>> 32));
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForLongConstant{" +
-                        "value=" + value +
-                        '}';
-            }
         }
 
         /**
          * Loads a {@code float} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForFloatConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2298,27 +1815,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && Float.compare(((ForFloatConstant) other).value, value) == 0;
-            }
-
-            @Override
-            public int hashCode() {
-                return (value != +0.0f ? Float.floatToIntBits(value) : 0);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForFloatConstant{value=" + value + '}';
-            }
         }
 
         /**
          * Loads a {@code double} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForDoubleConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2355,28 +1857,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && Double.compare(((ForDoubleConstant) other).value, value) == 0;
-            }
-
-            @Override
-            public int hashCode() {
-                long temp = Double.doubleToLongBits(value);
-                return (int) (temp ^ (temp >>> 32));
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForDoubleConstant{value=" + value + '}';
-            }
         }
 
         /**
          * Loads a {@link java.lang.String} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForTextConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2413,29 +1899,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && value.equals(((ForTextConstant) other).value);
-            }
-
-            @Override
-            public int hashCode() {
-                return value.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForTextConstant{" +
-                        "value='" + value + '\'' +
-                        '}';
-            }
         }
 
         /**
          * Loads a {@link java.lang.Class} value onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForClassConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2472,29 +1941,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && typeDescription.equals(((ForClassConstant) other).typeDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return typeDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForClassConstant{" +
-                        "typeDescription=" + typeDescription +
-                        '}';
-            }
         }
 
         /**
          * An argument loader that loads an enumeration constant.
          */
+        @EqualsAndHashCode
         class ForEnumerationValue implements ArgumentLoader, Factory {
 
             /**
@@ -2531,29 +1983,12 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && enumerationDescription.equals(((ForEnumerationValue) other).enumerationDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return enumerationDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForEnumerationValue{" +
-                        "enumerationDescription=" + enumerationDescription +
-                        '}';
-            }
         }
 
         /**
          * Loads a Java instance onto the operand stack.
          */
+        @EqualsAndHashCode
         class ForJavaConstant implements ArgumentLoader, Factory {
 
             /**
@@ -2589,24 +2024,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && javaConstant.equals(((ForJavaConstant) other).javaConstant);
-            }
-
-            @Override
-            public int hashCode() {
-                return javaConstant.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForJavaConstant{" +
-                        "javaConstant=" + javaConstant +
-                        '}';
             }
         }
     }
@@ -2648,16 +2065,12 @@ public class MethodCall implements Implementation.Composable {
                         ? MethodInvocation.invoke(invokedMethod).virtual(implementationTarget.getInstrumentedType())
                         : MethodInvocation.invoke(invokedMethod);
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodInvoker.ForContextualInvocation." + name();
-            }
         }
 
         /**
          * Applies a virtual invocation on a given type.
          */
+        @EqualsAndHashCode
         class ForVirtualInvocation implements MethodInvoker {
 
             /**
@@ -2695,26 +2108,6 @@ public class MethodCall implements Implementation.Composable {
                 return MethodInvocation.invoke(invokedMethod).virtual(typeDescription.asErasure());
             }
 
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                ForVirtualInvocation that = (ForVirtualInvocation) other;
-                return typeDescription.equals(that.typeDescription);
-            }
-
-            @Override
-            public int hashCode() {
-                return typeDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodInvoker.ForVirtualInvocation{" +
-                        "typeDescription=" + typeDescription +
-                        '}';
-            }
-
             /**
              * A method invoker for a virtual method that uses an implicit target type.
              */
@@ -2731,11 +2124,6 @@ public class MethodCall implements Implementation.Composable {
                         throw new IllegalStateException("Cannot invoke " + invokedMethod + " virtually");
                     }
                     return MethodInvocation.invoke(invokedMethod);
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.MethodInvoker.ForVirtualInvocation.WithImplicitType." + name();
                 }
             }
         }
@@ -2763,11 +2151,6 @@ public class MethodCall implements Implementation.Composable {
                 }
                 return stackManipulation;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodInvoker.ForSuperMethodInvocation." + name();
-            }
         }
 
         /**
@@ -2790,11 +2173,6 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + implementationTarget.getInstrumentedType());
                 }
                 return stackManipulation;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodInvoker.ForDefaultMethodInvocation." + name();
             }
         }
     }
@@ -2846,11 +2224,6 @@ public class MethodCall implements Implementation.Composable {
                                                      MethodDescription instrumentedMethod,
                                                      Assigner assigner,
                                                      Assigner.Typing typing);
-
-        @Override
-        public String toString() {
-            return "MethodCall.TerminationHandler." + name();
-        }
     }
 
     /**
@@ -2984,19 +2357,6 @@ public class MethodCall implements Implementation.Composable {
                     assigner,
                     typing);
         }
-
-        @Override
-        public String toString() {
-            return "MethodCall.WithoutSpecifiedTarget{" +
-                    "methodLocator=" + methodLocator +
-                    ", targetHandler=" + targetHandler +
-                    ", argumentLoaders=" + argumentLoaders +
-                    ", methodInvoker=" + methodInvoker +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
     }
 
     /**
@@ -3052,7 +2412,7 @@ public class MethodCall implements Implementation.Composable {
             return MethodCall.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
@@ -3062,17 +2422,9 @@ public class MethodCall implements Implementation.Composable {
 
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return implementationTarget.hashCode() + 31 * MethodCall.this.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCall.Appender{" +
-                    "methodCall=" + MethodCall.this +
-                    ", implementationTarget=" + implementationTarget +
-                    '}';
         }
     }
 }

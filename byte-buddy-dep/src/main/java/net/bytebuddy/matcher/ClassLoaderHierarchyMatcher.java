@@ -1,11 +1,14 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * An element matcher that matches all {@link java.lang.ClassLoader}s in the matched class loaders hierarchy
  * against a given matcher.
  *
  * @param <T> The exact type of the class loader that is matched.
  */
+@EqualsAndHashCode
 public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -32,17 +35,6 @@ public class ClassLoaderHierarchyMatcher<T extends ClassLoader> extends ElementM
             current = current.getParent();
         }
         return matcher.matches(null);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((ClassLoaderHierarchyMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override

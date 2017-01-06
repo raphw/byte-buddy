@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
 
@@ -8,6 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T>The type of the matched entity.
  */
+@EqualsAndHashCode
 public class VisibilityMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -27,17 +29,6 @@ public class VisibilityMatcher<T extends ByteCodeElement> extends ElementMatcher
     @Override
     public boolean matches(T target) {
         return target.isVisibleTo(typeDescription);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && typeDescription.equals(((VisibilityMatcher) other).typeDescription);
-    }
-
-    @Override
-    public int hashCode() {
-        return typeDescription.hashCode();
     }
 
     @Override

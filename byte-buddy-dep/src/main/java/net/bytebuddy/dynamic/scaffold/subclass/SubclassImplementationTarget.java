@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -17,6 +18,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 /**
  * An implementation target for creating a subclass of a given type.
  */
+@EqualsAndHashCode(callSuper = true)
 public class SubclassImplementationTarget extends Implementation.Target.AbstractBase {
 
     /**
@@ -91,33 +93,6 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         return originTypeResolver.identify(instrumentedType);
     }
 
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && super.equals(other)
-                && superConstructors.equals(((SubclassImplementationTarget) other).superConstructors)
-                && originTypeResolver == ((SubclassImplementationTarget) other).originTypeResolver;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + superConstructors.hashCode();
-        result = 31 * result + originTypeResolver.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "SubclassImplementationTarget{" +
-                "superConstructors=" + superConstructors +
-                ", originTypeResolver=" + originTypeResolver +
-                ", instrumentedType=" + instrumentedType +
-                ", methodGraph=" + methodGraph +
-                ", defaultMethodInvocation=" + defaultMethodInvocation +
-                '}';
-    }
-
     /**
      * Responsible for identifying the origin type that an implementation target represents when
      * {@link Implementation.Target#getOriginType()} is invoked.
@@ -151,11 +126,6 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          * @return The origin type to the given type description.
          */
         protected abstract TypeDefinition identify(TypeDescription typeDescription);
-
-        @Override
-        public String toString() {
-            return "SubclassImplementationTarget.OriginTypeResolver." + name();
-        }
     }
 
     /**
@@ -190,11 +160,6 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         @Override
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion) {
             return new SubclassImplementationTarget(instrumentedType, methodGraph, DefaultMethodInvocation.of(classFileVersion), originTypeResolver);
-        }
-
-        @Override
-        public String toString() {
-            return "SubclassImplementationTarget.Factory." + name();
         }
     }
 }

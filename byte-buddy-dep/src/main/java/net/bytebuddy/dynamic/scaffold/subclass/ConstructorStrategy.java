@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -238,14 +239,10 @@ public interface ConstructorStrategy {
             return new WithMethodAttributeAppenderFactory(this, MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER);
         }
 
-        @Override
-        public String toString() {
-            return "ConstructorStrategy.Default." + name();
-        }
-
         /**
          * A wrapper for a default constructor strategy which additionally applies a method attribute appender factory.
          */
+        @EqualsAndHashCode
         protected static class WithMethodAttributeAppenderFactory implements ConstructorStrategy {
 
             /**
@@ -277,29 +274,6 @@ public interface ConstructorStrategy {
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry) {
                 return delegate.doInject(methodRegistry, methodAttributeAppenderFactory);
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                WithMethodAttributeAppenderFactory that = (WithMethodAttributeAppenderFactory) object;
-                return delegate == that.delegate && methodAttributeAppenderFactory.equals(that.methodAttributeAppenderFactory);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = delegate.hashCode();
-                result = 31 * result + methodAttributeAppenderFactory.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "ConstructorStrategy.Default.WithMethodAttributeAppenderFactory{" +
-                        "delegate=" + delegate +
-                        ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
-                        '}';
             }
         }
 

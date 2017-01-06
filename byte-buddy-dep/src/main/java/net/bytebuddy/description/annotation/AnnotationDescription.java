@@ -1,6 +1,7 @@
 package net.bytebuddy.description.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
@@ -355,14 +356,6 @@ public interface AnnotationDescription {
                 result = 31 * result + entry.getValue().hashCode();
             }
             return result;
-        }
-
-        @Override
-        public String toString() {
-            return "TypePool.LazyTypeDescription.AnnotationInvocationHandler{" +
-                    "annotationType=" + annotationType +
-                    ", values=" + values +
-                    '}';
         }
 
         /**
@@ -794,6 +787,7 @@ public interface AnnotationDescription {
     /**
      * A builder for pragmatically creating {@link net.bytebuddy.description.annotation.AnnotationDescription}.
      */
+    @EqualsAndHashCode
     class Builder {
 
         /**
@@ -1254,28 +1248,6 @@ public interface AnnotationDescription {
                 }
             }
             return new Latent(annotationType, annotationValues);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && annotationType.equals(((Builder) other).annotationType)
-                    && annotationValues.equals(((Builder) other).annotationValues);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = annotationType.hashCode();
-            result = 31 * result + annotationValues.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "AnnotationDescription.Builder{" +
-                    "annotationType=" + annotationType +
-                    ", annotationValues=" + annotationValues +
-                    '}';
         }
     }
 }

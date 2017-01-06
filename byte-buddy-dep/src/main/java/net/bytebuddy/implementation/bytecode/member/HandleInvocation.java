@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.member;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.utility.JavaConstant;
@@ -9,6 +10,7 @@ import org.objectweb.asm.Opcodes;
 /**
  * An exact invocation of a method handle with a polymorphic signature.
  */
+@EqualsAndHashCode
 public class HandleInvocation implements StackManipulation {
 
     /**
@@ -45,23 +47,5 @@ public class HandleInvocation implements StackManipulation {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, METHOD_HANDLE_NAME, INVOKE_EXACT, methodType.getDescriptor(), false);
         int size = methodType.getReturnType().getStackSize().getSize() - methodType.getParameterTypes().getStackSize();
         return new Size(size, Math.max(size, 0));
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && methodType.equals(((HandleInvocation) other).methodType);
-    }
-
-    @Override
-    public int hashCode() {
-        return methodType.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "HandleInvocation{" +
-                "methodType=" + methodType +
-                '}';
     }
 }

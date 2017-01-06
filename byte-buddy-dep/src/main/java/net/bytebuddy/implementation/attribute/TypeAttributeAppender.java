@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -38,11 +39,6 @@ public interface TypeAttributeAppender {
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
-
-        @Override
-        public String toString() {
-            return "TypeAttributeAppender.NoOp." + name();
-        }
     }
 
     /**
@@ -79,15 +75,11 @@ public interface TypeAttributeAppender {
             }
         }
 
-        @Override
-        public String toString() {
-            return "TypeAttributeAppender.ForInstrumentedType." + name();
-        }
-
         /**
          * A type attribute appender that writes all annotations of the instrumented but excludes annotations up to
          * a given index.
          */
+        @EqualsAndHashCode
         public static class Differentiating implements TypeAttributeAppender {
 
             /**
@@ -147,33 +139,6 @@ public interface TypeAttributeAppender {
                     annotationAppender = annotationAppender.append(annotationDescription, annotationValueFilter);
                 }
             }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Differentiating differentiating = (Differentiating) other;
-                return annotationIndex == differentiating.annotationIndex
-                        && typeVariableIndex == differentiating.typeVariableIndex
-                        && interfaceTypeIndex == differentiating.interfaceTypeIndex;
-            }
-
-            @Override
-            public int hashCode() {
-                int result = annotationIndex;
-                result = 31 * result + typeVariableIndex;
-                result = 31 * result + interfaceTypeIndex;
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "TypeAttributeAppender.ForInstrumentedType.Differentiating{" +
-                        "annotationIndex=" + annotationIndex +
-                        ", typeVariableIndex=" + typeVariableIndex +
-                        ", interfaceTypeIndex=" + interfaceTypeIndex +
-                        '}';
-            }
         }
     }
 
@@ -181,6 +146,7 @@ public interface TypeAttributeAppender {
      * An attribute appender that appends a single annotation to a given type. The visibility for the annotation
      * will be inferred from the annotation's {@link java.lang.annotation.RetentionPolicy}.
      */
+    @EqualsAndHashCode
     class Explicit implements TypeAttributeAppender {
 
         /**
@@ -204,29 +170,12 @@ public interface TypeAttributeAppender {
                 appender = appender.append(annotation, annotationValueFilter);
             }
         }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && annotations.equals(((Explicit) other).annotations);
-        }
-
-        @Override
-        public int hashCode() {
-            return annotations.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "TypeAttributeAppender.Explicit{" +
-                    "annotations=" + annotations +
-                    '}';
-        }
     }
 
     /**
      * A compound type attribute appender that concatenates a number of other attribute appenders.
      */
+    @EqualsAndHashCode
     class Compound implements TypeAttributeAppender {
 
         /**
@@ -264,22 +213,6 @@ public interface TypeAttributeAppender {
             for (TypeAttributeAppender typeAttributeAppender : typeAttributeAppenders) {
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilter);
             }
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && typeAttributeAppenders.equals(((Compound) other).typeAttributeAppenders);
-        }
-
-        @Override
-        public int hashCode() {
-            return typeAttributeAppenders.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "TypeAttributeAppender.Compound{typeAttributeAppenders=" + typeAttributeAppenders + '}';
         }
     }
 }

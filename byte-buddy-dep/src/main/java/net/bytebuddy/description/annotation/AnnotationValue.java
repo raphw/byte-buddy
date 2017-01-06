@@ -286,11 +286,6 @@ public interface AnnotationValue<T, S> {
             }
             return stringBuilder.append(closingBrace).toString();
         }
-
-        @Override
-        public String toString() {
-            return "AnnotationValue.RenderingDispatcher." + name();
-        }
     }
 
     /**
@@ -389,11 +384,6 @@ public interface AnnotationValue<T, S> {
              */
             public boolean isResolved() {
                 return this == RESOLVED;
-            }
-
-            @Override
-            public String toString() {
-                return "AnnotationValue.Loaded.State." + name();
             }
         }
 
@@ -865,11 +855,6 @@ public interface AnnotationValue<T, S> {
                 public boolean equals(Object self, Object other) {
                     return self.equals(other);
                 }
-
-                @Override
-                public String toString() {
-                    return "AnnotationValue.ForConstant.PropertyDelegate.ForNonArrayType." + name();
-                }
             }
 
             /**
@@ -1133,11 +1118,6 @@ public interface AnnotationValue<T, S> {
                  * @return A {@link String} representation of the array element at the supplied index.
                  */
                 protected abstract String toString(Object array, int index);
-
-                @Override
-                public String toString() {
-                    return "AnnotationValue.ForConstant.PropertyDelegate.ForArrayType." + name();
-                }
             }
         }
 

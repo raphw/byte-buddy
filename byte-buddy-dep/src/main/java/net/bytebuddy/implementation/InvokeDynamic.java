@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -39,6 +40,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * An implementation that applies a
  * <a href="http://docs.oracle.com/javase/8/docs/api/java/lang/invoke/package-summary.html">dynamic method invocation</a>.
  */
+@EqualsAndHashCode
 public class InvokeDynamic implements Implementation.Composable {
 
     /**
@@ -769,46 +771,6 @@ public class InvokeDynamic implements Implementation.Composable {
         return invocationProvider;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof InvokeDynamic)) {
-            return false;
-        }
-        InvokeDynamic that = (InvokeDynamic) other;
-        return typing == that.typing
-                && assigner.equals(that.assigner)
-                && bootstrapMethod.equals(that.bootstrapMethod)
-                && handleArguments.equals(that.handleArguments)
-                && invocationProvider.equals(that.getInvocationProvider())
-                && terminationHandler.equals(that.terminationHandler);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = bootstrapMethod.hashCode();
-        result = 31 * result + handleArguments.hashCode();
-        result = 31 * result + getInvocationProvider().hashCode();
-        result = 31 * result + terminationHandler.hashCode();
-        result = 31 * result + assigner.hashCode();
-        result = 31 * result + typing.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "InvokeDynamic{" +
-                "bootstrapMethod=" + bootstrapMethod +
-                ", handleArguments=" + handleArguments +
-                ", invocationProvider=" + invocationProvider +
-                ", terminationHandler=" + terminationHandler +
-                ", assigner=" + assigner +
-                ", typing=" + typing +
-                '}';
-    }
-
     /**
      * An invocation provider is responsible for loading the arguments of the invoked method onto the operand
      * stack and for creating the actual <i>invoke dynamic</i> instruction.
@@ -922,6 +884,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * A simple implementation of
                  * {@link net.bytebuddy.implementation.InvokeDynamic.InvocationProvider.Target.Resolved}.
                  */
+                @EqualsAndHashCode
                 class Simple implements Resolved {
 
                     /**
@@ -981,46 +944,13 @@ public class InvokeDynamic implements Implementation.Composable {
                     public List<TypeDescription> getParameterTypes() {
                         return parameterTypes;
                     }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) {
-                            return true;
-                        }
-                        if (other == null || getClass() != other.getClass()) {
-                            return false;
-                        }
-                        Simple simple = (Simple) other;
-                        return internalName.equals(simple.internalName)
-                                && parameterTypes.equals(simple.parameterTypes)
-                                && returnType.equals(simple.returnType)
-                                && stackManipulation.equals(simple.stackManipulation);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = stackManipulation.hashCode();
-                        result = 31 * result + internalName.hashCode();
-                        result = 31 * result + returnType.hashCode();
-                        result = 31 * result + parameterTypes.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.Target.Resolved.Simple{" +
-                                "stackManipulation=" + stackManipulation +
-                                ", internalName='" + internalName + '\'' +
-                                ", returnType=" + returnType +
-                                ", parameterTypes=" + parameterTypes +
-                                '}';
-                    }
                 }
             }
 
             /**
              * A target that requests to dynamically invoke a method to substitute for a given method.
              */
+            @EqualsAndHashCode
             class ForMethodDescription implements Target, Target.Resolved {
 
                 /**
@@ -1062,24 +992,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     return methodDescription.isStatic()
                             ? methodDescription.getParameters().asTypeList().asErasures()
                             : CompoundList.of(methodDescription.getDeclaringType().asErasure(), methodDescription.getParameters().asTypeList().asErasures());
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && methodDescription.equals(((ForMethodDescription) other).methodDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return methodDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.Target.ForMethodDescription{" +
-                            "methodDescription=" + methodDescription +
-                            '}';
                 }
             }
         }
@@ -1135,11 +1047,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodInstanceAndParameters." + name();
-                }
             }
 
             /**
@@ -1161,11 +1068,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters." + name();
                 }
             }
 
@@ -1322,11 +1224,6 @@ public class InvokeDynamic implements Implementation.Composable {
                  */
                 protected abstract ArgumentProvider make(Object value);
 
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper." + name();
-                }
-
                 /**
                  * An argument provider that loads a primitive value from the constant pool and wraps it.
                  */
@@ -1358,7 +1255,7 @@ public class InvokeDynamic implements Implementation.Composable {
                         return instrumentedType;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && ConstantPoolWrapper.this.equals(((WrappingArgumentProvider) other).getOuter())
@@ -1374,17 +1271,9 @@ public class InvokeDynamic implements Implementation.Composable {
                         return ConstantPoolWrapper.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         return stackManipulation.hashCode() + 31 * ConstantPoolWrapper.this.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.WrappingArgumentProvider{" +
-                                "constantPoolWrapper=" + ConstantPoolWrapper.this +
-                                ", stackManipulation=" + stackManipulation +
-                                '}';
                     }
                 }
             }
@@ -1411,6 +1300,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * A simple implementation of a resolved argument provider.
                  */
+                @EqualsAndHashCode
                 class Simple implements Resolved {
 
                     /**
@@ -1454,40 +1344,13 @@ public class InvokeDynamic implements Implementation.Composable {
                     public List<TypeDescription> getLoadedTypes() {
                         return loadedTypes;
                     }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) {
-                            return true;
-                        }
-                        if (other == null || getClass() != other.getClass()) {
-                            return false;
-                        }
-                        Simple simple = (Simple) other;
-                        return loadedTypes.equals(simple.loadedTypes)
-                                && stackManipulation.equals(simple.stackManipulation);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = stackManipulation.hashCode();
-                        result = 31 * result + loadedTypes.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple{" +
-                                "stackManipulation=" + stackManipulation +
-                                ", loadedTypes=" + loadedTypes +
-                                '}';
-                    }
                 }
             }
 
             /**
              * An argument provider that loads the intercepted instance.
              */
+            @EqualsAndHashCode
             class ForThisInstance implements ArgumentProvider {
 
                 /**
@@ -1518,29 +1381,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((ForThisInstance) other).typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForThisInstance{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a value that is stored in a randomly named static field.
              */
+            @EqualsAndHashCode(exclude = "name")
             class ForInstance implements ArgumentProvider {
 
                 /**
@@ -1602,32 +1448,12 @@ public class InvokeDynamic implements Implementation.Composable {
                             .withField(new FieldDescription.Token(name, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType.asGenericType()))
                             .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldType.equals(((ForInstance) other).fieldType)
-                            && value.equals(((ForInstance) other).value);
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31 * value.hashCode() + fieldType.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstance{" +
-                            "value=" + value +
-                            ", fieldType=" + fieldType +
-                            ", name='" + name + '\'' +
-                            '}';
-                }
             }
 
             /**
              * Provides an argument from an existing field.
              */
+            @EqualsAndHashCode
             class ForField implements ArgumentProvider {
 
                 /**
@@ -1685,29 +1511,10 @@ public class InvokeDynamic implements Implementation.Composable {
                     return instrumentedType;
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldLocatorFactory.equals(((ForField) other).fieldLocatorFactory)
-                            && fieldName.equals(((ForField) other).fieldName);
-                }
-
-                @Override
-                public int hashCode() {
-                    return fieldName.hashCode() + 31 * fieldLocatorFactory.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForField{" +
-                            "fieldName='" + fieldName + '\'' +
-                            ", fieldLocatorFactory=" + fieldLocatorFactory +
-                            '}';
-                }
-
                 /**
                  * An argument provider for a field value with an explicit type.
                  */
+                @EqualsAndHashCode(callSuper = true)
                 protected static class WithExplicitType extends ForField {
 
                     /**
@@ -1735,37 +1542,13 @@ public class InvokeDynamic implements Implementation.Composable {
                         }
                         return new Resolved.Simple(new StackManipulation.Compound(access, stackManipulation), this.typeDescription);
                     }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        if (!super.equals(object)) return false;
-                        WithExplicitType that = (WithExplicitType) object;
-                        return typeDescription.equals(that.typeDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + typeDescription.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForField.WithExplicitType{" +
-                                "fieldName='" + fieldName + '\'' +
-                                ", fieldLocatorFactory=" + fieldLocatorFactory +
-                                ", typeDescription=" + typeDescription +
-                                '}';
-                    }
                 }
             }
 
             /**
              * An argument provider that loads an argument of the intercepted method.
              */
+            @EqualsAndHashCode
             class ForMethodParameter implements ArgumentProvider {
 
                 /**
@@ -1809,27 +1592,10 @@ public class InvokeDynamic implements Implementation.Composable {
                     return instrumentedType;
                 }
 
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && index == ((ForMethodParameter) other).index;
-                }
-
-                @Override
-                public int hashCode() {
-                    return index;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter{" +
-                            "index=" + index +
-                            '}';
-                }
-
                 /**
                  * An argument provider for a method parameter with an explicit type.
                  */
+                @EqualsAndHashCode(callSuper = true)
                 protected static class WithExplicitType extends ForMethodParameter {
 
                     /**
@@ -1856,36 +1622,13 @@ public class InvokeDynamic implements Implementation.Composable {
                         }
                         return new Resolved.Simple(new StackManipulation.Compound(access, stackManipulation), typeDescription);
                     }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        if (!super.equals(object)) return false;
-                        WithExplicitType that = (WithExplicitType) object;
-                        return typeDescription.equals(that.typeDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + typeDescription.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter.WithExplicitType{" +
-                                "index=" + index +
-                                ", typeDescription=" + typeDescription +
-                                '}';
-                    }
                 }
             }
 
             /**
              * An argument provider for a {@code boolean} value.
              */
+            @EqualsAndHashCode
             class ForBooleanConstant implements ArgumentProvider {
 
                 /**
@@ -1911,29 +1654,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForBooleanConstant) other).value;
-                }
-
-                @Override
-                public int hashCode() {
-                    return (value ? 1 : 0);
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForBooleanConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a {@code byte} value.
              */
+            @EqualsAndHashCode
             class ForByteConstant implements ArgumentProvider {
 
                 /**
@@ -1959,29 +1685,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForByteConstant) other).value;
-                }
-
-                @Override
-                public int hashCode() {
-                    return (int) value;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForByteConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a {@code short} value.
              */
+            @EqualsAndHashCode
             class ForShortConstant implements ArgumentProvider {
 
                 /**
@@ -2007,29 +1716,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForShortConstant) other).value;
-                }
-
-                @Override
-                public int hashCode() {
-                    return (int) value;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForShortConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a {@code char} value.
              */
+            @EqualsAndHashCode
             class ForCharacterConstant implements ArgumentProvider {
 
                 /**
@@ -2055,29 +1747,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForCharacterConstant) other).value;
-                }
-
-                @Override
-                public int hashCode() {
-                    return (int) value;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForCharacterConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a {@code int} value.
              */
+            @EqualsAndHashCode
             class ForIntegerConstant implements ArgumentProvider {
 
                 /**
@@ -2103,29 +1778,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForIntegerConstant) other).value;
-                }
-
-                @Override
-                public int hashCode() {
-                    return value;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForIntegerConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a {@code long} value.
              */
+            @EqualsAndHashCode
             class ForLongConstant implements ArgumentProvider {
 
                 /**
@@ -2151,29 +1809,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && value == ((ForLongConstant) other).value;
-                }
-
-                @Override
-                public int hashCode() {
-                    return (int) (value ^ (value >>> 32));
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForLongConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a {@code float} value.
              */
+            @EqualsAndHashCode
             class ForFloatConstant implements ArgumentProvider {
 
                 /**
@@ -2199,29 +1840,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && Float.compare(((ForFloatConstant) other).value, value) == 0;
-                }
-
-                @Override
-                public int hashCode() {
-                    return (value != +0.0f ? Float.floatToIntBits(value) : 0);
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForFloatConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a {@code double} value.
              */
+            @EqualsAndHashCode
             class ForDoubleConstant implements ArgumentProvider {
 
                 /**
@@ -2247,30 +1871,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && Double.compare(((ForDoubleConstant) other).value, value) == 0;
-                }
-
-                @Override
-                public int hashCode() {
-                    long temp = Double.doubleToLongBits(value);
-                    return (int) (temp ^ (temp >>> 32));
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForDoubleConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a {@link java.lang.String} value.
              */
+            @EqualsAndHashCode
             class ForStringConstant implements ArgumentProvider {
 
                 /**
@@ -2296,29 +1902,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && value.equals(((ForStringConstant) other).value);
-                }
-
-                @Override
-                public int hashCode() {
-                    return value.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringConstant{" +
-                            "value='" + value + '\'' +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a {@link java.lang.Class} constant.
              */
+            @EqualsAndHashCode
             class ForClassConstant implements ArgumentProvider {
 
                 /**
@@ -2344,29 +1933,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((ForClassConstant) other).typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassConstant{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for an {@link java.lang.Enum} constant.
              */
+            @EqualsAndHashCode
             class ForEnumerationValue implements ArgumentProvider {
 
                 /**
@@ -2392,29 +1964,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && enumerationDescription.equals(((ForEnumerationValue) other).enumerationDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return enumerationDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForEnumerationValue{" +
-                            "enumerationDescription=" + enumerationDescription +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for the {@code null} value.
              */
+            @EqualsAndHashCode
             class ForNullValue implements ArgumentProvider {
 
                 /**
@@ -2440,29 +1995,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((ForNullValue) other).typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForNullValue{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
-                }
             }
 
             /**
              * An argument provider for a Java instance.
              */
+            @EqualsAndHashCode
             class ForJavaConstant implements ArgumentProvider {
 
                 /**
@@ -2487,24 +2025,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && javaConstant.equals(((ForJavaConstant) other).javaConstant);
-                }
-
-                @Override
-                public int hashCode() {
-                    return javaConstant.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaConstant{" +
-                            "javaConstant=" + javaConstant +
-                            '}';
                 }
             }
         }
@@ -2536,16 +2056,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public String resolve(MethodDescription methodDescription) {
                     return methodDescription.getInternalName();
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.NameProvider.ForInterceptedMethod." + name();
-                }
             }
 
             /**
              * A name provider that provides an explicit name.
              */
+            @EqualsAndHashCode
             class ForExplicitName implements NameProvider {
 
                 /**
@@ -2565,24 +2081,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public String resolve(MethodDescription methodDescription) {
                     return internalName;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && internalName.equals(((ForExplicitName) other).internalName);
-                }
-
-                @Override
-                public int hashCode() {
-                    return internalName.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.NameProvider.ForExplicitName{" +
-                            "internalName='" + internalName + '\'' +
-                            '}';
                 }
             }
         }
@@ -2614,16 +2112,12 @@ public class InvokeDynamic implements Implementation.Composable {
                 public TypeDescription resolve(MethodDescription methodDescription) {
                     return methodDescription.getReturnType().asErasure();
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForInterceptedMethod." + name();
-                }
             }
 
             /**
              * Requests an explicit return type.
              */
+            @EqualsAndHashCode
             class ForExplicitType implements ReturnTypeProvider {
 
                 /**
@@ -2644,24 +2138,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public TypeDescription resolve(MethodDescription methodDescription) {
                     return typeDescription;
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && typeDescription.equals(((ForExplicitType) other).typeDescription);
-                }
-
-                @Override
-                public int hashCode() {
-                    return typeDescription.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForExplicitType{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
-                }
             }
         }
 
@@ -2669,6 +2145,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * An invocation provider that requests a synthetic dynamic invocation where all arguments are explicitly
          * provided by the user.
          */
+        @EqualsAndHashCode
         class Default implements InvocationProvider {
 
             /**
@@ -2762,40 +2239,10 @@ public class InvokeDynamic implements Implementation.Composable {
                 return instrumentedType;
             }
 
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) {
-                    return true;
-                }
-                if (other == null || getClass() != other.getClass()) {
-                    return false;
-                }
-                Default that = (Default) other;
-                return argumentProviders.equals(that.argumentProviders)
-                        && nameProvider.equals(that.nameProvider)
-                        && returnTypeProvider.equals(that.returnTypeProvider);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = nameProvider.hashCode();
-                result = 31 * result + returnTypeProvider.hashCode();
-                result = 31 * result + argumentProviders.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "InvokeDynamic.InvocationProvider.Default{" +
-                        "nameProvider=" + nameProvider +
-                        ", returnTypeProvider=" + returnTypeProvider +
-                        ", argumentProviders=" + argumentProviders +
-                        '}';
-            }
-
             /**
              * A target for a synthetically bound method call.
              */
+            @EqualsAndHashCode
             protected static class Target implements InvocationProvider.Target {
 
                 /**
@@ -2851,40 +2298,6 @@ public class InvokeDynamic implements Implementation.Composable {
                             returnType,
                             parameterTypes);
                 }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) {
-                        return true;
-                    }
-                    if (other == null || getClass() != other.getClass()) {
-                        return false;
-                    }
-                    Target target = (Target) other;
-                    return argumentProviders.equals(target.argumentProviders)
-                            && instrumentedMethod.equals(target.instrumentedMethod)
-                            && internalName.equals(target.internalName)
-                            && returnType.equals(target.returnType);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = internalName.hashCode();
-                    result = 31 * result + returnType.hashCode();
-                    result = 31 * result + argumentProviders.hashCode();
-                    result = 31 * result + instrumentedMethod.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.Default.Target{" +
-                            "internalName='" + internalName + '\'' +
-                            ", returnType=" + returnType +
-                            ", argumentProviders=" + argumentProviders +
-                            ", instrumentedMethod=" + instrumentedMethod +
-                            '}';
-                }
             }
         }
     }
@@ -2934,11 +2347,6 @@ public class InvokeDynamic implements Implementation.Composable {
                                                      TypeDescription returnType,
                                                      Assigner assigner,
                                                      Assigner.Typing typing);
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.TerminationHandler." + name();
-        }
     }
 
     /**
@@ -3181,18 +2589,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     assigner,
                     typing);
         }
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.WithImplicitArguments{" +
-                    "bootstrapMethod=" + bootstrapMethod +
-                    ", handleArguments=" + handleArguments +
-                    ", invocationProvider=" + invocationProvider +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
     }
 
     /**
@@ -3304,18 +2700,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     assigner,
                     typing);
         }
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.WithImplicitTarget{" +
-                    "bootstrapMethod=" + bootstrapMethod +
-                    ", handleArguments=" + handleArguments +
-                    ", invocationProvider=" + invocationProvider +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
     }
 
     /**
@@ -3421,19 +2805,6 @@ public class InvokeDynamic implements Implementation.Composable {
                         assigner,
                         typing);
             }
-
-            @Override
-            public String toString() {
-                return "InvokeDynamic.WithImplicitType.OfInstance{" +
-                        "bootstrapMethod=" + bootstrapMethod +
-                        ", handleArguments=" + handleArguments +
-                        ", invocationProvider=" + invocationProvider +
-                        ", terminationHandler=" + terminationHandler +
-                        ", assigner=" + assigner +
-                        ", typing=" + typing +
-                        ", value=" + value +
-                        '}';
-            }
         }
 
         /**
@@ -3487,19 +2858,6 @@ public class InvokeDynamic implements Implementation.Composable {
                         terminationHandler,
                         assigner,
                         typing);
-            }
-
-            @Override
-            public String toString() {
-                return "InvokeDynamic.WithImplicitType.OfArgument{" +
-                        "bootstrapMethod=" + bootstrapMethod +
-                        ", handleArguments=" + handleArguments +
-                        ", invocationProvider=" + invocationProvider +
-                        ", terminationHandler=" + terminationHandler +
-                        ", assigner=" + assigner +
-                        ", typing=" + typing +
-                        ", index=" + index +
-                        '}';
             }
         }
 
@@ -3563,20 +2921,6 @@ public class InvokeDynamic implements Implementation.Composable {
                         assigner,
                         typing);
             }
-
-            @Override
-            public String toString() {
-                return "InvokeDynamic.WithImplicitType.OfField{" +
-                        "bootstrapMethod=" + bootstrapMethod +
-                        ", handleArguments=" + handleArguments +
-                        ", invocationProvider=" + invocationProvider +
-                        ", terminationHandler=" + terminationHandler +
-                        ", assigner=" + assigner +
-                        ", typing=" + typing +
-                        ", fieldName=" + fieldName +
-                        ", fieldLocatorFactory=" + fieldLocatorFactory +
-                        '}';
-            }
         }
     }
 
@@ -3614,14 +2958,10 @@ public class InvokeDynamic implements Implementation.Composable {
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (other == null || getClass() != other.getClass()) {
-                return false;
-            }
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
             Appender appender = (Appender) other;
             return instrumentedType.equals(appender.instrumentedType)
                     && InvokeDynamic.this.equals(appender.getOuter());
@@ -3636,17 +2976,9 @@ public class InvokeDynamic implements Implementation.Composable {
             return InvokeDynamic.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
-            return instrumentedType.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.Appender{" +
-                    "invokeDynamic=" + InvokeDynamic.this +
-                    ", instrumentedType=" + instrumentedType +
-                    '}';
+            return instrumentedType.hashCode() + 31 * InvokeDynamic.this.hashCode();
         }
     }
 }

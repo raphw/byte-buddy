@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -30,6 +31,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * An adapter for adapting an {@link java.lang.reflect.InvocationHandler}. The adapter allows the invocation handler
  * to also intercept method calls to non-interface methods.
  */
+@EqualsAndHashCode
 public abstract class InvocationHandlerAdapter implements Implementation {
 
     /**
@@ -189,24 +191,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        InvocationHandlerAdapter that = (InvocationHandlerAdapter) other;
-        return cacheMethods == that.cacheMethods
-                && assigner.equals(that.assigner)
-                && fieldName.equals(that.fieldName);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = fieldName.hashCode();
-        result = 31 * result + assigner.hashCode();
-        result = 31 * result + (cacheMethods ? 1 : 0);
-        return result;
-    }
-
     /**
      * Allows for the configuration of an {@link net.bytebuddy.implementation.bytecode.assign.Assigner}
      * of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter}.
@@ -226,6 +210,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * An implementation of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter} that delegates method
      * invocations to an adapter that is stored in a static field.
      */
+    @EqualsAndHashCode(callSuper = true)
     protected static class ForInstance extends InvocationHandlerAdapter implements AssignerConfigurable {
 
         /**
@@ -275,28 +260,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             return new Appender(implementationTarget.getInstrumentedType());
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && super.equals(other)
-                    && invocationHandler.equals(((ForInstance) other).invocationHandler)
-                    && fieldName.equals(((ForInstance) other).fieldName);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * (31 * super.hashCode() + invocationHandler.hashCode()) + fieldName.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "InvocationHandlerAdapter.ForInstance{" +
-                    "fieldName=" + fieldName +
-                    ", cacheMethods=" + cacheMethods +
-                    ", invocationHandler=" + invocationHandler +
-                    '}';
-        }
-
         /**
          * An appender for implementing the {@link ForInstance}.
          */
@@ -334,24 +297,16 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 return ForInstance.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && instrumentedType.equals(((Appender) other).instrumentedType)
                         && ForInstance.this.equals(((Appender) other).getInvocationHandlerAdapter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return 31 * ForInstance.this.hashCode() + instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "InvocationHandlerAdapter.ForInstance.Appender{" +
-                        "invocationHandlerAdapter=" + ForInstance.this +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
             }
         }
     }
@@ -360,6 +315,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * An implementation of an {@link net.bytebuddy.implementation.InvocationHandlerAdapter} that delegates method
      * invocations to an adapter that is stored in an instance field.
      */
+    @EqualsAndHashCode(callSuper = true)
     protected static class ForField extends InvocationHandlerAdapter implements AssignerConfigurable {
 
         /**
@@ -407,31 +363,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             return new Appender(implementationTarget.getInstrumentedType(), resolution.getField());
         }
 
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            if (!super.equals(object)) return false;
-            ForField forField = (ForField) object;
-            return fieldLocatorFactory.equals(forField.fieldLocatorFactory);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = super.hashCode();
-            result = 31 * result + fieldLocatorFactory.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "InvocationHandlerAdapter.ForField{" +
-                    "fieldName=" + fieldName +
-                    "cacheMethods=" + cacheMethods +
-                    "fieldLocatorFactory=" + fieldLocatorFactory +
-                    '}';
-        }
-
         /**
          * An appender for implementing the {@link ForField}.
          */
@@ -469,7 +400,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         fieldDescription);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && instrumentedType.equals(((Appender) other).instrumentedType)
@@ -486,18 +417,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 return ForField.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return 31 * (31 * ForField.this.hashCode() + instrumentedType.hashCode()) + fieldDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "InvocationHandlerAdapter.ForField.Appender{" +
-                        "invocationHandlerAdapter=" + ForField.this +
-                        "instrumentedType=" + instrumentedType +
-                        "fieldDescription=" + fieldDescription +
-                        '}';
             }
         }
     }

@@ -1,6 +1,7 @@
 package net.bytebuddy.matcher;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 
 import java.util.Collection;
 
@@ -9,6 +10,7 @@ import java.util.Collection;
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode
 public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -37,17 +39,6 @@ public class CollectionSizeMatcher<T extends Iterable<?>> extends ElementMatcher
             }
             return size == this.size;
         }
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && size == ((CollectionSizeMatcher) other).size;
-    }
-
-    @Override
-    public int hashCode() {
-        return size;
     }
 
     @Override

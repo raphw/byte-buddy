@@ -575,7 +575,7 @@ public interface FieldDescription extends ByteCodeElement,
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof SignatureToken)) return false;
             SignatureToken that = (SignatureToken) other;
             return name.equals(that.name) && type.equals(that.type);
         }
@@ -589,7 +589,7 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public String toString() {
-            return "FieldDescription.SignatureToken{" +
+            return "SignatureToken{" +
                     "name='" + name + '\'' +
                     ", type=" + type +
                     '}';

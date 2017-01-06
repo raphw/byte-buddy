@@ -24,9 +24,4 @@ public enum Throw implements StackManipulation {
         methodVisitor.visitInsn(Opcodes.ATHROW);
         return StackSize.SINGLE.toDecreasingSize();
     }
-
-    @Override
-    public String toString() {
-        return "Throw." + name();
-    }
 }

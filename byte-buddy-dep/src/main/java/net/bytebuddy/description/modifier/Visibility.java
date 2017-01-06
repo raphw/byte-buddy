@@ -116,9 +116,4 @@ public enum Visibility implements ModifierContributor.ForType, ModifierContribut
                 throw new IllegalStateException("Unexpected visibility: " + visibility);
         }
     }
-
-    @Override
-    public String toString() {
-        return "Visibility." + name();
-    }
 }

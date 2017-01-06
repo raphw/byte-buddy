@@ -1,10 +1,13 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * A fail-safe matcher catches exceptions that are thrown by a delegate matcher and returns an alternative value.
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode
 public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -35,21 +38,6 @@ public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
         } catch (Exception ignored) {
             return fallback;
         }
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        FailSafeMatcher<?> that = (FailSafeMatcher<?>) other;
-        return fallback == that.fallback && matcher.equals(that.matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = matcher.hashCode();
-        result = 31 * result + (fallback ? 1 : 0);
-        return result;
     }
 
     @Override

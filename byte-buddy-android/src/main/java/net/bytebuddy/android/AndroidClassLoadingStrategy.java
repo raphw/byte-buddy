@@ -10,6 +10,7 @@ import com.android.dx.dex.cf.CfTranslator;
 import com.android.dx.dex.file.DexFile;
 import dalvik.system.DexClassLoader;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.utility.RandomString;
@@ -152,15 +153,6 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLo
         }
     }
 
-    @Override
-    public String toString() {
-        return "AndroidClassLoadingStrategy{" +
-                "dexProcessor=" + dexProcessor +
-                ", privateDirectory=" + privateDirectory +
-                ", randomString=" + randomString +
-                '}';
-    }
-
     /**
      * A dex processor is responsible for converting a collection of Java class files into a Android dex file.
      */
@@ -211,6 +203,7 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLo
          * An implementation of a dex processor based on the Android SDK's <i>dx.jar</i> with an API that is
          * compatible to version 1.7.
          */
+        @EqualsAndHashCode
         class ForSdkCompiler implements DexProcessor {
 
             /**
@@ -276,28 +269,6 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLo
                 return new DexClassLoader(zipFile.getAbsolutePath(), privateDirectory.getAbsolutePath(), EMPTY_LIBRARY_PATH, parentClassLoader);
             }
 
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass()) &&
-                        dexCompilerOptions.equals(((ForSdkCompiler) other).dexCompilerOptions)
-                        && dexFileOptions.equals(((ForSdkCompiler) other).dexFileOptions);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = dexFileOptions.hashCode();
-                result = 31 * result + dexCompilerOptions.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler{" +
-                        "dexFileOptions=" + dexFileOptions +
-                        ", dexCompilerOptions=" + dexCompilerOptions +
-                        '}';
-            }
-
             /**
              * Represents a to-dex-file-conversion of a
              * {@link net.bytebuddy.android.AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler}.
@@ -348,24 +319,16 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLo
                     return ForSdkCompiler.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
                             && ForSdkCompiler.this.equals(((Conversion) other).getOuter())
                             && dexFile.equals(((Conversion) other).dexFile);
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     return dexFile.hashCode() + 31 * ForSdkCompiler.this.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Conversion{" +
-                            "dexProcessor=" + ForSdkCompiler.this +
-                            ", dexFile=" + dexFile +
-                            '}';
                 }
             }
         }

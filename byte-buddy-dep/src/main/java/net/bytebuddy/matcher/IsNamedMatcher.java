@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.NamedElement;
 
 /**
@@ -7,21 +8,12 @@ import net.bytebuddy.description.NamedElement;
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode
 public class IsNamedMatcher<T extends NamedElement.WithOptionalName> extends ElementMatcher.Junction.AbstractBase<T> {
 
     @Override
     public boolean matches(T target) {
         return target.isNamed();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass());
-    }
-
-    @Override
-    public int hashCode() {
-        return 31;
     }
 
     @Override

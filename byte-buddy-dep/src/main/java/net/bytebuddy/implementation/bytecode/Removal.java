@@ -80,10 +80,5 @@ public enum Removal implements StackManipulation {
         methodVisitor.visitInsn(opcode);
         return size;
     }
-
-    @Override
-    public String toString() {
-        return "Removal." + name();
-    }
 }
 

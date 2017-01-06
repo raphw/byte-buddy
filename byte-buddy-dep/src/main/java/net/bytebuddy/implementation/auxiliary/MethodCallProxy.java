@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.auxiliary;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -51,6 +52,7 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
  * <li>All arguments for the called method in the order in which they are required.</li>
  * </ol>
  */
+@EqualsAndHashCode
 public class MethodCallProxy implements AuxiliaryType {
 
     /**
@@ -150,33 +152,6 @@ public class MethodCallProxy implements AuxiliaryType {
         return builder.make();
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
-        MethodCallProxy that = (MethodCallProxy) other;
-        return serializableProxy == that.serializableProxy
-                && assigner.equals(that.assigner)
-                && specialMethodInvocation.equals(that.specialMethodInvocation);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = specialMethodInvocation.hashCode();
-        result = 31 * result + (serializableProxy ? 1 : 0);
-        result = 31 * result + assigner.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "MethodCallProxy{" +
-                "specialMethodInvocation=" + specialMethodInvocation +
-                ", serializableProxy=" + serializableProxy +
-                ", assigner=" + assigner +
-                '}';
-    }
-
     /**
      * A precomputed method graph that only displays the methods that are relevant for creating a method call proxy.
      */
@@ -233,11 +208,6 @@ public class MethodCallProxy implements AuxiliaryType {
         public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
             return methodGraph;
         }
-
-        @Override
-        public String toString() {
-            return "MethodCallProxy.PrecomputedMethodGraph." + name();
-        }
     }
 
     /**
@@ -272,14 +242,10 @@ public class MethodCallProxy implements AuxiliaryType {
             return new Appender(implementationTarget.getInstrumentedType());
         }
 
-        @Override
-        public String toString() {
-            return "MethodCallProxy.ConstructorCall." + name();
-        }
-
         /**
          * The appender for implementing the {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy.ConstructorCall}.
          */
+        @EqualsAndHashCode
         protected static class Appender implements ByteCodeAppender {
 
             /**
@@ -317,28 +283,13 @@ public class MethodCallProxy implements AuxiliaryType {
                 ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && instrumentedType.equals(((Appender) other).instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCallProxy.ConstructorCall.Appender{instrumentedType=" + instrumentedType + '}';
-            }
         }
     }
 
     /**
      * An implementation for a method of a {@link net.bytebuddy.implementation.auxiliary.MethodCallProxy}.
      */
+    @EqualsAndHashCode
     protected static class MethodCall implements Implementation {
 
         /**
@@ -370,26 +321,6 @@ public class MethodCallProxy implements AuxiliaryType {
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getInstrumentedType());
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && accessorMethod.equals(((MethodCall) other).accessorMethod)
-                    && assigner.equals(((MethodCall) other).assigner);
-        }
-
-        @Override
-        public int hashCode() {
-            return accessorMethod.hashCode() + 31 * assigner.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCallProxy.MethodCall{" +
-                    "accessorMethod=" + accessorMethod +
-                    ", assigner=" + assigner +
-                    '}';
         }
 
         /**
@@ -439,24 +370,16 @@ public class MethodCallProxy implements AuxiliaryType {
                 return MethodCall.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && instrumentedType.equals(((Appender) other).instrumentedType)
                         && MethodCall.this.equals(((Appender) other).getMethodCall());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return 31 * MethodCall.this.hashCode() + instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCallProxy.MethodCall.Appender{" +
-                        "methodCall=" + MethodCall.this +
-                        ", instrumentedType=" + instrumentedType +
-                        '}';
             }
         }
     }
@@ -467,6 +390,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * are loaded onto the stack what is only possible if this instance is used from a method with an identical signature such
      * as the target method itself.
      */
+    @EqualsAndHashCode
     public static class AssignableSignatureCall implements StackManipulation {
 
         /**
@@ -509,26 +433,6 @@ public class MethodCallProxy implements AuxiliaryType {
                     MethodVariableAccess.allArgumentsOf(specialMethodInvocation.getMethodDescription()).prependThisReference(),
                     MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
             ).apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && serializable == ((AssignableSignatureCall) other).serializable
-                    && specialMethodInvocation.equals(((AssignableSignatureCall) other).specialMethodInvocation);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * specialMethodInvocation.hashCode() + (serializable ? 1 : 0);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCallProxy.AssignableSignatureCall{" +
-                    "specialMethodInvocation=" + specialMethodInvocation +
-                    ", serializableProxy=" + serializable +
-                    '}';
         }
     }
 }

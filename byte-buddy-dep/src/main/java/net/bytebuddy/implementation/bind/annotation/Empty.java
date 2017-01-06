@@ -46,10 +46,5 @@ public @interface Empty {
                                                                Assigner.Typing typing) {
             return new MethodDelegationBinder.ParameterBinding.Anonymous(DefaultValue.of(target.getType().asErasure()));
         }
-
-        @Override
-        public String toString() {
-            return "Empty.Binder." + name();
-        }
     }
 }

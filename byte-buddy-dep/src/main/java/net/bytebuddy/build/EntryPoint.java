@@ -101,10 +101,5 @@ public interface EntryPoint {
         public ByteBuddy getByteBuddy() {
             return byteBuddy;
         }
-
-        @Override
-        public String toString() {
-            return "EntryPoint.Default." + name();
-        }
     }
 }

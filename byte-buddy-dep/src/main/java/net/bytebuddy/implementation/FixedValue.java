@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -27,6 +28,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  *
  * @see FieldAccessor
  */
+@EqualsAndHashCode
 public abstract class FixedValue implements Implementation {
 
     /**
@@ -217,18 +219,6 @@ public abstract class FixedValue implements Implementation {
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
 
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && typing == ((FixedValue) other).typing
-                && assigner.equals(((FixedValue) other).assigner);
-    }
-
-    @Override
-    public int hashCode() {
-        return 31 * assigner.hashCode() + typing.hashCode();
-    }
-
     /**
      * Represents a fixed value implementation that is using a default assigner for attempting to assign
      * the fixed value to the return type of the instrumented method.
@@ -276,11 +266,6 @@ public abstract class FixedValue implements Implementation {
                     MethodReturn.REFERENCE
             ).apply(methodVisitor, implementationContext, instrumentedMethod);
         }
-
-        @Override
-        public String toString() {
-            return "FixedValue.ForNullValue." + name();
-        }
     }
 
     /**
@@ -320,14 +305,6 @@ public abstract class FixedValue implements Implementation {
             return instrumentedType;
         }
 
-        @Override
-        public String toString() {
-            return "FixedValue.ForOriginType{" +
-                    "assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
-
         /**
          * An appender for writing the origin type.
          */
@@ -365,7 +342,7 @@ public abstract class FixedValue implements Implementation {
                 return ForOriginType.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object o) {
                 if (this == o) return true;
                 if (o == null || getClass() != o.getClass()) return false;
@@ -374,17 +351,9 @@ public abstract class FixedValue implements Implementation {
                         && getOuter().equals(appender.getOuter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return 31 * getOuter().hashCode() + originType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "FixedValue.ForOriginType.Appender{" +
-                        "outer=" + getOuter() +
-                        ", originType=" + originType +
-                        '}';
             }
         }
     }
@@ -426,17 +395,10 @@ public abstract class FixedValue implements Implementation {
             return new ForThisValue(assigner, typing);
         }
 
-        @Override
-        public String toString() {
-            return "FixedValue.ForThisValue{" +
-                    "assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
-
         /**
          * A byte code appender for returning {@code this}.
          */
+        @EqualsAndHashCode
         protected static class Appender implements ByteCodeAppender {
 
             /**
@@ -463,32 +425,13 @@ public abstract class FixedValue implements Implementation {
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext, instrumentedMethod);
             }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) return true;
-                if (object == null || getClass() != object.getClass()) return false;
-                Appender appender = (Appender) object;
-                return instrumentedType.equals(appender.instrumentedType);
-            }
-
-            @Override
-            public int hashCode() {
-                return instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "FixedValue.ForThisValue.Appender{" +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
-            }
         }
     }
 
     /**
      * A fixed value implementation that returns a method's argument.
      */
+    @EqualsAndHashCode(callSuper = true)
     protected static class ForArgument extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
@@ -549,37 +492,13 @@ public abstract class FixedValue implements Implementation {
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
             return new ForArgument(assigner, typing, index);
         }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            if (!super.equals(object)) return false;
-            ForArgument that = (ForArgument) object;
-            return index == that.index;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = super.hashCode();
-            result = 31 * result + index;
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "FixedValue.ForArgument{" +
-                    "index=" + index +
-                    ", assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
     }
 
     /**
      * A fixed value implementation that represents its fixed value as a value that is written to the instrumented
      * class's constant pool.
      */
+    @EqualsAndHashCode(callSuper = true)
     protected static class ForPoolValue extends FixedValue implements AssignerConfigurable, ByteCodeAppender {
 
         /**
@@ -649,37 +568,12 @@ public abstract class FixedValue implements Implementation {
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             return apply(methodVisitor, implementationContext, instrumentedMethod, loadedType.asGenericType(), valueLoadInstruction);
         }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && super.equals(other)
-                    && loadedType.equals(((ForPoolValue) other).loadedType)
-                    && valueLoadInstruction.equals(((ForPoolValue) other).valueLoadInstruction);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = super.hashCode();
-            result = 31 * result + valueLoadInstruction.hashCode();
-            result = 31 * result + loadedType.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "FixedValue.ForPoolValue{" +
-                    "valueLoadInstruction=" + valueLoadInstruction +
-                    ", loadedType=" + loadedType +
-                    ", assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
     }
 
     /**
      * A fixed value implementation that represents its fixed value as a static field of the instrumented class.
      */
+    @EqualsAndHashCode(callSuper = true, exclude = "fieldType")
     protected static class ForValue extends FixedValue implements AssignerConfigurable {
 
         /**
@@ -755,33 +649,10 @@ public abstract class FixedValue implements Implementation {
             return new StaticFieldByteCodeAppender(implementationTarget.getInstrumentedType());
         }
 
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && fieldName.equals(((ForValue) other).fieldName)
-                    && value.equals(((ForValue) other).value)
-                    && super.equals(other);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * 31 * super.hashCode() + 31 * fieldName.hashCode() + value.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "FixedValue.ForValue{" +
-                    "fieldName='" + fieldName + '\'' +
-                    ", fieldType=" + fieldType +
-                    ", value=" + value +
-                    ", assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
-
         /**
          * A byte code appender for returning the fixed value that was stored in a static field.
          */
+        @EqualsAndHashCode
         private class StaticFieldByteCodeAppender implements ByteCodeAppender {
 
             /**
@@ -801,22 +672,6 @@ public abstract class FixedValue implements Implementation {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 return ForValue.this.apply(methodVisitor, implementationContext, instrumentedMethod, fieldType, fieldGetAccess);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && fieldGetAccess.equals(((StaticFieldByteCodeAppender) other).fieldGetAccess);
-            }
-
-            @Override
-            public int hashCode() {
-                return fieldGetAccess.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "StaticFieldByteCodeAppender{fieldGetAccess=" + fieldGetAccess + '}';
             }
         }
     }

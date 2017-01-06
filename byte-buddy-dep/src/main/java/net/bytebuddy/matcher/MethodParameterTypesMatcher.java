@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 
@@ -10,6 +11,7 @@ import java.util.List;
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode
 public class MethodParameterTypesMatcher<T extends ParameterList<?>> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -29,17 +31,6 @@ public class MethodParameterTypesMatcher<T extends ParameterList<?>> extends Ele
     @Override
     public boolean matches(T target) {
         return matcher.matches(target.asTypeList());
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((MethodParameterTypesMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return matcher.hashCode();
     }
 
     @Override
