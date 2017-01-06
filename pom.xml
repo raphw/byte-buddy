@@ -155,11 +155,6 @@
                 <artifactId>android</artifactId>
                 <version>${version.android.sdk}</version>
             </dependency>
-            <!--<dependency>-->
-                <!--<groupId>org.projectlombok</groupId>-->
-                <!--<artifactId>lombok</artifactId>-->
-                <!--<version>${version.lombok}</version>-->
-            <!--</dependency>-->
         </dependencies>
     </dependencyManagement>
 

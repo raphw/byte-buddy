@@ -1,6 +1,5 @@
 package net.bytebuddy.build.maven;
 
-import lombok.EqualsAndHashCode;
 import org.apache.maven.plugin.logging.Log;
 
 import java.util.logging.Handler;
@@ -11,7 +10,6 @@ import java.util.logging.SimpleFormatter;
 /**
  * A log handler for only printing Byte Buddy specific log-messages if debug logging is enabled for a plugin.
  */
-@EqualsAndHashCode(callSuper = false)
 public class ByteBuddyLogHandler extends Handler {
 
     /**
