@@ -515,11 +515,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription;
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.NoOp." + name();
-                }
             }
 
             /**
@@ -555,11 +550,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription.asRawType();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.TypeErasing." + name();
                 }
             }
 
@@ -606,11 +596,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return typeDescription.isArray()
                             ? new OfGenericArray.Latent(onNonGenericType(typeDescription.getComponentType()), Collections.<AnnotationDescription>emptyList())
                             : new OfNonGenericType.OfErasure(typeDescription.asErasure());
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.AnnotationStripper." + name();
                 }
 
                 /**
@@ -714,11 +699,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return typeDescription;
                 }
 
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.TypeVariableErasing." + name();
-                }
-
                 /**
                  * A visitor for checking if a type can be erased partially when defined as a parameter of a parameterized type.
                  * If this condition is true, a parameterized type must be erased instead of erasing the parameterized type's
@@ -758,11 +738,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     public Boolean onNonGenericType(Generic typeDescription) {
                         return false;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.TypeVariableErasing.PartialErasureReviser." + name();
-                    }
                 }
 
                 /**
@@ -793,13 +768,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     @Override
                     public Generic onMethod(MethodDescription.InDefinedShape methodDescription) {
                         return new RetainedTypeVariable(typeVariable);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.TypeVariableErasing.TypeVariableReviser{" +
-                                "typeVariable=" + typeVariable +
-                                '}';
                     }
                 }
 
@@ -879,11 +847,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public Dispatcher onNonGenericType(Generic typeDescription) {
                     return new Dispatcher.ForNonGenericType(typeDescription.asErasure());
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.Assigner." + name();
                 }
 
                 /**
@@ -973,13 +936,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         public Boolean onNonGenericType(Generic typeDescription) {
                             return this.typeDescription.isAssignableFrom(typeDescription.asErasure());
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForNonGenericType{" +
-                                    "typeDescription=" + typeDescription +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -1033,13 +989,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public Boolean onNonGenericType(Generic typeDescription) {
                             return false;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForTypeVariable{" +
-                                    "typeVariable=" + typeVariable +
-                                    '}';
                         }
                     }
 
@@ -1131,13 +1080,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return false;
                         }
 
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType{" +
-                                    "parameterizedType=" + parameterizedType +
-                                    '}';
-                        }
-
                         /**
                          * An assigner for a parameter of a parameterized type.
                          */
@@ -1176,11 +1118,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                 return new InvariantBinding(typeDescription);
                             }
 
-                            @Override
-                            public String toString() {
-                                return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner." + name();
-                            }
-
                             /**
                              * A dispatcher for an invariant parameter of a parameterized type, i.e. a type without a wildcard.
                              */
@@ -1204,13 +1141,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                 @Override
                                 public boolean isAssignableFrom(Generic typeDescription) {
                                     return typeDescription.equals(this.typeDescription);
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.InvariantBinding{" +
-                                            "typeDescription=" + typeDescription +
-                                            '}';
                                 }
                             }
 
@@ -1243,13 +1173,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                         return upperBound.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription);
                                     }
                                 }
-
-                                @Override
-                                public String toString() {
-                                    return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.CovariantBinding{" +
-                                            "upperBound=" + upperBound +
-                                            '}';
-                                }
                             }
 
                             /**
@@ -1280,13 +1203,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                     } else {
                                         return typeDescription.getSort().isWildcard() || typeDescription.accept(Assigner.INSTANCE).isAssignableFrom(lowerBound);
                                     }
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.ContravariantBinding{" +
-                                            "lowerBound=" + lowerBound +
-                                            '}';
                                 }
                             }
                         }
@@ -1336,13 +1252,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         public Boolean onNonGenericType(Generic typeDescription) {
                             return typeDescription.isArray()
                                     && genericArray.getComponentType().accept(Assigner.INSTANCE).isAssignableFrom(typeDescription.getComponentType());
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForGenericArray{" +
-                                    "genericArray=" + genericArray +
-                                    '}';
                         }
                     }
                 }
@@ -1495,11 +1404,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             && (acceptsVoid || !typeDescription.represents(void.class));
                 }
 
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.Validator." + name();
-                }
-
                 /**
                  * A type validator for checking type annotations.
                  */
@@ -1611,11 +1515,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         }
                         return true;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations." + name();
-                    }
                 }
             }
 
@@ -1699,13 +1598,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return signatureVisitor;
                 }
 
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.ForSignatureVisitor{" +
-                            "signatureVisitor=" + signatureVisitor +
-                            '}';
-                }
-
                 /**
                  * Visits a parameter while visiting a generic type for delegating discoveries to a signature visitor.
                  */
@@ -1755,11 +1647,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     public SignatureVisitor onNonGenericType(Generic typeDescription) {
                         typeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
                         return signatureVisitor;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.ForSignatureVisitor.OfTypeArgument{}";
                     }
                 }
             }
@@ -1920,14 +1807,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                 ? new OfNonGenericType.Latent(declaringType, typeDescription.getDeclaredAnnotations())
                                 : typeDescription;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.Substitutor.ForAttachment{" +
-                                "declaringType=" + declaringType +
-                                ", typeVariableSource=" + typeVariableSource +
-                                '}';
-                    }
                 }
 
                 /**
@@ -1972,13 +1851,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         return typeMatcher.matches(typeDescription.asErasure())
                                 ? new OfNonGenericType.Latent(TargetType.DESCRIPTION, typeDescription.getOwnerType(), typeDescription.getDeclaredAnnotations())
                                 : typeDescription;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.Substitutor.ForDetachment{" +
-                                "typeMatcher=" + typeMatcher +
-                                '}';
                     }
                 }
 
@@ -2028,13 +1900,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     @Override
                     public Generic onTypeVariable(Generic typeVariable) {
                         return typeVariable.getTypeVariableSource().accept(new TypeVariableSubstitutor(typeVariable));
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding{" +
-                                "bindings=" + bindings +
-                                '}';
                     }
 
                     /**
@@ -2090,14 +1955,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public int hashCode() {
                             return typeVariable.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding.TypeVariableSubstitutor{" +
-                                    "outer=" + getOuter() +
-                                    ", typeVariable=" + typeVariable +
-                                    '}';
                         }
                     }
 
@@ -2173,13 +2030,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     public Generic onTypeVariable(Generic typeVariable) {
                         return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization{" +
-                                "typeDescription=" + typeDescription +
-                                '}';
-                    }
                 }
             }
 
@@ -2247,14 +2097,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public TypeDescription onNonGenericType(Generic typeDescription) {
                     return TargetType.resolve(typeDescription.asErasure(), declaringType);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.Reducing{" +
-                            "declaringType=" + declaringType +
-                            ", typeVariableTokens=" + typeVariableTokens +
-                            '}';
                 }
             }
         }
@@ -2455,11 +2297,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return Dispatcher.ForLegacyVm.INSTANCE;
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.AnnotationReader.Dispatcher.CreationAction." + name();
-                    }
                 }
 
                 /**
@@ -2515,11 +2352,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     @Override
                     public Generic resolve(AnnotatedElement annotatedType) {
                         throw new IllegalStateException("Loaded annotated type cannot be represented on this VM");
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm." + name();
                     }
                 }
 
@@ -2658,20 +2490,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         }
                     }
 
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm{" +
-                                "getAnnotatedSuperclass=" + getAnnotatedSuperclass +
-                                ", getAnnotatedInterfaces=" + getAnnotatedInterfaces +
-                                ", getAnnotatedType=" + getAnnotatedType +
-                                ", getAnnotatedReturnType=" + getAnnotatedReturnType +
-                                ", getAnnotatedParameterTypes=" + getAnnotatedParameterTypes +
-                                ", getAnnotatedExceptionTypes=" + getAnnotatedExceptionTypes +
-                                ", getAnnotatedReceiverType=" + getAnnotatedReceiverType +
-                                ", getType=" + getType +
-                                '}';
-                    }
-
                     /**
                      * A delegator for an existing {@code java.lang.reflect.Annotatedelement}.
                      */
@@ -2695,13 +2513,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public AnnotatedElement resolve() {
                             return annotatedElement;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.Resolved{" +
-                                    ", annotatedElement=" + annotatedElement +
-                                    '}';
                         }
                     }
 
@@ -2733,13 +2544,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public AnnotationReader ofTypeVariableBoundType(int index) {
                             return new ForTypeVariableBoundType.OfFormalTypeVariable(typeVariable, index);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedTypeVariableType{" +
-                                    ", typeVariable=" + typeVariable +
-                                    '}';
                         }
                     }
 
@@ -2792,14 +2596,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public int hashCode() {
                             return getOuter().hashCode() + type.hashCode() * 31;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedSuperClass{" +
-                                    "dispatcher=" + getOuter() +
-                                    ", type=" + type +
-                                    '}';
                         }
                     }
 
@@ -2861,15 +2657,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         public int hashCode() {
                             return 31 * (type.hashCode() + 31 * getOuter().hashCode()) + index;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedInterfaceType{" +
-                                    "dispatcher=" + getOuter() +
-                                    ", type=" + type +
-                                    ", index=" + index +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -2922,14 +2709,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         public int hashCode() {
                             return field.hashCode() + getOuter().hashCode() * 31;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedFieldType{" +
-                                    "dispatcher=" + getOuter() +
-                                    ", field=" + field +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -2981,14 +2760,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public int hashCode() {
                             return 31 * method.hashCode() + getOuter().hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedReturnType{" +
-                                    "dispatcher=" + getOuter() +
-                                    ", method=" + method +
-                                    '}';
                         }
                     }
 
@@ -3050,15 +2821,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         public int hashCode() {
                             return 31 * (executable.hashCode() + 31 * index) + getOuter().hashCode();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedParameterizedType{" +
-                                    "dispatcher=" + getOuter() +
-                                    ", executable=" + executable +
-                                    ", index=" + index +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -3118,15 +2880,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public int hashCode() {
                             return 31 * (executable.hashCode() + 31 * index) + getOuter().hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedExceptionType{" +
-                                    "dispatcher=" + getOuter() +
-                                    ", executable=" + executable +
-                                    ", index=" + index +
-                                    '}';
                         }
                     }
                 }
@@ -3205,11 +2958,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public Annotation[] getDeclaredAnnotations() {
                     return new Annotation[0];
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.AnnotationReader.NoOp." + name();
                 }
             }
 
@@ -3343,14 +3091,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                 return NOT_AVAILABLE;
                             }
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Delegator.Chained.MethodLookupAction{" +
-                                    "typeName='" + typeName + '\'' +
-                                    ", methodName='" + methodName + '\'' +
-                                    '}';
-                        }
                     }
                 }
             }
@@ -3397,14 +3137,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception.getCause());
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.AnnotationReader.ForWildcardUpperBoundType{"
-                            + "annotationReader=" + annotationReader
-                            + ", index=" + index
-                            + '}';
-                }
             }
 
             /**
@@ -3446,14 +3178,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds", exception.getCause());
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.AnnotationReader.ForWildcardLowerBoundType{"
-                            + "annotationReader=" + annotationReader
-                            + ", index=" + index
-                            + '}';
-                }
             }
 
             /**
@@ -3494,14 +3218,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds", exception.getCause());
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.AnnotationReader.ForTypeVariableBoundType{"
-                            + "annotationReader=" + annotationReader
-                            + ", index=" + index
-                            + '}';
                 }
 
                 /**
@@ -3546,14 +3262,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             throw new IllegalStateException("Error invoking java.lang.reflect.TypeVariable#getAnnotatedBounds", exception.getCause());
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.AnnotationReader.OfFormalTypeVariable{"
-                                + "typeVariable=" + typeVariable
-                                + ", index=" + index
-                                + '}';
-                    }
                 }
             }
 
@@ -3596,14 +3304,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments", exception.getCause());
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.AnnotationReader.ForTypeArgument{"
-                            + "annotationReader=" + annotationReader
-                            + ", index=" + index
-                            + '}';
-                }
             }
 
             /**
@@ -3636,13 +3336,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType", exception.getCause());
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.AnnotationReader.ForComponentType{"
-                            + "annotationReader=" + annotationReader
-                            + '}';
                 }
             }
 
@@ -3693,13 +3386,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedType#getAnnotatedOwnerType", exception.getCause());
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.AnnotationReader.ForOwnerType{"
-                            + "annotationReader=" + annotationReader
-                            + '}';
                 }
             }
         }
@@ -4799,11 +4485,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param ownerType       The rendered type's owner type.
                  */
                 protected abstract void apply(StringBuilder stringBuilder, TypeDescription typeDescription, Generic ownerType);
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.OfParameterizedType.RenderingDelegate." + name();
-                }
             }
 
             /**
@@ -6556,15 +6237,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
                     return new Generic.OfNonGenericType.Latent(typeDescription, ownerType, annotations);
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Builder.OfNonGenericType{" +
-                            "annotations=" + annotations +
-                            ", ownerType=" + ownerType +
-                            ", typeDescription=" + typeDescription +
-                            '}';
-                }
             }
 
             /**
@@ -6626,16 +6298,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected Generic doBuild() {
                     return new Generic.OfParameterizedType.Latent(rawType, ownerType, parameterTypes, annotations);
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Builder.OfParameterizedType{" +
-                            "annotations=" + annotations +
-                            ", rawType=" + rawType +
-                            ", ownerType=" + ownerType +
-                            ", parameterTypes=" + parameterTypes +
-                            '}';
-                }
             }
 
             /**
@@ -6678,14 +6340,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected Generic doBuild() {
                     return new Generic.OfGenericArray.Latent(componentType, annotations);
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Builder.OfGenericArrayType{" +
-                            "annotations=" + annotations +
-                            ", componentType=" + componentType +
-                            '}';
-                }
             }
 
             /**
@@ -6727,14 +6381,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 protected Generic doBuild() {
                     return new Generic.OfTypeVariable.Symbolic(symbol, annotations);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Builder.OfTypeVariable{" +
-                            "annotations=" + annotations +
-                            ", symbol=" + symbol +
-                            '}';
                 }
             }
         }
@@ -8145,11 +7791,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
                     return Class.forName(name, false, classLoader);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.SuperTypeLoading.ClassLoadingDelegate.Simple." + name();
                 }
             }
         }

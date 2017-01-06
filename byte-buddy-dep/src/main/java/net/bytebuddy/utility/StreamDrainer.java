@@ -83,9 +83,4 @@ public class StreamDrainer {
         System.arraycopy(currentArray, FROM_BEGINNING, result, arrayIndex * bufferSize, currentIndex);
         return result;
     }
-
-    @Override
-    public String toString() {
-        return "StreamDrainer{bufferSize=" + bufferSize + '}';
-    }
 }

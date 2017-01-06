@@ -58,13 +58,6 @@ public interface MethodNameTransformer {
         public String transform(MethodDescription methodDescription) {
             return String.format("%s$%s", methodDescription.getInternalName(), suffix);
         }
-
-        @Override
-        public String toString() {
-            return "MethodNameTransformer.Suffixing{" +
-                    "suffix='" + suffix + '\'' +
-                    '}';
-        }
     }
 
     /**
@@ -102,13 +95,6 @@ public interface MethodNameTransformer {
         @Override
         public String transform(MethodDescription methodDescription) {
             return String.format("%s%s", prefix, methodDescription.getInternalName());
-        }
-
-        @Override
-        public String toString() {
-            return "MethodNameTransformer.Prefixing{" +
-                    "prefix='" + prefix + '\'' +
-                    '}';
         }
     }
 }

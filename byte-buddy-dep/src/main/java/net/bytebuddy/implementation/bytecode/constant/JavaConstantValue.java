@@ -37,9 +37,4 @@ public class JavaConstantValue implements StackManipulation {
         methodVisitor.visitLdcInsn(javaConstant.asConstantPoolValue());
         return StackSize.SINGLE.toIncreasingSize();
     }
-
-    @Override
-    public String toString() {
-        return "JavaConstantValue{javaConstant=" + javaConstant + '}';
-    }
 }

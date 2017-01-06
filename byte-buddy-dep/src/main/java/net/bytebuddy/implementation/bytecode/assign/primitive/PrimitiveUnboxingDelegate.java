@@ -191,11 +191,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         return size;
     }
 
-    @Override
-    public String toString() {
-        return "PrimitiveUnboxingDelegate." + name();
-    }
-
     /**
      * An explicitly types unboxing responsible is applied for directly unboxing a wrapper type.
      */
@@ -261,11 +256,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
                     primitiveUnboxingDelegate,
                     PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
         }
-
-        @Override
-        public String toString() {
-            return "PrimitiveUnboxingDelegate.ExplicitlyTypedUnboxingResponsible." + name();
-        }
     }
 
     /**
@@ -314,11 +304,6 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
             return new Compound(
                     assigner.assign(originalType, primitiveUnboxingDelegate.getWrapperType(), typing),
                     primitiveUnboxingDelegate);
-        }
-
-        @Override
-        public String toString() {
-            return "PrimitiveUnboxingDelegate.ImplicitlyTypedUnboxingResponsible{originalType=" + originalType + '}';
         }
     }
 }

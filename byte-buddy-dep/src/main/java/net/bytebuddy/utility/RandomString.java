@@ -118,12 +118,4 @@ public class RandomString {
         }
         return new String(buffer);
     }
-
-    @Override
-    public String toString() {
-        return "RandomString{" +
-                "random=" + random +
-                ", length=" + length +
-                '}';
-    }
 }

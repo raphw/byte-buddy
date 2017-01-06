@@ -100,11 +100,6 @@ public enum FieldAccess {
                 : OfGenericField.of(fieldDescription, forField(declaredField));
     }
 
-    @Override
-    public String toString() {
-        return "FieldAccess." + name();
-    }
-
     /**
      * Representation of a field access for which a getter and a setter can be created.
      */
@@ -172,14 +167,6 @@ public enum FieldAccess {
         public StackManipulation write() {
             return defined.write();
         }
-
-        @Override
-        public String toString() {
-            return "FieldAccess.OfGenericField{" +
-                    "targetType=" + targetType +
-                    ", defined=" + defined +
-                    '}';
-        }
     }
 
     /**
@@ -221,14 +208,6 @@ public enum FieldAccess {
         @Override
         public int hashCode() {
             return fieldDescription.hashCode() + 31 * FieldAccess.this.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAccess.AccessDispatcher{" +
-                    "fieldAccess=" + FieldAccess.this +
-                    ", fieldDescription=" + fieldDescription +
-                    '}';
         }
 
         /**
@@ -302,11 +281,6 @@ public enum FieldAccess {
                 return getAccessDispatcher().hashCode() + 7;
             }
 
-            @Override
-            public String toString() {
-                return "FieldAccess.AccessDispatcher.FieldGetInstruction{fieldDescription=" + fieldDescription + '}';
-            }
-
             /**
              * Returns the outer instance.
              *
@@ -341,11 +315,6 @@ public enum FieldAccess {
             @Override
             public int hashCode() {
                 return getAccessDispatcher().hashCode() + 14;
-            }
-
-            @Override
-            public String toString() {
-                return "FieldAccess.AccessDispatcher.FieldPutInstruction{fieldDescription=" + fieldDescription + '}';
             }
 
             /**

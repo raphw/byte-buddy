@@ -239,11 +239,6 @@ public interface ConstructorStrategy {
             return new WithMethodAttributeAppenderFactory(this, MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER);
         }
 
-        @Override
-        public String toString() {
-            return "ConstructorStrategy.Default." + name();
-        }
-
         /**
          * A wrapper for a default constructor strategy which additionally applies a method attribute appender factory.
          */
@@ -279,14 +274,6 @@ public interface ConstructorStrategy {
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry) {
                 return delegate.doInject(methodRegistry, methodAttributeAppenderFactory);
-            }
-
-            @Override
-            public String toString() {
-                return "ConstructorStrategy.Default.WithMethodAttributeAppenderFactory{" +
-                        "delegate=" + delegate +
-                        ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
-                        '}';
             }
         }
 

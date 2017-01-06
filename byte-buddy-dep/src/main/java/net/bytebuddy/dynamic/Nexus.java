@@ -160,14 +160,4 @@ public class Nexus extends WeakReference<ClassLoader> {
     public static void clean(Reference<? super ClassLoader> reference) {
         TYPE_INITIALIZERS.remove(reference);
     }
-
-    @Override
-    public String toString() {
-        return "Nexus{" +
-                "name='" + name + '\'' +
-                ", classLoaderReference=" + get() +
-                ", classLoaderHashCode=" + classLoaderHashCode +
-                ", identification=" + identification +
-                '}';
-    }
 }

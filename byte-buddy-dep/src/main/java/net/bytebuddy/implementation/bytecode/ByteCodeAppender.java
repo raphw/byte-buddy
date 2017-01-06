@@ -87,11 +87,6 @@ public interface ByteCodeAppender {
         public Size merge(Size other) {
             return new Size(Math.max(operandStackSize, other.operandStackSize), Math.max(localVariableSize, other.localVariableSize));
         }
-
-        @Override
-        public String toString() {
-            return "ByteCodeAppender.Size{operandStackSize=" + operandStackSize + ", localVariableSize=" + localVariableSize + '}';
-        }
     }
 
     /**
@@ -140,11 +135,6 @@ public interface ByteCodeAppender {
             }
             return size;
         }
-
-        @Override
-        public String toString() {
-            return "ByteCodeAppender.Compound{byteCodeAppenders=" + byteCodeAppenders + '}';
-        }
     }
 
     /**
@@ -182,11 +172,6 @@ public interface ByteCodeAppender {
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
             return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-
-        @Override
-        public String toString() {
-            return "ByteCodeAppender.Simple{stackManipulation=" + stackManipulation + '}';
         }
     }
 }

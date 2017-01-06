@@ -28,11 +28,4 @@ public class GetSystemPropertyAction implements PrivilegedAction<String> {
     public String run() {
         return System.getProperty(key);
     }
-
-    @Override
-    public String toString() {
-        return "GetSystemPropertyAction{" +
-                "key='" + key + '\'' +
-                '}';
-    }
 }

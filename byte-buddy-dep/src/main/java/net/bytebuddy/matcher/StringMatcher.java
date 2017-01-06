@@ -172,10 +172,5 @@ public class StringMatcher extends ElementMatcher.Junction.AbstractBase<String> 
          * @return {@code true} if the source matches the target.
          */
         protected abstract boolean matches(String expected, String actual);
-
-        @Override
-        public String toString() {
-            return "StringMatcher.Mode." + name();
-        }
     }
 }

@@ -199,12 +199,4 @@ public class LambdaFactory {
                 additionalBridges,
                 CLASS_FILE_TRANSFORMERS.keySet());
     }
-
-    @Override
-    public String toString() {
-        return "LambdaFactory{" +
-                "target=" + target +
-                ", dispatcher=" + dispatcher +
-                '}';
-    }
 }

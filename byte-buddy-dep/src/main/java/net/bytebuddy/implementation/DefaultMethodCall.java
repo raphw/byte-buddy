@@ -154,11 +154,6 @@ public class DefaultMethodCall implements Implementation {
         return filtered;
     }
 
-    @Override
-    public String toString() {
-        return "DefaultMethodCall{prioritizedInterfaces=" + prioritizedInterfaces + '}';
-    }
-
     /**
      * The appender for implementing a {@link net.bytebuddy.implementation.DefaultMethodCall}.
      */
@@ -232,15 +227,6 @@ public class DefaultMethodCall implements Implementation {
                 specialMethodInvocation = other;
             }
             return specialMethodInvocation;
-        }
-
-        @Override
-        public String toString() {
-            return "DefaultMethodCall.Appender{" +
-                    "implementationTarget=" + implementationTarget +
-                    ", prioritizedInterfaces=" + prioritizedInterfaces +
-                    ", nonPrioritizedInterfaces=" + nonPrioritizedInterfaces +
-                    '}';
         }
     }
 }

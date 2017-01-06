@@ -42,11 +42,6 @@ public enum SuperMethodCall implements Implementation.Composable {
         return new Compound(WithoutReturn.INSTANCE, implementation);
     }
 
-    @Override
-    public String toString() {
-        return "SuperMethodCall." + name();
-    }
-
     /**
      * A super method invocation where the return value is dropped instead of returning from the method.
      */
@@ -65,11 +60,6 @@ public enum SuperMethodCall implements Implementation.Composable {
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget, Appender.TerminationHandler.DROPPING);
-        }
-
-        @Override
-        public String toString() {
-            return "SuperMethodCall.WithoutReturn." + name();
         }
     }
 
@@ -114,14 +104,6 @@ public enum SuperMethodCall implements Implementation.Composable {
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
-        @Override
-        public String toString() {
-            return "SuperMethodCall.Appender{" +
-                    "implementationTarget=" + implementationTarget +
-                    ", terminationHandler=" + terminationHandler +
-                    '}';
-        }
-
         /**
          * A handler that determines how to handle the method return value.
          */
@@ -155,11 +137,6 @@ public enum SuperMethodCall implements Implementation.Composable {
              * @return The stack manipulation that implements this handler.
              */
             protected abstract StackManipulation of(MethodDescription methodDescription);
-
-            @Override
-            public String toString() {
-                return "SuperMethodCall.Appender.TerminationHandler." + name();
-            }
         }
     }
 }

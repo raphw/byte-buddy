@@ -122,11 +122,6 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
                 : resolution;
     }
 
-    @Override
-    public String toString() {
-        return "ArgumentTypeResolver." + name();
-    }
-
     /**
      * A representation of the precedence of a most specific primitive type in the Java programming language.
      */
@@ -233,11 +228,6 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
                 return Resolution.LEFT;
             }
         }
-
-        @Override
-        public String toString() {
-            return "ArgumentTypeResolver.PrimitiveTypePrecedence." + name();
-        }
     }
 
     /**
@@ -260,11 +250,6 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
          */
         public ParameterIndexToken(int parameterIndex) {
             this.parameterIndex = parameterIndex;
-        }
-
-        @Override
-        public String toString() {
-            return "ArgumentTypeResolver.ParameterIndexToken{parameterIndex=" + parameterIndex + '}';
         }
     }
 }

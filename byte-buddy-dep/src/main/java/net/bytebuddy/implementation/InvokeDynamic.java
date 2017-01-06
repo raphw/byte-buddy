@@ -771,18 +771,6 @@ public class InvokeDynamic implements Implementation.Composable {
         return invocationProvider;
     }
 
-    @Override
-    public String toString() {
-        return "InvokeDynamic{" +
-                "bootstrapMethod=" + bootstrapMethod +
-                ", handleArguments=" + handleArguments +
-                ", invocationProvider=" + invocationProvider +
-                ", terminationHandler=" + terminationHandler +
-                ", assigner=" + assigner +
-                ", typing=" + typing +
-                '}';
-    }
-
     /**
      * An invocation provider is responsible for loading the arguments of the invoked method onto the operand
      * stack and for creating the actual <i>invoke dynamic</i> instruction.
@@ -956,16 +944,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     public List<TypeDescription> getParameterTypes() {
                         return parameterTypes;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.Target.Resolved.Simple{" +
-                                "stackManipulation=" + stackManipulation +
-                                ", internalName='" + internalName + '\'' +
-                                ", returnType=" + returnType +
-                                ", parameterTypes=" + parameterTypes +
-                                '}';
-                    }
                 }
             }
 
@@ -1014,13 +992,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     return methodDescription.isStatic()
                             ? methodDescription.getParameters().asTypeList().asErasures()
                             : CompoundList.of(methodDescription.getDeclaringType().asErasure(), methodDescription.getParameters().asTypeList().asErasures());
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.Target.ForMethodDescription{" +
-                            "methodDescription=" + methodDescription +
-                            '}';
                 }
             }
         }
@@ -1076,11 +1047,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodInstanceAndParameters." + name();
-                }
             }
 
             /**
@@ -1102,11 +1068,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInterceptedMethodParameters." + name();
                 }
             }
 
@@ -1263,11 +1224,6 @@ public class InvokeDynamic implements Implementation.Composable {
                  */
                 protected abstract ArgumentProvider make(Object value);
 
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper." + name();
-                }
-
                 /**
                  * An argument provider that loads a primitive value from the constant pool and wraps it.
                  */
@@ -1318,14 +1274,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     @Override
                     public int hashCode() {
                         return stackManipulation.hashCode() + 31 * ConstantPoolWrapper.this.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ConstantPoolWrapper.WrappingArgumentProvider{" +
-                                "constantPoolWrapper=" + ConstantPoolWrapper.this +
-                                ", stackManipulation=" + stackManipulation +
-                                '}';
                     }
                 }
             }
@@ -1396,14 +1344,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     public List<TypeDescription> getLoadedTypes() {
                         return loadedTypes;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.Resolved.Simple{" +
-                                "stackManipulation=" + stackManipulation +
-                                ", loadedTypes=" + loadedTypes +
-                                '}';
-                    }
                 }
             }
 
@@ -1440,13 +1380,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForThisInstance{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
                 }
             }
 
@@ -1515,15 +1448,6 @@ public class InvokeDynamic implements Implementation.Composable {
                             .withField(new FieldDescription.Token(name, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType.asGenericType()))
                             .withInitializer(new LoadedTypeInitializer.ForStaticField(name, value));
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForInstance{" +
-                            "value=" + value +
-                            ", fieldType=" + fieldType +
-                            ", name='" + name + '\'' +
-                            '}';
-                }
             }
 
             /**
@@ -1587,14 +1511,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     return instrumentedType;
                 }
 
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForField{" +
-                            "fieldName='" + fieldName + '\'' +
-                            ", fieldLocatorFactory=" + fieldLocatorFactory +
-                            '}';
-                }
-
                 /**
                  * An argument provider for a field value with an explicit type.
                  */
@@ -1625,15 +1541,6 @@ public class InvokeDynamic implements Implementation.Composable {
                             throw new IllegalStateException("Cannot assign " + typeDescription + " to " + this.typeDescription);
                         }
                         return new Resolved.Simple(new StackManipulation.Compound(access, stackManipulation), this.typeDescription);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForField.WithExplicitType{" +
-                                "fieldName='" + fieldName + '\'' +
-                                ", fieldLocatorFactory=" + fieldLocatorFactory +
-                                ", typeDescription=" + typeDescription +
-                                '}';
                     }
                 }
             }
@@ -1685,13 +1592,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     return instrumentedType;
                 }
 
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter{" +
-                            "index=" + index +
-                            '}';
-                }
-
                 /**
                  * An argument provider for a method parameter with an explicit type.
                  */
@@ -1721,14 +1621,6 @@ public class InvokeDynamic implements Implementation.Composable {
                             throw new IllegalStateException("Cannot assign " + type + " to " + typeDescription);
                         }
                         return new Resolved.Simple(new StackManipulation.Compound(access, stackManipulation), typeDescription);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForMethodParameter.WithExplicitType{" +
-                                "index=" + index +
-                                ", typeDescription=" + typeDescription +
-                                '}';
                     }
                 }
             }
@@ -1762,13 +1654,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForBooleanConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
@@ -1799,13 +1684,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForByteConstant{" +
-                            "value=" + value +
-                            '}';
                 }
             }
 
@@ -1838,13 +1716,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForShortConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
@@ -1875,13 +1746,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForCharacterConstant{" +
-                            "value=" + value +
-                            '}';
                 }
             }
 
@@ -1914,13 +1778,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForIntegerConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
@@ -1951,13 +1808,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForLongConstant{" +
-                            "value=" + value +
-                            '}';
                 }
             }
 
@@ -1990,13 +1840,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForFloatConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
@@ -2027,13 +1870,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForDoubleConstant{" +
-                            "value=" + value +
-                            '}';
                 }
             }
 
@@ -2066,13 +1902,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForStringConstant{" +
-                            "value='" + value + '\'' +
-                            '}';
-                }
             }
 
             /**
@@ -2103,13 +1932,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForClassConstant{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
                 }
             }
 
@@ -2142,13 +1964,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForEnumerationValue{" +
-                            "enumerationDescription=" + enumerationDescription +
-                            '}';
-                }
             }
 
             /**
@@ -2179,13 +1994,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForNullValue{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
                 }
             }
 
@@ -2218,13 +2026,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ArgumentProvider.ForJavaConstant{" +
-                            "javaConstant=" + javaConstant +
-                            '}';
-                }
             }
         }
 
@@ -2255,11 +2056,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public String resolve(MethodDescription methodDescription) {
                     return methodDescription.getInternalName();
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.NameProvider.ForInterceptedMethod." + name();
-                }
             }
 
             /**
@@ -2285,13 +2081,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public String resolve(MethodDescription methodDescription) {
                     return internalName;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.NameProvider.ForExplicitName{" +
-                            "internalName='" + internalName + '\'' +
-                            '}';
                 }
             }
         }
@@ -2323,11 +2112,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 public TypeDescription resolve(MethodDescription methodDescription) {
                     return methodDescription.getReturnType().asErasure();
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForInterceptedMethod." + name();
-                }
             }
 
             /**
@@ -2353,13 +2137,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public TypeDescription resolve(MethodDescription methodDescription) {
                     return typeDescription;
-                }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.ReturnTypeProvider.ForExplicitType{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
                 }
             }
         }
@@ -2462,15 +2239,6 @@ public class InvokeDynamic implements Implementation.Composable {
                 return instrumentedType;
             }
 
-            @Override
-            public String toString() {
-                return "InvokeDynamic.InvocationProvider.Default{" +
-                        "nameProvider=" + nameProvider +
-                        ", returnTypeProvider=" + returnTypeProvider +
-                        ", argumentProviders=" + argumentProviders +
-                        '}';
-            }
-
             /**
              * A target for a synthetically bound method call.
              */
@@ -2530,16 +2298,6 @@ public class InvokeDynamic implements Implementation.Composable {
                             returnType,
                             parameterTypes);
                 }
-
-                @Override
-                public String toString() {
-                    return "InvokeDynamic.InvocationProvider.Default.Target{" +
-                            "internalName='" + internalName + '\'' +
-                            ", returnType=" + returnType +
-                            ", argumentProviders=" + argumentProviders +
-                            ", instrumentedMethod=" + instrumentedMethod +
-                            '}';
-                }
             }
         }
     }
@@ -2589,11 +2347,6 @@ public class InvokeDynamic implements Implementation.Composable {
                                                      TypeDescription returnType,
                                                      Assigner assigner,
                                                      Assigner.Typing typing);
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.TerminationHandler." + name();
-        }
     }
 
     /**
@@ -2836,18 +2589,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     assigner,
                     typing);
         }
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.WithImplicitArguments{" +
-                    "bootstrapMethod=" + bootstrapMethod +
-                    ", handleArguments=" + handleArguments +
-                    ", invocationProvider=" + invocationProvider +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
     }
 
     /**
@@ -2959,18 +2700,6 @@ public class InvokeDynamic implements Implementation.Composable {
                     assigner,
                     typing);
         }
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.WithImplicitTarget{" +
-                    "bootstrapMethod=" + bootstrapMethod +
-                    ", handleArguments=" + handleArguments +
-                    ", invocationProvider=" + invocationProvider +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
     }
 
     /**
@@ -3076,19 +2805,6 @@ public class InvokeDynamic implements Implementation.Composable {
                         assigner,
                         typing);
             }
-
-            @Override
-            public String toString() {
-                return "InvokeDynamic.WithImplicitType.OfInstance{" +
-                        "bootstrapMethod=" + bootstrapMethod +
-                        ", handleArguments=" + handleArguments +
-                        ", invocationProvider=" + invocationProvider +
-                        ", terminationHandler=" + terminationHandler +
-                        ", assigner=" + assigner +
-                        ", typing=" + typing +
-                        ", value=" + value +
-                        '}';
-            }
         }
 
         /**
@@ -3142,19 +2858,6 @@ public class InvokeDynamic implements Implementation.Composable {
                         terminationHandler,
                         assigner,
                         typing);
-            }
-
-            @Override
-            public String toString() {
-                return "InvokeDynamic.WithImplicitType.OfArgument{" +
-                        "bootstrapMethod=" + bootstrapMethod +
-                        ", handleArguments=" + handleArguments +
-                        ", invocationProvider=" + invocationProvider +
-                        ", terminationHandler=" + terminationHandler +
-                        ", assigner=" + assigner +
-                        ", typing=" + typing +
-                        ", index=" + index +
-                        '}';
             }
         }
 
@@ -3218,20 +2921,6 @@ public class InvokeDynamic implements Implementation.Composable {
                         assigner,
                         typing);
             }
-
-            @Override
-            public String toString() {
-                return "InvokeDynamic.WithImplicitType.OfField{" +
-                        "bootstrapMethod=" + bootstrapMethod +
-                        ", handleArguments=" + handleArguments +
-                        ", invocationProvider=" + invocationProvider +
-                        ", terminationHandler=" + terminationHandler +
-                        ", assigner=" + assigner +
-                        ", typing=" + typing +
-                        ", fieldName=" + fieldName +
-                        ", fieldLocatorFactory=" + fieldLocatorFactory +
-                        '}';
-            }
         }
     }
 
@@ -3294,14 +2983,6 @@ public class InvokeDynamic implements Implementation.Composable {
         @Override
         public int hashCode() {
             return instrumentedType.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "InvokeDynamic.Appender{" +
-                    "invokeDynamic=" + InvokeDynamic.this +
-                    ", instrumentedType=" + instrumentedType +
-                    '}';
         }
     }
 }

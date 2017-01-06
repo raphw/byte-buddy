@@ -62,11 +62,6 @@ public interface LatentMatcher<T> {
                     ? not(isDeclaredBy(typeDescription))
                     : isDeclaredBy(typeDescription));
         }
-
-        @Override
-        public String toString() {
-            return "LatentMatcher.ForSelfDeclaredMethod." + name();
-        }
     }
 
     /**
@@ -95,13 +90,6 @@ public interface LatentMatcher<T> {
         public ElementMatcher<? super S> resolve(TypeDescription typeDescription) {
             return matcher;
         }
-
-        @Override
-        public String toString() {
-            return "LatentMatcher.Resolved{" +
-                    "matcher=" + matcher +
-                    '}';
-        }
     }
 
     /**
@@ -129,13 +117,6 @@ public interface LatentMatcher<T> {
             return new ResolvedMatcher(token.asSignatureToken(typeDescription));
         }
 
-        @Override
-        public String toString() {
-            return "LatentMatcher.ForFieldToken{" +
-                    "token=" + token +
-                    '}';
-        }
-
         /**
          * A resolved matcher of a latent field matcher for a field token.
          */
@@ -159,13 +140,6 @@ public interface LatentMatcher<T> {
             @Override
             public boolean matches(FieldDescription target) {
                 return target.asSignatureToken().equals(signatureToken);
-            }
-
-            @Override
-            public String toString() {
-                return "LatentMatcher.ForFieldToken.ResolvedMatcher{" +
-                        "signatureToken=" + signatureToken +
-                        '}';
             }
         }
     }
@@ -195,13 +169,6 @@ public interface LatentMatcher<T> {
             return new ResolvedMatcher(token.asSignatureToken(typeDescription));
         }
 
-        @Override
-        public String toString() {
-            return "LatentMatcher.ForMethodToken{" +
-                    "token=" + token +
-                    '}';
-        }
-
         /**
          * A resolved matcher of a latent method matcher for a method token.
          */
@@ -225,13 +192,6 @@ public interface LatentMatcher<T> {
             @Override
             public boolean matches(MethodDescription target) {
                 return target.asSignatureToken().equals(signatureToken);
-            }
-
-            @Override
-            public String toString() {
-                return "LatentMatcher.ForMethodToken.ResolvedMatcher{" +
-                        "signatureToken=" + signatureToken +
-                        '}';
             }
         }
     }
@@ -276,13 +236,6 @@ public interface LatentMatcher<T> {
             }
             return matcher;
         }
-
-        @Override
-        public String toString() {
-            return "LatentMatcher.Conjunction{" +
-                    "matchers=" + matchers +
-                    '}';
-        }
     }
 
     /**
@@ -324,13 +277,6 @@ public interface LatentMatcher<T> {
                 matcher = matcher.or(latentMatcher.resolve(typeDescription));
             }
             return matcher;
-        }
-
-        @Override
-        public String toString() {
-            return "LatentMatcher.Disjunction{" +
-                    "matchers=" + matchers +
-                    '}';
         }
     }
 }

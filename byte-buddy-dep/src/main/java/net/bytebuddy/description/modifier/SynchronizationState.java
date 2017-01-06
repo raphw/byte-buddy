@@ -54,9 +54,4 @@ public enum SynchronizationState implements ModifierContributor.ForMethod {
     public boolean isSynchronized() {
         return this == SYNCHRONIZED;
     }
-
-    @Override
-    public String toString() {
-        return "SynchronizationState." + name();
-    }
 }

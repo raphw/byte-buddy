@@ -249,11 +249,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
                     return Dispatcher.Disabled.INSTANCE;
                 }
             }
-
-            @Override
-            public String toString() {
-                return "JavaModule.Dispatcher.CreationAction." + name();
-            }
         }
 
         /**
@@ -410,19 +405,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
                     throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
                 }
             }
-
-            @Override
-            public String toString() {
-                return "JavaModule.Dispatcher.Enabled{" +
-                        "getModule=" + getModule +
-                        ", getClassLoader=" + getClassLoader +
-                        ", getResourceAsStream=" + getResourceAsStream +
-                        ", isNamed=" + isNamed +
-                        ", getName=" + getName +
-                        ", canRead=" + canRead +
-                        ", redefineModule=" + redefineModule +
-                        '}';
-            }
         }
 
         /**
@@ -473,11 +455,6 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @Override
             public void addReads(Instrumentation instrumentation, Object source, Object target) {
                 throw new IllegalStateException("Current VM does not support modules");
-            }
-
-            @Override
-            public String toString() {
-                return "JavaModule.Dispatcher.Disabled." + name();
             }
         }
     }

@@ -70,11 +70,6 @@ public enum DoubleConstant implements StackManipulation {
         return SIZE;
     }
 
-    @Override
-    public String toString() {
-        return "DoubleConstant." + name();
-    }
-
     /**
      * A stack manipulation for loading a {@code double} value from a class's constant pool onto the operand stack.
      */
@@ -104,11 +99,6 @@ public enum DoubleConstant implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitLdcInsn(value);
             return SIZE;
-        }
-
-        @Override
-        public String toString() {
-            return "DoubleConstant.ConstantPool{value=" + value + '}';
         }
     }
 }

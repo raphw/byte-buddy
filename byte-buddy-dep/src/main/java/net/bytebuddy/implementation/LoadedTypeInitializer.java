@@ -54,11 +54,6 @@ public interface LoadedTypeInitializer {
         public boolean isAlive() {
             return false;
         }
-
-        @Override
-        public String toString() {
-            return "LoadedTypeInitializer.NoOp." + name();
-        }
     }
 
     /**
@@ -116,14 +111,6 @@ public interface LoadedTypeInitializer {
         @Override
         public boolean isAlive() {
             return true;
-        }
-
-        @Override
-        public String toString() {
-            return "LoadedTypeInitializer.ForStaticField{" +
-                    "fieldName='" + fieldName + '\'' +
-                    ", value=" + value +
-                    '}';
         }
     }
 
@@ -184,11 +171,6 @@ public interface LoadedTypeInitializer {
                 }
             }
             return false;
-        }
-
-        @Override
-        public String toString() {
-            return "LoadedTypeInitializer.Compound{loadedTypeInitializers=" + loadedTypeInitializers + '}';
         }
     }
 }

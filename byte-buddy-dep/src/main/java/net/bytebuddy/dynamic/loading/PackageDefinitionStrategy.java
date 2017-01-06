@@ -42,11 +42,6 @@ public interface PackageDefinitionStrategy {
         public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             return Definition.Undefined.INSTANCE;
         }
-
-        @Override
-        public String toString() {
-            return "PackageDefinitionStrategy.NoOp." + name();
-        }
     }
 
     /**
@@ -62,11 +57,6 @@ public interface PackageDefinitionStrategy {
         @Override
         public Definition define(ClassLoader classLoader, String packageName, String typeName) {
             return Definition.Trivial.INSTANCE;
-        }
-
-        @Override
-        public String toString() {
-            return "PackageDefinitionStrategy.Trivial." + name();
         }
     }
 
@@ -200,12 +190,6 @@ public interface PackageDefinitionStrategy {
             public boolean isCompatibleTo(Package definedPackage) {
                 throw new IllegalStateException("Cannot check compatibility to undefined package");
             }
-
-
-            @Override
-            public String toString() {
-                return "PackageDefinitionStrategy.Definition.Undefined." + name();
-            }
         }
 
         /**
@@ -271,11 +255,6 @@ public interface PackageDefinitionStrategy {
             @Override
             public boolean isCompatibleTo(Package definedPackage) {
                 return true;
-            }
-
-            @Override
-            public String toString() {
-                return "PackageDefinitionStrategy.Definition.Trivial." + name();
             }
         }
 
@@ -422,19 +401,6 @@ public interface PackageDefinitionStrategy {
                 result = 31 * result + (sealBase != null ? sealBase.hashCode() : 0);
                 return result;
             }
-
-            @Override
-            public String toString() {
-                return "PackageDefinitionStrategy.Definition.Simple{" +
-                        "specificationTitle='" + specificationTitle + '\'' +
-                        ", specificationVersion='" + specificationVersion + '\'' +
-                        ", specificationVendor='" + specificationVendor + '\'' +
-                        ", implementationTitle='" + implementationTitle + '\'' +
-                        ", implementationVersion='" + implementationVersion + '\'' +
-                        ", implementationVendor='" + implementationVendor + '\'' +
-                        ", sealBase=" + sealBase +
-                        '}';
-            }
         }
     }
 
@@ -531,11 +497,6 @@ public interface PackageDefinitionStrategy {
             }
         }
 
-        @Override
-        public String toString() {
-            return "PackageDefinitionStrategy.ManifestReading{sealBaseLocator=" + sealBaseLocator + '}';
-        }
-
         /**
          * A locator for a seal base URL.
          */
@@ -563,11 +524,6 @@ public interface PackageDefinitionStrategy {
                 @Override
                 public URL findSealBase(ClassLoader classLoader, String typeName) {
                     return NOT_SEALED;
-                }
-
-                @Override
-                public String toString() {
-                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.NonSealing." + name();
                 }
             }
 
@@ -606,13 +562,6 @@ public interface PackageDefinitionStrategy {
                 @SuppressFBWarnings(value = "DMI_BLOCKING_METHODS_ON_URL", justification = "Package sealing relies on URL equality")
                 public int hashCode() {
                     return sealBase.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForFixedValue{" +
-                            "sealBase=" + sealBase +
-                            '}';
                 }
             }
 
@@ -692,13 +641,6 @@ public interface PackageDefinitionStrategy {
                         }
                     }
                     return fallback.findSealBase(classLoader, typeName);
-                }
-
-                @Override
-                public String toString() {
-                    return "PackageDefinitionStrategy.ManifestReading.SealBaseLocator.ForTypeResourceUrl{" +
-                            "fallback=" + fallback +
-                            '}';
                 }
             }
         }

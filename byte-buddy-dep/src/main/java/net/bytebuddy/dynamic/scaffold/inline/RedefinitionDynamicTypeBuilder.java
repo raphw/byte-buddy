@@ -170,25 +170,4 @@ public class RedefinitionDynamicTypeBuilder<T> extends AbstractInliningDynamicTy
                 originalType,
                 classFileLocator).make(typeResolutionStrategy.resolve());
     }
-
-    @Override
-    public String toString() {
-        return "RedefinitionDynamicTypeBuilder{" +
-                "instrumentedType=" + instrumentedType +
-                ", fieldRegistry=" + fieldRegistry +
-                ", methodRegistry=" + methodRegistry +
-                ", typeAttributeAppender=" + typeAttributeAppender +
-                ", asmVisitorWrapper=" + asmVisitorWrapper +
-                ", classFileVersion=" + classFileVersion +
-                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                ", annotationRetention=" + annotationRetention +
-                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                ", implementationContextFactory=" + implementationContextFactory +
-                ", methodGraphCompiler=" + methodGraphCompiler +
-                ", typeValidation=" + typeValidation +
-                ", ignoredMethods=" + ignoredMethods +
-                ", originalType=" + originalType +
-                ", classFileLocator=" + classFileLocator +
-                '}';
-    }
 }

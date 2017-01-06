@@ -36,9 +36,4 @@ public class TextConstant implements StackManipulation {
         methodVisitor.visitLdcInsn(text);
         return StackSize.SINGLE.toIncreasingSize();
     }
-
-    @Override
-    public String toString() {
-        return "TextConstant{text='" + text + '\'' + '}';
-    }
 }

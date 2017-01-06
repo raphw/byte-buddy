@@ -54,9 +54,4 @@ public enum ProvisioningState implements ModifierContributor.ForParameter {
     public boolean isMandated() {
         return this == MANDATED;
     }
-
-    @Override
-    public String toString() {
-        return "ProvisioningState." + name();
-    }
 }

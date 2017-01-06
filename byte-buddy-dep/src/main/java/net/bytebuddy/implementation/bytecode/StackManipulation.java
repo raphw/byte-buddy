@@ -48,11 +48,6 @@ public interface StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             throw new IllegalStateException("An illegal stack manipulation must not be applied");
         }
-
-        @Override
-        public String toString() {
-            return "StackManipulation.Illegal." + name();
-        }
     }
 
     /**
@@ -73,11 +68,6 @@ public interface StackManipulation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return StackSize.ZERO.toIncreasingSize();
-        }
-
-        @Override
-        public String toString() {
-            return "StackManipulation.Trivial." + name();
         }
     }
 
@@ -153,11 +143,6 @@ public interface StackManipulation {
         private Size aggregate(int sizeChange, int interimMaximalSize) {
             return new Size(sizeImpact + sizeChange, Math.max(maximalSize, sizeImpact + interimMaximalSize));
         }
-
-        @Override
-        public String toString() {
-            return "StackManipulation.Size{sizeImpact=" + sizeImpact + ", maximalSize=" + maximalSize + '}';
-        }
     }
 
     /**
@@ -213,11 +198,6 @@ public interface StackManipulation {
                 size = size.aggregate(stackManipulation.apply(methodVisitor, implementationContext));
             }
             return size;
-        }
-
-        @Override
-        public String toString() {
-            return "StackManipulation.Compound{stackManipulations=" + stackManipulations + "}";
         }
     }
 }

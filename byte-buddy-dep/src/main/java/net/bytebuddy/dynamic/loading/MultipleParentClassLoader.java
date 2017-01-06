@@ -98,13 +98,6 @@ public class MultipleParentClassLoader extends ClassLoader {
         return new CompoundEnumeration(enumerations);
     }
 
-    @Override
-    public String toString() {
-        return "MultipleParentClassLoader{" +
-                "parents=" + parents +
-                '}';
-    }
-
     /**
      * A compound URL enumeration.
      */
@@ -154,14 +147,6 @@ public class MultipleParentClassLoader extends ClassLoader {
             } else {
                 throw new NoSuchElementException();
             }
-        }
-
-        @Override
-        public String toString() {
-            return "MultipleParentClassLoader.CompoundEnumeration{" +
-                    "enumerations=" + enumerations +
-                    ", currentEnumeration=" + currentEnumeration +
-                    '}';
         }
     }
 
@@ -326,13 +311,6 @@ public class MultipleParentClassLoader extends ClassLoader {
         @SuppressFBWarnings(value = "DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification = "Privilege is explicit user responsibility")
         private ClassLoader doBuild(ClassLoader parent) {
             return new MultipleParentClassLoader(parent, classLoaders);
-        }
-
-        @Override
-        public String toString() {
-            return "MultipleParentClassLoader.Builder{" +
-                    "classLoaders=" + classLoaders +
-                    '}';
         }
     }
 }

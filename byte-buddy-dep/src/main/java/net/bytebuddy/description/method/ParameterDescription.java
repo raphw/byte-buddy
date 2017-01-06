@@ -298,11 +298,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "ParameterDescription.ForLoadedParameter.Dispatcher.CreationAction." + name();
-                }
             }
 
             /**
@@ -395,16 +390,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                         throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getParameters", exception.getCause());
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "ParameterDescription.ForLoadedParameter.Dispatcher.ForJava8CapableVm{" +
-                            "getParameters=" + getParameters +
-                            ", getName=" + getName +
-                            ", isNamePresent=" + isNamePresent +
-                            ", getModifiers=" + getModifiers +
-                            '}';
-                }
             }
 
             /**
@@ -431,11 +416,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 @Override
                 public String getName(AccessibleObject executable, int index) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
-                }
-
-                @Override
-                public String toString() {
-                    return "ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm." + name();
                 }
             }
         }
@@ -1046,16 +1026,6 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             result = 31 * result + (name != null ? name.hashCode() : 0);
             result = 31 * result + (modifiers != null ? modifiers.hashCode() : 0);
             return result;
-        }
-
-        @Override
-        public String toString() {
-            return "ParameterDescription.Token{" +
-                    "type=" + type +
-                    ", annotations=" + annotations +
-                    ", name=" + (name == null ? null : "'" + name + '\'') +
-                    ", modifiers=" + modifiers +
-                    '}';
         }
 
         /**

@@ -100,11 +100,6 @@ public enum MethodInvocation {
                 : OfGenericMethod.of(methodDescription, invoke(declaredMethod));
     }
 
-    @Override
-    public String toString() {
-        return "MethodInvocation." + name();
-    }
-
     /**
      * An illegal implicit method invocation.
      */
@@ -146,11 +141,6 @@ public enum MethodInvocation {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return Illegal.INSTANCE.apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.IllegalInvocation." + name();
         }
     }
 
@@ -268,14 +258,6 @@ public enum MethodInvocation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return new Compound(invocation, TypeCasting.to(targetType)).apply(methodVisitor, implementationContext);
         }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.OfGenericMethod{" +
-                    "targetType=" + targetType +
-                    ", invocation=" + invocation +
-                    '}';
-        }
     }
 
     /**
@@ -389,14 +371,6 @@ public enum MethodInvocation {
             result = 31 * result + methodDescription.asSignatureToken().hashCode();
             return result;
         }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.Invocation{" +
-                    "typeDescription=" + typeDescription +
-                    ", methodDescription=" + methodDescription +
-                    '}';
-        }
     }
 
     /**
@@ -506,18 +480,6 @@ public enum MethodInvocation {
             result = 31 * result + arguments.hashCode();
             return result;
         }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.DynamicInvocation{" +
-                    "methodInvocation=" + MethodInvocation.this +
-                    ", methodName='" + methodName + '\'' +
-                    ", returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    ", bootstrapMethod=" + bootstrapMethod +
-                    ", arguments=" + arguments +
-                    '}';
-        }
     }
 
     /**
@@ -569,14 +531,6 @@ public enum MethodInvocation {
             int parameterSize = 1 + methodDescription.getStackSize(), returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
             return new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.HandleInvocation{" +
-                    "methodDescription=" + methodDescription +
-                    ", type=" + type +
-                    '}';
-        }
     }
 
     /**
@@ -615,11 +569,6 @@ public enum MethodInvocation {
          */
         protected String getMethodName() {
             return methodName;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodInvocation.HandleType." + name();
         }
     }
 }

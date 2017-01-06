@@ -941,21 +941,6 @@ public class ByteBuddy {
                 ignoredMethods);
     }
 
-    @Override
-    public String toString() {
-        return "ByteBuddy{" +
-                "classFileVersion=" + classFileVersion +
-                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                ", annotationRetention=" + annotationRetention +
-                ", namingStrategy=" + namingStrategy +
-                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                ", implementationContextFactory=" + implementationContextFactory +
-                ", methodGraphCompiler=" + methodGraphCompiler +
-                ", typeValidation=" + typeValidation +
-                ", ignoredMethods=" + ignoredMethods +
-                '}';
-    }
-
     /**
      * An implementation fo the {@code values} method of an enumeration type.
      */
@@ -1020,13 +1005,6 @@ public class ByteBuddy {
             return new ValuesMethodAppender(implementationTarget.getInstrumentedType());
         }
 
-        @Override
-        public String toString() {
-            return "ByteBuddy.EnumerationImplementation{" +
-                    "values=" + values +
-                    '}';
-        }
-
         /**
          * A byte code appender for the {@code values} method of any enumeration type.
          */
@@ -1057,13 +1035,6 @@ public class ByteBuddy {
                         TypeCasting.to(valuesField.getType().asErasure()),
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddy.EnumerationImplementation.ValuesMethodAppender{" +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
             }
         }
 
@@ -1117,13 +1088,6 @@ public class ByteBuddy {
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly()).write()
                 );
                 return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddy.EnumerationImplementation.InitializationAppender{" +
-                        "values=" + values +
-                        '}';
             }
         }
     }

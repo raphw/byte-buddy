@@ -200,11 +200,6 @@ public @interface Pipe {
                     annotation.loadSilent().serializableProxy()));
         }
 
-        @Override
-        public String toString() {
-            return "Pipe.Binder{forwardingMethod=" + forwardingMethod + '}';
-        }
-
         /**
          * An auxiliary type for performing the redirection of a method invocation as requested by the
          * {@link net.bytebuddy.implementation.bind.annotation.Pipe} annotation.
@@ -318,16 +313,6 @@ public @interface Pipe {
                 ).apply(methodVisitor, implementationContext);
             }
 
-            @Override
-            public String toString() {
-                return "Pipe.Binder.Redirection{" +
-                        "forwardingType=" + forwardingType +
-                        ", sourceMethod=" + sourceMethod +
-                        ", assigner=" + assigner +
-                        ", serializableProxy=" + serializableProxy +
-                        '}';
-            }
-
             /**
              * The implementation to implement a
              * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
@@ -361,11 +346,6 @@ public @interface Pipe {
                 @Override
                 public ByteCodeAppender appender(Target implementationTarget) {
                     return new Appender(implementationTarget.getInstrumentedType());
-                }
-
-                @Override
-                public String toString() {
-                    return "Pipe.Binder.Redirection.ConstructorCall." + name();
                 }
 
                 /**
@@ -410,11 +390,6 @@ public @interface Pipe {
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Pipe.Binder.Redirection.ConstructorCall.Appender{instrumentedType=" + instrumentedType + '}';
-                    }
                 }
             }
 
@@ -458,14 +433,6 @@ public @interface Pipe {
                         throw new IllegalStateException("Cannot invoke " + redirectedMethod + " from outside of class via @Pipe proxy");
                     }
                     return new Appender(implementationTarget.getInstrumentedType());
-                }
-
-                @Override
-                public String toString() {
-                    return "Pipe.Binder.Redirection.MethodCall{" +
-                            "redirectedMethod=" + redirectedMethod +
-                            ", assigner=" + assigner +
-                            '}';
                 }
 
                 /**
@@ -529,14 +496,6 @@ public @interface Pipe {
                     @Override
                     public int hashCode() {
                         return 31 * MethodCall.this.hashCode() + instrumentedType.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Pipe.Binder.Redirection.MethodCall.Appender{" +
-                                "methodCall=" + MethodCall.this +
-                                ", instrumentedType=" + instrumentedType +
-                                '}';
                     }
                 }
             }

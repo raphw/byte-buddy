@@ -60,11 +60,6 @@ public interface Transformer<T> {
         public Object transform(TypeDescription instrumentedType, Object target) {
             return target;
         }
-
-        @Override
-        public String toString() {
-            return "Transformer.NoOp." + name();
-        }
     }
 
     /**
@@ -105,13 +100,6 @@ public interface Transformer<T> {
                     fieldDescription.asDefined());
         }
 
-        @Override
-        public String toString() {
-            return "Transformer.ForField{" +
-                    "transformer=" + transformer +
-                    '}';
-        }
-
         /**
          * A transformer for a field's modifiers.
          */
@@ -138,13 +126,6 @@ public interface Transformer<T> {
                         ModifierContributor.Resolver.of(modifierContributors).resolve(target.getModifiers()),
                         target.getType(),
                         target.getAnnotations());
-            }
-
-            @Override
-            public String toString() {
-                return "Transformer.ForField.FieldModifierTransformer{" +
-                        "modifierContributors=" + modifierContributors +
-                        '}';
             }
         }
 
@@ -262,13 +243,6 @@ public interface Transformer<T> {
                     methodDescription.asDefined());
         }
 
-        @Override
-        public String toString() {
-            return "Transformer.ForMethod{" +
-                    "transformer=" + transformer +
-                    '}';
-        }
-
         /**
          * A transformer for a method's modifiers.
          */
@@ -300,13 +274,6 @@ public interface Transformer<T> {
                         target.getAnnotations(),
                         target.getDefaultValue(),
                         target.getReceiverType());
-            }
-
-            @Override
-            public String toString() {
-                return "Transformer.ForMethod.MethodModifierTransformer{" +
-                        "modifierContributors=" + modifierContributors +
-                        '}';
             }
         }
 
@@ -541,13 +508,6 @@ public interface Transformer<T> {
                 private TransformedMethod getOuter() {
                     return TransformedMethod.this;
                 }
-
-                @Override
-                public String toString() {
-                    return "Transformer.ForMethod.TransformedMethod.AttachmentVisitor{" +
-                            "outer=" + TransformedMethod.this +
-                            '}';
-                }
             }
         }
     }
@@ -597,13 +557,6 @@ public interface Transformer<T> {
                 target = transformer.transform(instrumentedType, target);
             }
             return target;
-        }
-
-        @Override
-        public String toString() {
-            return "Transformer.Compound{" +
-                    "transformers=" + transformers +
-                    '}';
         }
     }
 }

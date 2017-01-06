@@ -56,7 +56,7 @@ public class MethodDelegationBinderTest {
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodInvoker.Simple.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodInvoker.Virtual.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.ParameterBinding.Illegal.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegationBinder.ParameterBinding.Anonymous.class).ignoreFields("anonymousToken").apply();
+        ObjectPropertyAssertion.of(MethodDelegationBinder.ParameterBinding.Anonymous.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.ParameterBinding.Unique.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodBinding.Illegal.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodBinding.Builder.class).create(new ObjectPropertyAssertion.Creator<MethodDescription>() {

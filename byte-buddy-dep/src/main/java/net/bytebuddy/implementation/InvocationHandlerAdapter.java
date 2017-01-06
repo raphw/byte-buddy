@@ -260,15 +260,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             return new Appender(implementationTarget.getInstrumentedType());
         }
 
-        @Override
-        public String toString() {
-            return "InvocationHandlerAdapter.ForInstance{" +
-                    "fieldName=" + fieldName +
-                    ", cacheMethods=" + cacheMethods +
-                    ", invocationHandler=" + invocationHandler +
-                    '}';
-        }
-
         /**
          * An appender for implementing the {@link ForInstance}.
          */
@@ -316,14 +307,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             @Override
             public int hashCode() {
                 return 31 * ForInstance.this.hashCode() + instrumentedType.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "InvocationHandlerAdapter.ForInstance.Appender{" +
-                        "invocationHandlerAdapter=" + ForInstance.this +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
             }
         }
     }
@@ -378,15 +361,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 throw new IllegalStateException("Field " + resolution.getField() + " does not declare a type that is assignable to invocation handler");
             }
             return new Appender(implementationTarget.getInstrumentedType(), resolution.getField());
-        }
-
-        @Override
-        public String toString() {
-            return "InvocationHandlerAdapter.ForField{" +
-                    "fieldName=" + fieldName +
-                    "cacheMethods=" + cacheMethods +
-                    "fieldLocatorFactory=" + fieldLocatorFactory +
-                    '}';
         }
 
         /**
@@ -446,15 +420,6 @@ public abstract class InvocationHandlerAdapter implements Implementation {
             @Override
             public int hashCode() {
                 return 31 * (31 * ForField.this.hashCode() + instrumentedType.hashCode()) + fieldDescription.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "InvocationHandlerAdapter.ForField.Appender{" +
-                        "invocationHandlerAdapter=" + ForField.this +
-                        "instrumentedType=" + instrumentedType +
-                        "fieldDescription=" + fieldDescription +
-                        '}';
             }
         }
     }

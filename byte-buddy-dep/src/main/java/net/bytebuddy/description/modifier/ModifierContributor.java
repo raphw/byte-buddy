@@ -189,12 +189,5 @@ public interface ModifierContributor {
             }
             return modifiers;
         }
-
-        @Override
-        public String toString() {
-            return "ModifierContributor.Resolver{" +
-                    "modifierContributors=" + modifierContributors +
-                    '}';
-        }
     }
 }

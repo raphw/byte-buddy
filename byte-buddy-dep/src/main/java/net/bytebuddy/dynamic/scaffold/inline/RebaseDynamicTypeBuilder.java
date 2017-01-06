@@ -200,28 +200,6 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 methodRebaseResolver).make(typeResolutionStrategy.resolve());
     }
 
-    @Override
-    public String toString() {
-        return "RebaseDynamicTypeBuilder{" +
-                "instrumentedType=" + instrumentedType +
-                ", fieldRegistry=" + fieldRegistry +
-                ", methodRegistry=" + methodRegistry +
-                ", typeAttributeAppender=" + typeAttributeAppender +
-                ", asmVisitorWrapper=" + asmVisitorWrapper +
-                ", classFileVersion=" + classFileVersion +
-                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                ", annotationRetention=" + annotationRetention +
-                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                ", implementationContextFactory=" + implementationContextFactory +
-                ", methodGraphCompiler=" + methodGraphCompiler +
-                ", typeValidation=" + typeValidation +
-                ", ignoredMethods=" + ignoredMethods +
-                ", originalType=" + originalType +
-                ", classFileLocator=" + classFileLocator +
-                ", methodNameTransformer=" + methodNameTransformer +
-                '}';
-    }
-
     /**
      * A matcher that filters any method that should not be rebased, i.e. that is not already defined by the original type.
      */
@@ -263,14 +241,6 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
         @Override
         public boolean matches(MethodDescription target) {
             return instrumentedMethodTokens.contains(target.asToken(is(instrumentedType)));
-        }
-
-        @Override
-        public String toString() {
-            return "RebaseDynamicTypeBuilder.RebaseableMatcher{" +
-                    "instrumentedType=" + instrumentedType +
-                    ", instrumentedMethodTokens=" + instrumentedMethodTokens +
-                    '}';
         }
     }
 }

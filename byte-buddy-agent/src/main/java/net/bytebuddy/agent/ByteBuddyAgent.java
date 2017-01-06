@@ -407,11 +407,6 @@ public class ByteBuddyAgent {
                 public Class<?> getVirtualMachineType() {
                     throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
                 }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.AttachmentProvider.Accessor.Unavailable." + name();
-                }
             }
 
             /**
@@ -482,13 +477,6 @@ public class ByteBuddyAgent {
                 public Class<?> getVirtualMachineType() {
                     return virtualMachineType;
                 }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.AttachmentProvider.Accessor.Simple{" +
-                            "virtualMachineType=" + virtualMachineType +
-                            '}';
-                }
             }
         }
 
@@ -506,11 +494,6 @@ public class ByteBuddyAgent {
             public Accessor attempt() {
                 return Accessor.Simple.of(ClassLoader.getSystemClassLoader());
             }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.ForJigsawVm." + name();
-            }
         }
 
         /**
@@ -527,11 +510,6 @@ public class ByteBuddyAgent {
             @Override
             public Accessor attempt() {
                 return Accessor.Simple.ofJ9();
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.ForJ9Vm." + name();
             }
         }
 
@@ -590,11 +568,6 @@ public class ByteBuddyAgent {
                     throw new IllegalStateException("Could not represent " + toolsJar + " as URL");
                 }
             }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.ForToolsJarVm." + name();
-            }
         }
 
         /**
@@ -614,11 +587,6 @@ public class ByteBuddyAgent {
                 } catch (Throwable ignored) {
                     return Accessor.Unavailable.INSTANCE;
                 }
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.ForUnixHotSpotVm." + name();
             }
         }
 
@@ -670,13 +638,6 @@ public class ByteBuddyAgent {
                 }
                 return Accessor.Unavailable.INSTANCE;
             }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AttachmentProvider.Compound{" +
-                        "attachmentProviders=" + attachmentProviders +
-                        '}';
-            }
         }
     }
 
@@ -719,11 +680,6 @@ public class ByteBuddyAgent {
                 return dispatcher.resolve();
             }
 
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.ProcessProvider.ForCurrentVm." + name();
-            }
-
             /**
              * A process provider for a legacy VM that reads the process id from its JMX properties.
              */
@@ -743,11 +699,6 @@ public class ByteBuddyAgent {
                     } else {
                         return runtimeName.substring(0, processIdIndex);
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.ProcessProvider.ForCurrentVm.ForLegacyVm." + name();
                 }
             }
 
@@ -803,14 +754,6 @@ public class ByteBuddyAgent {
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error when accessing Java 9 process API", exception.getCause());
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.ProcessProvider.ForCurrentVm.ForJava9CapableVm{" +
-                            "current=" + current +
-                            ", getPid=" + getPid +
-                            '}';
                 }
             }
         }
@@ -882,11 +825,6 @@ public class ByteBuddyAgent {
                 }
                 return agentJar;
             }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AgentProvider.ForByteBuddyAgent." + name();
-            }
         }
 
         /**
@@ -912,13 +850,6 @@ public class ByteBuddyAgent {
             @Override
             public File resolve() {
                 return agent;
-            }
-
-            @Override
-            public String toString() {
-                return "ByteBuddyAgent.AgentProvider.ForExistingAgent{" +
-                        "agent='" + agent + '\'' +
-                        '}';
             }
         }
     }

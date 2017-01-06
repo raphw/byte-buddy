@@ -50,9 +50,4 @@ public class VoidAwareAssigner implements Assigner {
             return chained.assign(source, target, typing);
         }
     }
-
-    @Override
-    public String toString() {
-        return "VoidAwareAssigner{chained=" + chained + '}';
-    }
 }

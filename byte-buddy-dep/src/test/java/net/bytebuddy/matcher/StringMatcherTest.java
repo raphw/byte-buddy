@@ -1,7 +1,6 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -59,8 +58,8 @@ public class StringMatcherTest extends AbstractElementMatcherTest<StringMatcher>
     }
 
     @Override
-    protected <S> ObjectPropertyAssertion<S> modify(ObjectPropertyAssertion<S> propertyAssertion) {
-        return propertyAssertion.skipToString();
+    protected String makeRegex(String startsWith) {
+        return null;
     }
 
     @Test

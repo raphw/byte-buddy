@@ -99,15 +99,6 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         return instrumentedType;
     }
 
-    @Override
-    public String toString() {
-        return "RebaseImplementationTarget{" +
-                ", instrumentedType=" + instrumentedType +
-                ", methodGraph=" + methodGraph +
-                ", rebaseableMethods=" + rebaseableMethods +
-                '}';
-    }
-
     /**
      * A {@link Implementation.SpecialMethodInvocation} which invokes a rebased method
      * as given by a {@link MethodRebaseResolver}.
@@ -175,15 +166,6 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return stackManipulation.apply(methodVisitor, implementationContext);
         }
-
-        @Override
-        public String toString() {
-            return "RebaseImplementationTarget.RebasedMethodInvocation{" +
-                    "instrumentedType=" + instrumentedType +
-                    ", methodDescription=" + methodDescription +
-                    ", stackManipulation=" + stackManipulation +
-                    '}';
-        }
     }
 
     /**
@@ -209,13 +191,6 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
         @Override
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion) {
             return RebaseImplementationTarget.of(instrumentedType, methodGraph, classFileVersion, methodRebaseResolver);
-        }
-
-        @Override
-        public String toString() {
-            return "RebaseImplementationTarget.Factory{" +
-                    "methodRebaseResolver=" + methodRebaseResolver +
-                    '}';
         }
     }
 }

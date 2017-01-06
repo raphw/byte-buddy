@@ -63,11 +63,6 @@ public interface FieldRegistry {
             public Record target(FieldDescription fieldDescription) {
                 return new Record.ForImplicitField(fieldDescription);
             }
-
-            @Override
-            public String toString() {
-                return "FieldRegistry.Compiled.NoOp." + name();
-            }
         }
     }
 
@@ -122,11 +117,6 @@ public interface FieldRegistry {
                 entries.add(new Compiled.Entry(entry.resolve(instrumentedType), fieldAttributeAppender, entry.getDefaultValue(), entry.getTransformer()));
             }
             return new Compiled(instrumentedType, entries);
-        }
-
-        @Override
-        public String toString() {
-            return "FieldRegistry.Default{entries=" + entries + '}';
         }
 
         /**
@@ -204,16 +194,6 @@ public interface FieldRegistry {
             public ElementMatcher<? super FieldDescription> resolve(TypeDescription typeDescription) {
                 return matcher.resolve(typeDescription);
             }
-
-            @Override
-            public String toString() {
-                return "FieldRegistry.Default.Entry{" +
-                        "matcher=" + matcher +
-                        ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
-                        ", defaultValue=" + defaultValue +
-                        ", transformer=" + transformer +
-                        '}';
-            }
         }
 
         /**
@@ -251,14 +231,6 @@ public interface FieldRegistry {
                     }
                 }
                 return new Record.ForImplicitField(fieldDescription);
-            }
-
-            @Override
-            public String toString() {
-                return "FieldRegistry.Default.Compiled{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", entries=" + entries +
-                        '}';
             }
 
             /**
@@ -319,16 +291,6 @@ public interface FieldRegistry {
                 @Override
                 public boolean matches(FieldDescription target) {
                     return matcher.matches(target);
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldRegistry.Default.Compiled.Entry{" +
-                            "matcher=" + matcher +
-                            ", fieldAttributeAppender=" + fieldAttributeAppender +
-                            ", defaultValue=" + defaultValue +
-                            ", transformer=" + transformer +
-                            '}';
                 }
             }
         }

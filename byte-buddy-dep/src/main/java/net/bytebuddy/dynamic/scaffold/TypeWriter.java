@@ -199,13 +199,6 @@ public interface TypeWriter<T> {
                 public void apply(FieldVisitor fieldVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     throw new IllegalStateException("An implicit field record is not intended for partial application: " + this);
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.FieldPool.Record.ForImplicitField{" +
-                            "fieldDescription=" + fieldDescription +
-                            '}';
-                }
             }
 
             /**
@@ -278,15 +271,6 @@ public interface TypeWriter<T> {
                 @Override
                 public void apply(FieldVisitor fieldVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     attributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilterFactory.on(fieldDescription));
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.FieldPool.Record.ForExplicitField{" +
-                            "attributeAppender=" + attributeAppender +
-                            ", defaultValue=" + defaultValue +
-                            ", fieldDescription=" + fieldDescription +
-                            '}';
                 }
             }
         }
@@ -446,11 +430,6 @@ public interface TypeWriter<T> {
                 public boolean isImplemented() {
                     return implement;
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.MethodPool.Entry.Sort." + name();
-                }
             }
 
             /**
@@ -517,13 +496,6 @@ public interface TypeWriter<T> {
                 public Record prepend(ByteCodeAppender byteCodeAppender) {
                     return new ForDefinedMethod.WithBody(methodDescription, new ByteCodeAppender.Compound(byteCodeAppender,
                             new ByteCodeAppender.Simple(DefaultValue.of(methodDescription.getReturnType()), MethodReturn.of(methodDescription.getReturnType()))));
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.MethodPool.Record.ForNonImplementedMethod{" +
-                            "methodDescription=" + methodDescription +
-                            '}';
                 }
             }
 
@@ -649,16 +621,6 @@ public interface TypeWriter<T> {
                                 methodAttributeAppender,
                                 visibility);
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody{" +
-                                "methodDescription=" + methodDescription +
-                                ", byteCodeAppender=" + byteCodeAppender +
-                                ", methodAttributeAppender=" + methodAttributeAppender +
-                                ", visibility=" + visibility +
-                                '}';
-                    }
                 }
 
                 /**
@@ -733,15 +695,6 @@ public interface TypeWriter<T> {
                     @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
                         throw new IllegalStateException("Cannot prepend code for abstract method on " + methodDescription);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody{" +
-                                "methodDescription=" + methodDescription +
-                                ", methodAttributeAppender=" + methodAttributeAppender +
-                                ", visibility=" + visibility +
-                                '}';
                     }
                 }
 
@@ -827,15 +780,6 @@ public interface TypeWriter<T> {
                     @Override
                     public Record prepend(ByteCodeAppender byteCodeAppender) {
                         throw new IllegalStateException("Cannot prepend code for default value on " + methodDescription);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue{" +
-                                "methodDescription=" + methodDescription +
-                                ", annotationValue=" + annotationValue +
-                                ", methodAttributeAppender=" + methodAttributeAppender +
-                                '}';
                     }
                 }
 
@@ -951,16 +895,6 @@ public interface TypeWriter<T> {
                                 MethodInvocation.invoke(bridgeTarget).special(superClass),
                                 MethodReturn.of(instrumentedMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext, instrumentedMethod);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge{" +
-                                "visibilityBridge=" + visibilityBridge +
-                                ", bridgeTarget=" + bridgeTarget +
-                                ", superClass=" + superClass +
-                                ", attributeAppender=" + attributeAppender +
-                                '}';
                     }
 
                     /**
@@ -1185,17 +1119,6 @@ public interface TypeWriter<T> {
                 @Override
                 public ByteCodeAppender.Size applyCode(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                     return delegate.applyCode(methodVisitor, implementationContext);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.MethodPool.Record.AccessBridgeWrapper{" +
-                            "delegate=" + delegate +
-                            ", instrumentedType=" + instrumentedType +
-                            ", bridgeTarget=" + bridgeTarget +
-                            ", bridgeTypes=" + bridgeTypes +
-                            ", attributeAppender=" + attributeAppender +
-                            '}';
                 }
 
                 /**
@@ -1781,15 +1704,6 @@ public interface TypeWriter<T> {
                 result = 31 * result + Default.this.hashCode();
                 return result;
             }
-
-            @Override
-            public String toString() {
-                return "TypeWriter.Default.UnresolvedType{" +
-                        "outer=" + Default.this +
-                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                        ", auxiliaryTypes=" + auxiliaryTypes +
-                        '}';
-            }
         }
 
         /**
@@ -1955,13 +1869,6 @@ public interface TypeWriter<T> {
                         !descriptor.startsWith(NO_PARAMETERS) || descriptor.endsWith(RETURNS_VOID),
                         signature != null);
                 return new ValidatingMethodVisitor(super.visitMethod(modifiers, name, descriptor, signature, exceptions), name);
-            }
-
-            @Override
-            public String toString() {
-                return "TypeWriter.Default.ValidatingClassVisitor{" +
-                        "constraint=" + constraint +
-                        "}";
             }
 
             /**
@@ -2156,11 +2063,6 @@ public interface TypeWriter<T> {
                     public void assertSubRoutine() {
                         /* do nothing */
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClass." + name();
-                    }
                 }
 
                 /**
@@ -2243,11 +2145,6 @@ public interface TypeWriter<T> {
                         } else if (definesInterfaces) {
                             throw new IllegalStateException("Cannot implement interface for package type");
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForPackageType." + name();
                     }
                 }
 
@@ -2359,11 +2256,6 @@ public interface TypeWriter<T> {
                     public void assertSubRoutine() {
                         /* do nothing */
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForInterface." + name();
-                    }
                 }
 
                 /**
@@ -2473,11 +2365,6 @@ public interface TypeWriter<T> {
                     @Override
                     public void assertSubRoutine() {
                         /* do nothing */
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForAnnotation." + name();
                     }
                 }
 
@@ -2593,13 +2480,6 @@ public interface TypeWriter<T> {
                         if (!classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)) {
                             throw new IllegalStateException("Cannot write subroutine for class file version " + classFileVersion);
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClassFileVersion{" +
-                                "classFileVersion=" + classFileVersion +
-                                '}';
                     }
                 }
 
@@ -2729,13 +2609,6 @@ public interface TypeWriter<T> {
                             constraint.assertSubRoutine();
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ValidatingClassVisitor.Constraint.Compound{" +
-                                "constraints=" + constraints +
-                                '}';
-                    }
                 }
             }
 
@@ -2757,13 +2630,6 @@ public interface TypeWriter<T> {
                 public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
                     constraint.assertAnnotation();
                     return super.visitAnnotation(desc, visible);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.Default.ValidatingClassVisitor.ValidatingFieldVisitor{" +
-                            "classVisitor=" + ValidatingClassVisitor.this +
-                            '}';
                 }
             }
 
@@ -2841,14 +2707,6 @@ public interface TypeWriter<T> {
                     }
                     super.visitJumpInsn(opcode, label);
                 }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor{" +
-                            "classVisitor=" + ValidatingClassVisitor.this +
-                            ", name='" + name + '\'' +
-                            '}';
-                }
             }
         }
 
@@ -2902,13 +2760,6 @@ public interface TypeWriter<T> {
                     } while (!leftType.isAssignableFrom(rightType));
                     return leftType.getInternalName();
                 }
-            }
-
-            @Override
-            public String toString() {
-                return "TypeWriter.Default.FrameComputingClassWriter{" +
-                        "typePool=" + typePool +
-                        '}';
             }
         }
 
@@ -3072,31 +2923,6 @@ public interface TypeWriter<T> {
                         : new ClassRemapper(classVisitor, new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
             }
 
-            @Override
-            public String toString() {
-                return "TypeWriter.Default.ForInlining{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", fieldPool=" + fieldPool +
-                        ", methodRegistry=" + methodRegistry +
-                        ", auxiliaryTypes=" + auxiliaryTypes +
-                        ", fields=" + fields +
-                        ", instrumentedMethods=" + instrumentedMethods +
-                        ", loadedTypeInitializer=" + loadedTypeInitializer +
-                        ", typeInitializer=" + typeInitializer +
-                        ", typeAttributeAppender=" + typeAttributeAppender +
-                        ", asmVisitorWrapper=" + asmVisitorWrapper +
-                        ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                        ", annotationRetention=" + annotationRetention +
-                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                        ", implementationContextFactory=" + implementationContextFactory +
-                        ", implementationTargetFactory=" + implementationTargetFactory +
-                        ", typeValidation=" + typeValidation +
-                        ", originalType=" + originalType +
-                        ", classFileLocator=" + classFileLocator +
-                        ", methodRebaseResolver=" + methodRebaseResolver +
-                        '}';
-            }
-
             /**
              * An initialization handler is responsible for handling the creation of the type initializer.
              */
@@ -3131,15 +2957,6 @@ public interface TypeWriter<T> {
                     @Override
                     public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
                         implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ForInlining.InitializationHandler.Creating{" +
-                                "instrumentedType=" + instrumentedType +
-                                ", methodPool=" + methodPool +
-                                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                                "}";
                     }
                 }
 
@@ -3336,11 +3153,6 @@ public interface TypeWriter<T> {
                             public void emitFrame(MethodVisitor methodVisitor) {
                                 /* do nothing */
                             }
-
-                            @Override
-                            public String toString() {
-                                return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.NoOp." + name();
-                            }
                         }
 
                         /**
@@ -3361,11 +3173,6 @@ public interface TypeWriter<T> {
                             @Override
                             public void emitFrame(MethodVisitor methodVisitor) {
                                 methodVisitor.visitFrame(Opcodes.F_NEW, EMPTY.length, EMPTY, EMPTY.length, EMPTY);
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.Expanding." + name();
                             }
                         }
 
@@ -3412,13 +3219,6 @@ public interface TypeWriter<T> {
                                 }
                                 currentLocalVariableLength = 0;
                             }
-
-                            @Override
-                            public String toString() {
-                                return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.Active{" +
-                                        "currentLocalVariableLength=" + currentLocalVariableLength +
-                                        '}';
-                            }
                         }
                     }
 
@@ -3449,13 +3249,6 @@ public interface TypeWriter<T> {
                         @Override
                         protected void onComplete(Implementation.Context implementationContext) {
                             /* do nothing */
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.WithoutActiveRecord{" +
-                                    "instrumentedType=" + instrumentedType +
-                                    '}';
                         }
                     }
 
@@ -3506,14 +3299,6 @@ public interface TypeWriter<T> {
                             stackSize = Math.max(stackSize, size.getOperandStackSize());
                             localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypeWriter.Default.ForInlining.InitializationHandler.Appending.WithActiveRecord{" +
-                                    "instrumentedType=" + instrumentedType +
-                                    ", label=" + label +
-                                    '}';
-                        }
                     }
                 }
             }
@@ -3546,13 +3331,6 @@ public interface TypeWriter<T> {
                 @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR", justification = "Lazy value definition is intended")
                 public List<DynamicType> getAuxiliaryTypes() {
                     return implementationContext.getAuxiliaryTypes();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.Default.ForInlining.ContextRegistry{" +
-                            "implementationContext=" + implementationContext +
-                            '}';
                 }
             }
 
@@ -3790,22 +3568,6 @@ public interface TypeWriter<T> {
                     super.visitEnd();
                 }
 
-                @Override
-                public String toString() {
-                    return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor{" +
-                            "typeWriter=" + TypeWriter.Default.ForInlining.this +
-                            ", typeInitializer=" + typeInitializer +
-                            ", contextRegistry=" + contextRegistry +
-                            ", readerFlags=" + readerFlags +
-                            ", writerFlags=" + writerFlags +
-                            ", implementationContext=" + implementationContext +
-                            ", declarableFields=" + declarableFields +
-                            ", declarableMethods=" + declarableMethods +
-                            ", methodPool=" + methodPool +
-                            ", initializationHandler=" + initializationHandler +
-                            '}';
-                }
-
                 /**
                  * A field visitor that obtains all attributes and annotations of a field that is found in the
                  * class file but that discards all code.
@@ -3846,14 +3608,6 @@ public interface TypeWriter<T> {
                     public void visitEnd() {
                         record.apply(fv, annotationValueFilterFactory);
                         super.visitEnd();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingFieldVisitor{" +
-                                "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
-                                ", record=" + record +
-                                '}';
                     }
                 }
 
@@ -3939,16 +3693,6 @@ public interface TypeWriter<T> {
                     public void visitMaxs(int stackSize, int localVariableLength) {
                         super.visitMaxs(stackSize, Math.max(localVariableLength, resolution.getResolvedMethod().getStackSize()));
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.CodePreservingMethodVisitor{" +
-                                "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
-                                ", actualMethodVisitor=" + actualMethodVisitor +
-                                ", record=" + record +
-                                ", resolution=" + resolution +
-                                '}';
-                    }
                 }
 
                 /**
@@ -4015,15 +3759,6 @@ public interface TypeWriter<T> {
                     public void visitEnd() {
                         record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
                         actualMethodVisitor.visitEnd();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingMethodVisitor{" +
-                                "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
-                                ", actualMethodVisitor=" + actualMethodVisitor +
-                                ", record=" + record +
-                                '}';
                     }
                 }
             }
@@ -4140,30 +3875,6 @@ public interface TypeWriter<T> {
                 classVisitor.visitEnd();
                 return new UnresolvedType(classWriter.toByteArray(), implementationContext.getAuxiliaryTypes());
             }
-
-            @Override
-            public String toString() {
-                return "TypeWriter.Default.ForCreation{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", fieldPool=" + fieldPool +
-                        ", methodPool=" + methodPool +
-                        ", auxiliaryTypes=" + auxiliaryTypes +
-                        ", fields=" + fields +
-                        ", methods=" + methods +
-                        ", instrumentedMethods=" + instrumentedMethods +
-                        ", loadedTypeInitializer=" + loadedTypeInitializer +
-                        ", typeInitializer=" + typeInitializer +
-                        ", typeAttributeAppender=" + typeAttributeAppender +
-                        ", asmVisitorWrapper=" + asmVisitorWrapper +
-                        ", classFileVersion=" + classFileVersion +
-                        ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                        ", annotationRetention=" + annotationRetention +
-                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                        ", implementationContextFactory=" + implementationContextFactory +
-                        ", typeValidation=" + typeValidation +
-                        ", typePool=" + typePool +
-                        '}';
-            }
         }
 
         /**
@@ -4214,15 +3925,6 @@ public interface TypeWriter<T> {
                 } finally {
                     outputStream.close();
                 }
-            }
-
-            @Override
-            public String toString() {
-                return "TypeWriter.Default.ClassDumpAction{" +
-                        "target=" + target +
-                        ", instrumentedType=" + instrumentedType +
-                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                        '}';
             }
         }
     }

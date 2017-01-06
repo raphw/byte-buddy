@@ -96,9 +96,4 @@ public enum FieldManifestation implements ModifierContributor.ForField {
     public boolean isPlain() {
         return !(isFinal() || isVolatile() || isTransient());
     }
-
-    @Override
-    public String toString() {
-        return "FieldManifestation." + name();
-    }
 }

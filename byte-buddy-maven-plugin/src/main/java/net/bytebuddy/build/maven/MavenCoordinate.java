@@ -46,13 +46,4 @@ public class MavenCoordinate {
     public Artifact asArtifact() {
         return new DefaultArtifact(groupId, artifactId, "jar", version);
     }
-
-    @Override
-    public String toString() {
-        return "MavenCoordinate{" +
-                "groupId='" + groupId + '\'' +
-                ", artifactId='" + artifactId + '\'' +
-                ", version='" + version + '\'' +
-                '}';
-    }
 }

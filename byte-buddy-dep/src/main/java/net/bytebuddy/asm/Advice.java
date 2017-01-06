@@ -577,17 +577,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return new Advice(methodEnter, methodExit, assigner, exceptionHandler, implementation);
     }
 
-    @Override
-    public String toString() {
-        return "Advice{" +
-                "methodEnter=" + methodEnter +
-                ", methodExit=" + methodExit +
-                ", assigner=" + assigner +
-                ", exceptionHandler=" + exceptionHandler +
-                ", delegate=" + delegate +
-                '}';
-    }
-
     /**
      * A handler for computing the instrumented method's size.
      */
@@ -722,11 +711,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public void recordPadding(int padding) {
                 /* do nothing */
             }
-
-            @Override
-            public String toString() {
-                return "Advice.MethodSizeHandler.NoOp." + name();
-            }
         }
 
         /**
@@ -821,17 +805,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 this.localVariableLength = Math.max(this.localVariableLength, localVariableLength);
             }
 
-            @Override
-            public String toString() {
-                return "Advice.MethodSizeHandler.Default{" +
-                        "instrumentedMethod=" + instrumentedMethod +
-                        ", requiredTypes=" + requiredTypes +
-                        ", yieldedTypes=" + yieldedTypes +
-                        ", stackSize=" + stackSize +
-                        ", localVariableLength=" + localVariableLength +
-                        '}';
-            }
-
             /**
              * A method size handler for an advice method.
              */
@@ -894,16 +867,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void recordPadding(int padding) {
                     this.padding = Math.max(this.padding, padding);
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.MethodSizeHandler.Default.ForAdvice{" +
-                            "adviceMethod=" + adviceMethod +
-                            ", requiredTypes=" + requiredTypes +
-                            ", yieldedTypes=" + yieldedTypes +
-                            ", padding=" + padding +
-                            '}';
                 }
             }
         }
@@ -1033,11 +996,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
                 /* do nothing */
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.StackMapFrameHandler.NoOp." + name();
             }
         }
 
@@ -1318,18 +1276,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 currentFrameDivergence = 0;
             }
 
-            @Override
-            public String toString() {
-                return "Advice.StackMapFrameHandler.Default{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", instrumentedMethod=" + instrumentedMethod +
-                        ", requiredTypes=" + requiredTypes +
-                        ", yieldedTypes=" + yieldedTypes +
-                        ", expandFrames=" + expandFrames +
-                        ", currentFrameDivergence=" + currentFrameDivergence +
-                        '}';
-            }
-
             /**
              * A translation mode that determines how the fixed frames of the instrumented method are written.
              */
@@ -1411,11 +1357,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodDescription methodDescription,
                                             Object[] localVariable,
                                             Object[] translated);
-
-                @Override
-                public String toString() {
-                    return "Advice.StackMapFrameHandler.Default.TranslationMode." + name();
-                }
             }
 
             /**
@@ -1520,16 +1461,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else {
                         injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), Collections.<TypeDescription>emptyList());
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.StackMapFrameHandler.Default.ForAdvice{" +
-                            "adviceMethod=" + adviceMethod +
-                            ", requiredTypes=" + requiredTypes +
-                            ", yieldedTypes=" + yieldedTypes +
-                            ", translationMode=" + translationMode +
-                            '}';
                 }
             }
         }
@@ -1678,11 +1609,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int getPadding() {
                         return StackSize.ZERO.getSize();
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry." + name();
-                    }
                 }
 
                 /**
@@ -1746,11 +1672,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public int getPadding() {
                         return stackSize.getSize();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Context.ForMethodExit." + name();
                     }
                 }
             }
@@ -1848,14 +1769,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public StackManipulation resolveIncrement(int value) {
                             throw new IllegalStateException("Cannot write to read-only default value");
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.ReadOnly{" +
-                                    "typeDefinition=" + typeDefinition +
-                                    ", readAssignment=" + readAssignment +
-                                    "}";
-                        }
                     }
 
                     /**
@@ -1890,14 +1803,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public StackManipulation resolveIncrement(int value) {
                             return StackManipulation.Trivial.INSTANCE;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.ReadWrite{" +
-                                    "typeDefinition=" + typeDefinition +
-                                    ", readAssignment=" + readAssignment +
-                                    "}";
                         }
                     }
                 }
@@ -1976,15 +1881,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public StackManipulation resolveIncrement(int value) {
                             throw new IllegalStateException("Cannot write to read-only variable " + typeDefinition + " at " + offset);
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForVariable.ReadOnly{" +
-                                    "typeDefinition=" + typeDefinition +
-                                    ", offset=" + offset +
-                                    ", readAssignment=" + readAssignment +
-                                    "}";
-                        }
                     }
 
                     /**
@@ -2032,16 +1928,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return typeDefinition.represents(int.class)
                                     ? MethodVariableAccess.of(typeDefinition).increment(offset, value)
                                     : new StackManipulation.Compound(resolveRead(), IntegerConstant.forValue(1), Addition.INTEGER, resolveWrite());
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForVariable.ReadWrite{" +
-                                    "typeDefinition=" + typeDefinition +
-                                    ", offset=" + offset +
-                                    ", readAssignment=" + readAssignment +
-                                    ", writeAssignment=" + writeAssignment +
-                                    "}";
                         }
                     }
                 }
@@ -2102,14 +1988,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public StackManipulation resolveWrite() {
                             throw new IllegalStateException("Cannot write to read-only array value");
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForArray.ReadOnly{" +
-                                    "target=" + target +
-                                    ", valueReads=" + valueReads +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -2138,15 +2016,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public StackManipulation resolveWrite() {
                             return ArrayAccess.of(target).forEach(valueWrites);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForArray.ReadWrite{" +
-                                    "target=" + target +
-                                    ", valueReads=" + valueReads +
-                                    ", valueWrites=" + valueWrites +
-                                    '}';
                         }
                     }
                 }
@@ -2209,14 +2078,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public StackManipulation resolveIncrement(int value) {
                             throw new IllegalStateException("Cannot write to read-only field value");
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForField.ReadOnly{" +
-                                    "fieldDescription=" + fieldDescription +
-                                    ", readAssignment=" + readAssignment +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -2265,15 +2126,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     Addition.INTEGER,
                                     resolveWrite()
                             );
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.Target.ForField.ReadWrite{" +
-                                    "fieldDescription=" + fieldDescription +
-                                    ", readAssignment=" + readAssignment +
-                                    ", writeAssignment=" + writeAssignment +
-                                    '}';
                         }
                     }
                 }
@@ -2371,13 +2223,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public StackManipulation resolveIncrement(int value) {
                         throw new IllegalStateException("Cannot write to constant value: " + stackManipulation);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForStackManipulation{" +
-                                "stackManipulation=" + stackManipulation +
-                                '}';
                     }
                 }
             }
@@ -2483,16 +2328,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForArgument{" +
-                            "target=" + target +
-                            ", index=" + index +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for a mapping of a parameter of the instrumented method.
                  */
@@ -2532,11 +2367,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else {
                             return new ForArgument(parameterDescription.getType(), annotation.loadSilent());
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForArgument.Factory." + name();
                     }
                 }
             }
@@ -2622,16 +2452,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForThisReference{" +
-                            "target=" + target +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            ", optional=" + optional +
-                            '}';
-                }
-
                 /**
                  * A factory for creating a {@link ForThisReference} offset mapping.
                  */
@@ -2671,11 +2491,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else {
                             return new ForThisReference(parameterDescription.getType(), annotation.loadSilent());
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForThisReference.Factory." + name();
                     }
                 }
             }
@@ -2749,15 +2564,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForAllArguments{" +
-                            "target=" + target +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for an offset mapping that maps all arguments values of the instrumented method.
                  */
@@ -2800,11 +2606,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return new ForAllArguments(parameterDescription.getType().getComponentType(), annotation.loadSilent());
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForAllArguments.Factory." + name();
-                    }
                 }
             }
 
@@ -2821,11 +2622,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public Target resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Context context) {
                     return Target.ForStackManipulation.of(instrumentedType);
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForInstrumentedType." + name();
                 }
             }
 
@@ -2879,11 +2675,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return {@code true} if this method is representable.
                  */
                 protected abstract boolean isRepresentable(MethodDescription instrumentedMethod);
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForInstrumentedMethod." + name();
-                }
             }
 
             /**
@@ -3023,17 +2814,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
                         return new FieldLocator.ForClassHierarchy(instrumentedType);
                     }
-
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForField.WithImplicitType{" +
-                                "target=" + target +
-                                ", name=" + name +
-                                ", readOnly=" + readOnly +
-                                ", typing=" + typing +
-                                '}';
-                    }
                 }
 
                 /**
@@ -3083,17 +2863,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                         return new FieldLocator.ForExactType(TargetType.resolve(declaringType, instrumentedType));
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForField.WithExplicitType{" +
-                                "target=" + target +
-                                ", name=" + name +
-                                ", readOnly=" + readOnly +
-                                ", typing=" + typing +
-                                ", declaringType=" + declaringType +
-                                '}';
-                    }
                 }
 
                 /**
@@ -3138,11 +2907,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     ? new WithImplicitType(parameterDescription.getType(), annotation)
                                     : new WithExplicitType(parameterDescription.getType(), annotation, declaringType);
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForField.Factory." + name();
                     }
                 }
             }
@@ -3233,13 +2997,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return Target.ForStackManipulation.of(stringBuilder.toString());
                 }
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForOrigin{" +
-                            "renderers=" + renderers +
-                            '}';
-                }
-
                 /**
                  * A renderer for an origin pattern element.
                  */
@@ -3273,11 +3030,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedMethod.getInternalName();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForMethodName." + name();
-                        }
                     }
 
                     /**
@@ -3299,11 +3051,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedType.getName();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForTypeName." + name();
-                        }
                     }
 
                     /**
@@ -3324,11 +3071,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedMethod.getDescriptor();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForDescriptor." + name();
                         }
                     }
 
@@ -3361,11 +3103,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                             return stringBuilder.append(')').toString();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForJavaSignature." + name();
-                        }
                     }
 
                     /**
@@ -3387,11 +3124,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedMethod.getReturnType().asErasure().getName();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName." + name();
-                        }
                     }
 
                     /**
@@ -3407,11 +3139,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return instrumentedMethod.toString();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation." + name();
                         }
                     }
 
@@ -3438,13 +3165,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public String apply(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                             return value;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForConstantValue{" +
-                                    "value='" + value + '\'' +
-                                    '}';
                         }
                     }
                 }
@@ -3478,11 +3198,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Non-supported type " + parameterDescription.getType() + " for @Origin annotation");
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForOrigin.Factory." + name();
-                    }
                 }
             }
 
@@ -3511,13 +3226,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return new Target.ForDefaultValue.ReadWrite(target);
                 }
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForUnusedValue{" +
-                            "target=" + target +
-                            '}';
-                }
-
                 /**
                  * A factory for an offset mapping for an unused value.
                  */
@@ -3533,11 +3241,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Unused.class)
                                 ? new ForUnusedValue(parameterDescription.getType())
                                 : UNDEFINED;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForUnusedValue.Factory." + name();
                     }
                 }
             }
@@ -3569,11 +3272,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else {
                         return this;
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForStubValue." + name();
                 }
             }
 
@@ -3645,16 +3343,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForEnterValue{" +
-                            "target=" + target +
-                            ", enterType=" + enterType +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for creating a {@link ForEnterValue} offset mapping.
                  */
@@ -3690,14 +3378,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else {
                             return UNDEFINED;
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForEnterValue.Factory{" +
-                                "enterType=" + enterType +
-                                "m readOnly=" + readOnly +
-                                '}';
                     }
                 }
             }
@@ -3767,15 +3447,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForReturnValue{" +
-                            "target=" + target +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for creating a {@link ForReturnValue} offset mapping.
                  */
@@ -3815,11 +3486,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else {
                             return new ForReturnValue(parameterDescription.getType(), annotation.loadSilent());
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForReturnValue.Factory." + name();
                     }
                 }
             }
@@ -3885,15 +3551,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForThrowable{" +
-                            "target=" + target +
-                            ", readOnly=" + readOnly +
-                            ", typing=" + typing +
-                            '}';
-                }
-
                 /**
                  * A factory for accessing an exception that was thrown by the instrumented method.
                  */
@@ -3940,13 +3597,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else {
                             return new ForThrowable(parameterDescription.getType(), annotation.loadSilent());
                         }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForThrowable.Factory{" +
-                                "readOnly=" + readOnly +
-                                '}';
                     }
                 }
             }
@@ -3999,15 +3649,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             context.isInitialized()));
                 }
 
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.ForUserValue{" +
-                            "target=" + target +
-                            ", annotation=" + annotation +
-                            ", dynamicValue=" + dynamicValue +
-                            '}';
-                }
-
                 /**
                  * A factory for mapping a user-defined dynamic value.
                  *
@@ -4056,14 +3697,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ? UNDEFINED
                                 : new ForUserValue<S>(parameterDescription, annotation, dynamicValue);
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.ForUserValue.Factory{" +
-                                "type=" + type +
-                                ", dynamicValue=" + dynamicValue +
-                                '}';
-                    }
                 }
             }
 
@@ -4105,13 +3738,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
                     return UNDEFINED;
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.OffsetMapping.Illegal{" +
-                            "annotations=" + annotations +
-                            '}';
                 }
             }
         }
@@ -4235,11 +3861,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                          ReturnValueProducer returnValueProducer) {
                     /* do nothing */
                 }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.SuppressionHandler.NoOp." + name();
-                }
             }
 
             /**
@@ -4277,13 +3898,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public SuppressionHandler.Bound bind(StackManipulation exceptionHandler) {
                     return new Bound(suppressedType, exceptionHandler);
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.Dispatcher.SuppressionHandler.Suppressing{" +
-                            "suppressedType=" + suppressedType +
-                            '}';
                 }
 
                 /**
@@ -4356,16 +3970,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
                         onEnd(methodVisitor, implementationContext, methodSizeHandler, stackMapFrameHandler, returnValueProducer);
                         methodVisitor.visitLabel(endOfHandler);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.SuppressionHandler.Suppressing.Bound{" +
-                                "suppressedType=" + suppressedType +
-                                "exceptionHandler=" + exceptionHandler +
-                                ", startOfMethod=" + startOfMethod +
-                                ", endOfMethod=" + endOfMethod +
-                                '}';
                     }
                 }
             }
@@ -4466,11 +4070,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           MethodDescription instrumentedMethod,
                                           Bound.SkipHandler skipHandler) {
                             /* do nothing */
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.Disabled." + name();
                         }
                     }
 
@@ -4643,11 +4242,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return new Inverted();
                         }
 
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue." + name();
-                        }
-
                         /**
                          * An inverted version of a value-based skipped dispatcher that triggers upon observing a non-default value.
                          */
@@ -4686,13 +4280,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 }
                                 Inverted inverted = (Inverted) other;
                                 return inverted.getOuter().equals(ForValue.this);
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue.Inverted{" +
-                                        "outer=" + ForValue.this +
-                                        "}";
                             }
                         }
                     }
@@ -4764,13 +4351,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             skipHandler.apply(methodVisitor);
                             methodVisitor.visitLabel(noSkip);
                             stackMapFrameHandler.injectCompletionFrame(methodVisitor, true);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForType{" +
-                                    "typeDescription=" + typeDescription +
-                                    '}';
                         }
                     }
                 }
@@ -4924,11 +4504,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                  StackManipulation exceptionHandler) {
                 return this;
             }
-
-            @Override
-            public String toString() {
-                return "Advice.Dispatcher.Inactive." + name();
-            }
         }
 
         /**
@@ -4972,13 +4547,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                     ClassReader classReader,
                                                                     Dispatcher.Resolved.ForMethodEnter dispatcher) {
                 return Resolved.ForMethodExit.of(adviceMethod, userFactories, classReader, dispatcher.getEnterType());
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.Dispatcher.Inlining{" +
-                        "adviceMethod=" + adviceMethod +
-                        '}';
             }
 
             /**
@@ -5222,13 +4790,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     ? new ExceptionTableCollector(methodVisitor)
                                     : IGNORE_METHOD;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableExtractor{" +
-                                    "methodVisitor=" + methodVisitor +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -5261,13 +4822,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public AnnotationVisitor visitTryCatchAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                             return methodVisitor.visitTryCatchAnnotation(typeReference, typePath, descriptor, visible);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableCollector{" +
-                                    "methodVisitor=" + methodVisitor +
-                                    '}';
                         }
                     }
 
@@ -5359,15 +4913,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return substitution == null
                                     ? label
                                     : substitution;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableSubstitutor{" +
-                                    "methodVisitor=" + methodVisitor +
-                                    ", substitutions=" + substitutions +
-                                    ", index=" + index +
-                                    '}';
                         }
                     }
                 }
@@ -5487,16 +5032,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return result;
                     }
 
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Inlining.Resolved.ForMethodEnter{" +
-                                "adviceMethod=" + adviceMethod +
-                                ", offsetMappings=" + offsetMappings +
-                                ", skipDispatcher=" + skipDispatcher +
-                                ", prependLineNumber=" + prependLineNumber +
-                                '}';
-                    }
-
                     /**
                      * An advice method inliner for a method enter.
                      */
@@ -5550,21 +5085,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     methodSizeHandler.bindEntry(adviceMethod),
                                     stackMapFrameHandler.bindEntry(adviceMethod),
                                     instrumentedMethod, skipHandler);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodEnter.AdviceMethodInliner{" +
-                                    "instrumentedType=" + instrumentedType +
-                                    ", instrumentedMethod=" + instrumentedMethod +
-                                    ", methodVisitor=" + methodVisitor +
-                                    ", methodSizeHandler=" + methodSizeHandler +
-                                    ", stackMapFrameHandler=" + stackMapFrameHandler +
-                                    ", suppressionHandler=" + suppressionHandler +
-                                    ", classReader=" + classReader +
-                                    ", labels=" + labels +
-                                    ", skipDispatcher=" + skipDispatcher +
-                                    '}';
                         }
                     }
                 }
@@ -5742,20 +5262,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public void apply() {
                             doApply();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.AdviceMethodInliner{" +
-                                    "instrumentedType=" + instrumentedType +
-                                    ", instrumentedMethod=" + instrumentedMethod +
-                                    ", methodVisitor=" + methodVisitor +
-                                    ", methodSizeHandler=" + methodSizeHandler +
-                                    ", stackMapFrameHandler=" + stackMapFrameHandler +
-                                    ", suppressionHandler=" + suppressionHandler +
-                                    ", classReader=" + classReader +
-                                    ", labels=" + labels +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -5796,15 +5302,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public TypeDescription getThrowable() {
                             return throwable;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithExceptionHandler{" +
-                                    "adviceMethod=" + adviceMethod +
-                                    ", offsetMappings=" + offsetMappings +
-                                    ", throwable=" + throwable +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -5836,14 +5333,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public TypeDescription getThrowable() {
                             return NoExceptionHandler.DESCRIPTION;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithoutExceptionHandler{" +
-                                    "adviceMethod=" + adviceMethod +
-                                    ", offsetMappings=" + offsetMappings +
-                                    '}';
                         }
                     }
                 }
@@ -6159,15 +5648,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitVarInsn(returnType.getOpcode(Opcodes.ISTORE), instrumentedMethod.getStackSize());
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodEnter{" +
-                                "instrumentedMethod=" + instrumentedMethod +
-                                ", adviceMethod=" + adviceMethod +
-                                ", doesReturn=" + doesReturn +
-                                '}';
-                    }
                 }
 
                 /**
@@ -6249,15 +5729,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected void onMethodReturn() {
                         /* do nothing */
                     }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodExit{" +
-                                "instrumentedMethod=" + instrumentedMethod +
-                                ", adviceMethod=" + adviceMethod +
-                                ", padding=" + padding +
-                                '}';
-                    }
                 }
             }
         }
@@ -6303,13 +5774,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                     ClassReader classReader,
                                                                     Dispatcher.Resolved.ForMethodEnter dispatcher) {
                 return Resolved.ForMethodExit.of(adviceMethod, userFactories, dispatcher.getEnterType());
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.Dispatcher.Delegating{" +
-                        "adviceMethod=" + adviceMethod +
-                        '}';
             }
 
             /**
@@ -6546,17 +6010,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected abstract void onMethodReturn();
 
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Delegating.Resolved.AdviceMethodWriter{" +
-                                "instrumentedMethod=" + instrumentedMethod +
-                                ", methodVisitor=" + methodVisitor +
-                                ", methodSizeHandler=" + methodSizeHandler +
-                                ", stackMapFrameHandler=" + stackMapFrameHandler +
-                                ", suppressionHandler=" + suppressionHandler +
-                                '}';
-                    }
-
                     /**
                      * An advice method writer for a method entry.
                      */
@@ -6648,14 +6101,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
                             }
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.AdviceMethodWriter.ForMethodEnter{" +
-                                    "instrumentedMethod=" + instrumentedMethod +
-                                    ", adviceMethod=" + adviceMethod +
-                                    "}";
-                        }
                     }
 
                     /**
@@ -6717,14 +6162,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public void onDefaultValue(MethodVisitor methodVisitor) {
                             /* do nothing */
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.AdviceMethodWriter.ForMethodExit{" +
-                                    "instrumentedMethod=" + instrumentedMethod +
-                                    ", adviceMethod=" + adviceMethod +
-                                    "}";
                         }
                     }
                 }
@@ -6818,16 +6255,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         result = 31 * result + skipDispatcher.hashCode();
                         result = 31 * result + (prependLineNumber ? 1 : 0);
                         return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Delegating.Resolved.ForMethodEnter{" +
-                                "adviceMethod=" + adviceMethod +
-                                ", offsetMappings=" + offsetMappings +
-                                ", skipDispatcher=" + skipDispatcher +
-                                ", prependLineNumber=" + prependLineNumber +
-                                '}';
                     }
                 }
 
@@ -6959,15 +6386,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public TypeDescription getThrowable() {
                             return throwable;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.ForMethodExit.WithExceptionHandler{" +
-                                    "adviceMethod=" + adviceMethod +
-                                    ", offsetMappings=" + offsetMappings +
-                                    ", throwable=" + throwable +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -6992,14 +6410,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public TypeDescription getThrowable() {
                             return NoExceptionHandler.DESCRIPTION;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.ForMethodExit.WithoutExceptionHandler{" +
-                                    "adviceMethod=" + adviceMethod +
-                                    ", offsetMappings=" + offsetMappings +
-                                    '}';
                         }
                     }
                 }
@@ -7300,13 +6710,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodVisitor.visitInsn(Opcodes.ARETURN);
                 }
             }
-
-            @Override
-            public String toString() {
-                return "Advice.AdviceVisitor.WithoutExitAdvice{" +
-                        ", instrumentedMethod=" + instrumentedMethod +
-                        "}";
-            }
         }
 
         /**
@@ -7512,14 +6915,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected void onExitAdviceReturn() {
                     /* empty */
                 }
-
-                @Override
-                public String toString() {
-                    return "Advice.AdviceVisitor.WithExitAdvice.WithoutExceptionHandling{" +
-                            "instrumentedMethod=" + instrumentedMethod +
-                            ", doesReturn=" + doesReturn +
-                            "}";
-                }
             }
 
             /**
@@ -7650,15 +7045,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         variable(Opcodes.ASTORE);
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "Advice.AdviceVisitor.WithExitAdvice.WithExceptionHandling{" +
-                            "instrumentedMethod=" + instrumentedMethod +
-                            ", throwable=" + throwable +
-                            ", doesReturn=" + doesReturn +
-                            "}";
-                }
             }
         }
     }
@@ -7707,15 +7093,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     AsmVisitorWrapper.NO_FLAGS,
                     AsmVisitorWrapper.NO_FLAGS);
             return emulatingMethodVisitor.resolve(methodVisitor, implementationContext, instrumentedMethod);
-        }
-
-        @Override
-        public String toString() {
-            return "Advice.Appender{" +
-                    "advice=" + advice +
-                    ", implementationTarget=" + implementationTarget +
-                    ", delegate=" + delegate +
-                    '}';
         }
 
         /**
@@ -7782,15 +7159,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public void visitEnd() {
                 /* do nothing */
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.Appender.EmulatingMethodVisitor{" +
-                        "delegate=" + delegate +
-                        ", stackSize=" + stackSize +
-                        ", localVariableLength=" + localVariableLength +
-                        '}';
             }
         }
     }
@@ -8435,13 +7803,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return value;
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "Advice.DynamicValue.ForFixedValue.OfConstant{" +
-                            "value=" + value +
-                            '}';
-                }
             }
 
             /**
@@ -8485,13 +7846,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            Assigner assigner,
                                            boolean initialized) {
                     return annotation.getValue(property).resolve();
-                }
-
-                @Override
-                public String toString() {
-                    return "Advice.DynamicValue.ForFixedValue.OfAnnotationProperty{" +
-                            "property=" + property +
-                            '}';
                 }
             }
         }
@@ -8545,13 +7899,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         assignment
                 );
             }
-
-            @Override
-            public String toString() {
-                return "Advice.DynamicValue.ForFieldValue{" +
-                        "fieldDescription=" + fieldDescription +
-                        '}';
-            }
         }
 
         /**
@@ -8589,13 +7936,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target.getType());
                 }
                 return new StackManipulation.Compound(MethodVariableAccess.load(parameterDescription), assignment);
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.DynamicValue.ForParameterValue{" +
-                        "parameterDescription=" + parameterDescription +
-                        '}';
             }
         }
 
@@ -8652,14 +7992,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     throw new IllegalStateException("Cannot assign " + typeDescription + " to " + target.getType());
                 }
                 return new StackManipulation.Compound(deserialization, assignment);
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.DynamicValue.ForSerializedValue{" +
-                        "typeDescription=" + typeDescription +
-                        ", deserialization=" + deserialization +
-                        '}';
             }
         }
     }
@@ -8935,13 +8267,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 userFactories.add(Dispatcher.OffsetMapping.ForUserValue.Factory.of(entry.getKey(), entry.getValue()));
             }
             return Advice.to(enterAdvice, exitAdvice, classFileLocator, userFactories);
-        }
-
-        @Override
-        public String toString() {
-            return "Advice.WithCustomMapping{" +
-                    "dynamicValues=" + dynamicValues +
-                    '}';
         }
     }
 

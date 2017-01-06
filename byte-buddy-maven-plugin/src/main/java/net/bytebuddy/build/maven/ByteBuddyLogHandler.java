@@ -89,13 +89,4 @@ public class ByteBuddyLogHandler extends Handler {
     public void close() {
         /* do nothing */
     }
-
-    @Override
-    public String toString() {
-        return "ByteBuddyLogHandler{" +
-                "log=" + log +
-                " ,logger=" + logger +
-                " ,useParentHandlers=" + useParentHandlers +
-                '}';
-    }
 }

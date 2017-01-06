@@ -84,11 +84,6 @@ public interface AuxiliaryType {
             public String name(TypeDescription instrumentedType) {
                 return String.format("%s$%s$%s", instrumentedType.getName(), suffix, randomString.nextString());
             }
-
-            @Override
-            public String toString() {
-                return "Instrumentation.Context.Default.AuxiliaryTypeNamingStrategySuffixingRandom{suffix='" + suffix + '\'' + '}';
-            }
         }
     }
 

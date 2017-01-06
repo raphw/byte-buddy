@@ -1639,21 +1639,6 @@ public interface MethodDescription extends TypeVariableSource,
             result = 31 * result + (receiverType != null ? receiverType.hashCode() : 0);
             return result;
         }
-
-        @Override
-        public String toString() {
-            return "MethodDescription.Token{" +
-                    "name='" + name + '\'' +
-                    ", modifiers=" + modifiers +
-                    ", typeVariableTokens=" + typeVariableTokens +
-                    ", returnType=" + returnType +
-                    ", parameterTokens=" + parameterTokens +
-                    ", exceptionTypes=" + exceptionTypes +
-                    ", annotations=" + annotations +
-                    ", defaultValue=" + defaultValue +
-                    ", receiverType=" + receiverType +
-                    '}';
-        }
     }
 
     /**
@@ -1742,15 +1727,6 @@ public interface MethodDescription extends TypeVariableSource,
             result = 31 * result + parameterTypes.hashCode();
             return result;
         }
-
-        @Override
-        public String toString() {
-            return "MethodDescription.SignatureToken{" +
-                    "name='" + name + "'" +
-                    ", returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    '}';
-        }
     }
 
     /**
@@ -1811,14 +1787,6 @@ public interface MethodDescription extends TypeVariableSource,
             int result = returnType.hashCode();
             result = 31 * result + parameterTypes.hashCode();
             return result;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDescription.TypeToken{" +
-                    "returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    '}';
         }
     }
 }

@@ -120,14 +120,6 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
 
-    @Override
-    public String toString() {
-        return "ExceptionMethod{" +
-                "throwableType=" + throwableType +
-                ", constructionDelegate=" + constructionDelegate +
-                '}';
-    }
-
     /**
      * A construction delegate is responsible for calling a Throwable's constructor.
      */
@@ -175,14 +167,6 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
                         Duplication.SINGLE,
                         MethodInvocation.invoke(targetConstructor));
             }
-
-            @Override
-            public String toString() {
-                return "ExceptionMethod.ConstructionDelegate.ForDefaultConstructor{" +
-                        "exceptionType=" + exceptionType +
-                        ", targetConstructor=" + targetConstructor +
-                        '}';
-            }
         }
 
         /**
@@ -226,15 +210,6 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
                         Duplication.SINGLE,
                         new TextConstant(message),
                         MethodInvocation.invoke(targetConstructor));
-            }
-
-            @Override
-            public String toString() {
-                return "ExceptionMethod.ConstructionDelegate.ForStringConstructor{" +
-                        "exceptionType=" + exceptionType +
-                        ", targetConstructor=" + targetConstructor +
-                        ", message='" + message + '\'' +
-                        '}';
             }
         }
     }

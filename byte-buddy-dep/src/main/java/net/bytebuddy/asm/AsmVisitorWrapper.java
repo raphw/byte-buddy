@@ -103,11 +103,6 @@ public interface AsmVisitorWrapper {
                                  int readerFlags) {
             return classVisitor;
         }
-
-        @Override
-        public String toString() {
-            return "AsmVisitorWrapper.NoOp." + name();
-        }
     }
 
     /**
@@ -189,13 +184,6 @@ public interface AsmVisitorWrapper {
             return new DispatchingVisitor(classVisitor, instrumentedType, fields);
         }
 
-        @Override
-        public String toString() {
-            return "AsmVisitorWrapper.ForDeclaredFields{" +
-                    "entries=" + entries +
-                    '}';
-        }
-
         /**
          * A field visitor wrapper that allows for wrapping a {@link FieldVisitor} defining a declared field.
          */
@@ -251,14 +239,6 @@ public interface AsmVisitorWrapper {
                 }
                 return fieldVisitor;
             }
-
-            @Override
-            public String toString() {
-                return "AsmVisitorWrapper.ForDeclaredFields.Entry{" +
-                        "matcher=" + matcher +
-                        ", fieldVisitorWrappers=" + fieldVisitorWrappers +
-                        '}';
-            }
         }
 
         /**
@@ -302,14 +282,6 @@ public interface AsmVisitorWrapper {
                     }
                 }
                 return fieldVisitor;
-            }
-
-            @Override
-            public String toString() {
-                return "AsmVisitorWrapper.ForDeclaredFields.DispatchingVisitor{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", knownFields=" + knownFields +
-                        '}';
             }
         }
     }
@@ -432,15 +404,6 @@ public interface AsmVisitorWrapper {
                     readerFlags);
         }
 
-        @Override
-        public String toString() {
-            return "AsmVisitorWrapper.ForDeclaredMethods{" +
-                    "entries=" + entries +
-                    ", writerFlags=" + writerFlags +
-                    ", readerFlags=" + readerFlags +
-                    '}';
-        }
-
         /**
          * A method visitor wrapper that allows for wrapping a {@link MethodVisitor} defining a declared method.
          */
@@ -517,14 +480,6 @@ public interface AsmVisitorWrapper {
                             readerFlags);
                 }
                 return methodVisitor;
-            }
-
-            @Override
-            public String toString() {
-                return "AsmVisitorWrapper.ForDeclaredMethods.Entry{" +
-                        "matcher=" + matcher +
-                        ", methodVisitorWrappers=" + methodVisitorWrappers +
-                        '}';
             }
         }
 
@@ -610,18 +565,6 @@ public interface AsmVisitorWrapper {
                 }
                 return methodVisitor;
             }
-
-            @Override
-            public String toString() {
-                return "AsmVisitorWrapper.ForDeclaredMethods.DispatchingVisitor{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", knownMethods=" + knownMethods +
-                        ", implementationContext=" + implementationContext +
-                        ", typePool=" + typePool +
-                        ", writerFlags=" + writerFlags +
-                        ", readerFlags=" + readerFlags +
-                        '}';
-            }
         }
     }
 
@@ -703,11 +646,6 @@ public interface AsmVisitorWrapper {
                         readerFlags);
             }
             return classVisitor;
-        }
-
-        @Override
-        public String toString() {
-            return "AsmVisitorWrapper.Compound{asmVisitorWrappers=" + asmVisitorWrappers + '}';
         }
     }
 }

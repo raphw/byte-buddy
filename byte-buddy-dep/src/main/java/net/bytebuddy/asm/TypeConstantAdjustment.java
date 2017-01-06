@@ -52,11 +52,6 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
         return new TypeConstantDissolvingClassVisitor(classVisitor);
     }
 
-    @Override
-    public String toString() {
-        return "TypeConstantAdjustment." + name();
-    }
-
     /**
      * A class visitor that checks a class file version for its support of storing class constants in the constant pool and remaps such constants
      * on discovery if that is not the case.
@@ -88,14 +83,6 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
             return supportsTypeConstants
                     ? super.visitMethod(modifiers, name, descriptor, signature, exception)
                     : new TypeConstantDissolvingMethodVisitor(super.visitMethod(modifiers, name, descriptor, signature, exception));
-        }
-
-        @Override
-        public String toString() {
-            return "TypeConstantAdjustment.TypeConstantDissolvingClassVisitor{" +
-                    "classVisitor=" + cv +
-                    ", supportsTypeConstants=" + supportsTypeConstants +
-                    "}";
         }
 
         /**
@@ -141,11 +128,6 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
                     }
                 }
                 super.visitLdcInsn(constant);
-            }
-
-            @Override
-            public String toString() {
-                return "TypeConstantAdjustment.TypeConstantDissolvingClassVisitor.TypeConstantDissolvingMethodVisitor{methodVisitor=" + mv + "}";
             }
         }
     }

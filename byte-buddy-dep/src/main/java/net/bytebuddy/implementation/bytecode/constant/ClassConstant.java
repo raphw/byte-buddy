@@ -131,11 +131,6 @@ public enum ClassConstant implements StackManipulation {
         return SIZE;
     }
 
-    @Override
-    public String toString() {
-        return "ClassConstant." + name();
-    }
-
     /**
      * A class constant for a non-primitive {@link java.lang.Class}.
      */
@@ -170,11 +165,6 @@ public enum ClassConstant implements StackManipulation {
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
             }
             return SIZE;
-        }
-
-        @Override
-        public String toString() {
-            return "ClassConstant.ForReferenceType{typeDescription=" + typeDescription + '}';
         }
     }
 }

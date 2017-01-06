@@ -54,9 +54,4 @@ public enum MethodArguments implements ModifierContributor.ForMethod {
     public boolean isVarArgs() {
         return this == VARARGS;
     }
-
-    @Override
-    public String toString() {
-        return "MethodArguments." + name();
-    }
 }

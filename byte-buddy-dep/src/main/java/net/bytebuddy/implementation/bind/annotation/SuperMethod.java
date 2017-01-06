@@ -95,11 +95,6 @@ public @interface SuperMethod {
             }
         }
 
-        @Override
-        public String toString() {
-            return "SuperMethod.Binder." + name();
-        }
-
         /**
          * Loads the delegation method constant onto the stack.
          */
@@ -139,14 +134,6 @@ public @interface SuperMethod {
                 return (cached
                         ? FieldAccess.forField(implementationContext.cache(stackManipulation, new TypeDescription.ForLoadedType(Method.class))).read()
                         : stackManipulation).apply(methodVisitor, implementationContext);
-            }
-
-            @Override
-            public String toString() {
-                return "SuperMethod.Binder.DelegationMethod{" +
-                        "specialMethodInvocation=" + specialMethodInvocation +
-                        ", cached=" + cached +
-                        '}';
             }
         }
     }

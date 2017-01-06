@@ -205,11 +205,6 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "ParameterList.ForLoadedExecutable.Dispatcher.CreationAction." + name();
-                }
             }
 
             /**
@@ -235,11 +230,6 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
                     return new OfLegacyVmMethod(method);
-                }
-
-                @Override
-                public String toString() {
-                    return "ParameterList.ForLoadedExecutable.Dispatcher.ForLegacyVm." + name();
                 }
             }
 
@@ -282,13 +272,6 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
                     return new OfMethod(method);
-                }
-
-                @Override
-                public String toString() {
-                    return "ParameterList.ForLoadedExecutable.Dispatcher.ForJava8CapableVm{" +
-                            "getParameterCount=" + getParameterCount +
-                            '}';
                 }
             }
         }

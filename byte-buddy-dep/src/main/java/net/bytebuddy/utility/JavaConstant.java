@@ -281,14 +281,6 @@ public interface JavaConstant {
             return result;
         }
 
-        @Override
-        public String toString() {
-            return "JavaConstant.MethodType{" +
-                    "returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    '}';
-        }
-
         /**
          * A dispatcher for extracting information from a {@code java.lang.invoke.MethodType} instance.
          */
@@ -329,11 +321,6 @@ public interface JavaConstant {
                     } catch (Exception ignored) {
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodType.Dispatcher.CreationAction." + name();
                 }
             }
 
@@ -385,14 +372,6 @@ public interface JavaConstant {
                         throw new IllegalStateException("Error invoking java.lang.invoke.MethodType#parameterArray", exception.getCause());
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodType.Dispatcher.ForJava7CapableVm{" +
-                            "returnType=" + returnType +
-                            ", parameterArray=" + parameterArray +
-                            '}';
-                }
             }
 
             /**
@@ -413,11 +392,6 @@ public interface JavaConstant {
                 @Override
                 public Class<?>[] parameterArray(Object methodType) {
                     throw new IllegalStateException("Unsupported type for the current JVM: java.lang.invoke.MethodType");
-                }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodType.Dispatcher.ForLegacyVm." + name();
                 }
             }
         }
@@ -729,17 +703,6 @@ public interface JavaConstant {
             return result;
         }
 
-        @Override
-        public String toString() {
-            return "JavaConstant.MethodHandle{" +
-                    "handleType=" + handleType +
-                    ", ownerType=" + ownerType +
-                    ", name='" + name + '\'' +
-                    ", returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    '}';
-        }
-
         /**
          * Returns the lookup type of the provided {@code java.lang.invoke.MethodHandles$Lookup} instance.
          *
@@ -878,11 +841,6 @@ public interface JavaConstant {
                     } catch (Exception ignored) {
                         return Dispatcher.ForLegacyVm.INSTANCE;
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodHandle.Dispatcher.CreationAction." + name();
                 }
             }
 
@@ -1104,21 +1062,6 @@ public interface JavaConstant {
                 public Dispatcher initialize() {
                     return this;
                 }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodHandle.Dispatcher.ForJava8CapableVm{" +
-                            "publicLookup=" + publicLookup +
-                            ", getName=" + getName +
-                            ", getDeclaringClass=" + getDeclaringClass +
-                            ", getReferenceKind=" + getReferenceKind +
-                            ", getMethodType=" + getMethodType +
-                            ", returnType=" + returnType +
-                            ", parameterArray=" + parameterArray +
-                            ", lookupClass=" + lookupClass +
-                            ", revealDirect=" + revealDirect +
-                            '}';
-                }
             }
 
             /**
@@ -1187,21 +1130,6 @@ public interface JavaConstant {
                         throw new IllegalStateException("Error constructing java.lang.invoke.MethodInfo", exception);
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodHandle.Dispatcher.ForJava7CapableVm{" +
-                            "publicLookup=" + publicLookup +
-                            ", getName=" + getName +
-                            ", getDeclaringClass=" + getDeclaringClass +
-                            ", getReferenceKind=" + getReferenceKind +
-                            ", getMethodType=" + getMethodType +
-                            ", returnType=" + returnType +
-                            ", parameterArray=" + parameterArray +
-                            ", lookupClass=" + lookupClass +
-                            ", methodInfo=" + methodInfo +
-                            '}';
-                }
             }
 
             /**
@@ -1227,11 +1155,6 @@ public interface JavaConstant {
                 @Override
                 public Class<?> lookupType(Object lookup) {
                     throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
-                }
-
-                @Override
-                public String toString() {
-                    return "JavaConstant.MethodHandle.Dispatcher.ForLegacyVm." + name();
                 }
             }
         }
@@ -1381,11 +1304,6 @@ public interface JavaConstant {
              */
             public int getIdentifier() {
                 return identifier;
-            }
-
-            @Override
-            public String toString() {
-                return "JavaConstant.MethodHandle.HandleType." + name();
             }
         }
     }

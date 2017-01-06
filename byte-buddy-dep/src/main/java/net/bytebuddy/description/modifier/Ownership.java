@@ -55,9 +55,4 @@ public enum Ownership implements ModifierContributor.ForField, ModifierContribut
     public boolean isStatic() {
         return this == STATIC;
     }
-
-    @Override
-    public String toString() {
-        return "Ownership." + name();
-    }
 }

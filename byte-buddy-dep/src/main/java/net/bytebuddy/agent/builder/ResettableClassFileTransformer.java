@@ -153,11 +153,6 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
             public Map<Class<?>, Throwable> getErrors() {
                 return Collections.emptyMap();
             }
-
-            @Override
-            public String toString() {
-                return "ResettableClassFileTransformer.Reset.Simple." + name();
-            }
         }
 
         /**
@@ -200,13 +195,6 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
             @Override
             public Map<Class<?>, Throwable> getErrors() {
                 return failures;
-            }
-
-            @Override
-            public String toString() {
-                return "ResettableClassFileTransformer.Reset.WithErrors{" +
-                        "failures=" + failures +
-                        '}';
             }
         }
     }

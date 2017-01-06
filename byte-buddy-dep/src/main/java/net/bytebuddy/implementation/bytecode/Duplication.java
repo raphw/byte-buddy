@@ -118,11 +118,6 @@ public enum Duplication implements StackManipulation {
         return size;
     }
 
-    @Override
-    public String toString() {
-        return "Duplication." + name();
-    }
-
     /**
      * A duplication that flips a value over the second value on the operand stack.
      */
@@ -178,11 +173,6 @@ public enum Duplication implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(opcode);
             return stackSize.toIncreasingSize();
-        }
-
-        @Override
-        public String toString() {
-            return "Duplication.WithFlip." + name();
         }
     }
 }

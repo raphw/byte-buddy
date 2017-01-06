@@ -82,11 +82,6 @@ public interface TypeResolutionStrategy {
             }
             return new HashMap<TypeDescription, Class<?>>(types);
         }
-
-        @Override
-        public String toString() {
-            return "TypeResolutionStrategy.Passive." + name();
-        }
     }
 
     /**
@@ -121,13 +116,6 @@ public interface TypeResolutionStrategy {
         @SuppressFBWarnings(value = "DMI_RANDOM_USED_ONLY_ONCE", justification = "Avoid thread-contention")
         public TypeResolutionStrategy.Resolved resolve() {
             return new Resolved(nexusAccessor, new Random().nextInt());
-        }
-
-        @Override
-        public String toString() {
-            return "TypeResolutionStrategy.Active{" +
-                    "nexusAccessor=" + nexusAccessor +
-                    '}';
         }
 
         /**
@@ -178,14 +166,6 @@ public interface TypeResolutionStrategy {
                 }
                 return types;
             }
-
-            @Override
-            public String toString() {
-                return "TypeResolutionStrategy.Active.Resolved{" +
-                        "nexusAccessor=" + nexusAccessor +
-                        ", identification=" + identification +
-                        '}';
-            }
         }
     }
 
@@ -215,11 +195,6 @@ public interface TypeResolutionStrategy {
                                                                                  ClassLoadingStrategy<? super S> classLoadingStrategy) {
             return classLoadingStrategy.load(classLoader, dynamicType.getAllTypes());
         }
-
-        @Override
-        public String toString() {
-            return "TypeResolutionStrategy.Lazy." + name();
-        }
     }
 
     /**
@@ -247,11 +222,6 @@ public interface TypeResolutionStrategy {
                                                                                  S classLoader,
                                                                                  ClassLoadingStrategy<? super S> classLoadingStrategy) {
             throw new IllegalStateException("Cannot initialize a dynamic type for a disabled type resolution strategy");
-        }
-
-        @Override
-        public String toString() {
-            return "TypeResolutionStrategy.Disabled." + name();
         }
     }
 }

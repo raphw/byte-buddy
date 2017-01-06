@@ -3083,14 +3083,6 @@ public interface DynamicType {
                         result = 31 * result + token.hashCode();
                         return result;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.TypeVariableDefinitionAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", token=" + token +
-                                '}';
-                    }
                 }
 
                 /**
@@ -3188,17 +3180,6 @@ public interface DynamicType {
                         result = 31 * result + token.hashCode();
                         return result;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.FieldDefinitionAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
-                                ", transformer=" + transformer +
-                                ", defaultValue=" + defaultValue +
-                                ", token=" + token +
-                                '}';
-                    }
                 }
 
                 /**
@@ -3292,17 +3273,6 @@ public interface DynamicType {
                         result = 31 * result + getOuter().hashCode();
                         result = 31 * result + matcher.hashCode();
                         return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.FieldMatchAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
-                                ", transformer=" + transformer +
-                                ", defaultValue=" + defaultValue +
-                                ", matcher=" + matcher +
-                                '}';
                     }
                 }
 
@@ -3416,14 +3386,6 @@ public interface DynamicType {
                         return 31 * getOuter().hashCode() + token.hashCode();
                     }
 
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", token=" + token +
-                                '}';
-                    }
-
                     /**
                      * An adapter for defining a new type variable for the currently defined method.
                      */
@@ -3483,14 +3445,6 @@ public interface DynamicType {
                         @Override
                         public int hashCode() {
                             return 31 * getOuter().hashCode() + token.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.TypeVariableAnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", token=" + token +
-                                    '}';
                         }
                     }
 
@@ -3555,14 +3509,6 @@ public interface DynamicType {
                         public int hashCode() {
                             return 31 * getOuter().hashCode() + token.hashCode();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.ParameterAnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", token=" + token +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -3625,14 +3571,6 @@ public interface DynamicType {
                         @Override
                         public int hashCode() {
                             return 31 * getOuter().hashCode() + token.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.SimpleParameterAnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", token=" + token +
-                                    '}';
                         }
                     }
 
@@ -3757,16 +3695,6 @@ public interface DynamicType {
                         public int hashCode() {
                             return super.hashCode() + getOuter().hashCode();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.AnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", handler=" + handler +
-                                    ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
-                                    ", transformer=" + transformer +
-                                    '}';
-                        }
                     }
                 }
 
@@ -3834,14 +3762,6 @@ public interface DynamicType {
                     @Override
                     public int hashCode() {
                         return 31 * getOuter().hashCode() + matcher.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", matcher=" + matcher +
-                                '}';
                     }
 
                     /**
@@ -3937,16 +3857,6 @@ public interface DynamicType {
                         public int hashCode() {
                             return super.hashCode() + getOuter().hashCode();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter.AnnotationAdapter{" +
-                                    "adapter=" + getOuter() +
-                                    ", handler=" + handler +
-                                    ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
-                                    ", transformer=" + transformer +
-                                    '}';
-                        }
                     }
                 }
 
@@ -4041,14 +3951,6 @@ public interface DynamicType {
                     @Override
                     public int hashCode() {
                         return 31 * getOuter().hashCode() + interfaces.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "DynamicType.Builder.AbstractBase.Adapter.OptionalMethodMatchAdapter{" +
-                                "adapter=" + getOuter() +
-                                ", interfaces=" + interfaces +
-                                '}';
                     }
                 }
             }
@@ -4401,16 +4303,6 @@ public interface DynamicType {
             return result;
         }
 
-        @Override
-        public String toString() {
-            return "DynamicType.Default{" +
-                    "typeDescription='" + typeDescription + '\'' +
-                    ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                    ", loadedTypeInitializer=" + loadedTypeInitializer +
-                    ", auxiliaryTypes=" + auxiliaryTypes +
-                    '}';
-        }
-
         /**
          * A default implementation of an unloaded dynamic type.
          *
@@ -4491,17 +4383,6 @@ public interface DynamicType {
                 result = 31 * result + typeResolutionStrategy.hashCode();
                 return result;
             }
-
-            @Override
-            public String toString() {
-                return "DynamicType.Default.Unloaded{" +
-                        "typeDescription='" + typeDescription + '\'' +
-                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                        ", typeInitializer=" + loadedTypeInitializer +
-                        ", auxiliaryTypes=" + auxiliaryTypes +
-                        ", typeResolutionStrategy=" + typeResolutionStrategy +
-                        '}';
-            }
         }
 
         /**
@@ -4558,17 +4439,6 @@ public interface DynamicType {
             @Override
             public int hashCode() {
                 return 31 * super.hashCode() + loadedTypes.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "DynamicType.Default.Loaded{" +
-                        "typeDescription='" + typeDescription + '\'' +
-                        ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                        ", typeInitializer=" + loadedTypeInitializer +
-                        ", auxiliaryTypes=" + auxiliaryTypes +
-                        ", loadedTypes=" + loadedTypes +
-                        '}';
             }
         }
     }

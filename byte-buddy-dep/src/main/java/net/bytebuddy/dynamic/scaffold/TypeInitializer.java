@@ -94,15 +94,6 @@ public interface TypeInitializer extends ByteCodeAppender {
                         implementationContext,
                         annotationValueFilterFactory);
             }
-
-            @Override
-            public String toString() {
-                return "TypeInitializer.Drain.Default{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", methodPool=" + methodPool +
-                        ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                        '}';
-            }
         }
     }
 
@@ -134,11 +125,6 @@ public interface TypeInitializer extends ByteCodeAppender {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             return new Size(0, 0);
-        }
-
-        @Override
-        public String toString() {
-            return "TypeInitializer.None." + name();
         }
     }
 
@@ -180,13 +166,6 @@ public interface TypeInitializer extends ByteCodeAppender {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             return byteCodeAppender.apply(methodVisitor, implementationContext, instrumentedMethod);
-        }
-
-        @Override
-        public String toString() {
-            return "TypeInitializer.Simple{" +
-                    "byteCodeAppender=" + byteCodeAppender +
-                    '}';
         }
     }
 }

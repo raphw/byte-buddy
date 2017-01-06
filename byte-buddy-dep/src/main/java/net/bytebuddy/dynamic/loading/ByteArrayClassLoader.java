@@ -229,17 +229,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         return getPackage(name);
     }
 
-    @Override
-    public String toString() {
-        return "ByteArrayClassLoader{" +
-                "typeDefinitions=" + typeDefinitions +
-                ", persistenceHandler=" + persistenceHandler +
-                ", protectionDomain=" + protectionDomain +
-                ", packageDefinitionStrategy=" + packageDefinitionStrategy +
-                ", accessControlContext=" + accessControlContext +
-                '}';
-    }
-
     /**
      * An engine for receiving a <i>class loading lock</i> when loading a class.
      */
@@ -286,11 +275,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     return SynchronizationStrategy.ForLegacyVm.INSTANCE;
                 }
             }
-
-            @Override
-            public String toString() {
-                return "ByteArrayClassLoader.SynchronizationStrategy.CreationAction." + name();
-            }
         }
 
         /**
@@ -311,11 +295,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             @Override
             public SynchronizationStrategy initialize() {
                 return this;
-            }
-
-            @Override
-            public String toString() {
-                return "ByteArrayClassLoader.SynchronizationStrategy.ForLegacyVm." + name();
             }
         }
 
@@ -359,11 +338,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 } catch (Exception ignored) {
                     return ForLegacyVm.INSTANCE;
                 }
-            }
-
-            @Override
-            public String toString() {
-                return "ByteArrayClassLoader.SynchronizationStrategy.ForJava7CapableVm{method=" + method + '}';
             }
         }
     }
@@ -445,15 +419,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             result = 31 * result + Arrays.hashCode(binaryRepresentation);
             return result;
         }
-
-        @Override
-        public String toString() {
-            return "ByteArrayClassLoader.ClassDefinitionAction{" +
-                    "outer=" + ByteArrayClassLoader.this +
-                    ", name='" + name + '\'' +
-                    ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                    '}';
-        }
     }
 
     /**
@@ -489,11 +454,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     return PackageLookupStrategy.ForLegacyVm.INSTANCE;
                 }
             }
-
-            @Override
-            public String toString() {
-                return "ByteArrayClassLoader.PackageLookupStrategy.CreationAction." + name();
-            }
         }
 
         /**
@@ -509,11 +469,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             @Override
             public Package apply(ByteArrayClassLoader classLoader, String name) {
                 return classLoader.doGetPackage(name);
-            }
-
-            @Override
-            public String toString() {
-                return "ByteArrayClassLoader.PackageLookupStrategy.ForLegacyVm." + name();
             }
         }
 
@@ -546,13 +501,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 } catch (InvocationTargetException exception) {
                     throw new IllegalStateException("Cannot invoke " + getDefinedPackage, exception.getCause());
                 }
-            }
-
-            @Override
-            public String toString() {
-                return "ByteArrayClassLoader.PackageLookupStrategy.ForJava9CapableVm{" +
-                        "getDefinedPackage=" + getDefinedPackage +
-                        '}';
             }
         }
     }
@@ -650,11 +598,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
          */
         protected abstract URL url(String resourceName, ConcurrentMap<String, byte[]> typeDefinitions);
 
-        @Override
-        public String toString() {
-            return "ByteArrayClassLoader.PersistenceHandler." + name();
-        }
-
         /**
          * An action to define a URL that represents a class file.
          */
@@ -712,14 +655,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 }
             }
 
-            @Override
-            public String toString() {
-                return "ByteArrayClassLoader.PersistenceHandler.UrlDefinitionAction{" +
-                        "typeName='" + typeName + '\'' +
-                        "binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                        '}';
-            }
-
             /**
              * A stream handler that returns the given binary representation.
              */
@@ -743,13 +678,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                 @Override
                 protected URLConnection openConnection(URL url) throws IOException {
                     return new ByteArrayUrlConnection(url, new ByteArrayInputStream(binaryRepresentation));
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteArrayClassLoader.PersistenceHandler.UrlDefinitionAction.ByteArrayUrlStreamHandler{" +
-                            "binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                            '}';
                 }
 
                 /**
@@ -782,13 +710,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     public InputStream getInputStream() {
                         connect(); // Mimics the semantics of an actual URL connection.
                         return inputStream;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "ByteArrayClassLoader.PersistenceHandler.UrlDefinitionAction.ByteArrayUrlStreamHandler.ByteArrayUrlConnection{" +
-                                "inputStream=" + inputStream +
-                                '}';
                     }
                 }
             }
@@ -891,17 +812,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             }
         }
 
-        @Override
-        public String toString() {
-            return "ByteArrayClassLoader.ChildFirst{" +
-                    "typeDefinitions=" + typeDefinitions +
-                    ", protectionDomain=" + protectionDomain +
-                    ", persistenceHandler=" + persistenceHandler +
-                    ", packageDefinitionStrategy=" + packageDefinitionStrategy +
-                    ", accessControlContext=" + accessControlContext +
-                    '}';
-        }
-
         /**
          * An enumeration that prepends an element to another enumeration and skips the last element of the provided enumeration.
          */
@@ -945,14 +855,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     throw new NoSuchElementException();
                 }
             }
-
-            @Override
-            public String toString() {
-                return "ByteArrayClassLoader.ChildFirst.PrependingEnumeration{" +
-                        "nextElement=" + nextElement +
-                        ", enumeration=" + enumeration +
-                        '}';
-            }
         }
     }
 
@@ -974,11 +876,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         @Override
         public URL nextElement() {
             throw new NoSuchElementException();
-        }
-
-        @Override
-        public String toString() {
-            return "ByteArrayClassLoader.EmptyEnumeration." + name();
         }
     }
 
@@ -1017,13 +914,6 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                     element = null;
                 }
             }
-        }
-
-        @Override
-        public String toString() {
-            return "ByteArrayClassLoader.SingletonEnumeration{" +
-                    "element=" + element +
-                    '}';
         }
     }
 }

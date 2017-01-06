@@ -123,10 +123,5 @@ public @interface Origin {
                         " Method, Constructor, String, int, MethodType or MethodHandle type");
             }
         }
-
-        @Override
-        public String toString() {
-            return "Origin.Binder." + name();
-        }
     }
 }

@@ -32,11 +32,4 @@ public class SetAccessibleAction<T extends AccessibleObject> implements Privileg
         accessibleObject.setAccessible(true);
         return accessibleObject;
     }
-
-    @Override
-    public String toString() {
-        return "SetAccessibleAction{" +
-                "accessibleObject=" + accessibleObject +
-                '}';
-    }
 }

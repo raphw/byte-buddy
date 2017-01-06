@@ -189,26 +189,6 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         return instrumentedType;
     }
 
-    @Override
-    public String toString() {
-        return "SubclassDynamicTypeBuilder{" +
-                "instrumentedType=" + instrumentedType +
-                ", fieldRegistry=" + fieldRegistry +
-                ", methodRegistry=" + methodRegistry +
-                ", typeAttributeAppender=" + typeAttributeAppender +
-                ", asmVisitorWrapper=" + asmVisitorWrapper +
-                ", classFileVersion=" + classFileVersion +
-                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                ", annotationRetention=" + annotationRetention +
-                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                ", implementationContextFactory=" + implementationContextFactory +
-                ", methodGraphCompiler=" + methodGraphCompiler +
-                ", typeValidation=" + typeValidation +
-                ", ignoredMethods=" + ignoredMethods +
-                ", constructorStrategy=" + constructorStrategy +
-                '}';
-    }
-
     /**
      * A matcher that locates all methods that are overridable and not ignored or that are directly defined on the instrumented type.
      */
@@ -236,13 +216,6 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                     .and(isVisibleTo(typeDescription))
                     .and(not(ignoredMethods.resolve(typeDescription)))
                     .or(isDeclaredBy(typeDescription));
-        }
-
-        @Override
-        public String toString() {
-            return "SubclassDynamicTypeBuilder.InstrumentableMatcher{" +
-                    "ignoredMethods=" + ignoredMethods +
-                    '}';
         }
     }
 }

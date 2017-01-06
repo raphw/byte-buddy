@@ -70,11 +70,6 @@ public interface FieldLocator {
             public FieldDescription getField() {
                 throw new IllegalStateException("Could not locate field");
             }
-
-            @Override
-            public String toString() {
-                return "FieldLocator.Resolution.Illegal." + name();
-            }
         }
 
         /**
@@ -105,13 +100,6 @@ public interface FieldLocator {
             @Override
             public FieldDescription getField() {
                 return fieldDescription;
-            }
-
-            @Override
-            public String toString() {
-                return "FieldLocator.Resolution.Simple{" +
-                        "fieldDescription=" + fieldDescription +
-                        '}';
             }
         }
     }
@@ -153,11 +141,6 @@ public interface FieldLocator {
         @Override
         public Resolution locate(String name, TypeDescription type) {
             return Resolution.Illegal.INSTANCE;
-        }
-
-        @Override
-        public String toString() {
-            return "FieldLocator.NoOp." + name();
         }
     }
 
@@ -242,14 +225,6 @@ public interface FieldLocator {
             return typeDescription.getDeclaredFields().filter(matcher);
         }
 
-        @Override
-        public String toString() {
-            return "FieldLocator.ForExactType{" +
-                    "accessingType=" + accessingType +
-                    ", typeDescription=" + typeDescription +
-                    '}';
-        }
-
         /**
          * A factory for creating a {@link ForExactType}.
          */
@@ -273,13 +248,6 @@ public interface FieldLocator {
             @Override
             public FieldLocator make(TypeDescription typeDescription) {
                 return new ForExactType(this.typeDescription, typeDescription);
-            }
-
-            @Override
-            public String toString() {
-                return "FieldLocator.ForExactType.Factory{" +
-                        "typeDescription=" + typeDescription +
-                        '}';
             }
         }
     }
@@ -326,14 +294,6 @@ public interface FieldLocator {
             return new FieldList.Empty<FieldDescription>();
         }
 
-        @Override
-        public String toString() {
-            return "FieldLocator.ForClassHierarchy{" +
-                    "accessingType=" + accessingType +
-                    ", typeDescription=" + typeDescription +
-                    '}';
-        }
-
         /**
          * A factory for creating a {@link ForClassHierarchy}.
          */
@@ -347,11 +307,6 @@ public interface FieldLocator {
             @Override
             public FieldLocator make(TypeDescription typeDescription) {
                 return new ForClassHierarchy(typeDescription);
-            }
-
-            @Override
-            public String toString() {
-                return "FieldLocator.ForClassHierarchy.Factory." + name();
             }
         }
     }
@@ -375,13 +330,6 @@ public interface FieldLocator {
             return accessingType.getDeclaredFields().filter(matcher);
         }
 
-        @Override
-        public String toString() {
-            return "FieldLocator.ForTopLevelType{" +
-                    "accessingType=" + accessingType +
-                    "}";
-        }
-
         /**
          * A factory for locating a field in a top-level type.
          */
@@ -395,11 +343,6 @@ public interface FieldLocator {
             @Override
             public FieldLocator make(TypeDescription typeDescription) {
                 return new ForTopLevelType(typeDescription);
-            }
-
-            @Override
-            public String toString() {
-                return "FieldLocator.ForTopLevelType.Factory." + name();
             }
         }
     }

@@ -27,9 +27,4 @@ public enum ParameterLengthResolver implements MethodDelegationBinder.AmbiguityR
             return Resolution.LEFT;
         }
     }
-
-    @Override
-    public String toString() {
-        return "ParameterLengthResolver." + name();
-    }
 }

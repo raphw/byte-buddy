@@ -125,11 +125,6 @@ public enum IntegerConstant implements StackManipulation {
         return SIZE;
     }
 
-    @Override
-    public String toString() {
-        return "IntegerConstant." + name();
-    }
-
     /**
      * A stack manipulation that loads a JVM-integer value by a {@code BIPUSH} operation which is
      * legal for single byte integer values.
@@ -160,11 +155,6 @@ public enum IntegerConstant implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
             return SIZE;
-        }
-
-        @Override
-        public String toString() {
-            return "IntegerConstant.SingleBytePush{value=" + value + '}';
         }
     }
 
@@ -199,11 +189,6 @@ public enum IntegerConstant implements StackManipulation {
             methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
             return SIZE;
         }
-
-        @Override
-        public String toString() {
-            return "IntegerConstant.TwoBytePush{value=" + value + '}';
-        }
     }
 
     /**
@@ -235,11 +220,6 @@ public enum IntegerConstant implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitLdcInsn(value);
             return SIZE;
-        }
-
-        @Override
-        public String toString() {
-            return "IntegerConstant.ConstantPool{value=" + value + '}';
         }
     }
 }

@@ -125,11 +125,6 @@ public @interface DefaultMethod {
             }
         }
 
-        @Override
-        public String toString() {
-            return "DefaultMethod.Binder." + name();
-        }
-
         /**
          * A method locator is responsible for creating the super method call.
          */
@@ -157,11 +152,6 @@ public @interface DefaultMethod {
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     return implementationTarget.invokeDefault(source.asSignatureToken());
-                }
-
-                @Override
-                public String toString() {
-                    return "DefaultMethod.Binder.MethodLocator.ForImplicitType." + name();
                 }
             }
 
@@ -191,13 +181,6 @@ public @interface DefaultMethod {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
                     return implementationTarget.invokeDefault(source.asSignatureToken(), TargetType.resolve(typeDescription, implementationTarget.getInstrumentedType()));
-                }
-
-                @Override
-                public String toString() {
-                    return "DefaultMethod.Binder.MethodLocator.ForExplicitType{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
                 }
             }
         }
@@ -241,14 +224,6 @@ public @interface DefaultMethod {
                 return (cached
                         ? FieldAccess.forField(implementationContext.cache(stackManipulation, new TypeDescription.ForLoadedType(Method.class))).read()
                         : stackManipulation).apply(methodVisitor, implementationContext);
-            }
-
-            @Override
-            public String toString() {
-                return "DefaultMethod.Binder.DelegationMethod{" +
-                        "specialMethodInvocation=" + specialMethodInvocation +
-                        ", cached=" + cached +
-                        '}';
             }
         }
     }

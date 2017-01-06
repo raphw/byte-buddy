@@ -359,14 +359,4 @@ public class StackAwareMethodVisitor extends MethodVisitor {
         sizes.put(handler, Collections.singletonList(StackSize.SINGLE));
         super.visitTryCatchBlock(start, end, handler, type);
     }
-
-    @Override
-    public String toString() {
-        return "StackAwareMethodVisitor{" +
-                "methodVisitor=" + mv +
-                ", current=" + current +
-                ", sizes=" + sizes +
-                ", freeIndex=" + freeIndex +
-                '}';
-    }
 }

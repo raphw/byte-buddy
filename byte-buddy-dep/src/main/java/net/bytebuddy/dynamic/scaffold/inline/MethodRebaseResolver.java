@@ -79,11 +79,6 @@ public interface MethodRebaseResolver {
             return Collections.emptyMap();
         }
 
-        @Override
-        public String toString() {
-            return "MethodRebaseResolver.Disabled." + name();
-        }
-
     }
 
     /**
@@ -149,11 +144,6 @@ public interface MethodRebaseResolver {
             public StackManipulation getAdditionalArguments() {
                 throw new IllegalStateException("Cannot process additional arguments for non-rebased method: " + methodDescription);
             }
-
-            @Override
-            public String toString() {
-                return "MethodRebaseResolver.Resolution.Preserved{methodDescription=" + methodDescription + '}';
-            }
         }
 
         /**
@@ -200,11 +190,6 @@ public interface MethodRebaseResolver {
             @Override
             public StackManipulation getAdditionalArguments() {
                 return StackManipulation.Trivial.INSTANCE;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRebaseResolver.Resolution.ForRebasedMethod{methodDescription=" + methodDescription + '}';
             }
 
             /**
@@ -327,11 +312,6 @@ public interface MethodRebaseResolver {
             @Override
             public StackManipulation getAdditionalArguments() {
                 return NullConstant.INSTANCE;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRebaseResolver.Resolution.ForRebasedConstructor{methodDescription=" + methodDescription + '}';
             }
 
             /**
@@ -493,14 +473,6 @@ public interface MethodRebaseResolver {
                 tokenMap.put(entry.getKey().asSignatureToken(), entry.getValue());
             }
             return tokenMap;
-        }
-
-        @Override
-        public String toString() {
-            return "MethodRebaseResolver.Default{" +
-                    "resolutions=" + resolutions +
-                    ", dynamicTypes=" + dynamicTypes +
-                    '}';
         }
     }
 }

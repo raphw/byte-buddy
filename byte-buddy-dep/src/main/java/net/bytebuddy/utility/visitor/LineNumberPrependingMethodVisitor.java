@@ -43,12 +43,4 @@ public class LineNumberPrependingMethodVisitor extends ExceptionTableSensitiveMe
         }
         super.visitLineNumber(line, start);
     }
-
-    @Override
-    public String toString() {
-        return "LineNumberPrependingMethodVisitor{" +
-                "startOfMethod=" + startOfMethod +
-                ", prependLineNumber=" + prependLineNumber +
-                '}';
-    }
 }

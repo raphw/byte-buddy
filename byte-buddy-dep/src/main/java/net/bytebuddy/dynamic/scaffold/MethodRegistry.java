@@ -104,11 +104,6 @@ public interface MethodRegistry {
             public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                 return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithoutBody(methodDescription, attributeAppender, visibility);
             }
-
-            @Override
-            public String toString() {
-                return "MethodRegistry.Handler.ForAbstractMethod." + name();
-            }
         }
 
         /**
@@ -129,11 +124,6 @@ public interface MethodRegistry {
             @Override
             public Compiled compile(Implementation.Target implementationTarget) {
                 return new Compiled(implementationTarget.getInstrumentedType());
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRegistry.Handler.ForVisibilityBridge." + name();
             }
 
             /**
@@ -159,13 +149,6 @@ public interface MethodRegistry {
                 @Override
                 public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                     return TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge.of(instrumentedType, methodDescription, attributeAppender);
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodRegistry.Handler.ForVisibilityBridge.Compiled{" +
-                            "instrumentedType=" + instrumentedType +
-                            '}';
                 }
             }
         }
@@ -216,13 +199,6 @@ public interface MethodRegistry {
                 return new Compiled(implementation.appender(implementationTarget));
             }
 
-            @Override
-            public String toString() {
-                return "MethodRegistry.Handler.ForImplementation{" +
-                        "implementation=" + implementation +
-                        '}';
-            }
-
             /**
              * A compiled handler for implementing a method.
              */
@@ -246,13 +222,6 @@ public interface MethodRegistry {
                 @Override
                 public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                     return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody(methodDescription, byteCodeAppender, attributeAppender, visibility);
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodRegistry.Handler.ForImplementation.Compiled{" +
-                            "byteCodeAppender=" + byteCodeAppender +
-                            '}';
                 }
             }
         }
@@ -290,13 +259,6 @@ public interface MethodRegistry {
             @Override
             public TypeWriter.MethodPool.Record assemble(MethodDescription methodDescription, MethodAttributeAppender attributeAppender, Visibility visibility) {
                 return new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription, annotationValue, attributeAppender);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRegistry.Handler.ForAnnotationValue{" +
-                        "annotationValue=" + annotationValue +
-                        '}';
             }
         }
     }
@@ -506,13 +468,6 @@ public interface MethodRegistry {
                     new MethodList.Explicit<MethodDescription>(methods));
         }
 
-        @Override
-        public String toString() {
-            return "MethodRegistry.Default{" +
-                    "entries=" + entries +
-                    '}';
-        }
-
         /**
          * An entry of a default method registry.
          */
@@ -617,16 +572,6 @@ public interface MethodRegistry {
             @Override
             public ElementMatcher<? super MethodDescription> resolve(TypeDescription typeDescription) {
                 return matcher.resolve(typeDescription);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRegistry.Default.Entry{" +
-                        "matcher=" + matcher +
-                        ", handler=" + handler +
-                        ", attributeAppenderFactory=" + attributeAppenderFactory +
-                        ", transformer=" + transformer +
-                        '}';
             }
         }
 
@@ -745,18 +690,6 @@ public interface MethodRegistry {
                         methods,
                         entries,
                         classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5));
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRegistry.Default.Prepared{" +
-                        "implementations=" + implementations +
-                        ", loadedTypeInitializer=" + loadedTypeInitializer +
-                        ", typeInitializer=" + typeInitializer +
-                        ", instrumentedType=" + instrumentedType +
-                        ", methodGraph=" + methodGraph +
-                        ", methods=" + methods +
-                        '}';
             }
 
             /**
@@ -890,18 +823,6 @@ public interface MethodRegistry {
                 protected boolean isBridgeMethod() {
                     return bridgeMethod;
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodRegistry.Default.Prepared.Entry{" +
-                            "handler=" + handler +
-                            ", attributeAppenderFactory=" + attributeAppenderFactory +
-                            ", methodDescription=" + methodDescription +
-                            ", typeTokens=" + typeTokens +
-                            ", visibility=" + visibility +
-                            ", bridgeMethod=" + bridgeMethod +
-                            '}';
-                }
             }
         }
 
@@ -998,18 +919,6 @@ public interface MethodRegistry {
                         : entry.bind(instrumentedType, supportsBridges);
             }
 
-            @Override
-            public String toString() {
-                return "MethodRegistry.Default.Compiled{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", loadedTypeInitializer=" + loadedTypeInitializer +
-                        ", typeInitializer=" + typeInitializer +
-                        ", methods=" + methods +
-                        ", implementations=" + implementations +
-                        ", supportsBridges=" + supportsBridges +
-                        '}';
-            }
-
             /**
              * An entry of a compiled method registry.
              */
@@ -1085,18 +994,6 @@ public interface MethodRegistry {
                     return supportsBridges
                             ? TypeWriter.MethodPool.Record.AccessBridgeWrapper.of(record, instrumentedType, methodDescription, bridgeTypes, attributeAppender)
                             : record;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodRegistry.Default.Compiled.Entry{" +
-                            "handler=" + handler +
-                            ", attributeAppender=" + attributeAppender +
-                            ", methodDescription=" + methodDescription +
-                            ", bridgeTypes=" + bridgeTypes +
-                            ", bridgeMethod=" + bridgeMethod +
-                            ", visibility=" + visibility +
-                            '}';
                 }
             }
         }

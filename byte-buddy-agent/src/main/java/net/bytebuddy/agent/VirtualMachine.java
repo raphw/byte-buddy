@@ -334,18 +334,6 @@ public interface VirtualMachine {
             public void detach() throws IOException {
                 ((AFUNIXSocket) this.socket).close();
             }
-
-            @Override
-            public String toString() {
-                return "VirtualMachine.ForHotSpot.OnUnix{" +
-                        "processId=" + processId +
-                        ", socket=" + socket +
-                        ", attempts=" + attempts +
-                        ", pause=" + pause +
-                        ", timeout=" + timeout +
-                        ", timeUnit=" + timeUnit +
-                        '}';
-            }
         }
     }
 }

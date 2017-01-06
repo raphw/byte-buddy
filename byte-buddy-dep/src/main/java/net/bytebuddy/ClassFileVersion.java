@@ -265,11 +265,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 : getMajorVersion() - other.getMajorVersion());
     }
 
-    @Override
-    public String toString() {
-        return "ClassFileVersion{versionNumber=" + versionNumber + '}';
-    }
-
     /**
      * A locator for the executing VM's Java version.
      */
@@ -301,11 +296,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                 } catch (Exception ignored) {
                     return VersionLocator.ForLegacyVm.INSTANCE;
                 }
-            }
-
-            @Override
-            public String toString() {
-                return "ClassFileVersion.VersionLocator.CreationAction." + name();
             }
         }
 
@@ -351,14 +341,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                     throw new IllegalStateException("Could not access VM version lookup", exception);
                 }
             }
-
-            @Override
-            public String toString() {
-                return "ClassFileVersion.VersionLocator.ForJava9CapableVm{" +
-                        "current=" + current +
-                        ", major=" + major +
-                        '}';
-            }
         }
 
         /**
@@ -393,11 +375,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             public String run() {
                 return System.getProperty(JAVA_VERSION_PROPERTY);
             }
-
-            @Override
-            public String toString() {
-                return "ClassFileVersion.VersionLocator.ForLegacyVm." + name();
-            }
         }
     }
 
@@ -430,13 +407,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
          */
         protected int getClassFileVersionNumber() {
             return classFileVersionNumber;
-        }
-
-        @Override
-        public String toString() {
-            return "ClassFileVersion.VersionExtractor{" +
-                    "classFileVersionNumber=" + classFileVersionNumber +
-                    '}';
         }
     }
 }

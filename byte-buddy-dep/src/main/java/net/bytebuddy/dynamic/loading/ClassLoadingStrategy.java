@@ -135,11 +135,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             return dispatcher.allowExistingTypes();
         }
 
-        @Override
-        public String toString() {
-            return "ClassLoadingStrategy.Default." + name();
-        }
-
         /**
          * A class loading strategy which applies a class loader injection while applying a given
          * {@link java.security.ProtectionDomain} on class injection.
@@ -205,15 +200,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             @Override
             public Configurable<ClassLoader> allowExistingTypes() {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, false);
-            }
-
-            @Override
-            public String toString() {
-                return "ClassLoadingStrategy.Default.InjectionDispatcher{" +
-                        "protectionDomain=" + protectionDomain +
-                        ", packageDefinitionStrategy=" + packageDefinitionStrategy +
-                        ", forbidExisting=" + forbidExisting +
-                        '}';
             }
         }
 
@@ -319,17 +305,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
             public Configurable<ClassLoader> allowExistingTypes() {
                 return new InjectionDispatcher(protectionDomain, packageDefinitionStrategy, false);
             }
-
-            @Override
-            public String toString() {
-                return "ClassLoadingStrategy.Default.WrappingDispatcher{" +
-                        "packageDefinitionStrategy=" + packageDefinitionStrategy +
-                        ", protectionDomain=" + protectionDomain +
-                        ", childFirst=" + childFirst +
-                        ", persistenceHandler=" + persistenceHandler +
-                        ", forbidExisting=" + forbidExisting +
-                        '}';
-            }
         }
     }
 
@@ -399,14 +374,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
                     ? ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation)
                     : new ClassInjector.UsingReflection(classLoader);
             return classInjector.inject(types);
-        }
-
-        @Override
-        public String toString() {
-            return "ClassLoadingStrategy.ForBootstrapInjection{" +
-                    "instrumentation=" + instrumentation +
-                    ", folder=" + folder +
-                    '}';
         }
     }
 

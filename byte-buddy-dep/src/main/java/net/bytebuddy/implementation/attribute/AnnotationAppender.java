@@ -95,11 +95,6 @@ public interface AnnotationAppender {
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return classVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
-
-            @Override
-            public String toString() {
-                return "AnnotationAppender.Target.OnType{classVisitor=" + classVisitor + '}';
-            }
         }
 
         /**
@@ -130,11 +125,6 @@ public interface AnnotationAppender {
             @Override
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return methodVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
-            }
-
-            @Override
-            public String toString() {
-                return "AnnotationAppender.Target.OnMethod{methodVisitor=" + methodVisitor + '}';
             }
         }
 
@@ -174,14 +164,6 @@ public interface AnnotationAppender {
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return methodVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
             }
-
-            @Override
-            public String toString() {
-                return "AnnotationAppender.Target.OnMethodParameter{" +
-                        "methodVisitor=" + methodVisitor +
-                        ", parameterIndex=" + parameterIndex +
-                        '}';
-            }
         }
 
         /**
@@ -212,13 +194,6 @@ public interface AnnotationAppender {
             @Override
             public AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath) {
                 return fieldVisitor.visitTypeAnnotation(typeReference, TypePath.fromString(typePath), annotationTypeDescriptor, visible);
-            }
-
-            @Override
-            public String toString() {
-                return "AnnotationAppender.Target.OnField{" +
-                        "fieldVisitor=" + fieldVisitor +
-                        '}';
             }
         }
     }
@@ -348,11 +323,6 @@ public interface AnnotationAppender {
                               int typeReference,
                               String typePath) {
             handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible, typeReference, typePath), annotation, annotationValueFilter);
-        }
-
-        @Override
-        public String toString() {
-            return "AnnotationAppender.Default{target=" + target + '}';
         }
     }
 
@@ -670,16 +640,6 @@ public interface AnnotationAppender {
                 annotationAppender = annotationAppender.append(annotationDescription, annotationValueFilter, typeReference, typePath);
             }
             return annotationAppender;
-        }
-
-        @Override
-        public String toString() {
-            return "AnnotationAppender.ForTypeAnnotations{" +
-                    "annotationAppender=" + annotationAppender +
-                    ", annotationValueFilter=" + annotationValueFilter +
-                    ", typeReference=" + typeReference +
-                    ", typePath='" + typePath + '\'' +
-                    '}';
         }
     }
 }

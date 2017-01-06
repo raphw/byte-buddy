@@ -590,19 +590,6 @@ public class MethodCall implements Implementation.Composable {
         return new Appender(implementationTarget);
     }
 
-    @Override
-    public String toString() {
-        return "MethodCall{" +
-                "methodLocator=" + methodLocator +
-                ", targetHandler=" + targetHandler +
-                ", argumentLoaders=" + argumentLoaders +
-                ", methodInvoker=" + methodInvoker +
-                ", terminationHandler=" + terminationHandler +
-                ", assigner=" + assigner +
-                ", typing=" + typing +
-                '}';
-    }
-
     /**
      * A method locator is responsible for identifying the method that is to be invoked
      * by a {@link net.bytebuddy.implementation.MethodCall}.
@@ -632,11 +619,6 @@ public class MethodCall implements Implementation.Composable {
             public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return instrumentedMethod;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodLocator.ForInstrumentedMethod." + name();
-            }
         }
 
         /**
@@ -662,13 +644,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public MethodDescription resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod) {
                 return methodDescription;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodLocator.ForExplicitMethod{" +
-                        "methodDescription=" + methodDescription +
-                        '}';
             }
         }
 
@@ -707,14 +682,6 @@ public class MethodCall implements Implementation.Composable {
                 } else {
                     throw new IllegalStateException(instrumentedType + " does not define exactly one virtual method for " + matcher);
                 }
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodLocator.ForElementMatcher{" +
-                        "matcher=" + matcher +
-                        ", methodGraphCompiler=" + methodGraphCompiler +
-                        '}';
             }
         }
     }
@@ -768,11 +735,6 @@ public class MethodCall implements Implementation.Composable {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForSelfOrStaticInvocation." + name();
-            }
         }
 
         /**
@@ -793,11 +755,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForConstructingInvocation." + name();
             }
         }
 
@@ -861,15 +818,6 @@ public class MethodCall implements Implementation.Composable {
                         .withField(new FieldDescription.Token(name, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(name, target));
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForValue{" +
-                        "target=" + target +
-                        ", fieldType=" + fieldType +
-                        ", name='" + name + '\'' +
-                        '}';
-            }
         }
 
         /**
@@ -921,14 +869,6 @@ public class MethodCall implements Implementation.Composable {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForField{" +
-                        "name='" + name + '\'' +
-                        ", fieldLocatorFactory=" + fieldLocatorFactory +
-                        '}';
-            }
         }
 
         /**
@@ -971,13 +911,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.TargetHandler.ForMethodParameter{" +
-                        "index=" + index +
-                        '}';
             }
         }
     }
@@ -1049,11 +982,6 @@ public class MethodCall implements Implementation.Composable {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForNullConstant." + name();
-            }
         }
 
         /**
@@ -1087,13 +1015,6 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForThisReference{" +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
-            }
-
             /**
              * A factory for an argument loader that supplies the {@code this} value as an argument.
              */
@@ -1115,11 +1036,6 @@ public class MethodCall implements Implementation.Composable {
                         throw new IllegalStateException(instrumentedMethod + " is static and cannot supply an invoker instance");
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForThisReference(instrumentedType));
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForThisReference.Factory." + name();
                 }
             }
         }
@@ -1155,13 +1071,6 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForInstrumentedType{" +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
-            }
-
             /**
              * A factory for an argument loader that supplies the instrumented type as an argument.
              */
@@ -1180,11 +1089,6 @@ public class MethodCall implements Implementation.Composable {
                 @Override
                 public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForInstrumentedType(instrumentedType));
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForInstrumentedType.Factory." + name();
                 }
             }
         }
@@ -1228,14 +1132,6 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForMethodParameter{" +
-                        "index=" + index +
-                        ", instrumentedMethod=" + instrumentedMethod +
-                        '}';
-            }
-
             /**
              * A factory for argument loaders that supplies all arguments of the instrumented method as arguments.
              */
@@ -1258,11 +1154,6 @@ public class MethodCall implements Implementation.Composable {
                         argumentLoaders.add(new ForMethodParameter(parameterDescription.getIndex(), instrumentedMethod));
                     }
                     return argumentLoaders;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForMethodParameter.OfInstrumentedMethod." + name();
                 }
             }
 
@@ -1298,13 +1189,6 @@ public class MethodCall implements Implementation.Composable {
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForMethodParameter(index, instrumentedMethod));
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForMethodParameter.Factory{" +
-                            "index=" + index +
-                            '}';
-                }
             }
         }
 
@@ -1337,13 +1221,6 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot assign " + fieldDescription.getType() + " to " + target);
                 }
                 return stackManipulation;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForInstance{" +
-                        "fieldDescription=" + fieldDescription +
-                        '}';
             }
 
             /**
@@ -1430,14 +1307,6 @@ public class MethodCall implements Implementation.Composable {
                 public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                     return Collections.<ArgumentLoader>singletonList(new ForInstance(instrumentedType.getDeclaredFields().filter(named(name)).getOnly()));
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForInstance.Factory{" +
-                            "value=" + value +
-                            ", name='" + name + '\'' +
-                            '}';
-                }
             }
         }
 
@@ -1486,14 +1355,6 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForField{" +
-                        "fieldDescription=" + fieldDescription +
-                        ", instrumentedMethod=" + instrumentedMethod +
-                        '}';
-            }
-
             /**
              * A factory for an argument loaded that loads the value of an existing field as an argument.
              */
@@ -1533,14 +1394,6 @@ public class MethodCall implements Implementation.Composable {
                         throw new IllegalStateException("Could not locate field '" + name + "' on " + instrumentedType);
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForField(resolution.getField(), instrumentedMethod));
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForField.Factory{" +
-                            "name='" + name + '\'' +
-                            ", fieldLocatorFactory=" + fieldLocatorFactory +
-                            '}';
                 }
             }
         }
@@ -1586,14 +1439,6 @@ public class MethodCall implements Implementation.Composable {
                 return stackManipulation;
             }
 
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForMethodParameterArray{" +
-                        "parameterDescription=" + parameterDescription +
-                        ", index=" + index +
-                        '}';
-            }
-
             /**
              * Creates an argument loader for an array element that of a specific parameter.
              */
@@ -1635,14 +1480,6 @@ public class MethodCall implements Implementation.Composable {
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArray(instrumentedMethod.getParameters().get(index), arrayIndex));
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForMethodParameterArray.OfParameter{" +
-                            "index=" + index +
-                            ", arrayIndex=" + arrayIndex +
-                            '}';
-                }
             }
 
             /**
@@ -1682,13 +1519,6 @@ public class MethodCall implements Implementation.Composable {
                         argumentLoaders.add(new ForMethodParameterArray(instrumentedMethod.getParameters().get(this.index), index++));
                     }
                     return argumentLoaders;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.ArgumentLoader.ForMethodParameterArray.OfInvokedMethod{" +
-                            "index=" + index +
-                            '}';
                 }
             }
         }
@@ -1733,11 +1563,6 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForBooleanConstant{value=" + value + '}';
-            }
         }
 
         /**
@@ -1779,11 +1604,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForByteConstant{value=" + value + '}';
             }
         }
 
@@ -1827,11 +1647,6 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForShortConstant{value=" + value + '}';
-            }
         }
 
         /**
@@ -1873,11 +1688,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForCharacterConstant{value=" + value + '}';
             }
         }
 
@@ -1921,11 +1731,6 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForIntegerConstant{value=" + value + '}';
-            }
         }
 
         /**
@@ -1967,13 +1772,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForLongConstant{" +
-                        "value=" + value +
-                        '}';
             }
         }
 
@@ -2017,11 +1815,6 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForFloatConstant{value=" + value + '}';
-            }
         }
 
         /**
@@ -2063,11 +1856,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForDoubleConstant{value=" + value + '}';
             }
         }
 
@@ -2111,13 +1899,6 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForTextConstant{" +
-                        "value='" + value + '\'' +
-                        '}';
-            }
         }
 
         /**
@@ -2159,13 +1940,6 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForClassConstant{" +
-                        "typeDescription=" + typeDescription +
-                        '}';
             }
         }
 
@@ -2209,13 +1983,6 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForEnumerationValue{" +
-                        "enumerationDescription=" + enumerationDescription +
-                        '}';
-            }
         }
 
         /**
@@ -2258,13 +2025,6 @@ public class MethodCall implements Implementation.Composable {
             public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
                 return Collections.<ArgumentLoader>singletonList(this);
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.ArgumentLoader.ForJavaConstant{" +
-                        "javaConstant=" + javaConstant +
-                        '}';
-            }
         }
     }
 
@@ -2304,11 +2064,6 @@ public class MethodCall implements Implementation.Composable {
                 return invokedMethod.isVirtual()
                         ? MethodInvocation.invoke(invokedMethod).virtual(implementationTarget.getInstrumentedType())
                         : MethodInvocation.invoke(invokedMethod);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodInvoker.ForContextualInvocation." + name();
             }
         }
 
@@ -2353,13 +2108,6 @@ public class MethodCall implements Implementation.Composable {
                 return MethodInvocation.invoke(invokedMethod).virtual(typeDescription.asErasure());
             }
 
-            @Override
-            public String toString() {
-                return "MethodCall.MethodInvoker.ForVirtualInvocation{" +
-                        "typeDescription=" + typeDescription +
-                        '}';
-            }
-
             /**
              * A method invoker for a virtual method that uses an implicit target type.
              */
@@ -2376,11 +2124,6 @@ public class MethodCall implements Implementation.Composable {
                         throw new IllegalStateException("Cannot invoke " + invokedMethod + " virtually");
                     }
                     return MethodInvocation.invoke(invokedMethod);
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodCall.MethodInvoker.ForVirtualInvocation.WithImplicitType." + name();
                 }
             }
         }
@@ -2408,11 +2151,6 @@ public class MethodCall implements Implementation.Composable {
                 }
                 return stackManipulation;
             }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodInvoker.ForSuperMethodInvocation." + name();
-            }
         }
 
         /**
@@ -2435,11 +2173,6 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + implementationTarget.getInstrumentedType());
                 }
                 return stackManipulation;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodCall.MethodInvoker.ForDefaultMethodInvocation." + name();
             }
         }
     }
@@ -2491,11 +2224,6 @@ public class MethodCall implements Implementation.Composable {
                                                      MethodDescription instrumentedMethod,
                                                      Assigner assigner,
                                                      Assigner.Typing typing);
-
-        @Override
-        public String toString() {
-            return "MethodCall.TerminationHandler." + name();
-        }
     }
 
     /**
@@ -2629,19 +2357,6 @@ public class MethodCall implements Implementation.Composable {
                     assigner,
                     typing);
         }
-
-        @Override
-        public String toString() {
-            return "MethodCall.WithoutSpecifiedTarget{" +
-                    "methodLocator=" + methodLocator +
-                    ", targetHandler=" + targetHandler +
-                    ", argumentLoaders=" + argumentLoaders +
-                    ", methodInvoker=" + methodInvoker +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", typing=" + typing +
-                    '}';
-        }
     }
 
     /**
@@ -2710,14 +2425,6 @@ public class MethodCall implements Implementation.Composable {
         @Override
         public int hashCode() {
             return implementationTarget.hashCode() + 31 * MethodCall.this.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCall.Appender{" +
-                    "methodCall=" + MethodCall.this +
-                    ", implementationTarget=" + implementationTarget +
-                    '}';
         }
     }
 }

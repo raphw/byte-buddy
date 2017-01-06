@@ -190,16 +190,6 @@ public interface ClassInjector {
             return loadedTypes;
         }
 
-        @Override
-        public String toString() {
-            return "ClassInjector.UsingReflection{" +
-                    "classLoader=" + classLoader +
-                    ", protectionDomain=" + protectionDomain +
-                    ", packageDefinitionStrategy=" + packageDefinitionStrategy +
-                    ", forbidExisting=" + forbidExisting +
-                    '}';
-        }
-
         /**
          * A dispatcher for accessing a {@link ClassLoader} reflectively.
          */
@@ -555,17 +545,6 @@ public interface ClassInjector {
                     protected void onInitialization() {
                         getClassLoadingLock.setAccessible(true);
                     }
-
-                    @Override
-                    public String toString() {
-                        return "ClassInjector.UsingReflection.Dispatcher.Direct.ForJava7CapableVm{" +
-                                "findLoadedClass=" + findLoadedClass +
-                                ", defineClass=" + defineClass +
-                                ", getPackage=" + getPackage +
-                                ", definePackage=" + definePackage +
-                                ", getClassLoadingLock=" + getClassLoadingLock +
-                                '}';
-                    }
                 }
 
                 /**
@@ -596,16 +575,6 @@ public interface ClassInjector {
                     @Override
                     protected void onInitialization() {
                         /* do nothing */
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "ClassInjector.UsingReflection.Dispatcher.Direct.ForLegacyVm{" +
-                                "findLoadedClass=" + findLoadedClass +
-                                ", defineClass=" + defineClass +
-                                ", getPackage=" + getPackage +
-                                ", definePackage=" + definePackage +
-                                '}';
                     }
                 }
             }
@@ -925,11 +894,6 @@ public interface ClassInjector {
                                              String implementationVendor,
                                              URL sealBase) {
                     throw new UnsupportedOperationException("Cannot define package using injection", exception);
-                }
-
-                @Override
-                public String toString() {
-                    return "ClassInjector.UsingReflection.Dispatcher.Unavailable{exception=" + exception + '}';
                 }
             }
         }
@@ -1345,16 +1309,6 @@ public interface ClassInjector {
             }
         }
 
-        @Override
-        public String toString() {
-            return "ClassInjector.UsingInstrumentation{" +
-                    "instrumentation=" + instrumentation +
-                    ", target=" + target +
-                    ", folder=" + folder +
-                    ", randomString=" + randomString +
-                    '}';
-        }
-
         /**
          * A representation of the target to which Java classes should be appended to.
          */
@@ -1387,11 +1341,6 @@ public interface ClassInjector {
              * @param jarFile         The jar file to append.
              */
             protected abstract void inject(Instrumentation instrumentation, JarFile jarFile);
-
-            @Override
-            public String toString() {
-                return "ClassInjector.UsingInstrumentation.Target." + name();
-            }
         }
     }
 }

@@ -152,15 +152,6 @@ public class MethodCallProxy implements AuxiliaryType {
         return builder.make();
     }
 
-    @Override
-    public String toString() {
-        return "MethodCallProxy{" +
-                "specialMethodInvocation=" + specialMethodInvocation +
-                ", serializableProxy=" + serializableProxy +
-                ", assigner=" + assigner +
-                '}';
-    }
-
     /**
      * A precomputed method graph that only displays the methods that are relevant for creating a method call proxy.
      */
@@ -217,11 +208,6 @@ public class MethodCallProxy implements AuxiliaryType {
         public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
             return methodGraph;
         }
-
-        @Override
-        public String toString() {
-            return "MethodCallProxy.PrecomputedMethodGraph." + name();
-        }
     }
 
     /**
@@ -254,11 +240,6 @@ public class MethodCallProxy implements AuxiliaryType {
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getInstrumentedType());
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCallProxy.ConstructorCall." + name();
         }
 
         /**
@@ -302,11 +283,6 @@ public class MethodCallProxy implements AuxiliaryType {
                 ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
             }
-
-            @Override
-            public String toString() {
-                return "MethodCallProxy.ConstructorCall.Appender{instrumentedType=" + instrumentedType + '}';
-            }
         }
     }
 
@@ -345,14 +321,6 @@ public class MethodCallProxy implements AuxiliaryType {
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             return new Appender(implementationTarget.getInstrumentedType());
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCallProxy.MethodCall{" +
-                    "accessorMethod=" + accessorMethod +
-                    ", assigner=" + assigner +
-                    '}';
         }
 
         /**
@@ -413,14 +381,6 @@ public class MethodCallProxy implements AuxiliaryType {
             public int hashCode() {
                 return 31 * MethodCall.this.hashCode() + instrumentedType.hashCode();
             }
-
-            @Override
-            public String toString() {
-                return "MethodCallProxy.MethodCall.Appender{" +
-                        "methodCall=" + MethodCall.this +
-                        ", instrumentedType=" + instrumentedType +
-                        '}';
-            }
         }
     }
 
@@ -473,14 +433,6 @@ public class MethodCallProxy implements AuxiliaryType {
                     MethodVariableAccess.allArgumentsOf(specialMethodInvocation.getMethodDescription()).prependThisReference(),
                     MethodInvocation.invoke(auxiliaryType.getDeclaredMethods().filter(isConstructor()).getOnly())
             ).apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodCallProxy.AssignableSignatureCall{" +
-                    "specialMethodInvocation=" + specialMethodInvocation +
-                    ", serializableProxy=" + serializable +
-                    '}';
         }
     }
 }

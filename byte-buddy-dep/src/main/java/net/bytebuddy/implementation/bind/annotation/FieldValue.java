@@ -112,11 +112,6 @@ public @interface FieldValue {
             return delegate.bind(annotation, source, target, implementationTarget, assigner, typing);
         }
 
-        @Override
-        public String toString() {
-            return "FieldValue.Binder." + name();
-        }
-
         /**
          * A delegate implementation for the {@link FieldValue.Binder}.
          */
@@ -154,11 +149,6 @@ public @interface FieldValue {
             @Override
             protected TypeDescription declaringType(AnnotationDescription.Loadable<FieldValue> annotation) {
                 return annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
-            }
-
-            @Override
-            public String toString() {
-                return "FieldValue.Binder.Delegate{}";
             }
         }
     }

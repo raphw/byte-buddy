@@ -244,11 +244,6 @@ public enum PrimitiveWideningDelegate {
         }
     }
 
-    @Override
-    public String toString() {
-        return "PrimitiveWideningDelegate." + name();
-    }
-
     /**
      * A stack manipulation that widens a primitive type into a more general primitive type.
      */
@@ -285,14 +280,6 @@ public enum PrimitiveWideningDelegate {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitInsn(conversionOpcode);
             return size;
-        }
-
-        @Override
-        public String toString() {
-            return "PrimitiveWideningDelegate.WideningStackManipulation{" +
-                    "conversionOpcode=" + conversionOpcode +
-                    ", size=" + size +
-                    '}';
         }
     }
 }

@@ -240,11 +240,6 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
         public boolean isTypeVariable() {
             return this == VARIABLE || this == VARIABLE_SYMBOLIC;
         }
-
-        @Override
-        public String toString() {
-            return "TypeDefinition.Sort." + name();
-        }
     }
 
     /**
@@ -286,13 +281,6 @@ public interface TypeDefinition extends NamedElement, ModifierReviewable.ForType
         @Override
         public void remove() {
             throw new UnsupportedOperationException("remove");
-        }
-
-        @Override
-        public String toString() {
-            return "TypeDefinition.SuperClassIterator{" +
-                    "nextClass=" + nextClass +
-                    '}';
         }
     }
 }

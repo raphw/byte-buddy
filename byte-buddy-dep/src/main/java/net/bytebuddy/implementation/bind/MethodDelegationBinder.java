@@ -74,11 +74,6 @@ public interface MethodDelegationBinder {
                                       Assigner assigner) {
                 return MethodBinding.Illegal.INSTANCE;
             }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.Record.Illegal." + name();
-            }
         }
     }
 
@@ -111,11 +106,6 @@ public interface MethodDelegationBinder {
             public StackManipulation invoke(MethodDescription methodDescription) {
                 return MethodInvocation.invoke(methodDescription);
             }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.MethodInvoker.Simple." + name();
-            }
         }
 
         /**
@@ -141,11 +131,6 @@ public interface MethodDelegationBinder {
             @Override
             public StackManipulation invoke(MethodDescription methodDescription) {
                 return MethodInvocation.invoke(methodDescription).virtual(typeDescription);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.MethodInvoker.Virtual{typeDescription=" + typeDescription + '}';
             }
         }
     }
@@ -193,11 +178,6 @@ public interface MethodDelegationBinder {
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 throw new IllegalStateException("An illegal parameter binding must not be applied");
             }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.ParameterBinding.Illegal." + name();
-            }
         }
 
         /**
@@ -240,14 +220,6 @@ public interface MethodDelegationBinder {
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 return delegate.apply(methodVisitor, implementationContext);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.ParameterBinding.Anonymous{" +
-                        "anonymousToken=" + anonymousToken +
-                        ", delegate=" + delegate +
-                        '}';
             }
         }
 
@@ -308,14 +280,6 @@ public interface MethodDelegationBinder {
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 return delegate.apply(methodVisitor, implementationContext);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.ParameterBinding.Unique{" +
-                        "identificationToken=" + identificationToken +
-                        ", delegate=" + delegate +
-                        '}';
             }
         }
     }
@@ -380,11 +344,6 @@ public interface MethodDelegationBinder {
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 throw new IllegalStateException("Cannot delegate to an unbound method");
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.MethodBinding.Illegal." + name();
             }
         }
 
@@ -461,17 +420,6 @@ public interface MethodDelegationBinder {
                         methodInvoker.invoke(candidate),
                         parameterStackManipulations,
                         terminatingManipulation);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.MethodBinding.Builder{" +
-                        "methodInvoker=" + methodInvoker +
-                        ", candidate=" + candidate +
-                        ", parameterStackManipulations=" + parameterStackManipulations +
-                        ", registeredTargetIndices=" + registeredTargetIndices +
-                        ", nextParameterIndex=" + nextParameterIndex +
-                        '}';
             }
 
             /**
@@ -554,17 +502,6 @@ public interface MethodDelegationBinder {
                     return new Compound(
                             CompoundList.of(parameterStackManipulations, Arrays.asList(methodInvocation, terminatingStackManipulation))
                     ).apply(methodVisitor, implementationContext);
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegationBinder.MethodBinding.Builder.Build{" +
-                            "target=" + target +
-                            ", registeredTargetIndices=" + registeredTargetIndices +
-                            ", methodInvocation=" + methodInvocation +
-                            ", parameterStackManipulations=" + parameterStackManipulations +
-                            ", terminatingStackManipulation=" + terminatingStackManipulation +
-                            '}';
                 }
             }
         }
@@ -667,11 +604,6 @@ public interface MethodDelegationBinder {
                         throw new AssertionError();
                 }
             }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.AmbiguityResolver.Resolution." + name();
-            }
         }
 
         /**
@@ -687,11 +619,6 @@ public interface MethodDelegationBinder {
             @Override
             public Resolution resolve(MethodDescription source, MethodBinding left, MethodBinding right) {
                 return Resolution.UNKNOWN;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.AmbiguityResolver.NoOp." + name();
             }
         }
 
@@ -731,11 +658,6 @@ public interface MethodDelegationBinder {
                 return this.left
                         ? Resolution.LEFT
                         : Resolution.RIGHT;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.AmbiguityResolver.Directional." + name();
             }
         }
 
@@ -784,11 +706,6 @@ public interface MethodDelegationBinder {
                     resolution = iterator.next().resolve(source, left, right);
                 }
                 return resolution;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.AmbiguityResolver.Compound{ambiguityResolvers=" + ambiguityResolvers + '}';
             }
         }
     }
@@ -840,11 +757,6 @@ public interface MethodDelegationBinder {
                             : target.getReturnType());
                 }
             };
-
-            @Override
-            public String toString() {
-                return "MethodDelegationBinder.TerminationHandler.Default." + name();
-            }
         }
     }
 
@@ -973,14 +885,6 @@ public interface MethodDelegationBinder {
                     }
                 }
             }
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDelegationBinder.Processor{"
-                    + "records=" + records
-                    + ", ambiguityResolver=" + ambiguityResolver
-                    + '}';
         }
     }
 }

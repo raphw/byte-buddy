@@ -72,10 +72,5 @@ public @interface BindingPriority {
                 return Resolution.LEFT;
             }
         }
-
-        @Override
-        public String toString() {
-            return "BindingPriority.Resolver." + name();
-        }
     }
 }

@@ -85,11 +85,4 @@ public class SerializedConstant implements StackManipulation {
             throw new IllegalStateException("Could not locate Java API method", exception);
         }
     }
-
-    @Override
-    public String toString() {
-        return "SerializedConstant{" +
-                "serialization='" + serialization + '\'' +
-                '}';
-    }
 }

@@ -244,16 +244,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
         return new ClassReloadingStrategy(instrumentation, strategy, bootstrapInjection, preregisteredTypes);
     }
 
-    @Override
-    public String toString() {
-        return "ClassReloadingStrategy{" +
-                "instrumentation=" + instrumentation +
-                ", strategy=" + strategy +
-                ", bootstrapInjection=" + bootstrapInjection +
-                ", preregisteredTypes=" + preregisteredTypes +
-                '}';
-    }
-
     /**
      * A strategy which performs the actual redefinition of a {@link java.lang.Class}.
      */
@@ -392,11 +382,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             return redefinition;
         }
 
-        @Override
-        public String toString() {
-            return "ClassReloadingStrategy.Strategy." + name();
-        }
-
         /**
          * Resets the provided types to their original format.
          *
@@ -452,11 +437,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
                     throw new IllegalStateException("Could not transform: " + redefinedClasses.keySet());
                 }
             }
-
-            @Override
-            public String toString() {
-                return "ClassReloadingStrategy.Strategy.ClassRedefinitionTransformer{redefinedClasses=" + redefinedClasses + '}';
-            }
         }
 
         /**
@@ -476,11 +456,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
                                     ProtectionDomain protectionDomain,
                                     byte[] classfileBuffer) {
                 return NO_REDEFINITION;
-            }
-
-            @Override
-            public String toString() {
-                return "ClassReloadingStrategy.Strategy.ClassResettingTransformer." + name();
             }
         }
     }
@@ -512,11 +487,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             public ClassInjector make(Instrumentation instrumentation) {
                 throw new IllegalStateException("Bootstrap injection is not enabled");
             }
-
-            @Override
-            public String toString() {
-                return "ClassReloadingStrategy.BootstrapInjection.Disabled." + name();
-            }
         }
 
         /**
@@ -542,13 +512,6 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy<ClassLoader>
             @Override
             public ClassInjector make(Instrumentation instrumentation) {
                 return ClassInjector.UsingInstrumentation.of(folder, ClassInjector.UsingInstrumentation.Target.BOOTSTRAP, instrumentation);
-            }
-
-            @Override
-            public String toString() {
-                return "ClassReloadingStrategy.BootstrapInjection.Enabled{" +
-                        "folder=" + folder +
-                        '}';
             }
         }
     }

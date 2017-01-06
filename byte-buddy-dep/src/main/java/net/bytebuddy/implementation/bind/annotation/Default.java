@@ -101,11 +101,6 @@ public @interface Default {
             }
         }
 
-        @Override
-        public String toString() {
-            return "Default.Binder." + name();
-        }
-
         /**
          * Locates the type which should be the base type of the created proxy.
          */
@@ -132,11 +127,6 @@ public @interface Default {
                 @Override
                 public TypeDescription resolve(TypeDescription.Generic parameterType) {
                     return parameterType.asErasure();
-                }
-
-                @Override
-                public String toString() {
-                    return "Default.Binder.TypeLocator.ForParameterType." + name();
                 }
             }
 
@@ -182,13 +172,6 @@ public @interface Default {
                         throw new IllegalStateException("Impossible to assign " + typeDescription + " to parameter of type " + parameterType);
                     }
                     return typeDescription;
-                }
-
-                @Override
-                public String toString() {
-                    return "Default.Binder.TypeLocator.ForType{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
                 }
             }
         }

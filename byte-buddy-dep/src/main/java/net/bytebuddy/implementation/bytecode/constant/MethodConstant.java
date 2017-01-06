@@ -137,11 +137,6 @@ public abstract class MethodConstant implements StackManipulation {
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             return Illegal.INSTANCE.apply(methodVisitor, implementationContext);
         }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.CanCacheIllegal." + name();
-        }
     }
 
     /**
@@ -190,11 +185,6 @@ public abstract class MethodConstant implements StackManipulation {
                 throw new IllegalStateException("Cannot locate Class::getDeclaredMethod", exception);
             }
         }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.ForMethod{methodDescription=" + methodDescription + '}';
-        }
     }
 
     /**
@@ -225,11 +215,6 @@ public abstract class MethodConstant implements StackManipulation {
             } catch (NoSuchMethodException exception) {
                 throw new IllegalStateException("Cannot locate Class::getDeclaredConstructor", exception);
             }
-        }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.ForConstructor{methodDescription=" + methodDescription + '}';
         }
     }
 
@@ -269,11 +254,6 @@ public abstract class MethodConstant implements StackManipulation {
                     .read()
                     .apply(methodVisitor, implementationContext);
         }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.CachedMethod{methodConstant=" + methodConstant + '}';
-        }
     }
 
     /**
@@ -311,11 +291,6 @@ public abstract class MethodConstant implements StackManipulation {
             return FieldAccess.forField(implementationContext.cache(constructorConstant, CONSTRUCTOR_TYPE))
                     .read()
                     .apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodConstant.CachedConstructor{constructorConstant=" + constructorConstant + '}';
         }
     }
 }

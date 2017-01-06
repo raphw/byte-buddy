@@ -43,11 +43,6 @@ public interface FieldAttributeAppender {
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.NoOp." + name();
-        }
     }
 
     /**
@@ -108,11 +103,6 @@ public interface FieldAttributeAppender {
                 }
                 return new FieldAttributeAppender.Compound(fieldAttributeAppenders);
             }
-
-            @Override
-            public String toString() {
-                return "FieldAttributeAppender.Factory.Compound{factories=" + factories + '}';
-            }
         }
     }
 
@@ -138,11 +128,6 @@ public interface FieldAttributeAppender {
         @Override
         public FieldAttributeAppender make(TypeDescription typeDescription) {
             return this;
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.ForInstrumentedField." + name();
         }
     }
 
@@ -178,13 +163,6 @@ public interface FieldAttributeAppender {
         @Override
         public FieldAttributeAppender make(TypeDescription typeDescription) {
             return this;
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.Explicit{" +
-                    "annotations=" + annotations +
-                    '}';
         }
     }
 
@@ -232,11 +210,6 @@ public interface FieldAttributeAppender {
             for (FieldAttributeAppender fieldAttributeAppender : fieldAttributeAppenders) {
                 fieldAttributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilter);
             }
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.Compound{fieldAttributeAppenders=" + fieldAttributeAppenders + '}';
         }
     }
 }

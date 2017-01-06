@@ -70,7 +70,7 @@ public class JavaModuleTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(JavaModule.class).skipToString().apply();
+        ObjectPropertyAssertion.of(JavaModule.class).apply();
         Object object = new Object();
         assertThat(new JavaModule(object).hashCode(), is(object.hashCode()));
         assertThat(new JavaModule(object).toString(), is(object.toString()));

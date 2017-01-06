@@ -46,9 +46,4 @@ public enum StubMethod implements Implementation, ByteCodeAppender {
         ).apply(methodVisitor, implementationContext);
         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
     }
-
-    @Override
-    public String toString() {
-        return "StubMethod." + name();
-    }
 }

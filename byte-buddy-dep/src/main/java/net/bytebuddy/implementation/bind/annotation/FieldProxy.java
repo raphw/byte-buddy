@@ -289,13 +289,6 @@ public @interface FieldProxy {
             }
         }
 
-        @Override
-        public String toString() {
-            return "FieldProxy.Binder{" +
-                    "fieldResolverFactory=" + fieldResolverFactory +
-                    '}';
-        }
-
         /**
          * A resolver for creating an instrumentation for a field access.
          */
@@ -387,15 +380,6 @@ public @interface FieldProxy {
                             throw new IllegalStateException("Cannot use @FieldProxy on a non-installed type");
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "FieldProxy.Binder.FieldResolver.Factory.Duplex{" +
-                                "proxyType=" + proxyType +
-                                ", getterMethod=" + getterMethod +
-                                ", setterMethod=" + setterMethod +
-                                '}';
-                    }
                 }
 
                 /**
@@ -437,14 +421,6 @@ public @interface FieldProxy {
                             throw new IllegalStateException("Cannot use @FieldProxy on a non-installed type");
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "FieldProxy.Binder.FieldResolver.Factory.Simplex{" +
-                                "getterMethod=" + getterMethod +
-                                ", setterMethod=" + setterMethod +
-                                '}';
-                    }
                 }
             }
 
@@ -474,11 +450,6 @@ public @interface FieldProxy {
                                                     Assigner assigner,
                                                     MethodAccessorFactory methodAccessorFactory) {
                     throw new IllegalStateException("Cannot apply unresolved field resolver");
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldProxy.Binder.FieldResolver.Unresolved." + name();
                 }
             }
 
@@ -519,13 +490,6 @@ public @interface FieldProxy {
                                                     MethodAccessorFactory methodAccessorFactory) {
                     return builder.method(is(getterMethod)).intercept(new FieldGetter(fieldDescription, assigner, methodAccessorFactory));
                 }
-
-                @Override
-                public String toString() {
-                    return "FieldProxy.Binder.FieldResolver.ForGetter{" +
-                            "getterMethod=" + getterMethod +
-                            '}';
-                }
             }
 
             /**
@@ -564,13 +528,6 @@ public @interface FieldProxy {
                                                     Assigner assigner,
                                                     MethodAccessorFactory methodAccessorFactory) {
                     return builder.method(is(setterMethod)).intercept(new FieldSetter(fieldDescription, assigner, methodAccessorFactory));
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldProxy.Binder.FieldResolver.ForSetter{" +
-                            "setterMethod=" + setterMethod +
-                            '}';
                 }
             }
 
@@ -631,15 +588,6 @@ public @interface FieldProxy {
                                     ? ExceptionMethod.throwing(UnsupportedOperationException.class, "Cannot set final field " + fieldDescription)
                                     : new FieldSetter(fieldDescription, assigner, methodAccessorFactory));
                 }
-
-                @Override
-                public String toString() {
-                    return "FieldProxy.Binder.FieldResolver.ForGetterSetterPair{" +
-                            "proxyType=" + proxyType +
-                            ", getterMethod=" + getterMethod +
-                            ", setterMethod=" + setterMethod +
-                            '}';
-                }
             }
         }
 
@@ -674,11 +622,6 @@ public @interface FieldProxy {
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new ByteCodeAppender.Simple(MethodVariableAccess.loadThis(), MethodInvocation.invoke(objectTypeDefaultConstructor), MethodReturn.VOID);
             }
-
-            @Override
-            public String toString() {
-                return "FieldProxy.Binder.StaticFieldConstructor." + name();
-            }
         }
 
         /**
@@ -712,13 +655,6 @@ public @interface FieldProxy {
             @Override
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new Appender(implementationTarget);
-            }
-
-            @Override
-            public String toString() {
-                return "FieldProxy.Binder.InstanceFieldConstructor{" +
-                        "instrumentedType=" + instrumentedType +
-                        '}';
             }
 
             /**
@@ -757,13 +693,6 @@ public @interface FieldProxy {
                             MethodReturn.VOID
                     ).apply(methodVisitor, implementationContext);
                     return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldProxy.Binder.InstanceFieldConstructor.Appender{" +
-                            "fieldDescription=" + fieldDescription +
-                            '}';
                 }
             }
         }
@@ -812,15 +741,6 @@ public @interface FieldProxy {
             @Override
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new Appender(implementationTarget);
-            }
-
-            @Override
-            public String toString() {
-                return "FieldProxy.Binder.FieldGetter{" +
-                        "fieldDescription=" + fieldDescription +
-                        ", assigner=" + assigner +
-                        ", methodAccessorFactory=" + methodAccessorFactory +
-                        '}';
             }
 
             /**
@@ -881,14 +801,6 @@ public @interface FieldProxy {
                 public int hashCode() {
                     return typeDescription.hashCode() + 31 * FieldGetter.this.hashCode();
                 }
-
-                @Override
-                public String toString() {
-                    return "FieldProxy.Binder.FieldGetter.Appender{" +
-                            "outer=" + FieldGetter.this +
-                            ", typeDescription=" + typeDescription +
-                            '}';
-                }
             }
         }
 
@@ -936,15 +848,6 @@ public @interface FieldProxy {
             @Override
             public ByteCodeAppender appender(Target implementationTarget) {
                 return new Appender(implementationTarget);
-            }
-
-            @Override
-            public String toString() {
-                return "FieldProxy.Binder.FieldSetter{" +
-                        "fieldDescription=" + fieldDescription +
-                        ", assigner=" + assigner +
-                        ", methodAccessorFactory=" + methodAccessorFactory +
-                        '}';
             }
 
             /**
@@ -1007,14 +910,6 @@ public @interface FieldProxy {
                 @Override
                 public int hashCode() {
                     return typeDescription.hashCode() + 31 * FieldSetter.this.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldProxy.Binder.FieldSetter.Appender{" +
-                            "outer=" + FieldSetter.this +
-                            ", typeDescription=" + typeDescription +
-                            '}';
                 }
             }
         }
@@ -1139,18 +1034,6 @@ public @interface FieldProxy {
                 result = 31 * result + assigner.hashCode();
                 result = 31 * result + (serializableProxy ? 1 : 0);
                 return result;
-            }
-
-            @Override
-            public String toString() {
-                return "FieldProxy.Binder.AccessorProxy{" +
-                        "outer=" + Binder.this +
-                        ", fieldDescription=" + fieldDescription +
-                        ", instrumentedType=" + instrumentedType +
-                        ", fieldResolver=" + fieldResolver +
-                        ", assigner=" + assigner +
-                        ", serializableProxy=" + serializableProxy +
-                        '}';
             }
         }
     }

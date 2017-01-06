@@ -59,13 +59,6 @@ public class FieldConstant implements StackManipulation {
         }
     }
 
-    @Override
-    public String toString() {
-        return "FieldConstant{" +
-                "fieldDescription=" + fieldDescription +
-                '}';
-    }
-
     /**
      * A cached version of a {@link FieldConstant}.
      */
@@ -96,13 +89,6 @@ public class FieldConstant implements StackManipulation {
             return FieldAccess.forField(implementationContext.cache(fieldConstant, new TypeDescription.ForLoadedType(Field.class)))
                     .read()
                     .apply(methodVisitor, implementationContext);
-        }
-
-        @Override
-        public String toString() {
-            return "FieldConstant.Cached{" +
-                    "fieldConstant=" + fieldConstant +
-                    '}';
         }
     }
 }

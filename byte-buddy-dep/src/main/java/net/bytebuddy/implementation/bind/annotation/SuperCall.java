@@ -100,10 +100,5 @@ public @interface SuperCall {
             }
             return new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation);
         }
-
-        @Override
-        public String toString() {
-            return "SuperCall.Binder." + name();
-        }
     }
 }

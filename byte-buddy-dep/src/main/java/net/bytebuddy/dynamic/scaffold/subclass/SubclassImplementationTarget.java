@@ -93,17 +93,6 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         return originTypeResolver.identify(instrumentedType);
     }
 
-    @Override
-    public String toString() {
-        return "SubclassImplementationTarget{" +
-                "superConstructors=" + superConstructors +
-                ", originTypeResolver=" + originTypeResolver +
-                ", instrumentedType=" + instrumentedType +
-                ", methodGraph=" + methodGraph +
-                ", defaultMethodInvocation=" + defaultMethodInvocation +
-                '}';
-    }
-
     /**
      * Responsible for identifying the origin type that an implementation target represents when
      * {@link Implementation.Target#getOriginType()} is invoked.
@@ -137,11 +126,6 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          * @return The origin type to the given type description.
          */
         protected abstract TypeDefinition identify(TypeDescription typeDescription);
-
-        @Override
-        public String toString() {
-            return "SubclassImplementationTarget.OriginTypeResolver." + name();
-        }
     }
 
     /**
@@ -176,11 +160,6 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         @Override
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, ClassFileVersion classFileVersion) {
             return new SubclassImplementationTarget(instrumentedType, methodGraph, DefaultMethodInvocation.of(classFileVersion), originTypeResolver);
-        }
-
-        @Override
-        public String toString() {
-            return "SubclassImplementationTarget.Factory." + name();
         }
     }
 }

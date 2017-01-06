@@ -52,9 +52,4 @@ public enum AnnotationRetention {
     public boolean isEnabled() {
         return enabled;
     }
-
-    @Override
-    public String toString() {
-        return "AnnotationRetention." + name();
-    }
 }

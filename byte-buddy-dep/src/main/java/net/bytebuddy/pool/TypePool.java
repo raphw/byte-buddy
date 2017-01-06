@@ -102,13 +102,6 @@ public interface TypePool {
             public TypeDescription resolve() {
                 return typeDescription;
             }
-
-            @Override
-            public String toString() {
-                return "TypePool.Resolution.Simple{" +
-                        "typeDescription=" + typeDescription +
-                        '}';
-            }
         }
 
         /**
@@ -139,13 +132,6 @@ public interface TypePool {
             @Override
             public TypeDescription resolve() {
                 throw new IllegalStateException("Cannot resolve type description for " + name);
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.Resolution.Illegal{" +
-                        "name='" + name + '\'' +
-                        '}';
             }
         }
     }
@@ -208,11 +194,6 @@ public interface TypePool {
             public void clear() {
                 /* do nothing */
             }
-
-            @Override
-            public String toString() {
-                return "TypePool.CacheProvider.NoOp." + name();
-            }
         }
 
         /**
@@ -260,11 +241,6 @@ public interface TypePool {
             public void clear() {
                 cache.clear();
             }
-
-            @Override
-            public String toString() {
-                return "TypePool.CacheProvider.Simple{cache=" + cache + '}';
-            }
         }
     }
 
@@ -286,11 +262,6 @@ public interface TypePool {
         @Override
         public void clear() {
             /* do nothing */
-        }
-
-        @Override
-        public String toString() {
-            return "TypePool.Empty." + name();
         }
     }
 
@@ -496,14 +467,6 @@ public interface TypePool {
             @Override
             public TypeDescription resolve() {
                 return TypeDescription.ArrayProjection.of(resolution.resolve(), arity);
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.AbstractBase.ArrayTypeResolution{" +
-                        "resolution=" + resolution +
-                        ", arity=" + arity +
-                        '}';
             }
         }
 
@@ -1073,15 +1036,6 @@ public interface TypePool {
             return typeExtractor.toTypeDescription();
         }
 
-        @Override
-        public String toString() {
-            return "TypePool.Default{" +
-                    "classFileLocator=" + classFileLocator +
-                    ", cacheProvider=" + cacheProvider +
-                    ", readerMode=" + readerMode +
-                    '}';
-        }
-
         /**
          * Determines the granularity of the class file parsing that is conducted by a {@link net.bytebuddy.pool.TypePool.Default}.
          */
@@ -1130,11 +1084,6 @@ public interface TypePool {
              */
             public boolean isExtended() {
                 return this == EXTENDED;
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.Default.ReaderMode." + name();
             }
         }
 
@@ -1277,14 +1226,6 @@ public interface TypePool {
                 @Override
                 public int hashCode() {
                     return name.hashCode() + 31 * getOuter().hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.Default.WithLazyResolution.LazyResolution{" +
-                            "name='" + name + '\'' +
-                            ", outer=" + getOuter() +
-                            '}';
                 }
             }
 
@@ -1531,13 +1472,6 @@ public interface TypePool {
                     return annotationTokens;
                 }
 
-                @Override
-                public String toString() {
-                    return "TypePool.Default.AnnotationRegistrant.ForByteCodeElement{" +
-                            "annotationTokens=" + annotationTokens +
-                            '}';
-                }
-
                 /**
                  * An annotation collector for a byte code element with an index.
                  */
@@ -1575,14 +1509,6 @@ public interface TypePool {
                         }
                         return annotationTokens;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.AnnotationRegistrant.ForByteCodeElement.WithIndex{" +
-                                "index=" + index +
-                                ", annotationTokens=" + annotationTokens +
-                                '}';
-                    }
                 }
             }
 
@@ -1611,13 +1537,6 @@ public interface TypePool {
                 @Override
                 protected Map<String, List<LazyTypeDescription.AnnotationToken>> getPathMap() {
                     return pathMap;
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.Default.AnnotationRegistrant.ForTypeVariable{" +
-                            ", pathMap=" + pathMap +
-                            '}';
                 }
 
                 /**
@@ -1649,13 +1568,6 @@ public interface TypePool {
                     @Override
                     protected Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> getIndexedPathMap() {
                         return indexedPathMap;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.AnnotationRegistrant.ForTypeVariable.WithIndex{" +
-                                ", indexedPathMap=" + indexedPathMap +
-                                '}';
                     }
 
                     /**
@@ -1690,13 +1602,6 @@ public interface TypePool {
                         protected Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> getDoubleIndexedPathMap() {
                             return doubleIndexedPathMap;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.AnnotationRegistrant.ForTypeVariable.WithIndex.DoubleIndexed{" +
-                                    ", doubleIndexedPathMap=" + doubleIndexedPathMap +
-                                    '}';
-                        }
                     }
                 }
             }
@@ -1729,11 +1634,6 @@ public interface TypePool {
                 @Override
                 public RawDescriptionArray.ComponentTypeReference bind(String name) {
                     throw new IllegalStateException("Unexpected lookup of component type for " + name);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.Default.ComponentTypeLocator.Illegal." + name();
                 }
             }
 
@@ -1768,14 +1668,6 @@ public interface TypePool {
                 @Override
                 public RawDescriptionArray.ComponentTypeReference bind(String name) {
                     return new Bound(name);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.Default.ComponentTypeLocator.ForAnnotationProperty{" +
-                            "typePool=" + typePool +
-                            ", annotationName='" + annotationName + '\'' +
-                            '}';
                 }
 
                 /**
@@ -1831,13 +1723,6 @@ public interface TypePool {
                     private ForAnnotationProperty getOuter() {
                         return ForAnnotationProperty.this;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.ComponentTypeLocator.ForAnnotationProperty.Bound{" +
-                                "name='" + name + '\'' +
-                                '}';
-                    }
                 }
             }
 
@@ -1870,13 +1755,6 @@ public interface TypePool {
                 @Override
                 public String lookup() {
                     return componentType;
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.Default.ComponentTypeLocator.ForArrayType{" +
-                            "componentType='" + componentType + '\'' +
-                            '}';
                 }
             }
         }
@@ -1989,11 +1867,6 @@ public interface TypePool {
                 public void visitEnd() {
                     throw new IllegalStateException(MESSAGE);
                 }
-
-                @Override
-                public String toString() {
-                    return "TypePool.Default.GenericTypeRegistrant.RejectingSignatureVisitor{}";
-                }
             }
         }
 
@@ -2053,14 +1926,6 @@ public interface TypePool {
                     offset += aParameterType.getSize();
                 }
                 return parameterTokens;
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.Default.ParameterBag{" +
-                        "parameterType=" + Arrays.toString(parameterType) +
-                        ", parameterRegistry=" + parameterRegistry +
-                        '}';
             }
         }
 
@@ -2140,14 +2005,6 @@ public interface TypePool {
             @Override
             public void visitEnd() {
                 genericTypeRegistrant.register(incompleteToken.toToken());
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.Default.GenericTypeExtractor{" +
-                        "genericTypeRegistrant=" + genericTypeRegistrant +
-                        ", incompleteToken=" + incompleteToken +
-                        '}';
             }
 
             /**
@@ -2248,11 +2105,6 @@ public interface TypePool {
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             parameters.add(token);
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.GenericTypeExtractor.IncompleteToken.AbstractBase.ForDirectBound{outer=" + AbstractBase.this + '}';
-                        }
                     }
 
                     /**
@@ -2264,11 +2116,6 @@ public interface TypePool {
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             parameters.add(new LazyTypeDescription.GenericTypeToken.ForUpperBoundWildcard(token));
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.GenericTypeExtractor.IncompleteToken.AbstractBase.ForUpperBound{outer=" + AbstractBase.this + '}';
-                        }
                     }
 
                     /**
@@ -2279,11 +2126,6 @@ public interface TypePool {
                         @Override
                         public void register(LazyTypeDescription.GenericTypeToken token) {
                             parameters.add(new LazyTypeDescription.GenericTypeToken.ForLowerBoundWildcard(token));
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.GenericTypeExtractor.IncompleteToken.AbstractBase.ForLowerBound{outer=" + AbstractBase.this + '}';
                         }
                     }
                 }
@@ -2323,13 +2165,6 @@ public interface TypePool {
                     @Override
                     public String getName() {
                         return internalName.replace('/', '.');
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.GenericTypeExtractor.IncompleteToken.ForTopLevelType{" +
-                                "internalName='" + internalName + '\'' +
-                                '}';
                     }
                 }
 
@@ -2380,14 +2215,6 @@ public interface TypePool {
                     @Override
                     public String getName() {
                         return outerTypeToken.getName() + INNER_CLASS_SEPARATOR + internalName.replace('/', '.');
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.GenericTypeExtractor.IncompleteToken.ForInnerClass{" +
-                                "internalName='" + internalName + '\'' +
-                                "outerTypeToken=" + outerTypeToken +
-                                '}';
                     }
                 }
             }
@@ -2532,17 +2359,6 @@ public interface TypePool {
                         return new LazyTypeDescription.GenericTypeToken.Resolution.ForType.Tokenized(superClassToken, interfaceTypeTokens, typeVariableTokens);
                     }
 
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.GenericTypeExtractor.ForSignature.OfType{" +
-                                "currentTypeParameter='" + currentTypeParameter + '\'' +
-                                ", currentBounds=" + currentBounds +
-                                ", typeVariableTokens=" + typeVariableTokens +
-                                ", superClassToken=" + superClassToken +
-                                ", interfaceTypeTokens=" + interfaceTypeTokens +
-                                '}';
-                    }
-
                     /**
                      * A registrant for the super type.
                      */
@@ -2572,11 +2388,6 @@ public interface TypePool {
                          */
                         private OfType getOuter() {
                             return OfType.this;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfType.SuperClassRegistrant{outer=" + OfType.this + '}';
                         }
                     }
 
@@ -2609,11 +2420,6 @@ public interface TypePool {
                          */
                         private OfType getOuter() {
                             return OfType.this;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfType.InterfaceTypeRegistrant{outer=" + OfType.this + '}';
                         }
                     }
                 }
@@ -2686,18 +2492,6 @@ public interface TypePool {
                                 typeVariableTokens);
                     }
 
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod{" +
-                                "currentTypeParameter='" + currentTypeParameter + '\'' +
-                                ", currentBounds=" + currentBounds +
-                                ", typeVariableTokens=" + typeVariableTokens +
-                                ", returnTypeToken=" + returnTypeToken +
-                                ", parameterTypeTokens=" + parameterTypeTokens +
-                                ", exceptionTypeTokens=" + exceptionTypeTokens +
-                                '}';
-                    }
-
                     /**
                      * A registrant for a parameter type.
                      */
@@ -2727,11 +2521,6 @@ public interface TypePool {
                          */
                         private OfMethod getOuter() {
                             return OfMethod.this;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.ParameterTypeRegistrant{outer=" + OfMethod.this + '}';
                         }
                     }
 
@@ -2765,11 +2554,6 @@ public interface TypePool {
                         private OfMethod getOuter() {
                             return OfMethod.this;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.ReturnTypeTypeRegistrant{outer=" + OfMethod.this + '}';
-                        }
                     }
 
                     /**
@@ -2801,11 +2585,6 @@ public interface TypePool {
                          */
                         private OfMethod getOuter() {
                             return OfMethod.this;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.ExceptionTypeRegistrant{outer=" + OfMethod.this + '}';
                         }
                     }
                 }
@@ -2853,13 +2632,6 @@ public interface TypePool {
                      */
                     protected LazyTypeDescription.GenericTypeToken.Resolution.ForField resolve() {
                         return new LazyTypeDescription.GenericTypeToken.Resolution.ForField.Tokenized(fieldTypeToken);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.GenericTypeExtractor.ForSignature.OfField{" +
-                                "fieldTypeToken=" + fieldTypeToken +
-                                '}';
                     }
                 }
             }
@@ -3224,11 +2996,6 @@ public interface TypePool {
                     public boolean isLocalType() {
                         return false;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.TypeContainment.SelfContained." + name();
-                    }
                 }
 
                 /**
@@ -3281,14 +3048,6 @@ public interface TypePool {
                     @Override
                     public boolean isLocalType() {
                         return localType;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.TypeContainment.WithinType{" +
-                                "name='" + name + '\'' +
-                                ", localType=" + localType +
-                                '}';
                     }
                 }
 
@@ -3349,15 +3108,6 @@ public interface TypePool {
                     @Override
                     public boolean isLocalType() {
                         return true;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.TypeContainment.WithinMethod{" +
-                                "name='" + name + '\'' +
-                                ", methodName='" + methodName + '\'' +
-                                ", methodDescriptor='" + methodDescriptor + '\'' +
-                                '}';
                     }
                 }
             }
@@ -3559,11 +3309,6 @@ public interface TypePool {
                         throw new IllegalStateException("A primitive type cannot be the owner of a nested type: " + this);
                     }
 
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForPrimitiveType." + name();
-                    }
-
                     /**
                      * A representation of a lazy primitive type.
                      */
@@ -3659,11 +3404,6 @@ public interface TypePool {
                     @Override
                     public String getTypePathPrefix() {
                         throw new IllegalStateException("An unbound wildcard cannot be the owner of a nested type: " + this);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForUnboundWildcard." + name();
                     }
 
                     /**
@@ -3800,11 +3540,6 @@ public interface TypePool {
                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
                                                                      Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
                             return new TypeList.Generic.Empty();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.Raw." + name();
                         }
 
                         /**
@@ -4048,11 +3783,6 @@ public interface TypePool {
                                                                      Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
                             throw new GenericSignatureFormatError();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.Malformed." + name();
-                        }
                     }
 
                     /**
@@ -4146,15 +3876,6 @@ public interface TypePool {
                                                                          Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
                                                                          Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
                                 return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource, annotationTokens, boundAnnotationTokens);
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.ForType.Tokenized{" +
-                                        "superClassToken=" + superClassToken +
-                                        ", interfaceTypeTokens=" + interfaceTypeTokens +
-                                        ", typeVariableTokens=" + typeVariableTokens +
-                                        '}';
                             }
                         }
                     }
@@ -4284,16 +4005,6 @@ public interface TypePool {
                                                                          Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
                                 return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource, annotationTokens, boundAnnotationTokens);
                             }
-
-                            @Override
-                            public String toString() {
-                                return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.ForMethod.Tokenized{" +
-                                        "returnTypeToken=" + returnTypeToken +
-                                        ", parameterTypeTokens=" + parameterTypeTokens +
-                                        ", exceptionTypeTokens=" + exceptionTypeTokens +
-                                        ", typeVariableTokens=" + typeVariableTokens +
-                                        '}';
-                            }
                         }
                     }
 
@@ -4343,13 +4054,6 @@ public interface TypePool {
                                                             FieldDescription.InDefinedShape definingField) {
                                 return TokenizedGenericType.of(typePool, fieldTypeToken, fieldTypeDescriptor, annotationTokens, definingField.getDeclaringType());
                             }
-
-                            @Override
-                            public String toString() {
-                                return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.ForField.Tokenized{" +
-                                        "fieldTypeToken=" + fieldTypeToken +
-                                        '}';
-                            }
                         }
                     }
                 }
@@ -4396,13 +4100,6 @@ public interface TypePool {
                     public String getTypePathPrefix() {
                         throw new IllegalStateException("A non-generic type cannot be the owner of a nested type: " + this);
                     }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForRawType{" +
-                                "name='" + name + '\'' +
-                                '}';
-                    }
                 }
 
                 /**
@@ -4441,13 +4138,6 @@ public interface TypePool {
                     @Override
                     public String getTypePathPrefix() {
                         throw new IllegalStateException("A type variable cannot be the owner of a nested type: " + this);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForTypeVariable{" +
-                                "symbol='" + symbol + '\'' +
-                                '}';
                     }
 
                     /**
@@ -4611,14 +4301,6 @@ public interface TypePool {
                                             : boundaryAnnotationTokens,
                                     symbol,
                                     boundTypeTokens);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForTypeVariable.Formal{" +
-                                    "symbol='" + symbol + '\'' +
-                                    "boundTypeTokens='" + boundTypeTokens + '\'' +
-                                    '}';
                         }
 
                         /**
@@ -4800,13 +4482,6 @@ public interface TypePool {
                         throw new IllegalStateException("A generic array type cannot be the owner of a nested type: " + this);
                     }
 
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForGenericArray{" +
-                                "componentTypeToken='" + componentTypeToken + '\'' +
-                                '}';
-                    }
-
                     /**
                      * A generic type representation of a generic array.
                      */
@@ -4903,13 +4578,6 @@ public interface TypePool {
                     @Override
                     public String getTypePathPrefix() {
                         throw new IllegalStateException("A lower bound wildcard cannot be the owner of a nested type: " + this);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForLowerBoundWildcard{" +
-                                "boundTypeToken=" + boundTypeToken +
-                                '}';
                     }
 
                     /**
@@ -5016,13 +4684,6 @@ public interface TypePool {
                     @Override
                     public String getTypePathPrefix() {
                         throw new IllegalStateException("An upper bound wildcard cannot be the owner of a nested type: " + this);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForUpperBoundWildcard{" +
-                                "boundTypeToken=" + boundTypeToken +
-                                '}';
                     }
 
                     /**
@@ -5135,14 +4796,6 @@ public interface TypePool {
                         return String.valueOf(INNER_CLASS_PATH);
                     }
 
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForParameterizedType{" +
-                                "name='" + name + '\'' +
-                                ", parameterTypeTokens=" + parameterTypeTokens +
-                                '}';
-                    }
-
                     /**
                      * A generic type token to describe a parameterized type description with a generic owner type.
                      */
@@ -5193,15 +4846,6 @@ public interface TypePool {
                         @Override
                         public boolean isPrimaryBound(TypePool typePool) {
                             return !typePool.describe(name).resolve().isInterface();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForParameterizedType.Nested{" +
-                                    "name='" + name + '\'' +
-                                    ", parameterTypeTokens=" + parameterTypeTokens +
-                                    ", ownerTypeToken=" + ownerTypeToken +
-                                    '}';
                         }
 
                         /**
@@ -5562,14 +5206,6 @@ public interface TypePool {
                             : new Resolution.Illegal(getBinaryName());
                 }
 
-                @Override
-                public String toString() {
-                    return "TypePool.Default.LazyTypeDescription.AnnotationToken{" +
-                            "descriptor='" + descriptor + '\'' +
-                            ", values=" + values +
-                            '}';
-                }
-
                 /**
                  * A resolution for an annotation tokens. Any annotation is suppressed if its type is not available.
                  * This conforms to the handling of the Java reflection API.
@@ -5619,13 +5255,6 @@ public interface TypePool {
                         public AnnotationDescription resolve() {
                             return annotationDescription;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.LazyTypeDescription.AnnotationToken.Resolution.Simple{" +
-                                    "annotationDescription=" + annotationDescription +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -5656,13 +5285,6 @@ public interface TypePool {
                         @Override
                         public AnnotationDescription resolve() {
                             throw new IllegalStateException("Annotation type is not available: " + annotationType);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.Default.LazyTypeDescription.AnnotationToken.Resolution.Illegal{" +
-                                    "annotationType=" + annotationType +
-                                    '}';
                         }
                     }
                 }
@@ -5741,18 +5363,6 @@ public interface TypePool {
                             signatureResolution,
                             typeAnnotationTokens,
                             annotationTokens);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.Default.LazyTypeDescription.FieldToken{" +
-                            "modifiers=" + modifiers +
-                            ", name='" + name + '\'' +
-                            ", descriptor='" + descriptor + '\'' +
-                            ", signatureResolution=" + signatureResolution +
-                            ", typeAnnotationTokens=" + typeAnnotationTokens +
-                            ", annotationTokens=" + annotationTokens +
-                            '}';
                 }
             }
 
@@ -5915,27 +5525,6 @@ public interface TypePool {
                             defaultValue);
                 }
 
-                @Override
-                public String toString() {
-                    return "TypePool.Default.LazyTypeDescription.MethodToken{" +
-                            "modifiers=" + modifiers +
-                            ", name='" + name + '\'' +
-                            ", descriptor='" + descriptor + '\'' +
-                            ", signatureResolution=" + signatureResolution +
-                            ", exceptionName=" + Arrays.toString(exceptionName) +
-                            ", typeVariableAnnotationTokens=" + typeVariableAnnotationTokens +
-                            ", typeVariableBoundAnnotationTokens=" + typeVariableBoundAnnotationTokens +
-                            ", returnTypeAnnotationTokens=" + returnTypeAnnotationTokens +
-                            ", parameterTypeAnnotationTokens=" + parameterTypeAnnotationTokens +
-                            ", exceptionTypeAnnotationTokens=" + exceptionTypeAnnotationTokens +
-                            ", receiverTypeAnnotationTokens=" + receiverTypeAnnotationTokens +
-                            ", annotationTokens=" + annotationTokens +
-                            ", parameterAnnotationTokens=" + parameterAnnotationTokens +
-                            ", parameterTokens=" + parameterTokens +
-                            ", defaultValue=" + defaultValue +
-                            '}';
-                }
-
                 /**
                  * A token representing a method's parameter.
                  */
@@ -6005,14 +5594,6 @@ public interface TypePool {
                      */
                     protected Integer getModifiers() {
                         return modifiers;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.LazyTypeDescription.MethodToken.ParameterToken{" +
-                                "name='" + name + '\'' +
-                                ", modifiers=" + modifiers +
-                                '}';
                     }
                 }
             }
@@ -7409,23 +6990,6 @@ public interface TypePool {
                         methodTokens);
             }
 
-            @Override
-            public String toString() {
-                return "TypePool.Default.TypeExtractor{" +
-                        "typePool=" + Default.this +
-                        ", annotationTokens=" + annotationTokens +
-                        ", fieldTokens=" + fieldTokens +
-                        ", methodTokens=" + methodTokens +
-                        ", modifiers=" + modifiers +
-                        ", internalName='" + internalName + '\'' +
-                        ", superClassName='" + superClassName + '\'' +
-                        ", genericSignature='" + genericSignature + '\'' +
-                        ", interfaceName=" + Arrays.toString(interfaceName) +
-                        ", anonymousType=" + anonymousType +
-                        ", declarationContext=" + typeContainment +
-                        '}';
-            }
-
             /**
              * An annotation extractor reads an annotation found in a class field an collects data that
              * is relevant to creating a related annotation description.
@@ -7508,15 +7072,6 @@ public interface TypePool {
                     annotationRegistrant.onComplete();
                 }
 
-                @Override
-                public String toString() {
-                    return "TypePool.Default.TypeExtractor.AnnotationExtractor{" +
-                            "typeExtractor=" + TypeExtractor.this +
-                            "annotationRegistrant=" + annotationRegistrant +
-                            ", componentTypeLocator=" + componentTypeLocator +
-                            '}';
-                }
-
                 /**
                  * An annotation registrant for registering values of an array.
                  */
@@ -7557,16 +7112,6 @@ public interface TypePool {
                     @Override
                     public void onComplete() {
                         annotationRegistrant.register(name, new RawDescriptionArray(Default.this, componentTypeReference, values));
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.TypeExtractor.AnnotationExtractor.ArrayLookup{" +
-                                "annotationExtractor=" + AnnotationExtractor.this +
-                                ", name='" + name + '\'' +
-                                ", componentTypeReference=" + componentTypeReference +
-                                ", values=" + values +
-                                '}';
                     }
                 }
 
@@ -7610,15 +7155,6 @@ public interface TypePool {
                     @Override
                     public void onComplete() {
                         annotationRegistrant.register(name, new RawAnnotationValue(Default.this, new LazyTypeDescription.AnnotationToken(descriptor, values)));
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.Default.TypeExtractor.AnnotationExtractor.AnnotationLookup{" +
-                                "descriptor='" + descriptor + '\'' +
-                                ", name='" + name + '\'' +
-                                ", values=" + values +
-                                '}';
                     }
                 }
             }
@@ -7707,19 +7243,6 @@ public interface TypePool {
                             GenericTypeExtractor.ForSignature.OfField.extract(genericSignature),
                             typeAnnotationTokens,
                             annotationTokens));
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.Default.TypeExtractor.FieldExtractor{" +
-                            "typeExtractor=" + TypeExtractor.this +
-                            ", modifiers=" + modifiers +
-                            ", internalName='" + internalName + '\'' +
-                            ", descriptor='" + descriptor + '\'' +
-                            ", genericSignature='" + genericSignature + '\'' +
-                            ", typeAnnotationTokens=" + typeAnnotationTokens +
-                            ", annotationTokens=" + annotationTokens +
-                            '}';
                 }
             }
 
@@ -7961,30 +7484,6 @@ public interface TypePool {
                                     : parameterTokens,
                             defaultValue));
                 }
-
-                @Override
-                public String toString() {
-                    return "TypePool.Default.TypeExtractor.MethodExtractor{" +
-                            "typeExtractor=" + TypeExtractor.this +
-                            ", modifiers=" + modifiers +
-                            ", internalName='" + internalName + '\'' +
-                            ", descriptor='" + descriptor + '\'' +
-                            ", genericSignature='" + genericSignature + '\'' +
-                            ", exceptionName=" + Arrays.toString(exceptionName) +
-                            ", typeVariableAnnotationTokens=" + typeVariableAnnotationTokens +
-                            ", typeVariableBoundAnnotationTokens=" + typeVariableBoundAnnotationTokens +
-                            ", returnTypeAnnotationTokens=" + returnTypeAnnotationTokens +
-                            ", parameterTypeAnnotationTokens=" + parameterTypeAnnotationTokens +
-                            ", exceptionTypeAnnotationTokens=" + exceptionTypeAnnotationTokens +
-                            ", receiverTypeAnnotationTokens=" + receiverTypeAnnotationTokens +
-                            ", annotationTokens=" + annotationTokens +
-                            ", parameterAnnotationTokens=" + parameterAnnotationTokens +
-                            ", parameterTokens=" + parameterTokens +
-                            ", legacyParameterBag=" + legacyParameterBag +
-                            ", firstLabel=" + firstLabel +
-                            ", defaultValue=" + defaultValue +
-                            '}';
-                }
             }
         }
     }
@@ -8018,13 +7517,6 @@ public interface TypePool {
         @Override
         public void clear() {
             typePool.clear();
-        }
-
-        @Override
-        public String toString() {
-            return "TypePool.LazyFacade{" +
-                    "typePool=" + typePool +
-                    '}';
         }
 
         /**
@@ -8062,14 +7554,6 @@ public interface TypePool {
             @Override
             public TypeDescription resolve() {
                 return new LazyTypeDescription(typePool, name);
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.LazyFacade.LazyResolution{" +
-                        "typePool=" + typePool +
-                        ", name=" + name +
-                        '}';
             }
         }
 
@@ -8186,14 +7670,6 @@ public interface TypePool {
                 return new Resolution.Illegal(name);
             }
         }
-
-        @Override
-        public String toString() {
-            return "TypePool.ClassLoading{" +
-                    ", cacheProvider=" + cacheProvider +
-                    ", classLoader=" + classLoader +
-                    '}';
-        }
     }
 
     /**
@@ -8233,14 +7709,6 @@ public interface TypePool {
             return typeDescription == null
                     ? new Resolution.Illegal(name)
                     : new Resolution.Simple(typeDescription);
-        }
-
-        @Override
-        public String toString() {
-            return "TypePool.Explicit{" +
-                    "cacheProvider=" + cacheProvider +
-                    ", types=" + types +
-                    '}';
         }
     }
 }

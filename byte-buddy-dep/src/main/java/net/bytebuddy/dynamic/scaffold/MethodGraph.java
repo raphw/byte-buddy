@@ -75,11 +75,6 @@ public interface MethodGraph {
         public Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
             return this;
         }
-
-        @Override
-        public String toString() {
-            return "MethodGraph.Empty." + name();
-        }
     }
 
     /**
@@ -158,15 +153,6 @@ public interface MethodGraph {
             @Override
             public NodeList listNodes() {
                 return methodGraph.listNodes();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodGraph.Linked.Delegation{" +
-                        "methodGraph=" + methodGraph +
-                        ", superClassGraph=" + superClassGraph +
-                        ", interfaceGraphs=" + interfaceGraphs +
-                        '}';
             }
         }
     }
@@ -284,11 +270,6 @@ public interface MethodGraph {
             public boolean isMadeVisible() {
                 return madeVisible;
             }
-
-            @Override
-            public String toString() {
-                return "MethodGraph.Node.Sort." + name();
-            }
         }
 
         /**
@@ -319,12 +300,6 @@ public interface MethodGraph {
             @Override
             public Visibility getVisibility() {
                 throw new IllegalStateException("Cannot resolve visibility of an illegal node");
-            }
-
-
-            @Override
-            public String toString() {
-                return "MethodGraph.Node.Unresolved." + name();
             }
         }
 
@@ -366,13 +341,6 @@ public interface MethodGraph {
             @Override
             public Visibility getVisibility() {
                 return methodDescription.getVisibility();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodGraph.Node.Simple{" +
-                        "methodDescription=" + methodDescription +
-                        '}';
             }
         }
     }
@@ -427,11 +395,6 @@ public interface MethodGraph {
                     nodes.put(methodDescription.asSignatureToken(), new Node.Simple(methodDescription));
                 }
                 return new Linked.Delegation(new MethodGraph.Simple(nodes), Empty.INSTANCE, Collections.<TypeDescription, MethodGraph>emptyMap());
-            }
-
-            @Override
-            public String toString() {
-                return "MethodGraph.Compiler.ForDeclaredMethods." + name();
             }
         }
 
@@ -594,14 +557,6 @@ public interface MethodGraph {
                 return store;
             }
 
-            @Override
-            public String toString() {
-                return "MethodGraph.Compiler.Default{" +
-                        "harmonizer=" + harmonizer +
-                        ", merger=" + merger +
-                        '}';
-            }
-
             /**
              * A harmonizer is responsible for creating a token that identifies a method's relevant attributes for considering
              * two methods of being equal or not.
@@ -633,11 +588,6 @@ public interface MethodGraph {
                         return new Token(typeToken);
                     }
 
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod." + name();
-                    }
-
                     /**
                      * A token that identifies a Java method's type by its parameter types only.
                      */
@@ -667,13 +617,6 @@ public interface MethodGraph {
                         public int hashCode() {
                             return typeToken.getParameterTypes().hashCode();
                         }
-
-                        @Override
-                        public String toString() {
-                            return "MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token{" +
-                                    "typeToken=" + typeToken +
-                                    '}';
-                        }
                     }
                 }
 
@@ -690,11 +633,6 @@ public interface MethodGraph {
                     @Override
                     public Token harmonize(MethodDescription.TypeToken typeToken) {
                         return new Token(typeToken);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Harmonizer.ForJVMMethod." + name();
                     }
 
                     /**
@@ -726,13 +664,6 @@ public interface MethodGraph {
                         @Override
                         public int hashCode() {
                             return typeToken.getReturnType().hashCode() + 31 * typeToken.getParameterTypes().hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "MethodGraph.Compiler.Default.Harmonizer.ForJVMMethod.Token{" +
-                                    "typeToken=" + typeToken +
-                                    '}';
                         }
                     }
                 }
@@ -787,11 +718,6 @@ public interface MethodGraph {
                         return this.left
                                 ? left
                                 : right;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Merger.Directional." + name();
                     }
                 }
             }
@@ -937,14 +863,6 @@ public interface MethodGraph {
                     protected Set<V> getIdentifiers() {
                         return identifiers.keySet();
                     }
-
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Key.Harmonized{" +
-                                "internalName='" + internalName + '\'' +
-                                ", identifiers=" + identifiers +
-                                '}';
-                    }
                 }
 
                 /**
@@ -981,14 +899,6 @@ public interface MethodGraph {
                     @Override
                     protected Set<MethodDescription.TypeToken> getIdentifiers() {
                         return identifiers;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Key.Detached{" +
-                                "internalName='" + internalName + '\'' +
-                                ", identifiers=" + identifiers +
-                                '}';
                     }
                 }
 
@@ -1149,13 +1059,6 @@ public interface MethodGraph {
                         return new Graph(entries);
                     }
 
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Key.Store{" +
-                                "entries=" + entries +
-                                '}';
-                    }
-
                     /**
                      * An entry of a key store.
                      *
@@ -1274,11 +1177,6 @@ public interface MethodGraph {
                             public int hashCode() {
                                 return key.hashCode();
                             }
-
-                            @Override
-                            public String toString() {
-                                return "MethodGraph.Compiler.Default.Key.Store.Entry.Initial{key=" + key + '}';
-                            }
                         }
 
                         /**
@@ -1386,16 +1284,6 @@ public interface MethodGraph {
                                 return new Node(key.detach(methodDescription.asTypeToken()), methodDescription, visibility, madeVisible);
                             }
 
-                            @Override
-                            public String toString() {
-                                return "MethodGraph.Compiler.Default.Key.Store.Entry.Resolved{" +
-                                        "key=" + key +
-                                        ", methodDescription=" + methodDescription +
-                                        ", visibility=" + visibility +
-                                        ", madeVisible=" + madeVisible +
-                                        '}';
-                            }
-
                             /**
                              * A node implementation representing a non-ambiguous method.
                              */
@@ -1457,16 +1345,6 @@ public interface MethodGraph {
                                 @Override
                                 public Visibility getVisibility() {
                                     return visibility;
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "MethodGraph.Compiler.Default.Key.Store.Entry.Resolved.Node{" +
-                                            "key=" + key +
-                                            ", methodDescription=" + methodDescription +
-                                            ", visibility=" + visibility +
-                                            ", visible=" + visible +
-                                            '}';
                                 }
                             }
                         }
@@ -1581,15 +1459,6 @@ public interface MethodGraph {
                                 return new Node(key.detach(methodDescription.asTypeToken()), methodDescription, visibility);
                             }
 
-                            @Override
-                            public String toString() {
-                                return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous{" +
-                                        "key=" + key +
-                                        ", methodDescriptions=" + methodDescriptions +
-                                        ", visibility=" + visibility +
-                                        '}';
-                            }
-
                             /**
                              * A node implementation representing an ambiguous method resolution.
                              */
@@ -1641,15 +1510,6 @@ public interface MethodGraph {
                                 public Visibility getVisibility() {
                                     return visibility;
                                 }
-
-                                @Override
-                                public String toString() {
-                                    return "MethodGraph.Compiler.Default.Key.Store.Entry.Ambiguous.Node{" +
-                                            "key=" + key +
-                                            ", visibility=" + visibility +
-                                            ", methodDescription=" + methodDescription +
-                                            '}';
-                                }
                             }
                         }
                     }
@@ -1685,13 +1545,6 @@ public interface MethodGraph {
                         @Override
                         public NodeList listNodes() {
                             return new NodeList(new ArrayList<Node>(entries.values()));
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "MethodGraph.Compiler.Default.Key.Store.Graph{" +
-                                    "entries=" + entries +
-                                    '}';
                         }
                     }
                 }
@@ -1792,13 +1645,6 @@ public interface MethodGraph {
         @Override
         public NodeList listNodes() {
             return new NodeList(new ArrayList<Node>(nodes.values()));
-        }
-
-        @Override
-        public String toString() {
-            return "MethodGraph.Simple{" +
-                    "nodes=" + nodes +
-                    '}';
         }
     }
 }

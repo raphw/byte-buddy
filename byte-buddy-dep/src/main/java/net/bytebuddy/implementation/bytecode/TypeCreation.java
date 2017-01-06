@@ -49,9 +49,4 @@ public class TypeCreation implements StackManipulation {
         methodVisitor.visitTypeInsn(Opcodes.NEW, typeDescription.getInternalName());
         return new Size(1, 1);
     }
-
-    @Override
-    public String toString() {
-        return "TypeCreation{typeDescription=" + typeDescription + '}';
-    }
 }

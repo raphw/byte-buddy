@@ -174,11 +174,6 @@ public @interface Super {
         protected abstract StackManipulation proxyFor(TypeDescription parameterType,
                                                       Implementation.Target implementationTarget,
                                                       AnnotationDescription.Loadable<Super> annotation);
-
-        @Override
-        public String toString() {
-            return "Super.Instantiation." + name();
-        }
     }
 
     /**
@@ -243,11 +238,6 @@ public @interface Super {
             }
         }
 
-        @Override
-        public String toString() {
-            return "Super.Binder." + name();
-        }
-
         /**
          * Locates the type which should be the base type of the created proxy.
          */
@@ -276,11 +266,6 @@ public @interface Super {
                 public TypeDescription resolve(TypeDescription instrumentedType, TypeDescription.Generic parameterType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "Super.Binder.TypeLocator.ForInstrumentedType." + name();
-                }
             }
 
             /**
@@ -299,11 +284,6 @@ public @interface Super {
                     return erasure.equals(instrumentedType)
                             ? instrumentedType
                             : erasure;
-                }
-
-                @Override
-                public String toString() {
-                    return "Super.Binder.TypeLocator.ForParameterType." + name();
                 }
             }
 
@@ -351,13 +331,6 @@ public @interface Super {
                         throw new IllegalStateException("Impossible to assign " + typeDescription + " to parameter of type " + parameterType);
                     }
                     return typeDescription;
-                }
-
-                @Override
-                public String toString() {
-                    return "Super.Binder.TypeLocator.ForType{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
                 }
             }
         }

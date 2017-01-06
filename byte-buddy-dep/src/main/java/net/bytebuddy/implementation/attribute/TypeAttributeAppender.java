@@ -39,11 +39,6 @@ public interface TypeAttributeAppender {
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
-
-        @Override
-        public String toString() {
-            return "TypeAttributeAppender.NoOp." + name();
-        }
     }
 
     /**
@@ -78,11 +73,6 @@ public interface TypeAttributeAppender {
             for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
                 annotationAppender = annotationAppender.append(annotation, annotationValueFilter);
             }
-        }
-
-        @Override
-        public String toString() {
-            return "TypeAttributeAppender.ForInstrumentedType." + name();
         }
 
         /**
@@ -149,15 +139,6 @@ public interface TypeAttributeAppender {
                     annotationAppender = annotationAppender.append(annotationDescription, annotationValueFilter);
                 }
             }
-
-            @Override
-            public String toString() {
-                return "TypeAttributeAppender.ForInstrumentedType.Differentiating{" +
-                        "annotationIndex=" + annotationIndex +
-                        ", typeVariableIndex=" + typeVariableIndex +
-                        ", interfaceTypeIndex=" + interfaceTypeIndex +
-                        '}';
-            }
         }
     }
 
@@ -188,13 +169,6 @@ public interface TypeAttributeAppender {
             for (AnnotationDescription annotation : annotations) {
                 appender = appender.append(annotation, annotationValueFilter);
             }
-        }
-
-        @Override
-        public String toString() {
-            return "TypeAttributeAppender.Explicit{" +
-                    "annotations=" + annotations +
-                    '}';
         }
     }
 
@@ -239,11 +213,6 @@ public interface TypeAttributeAppender {
             for (TypeAttributeAppender typeAttributeAppender : typeAttributeAppenders) {
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilter);
             }
-        }
-
-        @Override
-        public String toString() {
-            return "TypeAttributeAppender.Compound{typeAttributeAppenders=" + typeAttributeAppenders + '}';
         }
     }
 }

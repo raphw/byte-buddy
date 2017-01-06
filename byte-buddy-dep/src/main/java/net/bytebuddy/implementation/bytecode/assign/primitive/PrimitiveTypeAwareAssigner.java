@@ -51,9 +51,4 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
             return referenceTypeAwareAssigner.assign(source, target, typing);
         }
     }
-
-    @Override
-    public String toString() {
-        return "PrimitiveTypeAwareAssigner{referenceTypeAwareAssigner=" + referenceTypeAwareAssigner + '}';
-    }
 }

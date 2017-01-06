@@ -53,9 +53,4 @@ public class TypeCasting implements StackManipulation {
         methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, typeDescription.getInternalName());
         return StackSize.ZERO.toIncreasingSize();
     }
-
-    @Override
-    public String toString() {
-        return "TypeCasting{typeDescription='" + typeDescription + '\'' + '}';
-    }
 }

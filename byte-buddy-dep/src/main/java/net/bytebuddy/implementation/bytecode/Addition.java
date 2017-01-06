@@ -59,9 +59,4 @@ public enum Addition implements StackManipulation {
         methodVisitor.visitInsn(opcode);
         return stackSize.toDecreasingSize();
     }
-
-    @Override
-    public String toString() {
-        return "Addition." + name();
-    }
 }

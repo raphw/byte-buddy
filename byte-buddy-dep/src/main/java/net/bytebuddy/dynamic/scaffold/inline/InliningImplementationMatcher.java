@@ -65,12 +65,4 @@ public class InliningImplementationMatcher implements LatentMatcher<MethodDescri
                 .and(isVirtual().and(not(isFinal())).or(isDeclaredBy(typeDescription)))
                 .or(isDeclaredBy(typeDescription).and(not(predefinedMethodSignatures)));
     }
-
-    @Override
-    public String toString() {
-        return "InliningImplementationMatcher{" +
-                "ignoredMethods=" + ignoredMethods +
-                ", predefinedMethodSignatures=" + predefinedMethodSignatures +
-                '}';
-    }
 }

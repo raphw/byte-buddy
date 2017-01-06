@@ -43,7 +43,7 @@ public class ArrayFactoryObjectPropertiesTest {
             public void apply(TypeDescription.Generic mock) {
                 when(mock.getStackSize()).thenReturn(StackSize.ZERO);
             }
-        }).ignoreFields("sizeDecrease", "arrayCreator").apply();
+        }).apply();
         ObjectPropertyAssertion.of(ArrayFactory.ArrayCreator.ForPrimitiveType.class).apply();
         ObjectPropertyAssertion.of(ArrayFactory.ArrayCreator.ForReferenceType.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override

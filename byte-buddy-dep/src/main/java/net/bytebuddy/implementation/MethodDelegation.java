@@ -526,17 +526,6 @@ public class MethodDelegation implements Implementation.Composable {
                 compiled);
     }
 
-    @Override
-    public String toString() {
-        return "MethodDelegation{" +
-                "implementationDelegate=" + implementationDelegate +
-                ", parameterBinders=" + parameterBinders +
-                ", terminationHandler=" + terminationHandler +
-                ", ambiguityResolver=" + ambiguityResolver +
-                ", assigner=" + assigner +
-                '}';
-    }
-
     /**
      * An implementation delegate is responsible for executing the actual method delegation and for resolving the target methods.
      */
@@ -616,13 +605,6 @@ public class MethodDelegation implements Implementation.Composable {
                 public List<MethodDelegationBinder.Record> getRecords() {
                     return records;
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.Compiled.ForStaticCall{" +
-                            "records=" + records +
-                            '}';
-                }
             }
 
             /**
@@ -671,14 +653,6 @@ public class MethodDelegation implements Implementation.Composable {
                 public List<MethodDelegationBinder.Record> getRecords() {
                     return records;
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.Compiled.ForField{" +
-                            "fieldDescription=" + fieldDescription +
-                            ", records=" + records +
-                            '}';
-                }
             }
 
             /**
@@ -721,14 +695,6 @@ public class MethodDelegation implements Implementation.Composable {
                 @Override
                 public List<MethodDelegationBinder.Record> getRecords() {
                     return records;
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.Compiled.ForConstruction{" +
-                            "typeDescription=" + typeDescription +
-                            ", records=" + records +
-                            '}';
                 }
             }
         }
@@ -776,13 +742,6 @@ public class MethodDelegation implements Implementation.Composable {
             @Override
             public ImplementationDelegate.Compiled compile(TypeDescription instrumentedType) {
                 return new Compiled.ForStaticCall(records);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegation.ImplementationDelegate.ForStaticMethod{" +
-                        "records=" + records +
-                        '}';
             }
         }
 
@@ -911,18 +870,6 @@ public class MethodDelegation implements Implementation.Composable {
                                 .getOnly();
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.ForField.WithInstance{" +
-                            "fieldName='" + fieldName + "'" +
-                            ", parameterBinders=" + parameterBinders +
-                            ", matcher=" + matcher +
-                            ", methodGraphCompiler=" + methodGraphCompiler +
-                            ", target=" + target +
-                            ", fieldType=" + fieldType +
-                            '}';
-                }
             }
 
 
@@ -968,17 +915,6 @@ public class MethodDelegation implements Implementation.Composable {
                     } else {
                         return resolution.getField();
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "MethodDelegation.ImplementationDelegate.ForField.WithLookup{" +
-                            "fieldName='" + fieldName + "'" +
-                            ", parameterBinders=" + parameterBinders +
-                            ", matcher=" + matcher +
-                            ", methodGraphCompiler=" + methodGraphCompiler +
-                            ", fieldLocatorFactory=" + fieldLocatorFactory +
-                            '}';
                 }
             }
         }
@@ -1036,14 +972,6 @@ public class MethodDelegation implements Implementation.Composable {
             @Override
             public Compiled compile(TypeDescription instrumentedType) {
                 return new Compiled.ForConstruction(typeDescription, records);
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDelegation.ImplementationDelegate.ForConstruction{" +
-                        "typeDescription=" + typeDescription +
-                        ", records=" + records +
-                        '}';
             }
         }
     }
@@ -1107,17 +1035,6 @@ public class MethodDelegation implements Implementation.Composable {
                     processor.bind(implementationTarget, instrumentedMethod, terminationHandler, compiled.invoke(), assigner)
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDelegation.Appender{" +
-                    "implementationTarget=" + implementationTarget +
-                    ", processor=" + processor +
-                    ", terminationHandler=" + terminationHandler +
-                    ", assigner=" + assigner +
-                    ", compiled=" + compiled +
-                    '}';
         }
     }
 
@@ -1480,15 +1397,6 @@ public class MethodDelegation implements Implementation.Composable {
             return new MethodDelegation(new ImplementationDelegate.ForField.WithLookup(name, methodGraphCompiler, parameterBinders, matcher, fieldLocatorFactory),
                     TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                     MethodDelegationBinder.AmbiguityResolver.DEFAULT);
-        }
-
-        @Override
-        public String toString() {
-            return "MethodDelegation.WithCustomProperties{" +
-                    "ambiguityResolver=" + ambiguityResolver +
-                    ", parameterBinders=" + parameterBinders +
-                    ", matcher=" + matcher +
-                    '}';
         }
     }
 }

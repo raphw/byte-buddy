@@ -54,9 +54,4 @@ public enum EnumerationState implements ModifierContributor.ForType, ModifierCon
     public boolean isEnumeration() {
         return this == ENUMERATION;
     }
-
-    @Override
-    public String toString() {
-        return "EnumerationState." + name();
-    }
 }

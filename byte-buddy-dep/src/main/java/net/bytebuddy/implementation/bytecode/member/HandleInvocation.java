@@ -48,11 +48,4 @@ public class HandleInvocation implements StackManipulation {
         int size = methodType.getReturnType().getStackSize().getSize() - methodType.getParameterTypes().getStackSize();
         return new Size(size, Math.max(size, 0));
     }
-
-    @Override
-    public String toString() {
-        return "HandleInvocation{" +
-                "methodType=" + methodType +
-                '}';
-    }
 }

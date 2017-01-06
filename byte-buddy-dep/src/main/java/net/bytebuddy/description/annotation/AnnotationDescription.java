@@ -358,14 +358,6 @@ public interface AnnotationDescription {
             return result;
         }
 
-        @Override
-        public String toString() {
-            return "TypePool.LazyTypeDescription.AnnotationInvocationHandler{" +
-                    "annotationType=" + annotationType +
-                    ", values=" + values +
-                    '}';
-        }
-
         /**
          * Represents a missing annotation property which is not represented by a default value.
          */
@@ -1256,14 +1248,6 @@ public interface AnnotationDescription {
                 }
             }
             return new Latent(annotationType, annotationValues);
-        }
-
-        @Override
-        public String toString() {
-            return "AnnotationDescription.Builder{" +
-                    "annotationType=" + annotationType +
-                    ", annotationValues=" + annotationValues +
-                    '}';
         }
     }
 }

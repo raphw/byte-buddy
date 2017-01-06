@@ -82,11 +82,6 @@ public interface Assigner {
         public boolean isDynamic() {
             return dynamic;
         }
-
-        @Override
-        public String toString() {
-            return "Assigner.Typing." + name();
-        }
     }
 
     /**
@@ -117,11 +112,6 @@ public interface Assigner {
                         : StackManipulation.Illegal.INSTANCE;
             }
         };
-
-        @Override
-        public String toString() {
-            return "Assigner.EqualTypesOnly." + name();
-        }
     }
 
     /**
@@ -137,11 +127,6 @@ public interface Assigner {
         @Override
         public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
             return StackManipulation.Illegal.INSTANCE;
-        }
-
-        @Override
-        public String toString() {
-            return "Assigner.Refusing." + name();
         }
     }
 }

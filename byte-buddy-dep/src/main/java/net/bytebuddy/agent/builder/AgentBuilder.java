@@ -906,11 +906,6 @@ public interface AgentBuilder {
                                    ProtectionDomain protectionDomain) {
                 return classBeingRedefined == null == unloaded;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.RawMatcher.ForLoadState." + name();
-            }
         }
 
         /**
@@ -949,14 +944,6 @@ public interface AgentBuilder {
                 return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                         && right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.RawMatcher.Conjunction{" +
-                        "left=" + left +
-                        ", right=" + right +
-                        '}';
-            }
         }
 
         /**
@@ -994,14 +981,6 @@ public interface AgentBuilder {
                                    ProtectionDomain protectionDomain) {
                 return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                         || right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.RawMatcher.Disjunction{" +
-                        "left=" + left +
-                        ", right=" + right +
-                        '}';
             }
         }
 
@@ -1052,15 +1031,6 @@ public interface AgentBuilder {
                                    Class<?> classBeingRedefined,
                                    ProtectionDomain protectionDomain) {
                 return moduleMatcher.matches(module) && classLoaderMatcher.matches(classLoader) && typeMatcher.matches(typeDescription);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.RawMatcher.ForElementMatchers{" +
-                        "typeMatcher=" + typeMatcher +
-                        ", classLoaderMatcher=" + classLoaderMatcher +
-                        ", moduleMatcher=" + moduleMatcher +
-                        '}';
             }
         }
     }
@@ -1136,11 +1106,6 @@ public interface AgentBuilder {
             @Override
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
                 /* do nothing */
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.NoOp." + name();
             }
         }
 
@@ -1236,13 +1201,6 @@ public interface AgentBuilder {
             public void onComplete(String typeName, ClassLoader classLoader, JavaModule module) {
                 printStream.printf(PREFIX + " COMPLETE %s [%s, %s]%n", typeName, classLoader, module);
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.StreamWriting{" +
-                        "printStream=" + printStream +
-                        '}';
-            }
         }
 
         /**
@@ -1298,14 +1256,6 @@ public interface AgentBuilder {
                 if (matcher.matches(typeName)) {
                     delegate.onComplete(typeName, classLoader, module);
                 }
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.Filtering{" +
-                        "matcher=" + matcher +
-                        ", delegate=" + delegate +
-                        '}';
             }
         }
 
@@ -1379,15 +1329,6 @@ public interface AgentBuilder {
                     }
                 }
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.ModuleReadEdgeCompleting{" +
-                        "instrumentation=" + instrumentation +
-                        ", addTargetEdge=" + addTargetEdge +
-                        ", modules=" + modules +
-                        '}';
-            }
         }
 
         /**
@@ -1453,13 +1394,6 @@ public interface AgentBuilder {
                     listener.onComplete(typeName, classLoader, module);
                 }
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Listener.Compound{" +
-                        "listeners=" + listeners +
-                        '}';
-            }
         }
     }
 
@@ -1502,11 +1436,6 @@ public interface AgentBuilder {
             public void release() {
                         /* do nothing */
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.CircularityLock.Inactive." + name();
-            }
         }
 
         /**
@@ -1533,11 +1462,6 @@ public interface AgentBuilder {
             @Override
             public void release() {
                 set(NOT_ACQUIRED);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.CircularityLock.Default{acquired=" + (get() != NOT_ACQUIRED) + "}";
             }
         }
     }
@@ -1624,11 +1548,6 @@ public interface AgentBuilder {
                     return byteBuddy.redefine(typeDescription, classFileLocator).ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);
                 }
             };
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.TypeStrategy.Default." + name();
-            }
         }
 
         /**
@@ -1657,13 +1576,6 @@ public interface AgentBuilder {
                                                   ClassFileLocator classFileLocator,
                                                   MethodNameTransformer methodNameTransformer) {
                 return entryPoint.transform(typeDescription, byteBuddy, classFileLocator, methodNameTransformer);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.TypeStrategy.ForBuildEntryPoint{" +
-                        "entryPoint=" + entryPoint +
-                        '}';
             }
         }
     }
@@ -1700,11 +1612,6 @@ public interface AgentBuilder {
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
                 return builder;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Transformer.NoOp." + name();
-            }
         }
 
         /**
@@ -1730,13 +1637,6 @@ public interface AgentBuilder {
             @Override
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
                 return plugin.apply(builder, typeDescription);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Transformer.ForBuildPlugin{" +
-                        "plugin=" + plugin +
-                        '}';
             }
         }
 
@@ -1783,13 +1683,6 @@ public interface AgentBuilder {
                     builder = transformer.transform(builder, typeDescription, classLoader);
                 }
                 return builder;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Transformer.Compound{" +
-                        "transformers=" + transformers +
-                        '}';
             }
         }
     }
@@ -1853,11 +1746,6 @@ public interface AgentBuilder {
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.PoolStrategy.Default." + name();
-            }
         }
 
         /**
@@ -1904,11 +1792,6 @@ public interface AgentBuilder {
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return new TypePool.Default(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.PoolStrategy.Eager." + name();
             }
         }
 
@@ -1957,11 +1840,6 @@ public interface AgentBuilder {
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
                 return TypePool.ClassLoading.of(classLoader, new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.Simple.withObjectType(), classFileLocator, readerMode));
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.PoolStrategy.ClassLoading." + name();
             }
         }
 
@@ -2070,13 +1948,6 @@ public interface AgentBuilder {
                 protected ClassLoader getBootstrapMarkerLoader() {
                     return ClassLoader.getSystemClassLoader();
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.PoolStrategy.WithTypePoolCache.Simple{" +
-                            "cacheProviders=" + cacheProviders +
-                            '}';
-                }
             }
         }
     }
@@ -2155,11 +2026,6 @@ public interface AgentBuilder {
             public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
                 /* do nothing */
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.InitializationStrategy.NoOp." + name();
-            }
         }
 
         /**
@@ -2200,11 +2066,6 @@ public interface AgentBuilder {
                         loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                     }
                 }
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.InitializationStrategy.Minimal." + name();
             }
         }
 
@@ -2332,16 +2193,6 @@ public interface AgentBuilder {
                     public boolean isAlive() {
                         return true;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitializer{" +
-                                "instrumentedType=" + instrumentedType +
-                                ", rawAuxiliaryTypes=" + rawAuxiliaryTypes +
-                                ", loadedTypeInitializers=" + loadedTypeInitializers +
-                                ", classInjector=" + classInjector +
-                                '}';
-                    }
                 }
             }
 
@@ -2371,13 +2222,6 @@ public interface AgentBuilder {
                 @Override
                 protected InitializationStrategy.Dispatcher dispatcher(int identification) {
                     return new Dispatcher(nexusAccessor, identification);
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.InitializationStrategy.SelfInjection.Split{" +
-                            "nexusAccessor=" + nexusAccessor +
-                            "}";
                 }
 
                 /**
@@ -2425,14 +2269,6 @@ public interface AgentBuilder {
                         }
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Split.Dispatcher{" +
-                                "nexusAccessor=" + nexusAccessor +
-                                ", identification=" + identification +
-                                "}";
-                    }
                 }
             }
 
@@ -2462,13 +2298,6 @@ public interface AgentBuilder {
                     return new Dispatcher(nexusAccessor, identification);
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.InitializationStrategy.SelfInjection.Lazy{" +
-                            "nexusAccessor=" + nexusAccessor +
-                            "}";
-                }
-
                 /**
                  * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Lazy} strategy.
                  */
@@ -2491,14 +2320,6 @@ public interface AgentBuilder {
                                 ? dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription())
                                 : new Dispatcher.InjectingInitializer(dynamicType.getTypeDescription(), auxiliaryTypes, dynamicType.getLoadedTypeInitializers(), injectorFactory.resolve());
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Lazy.Dispatcher{" +
-                                "nexusAccessor=" + nexusAccessor +
-                                ", identification=" + identification +
-                                "}";
                     }
                 }
             }
@@ -2529,13 +2350,6 @@ public interface AgentBuilder {
                     return new Dispatcher(nexusAccessor, identification);
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.InitializationStrategy.SelfInjection.Eager{" +
-                            "nexusAccessor=" + nexusAccessor +
-                            "}";
-                }
-
                 /**
                  * A dispatcher for the {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.Eager} strategy.
                  */
@@ -2562,14 +2376,6 @@ public interface AgentBuilder {
                         }
                         LoadedTypeInitializer loadedTypeInitializer = loadedTypeInitializers.get(dynamicType.getTypeDescription());
                         nexusAccessor.register(dynamicType.getTypeDescription().getName(), classLoader, identification, loadedTypeInitializer);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Eager.Dispatcher{" +
-                                "nexusAccessor=" + nexusAccessor +
-                                ", identification=" + identification +
-                                "}";
                     }
                 }
             }
@@ -2712,11 +2518,6 @@ public interface AgentBuilder {
             public boolean isLoadedFirst() {
                 return loadedFirst;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.DescriptionStrategy.Default." + name();
-            }
         }
 
         /**
@@ -2757,13 +2558,6 @@ public interface AgentBuilder {
                 return delegate.isLoadedFirst();
             }
 
-            @Override
-            public String toString() {
-                return "AgentBuilder.DescriptionStrategy.SuperTypeLoading{" +
-                        "delegate=" + delegate +
-                        '}';
-            }
-
             /**
              * A class loading delegate that unlocks the circularity lock during class loading.
              */
@@ -2792,13 +2586,6 @@ public interface AgentBuilder {
                     } finally {
                         circularityLock.acquire();
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.DescriptionStrategy.SuperTypeLoading.UnlockingClassLoadingDelegate{" +
-                            "circularityLock=" + circularityLock +
-                            '}';
                 }
             }
         }
@@ -2851,11 +2638,6 @@ public interface AgentBuilder {
                     return classFileTransformer;
                 }
             };
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.InstallationStrategy.Default." + name();
-            }
         }
     }
 
@@ -2886,11 +2668,6 @@ public interface AgentBuilder {
             @Override
             public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
                 return ClassFileLocator.NoOp.INSTANCE;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LocationStrategy.NoOp." + name();
             }
         }
 
@@ -2968,11 +2745,6 @@ public interface AgentBuilder {
                 allLocationStrategies.addAll(locationStrategies);
                 return new Compound(allLocationStrategies);
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LocationStrategy.ForClassLoader." + name();
-            }
         }
 
         /**
@@ -2998,13 +2770,6 @@ public interface AgentBuilder {
             @Override
             public ClassFileLocator classFileLocator(ClassLoader classLoader, JavaModule module) {
                 return classFileLocator;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LocationStrategy.Simple{" +
-                        "classFileLocator=" + classFileLocator +
-                        '}';
             }
         }
 
@@ -3051,13 +2816,6 @@ public interface AgentBuilder {
                     classFileLocators.add(locationStrategy.classFileLocator(classLoader, module));
                 }
                 return new ClassFileLocator.Compound(classFileLocators);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LocationStrategy.Compound{" +
-                        "locationStrategies=" + locationStrategies +
-                        '}';
             }
         }
     }
@@ -3113,11 +2871,6 @@ public interface AgentBuilder {
             public boolean isFallback(Class<?> type, Throwable throwable) {
                 return enabled;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.FallbackStrategy.Simple." + name();
-            }
         }
 
         /**
@@ -3168,13 +2921,6 @@ public interface AgentBuilder {
                     }
                 }
                 return false;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.FallbackStrategy.ByThrowableType{" +
-                        "types=" + types +
-                        '}';
             }
         }
     }
@@ -3308,11 +3054,6 @@ public interface AgentBuilder {
          */
         protected abstract Collector make(Default.Transformation transformation);
 
-        @Override
-        public String toString() {
-            return "AgentBuilder.RedefinitionStrategy." + name();
-        }
-
         /**
          * A batch allocator which is responsible for applying a redefinition in a batches. A class redefinition or
          * retransformation can be a time-consuming operation rendering a JVM non-responsive. In combination with a
@@ -3344,11 +3085,6 @@ public interface AgentBuilder {
                     return types.isEmpty()
                             ? Collections.<List<Class<?>>>emptySet()
                             : Collections.singleton(types);
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForTotal." + name();
                 }
             }
 
@@ -3395,13 +3131,6 @@ public interface AgentBuilder {
                         batches.add(new ArrayList<Class<?>>(types.subList(index, Math.min(types.size(), index + size))));
                     }
                     return batches;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize{" +
-                            "size=" + size +
-                            '}';
                 }
             }
 
@@ -3499,13 +3228,6 @@ public interface AgentBuilder {
                     }
                     return batches;
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping{" +
-                            "matchers=" + matchers +
-                            '}';
-                }
             }
 
             /**
@@ -3586,15 +3308,6 @@ public interface AgentBuilder {
                     return new SlicingIterable(minimum, maximum, batchAllocator.batch(types));
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing{" +
-                            "minimum=" + minimum +
-                            ", maximum=" + maximum +
-                            ", batchAllocator=" + batchAllocator +
-                            '}';
-                }
-
                 /**
                  * An iterable that slices batches into parts of a minimum and maximum size.
                  */
@@ -3631,15 +3344,6 @@ public interface AgentBuilder {
                     @Override
                     public Iterator<List<Class<?>>> iterator() {
                         return new SlicingIterator(minimum, maximum, iterable.iterator());
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable{" +
-                                "minimum=" + minimum +
-                                ", maximum=" + maximum +
-                                ", iterable=" + iterable +
-                                '}';
                     }
 
                     /**
@@ -3713,16 +3417,6 @@ public interface AgentBuilder {
                         public void remove() {
                             throw new UnsupportedOperationException("remove");
                         }
-
-                        @Override
-                        public String toString() {
-                            return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable.SlicingIterator{" +
-                                    "minimum=" + minimum +
-                                    ", maximum=" + maximum +
-                                    ", iterator=" + iterator +
-                                    ", buffer=" + buffer +
-                                    '}';
-                        }
                     }
                 }
             }
@@ -3777,13 +3471,6 @@ public interface AgentBuilder {
                             return batches;
                         }
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.BatchAllocator.Partitioning{" +
-                            "parts=" + parts +
-                            '}';
                 }
             }
         }
@@ -3847,11 +3534,6 @@ public interface AgentBuilder {
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.NoOp." + name();
-                }
             }
 
             /**
@@ -3879,11 +3561,6 @@ public interface AgentBuilder {
                 @Override
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     /* do nothing */
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.Yielding." + name();
                 }
             }
 
@@ -3927,11 +3604,6 @@ public interface AgentBuilder {
                 @Override
                 public void onBatch(int index, List<Class<?>> batch, List<Class<?>> types) {
                     /* do nothing */
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating." + name();
                 }
             }
 
@@ -4000,13 +3672,6 @@ public interface AgentBuilder {
                             ? Collections.<List<Class<?>>>emptyList()
                             : batchAllocator.batch(batch);
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.BatchReallocator{" +
-                            "batchAllocator=" + batchAllocator +
-                            '}';
-                }
             }
 
             /**
@@ -4056,13 +3721,6 @@ public interface AgentBuilder {
                             throw new RuntimeException("Sleep was interrupted", exception);
                         }
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.Pausing{" +
-                            "value=" + value +
-                            '}';
                 }
             }
 
@@ -4121,13 +3779,6 @@ public interface AgentBuilder {
                 @Override
                 public void onComplete(int amount, List<Class<?>> types, Map<List<Class<?>>, Throwable> failures) {
                     printStream.printf(AgentBuilder.Listener.StreamWriting.PREFIX + " REDEFINE COMPLETE #%d batch(es) containing %d types [%d failed batch(es)]%n", amount, types.size(), failures.size());
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.StreamWriting{" +
-                            "printStream=" + printStream +
-                            '}';
                 }
             }
 
@@ -4190,13 +3841,6 @@ public interface AgentBuilder {
                     }
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Listener.Compound{" +
-                            "listeners=" + listeners +
-                            '}';
-                }
-
                 /**
                  * A compound iterable.
                  */
@@ -4220,13 +3864,6 @@ public interface AgentBuilder {
                     @Override
                     public Iterator<List<Class<?>>> iterator() {
                         return new CompoundIterator(new ArrayList<Iterable<? extends List<Class<?>>>>(iterables));
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable{" +
-                                "iterables=" + iterables +
-                                '}';
                     }
 
                     /**
@@ -4284,14 +3921,6 @@ public interface AgentBuilder {
                         @Override
                         public void remove() {
                             throw new UnsupportedOperationException("remove");
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable.CompoundIterator{" +
-                                    "current=" + current +
-                                    ", backlog=" + backlog +
-                                    '}';
                         }
                     }
                 }
@@ -4429,14 +4058,6 @@ public interface AgentBuilder {
                                             LocationStrategy locationStrategy,
                                             AgentBuilder.Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
 
-            @Override
-            public String toString() {
-                return " AgentBuilder.RedefinitionStrategy.Collector." + getClass().getSimpleName() + "{" +
-                        "transformation=" + transformation +
-                        ", types=" + types +
-                        '}';
-            }
-
             /**
              * An iterator that allows prepending of iterables to be applied previous to another iterator.
              */
@@ -4494,14 +4115,6 @@ public interface AgentBuilder {
                 public void remove() {
                     throw new UnsupportedOperationException("remove");
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Collector.PrependableIterator{" +
-                            "current=" + current +
-                            ", backlog=" + backlog +
-                            '}';
-                }
             }
 
             /**
@@ -4552,14 +4165,6 @@ public interface AgentBuilder {
                         }
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition{" +
-                            "transformation=" + transformation +
-                            ", types=" + types +
-                            "}";
-                }
             }
 
             /**
@@ -4590,14 +4195,6 @@ public interface AgentBuilder {
                             circularityLock.acquire();
                         }
                     }
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.RedefinitionStrategy.Collector.ForRetransformation{" +
-                            "transformation=" + transformation +
-                            ", types=" + types +
-                            "}";
                 }
             }
         }
@@ -4733,11 +4330,6 @@ public interface AgentBuilder {
          */
         protected abstract boolean isInstrumented(Class<?> type);
 
-        @Override
-        public String toString() {
-            return "AgentBuilder.LambdaInstrumentationStrategy." + name();
-        }
-
         /**
          * An injector for injecting the lambda class dispatcher to the system class path.
          */
@@ -4754,11 +4346,6 @@ public interface AgentBuilder {
                 return ClassInjector.UsingReflection.ofSystemClassLoader()
                         .inject(Collections.singletonMap(lambdaFactory, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
                         .get(lambdaFactory);
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector." + name();
             }
         }
 
@@ -4906,13 +4493,6 @@ public interface AgentBuilder {
                 return classFile;
             }
 
-            @Override
-            public String toString() {
-                return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory{" +
-                        "byteBuddy=" + byteBuddy +
-                        '}';
-            }
-
             /**
              * Implements a lambda class's executing transformer.
              */
@@ -4944,11 +4524,6 @@ public interface AgentBuilder {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.ConstructorImplementation." + name();
                 }
 
                 /**
@@ -4986,13 +4561,6 @@ public interface AgentBuilder {
                                 MethodReturn.VOID
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.ConstructorImplementation.Appender{" +
-                                "declaredFields=" + declaredFields +
-                                '}';
-                    }
                 }
             }
 
@@ -5014,11 +4582,6 @@ public interface AgentBuilder {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation." + name();
                 }
 
                 /**
@@ -5050,13 +4613,6 @@ public interface AgentBuilder {
                                 MethodInvocation.invoke(instrumentedType.getDeclaredMethods().filter(isConstructor()).getOnly()),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation.Appender{" +
-                                "instrumentedType=" + instrumentedType +
-                                '}';
                     }
                 }
             }
@@ -5103,14 +4659,6 @@ public interface AgentBuilder {
                 @Override
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation{" +
-                            "targetMethod=" + targetMethod +
-                            ", specializedLambdaMethod=" + specializedLambdaMethod +
-                            '}';
                 }
 
                 /**
@@ -5169,15 +4717,6 @@ public interface AgentBuilder {
                                 MethodInvocation.invoke(targetMethod),
                                 MethodReturn.of(targetMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation.Appender{" +
-                                "targetMethod=" + targetMethod +
-                                ", specializedLambdaMethod=" + specializedLambdaMethod +
-                                ", declaredFields=" + declaredFields +
-                                '}';
                     }
                 }
             }
@@ -5278,18 +4817,6 @@ public interface AgentBuilder {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType;
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.SerializationImplementation{" +
-                            "targetType=" + targetType +
-                            ", lambdaType=" + lambdaType +
-                            ", lambdaMethodName='" + lambdaMethodName + '\'' +
-                            ", lambdaMethod=" + lambdaMethod +
-                            ", targetMethod=" + targetMethod +
-                            ", specializedMethod=" + specializedMethod +
-                            '}';
-                }
             }
 
             /**
@@ -5331,14 +4858,6 @@ public interface AgentBuilder {
                     return instrumentedType;
                 }
 
-                @Override
-                public String toString() {
-                    return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.BridgeMethodImplementation{" +
-                            "lambdaMethodName='" + lambdaMethodName + '\'' +
-                            ", lambdaMethod=" + lambdaMethod +
-                            '}';
-                }
-
                 /**
                  * An appender for implementing a bridge method for a lambda expression.
                  */
@@ -5372,13 +4891,6 @@ public interface AgentBuilder {
                                 MethodReturn.of(instrumentedMethod.getReturnType())
 
                         )).apply(methodVisitor, implementationContext, instrumentedMethod);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.LambdaInstrumentationStrategy.LambdaInstanceFactory.BridgeMethodImplementation.Appender{" +
-                                "bridgeTargetInvocation=" + bridgeTargetInvocation +
-                                '}';
                     }
                 }
             }
@@ -5569,11 +5081,6 @@ public interface AgentBuilder {
                 methodVisitor.visitMaxs(8, 8);
                 methodVisitor.visitEnd();
                 return IGNORE_ORIGINAL;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LambdaInstrumentationStrategy.MetaFactoryRedirection." + name();
             }
         }
 
@@ -5872,11 +5379,6 @@ public interface AgentBuilder {
                 methodVisitor.visitMaxs(9, 10);
                 methodVisitor.visitEnd();
                 return IGNORE_ORIGINAL;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.LambdaInstrumentationStrategy.AlternativeMetaFactoryRedirection." + name();
             }
         }
     }
@@ -6735,30 +6237,6 @@ public interface AgentBuilder {
             }
         }
 
-        @Override
-        public String toString() {
-            return "AgentBuilder.Default{" +
-                    "byteBuddy=" + byteBuddy +
-                    ", listener=" + listener +
-                    ", circularityLock=" + circularityLock +
-                    ", poolStrategy=" + poolStrategy +
-                    ", typeStrategy=" + typeStrategy +
-                    ", locationStrategy=" + locationStrategy +
-                    ", nativeMethodStrategy=" + nativeMethodStrategy +
-                    ", initializationStrategy=" + initializationStrategy +
-                    ", redefinitionStrategy=" + redefinitionStrategy +
-                    ", redefinitionBatchAllocator=" + redefinitionBatchAllocator +
-                    ", redefinitionListener=" + redefinitionListener +
-                    ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                    ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
-                    ", descriptionStrategy=" + descriptionStrategy +
-                    ", installationStrategy=" + installationStrategy +
-                    ", fallbackStrategy=" + fallbackStrategy +
-                    ", ignoredTypeMatcher=" + ignoredTypeMatcher +
-                    ", transformation=" + transformation +
-                    '}';
-        }
-
         /**
          * An injection strategy for injecting classes into the bootstrap class loader.
          */
@@ -6785,11 +6263,6 @@ public interface AgentBuilder {
                 @Override
                 public ClassInjector make(ProtectionDomain protectionDomain) {
                     throw new IllegalStateException("Injecting classes into the bootstrap class loader was not enabled");
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.BootstrapInjectionStrategy.Disabled." + name();
                 }
             }
 
@@ -6847,14 +6320,6 @@ public interface AgentBuilder {
                             ClassInjector.UsingInstrumentation.Target.BOOTSTRAP,
                             instrumentation);
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.BootstrapInjectionStrategy.Enabled{" +
-                            "folder=" + folder +
-                            ", instrumentation=" + instrumentation +
-                            '}';
-                }
             }
         }
 
@@ -6909,11 +6374,6 @@ public interface AgentBuilder {
                 public String getPrefix() {
                     throw new IllegalStateException("A disabled native method strategy does not define a method name prefix");
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.NativeMethodStrategy.Disabled." + name();
-                }
             }
 
             /**
@@ -6965,13 +6425,6 @@ public interface AgentBuilder {
                 @Override
                 public String getPrefix() {
                     return prefix;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.NativeMethodStrategy.ForPrefix{" +
-                            "prefix='" + prefix + '\'' +
-                            '}';
                 }
             }
         }
@@ -7092,11 +6545,6 @@ public interface AgentBuilder {
                     protected boolean isAlive() {
                         return alive;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.Transformation.Resolution.Sort." + name();
-                    }
                 }
 
                 /**
@@ -7174,15 +6622,6 @@ public interface AgentBuilder {
                         listener.onIgnored(typeDescription, classLoader, module);
                         return NO_TRANSFORMATION;
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.Transformation.Resolution.Unresolved{" +
-                                "typeDescription=" + typeDescription +
-                                ", classLoader=" + classLoader +
-                                ", module=" + module +
-                                '}';
-                    }
                 }
             }
 
@@ -7213,11 +6652,6 @@ public interface AgentBuilder {
                                           ProtectionDomain protectionDomain,
                                           TypePool typePool) {
                     return new Resolution.Unresolved(typeDescription, classLoader, module);
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.Transformation.Ignored." + name();
                 }
             }
 
@@ -7274,15 +6708,6 @@ public interface AgentBuilder {
                     return matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                             ? new Resolution(typeDescription, classLoader, module, protectionDomain, typePool, transformer, decorator)
                             : new Transformation.Resolution.Unresolved(typeDescription, classLoader, module);
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.Transformation.Simple{" +
-                            "rawMatcher=" + rawMatcher +
-                            ", transformer=" + transformer +
-                            ", decorator=" + decorator +
-                            '}';
                 }
 
                 /**
@@ -7402,19 +6827,6 @@ public interface AgentBuilder {
                         return dynamicType.getBytes();
                     }
 
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.Transformation.Simple.Resolution{" +
-                                "typeDescription=" + typeDescription +
-                                ", classLoader=" + classLoader +
-                                ", module=" + module +
-                                ", protectionDomain=" + protectionDomain +
-                                ", typePool=" + typePool +
-                                ", transformer=" + transformer +
-                                ", decorator=" + decorator +
-                                '}';
-                    }
-
                     /**
                      * An injector factory that resolves to a bootstrap class loader injection if this is necessary and enabled.
                      */
@@ -7456,15 +6868,6 @@ public interface AgentBuilder {
                             return classLoader == null
                                     ? bootstrapInjectionStrategy.make(protectionDomain)
                                     : new ClassInjector.UsingReflection(classLoader, protectionDomain);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory{" +
-                                    "bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                                    ", classLoader=" + classLoader +
-                                    ", protectionDomain=" + protectionDomain +
-                                    '}';
                         }
                     }
                 }
@@ -7548,13 +6951,6 @@ public interface AgentBuilder {
                         }
                     }
                     return current;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.Transformation.Compound{" +
-                            "transformations=" + transformations +
-                            '}';
                 }
             }
         }
@@ -7910,27 +7306,6 @@ public interface AgentBuilder {
 
             /* does not implement hashCode and equals in order to align with identity treatment of the JVM */
 
-            @Override
-            public String toString() {
-                return "AgentBuilder.Default." + getClass().getSimpleName() + "{" +
-                        "byteBuddy=" + byteBuddy +
-                        ", listener=" + listener +
-                        ", poolStrategy=" + poolStrategy +
-                        ", typeStrategy=" + typeStrategy +
-                        ", locationStrategy=" + locationStrategy +
-                        ", initializationStrategy=" + initializationStrategy +
-                        ", nativeMethodStrategy=" + nativeMethodStrategy +
-                        ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                        ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
-                        ", descriptionStrategy=" + descriptionStrategy +
-                        ", fallbackStrategy=" + fallbackStrategy +
-                        ", ignoredTypeMatcher=" + ignoredTypeMatcher +
-                        ", transformation=" + transformation +
-                        ", circularityLock=" + circularityLock +
-                        ", accessControlContext=" + accessControlContext +
-                        '}';
-            }
-
             /**
              * A factory for creating a {@link ClassFileTransformer} for the current VM.
              */
@@ -8017,11 +7392,6 @@ public interface AgentBuilder {
                             return Factory.ForLegacyVm.INSTANCE;
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.ExecutingTransformer.Factory.CreationAction." + name();
-                    }
                 }
 
                 /**
@@ -8085,13 +7455,6 @@ public interface AgentBuilder {
                             throw new IllegalStateException("Cannot invoke " + executingTransformer, exception.getCause());
                         }
                     }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.ExecutingTransformer.Factory.ForJava9CapableVm{" +
-                                "executingTransformer=" + executingTransformer +
-                                '}';
-                    }
                 }
 
                 /**
@@ -8133,11 +7496,6 @@ public interface AgentBuilder {
                                 ignoredTypeMatcher,
                                 transformation,
                                 circularityLock);
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "AgentBuilder.Default.ExecutingTransformer.Factory.ForLegacyVm." + name();
                     }
                 }
             }
@@ -8234,18 +7592,6 @@ public interface AgentBuilder {
                     result = 31 * result + ExecutingTransformer.this.hashCode();
                     result = 31 * result + Arrays.hashCode(binaryRepresentation);
                     return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.LegacyVmDispatcher{" +
-                            "outer=" + ExecutingTransformer.this +
-                            ", classLoader=" + classLoader +
-                            ", internalTypeName='" + internalTypeName + '\'' +
-                            ", classBeingRedefined=" + classBeingRedefined +
-                            ", protectionDomain=" + protectionDomain +
-                            ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                            '}';
                 }
             }
 
@@ -8353,19 +7699,6 @@ public interface AgentBuilder {
                     result = 31 * result + Arrays.hashCode(binaryRepresentation);
                     return result;
                 }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher{" +
-                            "outer=" + ExecutingTransformer.this +
-                            ", rawModule=" + rawModule +
-                            ", classLoader=" + classLoader +
-                            ", internalTypeName='" + internalTypeName + '\'' +
-                            ", classBeingRedefined=" + classBeingRedefined +
-                            ", protectionDomain=" + protectionDomain +
-                            ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                            '}';
-                }
             }
 
             /**
@@ -8394,13 +7727,6 @@ public interface AgentBuilder {
                         failures.put(type, throwable);
                     }
                     return Collections.emptyList();
-                }
-
-                @Override
-                public String toString() {
-                    return "AgentBuilder.Default.ExecutingTransformer.FailureCollectingListener{" +
-                            "failures=" + failures +
-                            '}';
                 }
             }
         }
@@ -8673,14 +7999,6 @@ public interface AgentBuilder {
                 result = 31 * result + Default.this.hashCode();
                 return result;
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Default.Ignoring{" +
-                        "rawMatcher=" + rawMatcher +
-                        ", agentBuilder=" + Default.this +
-                        '}';
-            }
         }
 
         /**
@@ -8792,29 +8110,6 @@ public interface AgentBuilder {
                         ignoredTypeMatcher,
                         transformation);
             }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Default.Redefining{" +
-                        "byteBuddy=" + byteBuddy +
-                        ", listener=" + listener +
-                        ", poolStrategy=" + poolStrategy +
-                        ", typeStrategy=" + typeStrategy +
-                        ", locationStrategy=" + locationStrategy +
-                        ", nativeMethodStrategy=" + nativeMethodStrategy +
-                        ", initializationStrategy=" + initializationStrategy +
-                        ", redefinitionStrategy=" + redefinitionStrategy +
-                        ", redefinitionBatchAllocator=" + redefinitionBatchAllocator +
-                        ", redefinitionListener=" + redefinitionListener +
-                        ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
-                        ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
-                        ", descriptionStrategy=" + descriptionStrategy +
-                        ", installationStrategy=" + installationStrategy +
-                        ", fallbackStrategy=" + fallbackStrategy +
-                        ", ignoredTypeMatcher=" + ignoredTypeMatcher +
-                        ", transformation=" + transformation +
-                        '}';
-            }
         }
 
         /**
@@ -8919,16 +8214,6 @@ public interface AgentBuilder {
                 result = 31 * result + transformer.hashCode();
                 result = 31 * result + Default.this.hashCode();
                 return result;
-            }
-
-            @Override
-            public String toString() {
-                return "AgentBuilder.Default.Transforming{" +
-                        "rawMatcher=" + rawMatcher +
-                        ", transformer=" + transformer +
-                        ", decorator=" + decorator +
-                        ", agentBuilder=" + Default.this +
-                        '}';
             }
         }
     }

@@ -181,16 +181,6 @@ public interface NamingStrategy {
             return String.format("%s$%s$%s", baseName, suffix, randomString.nextString());
         }
 
-        @Override
-        public String toString() {
-            return "NamingStrategy.SuffixingRandom{" +
-                    "suffix='" + suffix + '\'' +
-                    ", javaLangPackagePrefix='" + javaLangPackagePrefix + '\'' +
-                    ", baseNameResolver=" + baseNameResolver +
-                    ", randomString=" + randomString +
-                    '}';
-        }
-
         /**
          * A base name resolver is responsible for resolving a name onto which the suffix is appended.
          */
@@ -218,11 +208,6 @@ public interface NamingStrategy {
                 public String resolve(TypeDescription typeDescription) {
                     return typeDescription.getName();
                 }
-
-                @Override
-                public String toString() {
-                    return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForUnnamedType." + name();
-                }
             }
 
             /**
@@ -249,13 +234,6 @@ public interface NamingStrategy {
                 public String resolve(TypeDescription typeDescription) {
                     return this.typeDescription.getName();
                 }
-
-                @Override
-                public String toString() {
-                    return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType{" +
-                            "typeDescription=" + typeDescription +
-                            '}';
-                }
             }
 
             /**
@@ -281,13 +259,6 @@ public interface NamingStrategy {
                 @Override
                 public String resolve(TypeDescription typeDescription) {
                     return name;
-                }
-
-                @Override
-                public String toString() {
-                    return "NamingStrategy.SuffixingRandom.BaseNameResolver.ForFixedValue{" +
-                            "name='" + name + '\'' +
-                            '}';
                 }
             }
         }
@@ -323,14 +294,6 @@ public interface NamingStrategy {
         @Override
         protected String name(TypeDescription superClass) {
             return String.format("%s.%s$%s", prefix, superClass.getName(), randomString.nextString());
-        }
-
-        @Override
-        public String toString() {
-            return "NamingStrategy.PrefixingRandom{" +
-                    "prefix='" + prefix + '\'' +
-                    ", randomString=" + randomString +
-                    '}';
         }
     }
 }

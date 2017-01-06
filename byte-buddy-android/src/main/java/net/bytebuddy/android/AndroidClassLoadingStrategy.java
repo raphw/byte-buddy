@@ -153,15 +153,6 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLo
         }
     }
 
-    @Override
-    public String toString() {
-        return "AndroidClassLoadingStrategy{" +
-                "dexProcessor=" + dexProcessor +
-                ", privateDirectory=" + privateDirectory +
-                ", randomString=" + randomString +
-                '}';
-    }
-
     /**
      * A dex processor is responsible for converting a collection of Java class files into a Android dex file.
      */
@@ -278,14 +269,6 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLo
                 return new DexClassLoader(zipFile.getAbsolutePath(), privateDirectory.getAbsolutePath(), EMPTY_LIBRARY_PATH, parentClassLoader);
             }
 
-            @Override
-            public String toString() {
-                return "AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler{" +
-                        "dexFileOptions=" + dexFileOptions +
-                        ", dexCompilerOptions=" + dexCompilerOptions +
-                        '}';
-            }
-
             /**
              * Represents a to-dex-file-conversion of a
              * {@link net.bytebuddy.android.AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler}.
@@ -346,14 +329,6 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLo
                 @Override
                 public int hashCode() {
                     return dexFile.hashCode() + 31 * ForSdkCompiler.this.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Conversion{" +
-                            "dexProcessor=" + ForSdkCompiler.this +
-                            ", dexFile=" + dexFile +
-                            '}';
                 }
             }
         }

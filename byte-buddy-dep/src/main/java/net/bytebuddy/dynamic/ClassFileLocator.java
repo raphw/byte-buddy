@@ -93,13 +93,6 @@ public interface ClassFileLocator extends Closeable {
             public byte[] resolve() {
                 throw new IllegalStateException("Could not locate class file for " + typeName);
             }
-
-            @Override
-            public String toString() {
-                return "ClassFileLocator.Resolution.Illegal{" +
-                        "typeName='" + typeName + '\'' +
-                        '}';
-            }
         }
 
         /**
@@ -133,13 +126,6 @@ public interface ClassFileLocator extends Closeable {
             public byte[] resolve() {
                 return binaryRepresentation;
             }
-
-            @Override
-            public String toString() {
-                return "ClassFileLocator.Resolution.Explicit{" +
-                        "binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
-                        '}';
-            }
         }
     }
 
@@ -161,11 +147,6 @@ public interface ClassFileLocator extends Closeable {
         @Override
         public void close() throws IOException {
             /* do nothing */
-        }
-
-        @Override
-        public String toString() {
-            return "ClassFileLocator.NoOp." + name();
         }
     }
 
@@ -223,13 +204,6 @@ public interface ClassFileLocator extends Closeable {
         @Override
         public void close() {
             /* do nothing */
-        }
-
-        @Override
-        public String toString() {
-            return "ClassFileLocator.Simple{" +
-                    "classFiles=" + classFiles +
-                    '}';
         }
     }
 
@@ -331,13 +305,6 @@ public interface ClassFileLocator extends Closeable {
             }
         }
 
-        @Override
-        public String toString() {
-            return "ClassFileLocator.ForClassLoader{" +
-                    "classLoader=" + classLoader +
-                    '}';
-        }
-
         /**
          * <p>
          * A class file locator that queries a class loader for binary representations of class files.
@@ -406,14 +373,6 @@ public interface ClassFileLocator extends Closeable {
                 WeaklyReferenced that = (WeaklyReferenced) object;
                 ClassLoader classLoader = that.get();
                 return classLoader != null && get() == classLoader;
-            }
-
-            @Override
-            public String toString() {
-                return "ClassFileLocator.ForClassLoader.WeaklyReferenced{" +
-                        "classLoader=" + get() +
-                        ", hashCode=" + hashCode +
-                        '}';
             }
         }
     }
@@ -512,13 +471,6 @@ public interface ClassFileLocator extends Closeable {
             /* do nothing */
         }
 
-        @Override
-        public String toString() {
-            return "ClassFileLocator.ForModule{" +
-                    "module=" + module +
-                    '}';
-        }
-
         /**
          * <p>
          * A class file locator for a Java module that only references this module weakly. If a module was garbage collected,
@@ -588,14 +540,6 @@ public interface ClassFileLocator extends Closeable {
                 WeaklyReferenced that = (WeaklyReferenced) object;
                 Object module = that.get();
                 return module != null && get() == module;
-            }
-
-            @Override
-            public String toString() {
-                return "ClassFileLocator.ForModule.WeaklyReferenced{" +
-                        "module=" + get() +
-                        ", hashCode=" + hashCode +
-                        '}';
             }
         }
     }
@@ -712,13 +656,6 @@ public interface ClassFileLocator extends Closeable {
         @Override
         public void close() throws IOException {
             jarFile.close();
-        }
-
-        @Override
-        public String toString() {
-            return "ClassFileLocator.ForJarFile{" +
-                    "jarFile=" + jarFile +
-                    '}';
         }
     }
 
@@ -900,13 +837,6 @@ public interface ClassFileLocator extends Closeable {
         public void close() throws IOException {
             zipFile.close();
         }
-
-        @Override
-        public String toString() {
-            return "ClassFileLocator.ForModuleFile{" +
-                    "zipFile=" + zipFile +
-                    '}';
-        }
     }
 
     /**
@@ -949,13 +879,6 @@ public interface ClassFileLocator extends Closeable {
         @Override
         public void close() throws IOException {
             /* do nothing */
-        }
-
-        @Override
-        public String toString() {
-            return "ClassFileLocator.ForFolder{" +
-                    "folder=" + folder +
-                    '}';
         }
     }
 
@@ -1077,14 +1000,6 @@ public interface ClassFileLocator extends Closeable {
             /* do nothing */
         }
 
-        @Override
-        public String toString() {
-            return "ClassFileLocator.AgentBased{" +
-                    "instrumentation=" + instrumentation +
-                    ", classLoadingDelegate=" + classLoadingDelegate +
-                    '}';
-        }
-
         /**
          * A delegate that is queried for loading a class.
          */
@@ -1147,13 +1062,6 @@ public interface ClassFileLocator extends Closeable {
                 public ClassLoader getClassLoader() {
                     return classLoader;
                 }
-
-                @Override
-                public String toString() {
-                    return "ClassFileLocator.AgentBased.ClassLoadingDelegate.Default{" +
-                            "classLoader=" + classLoader +
-                            '}';
-                }
             }
 
             /**
@@ -1214,13 +1122,6 @@ public interface ClassFileLocator extends Closeable {
                             : super.locate(name);
                 }
 
-                @Override
-                public String toString() {
-                    return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader{" +
-                            "classLoader=" + classLoader +
-                            '}';
-                }
-
                 /**
                  * Representation of a Java {@link java.lang.reflect.Field}.
                  */
@@ -1265,11 +1166,6 @@ public interface ClassFileLocator extends Closeable {
                                 return new Dispatcher.Unresolved(exception);
                             }
                         }
-
-                        @Override
-                        public String toString() {
-                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.CreationAction." + name();
-                        }
                     }
 
                     /**
@@ -1312,13 +1208,6 @@ public interface ClassFileLocator extends Closeable {
                             field.setAccessible(true);
                             return this;
                         }
-
-                        @Override
-                        public String toString() {
-                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Resolved{" +
-                                    "field=" + field +
-                                    '}';
-                        }
                     }
 
                     /**
@@ -1344,13 +1233,6 @@ public interface ClassFileLocator extends Closeable {
                         @Override
                         public Dispatcher initialize() {
                             throw new IllegalStateException("Could not locate classes vector", exception);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "ClassFileLocator.AgentBased.ClassLoadingDelegate.ForDelegatingClassLoader.Dispatcher.Unresolved{" +
-                                    "exception=" + exception +
-                                    '}';
                         }
                     }
                 }
@@ -1423,14 +1305,6 @@ public interface ClassFileLocator extends Closeable {
                 public ClassLoader getClassLoader() {
                     return fallbackDelegate.getClassLoader();
                 }
-
-                @Override
-                public String toString() {
-                    return "ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit{" +
-                            "fallbackDelegate=" + fallbackDelegate +
-                            ", types=" + types +
-                            '}';
-                }
             }
         }
 
@@ -1494,18 +1368,6 @@ public interface ClassFileLocator extends Closeable {
             protected byte[] getBinaryRepresentation() {
                 return binaryRepresentation;
             }
-
-            @Override
-            public String toString() {
-                return "ClassFileLocator.AgentBased.ExtractionClassFileTransformer{" +
-                        "classLoader=" + classLoader +
-                        ", typeName=" + typeName +
-                        ", binaryRepresentation=" +
-                        (binaryRepresentation != null
-                                ? "<" + binaryRepresentation.length + " bytes>"
-                                : "null") +
-                        '}';
-            }
         }
     }
 
@@ -1545,13 +1407,6 @@ public interface ClassFileLocator extends Closeable {
             for (ClassFileLocator classFileLocator : classFileLocators.values()) {
                 classFileLocator.close();
             }
-        }
-
-        @Override
-        public String toString() {
-            return "ClassFileLocator.PackageDiscriminating{" +
-                    "classFileLocators=" + classFileLocators +
-                    '}';
         }
     }
 
@@ -1612,11 +1467,6 @@ public interface ClassFileLocator extends Closeable {
             for (ClassFileLocator classFileLocator : classFileLocators) {
                 classFileLocator.close();
             }
-        }
-
-        @Override
-        public String toString() {
-            return "ClassFileLocator.Compound{classFileLocators=" + classFileLocators + '}';
         }
     }
 }
