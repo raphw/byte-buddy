@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
  *
  * @param <T> The actual matched type of this matcher.
  */
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 public class BooleanMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

@@ -99,7 +99,7 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
     @Override
     public boolean equals(Object other) {
         if (this == other) return true;
-        if (other == null || getClass() != other.getClass()) return false;
+        if (!(other instanceof TypeVariableToken)) return false;
         TypeVariableToken that = (TypeVariableToken) other;
         return symbol.equals(that.symbol)
                 && bounds.equals(that.bounds)

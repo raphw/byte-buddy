@@ -77,7 +77,7 @@ public @interface FieldProxy {
     /**
      * A binder for the {@link FieldProxy} annotation.
      */
-    @EqualsAndHashCode(callSuper = false)
+    @EqualsAndHashCode
     class Binder extends TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFieldBinding<FieldProxy> {
 
         /**
@@ -789,7 +789,7 @@ public @interface FieldProxy {
                     return FieldGetter.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object object) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
@@ -797,7 +797,7 @@ public @interface FieldProxy {
                     return typeDescription.equals(appender.typeDescription) && FieldGetter.this.equals(appender.getOuter());
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     return typeDescription.hashCode() + 31 * FieldGetter.this.hashCode();
                 }
@@ -899,7 +899,7 @@ public @interface FieldProxy {
                     return FieldSetter.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object object) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
@@ -907,7 +907,7 @@ public @interface FieldProxy {
                     return typeDescription.equals(appender.typeDescription) && FieldSetter.this.equals(appender.getOuter());
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     return typeDescription.hashCode() + 31 * FieldSetter.this.hashCode();
                 }
@@ -1012,7 +1012,7 @@ public @interface FieldProxy {
                 return Binder.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object object) {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
@@ -1025,7 +1025,7 @@ public @interface FieldProxy {
                         && Binder.this.equals(that.getOuter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 int result = fieldDescription.hashCode();
                 result = 31 * result + Binder.this.hashCode();

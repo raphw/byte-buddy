@@ -569,7 +569,7 @@ public abstract class FieldAccessor implements Implementation {
                 return ForImplicitProperty.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object object) {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
@@ -577,7 +577,7 @@ public abstract class FieldAccessor implements Implementation {
                 return fieldLocation.equals(appender.fieldLocation) && ForImplicitProperty.this.equals(appender.getOuter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return fieldLocation.hashCode() + 31 * ForImplicitProperty.this.hashCode();
             }
@@ -717,7 +717,7 @@ public abstract class FieldAccessor implements Implementation {
                 return ForParameterSetter.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object object) {
                 if (this == object) return true;
                 if (object == null || getClass() != object.getClass()) return false;
@@ -725,7 +725,7 @@ public abstract class FieldAccessor implements Implementation {
                 return fieldLocation.equals(appender.fieldLocation) && ForParameterSetter.this.equals(appender.getOuter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return fieldLocation.hashCode() + 31 * ForParameterSetter.this.hashCode();
             }

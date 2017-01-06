@@ -414,7 +414,7 @@ public interface MethodGraph {
          *
          * @param <T> The type of the harmonizer token to be used for linking methods of different types.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @EqualsAndHashCode
         class Default<T> extends AbstractBase {
 
             /**
@@ -609,8 +609,7 @@ public interface MethodGraph {
 
                         @Override
                         public boolean equals(Object other) {
-                            return this == other || other instanceof Token
-                                    && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes());
+                            return this == other || (other instanceof Token && typeToken.getParameterTypes().equals(((Token) other).typeToken.getParameterTypes()));
                         }
 
                         @Override

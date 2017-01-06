@@ -8,7 +8,7 @@ import net.bytebuddy.description.ByteCodeElement;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 public class DescriptorMatcher<T extends ByteCodeElement> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

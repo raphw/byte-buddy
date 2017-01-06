@@ -876,7 +876,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a non-generic type.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @EqualsAndHashCode
                     class ForNonGenericType extends AbstractBase {
 
                         /**
@@ -941,7 +941,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a type variable.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @EqualsAndHashCode
                     class ForTypeVariable extends AbstractBase {
 
                         /**
@@ -995,7 +995,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a parameterized type.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @EqualsAndHashCode
                     class ForParameterizedType extends AbstractBase {
 
                         /**
@@ -1211,7 +1211,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A dispatcher for checking the assignability of a generic array type.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @EqualsAndHashCode
                     class ForGenericArray extends AbstractBase {
 
                         /**
@@ -1717,7 +1717,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * A substitutor that attaches type variables to a type variable source and replaces representations of
                  * {@link TargetType} with a given declaring type.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 public static class ForAttachment extends Substitutor {
 
                     /**
@@ -1814,7 +1814,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * detaching type variables and by replacing the declaring type which is identified by a provided {@link ElementMatcher}
                  * with {@link TargetType}.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 public static class ForDetachment extends Substitutor {
 
                     /**
@@ -1857,7 +1857,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A visitor for binding type variables to their values.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 public static class ForTypeVariableBinding extends WithoutTypeSubstitution {
 
                     /**
@@ -1945,14 +1945,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return ForTypeVariableBinding.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && getOuter().equals(((TypeVariableSubstitutor) other).getOuter())
                                     && typeVariable.equals(((TypeVariableSubstitutor) other).typeVariable);
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return typeVariable.hashCode();
                         }
@@ -2002,7 +2002,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A substitutor that normalizes a token to represent all {@link TargetType} by a given type and that symbolizes all type variables.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 public static class ForTokenNormalization extends Substitutor {
 
                     /**
@@ -2493,7 +2493,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A delegator for an existing {@code java.lang.reflect.Annotatedelement}.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @EqualsAndHashCode
                     protected static class Resolved extends Delegator {
 
                         /**
@@ -2519,7 +2519,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     /**
                      * A delegating annotation reader for an annotated type variable.
                      */
-                    @EqualsAndHashCode(callSuper = false)
+                    @EqualsAndHashCode
                     protected static class AnnotatedTypeVariableType extends Delegator {
 
                         /**
@@ -2586,14 +2586,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return ForJava8CapableVm.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && getOuter().equals(((AnnotatedSuperClass) other).getOuter())
                                     && type.equals(((AnnotatedSuperClass) other).type);
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return getOuter().hashCode() + type.hashCode() * 31;
                         }
@@ -2645,7 +2645,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return ForJava8CapableVm.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && getOuter().equals(((AnnotatedInterfaceType) other).getOuter())
@@ -2653,7 +2653,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                     && index == ((AnnotatedInterfaceType) other).index;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return 31 * (type.hashCode() + 31 * getOuter().hashCode()) + index;
                         }
@@ -2698,14 +2698,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return ForJava8CapableVm.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && getOuter().equals(((AnnotatedFieldType) other).getOuter())
                                     && field.equals(((AnnotatedFieldType) other).field);
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return field.hashCode() + getOuter().hashCode() * 31;
                         }
@@ -2750,14 +2750,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return ForJava8CapableVm.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && getOuter().equals(((AnnotatedReturnType) other).getOuter())
                                     && method.equals(((AnnotatedReturnType) other).method);
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return 31 * method.hashCode() + getOuter().hashCode();
                         }
@@ -2809,7 +2809,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return ForJava8CapableVm.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && getOuter().equals(((AnnotatedParameterizedType) other).getOuter())
@@ -2817,7 +2817,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                     && index == ((AnnotatedParameterizedType) other).index;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return 31 * (executable.hashCode() + 31 * index) + getOuter().hashCode();
                         }
@@ -2869,7 +2869,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                             return ForJava8CapableVm.this;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && getOuter().equals(((AnnotatedExceptionType) other).getOuter())
@@ -2877,7 +2877,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                                     && index == ((AnnotatedExceptionType) other).index;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return 31 * (executable.hashCode() + 31 * index) + getOuter().hashCode();
                         }
@@ -3009,7 +3009,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A chained delegator that bases its result on an underlying annotation reader.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 protected abstract static class Chained extends Delegator {
 
                     /**
@@ -3223,7 +3223,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A chained annotation reader for reading a formal type variable's type argument.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 protected static class OfFormalTypeVariable extends Delegator {
 
                     /**
@@ -5002,8 +5002,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public boolean equals(Object other) {
                     if (!(other instanceof Generic)) return false;
                     Generic typeDescription = (Generic) other;
-                    return typeDescription.getSort().isTypeVariable()
-                            && getSymbol().equals(typeDescription.getSymbol());
+                    return typeDescription.getSort().isTypeVariable() && getSymbol().equals(typeDescription.getSymbol());
                 }
 
                 @Override

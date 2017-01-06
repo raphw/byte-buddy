@@ -303,16 +303,12 @@ public interface ClassInjector {
                         return new Unavailable(exception);
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "ClassInjector.UsingReflection.Dispatcher.CreationAction." + name();
-                }
             }
 
             /**
              * A class injection dispatcher that is using reflection on the {@link ClassLoader} methods.
              */
+            @EqualsAndHashCode
             abstract class Direct implements Dispatcher, Initializable {
 
                 /**
@@ -475,26 +471,6 @@ public interface ClassInjector {
                     }
                 }
 
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Direct direct = (Direct) object;
-                    return findLoadedClass.equals(direct.findLoadedClass)
-                            && defineClass.equals(direct.defineClass)
-                            && getPackage.equals(direct.getPackage)
-                            && definePackage.equals(direct.definePackage);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = findLoadedClass.hashCode();
-                    result = 31 * result + defineClass.hashCode();
-                    result = 31 * result + getPackage.hashCode();
-                    result = 31 * result + definePackage.hashCode();
-                    return result;
-                }
-
                 /**
                  * Invoked upon initializing methods.
                  */
@@ -582,6 +558,7 @@ public interface ClassInjector {
             /**
              * An indirect dispatcher that uses a redirection accessor class that was injected into the bootstrap class loader.
              */
+            @EqualsAndHashCode
             class Indirect implements Dispatcher, Initializable {
 
                 /**
@@ -791,42 +768,6 @@ public interface ClassInjector {
                         throw new IllegalStateException("Error invoking (accessor)::definePackage", exception.getCause());
                     }
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Indirect indirect = (Indirect) object;
-                    return accessor.equals(indirect.accessor)
-                            && findLoadedClass.equals(indirect.findLoadedClass)
-                            && defineClass.equals(indirect.defineClass)
-                            && getPackage.equals(indirect.getPackage)
-                            && definePackage.equals(indirect.definePackage)
-                            && getClassLoadingLock.equals(indirect.getClassLoadingLock);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = accessor.hashCode();
-                    result = 31 * result + findLoadedClass.hashCode();
-                    result = 31 * result + defineClass.hashCode();
-                    result = 31 * result + getPackage.hashCode();
-                    result = 31 * result + definePackage.hashCode();
-                    result = 31 * result + getClassLoadingLock.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "ClassInjector.UsingReflection.Dispatcher.Indirect{" +
-                            "accessor=" + accessor +
-                            ", findLoadedClass=" + findLoadedClass +
-                            ", defineClass=" + defineClass +
-                            ", getPackage=" + getPackage +
-                            ", definePackage=" + definePackage +
-                            ", getClassLoadingLock=" + getClassLoadingLock +
-                            '}';
-                }
             }
 
             /**
@@ -902,6 +843,7 @@ public interface ClassInjector {
     /**
      * A class injector that uses {@code sun.misc.Unsafe} to inject classes.
      */
+    @EqualsAndHashCode
     class UsingUnsafe implements ClassInjector {
 
         /**
@@ -989,30 +931,6 @@ public interface ClassInjector {
             return loaded;
         }
 
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            UsingUnsafe that = (UsingUnsafe) object;
-            return (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null)
-                    && (protectionDomain != null ? protectionDomain.equals(that.protectionDomain) : that.protectionDomain == null);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = classLoader != null ? classLoader.hashCode() : 0;
-            result = 31 * result + (protectionDomain != null ? protectionDomain.hashCode() : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "ClassInjector.UsingUnsafe{" +
-                    "classLoader=" + classLoader +
-                    ", protectionDomain=" + protectionDomain +
-                    '}';
-        }
-
         /**
          * A dispatcher for using {@code sun.misc.Unsafe}.
          */
@@ -1075,16 +993,12 @@ public interface ClassInjector {
                         return new Disabled(exception);
                     }
                 }
-
-                @Override
-                public String toString() {
-                    return "ClassInjector.UsingUnsafe.Dispatcher.CreationAction." + name();
-                }
             }
 
             /**
              * An enabled dispatcher.
              */
+            @EqualsAndHashCode
             class Enabled implements Dispatcher, Initializable {
 
                 /**
@@ -1136,34 +1050,12 @@ public interface ClassInjector {
                         throw new IllegalStateException("Error invoking Unsafe::defineClass", exception.getCause());
                     }
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Enabled enabled = (Enabled) object;
-                    return theUnsafe.equals(enabled.theUnsafe) && defineClass.equals(enabled.defineClass);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = theUnsafe.hashCode();
-                    result = 31 * result + defineClass.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "ClassInjector.UsingUnsafe.Dispatcher.Enabled{" +
-                            "theUnsafe=" + theUnsafe +
-                            ", defineClass=" + defineClass +
-                            '}';
-                }
             }
 
             /**
              * A disabled dispatcher.
              */
+            @EqualsAndHashCode
             class Disabled implements Initializable {
 
                 /**
@@ -1188,26 +1080,6 @@ public interface ClassInjector {
                 @Override
                 public Dispatcher initialize() {
                     throw new IllegalStateException("Could not find sun.misc.Unsafe", exception);
-                }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    Disabled disabled = (Disabled) object;
-                    return exception.equals(disabled.exception);
-                }
-
-                @Override
-                public int hashCode() {
-                    return exception.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "ClassInjector.UsingUnsafe.Dispatcher.Disabled{" +
-                            "exception=" + exception +
-                            '}';
                 }
             }
         }

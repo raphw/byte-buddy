@@ -1262,7 +1262,7 @@ public interface AgentBuilder {
         /**
          * A listener that adds read-edges to any module of an instrumented class upon its transformation.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @EqualsAndHashCode
         class ModuleReadEdgeCompleting extends Listener.Adapter {
 
             /**
@@ -3640,7 +3640,7 @@ public interface AgentBuilder {
              * allocator must not resubmit batches that previously failed as an identical outcome is likely.
              * </p>
              */
-            @EqualsAndHashCode(callSuper = false)
+            @EqualsAndHashCode
             class BatchReallocator extends Adapter {
 
                 /**
@@ -3677,7 +3677,7 @@ public interface AgentBuilder {
             /**
              * A listener that invokes {@link Thread#sleep(long)} prior to every batch but the first batch.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @EqualsAndHashCode
             class Pausing extends Adapter {
 
                 /**
@@ -7570,7 +7570,7 @@ public interface AgentBuilder {
                     return ExecutingTransformer.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object object) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
@@ -7583,7 +7583,7 @@ public interface AgentBuilder {
                             && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     int result = classLoader != null ? classLoader.hashCode() : 0;
                     result = 31 * result + (internalTypeName != null ? internalTypeName.hashCode() : 0);
@@ -7674,7 +7674,7 @@ public interface AgentBuilder {
                     return ExecutingTransformer.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object object) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
@@ -7688,7 +7688,7 @@ public interface AgentBuilder {
                             && Arrays.equals(binaryRepresentation, that.binaryRepresentation);
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     int result = rawModule.hashCode();
                     result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
@@ -7704,7 +7704,7 @@ public interface AgentBuilder {
             /**
              * A listener that adds all discovered errors to a map.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @EqualsAndHashCode
             protected static class FailureCollectingListener extends RedefinitionStrategy.Listener.Adapter {
 
                 /**
@@ -7986,14 +7986,14 @@ public interface AgentBuilder {
                 return Default.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && rawMatcher.equals(((Ignoring) other).rawMatcher)
                         && Default.this.equals(((Ignoring) other).getOuter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 int result = rawMatcher.hashCode();
                 result = 31 * result + Default.this.hashCode();
@@ -8198,7 +8198,7 @@ public interface AgentBuilder {
                 return Default.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && decorator == ((Transforming) other).decorator
@@ -8207,7 +8207,7 @@ public interface AgentBuilder {
                         && Default.this.equals(((Transforming) other).getOuter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 int result = rawMatcher.hashCode();
                 result = 31 * result + (decorator ? 1 : 0);

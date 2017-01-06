@@ -9,7 +9,7 @@ import net.bytebuddy.description.ByteCodeElement;
  * @param <T> The type of the matched entity.
  * @param <S> The type of the defined shape of the matched entity.
  */
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 public class DefinedShapeMatcher<T extends ByteCodeElement.TypeDependant<S, ?>, S extends ByteCodeElement.TypeDependant<?, ?>>
         extends ElementMatcher.Junction.AbstractBase<T> {
 

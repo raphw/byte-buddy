@@ -176,12 +176,12 @@ public enum ArrayAccess {
             return ArrayAccess.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return ArrayAccess.this.hashCode();
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             return this == other || (other != null && other.getClass() == getClass()
                     && getArrayAccess() == ((Loader) other).getArrayAccess());
@@ -213,12 +213,12 @@ public enum ArrayAccess {
             return ArrayAccess.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return ArrayAccess.this.hashCode();
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             return this == other || (other != null && other.getClass() == getClass()
                     && getArrayAccess() == ((Putter) other).getArrayAccess());

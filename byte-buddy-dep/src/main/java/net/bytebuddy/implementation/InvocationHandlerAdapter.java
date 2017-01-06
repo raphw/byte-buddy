@@ -297,14 +297,14 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 return ForInstance.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && instrumentedType.equals(((Appender) other).instrumentedType)
                         && ForInstance.this.equals(((Appender) other).getInvocationHandlerAdapter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return 31 * ForInstance.this.hashCode() + instrumentedType.hashCode();
             }
@@ -400,7 +400,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         fieldDescription);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && instrumentedType.equals(((Appender) other).instrumentedType)
@@ -417,7 +417,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 return ForField.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return 31 * (31 * ForField.this.hashCode() + instrumentedType.hashCode()) + fieldDescription.hashCode();
             }

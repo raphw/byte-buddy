@@ -1,10 +1,13 @@
 package net.bytebuddy.matcher;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * An element matcher that reverses the matching result of another matcher.
  *
  * @param <T> The type of the matched entity.
  */
+@EqualsAndHashCode
 public class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
@@ -24,17 +27,6 @@ public class NegatingMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> 
     @Override
     public boolean matches(T target) {
         return !matcher.matches(target);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && matcher.equals(((NegatingMatcher<?>) other).matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return -1 * matcher.hashCode();
     }
 
     @Override

@@ -1255,7 +1255,7 @@ public class InvokeDynamic implements Implementation.Composable {
                         return instrumentedType;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && ConstantPoolWrapper.this.equals(((WrappingArgumentProvider) other).getOuter())
@@ -1271,7 +1271,7 @@ public class InvokeDynamic implements Implementation.Composable {
                         return ConstantPoolWrapper.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         return stackManipulation.hashCode() + 31 * ConstantPoolWrapper.this.hashCode();
                     }
@@ -2958,14 +2958,10 @@ public class InvokeDynamic implements Implementation.Composable {
             return new Size(size.getMaximalSize(), instrumentedMethod.getStackSize());
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (other == null || getClass() != other.getClass()) {
-                return false;
-            }
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
             Appender appender = (Appender) other;
             return instrumentedType.equals(appender.instrumentedType)
                     && InvokeDynamic.this.equals(appender.getOuter());
@@ -2980,9 +2976,9 @@ public class InvokeDynamic implements Implementation.Composable {
             return InvokeDynamic.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
-            return instrumentedType.hashCode();
+            return instrumentedType.hashCode() + 31 * InvokeDynamic.this.hashCode();
         }
     }
 }

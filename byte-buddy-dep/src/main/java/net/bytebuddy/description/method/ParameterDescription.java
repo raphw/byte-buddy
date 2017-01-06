@@ -154,11 +154,8 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
         @Override
         public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            } else if (!(other instanceof ParameterDescription)) {
-                return false;
-            }
+            if (this == other) return true;
+            if (!(other instanceof ParameterDescription)) return false;
             ParameterDescription parameterDescription = (ParameterDescription) other;
             return getDeclaringMethod().equals(parameterDescription.getDeclaringMethod())
                     && getIndex() == parameterDescription.getIndex();
@@ -1011,7 +1008,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof Token)) return false;
             Token token = (Token) other;
             return type.equals(token.type)
                     && annotations.equals(token.annotations)
@@ -1026,6 +1023,16 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             result = 31 * result + (name != null ? name.hashCode() : 0);
             result = 31 * result + (modifiers != null ? modifiers.hashCode() : 0);
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return "ParameterDescription.Token{" +
+                    "type=" + type +
+                    ", annotations=" + annotations +
+                    ", name='" + name + '\'' +
+                    ", modifiers=" + modifiers +
+                    '}';
         }
 
         /**

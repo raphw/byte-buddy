@@ -1,6 +1,5 @@
 package net.bytebuddy.description.field;
 
-import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -517,12 +516,21 @@ public interface FieldDescription extends ByteCodeElement,
             result = 31 * result + annotations.hashCode();
             return result;
         }
+
+        @Override
+        public String toString() {
+            return "FieldDescription.Token{" +
+                    "name='" + name + '\'' +
+                    ", modifiers=" + modifiers +
+                    ", type=" + type +
+                    ", annotations=" + annotations +
+                    '}';
+        }
     }
 
     /**
      * A token that uniquely identifies a field by its name and type erasure.
      */
-    @EqualsAndHashCode
     class SignatureToken {
 
         /**
@@ -562,6 +570,29 @@ public interface FieldDescription extends ByteCodeElement,
          */
         public TypeDescription getType() {
             return type;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (!(other instanceof SignatureToken)) return false;
+            SignatureToken that = (SignatureToken) other;
+            return name.equals(that.name) && type.equals(that.type);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + type.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "SignatureToken{" +
+                    "name='" + name + '\'' +
+                    ", type=" + type +
+                    '}';
         }
     }
 }

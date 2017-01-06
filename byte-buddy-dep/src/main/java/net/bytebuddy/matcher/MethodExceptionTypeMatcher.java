@@ -9,7 +9,7 @@ import net.bytebuddy.description.type.TypeList;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 public class MethodExceptionTypeMatcher<T extends MethodDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

@@ -319,14 +319,14 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLo
                     return ForSdkCompiler.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
                             && ForSdkCompiler.this.equals(((Conversion) other).getOuter())
                             && dexFile.equals(((Conversion) other).dexFile);
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     return dexFile.hashCode() + 31 * ForSdkCompiler.this.hashCode();
                 }

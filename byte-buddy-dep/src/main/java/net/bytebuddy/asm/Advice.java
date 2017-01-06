@@ -4265,19 +4265,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 return ForValue.this;
                             }
 
-                            @Override
+                            @Override // HE: Remove when Lombok support for getOuter is added.
                             public int hashCode() {
                                 return ForValue.this.hashCode();
                             }
 
-                            @Override
+                            @Override // HE: Remove when Lombok support for getOuter is added.
                             public boolean equals(Object other) {
-                                if (other == this) {
-                                    return true;
-                                }
-                                if (!(other instanceof Inverted)) {
-                                    return false;
-                                }
+                                if (other == this) return true;
+                                if (other == null || other.getClass() != getClass()) return false;
                                 Inverted inverted = (Inverted) other;
                                 return inverted.getOuter().equals(ForValue.this);
                             }
@@ -4640,18 +4636,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                        MethodDescription instrumentedMethod,
                                                        SuppressionHandler.Bound suppressionHandler);
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Inlining.Resolved resolved = (Inlining.Resolved) other;
-                    return adviceMethod.equals(resolved.adviceMethod) && offsetMappings.equals(resolved.offsetMappings);
+                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Inlining.Resolved resolved = (Inlining.Resolved) object;
+                    return adviceMethod.equals(resolved.adviceMethod)
+                            && offsetMappings.equals(resolved.offsetMappings)
+                            && suppressionHandler.equals(resolved.suppressionHandler);
                 }
 
-                @Override
+                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                 public int hashCode() {
                     int result = adviceMethod.hashCode();
                     result = 31 * result + offsetMappings.hashCode();
+                    result = 31 * result + suppressionHandler.hashCode();
                     return result;
                 }
 
@@ -5015,16 +5014,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 suppressionHandler);
                     }
 
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        if (!super.equals(other)) return false;
-                        Inlining.Resolved.ForMethodEnter that = (Inlining.Resolved.ForMethodEnter) other;
-                        return skipDispatcher == that.skipDispatcher && prependLineNumber == that.prependLineNumber;
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        Inlining.Resolved.ForMethodEnter that = (Inlining.Resolved.ForMethodEnter) object;
+                        return prependLineNumber == that.prependLineNumber && skipDispatcher.equals(that.skipDispatcher);
                     }
 
-                    @Override
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + skipDispatcher.hashCode();
@@ -5206,20 +5205,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected abstract StackSize getPadding();
 
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && super.equals(other)
-                                && enterType == ((Inlining.Resolved.ForMethodExit) other).enterType;
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + enterType.hashCode();
-                        return result;
-                    }
-
                     /**
                      * An advice method inliner for a method exit.
                      */
@@ -5264,9 +5249,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
 
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        Inlining.Resolved.ForMethodExit that = (Inlining.Resolved.ForMethodExit) object;
+                        return enterType.equals(that.enterType);
+                    }
+
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + enterType.hashCode();
+                        return result;
+                    }
+
                     /**
                      * Implementation of exit advice that handles exceptions.
                      */
+                    @EqualsAndHashCode(callSuper = true)
                     protected static class WithExceptionHandler extends Inlining.Resolved.ForMethodExit {
 
                         /**
@@ -5881,18 +5883,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              StackMapFrameHandler.ForInstrumentedMethod stackMapFrameHandler,
                                              StackManipulation exceptionHandler);
 
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    Delegating.Resolved resolved = (Delegating.Resolved) other;
-                    return adviceMethod.equals(resolved.adviceMethod) && offsetMappings.equals(resolved.offsetMappings);
+                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Delegating.Resolved<?> resolved = (Delegating.Resolved<?>) object;
+                    return adviceMethod.equals(resolved.adviceMethod)
+                            && offsetMappings.equals(resolved.offsetMappings)
+                            && suppressionHandler.equals(resolved.suppressionHandler);
                 }
 
-                @Override
+                @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                 public int hashCode() {
                     int result = adviceMethod.hashCode();
                     result = 31 * result + offsetMappings.hashCode();
+                    result = 31 * result + suppressionHandler.hashCode();
                     return result;
                 }
 
@@ -6240,16 +6245,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 skipDispatcher);
                     }
 
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (other == null || getClass() != other.getClass()) return false;
-                        if (!super.equals(other)) return false;
-                        Delegating.Resolved.ForMethodEnter that = (Delegating.Resolved.ForMethodEnter) other;
-                        return skipDispatcher == that.skipDispatcher && prependLineNumber == that.prependLineNumber;
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        Delegating.Resolved.ForMethodEnter that = (Delegating.Resolved.ForMethodEnter) object;
+                        return prependLineNumber == that.prependLineNumber && skipDispatcher.equals(that.skipDispatcher);
                     }
 
-                    @Override
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + skipDispatcher.hashCode();
@@ -6341,14 +6346,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 suppressionHandler.bind(exceptionHandler));
                     }
 
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && super.equals(other)
-                                && enterType == ((Delegating.Resolved.ForMethodExit) other).enterType;
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        Delegating.Resolved.ForMethodExit that = (Delegating.Resolved.ForMethodExit) object;
+                        return enterType.equals(that.enterType);
                     }
 
-                    @Override
+                    @Override // HE: Remove after Lombok resolves ambiguous type names correctly.
                     public int hashCode() {
                         int result = super.hashCode();
                         result = 31 * result + enterType.hashCode();
@@ -6358,6 +6365,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Implementation of exit advice that handles exceptions.
                      */
+                    @EqualsAndHashCode(callSuper = true)
                     protected static class WithExceptionHandler extends Delegating.Resolved.ForMethodExit {
 
                         /**
@@ -7767,7 +7775,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A fixed value binding for a constant pool value.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @EqualsAndHashCode
             protected static class OfConstant extends ForFixedValue<Annotation> {
 
                 /**
@@ -7808,7 +7816,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A dynamic value binding for an annotation property of an annotation on the bound parameter.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @EqualsAndHashCode
             protected static class OfAnnotationProperty extends ForFixedValue<Annotation> {
 
                 /**

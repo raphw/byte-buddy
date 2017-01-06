@@ -598,14 +598,14 @@ public class TypeProxy implements AuxiliaryType {
             return TypeProxy.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && methodAccessorFactory.equals(((MethodCall) other).methodAccessorFactory)
                     && TypeProxy.this.equals(((MethodCall) other).getTypeProxy());
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return 31 * TypeProxy.this.hashCode() + methodAccessorFactory.hashCode();
         }
@@ -647,14 +647,14 @@ public class TypeProxy implements AuxiliaryType {
                 return MethodCall.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && fieldLoadingInstruction.equals(((Appender) other).fieldLoadingInstruction)
                         && MethodCall.this.equals(((Appender) other).getMethodCall());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return 31 * MethodCall.this.hashCode() + fieldLoadingInstruction.hashCode();
             }
@@ -713,7 +713,7 @@ public class TypeProxy implements AuxiliaryType {
                     return Appender.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
@@ -723,7 +723,7 @@ public class TypeProxy implements AuxiliaryType {
                             && specialMethodInvocation.equals(that.specialMethodInvocation);
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     int result = Appender.this.hashCode();
                     result = 31 * result + instrumentedMethod.hashCode();

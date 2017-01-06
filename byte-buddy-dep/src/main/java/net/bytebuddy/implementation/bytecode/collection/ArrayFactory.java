@@ -299,14 +299,14 @@ public class ArrayFactory implements CollectionFactory {
             return ArrayFactory.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && ArrayFactory.this.equals(((ArrayStackManipulation) other).getArrayFactory())
                     && stackManipulations.equals(((ArrayStackManipulation) other).stackManipulations);
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return stackManipulations.hashCode();
         }

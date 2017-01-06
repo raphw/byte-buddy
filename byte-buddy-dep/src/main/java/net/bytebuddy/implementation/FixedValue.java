@@ -342,7 +342,7 @@ public abstract class FixedValue implements Implementation {
                 return ForOriginType.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object o) {
                 if (this == o) return true;
                 if (o == null || getClass() != o.getClass()) return false;
@@ -351,7 +351,7 @@ public abstract class FixedValue implements Implementation {
                         && getOuter().equals(appender.getOuter());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return 31 * getOuter().hashCode() + originType.hashCode();
             }

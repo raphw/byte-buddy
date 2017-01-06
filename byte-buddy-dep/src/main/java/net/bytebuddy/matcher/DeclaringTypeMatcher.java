@@ -11,7 +11,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T> The exact type of the element being matched.
  */
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

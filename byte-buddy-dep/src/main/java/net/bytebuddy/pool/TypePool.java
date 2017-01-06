@@ -1214,16 +1214,15 @@ public interface TypePool {
                     return WithLazyResolution.this;
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public boolean equals(Object object) {
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     LazyResolution that = (LazyResolution) object;
-                    return name.equals(that.name)
-                            && getOuter().equals(that.getOuter());
+                    return name.equals(that.name) && getOuter().equals(that.getOuter());
                 }
 
-                @Override
+                @Override // HE: Remove when Lombok support for getOuter is added.
                 public int hashCode() {
                     return name.hashCode() + 31 * getOuter().hashCode();
                 }
@@ -1703,14 +1702,14 @@ public interface TypePool {
                                 .getName();
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && name.equals(((Bound) other).name)
                                 && ForAnnotationProperty.this.equals(((Bound) other).getOuter());
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         return name.hashCode() + 31 * ForAnnotationProperty.this.hashCode();
                     }
@@ -2133,7 +2132,7 @@ public interface TypePool {
                 /**
                  * An incomplete token representing a generic type without an outer type.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 class ForTopLevelType extends AbstractBase {
 
                     /**
@@ -2171,7 +2170,7 @@ public interface TypePool {
                 /**
                  * An incomplete generic type token representing a type with an outer type.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 class ForInnerClass extends AbstractBase {
 
                     /**
@@ -2369,12 +2368,12 @@ public interface TypePool {
                             superClassToken = token;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return OfType.this.hashCode();
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return other != null
                                     && getClass() == other.getClass()
@@ -2401,12 +2400,12 @@ public interface TypePool {
                             interfaceTypeTokens.add(token);
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return OfType.this.hashCode();
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return other != null
                                     && getClass() == other.getClass()
@@ -2502,12 +2501,12 @@ public interface TypePool {
                             parameterTypeTokens.add(token);
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return OfMethod.this.hashCode();
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return other != null
                                     && getClass() == other.getClass()
@@ -2534,12 +2533,12 @@ public interface TypePool {
                             returnTypeToken = token;
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return OfMethod.this.hashCode();
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return other != null
                                     && getClass() == other.getClass()
@@ -2566,12 +2565,12 @@ public interface TypePool {
                             exceptionTypeTokens.add(token);
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public int hashCode() {
                             return OfMethod.this.hashCode();
                         }
 
-                        @Override
+                        @Override // HE: Remove when Lombok support for getOuter is added.
                         public boolean equals(Object other) {
                             return other != null
                                     && getClass() == other.getClass()
@@ -7491,7 +7490,7 @@ public interface TypePool {
     /**
      * A lazy facade of a type pool that delegates any lookups to another type pool only if another value than the type's name is looked up.
      */
-    @EqualsAndHashCode(callSuper = false)
+    @EqualsAndHashCode
     class LazyFacade extends AbstractBase {
 
         /**

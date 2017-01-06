@@ -348,14 +348,14 @@ public enum MethodVariableAccess {
             return MethodVariableAccess.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && MethodVariableAccess.this == ((OffsetLoading) other).getMethodVariableAccess()
                     && offset == ((OffsetLoading) other).offset;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return MethodVariableAccess.this.hashCode() + 31 * offset;
         }

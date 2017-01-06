@@ -268,7 +268,7 @@ public interface JavaConstant {
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof MethodType)) return false;
             MethodType that = (MethodType) other;
             return parameterTypes.equals(that.parameterTypes) && returnType.equals(that.returnType);
 
@@ -684,7 +684,7 @@ public interface JavaConstant {
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof MethodHandle)) return false;
             MethodHandle aDefault = (MethodHandle) other;
             return handleType == aDefault.handleType
                     && name.equals(aDefault.name)

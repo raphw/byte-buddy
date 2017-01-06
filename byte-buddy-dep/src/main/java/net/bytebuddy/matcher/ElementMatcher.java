@@ -76,7 +76,7 @@ public interface ElementMatcher<T> {
          *
          * @param <W> The type of the object that is being matched.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @EqualsAndHashCode
         class Conjunction<W> extends AbstractBase<W> {
 
             /**
@@ -112,7 +112,7 @@ public interface ElementMatcher<T> {
          *
          * @param <W> The type of the object that is being matched.
          */
-        @EqualsAndHashCode(callSuper = false)
+        @EqualsAndHashCode
         class Disjunction<W> extends AbstractBase<W> {
 
             /**

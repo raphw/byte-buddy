@@ -525,7 +525,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method as byte code.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 public static class WithBody extends ForDefinedMethod {
 
                     /**
@@ -626,7 +626,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method but without byte code and without an annotation value.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 public static class WithoutBody extends ForDefinedMethod {
 
                     /**
@@ -701,7 +701,7 @@ public interface TypeWriter<T> {
                 /**
                  * Describes an entry that defines a method with a default annotation value.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 public static class WithAnnotationDefaultValue extends ForDefinedMethod {
 
                     /**
@@ -786,7 +786,7 @@ public interface TypeWriter<T> {
                 /**
                  * A record for a visibility bridge.
                  */
-                @EqualsAndHashCode(callSuper = false)
+                @EqualsAndHashCode
                 public static class OfVisibilityBridge extends ForDefinedMethod implements ByteCodeAppender {
 
                     /**
@@ -1686,7 +1686,7 @@ public interface TypeWriter<T> {
                 return Default.this;
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             @SuppressWarnings("unchecked")
             public boolean equals(Object object) {
                 if (this == object) return true;
@@ -1697,7 +1697,7 @@ public interface TypeWriter<T> {
                         && auxiliaryTypes.equals(that.auxiliaryTypes);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 int result = Arrays.hashCode(binaryRepresentation);
                 result = 31 * result + auxiliaryTypes.hashCode();

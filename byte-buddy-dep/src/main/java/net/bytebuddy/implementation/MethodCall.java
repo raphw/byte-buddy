@@ -2412,7 +2412,7 @@ public class MethodCall implements Implementation.Composable {
             return MethodCall.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
@@ -2422,7 +2422,7 @@ public class MethodCall implements Implementation.Composable {
 
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return implementationTarget.hashCode() + 31 * MethodCall.this.hashCode();
         }

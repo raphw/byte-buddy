@@ -198,14 +198,14 @@ public enum FieldAccess {
             return new FieldPutInstruction();
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
                     && FieldAccess.this.equals(((AccessDispatcher) other).getFieldAccess())
                     && fieldDescription.equals(((AccessDispatcher) other).fieldDescription);
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             return fieldDescription.hashCode() + 31 * FieldAccess.this.hashCode();
         }
@@ -270,13 +270,13 @@ public enum FieldAccess {
                 return new Size(sizeChange, sizeChange);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && getAccessDispatcher().equals(((FieldGetInstruction) other).getAccessDispatcher());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return getAccessDispatcher().hashCode() + 7;
             }
@@ -306,13 +306,13 @@ public enum FieldAccess {
                 return new Size(-1 * (fieldSize.getSize() + targetSizeChange), 0);
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
                         && getAccessDispatcher().equals(((FieldPutInstruction) other).getAccessDispatcher());
             }
 
-            @Override
+            @Override // HE: Remove when Lombok support for getOuter is added.
             public int hashCode() {
                 return getAccessDispatcher().hashCode() + 14;
             }

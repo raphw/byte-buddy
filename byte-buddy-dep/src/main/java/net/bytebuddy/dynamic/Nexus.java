@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  * system class loader in its hierarchy.
  * </p>
  */
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 public class Nexus extends WeakReference<ClassLoader> {
 
     /**

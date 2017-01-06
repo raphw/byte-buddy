@@ -402,7 +402,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             return ByteArrayClassLoader.this;
         }
 
-        @Override
+        @Override //
         public boolean equals(Object object) {
             if (this == object) return true;
             if (object == null || getClass() != object.getClass()) return false;
@@ -658,7 +658,7 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
             /**
              * A stream handler that returns the given binary representation.
              */
-            @EqualsAndHashCode(callSuper = false)
+            @EqualsAndHashCode
             protected static class ByteArrayUrlStreamHandler extends URLStreamHandler {
 
                 /**

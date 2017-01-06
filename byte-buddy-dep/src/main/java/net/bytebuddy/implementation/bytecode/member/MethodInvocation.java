@@ -354,7 +354,7 @@ public enum MethodInvocation {
             return MethodInvocation.this;
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public boolean equals(Object other) {
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
@@ -364,7 +364,7 @@ public enum MethodInvocation {
                     && typeDescription.equals(that.typeDescription);
         }
 
-        @Override
+        @Override // HE: Remove when Lombok support for getOuter is added.
         public int hashCode() {
             int result = typeDescription.hashCode();
             result = 31 * result + MethodInvocation.this.hashCode();

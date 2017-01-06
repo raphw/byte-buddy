@@ -9,7 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
  *
  * @param <T> The actual matched type of this matcher.
  */
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 public class InheritedAnnotationMatcher<T extends TypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

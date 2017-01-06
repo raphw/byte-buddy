@@ -380,6 +380,7 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     /**
      * A class loading strategy that injects a class using {@code sun.misc.Unsafe}.
      */
+    @EqualsAndHashCode
     class ForUnsafeInjection implements ClassLoadingStrategy<ClassLoader> {
 
         /**
@@ -406,26 +407,6 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
         @Override
         public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             return new ClassInjector.UsingUnsafe(classLoader, protectionDomain).inject(types);
-        }
-
-        @Override
-        public boolean equals(Object object) {
-            if (this == object) return true;
-            if (object == null || getClass() != object.getClass()) return false;
-            ForUnsafeInjection that = (ForUnsafeInjection) object;
-            return protectionDomain != null ? protectionDomain.equals(that.protectionDomain) : that.protectionDomain == null;
-        }
-
-        @Override
-        public int hashCode() {
-            return protectionDomain != null ? protectionDomain.hashCode() : 0;
-        }
-
-        @Override
-        public String toString() {
-            return "ClassLoadingStrategy.ForUnsafeInjection{" +
-                    "protectionDomain=" + protectionDomain +
-                    '}';
         }
     }
 }

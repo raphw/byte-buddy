@@ -155,11 +155,11 @@
                 <artifactId>android</artifactId>
                 <version>${version.android.sdk}</version>
             </dependency>
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${version.lombok}</version>
-            </dependency>
+            <!--<dependency>-->
+                <!--<groupId>org.projectlombok</groupId>-->
+                <!--<artifactId>lombok</artifactId>-->
+                <!--<version>${version.lombok}</version>-->
+            <!--</dependency>-->
         </dependencies>
     </dependencyManagement>
 
@@ -169,6 +169,13 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
             <version>${version.annotations.findbugs}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Allow usage of Lombok annotations. -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${version.lombok}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

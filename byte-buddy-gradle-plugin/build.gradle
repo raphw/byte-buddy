@@ -2,6 +2,7 @@ apply plugin: 'java'
 apply plugin: 'java-gradle-plugin'
 
 def pom = new XmlSlurper().parse(file('./pom.xml'))
+def outerPom = new XmlSlurper().parse(file('../pom.xml'))
 
 group = pom.parent.groupId.text().toString()
 version = pom.parent.version.text().toString()
@@ -21,24 +22,17 @@ def extras = Boolean.getBoolean('net.bytebuddy.misc.extras');
 dependencies {
     compile gradleApi()
     // At this point, it is not given that any artifact from the Maven build can be found in a repository.
-    def artifact = extras ? 'byte-buddy' : 'byte-buddy-dep'
-    logger.info("Using ${artifact} as Byte Buddy dependency")
-    def location = "../${artifact}/target/${artifact}-${version}.jar"
-    if (new File(location).exists()) {
-        logger.info('Byte Buddy location does not exist, cannot only clean but not build project')
+    def location = new File(project.buildscript.sourceFile.getParentFile(), "../byte-buddy/target/byte-buddy-${version}.jar").canonicalFile
+    logger.info("Relying on ${location.absolutePath} as Byte Buddy dependency")
+    if (location.exists()) {
+        compile files(location.absolutePath)
     } else {
-        compile files(location)
-    }
-    // When using the non-shaded dependency, the ASM dependencies are required.
-    if (!extras) {
-        def asmVersion = new XmlSlurper().parse(file('../pom.xml')).properties.'version.asm'
-        compile group: 'org.ow2.asm', name: 'asm', version: asmVersion
-        compile group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion
+        logger.warn("${location.absolutePath} does not exist, can clean but not build project")
     }
     testCompile gradleTestKit()
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.10.19'
-    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.16.12'
+    testCompile group: 'junit', name: 'junit', version: outerPom.properties.'version.junit'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: outerPom.properties.'version.mockito'
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: outerPom.properties.'version.lombok'
 }
 
 // Without the extras property, creating a javadoc artifact is not necessary.

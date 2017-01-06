@@ -726,11 +726,11 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public boolean equals(Object other) {
-            return other == this || other instanceof MethodDescription
+            return other == this || (other instanceof MethodDescription
                     && getInternalName().equals(((MethodDescription) other).getInternalName())
                     && getDeclaringType().equals(((MethodDescription) other).getDeclaringType())
                     && getReturnType().asErasure().equals(((MethodDescription) other).getReturnType().asErasure())
-                    && getParameters().asTypeList().asErasures().equals(((MethodDescription) other).getParameters().asTypeList().asErasures());
+                    && getParameters().asTypeList().asErasures().equals(((MethodDescription) other).getParameters().asTypeList().asErasures()));
         }
 
         @Override
@@ -1713,7 +1713,7 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof SignatureToken)) return false;
             SignatureToken signatureToken = (SignatureToken) other;
             return name.equals(signatureToken.name)
                     && returnType.equals(signatureToken.returnType)
@@ -1726,6 +1726,15 @@ public interface MethodDescription extends TypeVariableSource,
             result = 31 * result + returnType.hashCode();
             result = 31 * result + parameterTypes.hashCode();
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodDescription.SignatureToken{" +
+                    "name='" + name + '\'' +
+                    ", returnType=" + returnType +
+                    ", parameterTypes=" + parameterTypes +
+                    '}';
         }
     }
 
@@ -1776,10 +1785,9 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
+            if (!(other instanceof TypeToken)) return false;
             TypeToken typeToken = (TypeToken) other;
-            return returnType.equals(typeToken.returnType)
-                    && parameterTypes.equals(typeToken.parameterTypes);
+            return returnType.equals(typeToken.returnType) && parameterTypes.equals(typeToken.parameterTypes);
         }
 
         @Override
@@ -1787,6 +1795,14 @@ public interface MethodDescription extends TypeVariableSource,
             int result = returnType.hashCode();
             result = 31 * result + parameterTypes.hashCode();
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodDescription.TypeToken{" +
+                    "returnType=" + returnType +
+                    ", parameterTypes=" + parameterTypes +
+                    '}';
         }
     }
 }

@@ -135,10 +135,10 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     @Override
-    public boolean equals(Object object) {
-        if (this == object) return true;
-        if (object == null || getClass() != object.getClass()) return false;
-        JavaModule that = (JavaModule) object;
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (!(other instanceof JavaModule)) return false;
+        JavaModule that = (JavaModule) other;
         return module.equals(that.module);
     }
 

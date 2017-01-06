@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
  *
  * @param <T> The type of the matched entity.
  */
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode
 public class FailSafeMatcher<T> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**

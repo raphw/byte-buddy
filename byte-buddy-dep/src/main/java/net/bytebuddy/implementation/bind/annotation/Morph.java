@@ -573,14 +573,14 @@ public @interface Morph {
                         return MethodCall.this;
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && MethodCall.this.equals(((Appender) other).getMethodCall())
                                 && typeDescription.equals(((Appender) other).typeDescription);
                     }
 
-                    @Override
+                    @Override // HE: Remove when Lombok support for getOuter is added.
                     public int hashCode() {
                         return typeDescription.hashCode() + 31 * MethodCall.this.hashCode();
                     }
