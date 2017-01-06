@@ -2509,6 +2509,7 @@ public interface AgentBuilder {
              * Returns this description strategy where any described super type is loaded.
              *
              * @return This description strategy where any described super type is loaded.
+             * @see SuperTypeLoading
              */
             public DescriptionStrategy withSuperTypeLoading() {
                 return new SuperTypeLoading(this);
@@ -2521,7 +2522,13 @@ public interface AgentBuilder {
         }
 
         /**
+         * <p>
          * Creates a description strategy that enforces the loading of any super type of a type description.
+         * </p>
+         * <p>
+         * <b>Warning</b>: When using this description strategy, a type is not instrumented if any of its subtypes is loaded first.
+         * The instrumentation API does not submit such types to a class file transformer.
+         * </p>
          */
         @EqualsAndHashCode
         class SuperTypeLoading implements DescriptionStrategy {
