@@ -2512,7 +2512,7 @@ public interface AgentBuilder {
             }
 
             public DescriptionStrategy withSuperTypeLoading(ExecutorService executorService) {
-                return new SuperTypeLoading.Asynchronous(this, executorService);
+                return new SuperTypeLoading.Asynchronous(this, executorService, timeout);
             }
 
             @Override
@@ -2596,6 +2596,7 @@ public interface AgentBuilder {
                 }
             }
 
+            @EqualsAndHashCode
             public static class Asynchronous implements DescriptionStrategy {
 
                 private final DescriptionStrategy delegate;
