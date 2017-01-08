@@ -64,9 +64,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -2509,14 +2507,12 @@ public interface AgentBuilder {
                 this.loadedFirst = loadedFirst;
             }
 
-            /**
-             * Returns this description strategy where any described super type is loaded.
-             *
-             * @return This description strategy where any described super type is loaded.
-             * @see SuperTypeLoading
-             */
             public DescriptionStrategy withSuperTypeLoading() {
                 return new SuperTypeLoading(this);
+            }
+
+            public DescriptionStrategy withSuperTypeLoading(ExecutorService executorService) {
+                return new SuperTypeLoading.Asynchronous(this, executorService);
             }
 
             @Override
@@ -2596,6 +2592,112 @@ public interface AgentBuilder {
                         return Class.forName(name, false, classLoader);
                     } finally {
                         circularityLock.acquire();
+                    }
+                }
+            }
+
+            public static class Asynchronous implements DescriptionStrategy {
+
+                private final DescriptionStrategy delegate;
+
+                private final ExecutorService executorService;
+
+                public Asynchronous(DescriptionStrategy delegate, ExecutorService executorService) {
+                    this.delegate = delegate;
+                    this.executorService = executorService;
+                }
+
+                @Override
+                public TypeDescription apply(String typeName,
+                                             Class<?> type,
+                                             TypePool typePool,
+                                             CircularityLock circularityLock,
+                                             ClassLoader classLoader,
+                                             JavaModule module) {
+                    TypeDescription typeDescription = delegate.apply(typeName, type, typePool, circularityLock, classLoader, module);
+                    return typeDescription instanceof TypeDescription.ForLoadedType
+                            ? typeDescription
+                            : new TypeDescription.SuperTypeLoading(typeDescription, classLoader, new UnlockingClassLoadingDelegate(circularityLock, executorService));
+                }
+
+                @Override
+                public boolean isLoadedFirst() {
+                    return delegate.isLoadedFirst();
+                }
+
+                @EqualsAndHashCode
+                protected static class UnlockingClassLoadingDelegate implements TypeDescription.SuperTypeLoading.ClassLoadingDelegate {
+
+                    private final CircularityLock circularityLock;
+
+                    private final ExecutorService executorService;
+
+                    protected UnlockingClassLoadingDelegate(CircularityLock circularityLock, ExecutorService executorService) {
+                        this.circularityLock = circularityLock;
+                        this.executorService = executorService;
+                    }
+
+                    @Override
+                    public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
+                        boolean holdsLock = Thread.holdsLock(classLoader);
+                        circularityLock.release();
+                        try {
+                            Future<Class<?>> future = executorService.submit(holdsLock
+                                    ? new NotifyingClassLoadingAction(name, classLoader)
+                                    : new SimpleClassLoadingAction(name, classLoader));
+                            try {
+                                while (holdsLock && !future.isDone()) {
+                                    classLoader.wait();
+                                }
+                                return future.get();
+                            } catch (Exception exception) {
+                                throw new IllegalStateException("Could not load class asynchronously", exception);
+                            }
+                        } finally {
+                            circularityLock.acquire();
+                        }
+                    }
+
+                    @EqualsAndHashCode
+                    protected static class SimpleClassLoadingAction implements Callable<Class<?>> {
+
+                        private final String typeName;
+
+                        private final ClassLoader classLoader;
+
+                        protected SimpleClassLoadingAction(String typeName, ClassLoader classLoader) {
+                            this.typeName = typeName;
+                            this.classLoader = classLoader;
+                        }
+
+                        @Override
+                        public Class<?> call() throws ClassNotFoundException {
+                            return Class.forName(typeName, false, classLoader);
+                        }
+                    }
+
+                    @EqualsAndHashCode
+                    protected static class NotifyingClassLoadingAction implements Callable<Class<?>> {
+
+                        private final String typeName;
+
+                        private final ClassLoader classLoader;
+
+                        protected NotifyingClassLoadingAction(String typeName, ClassLoader classLoader) {
+                            this.typeName = typeName;
+                            this.classLoader = classLoader;
+                        }
+
+                        @Override
+                        public Class<?> call() throws ClassNotFoundException {
+                            synchronized (classLoader) {
+                                try {
+                                    return Class.forName(typeName, false, classLoader);
+                                } finally {
+                                    classLoader.notifyAll();
+                                }
+                            }
+                        }
                     }
                 }
             }
