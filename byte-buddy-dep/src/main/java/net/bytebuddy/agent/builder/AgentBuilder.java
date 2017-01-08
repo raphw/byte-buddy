@@ -2512,7 +2512,7 @@ public interface AgentBuilder {
             }
 
             public DescriptionStrategy withSuperTypeLoading(ExecutorService executorService) {
-                return new SuperTypeLoading.Asynchronous(this, executorService, timeout);
+                return new SuperTypeLoading.Asynchronous(this, executorService);
             }
 
             @Override
@@ -2640,7 +2640,7 @@ public interface AgentBuilder {
 
                     @Override
                     public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
-                        boolean holdsLock = Thread.holdsLock(classLoader);
+                        boolean holdsLock = classLoader != null && Thread.holdsLock(classLoader);
                         circularityLock.release();
                         try {
                             Future<Class<?>> future = executorService.submit(holdsLock
@@ -2652,7 +2652,7 @@ public interface AgentBuilder {
                                 }
                                 return future.get();
                             } catch (Exception exception) {
-                                throw new IllegalStateException("Could not load class asynchronously", exception);
+                                throw new IllegalStateException("Could not load " + name + " asynchronously", exception);
                             }
                         } finally {
                             circularityLock.acquire();
@@ -2662,30 +2662,30 @@ public interface AgentBuilder {
                     @EqualsAndHashCode
                     protected static class SimpleClassLoadingAction implements Callable<Class<?>> {
 
-                        private final String typeName;
+                        private final String name;
 
                         private final ClassLoader classLoader;
 
-                        protected SimpleClassLoadingAction(String typeName, ClassLoader classLoader) {
-                            this.typeName = typeName;
+                        protected SimpleClassLoadingAction(String name, ClassLoader classLoader) {
+                            this.name = name;
                             this.classLoader = classLoader;
                         }
 
                         @Override
                         public Class<?> call() throws ClassNotFoundException {
-                            return Class.forName(typeName, false, classLoader);
+                            return Class.forName(name, false, classLoader);
                         }
                     }
 
                     @EqualsAndHashCode
                     protected static class NotifyingClassLoadingAction implements Callable<Class<?>> {
 
-                        private final String typeName;
+                        private final String name;
 
                         private final ClassLoader classLoader;
 
-                        protected NotifyingClassLoadingAction(String typeName, ClassLoader classLoader) {
-                            this.typeName = typeName;
+                        protected NotifyingClassLoadingAction(String name, ClassLoader classLoader) {
+                            this.name = name;
                             this.classLoader = classLoader;
                         }
 
@@ -2693,7 +2693,7 @@ public interface AgentBuilder {
                         public Class<?> call() throws ClassNotFoundException {
                             synchronized (classLoader) {
                                 try {
-                                    return Class.forName(typeName, false, classLoader);
+                                    return Class.forName(name, false, classLoader);
                                 } finally {
                                     classLoader.notifyAll();
                                 }
