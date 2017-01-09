@@ -20,12 +20,11 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
@@ -64,23 +63,21 @@ public class AndroidClassLoadingStrategyTest {
     @Test
     public void testProcessing() throws Exception {
         AndroidClassLoadingStrategy.DexProcessor dexProcessor = mock(AndroidClassLoadingStrategy.DexProcessor.class);
-        Map<String, Class<?>> types = new HashMap<String, Class<?>>();
-        types.put(Foo.class.getName(), Foo.class);
-        types.put(Bar.class.getName(), Bar.class);
-        ClassLoader classLoader = new MapClassLoader(getClass().getClassLoader(), types);
-        when(dexProcessor.makeClassLoader(any(File.class), eq(folder), any(ClassLoader.class))).thenReturn(classLoader);
         AndroidClassLoadingStrategy.DexProcessor.Conversion conversion = mock(AndroidClassLoadingStrategy.DexProcessor.Conversion.class);
         when(dexProcessor.create()).thenReturn(conversion);
-        ClassLoadingStrategy<ClassLoader> classLoadingStrategy = new AndroidClassLoadingStrategy(folder, dexProcessor);
+        AndroidClassLoadingStrategy classLoadingStrategy = spy(new StubbedClassLoadingStrategy(folder, dexProcessor));
         Map<TypeDescription, byte[]> unloaded = new HashMap<TypeDescription, byte[]>();
         unloaded.put(firstType, QUX);
         unloaded.put(secondType, BAZ);
-        Map<TypeDescription, Class<?>> loaded = classLoadingStrategy.load(getClass().getClassLoader(), unloaded);
-        assertThat(loaded.size(), is(2));
-        assertThat(loaded.get(firstType), CoreMatchers.<Class<?>>is(Foo.class));
-        assertThat(loaded.get(secondType), CoreMatchers.<Class<?>>is(Bar.class));
+        Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
+        loaded.put(firstType, Foo.class);
+        loaded.put(secondType, Bar.class);
+        doReturn(loaded).when(classLoadingStrategy).doLoad(eq(getClass().getClassLoader()), eq(unloaded.keySet()), any(File.class));
+        Map<TypeDescription, Class<?>> result = classLoadingStrategy.load(getClass().getClassLoader(), unloaded);
+        assertThat(result.size(), is(2));
+        assertThat(result.get(firstType), CoreMatchers.<Class<?>>is(Foo.class));
+        assertThat(result.get(secondType), CoreMatchers.<Class<?>>is(Bar.class));
         verify(dexProcessor).create();
-        verify(dexProcessor).makeClassLoader(any(File.class), eq(folder), eq(getClass().getClassLoader()));
         verifyNoMoreInteractions(dexProcessor);
         verify(conversion).register(Foo.class.getName(), QUX);
         verify(conversion).register(Bar.class.getName(), BAZ);
@@ -90,7 +87,7 @@ public class AndroidClassLoadingStrategyTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testAndroidClassLoaderRequiresDirectory() throws Exception {
-        new AndroidClassLoadingStrategy(mock(File.class), mock(AndroidClassLoadingStrategy.DexProcessor.class));
+        new StubbedClassLoadingStrategy(mock(File.class), mock(AndroidClassLoadingStrategy.DexProcessor.class));
     }
 
     @Test
@@ -99,21 +96,16 @@ public class AndroidClassLoadingStrategyTest {
                 .subclass(Object.class)
                 .method(named(TO_STRING)).intercept(FixedValue.value(FOO))
                 .make();
-        StubClassLoader stubClassLoader = new StubClassLoader(dynamicType);
-        ClassLoadingStrategy<ClassLoader> classLoadingStrategy = new AndroidClassLoadingStrategy(folder, new StubbedClassLoaderDexCompilation(stubClassLoader));
+        AndroidClassLoadingStrategy classLoadingStrategy = spy(new StubbedClassLoadingStrategy(folder, new StubbedClassLoaderDexCompilation()));
+        doReturn(Collections.singletonMap(dynamicType.getTypeDescription(), Foo.class)).when(classLoadingStrategy).doLoad(eq(getClass().getClassLoader()),
+                eq(Collections.singleton(dynamicType.getTypeDescription())),
+                any(File.class));
         Map<TypeDescription, Class<?>> map = classLoadingStrategy.load(getClass().getClassLoader(), dynamicType.getAllTypes());
         assertThat(map.size(), is(1));
-        assertThat(map.get(dynamicType.getTypeDescription()), CoreMatchers.<Class<?>>is(stubClassLoader.getLoaded()));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.class).create(new ObjectPropertyAssertion.Creator<File>() {
-            @Override
-            public File create() {
-                return folder;
-            }
-        }).applyBasic();
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.class).apply();
         ObjectPropertyAssertion.of(AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler.Conversion.class).create(new ObjectPropertyAssertion.Creator<DexFile>() {
             @Override
@@ -123,70 +115,23 @@ public class AndroidClassLoadingStrategyTest {
         }).apply();
     }
 
-    private static class StubbedClassLoaderDexCompilation implements AndroidClassLoadingStrategy.DexProcessor {
+    private static class StubbedClassLoadingStrategy extends AndroidClassLoadingStrategy {
 
-        private final ClassLoader classLoader;
-
-        private StubbedClassLoaderDexCompilation(ClassLoader classLoader) {
-            this.classLoader = classLoader;
+        public StubbedClassLoadingStrategy(File privateDirectory, DexProcessor dexProcessor) {
+            super(privateDirectory, dexProcessor);
         }
+
+        @Override
+        protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
+            throw new AssertionError();
+        }
+    }
+
+    private static class StubbedClassLoaderDexCompilation implements AndroidClassLoadingStrategy.DexProcessor {
 
         @Override
         public Conversion create() {
             return new AndroidClassLoadingStrategy.DexProcessor.ForSdkCompiler(new DexOptions(), new CfOptions()).create();
-        }
-
-        @Override
-        public ClassLoader makeClassLoader(File zipFile, File privateDirectory, ClassLoader parentClassLoader) {
-            return classLoader;
-        }
-    }
-
-    private static class StubClassLoader extends ClassLoader {
-
-        private Class<?> loaded;
-
-        private final DynamicType.Unloaded<?> dynamicType;
-
-        public StubClassLoader(DynamicType.Unloaded<?> dynamicType) {
-            super(new URLClassLoader(new URL[0], null));
-            this.dynamicType = dynamicType;
-        }
-
-        @Override
-        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            if (loaded != null) {
-                throw new AssertionError("Already loaded: " + loaded);
-            } else if (resolve) {
-                throw new AssertionError("Did not intend to resolve: " + name);
-            }
-            loaded = dynamicType.load(getParent()).getLoaded();
-            return loaded;
-        }
-
-        public Class<?> getLoaded() {
-            return loaded;
-        }
-    }
-
-    private static class MapClassLoader extends ClassLoader {
-
-        private final Map<String, Class<?>> types;
-
-        public MapClassLoader(ClassLoader parent, Map<String, Class<?>> types) {
-            super(parent);
-            this.types = types;
-        }
-
-        @Override
-        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            Class<?> type = types.get(name);
-            if (type == null) {
-                throw new AssertionError("Unexpected type: " + name);
-            } else if (resolve) {
-                throw new AssertionError("Did not intend to resolve: " + name);
-            }
-            return type;
         }
     }
 

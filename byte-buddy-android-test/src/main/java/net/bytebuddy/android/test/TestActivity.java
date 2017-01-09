@@ -60,51 +60,10 @@ public class TestActivity extends Activity {
             Toast.makeText(TestActivity.this, "Warning: Could not read version property. (" + exception.getMessage() + ")", Toast.LENGTH_SHORT).show();
         }
         mavenInfo.setText(getResources().getString(R.string.version_info, version));
-        Button runTest = (Button) findViewById(R.id.run_test);
-        runTest.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ByteBuddy byteBuddy;
-                try {
-                    byteBuddy = new ByteBuddy();
-                } catch (Throwable throwable) {
-                    Log.w(BYTE_BUDDY_TAG, throwable);
-                    Toast.makeText(TestActivity.this, "Failure: Could not create Byte Buddy instance. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
-                    return;
-                }
-                try {
-                    File file = TestActivity.this.getDir(RandomString.make(), Context.MODE_PRIVATE);
-                    if (!file.isDirectory()) {
-                        throw new IOException("Not a directory: " + file);
-                    }
-                    DynamicType.Loaded<?> dynamicType;
-                    try {
-                        dynamicType = byteBuddy.subclass(Object.class)
-                                .method(named("toString")).intercept(MethodDelegation.to(Interceptor.class))
-                                .make()
-                                .load(TestActivity.class.getClassLoader(), new AndroidClassLoadingStrategy(file));
-                    } catch (Throwable throwable) {
-                        Log.w(BYTE_BUDDY_TAG, throwable);
-                        Toast.makeText(TestActivity.this, "Failure: Could not load dynamic type. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    try {
-                        String value = dynamicType.getLoaded().newInstance().toString();
-                        Toast.makeText(TestActivity.this,
-                                FOO.equals(value)
-                                        ? "Success: Created type and verified instrumentation."
-                                        : "Failure: Expected different value by instrumented method. (was: " + value + ")",
-                                Toast.LENGTH_LONG).show();
-                    } catch (Throwable throwable) {
-                        Log.w(BYTE_BUDDY_TAG, throwable);
-                        Toast.makeText(TestActivity.this, "Failure: Could create dynamic instance. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
-                    }
-                } catch (Throwable throwable) {
-                    Log.w(BYTE_BUDDY_TAG, throwable);
-                    Toast.makeText(TestActivity.this, "Failure: Could not create temporary file. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+        Button runTestWrapping = (Button) findViewById(R.id.run_test_wrapping);
+        runTestWrapping.setOnClickListener(new TestRun(new StrategyCreator.Wrapping()));
+        Button runTestInjecting = (Button) findViewById(R.id.run_test_injecting);
+        runTestInjecting.setOnClickListener(new TestRun(new StrategyCreator.Injecting()));
     }
 
     /**
@@ -128,6 +87,105 @@ public class TestActivity extends Activity {
                 throw new IllegalStateException("Super call proxy invocation did not derive in its value");
             }
             return FOO;
+        }
+    }
+
+    /**
+     * A test run for the sample Android application.
+     */
+    private class TestRun implements View.OnClickListener {
+
+        /**
+         * The strategy creator to use.
+         */
+        private final StrategyCreator strategyCreator;
+
+        /**
+         * Creates a new test run listener.
+         *
+         * @param strategyCreator The strategy creator to use.
+         */
+        private TestRun(StrategyCreator strategyCreator) {
+            this.strategyCreator = strategyCreator;
+        }
+
+        @Override
+        public void onClick(View view) {
+            ByteBuddy byteBuddy;
+            try {
+                byteBuddy = new ByteBuddy();
+            } catch (Throwable throwable) {
+                Log.w(BYTE_BUDDY_TAG, throwable);
+                Toast.makeText(TestActivity.this, "Failure: Could not create Byte Buddy instance. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
+                return;
+            }
+            try {
+                File file = TestActivity.this.getDir(RandomString.make(), Context.MODE_PRIVATE);
+                if (!file.isDirectory()) {
+                    throw new IOException("Not a directory: " + file);
+                }
+                DynamicType.Loaded<?> dynamicType;
+                try {
+                    dynamicType = byteBuddy.subclass(Object.class)
+                            .method(named("toString")).intercept(MethodDelegation.to(Interceptor.class))
+                            .make()
+                            .load(TestActivity.class.getClassLoader(), strategyCreator.make(file));
+                } catch (Throwable throwable) {
+                    Log.w(BYTE_BUDDY_TAG, throwable);
+                    Toast.makeText(TestActivity.this, "Failure: Could not load dynamic type. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                try {
+                    String value = dynamicType.getLoaded().newInstance().toString();
+                    Toast.makeText(TestActivity.this,
+                            FOO.equals(value)
+                                    ? "Success: Created type and verified instrumentation."
+                                    : "Failure: Expected different value by instrumented method. (was: " + value + ")",
+                            Toast.LENGTH_LONG).show();
+                } catch (Throwable throwable) {
+                    Log.w(BYTE_BUDDY_TAG, throwable);
+                    Toast.makeText(TestActivity.this, "Failure: Could create dynamic instance. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
+                }
+            } catch (Throwable throwable) {
+                Log.w(BYTE_BUDDY_TAG, throwable);
+                Toast.makeText(TestActivity.this, "Failure: Could not create temporary file. (" + throwable.getMessage() + ")", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    /**
+     * A strategy creator for Android.
+     */
+    private interface StrategyCreator {
+
+        /**
+         * Creates an Android class loading strategy.
+         *
+         * @param file The private folder to use.
+         * @return The class loading strategy to use.
+         */
+        AndroidClassLoadingStrategy make(File file);
+
+        /**
+         * A creator for creating a wrapping strategy.
+         */
+        class Wrapping implements StrategyCreator {
+
+            @Override
+            public AndroidClassLoadingStrategy make(File file) {
+                return new AndroidClassLoadingStrategy.Wrapping(file);
+            }
+        }
+
+        /**
+         * A creator for creating an injecting strategy.
+         */
+        class Injecting implements StrategyCreator {
+
+            @Override
+            public AndroidClassLoadingStrategy make(File file) {
+                return new AndroidClassLoadingStrategy.Injecting(file);
+            }
         }
     }
 }

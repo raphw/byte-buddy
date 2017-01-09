@@ -14,11 +14,19 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"/>
     <Button
-            android:id="@+id/run_test"
+            android:id="@+id/run_test_wrapping"
             android:layout_marginTop="10pt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingLeft="5pt"
             android:paddingRight="5pt"
-            android:text="@string/run_test"/>
+            android:text="@string/run_test_wrapping"/>
+    <Button
+            android:id="@+id/run_test_injecting"
+            android:layout_marginTop="10pt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="5pt"
+            android:paddingRight="5pt"
+            android:text="@string/run_test_injecting"/>
 </LinearLayout>

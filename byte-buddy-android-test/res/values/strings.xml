@@ -7,5 +7,6 @@
         Buddy\'s class loading strategy for Android. For this, it uses version the Android SDK\'s dex compiler
         in the form it is available on Maven Central.
     </string>
-    <string name="run_test">Run test</string>
+    <string name="run_test_wrapping">Run test: wrapping</string>
+    <string name="run_test_injecting">Run test: injecting</string>
 </resources>
