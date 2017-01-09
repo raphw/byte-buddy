@@ -97,6 +97,5 @@ public class AgentBuilderDescriptionStrategyTest {
         ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous.ThreadSwitchingClassLoadingDelegate.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous.ThreadSwitchingClassLoadingDelegate.SimpleClassLoadingAction.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.DescriptionStrategy.SuperTypeLoading.Asynchronous.ThreadSwitchingClassLoadingDelegate.NotifyingClassLoadingAction.class).apply();
     }
 }

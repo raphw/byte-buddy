@@ -2713,6 +2713,7 @@ public interface AgentBuilder {
                     /**
                      * A class loading action that simply loads a type.
                      */
+                    @EqualsAndHashCode
                     protected static class SimpleClassLoadingAction implements Callable<Class<?>> {
 
                         /**
