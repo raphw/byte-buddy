@@ -251,7 +251,7 @@ public class AgentBuilderDefaultApplicationTest {
             Class<?> type = classLoader.loadClass(SimpleType.class.getName());
             assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         } finally {
-            assertThat(classFileTransformer.reset(ByteBuddyAgent.getInstrumentation(), AgentBuilder.RedefinitionStrategy.REDEFINITION).isApplied(), is(true));
+            assertThat(classFileTransformer.reset(ByteBuddyAgent.getInstrumentation(), AgentBuilder.RedefinitionStrategy.REDEFINITION), is(true));
         }
         Class<?> type = classLoader.loadClass(SimpleType.class.getName());
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
@@ -353,7 +353,7 @@ public class AgentBuilderDefaultApplicationTest {
             Class<?> type = classLoader.loadClass(SimpleType.class.getName());
             assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
         } finally {
-            assertThat(classFileTransformer.reset(ByteBuddyAgent.getInstrumentation(), AgentBuilder.RedefinitionStrategy.RETRANSFORMATION).isApplied(), is(true));
+            assertThat(classFileTransformer.reset(ByteBuddyAgent.getInstrumentation(), AgentBuilder.RedefinitionStrategy.RETRANSFORMATION), is(true));
         }
         Class<?> type = classLoader.loadClass(SimpleType.class.getName());
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));

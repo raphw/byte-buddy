@@ -3142,14 +3142,14 @@ public interface AgentBuilder {
         /**
          * Disables redefinition such that already loaded classes are not affected by the agent.
          */
-        DISABLED(false) {
+        DISABLED(false, false) {
             @Override
-            protected boolean isRetransforming(Instrumentation instrumentation) {
-                return false;
+            protected void check(Instrumentation instrumentation) {
+                throw new IllegalStateException("Cannot apply redefinition on disabled strategy");
             }
 
             @Override
-            protected Collector make(Default.Transformation transformation) {
+            protected Collector make(RawMatcher matcher) {
                 throw new IllegalStateException("A disabled redefinition strategy cannot create a collector");
             }
         },
@@ -3170,18 +3170,17 @@ public interface AgentBuilder {
          * the constrains given by this type strategy.
          * </p>
          */
-        REDEFINITION(true) {
+        REDEFINITION(true, false) {
             @Override
-            protected boolean isRetransforming(Instrumentation instrumentation) {
+            protected void check(Instrumentation instrumentation) {
                 if (!instrumentation.isRedefineClassesSupported()) {
-                    throw new IllegalArgumentException("Cannot redefine classes: " + instrumentation);
+                    throw new IllegalStateException("Cannot apply redefinition on " + instrumentation);
                 }
-                return false;
             }
 
             @Override
-            protected Collector make(Default.Transformation transformation) {
-                return new Collector.ForRedefinition(transformation);
+            protected Collector make(RawMatcher matcher) {
+                return new Collector.ForRedefinition(matcher);
             }
         },
 
@@ -3201,18 +3200,17 @@ public interface AgentBuilder {
          * the constrains given by this type strategy.
          * </p>
          */
-        RETRANSFORMATION(true) {
+        RETRANSFORMATION(true, true) {
             @Override
-            protected boolean isRetransforming(Instrumentation instrumentation) {
+            protected void check(Instrumentation instrumentation) {
                 if (!instrumentation.isRetransformClassesSupported()) {
-                    throw new IllegalArgumentException("Cannot retransform classes: " + instrumentation);
+                    throw new IllegalStateException("Cannot apply redefinition on " + instrumentation);
                 }
-                return true;
             }
 
             @Override
-            protected Collector make(Default.Transformation transformation) {
-                return new Collector.ForRetransformation(transformation);
+            protected Collector make(RawMatcher matcher) {
+                return new Collector.ForRetransformation(matcher);
             }
         };
 
@@ -3222,22 +3220,37 @@ public interface AgentBuilder {
         private final boolean enabled;
 
         /**
+         * {@code true} if this strategy applies retransformation.
+         */
+        private final boolean retransforming;
+
+        /**
          * Creates a new redefinition strategy.
          *
-         * @param enabled {@code true} if this strategy is enabled.
+         * @param enabled        {@code true} if this strategy is enabled.
+         * @param retransforming {@code true} if this strategy applies retransformation.
          */
-        RedefinitionStrategy(boolean enabled) {
+        RedefinitionStrategy(boolean enabled, boolean retransforming) {
             this.enabled = enabled;
+            this.retransforming = retransforming;
         }
 
         /**
          * Indicates if this strategy requires a class file transformer to be registered with a hint to apply the
          * transformer for retransformation.
          *
-         * @param instrumentation The instrumentation instance used.
          * @return {@code true} if a class file transformer must be registered with a hint for retransformation.
          */
-        protected abstract boolean isRetransforming(Instrumentation instrumentation);
+        protected boolean isRetransforming() {
+            return retransforming;
+        }
+
+        /**
+         * Checks if this strategy can be applied to the supplied instrumentation instance.
+         *
+         * @param instrumentation The instrumentation instance to validate.
+         */
+        protected abstract void check(Instrumentation instrumentation);
 
         /**
          * Indicates that this redefinition strategy applies a modification of already loaded classes.
@@ -3251,10 +3264,82 @@ public interface AgentBuilder {
         /**
          * Creates a collector instance that is responsible for collecting loaded classes for potential retransformation.
          *
-         * @param transformation The transformation that is registered for the agent.
+         * @param matcher The matcher that decides upon whether a type should be submitted for retransformation.
          * @return A new collector for collecting already loaded classes for transformation.
          */
-        protected abstract Collector make(Default.Transformation transformation);
+        protected abstract Collector make(RawMatcher matcher);
+
+        /**
+         * Applies this redefinition strategy by submitting all loaded types to redefiniton.
+         *
+         * @param instrumentation               The instrumentation instance to use.
+         * @param listener                      The listener to notify on transformations.
+         * @param circularityLock               The circularity lock to use.
+         * @param poolStrategy                  The type locator to use.
+         * @param locationStrategy              The location strategy to use.
+         * @param redefinitionBatchAllocator    The batch allocator for the redefinition strategy to apply.
+         * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
+         * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
+         *                                      instrumentation of classes that represent lambda expressions.
+         * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
+         * @param fallbackStrategy              The fallback strategy to apply.
+         * @param typeMatcher                   Identifies types that should be instrumented.
+         * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
+         */
+        public void apply(Instrumentation instrumentation,
+                          AgentBuilder.Listener listener,
+                          CircularityLock circularityLock,
+                          PoolStrategy poolStrategy,
+                          LocationStrategy locationStrategy,
+                          BatchAllocator redefinitionBatchAllocator,
+                          Listener redefinitionListener,
+                          LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                          DescriptionStrategy descriptionStrategy,
+                          FallbackStrategy fallbackStrategy,
+                          RawMatcher typeMatcher,
+                          RawMatcher ignoredTypeMatcher) {
+            check(instrumentation);
+            RedefinitionStrategy.Collector collector = make(typeMatcher);
+            for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                if (!lambdaInstrumentationStrategy.isInstrumented(type)) {
+                    continue;
+                }
+                JavaModule module = JavaModule.ofType(type);
+                try {
+                    TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
+                    try {
+                        collector.consider(ignoredTypeMatcher,
+                                listener,
+                                descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool, circularityLock, type.getClassLoader(), module),
+                                type,
+                                type,
+                                module,
+                                !instrumentation.isModifiableClass(type));
+                    } catch (Throwable throwable) {
+                        if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
+                            collector.consider(ignoredTypeMatcher,
+                                    listener,
+                                    typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
+                                    type,
+                                    module);
+                        } else {
+                            throw throwable;
+                        }
+                    }
+                } catch (Throwable throwable) {
+                    try {
+                        try {
+                            listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, true, throwable);
+                        } finally {
+                            listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, true);
+                        }
+                    } catch (Throwable ignored) {
+                        // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
+                    }
+                }
+            }
+            collector.apply(instrumentation, circularityLock, locationStrategy, listener, redefinitionBatchAllocator, redefinitionListener);
+        }
 
         /**
          * A batch allocator which is responsible for applying a redefinition in a batches. A class redefinition or
@@ -4142,7 +4227,7 @@ public interface AgentBuilder {
             /**
              * The transformation instance to use for considering types.
              */
-            protected final Default.Transformation transformation;
+            protected final RawMatcher matcher;
 
             /**
              * All types that were collected for redefinition.
@@ -4152,10 +4237,10 @@ public interface AgentBuilder {
             /**
              * Creates a new collector.
              *
-             * @param transformation The transformation instance to use for considering types.
+             * @param matcher The matcher that decides upon whether a type should be submitted for retransformation.
              */
-            protected Collector(Default.Transformation transformation) {
-                this.transformation = transformation;
+            protected Collector(RawMatcher matcher) {
+                this.matcher = matcher;
                 types = new ArrayList<Class<?>>();
             }
 
@@ -4196,7 +4281,7 @@ public interface AgentBuilder {
                                     boolean unmodifiable) {
                 if (unmodifiable
                         || ignoredTypeMatcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
-                        || !transformation.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
+                        || !matcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
                         || !types.add(type)) {
                     try {
                         try {
@@ -4327,10 +4412,10 @@ public interface AgentBuilder {
                 /**
                  * Creates a new collector for a redefinition.
                  *
-                 * @param transformation The transformation of the built agent.
+                 * @param matcher The matcher that decides upon whether a type should be submitted for retransformation.
                  */
-                protected ForRedefinition(Default.Transformation transformation) {
-                    super(transformation);
+                protected ForRedefinition(RawMatcher matcher) {
+                    super(matcher);
                 }
 
                 @Override
@@ -4377,10 +4462,10 @@ public interface AgentBuilder {
                 /**
                  * Creates a new collector for a retransformation.
                  *
-                 * @param transformation The transformation defined by the built agent.
+                 * @param matcher The matcher that decides upon whether a type should be submitted for retransformation.
                  */
-                protected ForRetransformation(Default.Transformation transformation) {
-                    super(transformation);
+                protected ForRetransformation(RawMatcher matcher) {
+                    super(matcher);
                 }
 
                 @Override
@@ -6364,53 +6449,25 @@ public interface AgentBuilder {
             }
             try {
                 ResettableClassFileTransformer classFileTransformer = makeRaw();
-                instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming(instrumentation));
+                instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming());
                 try {
                     if (nativeMethodStrategy.isEnabled(instrumentation)) {
                         instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
                     }
                     lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
                     if (redefinitionStrategy.isEnabled()) {
-                        RedefinitionStrategy.Collector collector = redefinitionStrategy.make(transformation);
-                        for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                            if (!lambdaInstrumentationStrategy.isInstrumented(type)) {
-                                continue;
-                            }
-                            JavaModule module = JavaModule.ofType(type);
-                            try {
-                                TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
-                                try {
-                                    collector.consider(ignoredTypeMatcher,
-                                            listener,
-                                            descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool, circularityLock, type.getClassLoader(), module),
-                                            type,
-                                            type,
-                                            module,
-                                            !instrumentation.isModifiableClass(type));
-                                } catch (Throwable throwable) {
-                                    if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
-                                        collector.consider(ignoredTypeMatcher,
-                                                listener,
-                                                typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
-                                                type,
-                                                module);
-                                    } else {
-                                        throw throwable;
-                                    }
-                                }
-                            } catch (Throwable throwable) {
-                                try {
-                                    try {
-                                        listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, true, throwable);
-                                    } finally {
-                                        listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, true);
-                                    }
-                                } catch (Throwable ignored) {
-                                    // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
-                                }
-                            }
-                        }
-                        collector.apply(instrumentation, circularityLock, locationStrategy, listener, redefinitionBatchAllocator, redefinitionListener);
+                        redefinitionStrategy.apply(instrumentation,
+                                listener,
+                                circularityLock,
+                                poolStrategy,
+                                locationStrategy,
+                                redefinitionBatchAllocator,
+                                redefinitionListener,
+                                lambdaInstrumentationStrategy,
+                                descriptionStrategy,
+                                fallbackStrategy,
+                                transformation,
+                                ignoredTypeMatcher);
                     }
                     return classFileTransformer;
                 } catch (Throwable throwable) {
@@ -7466,65 +7523,26 @@ public interface AgentBuilder {
             }
 
             @Override
-            public synchronized Reset reset(Instrumentation instrumentation,
-                                            RedefinitionStrategy redefinitionStrategy,
-                                            RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                            RedefinitionStrategy.Listener redefinitionListener) {
+            public synchronized boolean reset(Instrumentation instrumentation,
+                                              RedefinitionStrategy redefinitionStrategy,
+                                              RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                              RedefinitionStrategy.Listener redefinitionListener) {
                 if (instrumentation.removeTransformer(this)) {
-                    if (!redefinitionStrategy.isEnabled()) {
-                        return Reset.Simple.ACTIVE;
-                    }
-                    redefinitionStrategy.isRetransforming(instrumentation);
-                    Map<Class<?>, Throwable> failures = new HashMap<Class<?>, Throwable>();
-                    RedefinitionStrategy.Collector collector = redefinitionStrategy.make(transformation);
-                    for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                        if (!lambdaInstrumentationStrategy.isInstrumented(type)) {
-                            continue;
-                        }
-                        JavaModule module = JavaModule.ofType(type);
-                        try {
-                            collector.consider(ignoredTypeMatcher,
-                                    Listener.NoOp.INSTANCE,
-                                    descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type),
-                                            type,
-                                            poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader()),
-                                            circularityLock,
-                                            type.getClassLoader(),
-                                            module),
-                                    type,
-                                    type,
-                                    module,
-                                    !instrumentation.isModifiableClass(type));
-                        } catch (Throwable throwable) {
-                            try {
-                                if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
-                                    collector.consider(ignoredTypeMatcher,
-                                            Listener.NoOp.INSTANCE,
-                                            descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type),
-                                                    NO_LOADED_TYPE,
-                                                    poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader()),
-                                                    circularityLock,
-                                                    type.getClassLoader(),
-                                                    module),
-                                            type,
-                                            module);
-                                } else {
-                                    failures.put(type, throwable);
-                                }
-                            } catch (Throwable fallback) {
-                                failures.put(type, fallback);
-                            }
-                        }
-                    }
-                    collector.apply(instrumentation,
-                            CircularityLock.Inactive.INSTANCE,
-                            locationStrategy,
+                    redefinitionStrategy.apply(instrumentation,
                             Listener.NoOp.INSTANCE,
-                            RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
-                            new RedefinitionStrategy.Listener.Compound(new FailureCollectingListener(failures), redefinitionListener));
-                    return Reset.WithErrors.ofPotentiallyErroneous(failures);
+                            CircularityLock.Inactive.INSTANCE,
+                            poolStrategy,
+                            locationStrategy,
+                            redefinitionBatchAllocator,
+                            redefinitionListener,
+                            lambdaInstrumentationStrategy,
+                            descriptionStrategy,
+                            fallbackStrategy,
+                            transformation,
+                            ignoredTypeMatcher);
+                    return true;
                 } else {
-                    return Reset.Simple.INACTIVE;
+                    return false;
                 }
             }
 
@@ -7922,35 +7940,6 @@ public interface AgentBuilder {
                     result = 31 * result + ExecutingTransformer.this.hashCode();
                     result = 31 * result + Arrays.hashCode(binaryRepresentation);
                     return result;
-                }
-            }
-
-            /**
-             * A listener that adds all discovered errors to a map.
-             */
-            @EqualsAndHashCode(callSuper = false)
-            protected static class FailureCollectingListener extends RedefinitionStrategy.Listener.Adapter {
-
-                /**
-                 * A mapping of failures by the class that causes this failure.
-                 */
-                private final Map<Class<?>, Throwable> failures;
-
-                /**
-                 * Creates a new failure collecting listener.
-                 *
-                 * @param failures A mapping of failures by the class that causes this failure.
-                 */
-                protected FailureCollectingListener(Map<Class<?>, Throwable> failures) {
-                    this.failures = failures;
-                }
-
-                @Override
-                public Iterable<? extends List<Class<?>>> onError(int index, List<Class<?>> batch, Throwable throwable, List<Class<?>> types) {
-                    for (Class<?> type : batch) {
-                        failures.put(type, throwable);
-                    }
-                    return Collections.emptyList();
                 }
             }
         }

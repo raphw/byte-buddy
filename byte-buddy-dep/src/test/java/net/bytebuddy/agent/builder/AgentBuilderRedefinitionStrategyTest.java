@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.lang.instrument.Instrumentation;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -28,32 +29,47 @@ public class AgentBuilderRedefinitionStrategyTest {
     }
 
     @Test
-    public void testDisabledRedefinitionStrategyIsNotRetransforming() throws Exception {
-        assertThat(AgentBuilder.RedefinitionStrategy.DISABLED.isRetransforming(mock(Instrumentation.class)), is(false));
+    public void testDisabledRedefinitionStrategyIsRetransforming() throws Exception {
+        assertThat(AgentBuilder.RedefinitionStrategy.DISABLED.isRetransforming(), is(false));
     }
 
     @Test
     public void testRetransformationStrategyIsRetransforming() throws Exception {
-        Instrumentation instrumentation = mock(Instrumentation.class);
-        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
-        assertThat(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION.isRetransforming(instrumentation), is(true));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testRetransformationStrategyNotSupportedThrowsException() throws Exception {
-        AgentBuilder.RedefinitionStrategy.RETRANSFORMATION.isRetransforming(mock(Instrumentation.class));
+        assertThat(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION.isRetransforming(), is(true));
     }
 
     @Test
-    public void testRedefinitionStrategyIsNotRetransforming() throws Exception {
-        Instrumentation instrumentation = mock(Instrumentation.class);
-        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
-        assertThat(AgentBuilder.RedefinitionStrategy.REDEFINITION.isRetransforming(instrumentation), is(false));
+    public void testRedefinitionStrategyIsRetransforming() throws Exception {
+        assertThat(AgentBuilder.RedefinitionStrategy.REDEFINITION.isRetransforming(), is(false));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
+    public void testDisabledRedefinitionStrategyIsNotChecked() throws Exception {
+        AgentBuilder.RedefinitionStrategy.DISABLED.check(mock(Instrumentation.class));
+    }
+
+    @Test
+    public void testRetransformationStrategyIsChecked() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
+        AgentBuilder.RedefinitionStrategy.RETRANSFORMATION.check(instrumentation);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetransformationStrategyNotSupportedThrowsException() throws Exception {
+        AgentBuilder.RedefinitionStrategy.RETRANSFORMATION.check(mock(Instrumentation.class));
+    }
+
+    @Test
+    public void testRedefinitionStrategyIsChecked() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        AgentBuilder.RedefinitionStrategy.REDEFINITION.check(instrumentation);
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testRedefinitionStrategyNotSupportedThrowsException() throws Exception {
-        AgentBuilder.RedefinitionStrategy.REDEFINITION.isRetransforming(mock(Instrumentation.class));
+        AgentBuilder.RedefinitionStrategy.REDEFINITION.check(mock(Instrumentation.class));
     }
 
     @Test
