@@ -12,6 +12,7 @@ import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,6 +20,8 @@ import org.junit.rules.MethodRule;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
@@ -41,6 +44,8 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
 
     private ClassLoader classLoader;
 
+    private ExecutorService executorService;
+
     @Before
     public void setUp() throws Exception {
         classLoader = new ByteArrayClassLoader(null,
@@ -48,15 +53,41 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
                 ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        executorService.shutdownNow();
     }
 
     @Test
     @AgentAttachmentRule.Enforce
-//    @IntegrationRule.Enforce
-    public void testAgentWithoutSelfInitialization() throws Exception {
+    @IntegrationRule.Enforce
+    public void testSynchronousSuperTypeLoading() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .with(AgentBuilder.DescriptionStrategy.Default.HYBRID.withSuperTypeLoading())
+                .with(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.withSuperTypeLoading())
+                .ignore(none())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .type(ElementMatchers.isSubTypeOf(Foo.class), ElementMatchers.is(classLoader)).transform(new ConstantTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(Bar.class.getName());
+            assertThat(type.getDeclaredMethod(BAR).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
+            assertThat(type.getSuperclass().getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce
+    @IntegrationRule.Enforce
+    public void testAsynchronousSuperTypeLoading() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(AgentBuilder.DescriptionStrategy.Default.POOL_ONLY.withSuperTypeLoading(executorService))
                 .ignore(none())
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .type(ElementMatchers.isSubTypeOf(Foo.class), ElementMatchers.is(classLoader)).transform(new ConstantTransformer())

@@ -65,6 +65,7 @@ import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -2693,11 +2694,12 @@ public interface AgentBuilder {
                     @Override
                     public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
                         boolean holdsLock = classLoader != null && Thread.holdsLock(classLoader);
+                        AtomicBoolean signal = new AtomicBoolean(holdsLock);
                         Future<Class<?>> future = executorService.submit(holdsLock
-                                ? new NotifyingClassLoadingAction(name, classLoader)
+                                ? new NotifyingClassLoadingAction(name, classLoader, signal)
                                 : new SimpleClassLoadingAction(name, classLoader));
                         try {
-                            while (holdsLock && !future.isDone()) {
+                            while (holdsLock && signal.get()) {
                                 classLoader.wait();
                             }
                             return future.get();
@@ -2711,7 +2713,6 @@ public interface AgentBuilder {
                     /**
                      * A class loading action that simply loads a type.
                      */
-                    @EqualsAndHashCode
                     protected static class SimpleClassLoadingAction implements Callable<Class<?>> {
 
                         /**
@@ -2744,7 +2745,6 @@ public interface AgentBuilder {
                     /**
                      * A class loading action that notifies the class loader's lock after the type was loaded.
                      */
-                    @EqualsAndHashCode
                     protected static class NotifyingClassLoadingAction implements Callable<Class<?>> {
 
                         /**
@@ -2758,14 +2758,21 @@ public interface AgentBuilder {
                         private final ClassLoader classLoader;
 
                         /**
+                         * The signal that indicates the completion of the class loading.
+                         */
+                        private final AtomicBoolean signal;
+
+                        /**
                          * Creates a notifying class loading action.
                          *
                          * @param name        The loaded type's name.
                          * @param classLoader The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+                         * @param signal      The signal that indicates the completion of the class loading.
                          */
-                        protected NotifyingClassLoadingAction(String name, ClassLoader classLoader) {
+                        protected NotifyingClassLoadingAction(String name, ClassLoader classLoader, AtomicBoolean signal) {
                             this.name = name;
                             this.classLoader = classLoader;
+                            this.signal = signal;
                         }
 
                         @Override
@@ -2774,6 +2781,7 @@ public interface AgentBuilder {
                                 try {
                                     return Class.forName(name, false, classLoader);
                                 } finally {
+                                    signal.set(false);
                                     classLoader.notifyAll();
                                 }
                             }
