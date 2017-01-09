@@ -22,10 +22,12 @@ import java.lang.instrument.Instrumentation;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
@@ -71,7 +73,7 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
         try {
             Class<?> type = classLoader.loadClass(Bar.class.getName());
             assertThat(type.getDeclaredMethod(BAR).invoke(type.getDeclaredConstructor().newInstance()), is((Object) BAR));
-            assertThat(type.getSuperclass().getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) FOO));
+            assertThat(type.getSuperclass().getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), nullValue(Object.class));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
@@ -116,8 +118,8 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
         @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
             return builder
-                    .method(named(FOO)).intercept(FixedValue.value(FOO))
-                    .method(named(BAR)).intercept(FixedValue.value(BAR));
+                    .method(isDeclaredBy(typeDescription).and(named(FOO))).intercept(FixedValue.value(FOO))
+                    .method(isDeclaredBy(typeDescription).and(named(BAR))).intercept(FixedValue.value(BAR));
         }
     }
 }
