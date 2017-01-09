@@ -2391,6 +2391,14 @@ public interface AgentBuilder {
     interface DescriptionStrategy {
 
         /**
+         * Indicates if this description strategy makes use of loaded type information and yields a different type description if no loaded type is available.
+         *
+         * @return {@code true} if this description strategy prefers loaded type information when describing a type and only uses a type pool
+         * if loaded type information is not available.
+         */
+        boolean isLoadedFirst();
+
+        /**
          * Describes the given type.
          *
          * @param typeName        The binary name of the type to describe.
@@ -2402,14 +2410,6 @@ public interface AgentBuilder {
          * @return An appropriate type description.
          */
         TypeDescription apply(String typeName, Class<?> type, TypePool typePool, CircularityLock circularityLock, ClassLoader classLoader, JavaModule module);
-
-        /**
-         * Indicates if this description strategy makes use of loaded type information and yields a different type description if no loaded type is available.
-         *
-         * @return {@code true} if this description strategy prefers loaded type information when describing a type and only uses a type pool
-         * if loaded type information is not available.
-         */
-        boolean isLoadedFirst();
 
         /**
          * Default implementations of a {@link DescriptionStrategy}.
@@ -2520,6 +2520,11 @@ public interface AgentBuilder {
                 return new SuperTypeLoading(this);
             }
 
+            @Override
+            public boolean isLoadedFirst() {
+                return loadedFirst;
+            }
+
             /**
              * Creates a description strategy that uses this strategy but loads any super type asynchronously. Super types are loaded via
              * another thread supplied by the executor service to enforce the instrumentation of any such super type. It is recommended
@@ -2532,11 +2537,6 @@ public interface AgentBuilder {
              */
             public DescriptionStrategy withSuperTypeLoading(ExecutorService executorService) {
                 return new SuperTypeLoading.Asynchronous(this, executorService);
-            }
-
-            @Override
-            public boolean isLoadedFirst() {
-                return loadedFirst;
             }
         }
 
@@ -2568,6 +2568,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public boolean isLoadedFirst() {
+                return delegate.isLoadedFirst();
+            }
+
+            @Override
             public TypeDescription apply(String typeName,
                                          Class<?> type,
                                          TypePool typePool,
@@ -2578,11 +2583,6 @@ public interface AgentBuilder {
                 return typeDescription instanceof TypeDescription.ForLoadedType
                         ? typeDescription
                         : new TypeDescription.SuperTypeLoading(typeDescription, classLoader, new UnlockingClassLoadingDelegate(circularityLock));
-            }
-
-            @Override
-            public boolean isLoadedFirst() {
-                return delegate.isLoadedFirst();
             }
 
             /**
@@ -2628,6 +2628,21 @@ public interface AgentBuilder {
              * threads are typically short lived which predestines the use of a {@link Executors#newCachedThreadPool()} without any upper bound
              * for the maximum number of created threads.
              * </p>
+             * <p>
+             * <b>Important</b>: This strategy can dead-lock under two circumstances:
+             * <ul>
+             * <li>
+             * <b>Classes declare circularities</b>: Under normal circumstances, such scenarios result in a {@link ClassCircularityError} but
+             * can result in dead-locks when using this instrumentation strategy.
+             * </li>
+             * <li>
+             * <b>Class loaders declare custom locks</b>: If a class loader locks another lock but itself during class loading, this lock cannot
+             * be released by this strategy.
+             * </li>
+             * </ul>
+             * For these reasons, it is not recommended to use this strategy when the target class loader is unknown or if the target application
+             * might contain corrupt class files.
+             * </p>
              */
             @EqualsAndHashCode
             public static class Asynchronous implements DescriptionStrategy {
@@ -2647,10 +2662,16 @@ public interface AgentBuilder {
                  *
                  * @param delegate        The delegate description strategy.
                  * @param executorService The executor service to use for loading super types.
+                 * @param timeout
                  */
                 public Asynchronous(DescriptionStrategy delegate, ExecutorService executorService) {
                     this.delegate = delegate;
                     this.executorService = executorService;
+                }
+
+                @Override
+                public boolean isLoadedFirst() {
+                    return delegate.isLoadedFirst();
                 }
 
                 @Override
@@ -2664,11 +2685,6 @@ public interface AgentBuilder {
                     return typeDescription instanceof TypeDescription.ForLoadedType
                             ? typeDescription
                             : new TypeDescription.SuperTypeLoading(typeDescription, classLoader, new ThreadSwitchingClassLoadingDelegate(executorService));
-                }
-
-                @Override
-                public boolean isLoadedFirst() {
-                    return delegate.isLoadedFirst();
                 }
 
                 /**
