@@ -2547,7 +2547,7 @@ public interface AgentBuilder {
          * </p>
          * <p>
          * <b>Warning</b>: When using this description strategy, a type is not instrumented if any of its subtypes is loaded first.
-         * The instrumentation API does not submit such types to a class file transformer.
+         * The instrumentation API does not submit such types to a class file transformer on most VM implementations.
          * </p>
          */
         @EqualsAndHashCode
@@ -2759,7 +2759,7 @@ public interface AgentBuilder {
                         private final ClassLoader classLoader;
 
                         /**
-                         * The signal that indicates the completion of the class loading.
+                         * The signal that indicates the completion of the class loading with {@code false}.
                          */
                         private final AtomicBoolean signal;
 
@@ -2768,7 +2768,7 @@ public interface AgentBuilder {
                          *
                          * @param name        The loaded type's name.
                          * @param classLoader The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
-                         * @param signal      The signal that indicates the completion of the class loading.
+                         * @param signal      The signal that indicates the completion of the class loading with {@code false}.
                          */
                         protected NotifyingClassLoadingAction(String name, ClassLoader classLoader, AtomicBoolean signal) {
                             this.name = name;
