@@ -387,16 +387,21 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
 
         @Override
         protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
+            if (classLoader == null) {
+                throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader on Android");
+            }
             dalvik.system.DexFile dexFile = dalvik.system.DexFile.loadDex(jar.getAbsolutePath(),
                     new File(privateDirectory.getAbsolutePath(), randomString.nextString() + EXTENSION).getAbsolutePath(),
                     NO_FLAGS);
             Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : typeDescriptions) {
-                Class<?> type = dexFile.loadClass(typeDescription.getName(), classLoader);
-                if (type == null) {
-                    throw new IllegalStateException("Could not load " + typeDescription);
+                synchronized (classLoader) {
+                    Class<?> type = dexFile.loadClass(typeDescription.getName(), classLoader);
+                    if (type == null) {
+                        throw new IllegalStateException("Could not load " + typeDescription);
+                    }
+                    loadedTypes.put(typeDescription, type);
                 }
-                loadedTypes.put(typeDescription, type);
             }
             return loadedTypes;
         }

@@ -90,6 +90,15 @@ public class AndroidClassLoadingStrategyTest {
         new StubbedClassLoadingStrategy(mock(File.class), mock(AndroidClassLoadingStrategy.DexProcessor.class));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testInjectBootstrapLoader() throws Exception {
+        File file = mock(File.class);
+        when(file.isDirectory()).thenReturn(true);
+        new StubbedClassLoadingStrategy.Injecting(file, mock(AndroidClassLoadingStrategy.DexProcessor.class)).doLoad(null,
+                null,
+                null);
+    }
+
     @Test
     public void testStubbedClassLoading() throws Exception {
         final DynamicType.Unloaded<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V6)
