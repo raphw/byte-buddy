@@ -57,6 +57,7 @@ import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.security.AccessControlContext;
@@ -1330,6 +1331,209 @@ public interface AgentBuilder {
                             target.addReads(instrumentation, module);
                         }
                     }
+                }
+            }
+        }
+
+        /**
+         * A resubmitting instrumentation listener which attempts to load types after their instrumentation and submits them
+         * for retransformation or redefinition.
+         */
+        class Resubmitting extends Listener.Adapter implements Runnable {
+
+            /**
+             * The instrumentation instance to use.
+             */
+            private final Instrumentation instrumentation;
+
+            /**
+             * The listener to notify when a location strategy fails for a type.
+             */
+            private final Listener listener;
+
+            /**
+             * The location strategy to use.
+             */
+            private final LocationStrategy locationStrategy;
+
+            /**
+             * The redefinition strategy to use.
+             */
+            private final RedefinitionStrategy redefinitionStrategy;
+
+            /**
+             * The redefinition batch allocator.
+             */
+            private final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
+
+            /**
+             * The redefinition listener.
+             */
+            private final RedefinitionStrategy.Listener redefinitionListener;
+
+            /**
+             * A mapping of class loader references to a set of names that failed to load on the origin class loader.
+             */
+            private final ConcurrentMap<ClassLoaderReference, Set<String>> types;
+
+            /**
+             * Creates a new resubmission listener that is using a {@link RedefinitionStrategy#RETRANSFORMATION}. During
+             * the retransformation, all types are submitted in a single batch and no listener is notified.
+             *
+             * @param instrumentation The instrumentation instance to use.
+             */
+            public Resubmitting(Instrumentation instrumentation) {
+                this(instrumentation, RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE, RedefinitionStrategy.Listener.NoOp.INSTANCE);
+            }
+
+            /**
+             * Creates a new resubmission listener that is using a {@link RedefinitionStrategy#RETRANSFORMATION}.
+             *
+             * @param instrumentation            The instrumentation instance to use.
+             * @param redefinitionBatchAllocator The redefinition batch allocator.
+             * @param redefinitionListener       The redefinition listener.
+             */
+            public Resubmitting(Instrumentation instrumentation,
+                                RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                RedefinitionStrategy.Listener redefinitionListener) {
+                this(instrumentation,
+                        NoOp.INSTANCE,
+                        LocationStrategy.NoOp.INSTANCE,
+                        RedefinitionStrategy.RETRANSFORMATION,
+                        redefinitionBatchAllocator,
+                        redefinitionListener);
+            }
+
+            /**
+             * Creates a new resubmission listener that is using a {@link RedefinitionStrategy#REDEFINITION}.
+             *
+             * @param instrumentation            The instrumentation instance to use.
+             * @param listener                   The listener to notify when a location strategy fails for a type.
+             * @param locationStrategy           The location strategy to use.
+             * @param redefinitionBatchAllocator The redefinition batch allocator.
+             * @param redefinitionListener       The redefinition listener.
+             */
+            public Resubmitting(Instrumentation instrumentation,
+                                Listener listener,
+                                LocationStrategy locationStrategy,
+                                RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                RedefinitionStrategy.Listener redefinitionListener) {
+                this(instrumentation, listener, locationStrategy, RedefinitionStrategy.REDEFINITION, redefinitionBatchAllocator, redefinitionListener);
+            }
+
+            /**
+             * Creates a new resubmission listener.
+             *
+             * @param instrumentation            The instrumentation instance to use.
+             * @param listener                   The listener to notify when a location strategy fails for a type.
+             * @param locationStrategy           The location strategy to use.
+             * @param redefinitionStrategy       The redefinition strategy to use.
+             * @param redefinitionBatchAllocator The redefinition batch allocator.
+             * @param redefinitionListener       The redefinition listener.
+             */
+            protected Resubmitting(Instrumentation instrumentation,
+                                   Listener listener,
+                                   LocationStrategy locationStrategy,
+                                   RedefinitionStrategy redefinitionStrategy,
+                                   RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                   RedefinitionStrategy.Listener redefinitionListener) {
+                this.instrumentation = instrumentation;
+                this.listener = listener;
+                this.locationStrategy = locationStrategy;
+                this.redefinitionStrategy = redefinitionStrategy;
+                this.redefinitionBatchAllocator = redefinitionBatchAllocator;
+                this.redefinitionListener = redefinitionListener;
+                types = new ConcurrentHashMap<ClassLoaderReference, Set<String>>();
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
+                if (!loaded) {
+                    ClassLoaderReference classLoaderReference = new ClassLoaderReference(classLoader);
+                    Set<String> types = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+                    Set<String> previous = this.types.putIfAbsent(classLoaderReference, types);
+                    if (previous != null) {
+                        types = previous;
+                    }
+                    types.add(typeName);
+                }
+            }
+
+            @Override
+            public void run() {
+                Iterator<Map.Entry<ClassLoaderReference, Set<String>>> entries = types.entrySet().iterator();
+                List<Class<?>> types = new ArrayList<Class<?>>();
+                while (entries.hasNext()) {
+                    Map.Entry<ClassLoaderReference, Set<String>> entry = entries.next();
+                    ClassLoader classLoader = entry.getKey().get();
+                    if (classLoader != null || entry.getKey().isBootstrapLoader()) {
+                        Iterator<String> iterator = entry.getValue().iterator();
+                        while (iterator.hasNext()) {
+                            try {
+                                Class<?> type = Class.forName(iterator.next(), false, classLoader);
+                                if (instrumentation.isModifiableClass(type)) {
+                                    types.add(type);
+                                }
+                            } catch (ClassNotFoundException ignored) {
+                                /* do nothing */
+                            } finally {
+                                iterator.remove();
+                            }
+                        }
+                    } else {
+                        entries.remove();
+                    }
+                }
+                RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
+                collector.include(types);
+                collector.apply(instrumentation,
+                        CircularityLock.Inactive.INSTANCE,
+                        locationStrategy,
+                        listener,
+                        redefinitionBatchAllocator,
+                        redefinitionListener);
+            }
+
+            /**
+             * A reference for a class loader that also allows the identification of the bootstrap loader.
+             */
+            protected static class ClassLoaderReference extends WeakReference<ClassLoader> {
+
+                /**
+                 * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
+                 */
+                private final int hashCode;
+
+                /**
+                 * Creates a new class loader reference.
+                 *
+                 * @param classLoader The represented class loader or {@code null} for the bootstrap class loader.
+                 */
+                protected ClassLoaderReference(ClassLoader classLoader) {
+                    super(classLoader);
+                    hashCode = System.identityHashCode(classLoader);
+                }
+
+                /**
+                 * Checks if this reference represents the bootstrap class loader.
+                 *
+                 * @return {@code true} if this entry represents the bootstrap class loader.
+                 */
+                protected boolean isBootstrapLoader() {
+                    return hashCode == 0;
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (!(object instanceof ClassLoaderReference)) return false;
+                    ClassLoaderReference that = (ClassLoaderReference) object;
+                    return hashCode == that.hashCode && get() == that.get();
+                }
+
+                @Override
+                public int hashCode() {
+                    return hashCode;
                 }
             }
         }
@@ -2662,7 +2866,6 @@ public interface AgentBuilder {
                  *
                  * @param delegate        The delegate description strategy.
                  * @param executorService The executor service to use for loading super types.
-                 * @param timeout
                  */
                 public Asynchronous(DescriptionStrategy delegate, ExecutorService executorService) {
                     this.delegate = delegate;
@@ -3165,7 +3368,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected Collector make(RawMatcher matcher) {
+            protected Collector make() {
                 throw new IllegalStateException("A disabled redefinition strategy cannot create a collector");
             }
         },
@@ -3195,8 +3398,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected Collector make(RawMatcher matcher) {
-                return new Collector.ForRedefinition(matcher);
+            protected Collector make() {
+                return new Collector.ForRedefinition();
             }
         },
 
@@ -3225,8 +3428,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            protected Collector make(RawMatcher matcher) {
-                return new Collector.ForRetransformation(matcher);
+            protected Collector make() {
+                return new Collector.ForRetransformation();
             }
         };
 
@@ -3280,10 +3483,9 @@ public interface AgentBuilder {
         /**
          * Creates a collector instance that is responsible for collecting loaded classes for potential retransformation.
          *
-         * @param matcher The matcher that decides upon whether a type should be submitted for retransformation.
          * @return A new collector for collecting already loaded classes for transformation.
          */
-        protected abstract Collector make(RawMatcher matcher);
+        protected abstract Collector make();
 
         /**
          * Applies this redefinition strategy by submitting all loaded types to redefiniton.
@@ -3315,7 +3517,7 @@ public interface AgentBuilder {
                           RawMatcher typeMatcher,
                           RawMatcher ignoredTypeMatcher) {
             check(instrumentation);
-            RedefinitionStrategy.Collector collector = make(typeMatcher);
+            RedefinitionStrategy.Collector collector = make();
             for (Class<?> type : instrumentation.getAllLoadedClasses()) {
                 if (!lambdaInstrumentationStrategy.isInstrumented(type)) {
                     continue;
@@ -3324,7 +3526,8 @@ public interface AgentBuilder {
                 try {
                     TypePool typePool = poolStrategy.typePool(locationStrategy.classFileLocator(type.getClassLoader(), module), type.getClassLoader());
                     try {
-                        collector.consider(ignoredTypeMatcher,
+                        collector.consider(typeMatcher,
+                                ignoredTypeMatcher,
                                 listener,
                                 descriptionStrategy.apply(TypeDescription.ForLoadedType.getName(type), type, typePool, circularityLock, type.getClassLoader(), module),
                                 type,
@@ -3333,7 +3536,8 @@ public interface AgentBuilder {
                                 !instrumentation.isModifiableClass(type));
                     } catch (Throwable throwable) {
                         if (descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(type, throwable)) {
-                            collector.consider(ignoredTypeMatcher,
+                            collector.consider(typeMatcher,
+                                    ignoredTypeMatcher,
                                     listener,
                                     typePool.describe(TypeDescription.ForLoadedType.getName(type)).resolve(),
                                     type,
@@ -4241,45 +4445,40 @@ public interface AgentBuilder {
             private static final Class<?> NO_LOADED_TYPE = null;
 
             /**
-             * The transformation instance to use for considering types.
-             */
-            protected final RawMatcher matcher;
-
-            /**
              * All types that were collected for redefinition.
              */
             protected final List<Class<?>> types;
 
             /**
              * Creates a new collector.
-             *
-             * @param matcher The matcher that decides upon whether a type should be submitted for retransformation.
              */
-            protected Collector(RawMatcher matcher) {
-                this.matcher = matcher;
+            protected Collector() {
                 types = new ArrayList<Class<?>>();
             }
 
             /**
              * Does consider the retransformation or redefinition of a loaded type without a loaded type representation.
              *
+             * @param typeMatcher        The type matcher to apply.
              * @param ignoredTypeMatcher The ignored type matcher to apply.
              * @param listener           The listener to apply during the consideration.
              * @param typeDescription    The type description of the type being considered.
              * @param type               The loaded type being considered.
              * @param module             The type's Java module or {@code null} if the current VM does not support modules.
              */
-            protected void consider(RawMatcher ignoredTypeMatcher,
+            protected void consider(RawMatcher typeMatcher,
+                                    RawMatcher ignoredTypeMatcher,
                                     AgentBuilder.Listener listener,
                                     TypeDescription typeDescription,
                                     Class<?> type,
                                     JavaModule module) {
-                consider(ignoredTypeMatcher, listener, typeDescription, type, NO_LOADED_TYPE, module, false);
+                consider(typeMatcher, ignoredTypeMatcher, listener, typeDescription, type, NO_LOADED_TYPE, module, false);
             }
 
             /**
              * Does consider the retransformation or redefinition of a loaded type.
              *
+             * @param typeMatcher         A type matcher to apply.
              * @param ignoredTypeMatcher  The ignored type matcher to apply.
              * @param listener            The listener to apply during the consideration.
              * @param typeDescription     The type description of the type being considered.
@@ -4288,7 +4487,8 @@ public interface AgentBuilder {
              * @param module              The type's Java module or {@code null} if the current VM does not support modules.
              * @param unmodifiable        {@code true} if the current type should be considered unmodifiable.
              */
-            protected void consider(RawMatcher ignoredTypeMatcher,
+            protected void consider(RawMatcher typeMatcher,
+                                    RawMatcher ignoredTypeMatcher,
                                     AgentBuilder.Listener listener,
                                     TypeDescription typeDescription,
                                     Class<?> type,
@@ -4297,7 +4497,7 @@ public interface AgentBuilder {
                                     boolean unmodifiable) {
                 if (unmodifiable
                         || ignoredTypeMatcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
-                        || !matcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
+                        || !typeMatcher.matches(typeDescription, type.getClassLoader(), module, classBeingRedefined, type.getProtectionDomain())
                         || !types.add(type)) {
                     try {
                         try {
@@ -4309,6 +4509,15 @@ public interface AgentBuilder {
                         // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
                     }
                 }
+            }
+
+            /**
+             * Includes all the supplied types in this collector.
+             *
+             * @param types The types to include.
+             */
+            protected void include(List<Class<?>> types) {
+                this.types.addAll(types);
             }
 
             /**
@@ -4425,15 +4634,6 @@ public interface AgentBuilder {
              */
             protected static class ForRedefinition extends Collector {
 
-                /**
-                 * Creates a new collector for a redefinition.
-                 *
-                 * @param matcher The matcher that decides upon whether a type should be submitted for retransformation.
-                 */
-                protected ForRedefinition(RawMatcher matcher) {
-                    super(matcher);
-                }
-
                 @Override
                 protected void doApply(Instrumentation instrumentation,
                                        CircularityLock circularityLock,
@@ -4474,15 +4674,6 @@ public interface AgentBuilder {
              * A collector that applies a <b>retransformation</b> of already loaded classes.
              */
             protected static class ForRetransformation extends Collector {
-
-                /**
-                 * Creates a new collector for a retransformation.
-                 *
-                 * @param matcher The matcher that decides upon whether a type should be submitted for retransformation.
-                 */
-                protected ForRetransformation(RawMatcher matcher) {
-                    super(matcher);
-                }
 
                 @Override
                 protected void doApply(Instrumentation instrumentation,
