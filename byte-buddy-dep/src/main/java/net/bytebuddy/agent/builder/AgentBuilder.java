@@ -2507,10 +2507,28 @@ public interface AgentBuilder {
                 this.loadedFirst = loadedFirst;
             }
 
+            /**
+             * Creates a description strategy that uses this strategy but loads any super type. If a super type is not yet loaded,
+             * this causes this super type to never be instrumented. Therefore, this option should only be used if all instrumented
+             * types are guaranteed to be top-level types.
+             *
+             * @return This description strategy where all super types are loaded during the instrumentation.
+             * @see SuperTypeLoading
+             */
             public DescriptionStrategy withSuperTypeLoading() {
                 return new SuperTypeLoading(this);
             }
 
+            /**
+             * Creates a description strategy that uses this strategy but loads any super type asynchronously. Super types are loaded via
+             * another thread supplied by the executor service to enforce the instrumentation of any such super type. It is recommended
+             * to allow the executor service to create new threads without bound as class loading blocks any thread until all super types
+             * were instrumented.
+             *
+             * @param executorService The executor service to use.
+             * @return This description strategy where all super types are loaded asynchronously during the instrumentation.
+             * @see SuperTypeLoading.Asynchronous
+             */
             public DescriptionStrategy withSuperTypeLoading(ExecutorService executorService) {
                 return new SuperTypeLoading.Asynchronous(this, executorService);
             }
@@ -2523,7 +2541,8 @@ public interface AgentBuilder {
 
         /**
          * <p>
-         * Creates a description strategy that enforces the loading of any super type of a type description.
+         * A description strategy that enforces the loading of any super type of a type description but delegates the actual type description
+         * to another description strategy.
          * </p>
          * <p>
          * <b>Warning</b>: When using this description strategy, a type is not instrumented if any of its subtypes is loaded first.
@@ -2596,13 +2615,38 @@ public interface AgentBuilder {
                 }
             }
 
+            /**
+             * <p>
+             * A description strategy that enforces the loading of any super type of a type description but delegates the actual type description
+             * to another description strategy.
+             * </p>
+             * <p>
+             * <b>Note</b>: This description strategy delegates class loading to another thread in order to enforce the instrumentation of any
+             * unloaded super type. This requires the executor service to supply at least as many threads as the deepest type hierarchy within the
+             * application minus one for the instrumented type as class loading blocks any thread until all of its super types are loaded. These
+             * threads are typically short lived which predestines the use of a {@link Executors#newCachedThreadPool()} without any upper bound
+             * for the maximum number of created threads.
+             * </p>
+             */
             @EqualsAndHashCode
             public static class Asynchronous implements DescriptionStrategy {
 
+                /**
+                 * The delegate description strategy.
+                 */
                 private final DescriptionStrategy delegate;
 
+                /**
+                 * The executor service to use for loading super types.
+                 */
                 private final ExecutorService executorService;
 
+                /**
+                 * Creates a new description strategy that enforces super type loading from another thread.
+                 *
+                 * @param delegate        The delegate description strategy.
+                 * @param executorService The executor service to use for loading super types.
+                 */
                 public Asynchronous(DescriptionStrategy delegate, ExecutorService executorService) {
                     this.delegate = delegate;
                     this.executorService = executorService;
@@ -2618,7 +2662,7 @@ public interface AgentBuilder {
                     TypeDescription typeDescription = delegate.apply(typeName, type, typePool, circularityLock, classLoader, module);
                     return typeDescription instanceof TypeDescription.ForLoadedType
                             ? typeDescription
-                            : new TypeDescription.SuperTypeLoading(typeDescription, classLoader, new UnlockingClassLoadingDelegate(circularityLock, executorService));
+                            : new TypeDescription.SuperTypeLoading(typeDescription, classLoader, new ThreadSwitchingClassLoadingDelegate(executorService));
                 }
 
                 @Override
@@ -2626,46 +2670,66 @@ public interface AgentBuilder {
                     return delegate.isLoadedFirst();
                 }
 
+                /**
+                 * A class loading delegate that delegates loading of the super type to another thread.
+                 */
                 @EqualsAndHashCode
-                protected static class UnlockingClassLoadingDelegate implements TypeDescription.SuperTypeLoading.ClassLoadingDelegate {
+                protected static class ThreadSwitchingClassLoadingDelegate implements TypeDescription.SuperTypeLoading.ClassLoadingDelegate {
 
-                    private final CircularityLock circularityLock;
-
+                    /**
+                     * The executor service to delegate class loading to.
+                     */
                     private final ExecutorService executorService;
 
-                    protected UnlockingClassLoadingDelegate(CircularityLock circularityLock, ExecutorService executorService) {
-                        this.circularityLock = circularityLock;
+                    /**
+                     * Creates a new thread-switching class loading delegate.
+                     *
+                     * @param executorService The executor service to delegate class loading to.
+                     */
+                    protected ThreadSwitchingClassLoadingDelegate(ExecutorService executorService) {
                         this.executorService = executorService;
                     }
 
                     @Override
                     public Class<?> load(String name, ClassLoader classLoader) throws ClassNotFoundException {
                         boolean holdsLock = classLoader != null && Thread.holdsLock(classLoader);
-                        circularityLock.release();
+                        Future<Class<?>> future = executorService.submit(holdsLock
+                                ? new NotifyingClassLoadingAction(name, classLoader)
+                                : new SimpleClassLoadingAction(name, classLoader));
                         try {
-                            Future<Class<?>> future = executorService.submit(holdsLock
-                                    ? new NotifyingClassLoadingAction(name, classLoader)
-                                    : new SimpleClassLoadingAction(name, classLoader));
-                            try {
-                                while (holdsLock && !future.isDone()) {
-                                    classLoader.wait();
-                                }
-                                return future.get();
-                            } catch (Exception exception) {
-                                throw new IllegalStateException("Could not load " + name + " asynchronously", exception);
+                            while (holdsLock && !future.isDone()) {
+                                classLoader.wait();
                             }
-                        } finally {
-                            circularityLock.acquire();
+                            return future.get();
+                        } catch (ExecutionException exception) {
+                            throw new IllegalStateException("Could not load " + name + " asynchronously", exception.getCause());
+                        } catch (Exception exception) {
+                            throw new IllegalStateException("Could not load " + name + " asynchronously", exception);
                         }
                     }
 
+                    /**
+                     * A class loading action that simply loads a type.
+                     */
                     @EqualsAndHashCode
                     protected static class SimpleClassLoadingAction implements Callable<Class<?>> {
 
+                        /**
+                         * The loaded type's name.
+                         */
                         private final String name;
 
+                        /**
+                         * The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+                         */
                         private final ClassLoader classLoader;
 
+                        /**
+                         * Creates a simple class loading action.
+                         *
+                         * @param name        The loaded type's name.
+                         * @param classLoader The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+                         */
                         protected SimpleClassLoadingAction(String name, ClassLoader classLoader) {
                             this.name = name;
                             this.classLoader = classLoader;
@@ -2677,13 +2741,28 @@ public interface AgentBuilder {
                         }
                     }
 
+                    /**
+                     * A class loading action that notifies the class loader's lock after the type was loaded.
+                     */
                     @EqualsAndHashCode
                     protected static class NotifyingClassLoadingAction implements Callable<Class<?>> {
 
+                        /**
+                         * The loaded type's name.
+                         */
                         private final String name;
 
+                        /**
+                         * The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+                         */
                         private final ClassLoader classLoader;
 
+                        /**
+                         * Creates a notifying class loading action.
+                         *
+                         * @param name        The loaded type's name.
+                         * @param classLoader The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
+                         */
                         protected NotifyingClassLoadingAction(String name, ClassLoader classLoader) {
                             this.name = name;
                             this.classLoader = classLoader;
