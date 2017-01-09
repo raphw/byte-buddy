@@ -1,11 +1,7 @@
 package net.bytebuddy.agent.builder;
 
-import lombok.EqualsAndHashCode;
-
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * A class file transformer that can reset its transformation.
