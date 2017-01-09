@@ -1727,15 +1727,6 @@ public interface MethodDescription extends TypeVariableSource,
             result = 31 * result + parameterTypes.hashCode();
             return result;
         }
-
-        @Override
-        public String toString() {
-            return "MethodDescription.SignatureToken{" +
-                    "name='" + name + '\'' +
-                    ", returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    '}';
-        }
     }
 
     /**
@@ -1799,10 +1790,11 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public String toString() {
-            return "MethodDescription.TypeToken{" +
-                    "returnType=" + returnType +
-                    ", parameterTypes=" + parameterTypes +
-                    '}';
+            StringBuilder stringBuilder = new StringBuilder().append('(');
+            for (TypeDescription parameterType : parameterTypes) {
+                stringBuilder.append(parameterType.getDescriptor());
+            }
+            return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
         }
     }
 }
