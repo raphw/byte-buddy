@@ -400,7 +400,7 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
                     NO_FLAGS);
             Map<TypeDescription, Class<?>> loadedTypes = new HashMap<TypeDescription, Class<?>>();
             for (TypeDescription typeDescription : typeDescriptions) {
-                synchronized (classLoader) {
+                synchronized (classLoader) { // Guaranteed to be non-null by check in 'load' method.
                     Class<?> type = dexFile.loadClass(typeDescription.getName(), classLoader);
                     if (type == null) {
                         throw new IllegalStateException("Could not load " + typeDescription);

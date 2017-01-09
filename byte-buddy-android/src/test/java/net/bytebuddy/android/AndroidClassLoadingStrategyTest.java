@@ -95,7 +95,7 @@ public class AndroidClassLoadingStrategyTest {
         File file = mock(File.class);
         when(file.isDirectory()).thenReturn(true);
         new StubbedClassLoadingStrategy.Injecting(file, mock(AndroidClassLoadingStrategy.DexProcessor.class))
-                .load(null, Collections.<TypeDescription, byte[]>emptyMap());
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, Collections.<TypeDescription, byte[]>emptyMap());
     }
 
     @Test
