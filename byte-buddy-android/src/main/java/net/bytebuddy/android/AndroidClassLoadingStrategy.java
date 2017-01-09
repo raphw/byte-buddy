@@ -386,10 +386,15 @@ public abstract class AndroidClassLoadingStrategy implements ClassLoadingStrateg
         }
 
         @Override
-        protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
+        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
             if (classLoader == null) {
                 throw new IllegalArgumentException("Cannot inject classes into the bootstrap class loader on Android");
             }
+            return super.load(classLoader, types);
+        }
+
+        @Override
+        protected Map<TypeDescription, Class<?>> doLoad(ClassLoader classLoader, Set<TypeDescription> typeDescriptions, File jar) throws IOException {
             dalvik.system.DexFile dexFile = dalvik.system.DexFile.loadDex(jar.getAbsolutePath(),
                     new File(privateDirectory.getAbsolutePath(), randomString.nextString() + EXTENSION).getAbsolutePath(),
                     NO_FLAGS);

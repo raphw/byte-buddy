@@ -94,9 +94,8 @@ public class AndroidClassLoadingStrategyTest {
     public void testInjectBootstrapLoader() throws Exception {
         File file = mock(File.class);
         when(file.isDirectory()).thenReturn(true);
-        new StubbedClassLoadingStrategy.Injecting(file, mock(AndroidClassLoadingStrategy.DexProcessor.class)).doLoad(null,
-                null,
-                null);
+        new StubbedClassLoadingStrategy.Injecting(file, mock(AndroidClassLoadingStrategy.DexProcessor.class))
+                .load(null, Collections.<TypeDescription, byte[]>emptyMap());
     }
 
     @Test
