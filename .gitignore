@@ -22,3 +22,6 @@ byte-buddy-gradle-plugin/build/
 
 # Shade plugin
 dependency-reduced-pom.xml
+
+# Android
+*/gen/*
