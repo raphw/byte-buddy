@@ -11,7 +11,6 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
-import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,9 +36,6 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     @Rule
-    public MethodRule javaVersionRule = new JavaVersionRule();
-
-    @Rule
     public MethodRule integrationRule = new IntegrationRule();
 
     private ClassLoader classLoader;
@@ -48,7 +44,7 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
 
     @Before
     public void setUp() throws Exception {
-        classLoader = new ByteArrayClassLoader(null,
+        classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(Foo.class, Bar.class),
                 ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
