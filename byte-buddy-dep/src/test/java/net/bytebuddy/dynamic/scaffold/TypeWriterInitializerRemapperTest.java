@@ -42,11 +42,11 @@ public class TypeWriterInitializerRemapperTest {
                 .getLoaded().getName(), true, classLoader);
     }
 
-    public static class NoInitializer {
-
+    private static class NoInitializer {
+        /* empty */
     }
 
-    public static class BranchingInitializer {
+    private static class BranchingInitializer {
 
         static {
             int ignored = 0;
