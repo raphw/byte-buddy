@@ -2673,6 +2673,11 @@ public interface TypePool {
             private final String superClassDescriptor;
 
             /**
+             * The type's generic signature as found in the class file or {@code null} if the type is not generic.
+             */
+            private final String genericSignature;
+
+            /**
              * The resolution of this type's generic type.
              */
             private final GenericTypeToken.Resolution.ForType signatureResolution;
@@ -2740,7 +2745,7 @@ public interface TypePool {
              * @param name                               The binary name of this type.
              * @param superClassInternalName             The internal name of this type's super type or {@code null} if no such super type is defined.
              * @param interfaceInternalName              An array of this type's interfaces or {@code null} if this type does not define any interfaces.
-             * @param signatureResolution                The resolution of this type's generic types.
+             * @param genericSignature                   The type's generic signature as found in the class file or {@code null} if the type is not generic.
              * @param typeContainment                    A definition of this type's containment within another type or method.
              * @param declaringTypeInternalName          The internal name of this type's declaring type or {@code null} if no such type exists.
              * @param declaredTypes                      A list of descriptors representing the types that are declared by this type.
@@ -2758,7 +2763,7 @@ public interface TypePool {
                                           String name,
                                           String superClassInternalName,
                                           String[] interfaceInternalName,
-                                          GenericTypeToken.Resolution.ForType signatureResolution,
+                                          String genericSignature,
                                           TypeContainment typeContainment,
                                           String declaringTypeInternalName,
                                           List<String> declaredTypes,
@@ -2775,7 +2780,8 @@ public interface TypePool {
                 this.superClassDescriptor = superClassInternalName == null
                         ? NO_TYPE
                         : Type.getObjectType(superClassInternalName).getDescriptor();
-                this.signatureResolution = signatureResolution;
+                this.genericSignature = genericSignature;
+                signatureResolution = GenericTypeExtractor.ForSignature.OfType.extract(genericSignature);
                 if (interfaceInternalName == null) {
                     interfaceTypeDescriptors = Collections.emptyList();
                 } else {
@@ -2884,6 +2890,11 @@ public interface TypePool {
             @Override
             public TypeList.Generic getTypeVariables() {
                 return signatureResolution.resolveTypeVariables(typePool, this, typeVariableAnnotationTokens, typeVariableBoundsAnnotationTokens);
+            }
+
+            @Override
+            public String getGenericSignature() {
+                return genericSignature;
             }
 
             /**
@@ -5311,6 +5322,11 @@ public interface TypePool {
                 private final String descriptor;
 
                 /**
+                 * The field's generic signature as found in the class file or {@code null} if the field is not generic.
+                 */
+                private final String genericSignature;
+
+                /**
                  * The resolution of this field's generic type.
                  */
                 private final GenericTypeToken.Resolution.ForField signatureResolution;
@@ -5331,20 +5347,21 @@ public interface TypePool {
                  * @param name                 The name of the field.
                  * @param modifiers            The modifiers of the represented field.
                  * @param descriptor           The descriptor of the field.
-                 * @param signatureResolution  The resolution of this field's generic type.
+                 * @param genericSignature     The field's generic signature as found in the class file or {@code null} if the field is not generic.
                  * @param typeAnnotationTokens A mapping of the field type's type annotation tokens.
                  * @param annotationTokens     A list of annotation tokens representing the annotations of the represented field.
                  */
                 protected FieldToken(String name,
                                      int modifiers,
                                      String descriptor,
-                                     GenericTypeToken.Resolution.ForField signatureResolution,
+                                     String genericSignature,
                                      Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                      List<AnnotationToken> annotationTokens) {
-                    this.modifiers = modifiers;
+                    this.modifiers = modifiers & ~Opcodes.ACC_DEPRECATED;
                     this.name = name;
                     this.descriptor = descriptor;
-                    this.signatureResolution = signatureResolution;
+                    this.genericSignature = genericSignature;
+                    signatureResolution = GenericTypeExtractor.ForSignature.OfField.extract(genericSignature);
                     this.typeAnnotationTokens = typeAnnotationTokens;
                     this.annotationTokens = annotationTokens;
                 }
@@ -5359,6 +5376,7 @@ public interface TypePool {
                     return lazyTypeDescription.new LazyFieldDescription(name,
                             modifiers,
                             descriptor,
+                            genericSignature,
                             signatureResolution,
                             typeAnnotationTokens,
                             annotationTokens);
@@ -5385,6 +5403,11 @@ public interface TypePool {
                  * The descriptor of the represented method.
                  */
                 private final String descriptor;
+
+                /**
+                 * The methods's generic signature as found in the class file or {@code null} if the method is not generic.
+                 */
+                private final String genericSignature;
 
                 /**
                  * The generic type resolution of this method.
@@ -5453,7 +5476,7 @@ public interface TypePool {
                  * @param name                              The name of the method.
                  * @param modifiers                         The modifiers of the represented method.
                  * @param descriptor                        The descriptor of the represented method.
-                 * @param signatureResolution               The generic type resolution of this method.
+                 * @param genericSignature                  The methods's generic signature as found in the class file or {@code null} if the method is not generic.
                  * @param exceptionName                     An array of internal names of the exceptions of the represented method or {@code null} if
                  *                                          there are no such exceptions.
                  * @param typeVariableAnnotationTokens      A mapping of the type variables' type annotation tokens by their indices.
@@ -5471,7 +5494,7 @@ public interface TypePool {
                 protected MethodToken(String name,
                                       int modifiers,
                                       String descriptor,
-                                      GenericTypeToken.Resolution.ForMethod signatureResolution,
+                                      String genericSignature,
                                       String[] exceptionName,
                                       Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
                                       Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundAnnotationTokens,
@@ -5483,10 +5506,11 @@ public interface TypePool {
                                       Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                       List<ParameterToken> parameterTokens,
                                       AnnotationValue<?, ?> defaultValue) {
-                    this.modifiers = modifiers;
+                    this.modifiers = modifiers & ~Opcodes.ACC_DEPRECATED;
                     this.name = name;
                     this.descriptor = descriptor;
-                    this.signatureResolution = signatureResolution;
+                    this.genericSignature = genericSignature;
+                    signatureResolution = GenericTypeExtractor.ForSignature.OfMethod.extract(genericSignature);
                     this.exceptionName = exceptionName;
                     this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
                     this.typeVariableBoundAnnotationTokens = typeVariableBoundAnnotationTokens;
@@ -5510,6 +5534,7 @@ public interface TypePool {
                     return lazyTypeDescription.new LazyMethodDescription(name,
                             modifiers,
                             descriptor,
+                            genericSignature,
                             signatureResolution,
                             exceptionName,
                             typeVariableAnnotationTokens,
@@ -6174,6 +6199,11 @@ public interface TypePool {
                 private final String descriptor;
 
                 /**
+                 * The field's generic signature as found in the class file or {@code null} if the field is not generic.
+                 */
+                private final String genericSignature;
+
+                /**
                  * A resolution of this field's generic type.
                  */
                 private final GenericTypeToken.Resolution.ForField signatureResolution;
@@ -6194,6 +6224,7 @@ public interface TypePool {
                  * @param name                 The name of the field.
                  * @param modifiers            The modifiers of the field.
                  * @param descriptor           The descriptor of this field's type.
+                 * @param genericSignature     The field's generic signature as found in the class file or {@code null} if the field is not generic.
                  * @param signatureResolution  A resolution of this field's generic type.
                  * @param typeAnnotationTokens A mapping of the field type's type annotation tokens.
                  * @param annotationTokens     A list of annotation descriptions of this field.
@@ -6201,12 +6232,14 @@ public interface TypePool {
                 private LazyFieldDescription(String name,
                                              int modifiers,
                                              String descriptor,
+                                             String genericSignature,
                                              GenericTypeToken.Resolution.ForField signatureResolution,
                                              Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                              List<AnnotationToken> annotationTokens) {
-                    this.modifiers = modifiers & ~Opcodes.ACC_DEPRECATED;
+                    this.modifiers = modifiers;
                     this.name = name;
                     this.descriptor = descriptor;
+                    this.genericSignature = genericSignature;
                     this.signatureResolution = signatureResolution;
                     this.typeAnnotationTokens = typeAnnotationTokens;
                     this.annotationTokens = annotationTokens;
@@ -6236,6 +6269,11 @@ public interface TypePool {
                 public int getModifiers() {
                     return modifiers;
                 }
+
+                @Override
+                public String getGenericSignature() {
+                    return genericSignature;
+                }
             }
 
             /**
@@ -6257,6 +6295,11 @@ public interface TypePool {
                  * The descriptor of the return type.
                  */
                 private final String returnTypeDescriptor;
+
+                /**
+                 * The method's generic signature as found in the class file or {@code null} if the method is not generic.
+                 */
+                private final String genericSignature;
 
                 /**
                  * The generic type token of this method.
@@ -6334,7 +6377,8 @@ public interface TypePool {
                  *
                  * @param internalName                      The internal name of this method.
                  * @param modifiers                         The modifiers of the represented method.
-                 * @param methodDescriptor                  The method descriptor of this method.
+                 * @param descriptor                        The method descriptor of this method.
+                 * @param genericSignature                  The method's generic signature as found in the class file or {@code null} if the method is not generic.
                  * @param signatureResolution               The generic type token of this method.
                  * @param exceptionTypeInternalName         The internal names of the exceptions that are declared by this
                  *                                          method or {@code null} if no exceptions are declared by this
@@ -6356,7 +6400,8 @@ public interface TypePool {
                  */
                 private LazyMethodDescription(String internalName,
                                               int modifiers,
-                                              String methodDescriptor,
+                                              String descriptor,
+                                              String genericSignature,
                                               GenericTypeToken.Resolution.ForMethod signatureResolution,
                                               String[] exceptionTypeInternalName,
                                               Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
@@ -6369,9 +6414,9 @@ public interface TypePool {
                                               Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                               List<MethodToken.ParameterToken> parameterTokens,
                                               AnnotationValue<?, ?> defaultValue) {
-                    this.modifiers = modifiers & ~Opcodes.ACC_DEPRECATED;
+                    this.modifiers = modifiers;
                     this.internalName = internalName;
-                    Type methodType = Type.getMethodType(methodDescriptor);
+                    Type methodType = Type.getMethodType(descriptor);
                     Type returnType = methodType.getReturnType();
                     Type[] parameterType = methodType.getArgumentTypes();
                     returnTypeDescriptor = returnType.getDescriptor();
@@ -6379,6 +6424,7 @@ public interface TypePool {
                     for (Type type : parameterType) {
                         parameterTypeDescriptors.add(type.getDescriptor());
                     }
+                    this.genericSignature = genericSignature;
                     this.signatureResolution = signatureResolution;
                     if (exceptionTypeInternalName == null) {
                         exceptionTypeDescriptors = Collections.emptyList();
@@ -6474,6 +6520,11 @@ public interface TypePool {
                                 ? new LazyParameterizedReceiverType()
                                 : new LazyNonGenericReceiverType();
                     }
+                }
+
+                @Override
+                public String getGenericSignature() {
+                    return genericSignature;
                 }
 
                 /**
@@ -6976,7 +7027,7 @@ public interface TypePool {
                         internalName,
                         superClassName,
                         interfaceName,
-                        GenericTypeExtractor.ForSignature.OfType.extract(genericSignature),
+                        genericSignature,
                         typeContainment,
                         declaringTypeName,
                         declaredTypes,
@@ -7239,7 +7290,7 @@ public interface TypePool {
                     fieldTokens.add(new LazyTypeDescription.FieldToken(internalName,
                             modifiers,
                             descriptor,
-                            GenericTypeExtractor.ForSignature.OfField.extract(genericSignature),
+                            genericSignature,
                             typeAnnotationTokens,
                             annotationTokens));
                 }
@@ -7468,7 +7519,7 @@ public interface TypePool {
                     methodTokens.add(new LazyTypeDescription.MethodToken(internalName,
                             modifiers,
                             descriptor,
-                            GenericTypeExtractor.ForSignature.OfMethod.extract(genericSignature),
+                            genericSignature,
                             exceptionName,
                             typeVariableAnnotationTokens,
                             typeVariableBoundAnnotationTokens,
