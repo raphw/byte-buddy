@@ -148,27 +148,27 @@ public class AdviceFrameTest {
         public String foo(String value) {
             int ignored = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 7L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 8L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 9L;
+                long v8 = 8L;
             }
             return value;
         }
@@ -176,27 +176,27 @@ public class AdviceFrameTest {
         public static String bar(String value) {
             int ignored = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 4L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 1L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v8 = 8L;
             }
             return value;
         }
@@ -208,29 +208,29 @@ public class AdviceFrameTest {
         @Advice.OnMethodEnter
         @Advice.OnMethodExit(onThrowable = Exception.class)
         private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
+            int v0 = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 1L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v8 = 8L;
             }
             FrameSample.count++;
             return value;
@@ -243,29 +243,29 @@ public class AdviceFrameTest {
         @Advice.OnMethodEnter
         @Advice.OnMethodExit
         private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
+            int v0 = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 1L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v8 = 8L;
             }
             FrameSample.count++;
             return value;
@@ -278,29 +278,29 @@ public class AdviceFrameTest {
         @Advice.OnMethodEnter(suppress = Exception.class)
         @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class)
         private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
+            int v0 = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 1L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v8 = 8L;
             }
             FrameSample.count++;
             return value;
@@ -312,29 +312,29 @@ public class AdviceFrameTest {
 
         @Advice.OnMethodEnter
         private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
+            int v0 = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 1L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v8 = 8L;
             }
             FrameSample.count++;
             return value;
@@ -346,29 +346,29 @@ public class AdviceFrameTest {
 
         @Advice.OnMethodEnter(suppress = Exception.class)
         private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
+            int v0 = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 1L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v8 = 8L;
             }
             FrameSample.count++;
             return value;
@@ -380,29 +380,29 @@ public class AdviceFrameTest {
 
         @Advice.OnMethodExit(onThrowable = Exception.class)
         private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
+            int v0 = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 1L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v8 = 8L;
             }
             FrameSample.count++;
             return value;
@@ -414,29 +414,29 @@ public class AdviceFrameTest {
 
         @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class)
         private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
+            int v0 = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 1L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v8 = 8L;
             }
             FrameSample.count++;
             return value;
@@ -448,29 +448,29 @@ public class AdviceFrameTest {
 
         @Advice.OnMethodExit(suppress = Exception.class, onThrowable = Exception.class)
         private static String advice(@Advice.Unused int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
+            int v0 = 0;
             {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
+                long v1 = 1L, v2 = 2L;
                 if (ignored == 1) {
                     throw new AssertionError();
                 } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
+                    if (v1 + v2 == 0L) {
                         throw new AssertionError();
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v3 = 3L, v4 = 4L, v5 = 5L, v6 = 6L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
+                if (v3 + v4 + v5 + v6 == 0L) {
                     throw new AssertionError();
                 }
             }
             try {
-                long v8 = 1L;
+                long v7 = 7L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v8 = 8L;
             }
             FrameSample.count++;
             return value;

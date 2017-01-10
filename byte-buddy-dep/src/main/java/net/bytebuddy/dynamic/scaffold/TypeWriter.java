@@ -3191,7 +3191,6 @@ public interface TypeWriter<T> {
                                 switch (type) {
                                     case Opcodes.F_SAME:
                                     case Opcodes.F_SAME1:
-                                        currentLocalVariableLength = 0;
                                         break;
                                     case Opcodes.F_APPEND:
                                         currentLocalVariableLength += localVariableLength;
