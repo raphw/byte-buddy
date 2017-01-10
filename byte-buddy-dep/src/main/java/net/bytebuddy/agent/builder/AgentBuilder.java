@@ -1447,6 +1447,7 @@ public interface AgentBuilder {
             }
 
             @Override
+            @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                 if (!loaded) {
                     Set<String> types = this.types.get(new LookupKey(classLoader));
@@ -1524,6 +1525,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
+                @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
                 public boolean equals(Object object) {
                     if (this == object) {
                         return true;
@@ -1573,6 +1575,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
+                @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
                 public boolean equals(Object object) {
                     if (this == object) {
                         return true;

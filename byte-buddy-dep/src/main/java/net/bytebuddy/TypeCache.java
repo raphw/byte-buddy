@@ -71,6 +71,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @param key         The key for the type in question.
      * @return The stored type or {@code null} if no type was stored.
      */
+    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
     public Class<?> find(ClassLoader classLoader, T key) {
         ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
@@ -93,6 +94,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * @param type        The type to insert of no previous type was stored in the cache.
      * @return The supplied type or a previously submitted type for the same class loader and key combination.
      */
+    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
     public Class<?> insert(ClassLoader classLoader, T key, Class<?> type) {
         ConcurrentMap<T, Reference<Class<?>>> storage = cache.get(new LookupKey(classLoader));
         if (storage == null) {
