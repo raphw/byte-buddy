@@ -2906,6 +2906,7 @@ public interface AgentBuilder {
              * </p>
              * <p>
              * <b>Important</b>: This strategy can dead-lock under two circumstances:
+             * </p>
              * <ul>
              * <li>
              * <b>Classes declare circularities</b>: Under normal circumstances, such scenarios result in a {@link ClassCircularityError} but
@@ -2916,7 +2917,8 @@ public interface AgentBuilder {
              * be released by this strategy.
              * </li>
              * </ul>
-             * For these reasons, it is not recommended to use this strategy when the target class loader is unknown or if the target application
+             * <p>
+             * For the above reasons, it is not recommended to use this strategy when the target class loader is unknown or if the target application
              * might contain corrupt class files.
              * </p>
              */
