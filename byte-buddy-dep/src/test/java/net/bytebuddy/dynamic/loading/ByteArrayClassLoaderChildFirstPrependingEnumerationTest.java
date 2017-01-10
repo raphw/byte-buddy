@@ -56,15 +56,4 @@ public class ByteArrayClassLoaderChildFirstPrependingEnumerationTest {
         enumeration.nextElement();
         enumeration.nextElement();
     }
-
-    @Test
-    public void testObjectPropertyAssertion() throws Exception {
-        final Iterator<URL> urls = Arrays.asList(new URL("file://foo"), new URL("file://bar")).iterator();
-        ObjectPropertyAssertion.of(ByteArrayClassLoader.ChildFirst.PrependingEnumeration.class).create(new ObjectPropertyAssertion.Creator<URL>() {
-            @Override
-            public URL create() {
-                return urls.next();
-            }
-        }).applyBasic();
-    }
 }

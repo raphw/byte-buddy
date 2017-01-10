@@ -2084,12 +2084,6 @@ public class AgentBuilderDefaultTest {
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Enabled.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Unsafe.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
-            @Override
-            public AccessControlContext create() {
-                return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
-            }
-        }).applyBasic();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Factory.CreationAction.class);
         final Iterator<Class<?>> java9Dispatcher = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Double.class, Float.class).iterator();
         ObjectPropertyAssertion.of(AgentBuilder.Default.ExecutingTransformer.Java9CapableVmDispatcher.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {

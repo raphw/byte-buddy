@@ -159,12 +159,6 @@ public class AgentBuilderRedefinitionStrategyListenerTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Compound.CompoundIterable.CompoundIterator.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
-            @Override
-            public List<?> create() {
-                return Collections.emptyList();
-            }
-        }).applyBasic();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Pausing.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.StreamWriting.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.Listener.Yielding.class).apply();

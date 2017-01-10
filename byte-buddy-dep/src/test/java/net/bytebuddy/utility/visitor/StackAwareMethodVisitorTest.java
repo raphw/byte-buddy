@@ -150,9 +150,4 @@ public class StackAwareMethodVisitorTest {
         verify(this.methodVisitor).visitInsn(Opcodes.POP);
         verifyNoMoreInteractions(this.methodVisitor);
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(StackAwareMethodVisitor.class).applyBasic();
-    }
 }

@@ -2961,7 +2961,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * An initialization handler that appends code to a c previously visited type initializer.
+                 * An initialization handler that appends code to a previously visited type initializer.
                  */
                 abstract class Appending extends MethodVisitor implements InitializationHandler, TypeInitializer.Drain {
 
@@ -2984,16 +2984,6 @@ public interface TypeWriter<T> {
                      * The frame writer to use.
                      */
                     protected final FrameWriter frameWriter;
-
-                    /**
-                     * A label marking the beginning of the appended code.
-                     */
-                    protected final Label appended;
-
-                    /**
-                     * A label marking the beginning og the original type initializer's code.
-                     */
-                    protected final Label original;
 
                     /**
                      * The currently recorded stack size.
@@ -3032,41 +3022,89 @@ public interface TypeWriter<T> {
                         } else {
                             frameWriter = new FrameWriter.Active();
                         }
-                        appended = new Label();
-                        original = new Label();
                     }
 
                     /**
-                     * Creates a new initialization handler that is appropriate for the supplied arguments.
+                     * Resolves an initialization handler.
                      *
-                     * @param methodVisitor                The underlying method visitor.
+                     * @param enabled                      {@code true} if the implementation context is enabled, i.e. any {@link TypeInitializer} might be active.
+                     * @param methodVisitor                The delegation method visitor.
                      * @param instrumentedType             The instrumented type.
                      * @param methodPool                   The method pool to use.
-                     * @param annotationValueFilterFactory The used annotation value filter factory.
-                     * @param requireFrames                {@code true} if the visitor is required to add frames.
-                     * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
-                     * @return An appropriate initialization handler which is required to also be a {@link MethodVisitor}.
+                     * @param annotationValueFilterFactory The annotation value filter factory to use.
+                     * @param requireFrames                {@code true} if frames must be computed.
+                     * @param expandFrames                 {@code true} if frames must be expanded.
+                     * @return An initialization handler which is also guaranteed to be a {@link MethodVisitor}.
                      */
-                    protected static InitializationHandler of(MethodVisitor methodVisitor,
+                    protected static InitializationHandler of(boolean enabled,
+                                                              MethodVisitor methodVisitor,
                                                               TypeDescription instrumentedType,
                                                               MethodPool methodPool,
                                                               AnnotationValueFilter.Factory annotationValueFilterFactory,
                                                               boolean requireFrames,
                                                               boolean expandFrames) {
+                        return enabled
+                                ? withDrain(methodVisitor, instrumentedType, methodPool, annotationValueFilterFactory, requireFrames, expandFrames)
+                                : withoutDrain(methodVisitor, instrumentedType, methodPool, annotationValueFilterFactory, requireFrames, expandFrames);
+                    }
+
+                    /**
+                     * Resolves an initialization handler with a drain.
+                     *
+                     * @param methodVisitor                The delegation method visitor.
+                     * @param instrumentedType             The instrumented type.
+                     * @param methodPool                   The method pool to use.
+                     * @param annotationValueFilterFactory The annotation value filter factory to use.
+                     * @param requireFrames                {@code true} if frames must be computed.
+                     * @param expandFrames                 {@code true} if frames must be expanded.
+                     * @return An initialization handler which is also guaranteed to be a {@link MethodVisitor}.
+                     */
+                    private static WithDrain withDrain(MethodVisitor methodVisitor,
+                                                       TypeDescription instrumentedType,
+                                                       MethodPool methodPool,
+                                                       AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                       boolean requireFrames,
+                                                       boolean expandFrames) {
                         MethodPool.Record record = methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
                         return record.getSort().isImplemented()
-                                ? new WithActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
-                                : new WithoutActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                ? new WithDrain.WithActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
+                                : new WithDrain.WithoutActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                    }
+
+                    /**
+                     * Resolves an initialization handler without a drain.
+                     *
+                     * @param methodVisitor                The delegation method visitor.
+                     * @param instrumentedType             The instrumented type.
+                     * @param methodPool                   The method pool to use.
+                     * @param annotationValueFilterFactory The annotation value filter factory to use.
+                     * @param requireFrames                {@code true} if frames must be computed.
+                     * @param expandFrames                 {@code true} if frames must be expanded.
+                     * @return An initialization handler which is also guaranteed to be a {@link MethodVisitor}.
+                     */
+                    private static WithoutDrain withoutDrain(MethodVisitor methodVisitor,
+                                                             TypeDescription instrumentedType,
+                                                             MethodPool methodPool,
+                                                             AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                             boolean requireFrames,
+                                                             boolean expandFrames) {
+                        MethodPool.Record record = methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType));
+                        return record.getSort().isImplemented()
+                                ? new WithoutDrain.WithActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames)
+                                : new WithoutDrain.WithoutActiveRecord(methodVisitor, instrumentedType, record, annotationValueFilterFactory);
                     }
 
                     @Override
                     public void visitCode() {
                         record.applyAttributes(mv, annotationValueFilterFactory);
                         super.visitCode();
-                        mv.visitJumpInsn(Opcodes.GOTO, appended);
-                        mv.visitLabel(original);
-                        frameWriter.emitFrame(mv);
+                        onStart();
                     }
+
+                    /**
+                     * Invoked after the user code was visited.
+                     */
+                    protected abstract void onStart();
 
                     @Override
                     public void visitFrame(int type, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
@@ -3082,24 +3120,20 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitEnd() {
-                        mv.visitLabel(appended);
-                        frameWriter.emitFrame(mv);
+                        onEnd();
                     }
+
+                    /**
+                     * Invoked after the user code was completed.
+                     */
+                    protected abstract void onEnd();
 
                     @Override
                     public void apply(ClassVisitor classVisitor, TypeInitializer typeInitializer, Implementation.Context implementationContext) {
                         ByteCodeAppender.Size size = typeInitializer.apply(mv, implementationContext, new MethodDescription.Latent.TypeInitializer(instrumentedType));
                         stackSize = Math.max(stackSize, size.getOperandStackSize());
                         localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
-                        mv.visitJumpInsn(Opcodes.GOTO, original);
                         onComplete(implementationContext);
-                    }
-
-                    @Override
-                    public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
-                        implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
-                        mv.visitMaxs(stackSize, localVariableLength);
-                        mv.visitEnd();
                     }
 
                     /**
@@ -3108,6 +3142,13 @@ public interface TypeWriter<T> {
                      * @param implementationContext The implementation context to use.
                      */
                     protected abstract void onComplete(Implementation.Context implementationContext);
+
+                    @Override
+                    public void complete(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
+                        implementationContext.drain(this, classVisitor, annotationValueFilterFactory);
+                        mv.visitMaxs(stackSize, localVariableLength);
+                        mv.visitEnd();
+                    }
 
                     /**
                      * A frame writer is responsible for adding empty frames on jumo instructions.
@@ -3222,12 +3263,13 @@ public interface TypeWriter<T> {
                     }
 
                     /**
-                     * A code appending initialization handler that does not apply an explicit record.
+                     * An initialization handler that appends code to a previously visited type initializer without allowing active
+                     * {@link TypeInitializer} registrations.
                      */
-                    protected static class WithoutActiveRecord extends Appending {
+                    protected abstract static class WithoutDrain extends Appending {
 
                         /**
-                         * Creates a new appending initialization handler without an active record.
+                         * Creates a new appending initialization handler without a drain.
                          *
                          * @param methodVisitor                The underlying method visitor.
                          * @param instrumentedType             The instrumented type.
@@ -3236,33 +3278,122 @@ public interface TypeWriter<T> {
                          * @param requireFrames                {@code true} if the visitor is required to add frames.
                          * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
                          */
-                        protected WithoutActiveRecord(MethodVisitor methodVisitor,
-                                                      TypeDescription instrumentedType,
-                                                      MethodPool.Record record,
-                                                      AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                      boolean requireFrames,
-                                                      boolean expandFrames) {
+                        protected WithoutDrain(MethodVisitor methodVisitor,
+                                               TypeDescription instrumentedType,
+                                               MethodPool.Record record,
+                                               AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                               boolean requireFrames,
+                                               boolean expandFrames) {
                             super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
                         }
 
                         @Override
-                        protected void onComplete(Implementation.Context implementationContext) {
+                        protected void onStart() {
                             /* do nothing */
+                        }
+
+                        @Override
+                        protected void onEnd() {
+                            /* do nothing */
+                        }
+
+                        /**
+                         * An initialization handler that appends code to a previously visited type initializer without allowing active
+                         * {@link TypeInitializer} registrations and without an active record.
+                         */
+                        protected static class WithoutActiveRecord extends WithoutDrain {
+
+                            /**
+                             * Creates a new appending initialization handler without a drain and without an active record.
+                             *
+                             * @param methodVisitor                The underlying method visitor.
+                             * @param instrumentedType             The instrumented type.
+                             * @param record                       The method pool record for the type initializer.
+                             * @param annotationValueFilterFactory The used annotation value filter factory.
+                             */
+                            protected WithoutActiveRecord(MethodVisitor methodVisitor,
+                                                          TypeDescription instrumentedType,
+                                                          MethodPool.Record record,
+                                                          AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, false, false);
+                            }
+
+                            @Override
+                            protected void onComplete(Implementation.Context implementationContext) {
+                                /* do nothing */
+                            }
+                        }
+
+                        /**
+                         * An initialization handler that appends code to a previously visited type initializer without allowing active
+                         * {@link TypeInitializer} registrations and with an active record.
+                         */
+                        protected static class WithActiveRecord extends WithoutDrain {
+
+                            /**
+                             * The label that indicates the beginning of the active record.
+                             */
+                            private final Label label;
+
+                            /**
+                             * Creates a new appending initialization handler without a drain and with an active record.
+                             *
+                             * @param methodVisitor                The underlying method visitor.
+                             * @param instrumentedType             The instrumented type.
+                             * @param record                       The method pool record for the type initializer.
+                             * @param annotationValueFilterFactory The used annotation value filter factory.
+                             * @param requireFrames                {@code true} if the visitor is required to add frames.
+                             * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                             */
+                            protected WithActiveRecord(MethodVisitor methodVisitor,
+                                                       TypeDescription instrumentedType,
+                                                       MethodPool.Record record,
+                                                       AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                       boolean requireFrames,
+                                                       boolean expandFrames) {
+                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                label = new Label();
+                            }
+
+                            @Override
+                            public void visitInsn(int opcode) {
+                                if (opcode == Opcodes.RETURN) {
+                                    mv.visitJumpInsn(Opcodes.GOTO, label);
+                                } else {
+                                    super.visitInsn(opcode);
+                                }
+                            }
+
+                            @Override
+                            protected void onComplete(Implementation.Context implementationContext) {
+                                mv.visitLabel(label);
+                                frameWriter.emitFrame(mv);
+                                ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
+                                stackSize = Math.max(stackSize, size.getOperandStackSize());
+                                localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
+                            }
+
                         }
                     }
 
                     /**
-                     * A code appending initialization handler that applies an explicit record.
+                     * An initialization handler that appends code to a previously visited type initializer with allowing active
+                     * {@link TypeInitializer} registrations.
                      */
-                    protected static class WithActiveRecord extends Appending {
+                    protected abstract static class WithDrain extends Appending {
 
                         /**
-                         * A label indicating the beginning of the record's code.
+                         * A label marking the beginning of the appended code.
                          */
-                        private final Label label;
+                        protected final Label appended;
 
                         /**
-                         * Creates a new appending initialization handler with an active record.
+                         * A label marking the beginning og the original type initializer's code.
+                         */
+                        protected final Label original;
+
+                        /**
+                         * Creates a new appending initialization handler with a drain.
                          *
                          * @param methodVisitor                The underlying method visitor.
                          * @param instrumentedType             The instrumented type.
@@ -3271,32 +3402,120 @@ public interface TypeWriter<T> {
                          * @param requireFrames                {@code true} if the visitor is required to add frames.
                          * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
                          */
-                        protected WithActiveRecord(MethodVisitor methodVisitor,
-                                                   TypeDescription instrumentedType,
-                                                   MethodPool.Record record,
-                                                   AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                   boolean requireFrames,
-                                                   boolean expandFrames) {
+                        protected WithDrain(MethodVisitor methodVisitor,
+                                            TypeDescription instrumentedType,
+                                            MethodPool.Record record,
+                                            AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                            boolean requireFrames,
+                                            boolean expandFrames) {
                             super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
-                            label = new Label();
+                            appended = new Label();
+                            original = new Label();
                         }
 
                         @Override
-                        public void visitInsn(int opcode) {
-                            if (opcode == Opcodes.RETURN) {
-                                mv.visitJumpInsn(Opcodes.GOTO, label);
-                            } else {
-                                super.visitInsn(opcode);
-                            }
+                        protected void onStart() {
+                            mv.visitJumpInsn(Opcodes.GOTO, appended);
+                            mv.visitLabel(original);
+                            frameWriter.emitFrame(mv);
+                        }
+
+                        @Override
+                        protected void onEnd() {
+                            mv.visitLabel(appended);
+                            frameWriter.emitFrame(mv);
                         }
 
                         @Override
                         protected void onComplete(Implementation.Context implementationContext) {
-                            mv.visitLabel(label);
-                            frameWriter.emitFrame(mv);
-                            ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
-                            stackSize = Math.max(stackSize, size.getOperandStackSize());
-                            localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
+                            mv.visitJumpInsn(Opcodes.GOTO, original);
+                            afterComplete(implementationContext);
+                        }
+
+                        /**
+                         * Invoked after completion of writing the type initializer.
+                         *
+                         * @param implementationContext The implementation context to use.
+                         */
+                        protected abstract void afterComplete(Implementation.Context implementationContext);
+
+                        /**
+                         * A code appending initialization handler with a drain that does not apply an explicit record.
+                         */
+                        protected static class WithoutActiveRecord extends WithDrain {
+
+                            /**
+                             * Creates a new appending initialization handler with a drain and without an active record.
+                             *
+                             * @param methodVisitor                The underlying method visitor.
+                             * @param instrumentedType             The instrumented type.
+                             * @param record                       The method pool record for the type initializer.
+                             * @param annotationValueFilterFactory The used annotation value filter factory.
+                             * @param requireFrames                {@code true} if the visitor is required to add frames.
+                             * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                             */
+                            protected WithoutActiveRecord(MethodVisitor methodVisitor,
+                                                          TypeDescription instrumentedType,
+                                                          MethodPool.Record record,
+                                                          AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                          boolean requireFrames,
+                                                          boolean expandFrames) {
+                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                            }
+
+                            @Override
+                            protected void afterComplete(Implementation.Context implementationContext) {
+                                /* do nothing */
+                            }
+                        }
+
+                        /**
+                         * A code appending initialization handler with a drain that applies an explicit record.
+                         */
+                        protected static class WithActiveRecord extends WithDrain {
+
+                            /**
+                             * A label indicating the beginning of the record's code.
+                             */
+                            private final Label label;
+
+                            /**
+                             * Creates a new appending initialization handler with a drain and with an active record.
+                             *
+                             * @param methodVisitor                The underlying method visitor.
+                             * @param instrumentedType             The instrumented type.
+                             * @param record                       The method pool record for the type initializer.
+                             * @param annotationValueFilterFactory The used annotation value filter factory.
+                             * @param requireFrames                {@code true} if the visitor is required to add frames.
+                             * @param expandFrames                 {@code true} if the visitor is required to expand any added frame.
+                             */
+                            protected WithActiveRecord(MethodVisitor methodVisitor,
+                                                       TypeDescription instrumentedType,
+                                                       MethodPool.Record record,
+                                                       AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                       boolean requireFrames,
+                                                       boolean expandFrames) {
+                                super(methodVisitor, instrumentedType, record, annotationValueFilterFactory, requireFrames, expandFrames);
+                                label = new Label();
+                            }
+
+                            @Override
+                            public void visitInsn(int opcode) {
+                                if (opcode == Opcodes.RETURN) {
+                                    mv.visitJumpInsn(Opcodes.GOTO, label);
+                                } else {
+                                    super.visitInsn(opcode);
+                                }
+                            }
+
+                            @Override
+                            protected void afterComplete(Implementation.Context implementationContext) {
+                                mv.visitLabel(label);
+                                frameWriter.emitFrame(mv);
+                                ByteCodeAppender.Size size = record.applyCode(mv, implementationContext);
+                                stackSize = Math.max(stackSize, size.getOperandStackSize());
+                                localVariableLength = Math.max(localVariableLength, size.getLocalVariableSize());
+                            }
                         }
                     }
                 }
@@ -3511,7 +3730,8 @@ public interface TypeWriter<T> {
                                                  String genericSignature,
                                                  String[] exceptionName) {
                     if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                        return (MethodVisitor) (initializationHandler = InitializationHandler.Appending.of(super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName),
+                        return (MethodVisitor) (initializationHandler = InitializationHandler.Appending.of(implementationContext.isEnabled(),
+                                super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName),
                                 instrumentedType,
                                 methodPool,
                                 annotationValueFilterFactory,

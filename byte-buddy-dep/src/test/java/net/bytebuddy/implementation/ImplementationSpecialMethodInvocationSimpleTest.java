@@ -49,14 +49,4 @@ public class ImplementationSpecialMethodInvocationSimpleTest extends AbstractSpe
         assertThat(new Implementation.SpecialMethodInvocation.Simple(firstMethod, firstType, mock(StackManipulation.class)),
                 not(new Implementation.SpecialMethodInvocation.Simple(firstMethod, secondType, mock(StackManipulation.class))));
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Implementation.SpecialMethodInvocation.Simple.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
-            @Override
-            public void apply(MethodDescription mock) {
-                when(mock.asSignatureToken()).thenReturn(Mockito.mock(MethodDescription.SignatureToken.class));
-            }
-        }).applyBasic();
-    }
 }

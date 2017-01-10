@@ -24,9 +24,4 @@ public class LineNumberPrependingMethodVisitorTest {
         verify(delegate).visitLineNumber(eq(LINE), argThat(not(label)));
         verifyNoMoreInteractions(delegate);
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(LineNumberPrependingMethodVisitor.class).applyBasic();
-    }
 }

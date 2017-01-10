@@ -127,11 +127,5 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredFields.class).apply();
         ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredFields.Entry.class).apply();
-        ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredFields.DispatchingVisitor.class).create(new ObjectPropertyAssertion.Creator<FieldList<?>>() {
-            @Override
-            public FieldList<?> create() {
-                return new FieldList.Explicit<FieldDescription.InDefinedShape>(mock(FieldDescription.InDefinedShape.class));
-            }
-        }).applyBasic();
     }
 }

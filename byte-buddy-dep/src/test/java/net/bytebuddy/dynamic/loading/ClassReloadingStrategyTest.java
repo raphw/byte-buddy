@@ -272,7 +272,6 @@ public class ClassReloadingStrategyTest {
         }).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.Strategy.class).apply();
-        ObjectPropertyAssertion.of(ClassReloadingStrategy.Strategy.ClassRedefinitionTransformer.class).applyBasic();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.Strategy.ClassResettingTransformer.class).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Disabled.class).apply();

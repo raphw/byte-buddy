@@ -156,28 +156,6 @@ public class ObjectPropertyAssertion<T> {
         }
     }
 
-    public void applyBasic() throws IllegalAccessException, InvocationTargetException, InstantiationException {
-        for (Constructor<?> constructor : type.getDeclaredConstructors()) {
-            if (constructor.isSynthetic() && skipSynthetic) {
-                continue;
-            }
-            constructor.setAccessible(true);
-            Class<?>[] parameterTypes = constructor.getParameterTypes();
-            Object[] actualArguments = new Object[parameterTypes.length];
-            Object[] otherArguments = new Object[parameterTypes.length];
-            int index = 0;
-            for (Class<?> parameterType : parameterTypes) {
-                putInstance(parameterType, actualArguments, otherArguments, index++);
-            }
-            @SuppressWarnings("unchecked")
-            T instance = (T) constructor.newInstance(actualArguments);
-            assertThat(instance, is(instance));
-            assertThat(instance, not(equalTo(null)));
-            assertThat(instance, not(new Object()));
-            assertThat(instance, not(constructor.newInstance(otherArguments)));
-        }
-    }
-
     private void putInstance(Class<?> parameterType, Object actualArguments, Object otherArguments, int index) {
         Object actualArgument, otherArgument;
         if (parameterType == boolean.class) {

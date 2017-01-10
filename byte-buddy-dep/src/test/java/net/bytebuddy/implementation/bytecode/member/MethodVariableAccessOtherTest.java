@@ -95,13 +95,6 @@ public class MethodVariableAccessOtherTest {
         ObjectPropertyAssertion.of(MethodVariableAccess.OffsetWriting.class).apply();
         ObjectPropertyAssertion.of(MethodVariableAccess.OffsetIncrementing.class).apply();
         ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.class).apply();
-        ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.TypeCastingHandler.ForBridgeTarget.class)
-                .refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
-                    @Override
-                    public void apply(MethodDescription mock) {
-                        when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-                    }
-                }).applyBasic();
         ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.TypeCastingHandler.NoOp.class).apply();
     }
 }

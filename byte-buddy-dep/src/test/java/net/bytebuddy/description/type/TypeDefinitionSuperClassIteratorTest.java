@@ -53,9 +53,4 @@ public class TypeDefinitionSuperClassIteratorTest {
     public void testNoRemoval() throws Exception {
         new TypeDefinition.SuperClassIterator(typeDescription).remove();
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDefinition.SuperClassIterator.class).applyBasic();
-    }
 }

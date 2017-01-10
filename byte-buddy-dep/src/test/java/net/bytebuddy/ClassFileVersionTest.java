@@ -46,7 +46,6 @@ public class ClassFileVersionTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileVersion.class).apply();
-        ObjectPropertyAssertion.of(ClassFileVersion.VersionExtractor.class).applyBasic();
         ObjectPropertyAssertion.of(ClassFileVersion.VersionLocator.CreationAction.class).apply();
         ObjectPropertyAssertion.of(ClassFileVersion.VersionLocator.ForLegacyVm.class).apply();
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();

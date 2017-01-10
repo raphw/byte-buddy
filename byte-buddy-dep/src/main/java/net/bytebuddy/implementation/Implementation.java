@@ -471,6 +471,13 @@ public interface Implementation extends InstrumentedType.Prepareable {
         interface ExtractableView extends Context {
 
             /**
+             * Returns {@code true} if this implementation context permits the registration of any implicit type initializers.
+             *
+             * @return {@code true} if this implementation context permits the registration of any implicit type initializers.
+             */
+            boolean isEnabled();
+
+            /**
              * Returns any {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType} that was registered
              * with this {@link Implementation.Context}.
              *
@@ -565,6 +572,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             protected Disabled(TypeDescription instrumentedType, ClassFileVersion classFileVersion) {
                 super(instrumentedType, classFileVersion);
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return false;
             }
 
             @Override
@@ -717,6 +729,11 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
                 suffix = RandomString.make();
                 fieldCacheCanAppendEntries = true;
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return true;
             }
 
             @Override

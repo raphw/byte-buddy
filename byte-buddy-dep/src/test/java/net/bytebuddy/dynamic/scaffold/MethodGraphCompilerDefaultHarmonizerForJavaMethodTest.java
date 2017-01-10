@@ -82,16 +82,6 @@ public class MethodGraphCompilerDefaultHarmonizerForJavaMethodTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.Token.class)
-                .create(new ObjectPropertyAssertion.Creator<MethodDescription.TypeToken>() {
-                    @Override
-                    public MethodDescription.TypeToken create() {
-                        MethodDescription.TypeToken typeToken = mock(MethodDescription.TypeToken.class);
-                        when(typeToken.getReturnType()).thenReturn(mock(TypeDescription.class));
-                        when(typeToken.getParameterTypes()).thenReturn(Collections.singletonList(mock(TypeDescription.class)));
-                        return typeToken;
-                    }
-                }).applyBasic();
         ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.Harmonizer.ForJavaMethod.class).apply();
     }
 }

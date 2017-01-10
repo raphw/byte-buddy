@@ -31,7 +31,6 @@ public class AgentBuilderCircularityLockTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AgentBuilder.CircularityLock.Default.class).applyBasic();
         ObjectPropertyAssertion.of(AgentBuilder.CircularityLock.Inactive.class).apply();
     }
 }

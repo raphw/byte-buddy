@@ -589,34 +589,7 @@ public class TypeWriterDefaultTest {
         ObjectPropertyAssertion.of(TypeWriter.Default.ClassDumpAction.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.ContextRegistry.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.class).create(new ObjectPropertyAssertion.Creator<TypeWriter.Default.ForInlining<?>>() {
-            @Override
-            @SuppressWarnings("unchecked")
-            public TypeWriter.Default.ForInlining<?> create() {
-                TypeWriter.Default.ForInlining<?> inlining = mock(TypeWriter.Default.ForInlining.class);
-                try {
-                    Field fields = TypeWriter.Default.class.getDeclaredField("fields");
-                    Field methods = TypeWriter.Default.class.getDeclaredField("instrumentedMethods");
-                    fields.setAccessible(true);
-                    fields.set(inlining, new FieldList.Empty<FieldDescription.InDefinedShape>());
-                    methods.setAccessible(true);
-                    methods.set(inlining, new MethodList.Empty<MethodDescription>());
-                    return inlining;
-                } catch (Exception ignored) {
-                    throw new AssertionError();
-                }
-            }
-        }).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingFieldVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingMethodVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.CodePreservingMethodVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.InitializationHandler.Creating.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.InitializationHandler.Appending.WithActiveRecord.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.InitializationHandler.Appending.WithoutActiveRecord.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingFieldVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.ValidatingMethodVisitor.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForAnnotation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForInterface.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClass.class).apply();

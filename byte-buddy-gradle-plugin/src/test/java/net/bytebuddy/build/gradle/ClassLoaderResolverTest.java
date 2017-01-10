@@ -41,9 +41,4 @@ public class ClassLoaderResolverTest {
         classLoaderResolver.resolve(Collections.singleton(file));
         classLoaderResolver.close();
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassLoaderResolver.class).applyBasic();
-    }
 }

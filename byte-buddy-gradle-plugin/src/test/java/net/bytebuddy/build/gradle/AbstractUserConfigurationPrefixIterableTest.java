@@ -36,10 +36,4 @@ public class AbstractUserConfigurationPrefixIterableTest {
     public void testRemoval() throws Exception {
         new AbstractUserConfiguration.PrefixIterable(primary, Collections.<File>emptySet()).iterator().remove();
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AbstractUserConfiguration.PrefixIterable.class).applyBasic();
-        ObjectPropertyAssertion.of(AbstractUserConfiguration.PrefixIterable.PrefixIterator.class).applyBasic();
-    }
 }

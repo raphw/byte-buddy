@@ -57,30 +57,13 @@ public class TypePoolDefaultTest {
 
     @Test
     public void testGenericsObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.GenericTypeRegistrant.RejectingSignatureVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.IncompleteToken.AbstractBase.ForDirectBound.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.IncompleteToken.AbstractBase.ForUpperBound.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.IncompleteToken.AbstractBase.ForLowerBound.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.IncompleteToken.ForTopLevelType.class).apply();
         ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.IncompleteToken.ForInnerClass.class).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.ForSignature.OfType.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.ForSignature.OfType.SuperClassRegistrant.class).apply();
         ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.ForSignature.OfType.InterfaceTypeRegistrant.class).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.ReturnTypeTypeRegistrant.class).apply();
         ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.ParameterTypeRegistrant.class).apply();
         ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.ForSignature.OfMethod.ExceptionTypeRegistrant.class).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.ForSignature.OfField.class).applyBasic();
-    }
-
-    @Test
-    public void testAnnotationRegistrantObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForByteCodeElement.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForByteCodeElement.WithIndex.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForTypeVariable.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForTypeVariable.WithIndex.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForTypeVariable.WithIndex.DoubleIndexed.class).applyBasic();
     }
 
     @Test

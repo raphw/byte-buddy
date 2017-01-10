@@ -2,7 +2,9 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,9 +34,42 @@ public class TypeWriterInitializerRemapperTest {
     }
 
     @Test
-    public void testInitializer() throws Exception {
+    public void testNoInitializerWithEnabledContext() throws Exception {
         ClassLoader classLoader = new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
         Class.forName(new ByteBuddy()
+                .redefine(type)
+                .make()
+                .load(classLoader)
+                .getLoaded().getName(), true, classLoader);
+    }
+
+    @Test
+    public void testNoInitializerWithDisabledContext() throws Exception {
+        ClassLoader classLoader = new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
+        Class.forName(new ByteBuddy()
+                .with(Implementation.Context.Disabled.Factory.INSTANCE)
+                .redefine(type)
+                .make()
+                .load(classLoader)
+                .getLoaded().getName(), true, classLoader);
+    }
+
+    @Test
+    public void testInitializerWithEnabledContext() throws Exception {
+        ClassLoader classLoader = new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
+        Class.forName(new ByteBuddy()
+                .redefine(type)
+                .invokable(isTypeInitializer()).intercept(StubMethod.INSTANCE)
+                .make()
+                .load(classLoader)
+                .getLoaded().getName(), true, classLoader);
+    }
+
+    @Test
+    public void testInitializerWithDisabledContext() throws Exception {
+        ClassLoader classLoader = new URLClassLoader(new URL[0], ClassLoadingStrategy.BOOTSTRAP_LOADER);
+        Class.forName(new ByteBuddy()
+                .with(Implementation.Context.Disabled.Factory.INSTANCE)
                 .redefine(type)
                 .invokable(isTypeInitializer()).intercept(StubMethod.INSTANCE)
                 .make()

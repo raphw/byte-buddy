@@ -140,11 +140,5 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredMethods.class).apply();
         ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredMethods.Entry.class).apply();
-        ObjectPropertyAssertion.of(AsmVisitorWrapper.ForDeclaredMethods.DispatchingVisitor.class).create(new ObjectPropertyAssertion.Creator<MethodList<?>>() {
-            @Override
-            public MethodList<?> create() {
-                return new MethodList.Explicit<MethodDescription>(mock(MethodDescription.class));
-            }
-        }).applyBasic();
     }
 }

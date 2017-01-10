@@ -33,6 +33,15 @@ public class ImplementationContextDefaultOtherTest {
     }
 
     @Test
+    public void testEnabled() throws Exception {
+        assertThat(new Implementation.Context.Default(mock(TypeDescription.class),
+                mock(ClassFileVersion.class),
+                mock(AuxiliaryType.NamingStrategy.class),
+                mock(TypeInitializer.class),
+                mock(ClassFileVersion.class)).isEnabled(), is(true));
+    }
+
+    @Test
     public void testInstrumentationGetter() throws Exception {
         TypeDescription instrumentedType = mock(TypeDescription.class);
         assertThat(new Implementation.Context.Default(instrumentedType,
@@ -60,7 +69,6 @@ public class ImplementationContextDefaultOtherTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(Implementation.Context.Default.class).applyBasic();
         ObjectPropertyAssertion.of(Implementation.Context.Default.FieldCacheEntry.class).apply();
         ObjectPropertyAssertion.of(Implementation.Context.Default.AccessorMethodDelegation.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.SpecialMethodInvocation>() {
             @Override

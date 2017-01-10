@@ -1872,20 +1872,10 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.class).apply();
         ObjectPropertyAssertion.of(Advice.WithCustomMapping.class).apply();
         ObjectPropertyAssertion.of(Advice.MethodSizeHandler.NoOp.class).apply();
-        ObjectPropertyAssertion.of(Advice.MethodSizeHandler.Default.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.MethodSizeHandler.Default.ForAdvice.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
-            @Override
-            public void apply(MethodDescription mock) {
-                when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
-            }
-        }).applyBasic();
         ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.NoOp.class).apply();
-        ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.Default.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.Default.ForAdvice.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.Default.TranslationMode.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.Suppressing.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.Suppressing.Bound.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodExit.class).apply();
@@ -1997,21 +1987,6 @@ public class AdviceTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.class).apply();
-        //ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.ForMethodEnter.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.ForMethodEnter.AdviceMethodInliner.class).applyBasic();
-        //ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithExceptionHandler.class).applyBasic();
-        //ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithoutExceptionHandler.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.ForMethodExit.AdviceMethodInliner.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableSubstitutor.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableCollector.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableExtractor.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
-            @Override
-            public void apply(MethodDescription.InDefinedShape mock) {
-                when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
-            }
-        }).applyBasic();
         ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.OfConstant.class).apply();
         ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.OfAnnotationProperty.class).apply();
         ObjectPropertyAssertion.of(Advice.DynamicValue.ForFieldValue.class).apply();
@@ -2021,7 +1996,6 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.Disabled.class).apply();
         ObjectPropertyAssertion.of(Advice.Appender.class).apply();
-        ObjectPropertyAssertion.of(Advice.Appender.EmulatingMethodVisitor.class).applyBasic();
     }
 
     @SuppressWarnings("unused")

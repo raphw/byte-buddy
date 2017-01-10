@@ -337,7 +337,6 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldValue.Binder.class).apply();
-        ObjectPropertyAssertion.of(FieldValue.Binder.Delegate.class).applyBasic();
     }
 
     public static class Foo {

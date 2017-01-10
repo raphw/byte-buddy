@@ -36,15 +36,4 @@ public class ByteArrayClassLoaderSingletonEnumerationTest {
         enumeration.nextElement();
         enumeration.nextElement();
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        final Iterator<URL> urls = Arrays.asList(new URL("file://foo"), new URL("file://bar")).iterator();
-        ObjectPropertyAssertion.of(ByteArrayClassLoader.SingletonEnumeration.class).create(new ObjectPropertyAssertion.Creator<URL>() {
-            @Override
-            public URL create() {
-                return urls.next();
-            }
-        }).applyBasic();
-    }
 }

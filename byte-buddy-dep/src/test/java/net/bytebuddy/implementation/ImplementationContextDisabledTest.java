@@ -66,6 +66,11 @@ public class ImplementationContextDisabledTest {
     }
 
     @Test
+    public void testDisabled() throws Exception {
+        assertThat(new Implementation.Context.Disabled(instrumentedType, classFileVersion).isEnabled(), is(false));
+    }
+
+    @Test
     public void testAuxiliaryTypes() throws Exception {
         assertThat(new Implementation.Context.Disabled(instrumentedType, classFileVersion).getAuxiliaryTypes().size(), is(0));
     }

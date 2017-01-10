@@ -104,9 +104,4 @@ public class ClassLoaderResolverTest {
         classLoaderResolver.resolve(new MavenCoordinate(FOO, BAR, QUX));
         classLoaderResolver.close();
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassLoaderResolver.class).applyBasic();
-    }
 }

@@ -44,9 +44,4 @@ public class RandomStringTest {
         assertThat(RandomString.hashOf(0), not(RandomString.hashOf(-1)));
         assertThat(RandomString.hashOf(0), not(RandomString.hashOf(1)));
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(RandomString.class).applyBasic();
-    }
 }

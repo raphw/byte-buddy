@@ -283,8 +283,6 @@ public class AgentBuilderRedefinitionStrategyBatchAllocatorTest {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForFixedSize.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.ForMatchedGrouping.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable.class).applyBasic();
-        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.SlicingIterable.SlicingIterator.class).applyBasic();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.BatchAllocator.Slicing.Partitioning.class).apply();
     }
 }

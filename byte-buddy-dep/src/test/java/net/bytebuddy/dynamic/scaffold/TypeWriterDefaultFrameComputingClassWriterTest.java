@@ -75,9 +75,4 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
         when(superClass.isAssignableFrom(rightType)).thenReturn(true);
         assertThat(frameComputingClassWriter.getCommonSuperClass(FOO, BAR), is(FOOBAR));
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.Default.FrameComputingClassWriter.class).applyBasic();
-    }
 }

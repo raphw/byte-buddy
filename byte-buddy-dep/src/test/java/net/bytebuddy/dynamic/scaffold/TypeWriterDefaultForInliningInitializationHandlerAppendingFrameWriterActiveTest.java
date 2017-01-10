@@ -77,9 +77,4 @@ public class TypeWriterDefaultForInliningInitializationHandlerAppendingFrameWrit
     public void testUnexpected() throws Exception {
         frameWriter.onFrame(-2, 0);
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.InitializationHandler.Appending.FrameWriter.Active.class).applyBasic();
-    }
 }

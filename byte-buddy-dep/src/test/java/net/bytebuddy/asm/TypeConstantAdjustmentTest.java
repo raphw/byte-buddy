@@ -152,7 +152,5 @@ public class TypeConstantAdjustmentTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeConstantAdjustment.class).apply();
-        ObjectPropertyAssertion.of(TypeConstantAdjustment.TypeConstantDissolvingClassVisitor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeConstantAdjustment.TypeConstantDissolvingClassVisitor.TypeConstantDissolvingMethodVisitor.class).applyBasic();
     }
 }

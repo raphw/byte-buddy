@@ -59,14 +59,6 @@ public class MethodDelegationBinderTest {
         ObjectPropertyAssertion.of(MethodDelegationBinder.ParameterBinding.Anonymous.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.ParameterBinding.Unique.class).apply();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodBinding.Illegal.class).apply();
-        ObjectPropertyAssertion.of(MethodDelegationBinder.MethodBinding.Builder.class).create(new ObjectPropertyAssertion.Creator<MethodDescription>() {
-            @Override
-            public MethodDescription create() {
-                MethodDescription methodDescription = mock(MethodDescription.class);
-                when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-                return methodDescription;
-            }
-        }).applyBasic();
         ObjectPropertyAssertion.of(MethodDelegationBinder.MethodBinding.Builder.Build.class).create(new ObjectPropertyAssertion.Creator<Map<?, ?>>() {
             @Override
             public Map<?, ?> create() {

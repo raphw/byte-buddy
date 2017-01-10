@@ -17,14 +17,4 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
     protected Implementation.SpecialMethodInvocation make(MethodDescription methodDescription, TypeDescription typeDescription) {
         return new RebaseImplementationTarget.RebasedMethodInvocation(methodDescription, typeDescription, mock(StackManipulation.class));
     }
-
-    @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(RebaseImplementationTarget.RebasedMethodInvocation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
-            @Override
-            public void apply(MethodDescription mock) {
-                when(mock.asSignatureToken()).thenReturn(mock(MethodDescription.SignatureToken.class));
-            }
-        }).applyBasic();
-    }
 }

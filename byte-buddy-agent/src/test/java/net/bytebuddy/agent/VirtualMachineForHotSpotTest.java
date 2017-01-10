@@ -82,12 +82,6 @@ public class VirtualMachineForHotSpotTest {
         ).loadAgent("foo", null);
     }
 
-    @Test
-    @UnixSocketRule.Enforce
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(VirtualMachine.ForHotSpot.OnUnix.class).applyBasic();
-    }
-
     private static class PseudoMachine extends VirtualMachine.ForHotSpot {
 
         private final byte[][] read;

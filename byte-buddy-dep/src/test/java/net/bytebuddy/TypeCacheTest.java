@@ -136,8 +136,6 @@ public class TypeCacheTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeCache.class).applyBasic();
-        ObjectPropertyAssertion.of(TypeCache.WithInlineExpunction.class).applyBasic();
         ObjectPropertyAssertion.of(TypeCache.Sort.class).apply();
         final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(Object.class,
                 String.class,
@@ -161,8 +159,6 @@ public class TypeCacheTest {
                 return iterator.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(TypeCache.LookupKey.class).apply();
-        ObjectPropertyAssertion.of(TypeCache.StorageKey.class).applyBasic();
 
     }
 }
