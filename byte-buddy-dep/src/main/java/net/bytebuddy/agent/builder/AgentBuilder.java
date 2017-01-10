@@ -1374,7 +1374,7 @@ public interface AgentBuilder {
             /**
              * A mapping of class loader references to a set of names that failed to load on the origin class loader.
              */
-            private final ConcurrentMap<ClassLoaderReference, Set<String>> types;
+            private final ConcurrentMap<StorageKey, Set<String>> types;
 
             /**
              * Creates a new resubmission listener that is using a {@link RedefinitionStrategy#RETRANSFORMATION}. During
@@ -1443,17 +1443,19 @@ public interface AgentBuilder {
                 this.redefinitionStrategy = redefinitionStrategy;
                 this.redefinitionBatchAllocator = redefinitionBatchAllocator;
                 this.redefinitionListener = redefinitionListener;
-                types = new ConcurrentHashMap<ClassLoaderReference, Set<String>>();
+                types = new ConcurrentHashMap<StorageKey, Set<String>>();
             }
 
             @Override
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                 if (!loaded) {
-                    ClassLoaderReference classLoaderReference = new ClassLoaderReference(classLoader);
-                    Set<String> types = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-                    Set<String> previous = this.types.putIfAbsent(classLoaderReference, types);
-                    if (previous != null) {
-                        types = previous;
+                    Set<String> types = this.types.get(new LookupKey(classLoader));
+                    if (types == null) {
+                        types = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+                        Set<String> previous = this.types.putIfAbsent(new StorageKey(classLoader), types);
+                        if (previous != null) {
+                            types = previous;
+                        }
                     }
                     types.add(typeName);
                 }
@@ -1461,10 +1463,10 @@ public interface AgentBuilder {
 
             @Override
             public void run() {
-                Iterator<Map.Entry<ClassLoaderReference, Set<String>>> entries = types.entrySet().iterator();
+                Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
                 List<Class<?>> types = new ArrayList<Class<?>>();
                 while (entries.hasNext()) {
-                    Map.Entry<ClassLoaderReference, Set<String>> entry = entries.next();
+                    Map.Entry<StorageKey, Set<String>> entry = entries.next();
                     ClassLoader classLoader = entry.getKey().get();
                     if (classLoader != null || entry.getKey().isBootstrapLoader()) {
                         Iterator<String> iterator = entry.getValue().iterator();
@@ -1474,7 +1476,7 @@ public interface AgentBuilder {
                                 if (instrumentation.isModifiableClass(type)) {
                                     types.add(type);
                                 }
-                            } catch (ClassNotFoundException ignored) {
+                            } catch (Throwable ignored) {
                                 /* do nothing */
                             } finally {
                                 iterator.remove();
@@ -1494,10 +1496,17 @@ public interface AgentBuilder {
                         redefinitionListener);
             }
 
+            /* does not implement hashCode and equals in order to align with identity treatment of the JVM */
+
             /**
-             * A reference for a class loader that also allows the identification of the bootstrap loader.
+             * A key for a class loader that can only be used for looking up a preexisting value but avoids reference management.
              */
-            protected static class ClassLoaderReference extends WeakReference<ClassLoader> {
+            protected static class LookupKey {
+
+                /**
+                 * The represented class loader.
+                 */
+                private final ClassLoader classLoader;
 
                 /**
                  * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
@@ -1505,11 +1514,51 @@ public interface AgentBuilder {
                 private final int hashCode;
 
                 /**
-                 * Creates a new class loader reference.
+                 * Creates a new lookup key.
+                 *
+                 * @param classLoader The represented class loader.
+                 */
+                protected LookupKey(ClassLoader classLoader) {
+                    this.classLoader = classLoader;
+                    hashCode = System.identityHashCode(classLoader);
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) {
+                        return true;
+                    } else if (object instanceof LookupKey) {
+                        return classLoader == ((LookupKey) object).classLoader;
+                    } else if (object instanceof StorageKey) {
+                        StorageKey storageKey = (StorageKey) object;
+                        return hashCode == storageKey.hashCode && classLoader == storageKey.get();
+                    } else {
+                        return false;
+                    }
+                }
+
+                @Override
+                public int hashCode() {
+                    return hashCode;
+                }
+            }
+
+            /**
+             * A key for a class loader that only weakly references the class loader.
+             */
+            protected static class StorageKey extends WeakReference<ClassLoader> {
+
+                /**
+                 * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
+                 */
+                private final int hashCode;
+
+                /**
+                 * Creates a new storage key.
                  *
                  * @param classLoader The represented class loader or {@code null} for the bootstrap class loader.
                  */
-                protected ClassLoaderReference(ClassLoader classLoader) {
+                protected StorageKey(ClassLoader classLoader) {
                     super(classLoader);
                     hashCode = System.identityHashCode(classLoader);
                 }
@@ -1525,10 +1574,17 @@ public interface AgentBuilder {
 
                 @Override
                 public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (!(object instanceof ClassLoaderReference)) return false;
-                    ClassLoaderReference that = (ClassLoaderReference) object;
-                    return hashCode == that.hashCode && get() == that.get();
+                    if (this == object) {
+                        return true;
+                    } else if (object instanceof LookupKey) {
+                        LookupKey lookupKey = (LookupKey) object;
+                        return hashCode == lookupKey.hashCode && get() == lookupKey.classLoader;
+                    } else if (object instanceof StorageKey) {
+                        StorageKey storageKey = (StorageKey) object;
+                        return hashCode == storageKey.hashCode && get() == storageKey.get();
+                    } else {
+                        return false;
+                    }
                 }
 
                 @Override

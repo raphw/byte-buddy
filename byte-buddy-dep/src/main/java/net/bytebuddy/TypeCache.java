@@ -52,7 +52,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
     /**
      * The underlying map containing cached objects.
      */
-    protected final ConcurrentMap<Object, ConcurrentMap<T, Reference<Class<?>>>> cache;
+    protected final ConcurrentMap<StorageKey, ConcurrentMap<T, Reference<Class<?>>>> cache;
 
     /**
      * Creates a new type cache.
@@ -61,7 +61,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      */
     public TypeCache(Sort sort) {
         this.sort = sort;
-        cache = new ConcurrentHashMap<Object, ConcurrentMap<T, Reference<Class<?>>>>();
+        cache = new ConcurrentHashMap<StorageKey, ConcurrentMap<T, Reference<Class<?>>>>();
     }
 
     /**
