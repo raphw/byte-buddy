@@ -1497,6 +1497,19 @@ public interface AgentBuilder {
                         redefinitionListener);
             }
 
+            /**
+             * Schedules this resubmitter at the specified rate.
+             *
+             * @param executorService The executor service to which the task is scheduled.
+             * @param time            The time between two resubmissions.
+             * @param timeUnit        The time unit of the specified time.
+             * @return This listener to be registered with an agent builder.
+             */
+            public Listener scheduled(ScheduledExecutorService executorService, long time, TimeUnit timeUnit) {
+                executorService.scheduleWithFixedDelay(this, time, time, timeUnit);
+                return this;
+            }
+
             /* does not implement hashCode and equals in order to align with identity treatment of the JVM */
 
             /**
