@@ -1372,6 +1372,11 @@ public interface AgentBuilder {
             private final RedefinitionStrategy.Listener redefinitionListener;
 
             /**
+             * The matcher to apply onto occured exceptions.
+             */
+            private final ElementMatcher.Junction<? super Throwable> matcher;
+
+            /**
              * A mapping of class loader references to a set of names that failed to load on the origin class loader.
              */
             private final ConcurrentMap<StorageKey, Set<String>> types;
@@ -1383,7 +1388,7 @@ public interface AgentBuilder {
              * @param instrumentation The instrumentation instance to use.
              */
             public Resubmitting(Instrumentation instrumentation) {
-                this(instrumentation, RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE, RedefinitionStrategy.Listener.NoOp.INSTANCE);
+                this(instrumentation, RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE);
             }
 
             /**
@@ -1391,17 +1396,15 @@ public interface AgentBuilder {
              *
              * @param instrumentation            The instrumentation instance to use.
              * @param redefinitionBatchAllocator The redefinition batch allocator.
-             * @param redefinitionListener       The redefinition listener.
              */
-            public Resubmitting(Instrumentation instrumentation,
-                                RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                RedefinitionStrategy.Listener redefinitionListener) {
+            public Resubmitting(Instrumentation instrumentation, RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
                 this(instrumentation,
                         NoOp.INSTANCE,
                         LocationStrategy.NoOp.INSTANCE,
                         RedefinitionStrategy.RETRANSFORMATION,
                         redefinitionBatchAllocator,
-                        redefinitionListener);
+                        RedefinitionStrategy.Listener.NoOp.INSTANCE,
+                        any());
             }
 
             /**
@@ -1411,14 +1414,18 @@ public interface AgentBuilder {
              * @param listener                   The listener to notify when a location strategy fails for a type.
              * @param locationStrategy           The location strategy to use.
              * @param redefinitionBatchAllocator The redefinition batch allocator.
-             * @param redefinitionListener       The redefinition listener.
              */
             public Resubmitting(Instrumentation instrumentation,
                                 Listener listener,
                                 LocationStrategy locationStrategy,
-                                RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                RedefinitionStrategy.Listener redefinitionListener) {
-                this(instrumentation, listener, locationStrategy, RedefinitionStrategy.REDEFINITION, redefinitionBatchAllocator, redefinitionListener);
+                                RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
+                this(instrumentation,
+                        listener,
+                        locationStrategy,
+                        RedefinitionStrategy.REDEFINITION,
+                        redefinitionBatchAllocator,
+                        RedefinitionStrategy.Listener.NoOp.INSTANCE,
+                        any());
             }
 
             /**
@@ -1430,26 +1437,29 @@ public interface AgentBuilder {
              * @param redefinitionStrategy       The redefinition strategy to use.
              * @param redefinitionBatchAllocator The redefinition batch allocator.
              * @param redefinitionListener       The redefinition listener.
+             * @param matcher                    The matcher to apply onto occured exceptions.
              */
             protected Resubmitting(Instrumentation instrumentation,
                                    Listener listener,
                                    LocationStrategy locationStrategy,
                                    RedefinitionStrategy redefinitionStrategy,
                                    RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                   RedefinitionStrategy.Listener redefinitionListener) {
+                                   RedefinitionStrategy.Listener redefinitionListener,
+                                   ElementMatcher.Junction<? super Throwable> matcher) {
                 this.instrumentation = instrumentation;
                 this.listener = listener;
                 this.locationStrategy = locationStrategy;
                 this.redefinitionStrategy = redefinitionStrategy;
                 this.redefinitionBatchAllocator = redefinitionBatchAllocator;
                 this.redefinitionListener = redefinitionListener;
+                this.matcher = matcher;
                 types = new ConcurrentHashMap<StorageKey, Set<String>>();
             }
 
             @Override
             @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
             public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
-                if (!loaded) {
+                if (!loaded && matcher.matches(throwable)) {
                     Set<String> types = this.types.get(new LookupKey(classLoader));
                     if (types == null) {
                         types = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
@@ -1460,6 +1470,38 @@ public interface AgentBuilder {
                     }
                     types.add(typeName);
                 }
+            }
+
+            /**
+             * Applies the supplied redefinition listener additionally to any previously registered listeners.
+             *
+             * @param redefinitionListener The redefinition listener to apply.
+             * @return A new resubmitting listener that notifies the specified listener upon a redefinition.
+             */
+            public Resubmitting with(RedefinitionStrategy.Listener redefinitionListener) {
+                return new Resubmitting(instrumentation,
+                        listener,
+                        locationStrategy,
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        new RedefinitionStrategy.Listener.Compound(this.redefinitionListener, redefinitionListener),
+                        this.matcher.and(matcher));
+            }
+
+            /**
+             * Narrows this type matcher to only be applied onto certain exceptions caused by the instrumentation process.
+             *
+             * @param matcher The matcher that filters any throwables of the instrumentation process.
+             * @return A new resubmitting listener that ignores unmatched throwables.
+             */
+            public Resubmitting filter(ElementMatcher<? super Throwable> matcher) {
+                return new Resubmitting(instrumentation,
+                        listener,
+                        locationStrategy,
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        this.matcher.and(matcher));
             }
 
             @Override
@@ -4379,7 +4421,7 @@ public interface AgentBuilder {
                  *
                  * @param listener The listeners to invoke.
                  */
-                protected Compound(Listener... listener) {
+                public Compound(Listener... listener) {
                     this(Arrays.asList(listener));
                 }
 
@@ -4388,7 +4430,7 @@ public interface AgentBuilder {
                  *
                  * @param listeners The listeners to invoke.
                  */
-                protected Compound(List<? extends Listener> listeners) {
+                public Compound(List<? extends Listener> listeners) {
                     this.listeners = new ArrayList<Listener>();
                     for (Listener listener : listeners) {
                         if (listener instanceof Compound) {
