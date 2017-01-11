@@ -1485,7 +1485,7 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         redefinitionBatchAllocator,
                         new RedefinitionStrategy.Listener.Compound(this.redefinitionListener, redefinitionListener),
-                        this.matcher.and(matcher));
+                        matcher);
             }
 
             /**
@@ -1501,7 +1501,7 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
-                        this.matcher.and(matcher));
+                        this.matcher.<Throwable>and(matcher));
             }
 
             @Override
