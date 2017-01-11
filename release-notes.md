@@ -1,6 +1,17 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. January 2017: version 1.6.2
+
+- Removed obsolete `toString` representations.
+- Start using Lombok for equals/hashCode unless explicit.
+- Add security manager check to Byte Buddy agent.
+- Added asynchronous super type loading strategies.
+- Added resubmitter.
+- Added class injection strategy for Android.
+- Fixed type initializer instrumentation for redefinitions.
+- Added `loaded` property for listener on agent builder.
+
 ### 5. January 2017: version 1.6.1
 
 - Added check to `@Pipe` for method invokability.
