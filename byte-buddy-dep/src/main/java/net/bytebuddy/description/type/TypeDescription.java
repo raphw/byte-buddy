@@ -3223,6 +3223,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     public AnnotatedElement resolve() {
                         try {
                             return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(typeVariable), index);
+                        } catch (ClassCastException ignored) { // To avoid bug on early releases of Java 8.
+                            return NoOp.INSTANCE;
                         } catch (IllegalAccessException exception) {
                             throw new IllegalStateException("Cannot access java.lang.reflect.TypeVariable#getAnnotatedBounds", exception);
                         } catch (InvocationTargetException exception) {

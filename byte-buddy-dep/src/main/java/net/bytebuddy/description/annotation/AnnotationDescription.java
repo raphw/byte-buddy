@@ -667,8 +667,10 @@ public interface AnnotationDescription {
                     }
                 }
                 return asValue(method.invoke(annotation), method.getReturnType());
+            } catch (InvocationTargetException exception) {
+                throw new IllegalStateException("Error reading annotation property " + property, exception.getCause());
             } catch (Exception exception) {
-                throw new IllegalStateException("Cannot access annotation property " + property, exception.getCause());
+                throw new IllegalStateException("Cannot access annotation property " + property, exception);
             }
         }
 

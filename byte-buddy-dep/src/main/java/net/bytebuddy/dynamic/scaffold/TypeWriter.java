@@ -1614,7 +1614,7 @@ public interface TypeWriter<T> {
                 try {
                     AccessController.doPrivileged(new ClassDumpAction(DUMP_FOLDER, instrumentedType, unresolvedType.getBinaryRepresentation()));
                 } catch (Exception exception) {
-                    Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not dump class file for " + instrumentedType, exception.getCause());
+                    Logger.getLogger("net.bytebuddy").log(Level.WARNING, "Could not dump class file for " + instrumentedType, exception);
                 }
             }
             return unresolvedType.toDynamicType(typeResolutionStrategy);

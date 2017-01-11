@@ -335,10 +335,10 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             public ClassFileVersion locate() {
                 try {
                     return ClassFileVersion.ofJavaVersion((Integer) major.invoke(current.invoke(STATIC_METHOD)));
-                } catch (InvocationTargetException exception) {
-                    throw new IllegalStateException("Could not look up VM version", exception.getCause());
                 } catch (IllegalAccessException exception) {
                     throw new IllegalStateException("Could not access VM version lookup", exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Could not look up VM version", exception.getCause());
                 }
             }
         }
