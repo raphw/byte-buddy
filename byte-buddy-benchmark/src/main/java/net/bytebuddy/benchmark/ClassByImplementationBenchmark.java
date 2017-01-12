@@ -8,7 +8,6 @@ import net.bytebuddy.benchmark.specimen.ExampleInterface;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
-import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.pool.TypePool;
 import net.sf.cglib.proxy.CallbackHelper;
