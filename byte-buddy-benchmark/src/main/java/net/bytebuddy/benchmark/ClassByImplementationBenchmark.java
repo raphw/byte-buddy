@@ -5,9 +5,12 @@ import javassist.util.proxy.MethodHandler;
 import javassist.util.proxy.ProxyFactory;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.benchmark.specimen.ExampleInterface;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
+import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.pool.TypePool;
 import net.sf.cglib.proxy.CallbackHelper;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.FixedValue;
@@ -159,6 +162,19 @@ public class ClassByImplementationBenchmark {
     }
 
     /**
+     * A description of {@link ClassByExtensionBenchmark#baseClass}.
+     */
+    private TypeDescription baseClassDescription;
+
+    /**
+     * Sets up this benchmark.
+     */
+    @Setup
+    public void setup() {
+        baseClassDescription = TypePool.Default.ofClassPath().describe(baseClass.getName()).resolve();
+    }
+
+    /**
      * Creates a baseline for the benchmark.
      *
      * @return A simple object that is not transformed.
@@ -271,6 +287,27 @@ public class ClassByImplementationBenchmark {
                 .ignore(none())
                 .subclass(baseClass)
                 .method(isDeclaredBy(baseClass)).intercept(StubMethod.INSTANCE)
+                .make()
+                .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded()
+                .getDeclaredConstructor()
+                .newInstance();
+    }
+
+    /**
+     * Performs a benchmark of an interface implementation using Byte Buddy. This benchmark uses a type pool to compare against
+     * usage of the reflection API.
+     *
+     * @return The created instance, in order to avoid JIT removal.
+     * @throws java.lang.Exception If the reflective invocation causes an exception.
+     */
+    @Benchmark
+    public ExampleInterface benchmarkByteBuddyWithTypePool() throws Exception {
+        return (ExampleInterface) new ByteBuddy()
+                .with(TypeValidation.DISABLED)
+                .ignore(none())
+                .subclass(baseClassDescription)
+                .method(isDeclaredBy(baseClassDescription)).intercept(StubMethod.INSTANCE)
                 .make()
                 .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded()
