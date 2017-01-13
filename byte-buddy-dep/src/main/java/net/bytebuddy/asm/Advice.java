@@ -123,6 +123,12 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * <p>
  * <b>Note</b>: The behavior of this component is undefined if it is supplied with invalid byte code what might result in runtime exceptions.
  * </p>
+ * <p>
+ * <b>Note</b>: When using advice from a Java agent with an {@link net.bytebuddy.agent.builder.AgentBuilder}, it often makes sense to not include
+ * any library-specific code in the agent's jar file. For being able to locate the advice code in the context of the library dependencies, Byte
+ * Buddy offers an {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer.ForAdvice} implementation that allows registering the agent's
+ * class file locators for assembly of the advice class's description at runtime and with respect to the specific user dependencies.
+ * </p>
  *
  * @see DynamicValue
  * @see OnMethodEnter
