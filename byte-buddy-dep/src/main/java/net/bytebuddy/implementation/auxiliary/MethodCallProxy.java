@@ -33,9 +33,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -347,13 +345,12 @@ public class MethodCallProxy implements AuxiliaryType {
                               Context implementationContext,
                               MethodDescription instrumentedMethod) {
                 FieldList<?> fieldList = instrumentedType.getDeclaredFields();
-                StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
-                int index = 0;
+                List<StackManipulation> fieldLoadings = new ArrayList<StackManipulation>(fieldList.size());
                 for (FieldDescription fieldDescription : fieldList) {
-                    fieldLoading[index++] = new StackManipulation.Compound(MethodVariableAccess.loadThis(), FieldAccess.forField(fieldDescription).read());
+                    fieldLoadings.add(new StackManipulation.Compound(MethodVariableAccess.loadThis(), FieldAccess.forField(fieldDescription).read()));
                 }
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
-                        new StackManipulation.Compound(fieldLoading),
+                        new StackManipulation.Compound(fieldLoadings),
                         MethodInvocation.invoke(accessorMethod),
                         assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
                         MethodReturn.of(instrumentedMethod.getReturnType())
