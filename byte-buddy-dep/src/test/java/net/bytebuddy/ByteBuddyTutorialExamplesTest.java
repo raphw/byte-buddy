@@ -27,6 +27,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaModule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -167,7 +168,7 @@ public class ByteBuddyTutorialExamplesTest {
     public void testTutorialGettingStartedJavaAgent() throws Exception {
         new AgentBuilder.Default().type(isAnnotatedWith(Rebase.class)).transform(new AgentBuilder.Transformer() {
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader, JavaModule module) {
                 return builder.method(named("toString")).intercept(FixedValue.value("transformed"));
             }
         }).installOn(mock(Instrumentation.class));

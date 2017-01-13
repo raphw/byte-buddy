@@ -20,6 +20,7 @@ import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -735,6 +736,7 @@ public class AgentBuilderDefaultApplicationTest {
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new AgentBuilder.Transformer.ForAdvice()
                         .with(poolStrategy)
+                        .with(AgentBuilder.LocationStrategy.ForClassLoader.STRONG)
                         .include(BarAdvice.class.getClassLoader())
                         .with(Assigner.DEFAULT)
                         .withExceptionHandler(Removal.SINGLE)
@@ -751,7 +753,10 @@ public class AgentBuilderDefaultApplicationTest {
     private static class FooTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
         }
     }
@@ -773,7 +778,10 @@ public class AgentBuilderDefaultApplicationTest {
     public static class BarTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
             } catch (Exception exception) {
@@ -799,7 +807,10 @@ public class AgentBuilderDefaultApplicationTest {
     public static class QuxTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
             } catch (Exception exception) {
@@ -825,7 +836,10 @@ public class AgentBuilderDefaultApplicationTest {
     public static class QuxBazTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
             } catch (Exception exception) {
@@ -852,7 +866,10 @@ public class AgentBuilderDefaultApplicationTest {
     public static class ConstructorTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             return builder.constructor(ElementMatchers.any()).intercept(SuperMethodCall.INSTANCE);
         }
     }
@@ -866,7 +883,10 @@ public class AgentBuilderDefaultApplicationTest {
         }
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             return builder.method(named(methodName)).intercept(FixedValue.value(BAR));
         }
     }
@@ -874,7 +894,10 @@ public class AgentBuilderDefaultApplicationTest {
     public static class BarAdviceTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             return builder.visit(Advice.to(BarAdvice.class).on(named(FOO)));
         }
     }
@@ -882,7 +905,10 @@ public class AgentBuilderDefaultApplicationTest {
     public static class QuxAdviceTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             return builder.visit(Advice.to(QuxAdvice.class).on(named(FOO)));
         }
     }

@@ -1,5 +1,6 @@
 package net.bytebuddy.agent.builder;
 
+import com.sun.org.apache.regexp.internal.RE;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
@@ -120,7 +121,8 @@ public class AgentBuilderDefaultTest {
         loadedTypeInitializers.put(new TypeDescription.ForLoadedType(REDEFINED), loadedTypeInitializer);
         when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(transformer.transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader())).thenReturn((DynamicType.Builder) builder);
+        when(transformer.transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED)))
+                .thenReturn((DynamicType.Builder) builder);
         when(poolStrategy.typePool(any(ClassFileLocator.class), any(ClassLoader.class))).thenReturn(typePool);
         when(typePool.describe(REDEFINED.getName())).thenReturn(resolution);
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
@@ -168,7 +170,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(dispatcher);
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verify(transformer).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(transformer).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
         verifyNoMoreInteractions(transformer);
         verifyZeroInteractions(installationStrategy);
     }
@@ -1865,7 +1867,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(dispatcher);
         verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
-        verify(transformer, times(2)).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(transformer, times(2)).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
         verifyNoMoreInteractions(transformer);
         verifyZeroInteractions(installationStrategy);
     }

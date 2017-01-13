@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -31,11 +32,14 @@ public class AgentBuilderTransformerForBuildPluginTest {
     @Mock
     private ClassLoader classLoader;
 
+    @Mock
+    private JavaModule module;
+
     @Test
     @SuppressWarnings("unchecked")
     public void testApplication() throws Exception {
         when(plugin.apply(builder, typeDescription)).thenReturn((DynamicType.Builder) result);
-        assertThat(new AgentBuilder.Transformer.ForBuildPlugin(plugin).transform(builder, typeDescription, classLoader), is((DynamicType.Builder) result));
+        assertThat(new AgentBuilder.Transformer.ForBuildPlugin(plugin).transform(builder, typeDescription, classLoader, module), is((DynamicType.Builder) result));
         verify(plugin).apply(builder, typeDescription);
         verifyNoMoreInteractions(plugin);
     }

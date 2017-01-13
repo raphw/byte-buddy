@@ -11,6 +11,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -116,7 +117,10 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
     private static class ConstantTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             return builder
                     .method(isDeclaredBy(typeDescription).and(named(FOO))).intercept(FixedValue.value(FOO))
                     .method(isDeclaredBy(typeDescription).and(named(BAR))).intercept(FixedValue.value(BAR));

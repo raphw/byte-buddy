@@ -193,7 +193,7 @@ public class TimerAgent {
                              Instrumentation instrumentation) {
     new AgentBuilder.Default()
       .type(ElementMatchers.nameEndsWith("Timed"))
-      .transform((builder, type, classLoader) -> 
+      .transform((builder, type, classLoader, module) -> 
           builder.method(ElementMatchers.any())
                  .intercept(MethodDelegation.to(TimingInterceptor.class))
       ).installOn(instrumentation);

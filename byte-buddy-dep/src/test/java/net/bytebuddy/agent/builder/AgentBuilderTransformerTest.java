@@ -4,6 +4,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -33,21 +34,24 @@ public class AgentBuilderTransformerTest {
     @Mock
     private ClassLoader classLoader;
 
+    @Mock
+    private JavaModule module;
+
     @Test
     @SuppressWarnings("unchecked")
     public void testNoOp() throws Exception {
-        assertThat(AgentBuilder.Transformer.NoOp.INSTANCE.transform(builder, typeDescription, classLoader), sameInstance((DynamicType.Builder) builder));
+        assertThat(AgentBuilder.Transformer.NoOp.INSTANCE.transform(builder, typeDescription, classLoader, module), sameInstance((DynamicType.Builder) builder));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testCompound() throws Exception {
-        when(first.transform(builder, typeDescription, classLoader)).thenReturn((DynamicType.Builder) builder);
-        when(second.transform(builder, typeDescription, classLoader)).thenReturn((DynamicType.Builder) builder);
-        assertThat(new AgentBuilder.Transformer.Compound(first, second).transform(builder, typeDescription, classLoader), sameInstance((DynamicType.Builder) builder));
-        verify(first).transform(builder, typeDescription, classLoader);
+        when(first.transform(builder, typeDescription, classLoader, module)).thenReturn((DynamicType.Builder) builder);
+        when(second.transform(builder, typeDescription, classLoader, module)).thenReturn((DynamicType.Builder) builder);
+        assertThat(new AgentBuilder.Transformer.Compound(first, second).transform(builder, typeDescription, classLoader, module), sameInstance((DynamicType.Builder) builder));
+        verify(first).transform(builder, typeDescription, classLoader, module);
         verifyNoMoreInteractions(first);
-        verify(second).transform(builder, typeDescription, classLoader);
+        verify(second).transform(builder, typeDescription, classLoader, module);
         verifyNoMoreInteractions(second);
     }
 

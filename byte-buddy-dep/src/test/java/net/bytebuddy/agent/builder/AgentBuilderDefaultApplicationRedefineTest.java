@@ -16,6 +16,7 @@ import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -178,7 +179,10 @@ public class AgentBuilderDefaultApplicationRedefineTest {
     private static class FooTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                TypeDescription typeDescription,
+                                                ClassLoader classLoader,
+                                                JavaModule module) {
             return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
         }
     }

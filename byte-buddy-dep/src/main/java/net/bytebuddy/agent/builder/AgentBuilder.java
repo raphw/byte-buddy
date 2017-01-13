@@ -1911,11 +1911,14 @@ public interface AgentBuilder {
          *
          * @param builder         The dynamic builder to transform.
          * @param typeDescription The description of the type currently being instrumented.
-         * @param classLoader     The class loader of the instrumented class. Might be {@code null} to
-         *                        represent the bootstrap class loader.
+         * @param classLoader     The class loader of the instrumented class. Might be {@code null} to represent the bootstrap class loader.
+         * @param module          The class's module or {@code null} if the current VM does not support modules.
          * @return A transformed version of the supplied {@code builder}.
          */
-        DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader);
+        DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                         TypeDescription typeDescription,
+                                         ClassLoader classLoader,
+                                         JavaModule module);
 
         /**
          * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer} that does
@@ -1929,7 +1932,10 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                    TypeDescription typeDescription,
+                                                    ClassLoader classLoader,
+                                                    JavaModule module) {
                 return builder;
             }
         }
@@ -1955,7 +1961,10 @@ public interface AgentBuilder {
             }
 
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                    TypeDescription typeDescription,
+                                                    ClassLoader classLoader,
+                                                    JavaModule module) {
                 return plugin.apply(builder, typeDescription);
             }
         }
@@ -1996,6 +2005,11 @@ public interface AgentBuilder {
             private final PoolStrategy poolStrategy;
 
             /**
+             * The location strategy to use for class loaders when resolving advice classes.
+             */
+            private final LocationStrategy locationStrategy;
+
+            /**
              * The advice entries to apply.
              */
             private final List<Entry> entries;
@@ -2018,6 +2032,7 @@ public interface AgentBuilder {
                         Assigner.DEFAULT,
                         ClassFileLocator.NoOp.INSTANCE,
                         PoolStrategy.Default.FAST,
+                        LocationStrategy.ForClassLoader.STRONG,
                         Collections.<Entry>emptyList());
             }
 
@@ -2029,6 +2044,7 @@ public interface AgentBuilder {
              * @param assigner         The assigner to use.
              * @param classFileLocator The class file locator to use.
              * @param poolStrategy     The pool strategy to use for looking up an advice.
+             * @param locationStrategy The location strategy to use for class loaders when resolving advice classes.
              * @param entries          The advice entries to apply.
              */
             protected ForAdvice(Advice.WithCustomMapping advice,
@@ -2036,18 +2052,23 @@ public interface AgentBuilder {
                                 Assigner assigner,
                                 ClassFileLocator classFileLocator,
                                 PoolStrategy poolStrategy,
+                                LocationStrategy locationStrategy,
                                 List<Entry> entries) {
                 this.advice = advice;
                 this.exceptionHandler = exceptionHandler;
                 this.assigner = assigner;
                 this.classFileLocator = classFileLocator;
                 this.poolStrategy = poolStrategy;
+                this.locationStrategy = locationStrategy;
                 this.entries = entries;
             }
 
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
-                ClassFileLocator classFileLocator = new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(classLoader), this.classFileLocator);
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                    TypeDescription typeDescription,
+                                                    ClassLoader classLoader,
+                                                    JavaModule module) {
+                ClassFileLocator classFileLocator = new ClassFileLocator.Compound(locationStrategy.classFileLocator(classLoader, module), this.classFileLocator);
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
                 for (Entry entry : entries) {
@@ -2066,7 +2087,18 @@ public interface AgentBuilder {
              * @return A new instance of this advice transformer that applies the supplied pool strategy.
              */
             public ForAdvice with(PoolStrategy poolStrategy) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, entries);
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
+            }
+
+            /**
+             * Registers a location strategy for creating a {@link ClassFileLocator} from the class loader that is supplied during transformation
+             * that should be used for looking up advice-relevant classes.
+             *
+             * @param locationStrategy The location strategy to use.
+             * @return A new instance of this advice transformer that applies the supplied location strategy.
+             */
+            public ForAdvice with(LocationStrategy locationStrategy) {
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
             }
 
             /**
@@ -2077,7 +2109,7 @@ public interface AgentBuilder {
              * @see Advice#withExceptionHandler(StackManipulation)
              */
             public ForAdvice withExceptionHandler(StackManipulation exceptionHandler) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, entries);
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
             }
 
             /**
@@ -2088,7 +2120,7 @@ public interface AgentBuilder {
              * @see Advice#withAssigner(Assigner)
              */
             public ForAdvice with(Assigner assigner) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, entries);
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, locationStrategy, entries);
             }
 
             /**
@@ -2127,6 +2159,7 @@ public interface AgentBuilder {
                         assigner,
                         new ClassFileLocator.Compound(CompoundList.of(classFileLocator, classFileLocators)),
                         poolStrategy,
+                        locationStrategy,
                         entries);
             }
 
@@ -2149,7 +2182,13 @@ public interface AgentBuilder {
              * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
              */
             public ForAdvice advice(LatentMatcher<? super MethodDescription> matcher, String name) {
-                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, CompoundList.of(entries, new Entry(matcher, name)));
+                return new ForAdvice(advice,
+                        exceptionHandler,
+                        assigner,
+                        classFileLocator,
+                        poolStrategy,
+                        locationStrategy,
+                        CompoundList.of(entries, new Entry(matcher, name)));
             }
 
             /**
@@ -2237,9 +2276,12 @@ public interface AgentBuilder {
             }
 
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
+                                                    TypeDescription typeDescription,
+                                                    ClassLoader classLoader,
+                                                    JavaModule module) {
                 for (Transformer transformer : transformers) {
-                    builder = transformer.transform(builder, typeDescription, classLoader);
+                    builder = transformer.transform(builder, typeDescription, classLoader, module);
                 }
                 return builder;
             }
@@ -7655,7 +7697,7 @@ public interface AgentBuilder {
                         DynamicType.Unloaded<?> dynamicType = dispatcher.apply(transformer.transform(typeStrategy.builder(typeDescription,
                                 byteBuddy,
                                 classFileLocator,
-                                methodNameTransformer.resolve()), typeDescription, classLoader)).make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
+                                methodNameTransformer.resolve()), typeDescription, classLoader, module)).make(TypeResolutionStrategy.Disabled.INSTANCE, typePool);
                         dispatcher.register(dynamicType, classLoader, new BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
                                 classLoader,
                                 protectionDomain));
