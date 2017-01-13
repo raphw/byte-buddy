@@ -1960,6 +1960,13 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * A transformer for applying an {@link Advice} where this advice class might reference types of both the agent's and the user's
+         * class loader. Using this transformer, it is possible to apply advice without including any library dependencies of this advice
+         * class which are then rather looked up from the transformed class's class loader. For this to work, it is required to register
+         * the advice class's class loader manually via the {@code include} methods and to reference the advice class by its fully-qualified
+         * name. The advice class is then never loaded by rather described by a {@link TypePool}.
+         */
         @EqualsAndHashCode
         class ForAdvice implements Transformer {
 
@@ -2067,6 +2074,7 @@ public interface AgentBuilder {
              *
              * @param exceptionHandler The exception handler to use.
              * @return A new instance of this advice transformer that applies the supplied exception handler.
+             * @see Advice#withExceptionHandler(StackManipulation)
              */
             public ForAdvice withExceptionHandler(StackManipulation exceptionHandler) {
                 return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, entries);
@@ -2077,6 +2085,7 @@ public interface AgentBuilder {
              *
              * @param assigner The assigner to use.
              * @return A new instance of this advice transformer that applies the supplied assigner.
+             * @see Advice#withAssigner(Assigner)
              */
             public ForAdvice with(Assigner assigner) {
                 return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, entries);
