@@ -12,6 +12,8 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.implementation.bytecode.Removal;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
@@ -720,6 +722,29 @@ public class AgentBuilderDefaultApplicationTest {
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
+    }
+
+    @Test
+    @IntegrationRule.Enforce
+    public void testAdviceTransformer() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(poolStrategy)
+                .ignore(none())
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new AgentBuilder.Transformer.ForAdvice()
+                        .with(poolStrategy)
+                        .include(BarAdvice.class.getClassLoader())
+                        .with(Assigner.DEFAULT)
+                        .withExceptionHandler(Removal.SINGLE)
+                        .advice(named(FOO), BarAdvice.class.getName()))
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(Foo.class.getName());
+            assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor().newInstance()), is((Object) (FOO + BAR)));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
     }
 

@@ -54,6 +54,8 @@ public class AgentBuilderTransformerTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Transformer.NoOp.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Transformer.ForAdvice.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Transformer.ForAdvice.Entry.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Transformer.Compound.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override
             public List<?> create() {

@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.asm.Advice;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
@@ -27,10 +28,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.Duplication;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
-import net.bytebuddy.implementation.bytecode.TypeCreation;
+import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
@@ -44,6 +42,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaModule;
 import net.bytebuddy.utility.JavaType;
@@ -1958,6 +1957,236 @@ public interface AgentBuilder {
             @Override
             public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
                 return plugin.apply(builder, typeDescription);
+            }
+        }
+
+        @EqualsAndHashCode
+        class ForAdvice implements Transformer {
+
+            /**
+             * The advice to use.
+             */
+            private final Advice.WithCustomMapping advice;
+
+            /**
+             * The exception handler to register for the advice.
+             */
+            private final StackManipulation exceptionHandler;
+
+            /**
+             * The assigner to use for the advice.
+             */
+            private final Assigner assigner;
+
+            /**
+             * The class file locator to query for the advice class.
+             */
+            private final ClassFileLocator classFileLocator;
+
+            /**
+             * The pool strategy to use for looking up an advice.
+             */
+            private final PoolStrategy poolStrategy;
+
+            /**
+             * The advice entries to apply.
+             */
+            private final List<Entry> entries;
+
+            /**
+             * Creates a new advice transformer with a default setup.
+             */
+            public ForAdvice() {
+                this(Advice.withCustomMapping());
+            }
+
+            /**
+             * Creates a new advice transformer which applies the given advice.
+             *
+             * @param advice The configured advice to use.
+             */
+            public ForAdvice(Advice.WithCustomMapping advice) {
+                this(advice,
+                        Removal.of(TypeDescription.THROWABLE),
+                        Assigner.DEFAULT,
+                        ClassFileLocator.NoOp.INSTANCE,
+                        PoolStrategy.Default.FAST,
+                        Collections.<Entry>emptyList());
+            }
+
+            /**
+             * Creates a new advice transformer.
+             *
+             * @param advice           The configured advice to use.
+             * @param exceptionHandler The exception handler to use.
+             * @param assigner         The assigner to use.
+             * @param classFileLocator The class file locator to use.
+             * @param poolStrategy     The pool strategy to use for looking up an advice.
+             * @param entries          The advice entries to apply.
+             */
+            protected ForAdvice(Advice.WithCustomMapping advice,
+                                StackManipulation exceptionHandler,
+                                Assigner assigner,
+                                ClassFileLocator classFileLocator,
+                                PoolStrategy poolStrategy,
+                                List<Entry> entries) {
+                this.advice = advice;
+                this.exceptionHandler = exceptionHandler;
+                this.assigner = assigner;
+                this.classFileLocator = classFileLocator;
+                this.poolStrategy = poolStrategy;
+                this.entries = entries;
+            }
+
+            @Override
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
+                ClassFileLocator classFileLocator = new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(classLoader), this.classFileLocator);
+                TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
+                AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
+                for (Entry entry : entries) {
+                    asmVisitorWrapper = asmVisitorWrapper.method(entry.getMatcher().resolve(typeDescription), advice
+                            .to(typePool.describe(entry.getAdvice()).resolve(), classFileLocator)
+                            .withAssigner(assigner)
+                            .withExceptionHandler(exceptionHandler));
+                }
+                return builder.visit(asmVisitorWrapper);
+            }
+
+            /**
+             * Registers a pool strategy for creating a {@link TypePool} that should be used for creating the advice class.
+             *
+             * @param poolStrategy The pool strategy to use.
+             * @return A new instance of this advice transformer that applies the supplied pool strategy.
+             */
+            public ForAdvice with(PoolStrategy poolStrategy) {
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, entries);
+            }
+
+            /**
+             * Registers an exception handler for suppressed exceptions to use by the registered advice.
+             *
+             * @param exceptionHandler The exception handler to use.
+             * @return A new instance of this advice transformer that applies the supplied exception handler.
+             */
+            public ForAdvice withExceptionHandler(StackManipulation exceptionHandler) {
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, entries);
+            }
+
+            /**
+             * Registers an assigner to be used by the advice class.
+             *
+             * @param assigner The assigner to use.
+             * @return A new instance of this advice transformer that applies the supplied assigner.
+             */
+            public ForAdvice with(Assigner assigner) {
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, entries);
+            }
+
+            /**
+             * Includes the supplied class loaders as a source for looking up an advice class or its dependencies.
+             *
+             * @param classLoader The class loaders to include when looking up classes in their order. Duplicates are filtered.
+             * @return A new instance of this advice transformer that considers the supplied class loaders as a lookup source.
+             */
+            public ForAdvice include(ClassLoader... classLoader) {
+                Set<ClassFileLocator> classFileLocators = new LinkedHashSet<ClassFileLocator>();
+                for (ClassLoader aClassLoader : classLoader) {
+                    classFileLocators.add(ClassFileLocator.ForClassLoader.of(aClassLoader));
+                }
+                return include(new ArrayList<ClassFileLocator>(classFileLocators));
+            }
+
+            /**
+             * Includes the supplied class file locators as a source for looking up an advice class or its dependencies.
+             *
+             * @param classFileLocator The class file locators to include when looking up classes in their order. Duplicates are filtered.
+             * @return A new instance of this advice transformer that considers the supplied class file locators as a lookup source.
+             */
+            public ForAdvice include(ClassFileLocator... classFileLocator) {
+                return include(Arrays.asList(classFileLocator));
+            }
+
+            /**
+             * Includes the supplied class file locators as a source for looking up an advice class or its dependencies.
+             *
+             * @param classFileLocators The class file locators to include when looking up classes in their order. Duplicates are filtered.
+             * @return A new instance of this advice transformer that considers the supplied class file locators as a lookup source.
+             */
+            public ForAdvice include(List<? extends ClassFileLocator> classFileLocators) {
+                return new ForAdvice(advice,
+                        exceptionHandler,
+                        assigner,
+                        new ClassFileLocator.Compound(CompoundList.of(classFileLocator, classFileLocators)),
+                        poolStrategy,
+                        entries);
+            }
+
+            /**
+             * Applies the given advice class onto all methods that satisfy the supplied matcher.
+             *
+             * @param matcher The matcher to determine what methods the advice should be applied to.
+             * @param name    The fully-qualified, binary name of the advice class.
+             * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
+             */
+            public ForAdvice advice(ElementMatcher<? super MethodDescription> matcher, String name) {
+                return advice(new LatentMatcher.Resolved<MethodDescription>(matcher), name);
+            }
+
+            /**
+             * Applies the given advice class onto all methods that satisfy the supplied matcher.
+             *
+             * @param matcher The matcher to determine what methods the advice should be applied to.
+             * @param name    The fully-qualified, binary name of the advice class.
+             * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
+             */
+            public ForAdvice advice(LatentMatcher<? super MethodDescription> matcher, String name) {
+                return new ForAdvice(advice, exceptionHandler, assigner, classFileLocator, poolStrategy, CompoundList.of(entries, new Entry(matcher, name)));
+            }
+
+            /**
+             * An entry for an advice to apply.
+             */
+            @EqualsAndHashCode
+            protected static class Entry {
+
+                /**
+                 * The matcher for advised methods.
+                 */
+                private final LatentMatcher<? super MethodDescription> matcher;
+
+                /**
+                 * The name of the advice class.
+                 */
+                private final String advice;
+
+                /**
+                 * Creates a new entry.
+                 *
+                 * @param matcher The matcher for advised methods.
+                 * @param advice  The name of the advice class.
+                 */
+                protected Entry(LatentMatcher<? super MethodDescription> matcher, String advice) {
+                    this.matcher = matcher;
+                    this.advice = advice;
+                }
+
+                /**
+                 * Returns the matcher for advised methods.
+                 *
+                 * @return The matcher for advised methods.
+                 */
+                protected LatentMatcher<? super MethodDescription> getMatcher() {
+                    return matcher;
+                }
+
+                /**
+                 * Returns the name of the advice class.
+                 *
+                 * @return The name of the advice class.
+                 */
+                protected String getAdvice() {
+                    return advice;
+                }
             }
         }
 
