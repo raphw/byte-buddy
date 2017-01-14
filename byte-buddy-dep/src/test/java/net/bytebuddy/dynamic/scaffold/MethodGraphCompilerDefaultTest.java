@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -10,6 +11,7 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -1105,6 +1107,22 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    @Ignore("Raw types are not currently processed correctly")
+    public void testRawType() throws Exception {
+        TypeDescription typeDescription = new TypeDescription.ForLoadedType(RawType.Raw.class);
+        MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
+        assertThat(methodGraph.getSuperClassGraph().listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
+        MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(isMethod()).getOnly();
+        MethodGraph.Node node = methodGraph.locate(methodDescription.asSignatureToken());
+        assertThat(node.getSort(), is(MethodGraph.Node.Sort.RESOLVED));
+        assertThat(methodGraph.locate(methodDescription.asDefined().asSignatureToken()), is(node));
+        assertThat(node.getMethodTypes().size(), is(2));
+        assertThat(node.getMethodTypes().contains(methodDescription.asTypeToken()), is(true));
+        assertThat(node.getMethodTypes().contains(methodDescription.asDefined().asTypeToken()), is(true));
+        assertThat(node.getVisibility(), is(methodDescription.getVisibility()));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodGraph.Compiler.Default.class).apply();
     }
@@ -1623,5 +1641,28 @@ public class MethodGraphCompilerDefaultTest {
 
     public static class MethodConvergenceVisibilityBridgeTarget extends MethodConvergenceVisibilityBridgeIntermediate {
         /* empty */
+    }
+
+    public static class RawType<T> {
+
+        public void foo(T t) {
+            /* empty */
+        }
+
+        public static class Intermediate<T extends Number> extends RawType<T> {
+
+            @Override
+            public void foo(T t) {
+                /* empty */
+            }
+        }
+
+        public static class Raw extends Intermediate {
+
+            @Override
+            public void foo(Number t) {
+                /* empty */
+            }
+        }
     }
 }
