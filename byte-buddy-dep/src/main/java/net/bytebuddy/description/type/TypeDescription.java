@@ -659,7 +659,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(INSTANCE), genericArray.getDeclaredAnnotations());
+                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
                 }
 
                 @Override
@@ -670,13 +670,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         if (typeArgument.accept(TypeVariableErasing.PartialErasureReviser.INSTANCE)) {
                             return parameterizedType.asRawType();
                         }
-                        transformedTypeArguments.add(typeArgument.accept(INSTANCE));
+                        transformedTypeArguments.add(typeArgument.accept(this));
                     }
                     Generic ownerType = parameterizedType.getOwnerType();
                     return new OfParameterizedType.Latent(parameterizedType.asErasure(),
                             ownerType == null
                                     ? UNDEFINED
-                                    : ownerType.accept(INSTANCE),
+                                    : ownerType.accept(this),
                             transformedTypeArguments,
                             parameterizedType.getDeclaredAnnotations());
                 }
@@ -684,8 +684,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public Generic onWildcard(Generic wildcard) {
                     // Wildcards which are used within parameterized types are taken care of by the calling method.
-                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(INSTANCE),
-                            wildcard.getLowerBounds().accept(INSTANCE),
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this),
+                            wildcard.getLowerBounds().accept(this),
                             wildcard.getDeclaredAnnotations());
                 }
 
@@ -3407,12 +3407,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Visitor.TypeVariableErasing.INSTANCE);
+                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Visitor.TypeVariableErasing.INSTANCE); // TODO: Do not erase parameterized type.
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Visitor.TypeVariableErasing.INSTANCE);
+                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Visitor.TypeVariableErasing.INSTANCE); // TODO: Do not erase parameterized type.
             }
 
             @Override
