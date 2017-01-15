@@ -444,14 +444,15 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
 
             /**
-             * Creates a list of types that are attached to the provided type.
+             * Creates a list of types that are attached to the provided type. The types are resolved lazily, i.e. type variables
+             * are not resolved prior to computing an erasure.
              *
              * @param typeDescription The type to which the detached variables are attached to.
              * @param detachedTypes   The detached types.
              * @return A type list representing the detached types being attached to the provided type description.
              */
             public static Generic attach(TypeDescription typeDescription, List<? extends TypeDescription.Generic> detachedTypes) {
-                return new ForDetachedTypes(detachedTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription));
+                return new WithLazyResolution(detachedTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription));
             }
 
             /**
@@ -519,6 +520,35 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 return detachedTypes.size();
             }
 
+            public static class WithLazyResolution extends Generic.AbstractBase {
+
+                /**
+                 * The detached types this list represents.
+                 */
+                private final List<? extends TypeDescription.Generic> detachedTypes;
+
+                /**
+                 * The visitor to use for attaching the detached types.
+                 */
+                private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
+
+                public WithLazyResolution(List<? extends TypeDescription.Generic> detachedTypes,
+                                          TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                    this.detachedTypes = detachedTypes;
+                    this.visitor = visitor;
+                }
+
+                @Override
+                public TypeDescription.Generic get(int index) {
+                    return new TypeDescription.Generic.LazyProjection.WithLazyNavigation.Detached(detachedTypes.get(index), visitor);
+                }
+
+                @Override
+                public int size() {
+                    return detachedTypes.size();
+                }
+            }
+
             /**
              * A list of attached type variables represented by a list of type variable tokens.
              */
@@ -547,8 +577,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                  * @param visitor               A visitor for attaching the type variable's bounds.
                  */
                 public OfTypeVariables(TypeVariableSource typeVariableSource,
-                                          List<? extends TypeVariableToken> detachedTypeVariables,
-                                          TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                                       List<? extends TypeVariableToken> detachedTypeVariables,
+                                       TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                     this.typeVariableSource = typeVariableSource;
                     this.detachedTypeVariables = detachedTypeVariables;
                     this.visitor = visitor;

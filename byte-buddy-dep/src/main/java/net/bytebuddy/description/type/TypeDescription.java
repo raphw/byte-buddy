@@ -3407,12 +3407,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : superClass.accept(Generic.Visitor.TypeVariableErasing.INSTANCE);
+                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Generic.Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes(asErasure().getInterfaces(), Generic.Visitor.TypeVariableErasing.INSTANCE);
+                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Generic.Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
@@ -4280,12 +4280,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : superClass.accept(Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes(asErasure().getInterfaces(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
@@ -5268,9 +5268,53 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 /**
+                 * A type description of a generic type that requires attachment unless when reading the erasure of the type description.
+                 * This is only applicable when the represented type is a super type of another type where it is impossible that the
+                 * represented type is a type variable.
+                 */
+                public static class Detached extends WithLazyNavigation {
+
+                    /**
+                     * The underlying type description.
+                     */
+                    private final Generic delegate;
+
+                    /**
+                     * The visitor to apply before resolution.
+                     */
+                    private final Visitor<? extends Generic> visitor;
+
+                    /**
+                     * Creates a new detached generic type description with lazy navigation.
+                     *
+                     * @param delegate The underlying type description.
+                     * @param visitor  The visitor to apply before resolution.
+                     */
+                    public Detached(Generic delegate, Visitor<? extends Generic> visitor) {
+                        this.delegate = delegate;
+                        this.visitor = visitor;
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return delegate.getDeclaredAnnotations();
+                    }
+
+                    @Override
+                    public TypeDescription asErasure() {
+                        return delegate.asErasure();
+                    }
+
+                    @Override
+                    protected Generic resolve() {
+                        return delegate.accept(visitor);
+                    }
+                }
+
+                /**
                  * A lazy super class description for a lazy projection.
                  */
-                protected static class LazySuperClass extends LazyProjection.WithLazyNavigation {
+                protected static class LazySuperClass extends WithLazyNavigation {
 
                     /**
                      * The lazy projection for which this description is a delegate.
@@ -5317,7 +5361,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 /**
                  * A lazy interface type description for a lazy projection.
                  */
-                protected static class LazyInterfaceType extends LazyProjection.WithLazyNavigation {
+                protected static class LazyInterfaceType extends WithLazyNavigation {
 
                     /**
                      * The lazy projection for which this description is a delegate.
