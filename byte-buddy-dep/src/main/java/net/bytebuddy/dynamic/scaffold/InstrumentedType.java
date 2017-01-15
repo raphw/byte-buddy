@@ -676,7 +676,7 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public TypeList.Generic getInterfaces() {
-            return TypeList.Generic.ForDetachedTypes.attach(this, interfaceTypes);
+            return TypeList.Generic.ForDetachedTypes.attachLazy(this, interfaceTypes);
         }
 
         @Override

@@ -451,7 +451,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
              * @param detachedTypes   The detached types.
              * @return A type list representing the detached types being attached to the provided type description.
              */
-            public static Generic attach(TypeDescription typeDescription, List<? extends TypeDescription.Generic> detachedTypes) {
+            public static Generic attachLazy(TypeDescription typeDescription, List<? extends TypeDescription.Generic> detachedTypes) {
                 return new WithLazyResolution(detachedTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription));
             }
 
