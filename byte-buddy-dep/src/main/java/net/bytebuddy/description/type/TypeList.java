@@ -520,6 +520,9 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 return detachedTypes.size();
             }
 
+            /**
+             * A list of detached types that are attached on reception but not when computing an erasure.
+             */
             public static class WithLazyResolution extends Generic.AbstractBase {
 
                 /**
@@ -532,6 +535,13 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                  */
                 private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
+                /**
+                 * Creates a list of generic type descriptions that are resolved lazily, i.e. type variables are not resolved
+                 * when computing an erausre.
+                 *
+                 * @param detachedTypes The detached types this list represents.
+                 * @param visitor       The visitor to use for attaching the detached types.
+                 */
                 public WithLazyResolution(List<? extends TypeDescription.Generic> detachedTypes,
                                           TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                     this.detachedTypes = detachedTypes;
