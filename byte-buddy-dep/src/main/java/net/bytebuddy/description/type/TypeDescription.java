@@ -3407,12 +3407,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Visitor.TypeVariableErasing.INSTANCE); // TODO: Do not erase parameterized type.
+                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Visitor.TypeVariableErasing.INSTANCE); // TODO: Do not erase parameterized type.
+                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
