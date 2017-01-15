@@ -659,15 +659,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
-                }
-
-                @Override
-                public Generic onWildcard(Generic wildcard) {
-                    // Wildcards which are used within parameterized types are taken care of by the calling method.
-                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this),
-                            wildcard.getLowerBounds().accept(this),
-                            wildcard.getDeclaredAnnotations());
+                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(INSTANCE), genericArray.getDeclaredAnnotations());
                 }
 
                 @Override
@@ -678,15 +670,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         if (typeArgument.accept(TypeVariableErasing.PartialErasureReviser.INSTANCE)) {
                             return parameterizedType.asRawType();
                         }
-                        transformedTypeArguments.add(typeArgument.accept(this));
+                        transformedTypeArguments.add(typeArgument.accept(INSTANCE));
                     }
                     Generic ownerType = parameterizedType.getOwnerType();
                     return new OfParameterizedType.Latent(parameterizedType.asErasure(),
                             ownerType == null
                                     ? UNDEFINED
-                                    : ownerType.accept(this),
+                                    : ownerType.accept(INSTANCE),
                             transformedTypeArguments,
                             parameterizedType.getDeclaredAnnotations());
+                }
+
+                @Override
+                public Generic onWildcard(Generic wildcard) {
+                    // Wildcards which are used within parameterized types are taken care of by the calling method.
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(INSTANCE),
+                            wildcard.getLowerBounds().accept(INSTANCE),
+                            wildcard.getDeclaredAnnotations());
                 }
 
                 @Override
@@ -3407,22 +3407,22 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Generic.Visitor.TypeVariableErasing.INSTANCE);
+                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Generic.Visitor.TypeVariableErasing.INSTANCE);
+                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
-                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Generic.Visitor.TypeVariableErasing.INSTANCE);
+                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Generic.Visitor.TypeVariableErasing.INSTANCE);
+                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
@@ -3431,7 +3431,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public <T> T accept(Generic.Visitor<T> visitor) {
+            public <T> T accept(Visitor<T> visitor) {
                 return visitor.onNonGenericType(this);
             }
 
@@ -3796,7 +3796,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public <T> T accept(Generic.Visitor<T> visitor) {
+            public <T> T accept(Visitor<T> visitor) {
                 return getSort().isNonGeneric()
                         ? visitor.onNonGenericType(this)
                         : visitor.onGenericArray(this);
@@ -4012,7 +4012,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public <T> T accept(Generic.Visitor<T> visitor) {
+            public <T> T accept(Visitor<T> visitor) {
                 return visitor.onWildcard(this);
             }
 
@@ -4280,22 +4280,22 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
-                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
@@ -4354,7 +4354,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public <T> T accept(Generic.Visitor<T> visitor) {
+            public <T> T accept(Visitor<T> visitor) {
                 return visitor.onParameterizedType(this);
             }
 
@@ -4695,7 +4695,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                     @Override
                     public Generic get(int index) {
-                        return typeVariables.get(index).accept(Generic.Visitor.TypeVariableErasing.INSTANCE);
+                        return typeVariables.get(index).accept(Visitor.TypeVariableErasing.INSTANCE);
                     }
 
                     @Override
@@ -4775,7 +4775,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public <T> T accept(Generic.Visitor<T> visitor) {
+            public <T> T accept(Visitor<T> visitor) {
                 return visitor.onTypeVariable(this);
             }
 
@@ -4930,7 +4930,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                public <T> T accept(Generic.Visitor<T> visitor) {
+                public <T> T accept(Visitor<T> visitor) {
                     return visitor.onTypeVariable(this);
                 }
 
@@ -5205,7 +5205,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             @Override
-            public <T> T accept(Generic.Visitor<T> visitor) {
+            public <T> T accept(Visitor<T> visitor) {
                 return resolve().accept(visitor);
             }
 
