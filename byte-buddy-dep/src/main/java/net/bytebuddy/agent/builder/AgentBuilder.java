@@ -2072,8 +2072,7 @@ public interface AgentBuilder {
                 TypePool typePool = poolStrategy.typePool(classFileLocator, classLoader);
                 AsmVisitorWrapper.ForDeclaredMethods asmVisitorWrapper = new AsmVisitorWrapper.ForDeclaredMethods();
                 for (Entry entry : entries) {
-                    asmVisitorWrapper = asmVisitorWrapper.method(entry.getMatcher().resolve(typeDescription), advice
-                            .to(typePool.describe(entry.getAdvice()).resolve(), classFileLocator)
+                    asmVisitorWrapper = asmVisitorWrapper.method(entry.getMatcher().resolve(typeDescription), entry.resolve(advice, typePool, classFileLocator)
                             .withAssigner(assigner)
                             .withExceptionHandler(exceptionHandler));
                 }
@@ -2188,14 +2187,44 @@ public interface AgentBuilder {
                         classFileLocator,
                         poolStrategy,
                         locationStrategy,
-                        CompoundList.of(entries, new Entry(matcher, name)));
+                        CompoundList.of(entries, new Entry.ForUnifiedAdvice(matcher, name)));
+            }
+
+            /**
+             * Applies the given advice class onto all methods that satisfy the supplied matcher.
+             *
+             * @param matcher The matcher to determine what methods the advice should be applied to.
+             * @param enter   The fully-qualified, binary name of the enter advice class.
+             * @param exit    The fully-qualified, binary name of the exit advice class.
+             * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
+             */
+            public ForAdvice advice(ElementMatcher<? super MethodDescription> matcher, String enter, String exit) {
+                return advice(new LatentMatcher.Resolved<MethodDescription>(matcher), enter, exit);
+            }
+
+            /**
+             * Applies the given advice class onto all methods that satisfy the supplied matcher.
+             *
+             * @param matcher The matcher to determine what methods the advice should be applied to.
+             *                * @param enter    The fully-qualified, binary name of the enter advice class.
+             * @param exit    The fully-qualified, binary name of the exit advice class.
+             * @return A new instance of this advice transformer that applies the given advice to all matched methods of an instrumented type.
+             */
+            public ForAdvice advice(LatentMatcher<? super MethodDescription> matcher, String enter, String exit) {
+                return new ForAdvice(advice,
+                        exceptionHandler,
+                        assigner,
+                        classFileLocator,
+                        poolStrategy,
+                        locationStrategy,
+                        CompoundList.of(entries, new Entry.ForSplitAdvice(matcher, enter, exit)));
             }
 
             /**
              * An entry for an advice to apply.
              */
             @EqualsAndHashCode
-            protected static class Entry {
+            protected abstract static class Entry {
 
                 /**
                  * The matcher for advised methods.
@@ -2203,19 +2232,12 @@ public interface AgentBuilder {
                 private final LatentMatcher<? super MethodDescription> matcher;
 
                 /**
-                 * The name of the advice class.
-                 */
-                private final String advice;
-
-                /**
                  * Creates a new entry.
                  *
                  * @param matcher The matcher for advised methods.
-                 * @param advice  The name of the advice class.
                  */
-                protected Entry(LatentMatcher<? super MethodDescription> matcher, String advice) {
+                protected Entry(LatentMatcher<? super MethodDescription> matcher) {
                     this.matcher = matcher;
-                    this.advice = advice;
                 }
 
                 /**
@@ -2228,12 +2250,76 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * Returns the name of the advice class.
+                 * Resolves the advice for this entry.
                  *
-                 * @return The name of the advice class.
+                 * @param advice           The advice configuration.
+                 * @param typePool         The type pool to use.
+                 * @param classFileLocator The class file locator to use.
+                 * @return The resolved advice.
                  */
-                protected String getAdvice() {
-                    return advice;
+                protected abstract Advice resolve(Advice.WithCustomMapping advice, TypePool typePool, ClassFileLocator classFileLocator);
+
+                /**
+                 * An entry for an advice class where both the (optional) entry and exit advice methods are declared by the same class.
+                 */
+                @EqualsAndHashCode(callSuper = true)
+                protected static class ForUnifiedAdvice extends Entry {
+
+                    /**
+                     * The name of the advice class.
+                     */
+                    protected final String name;
+
+                    /**
+                     * Creates a new entry for an advice class where both the (optional) entry and exit advice methods are declared by the same class.
+                     *
+                     * @param matcher The matcher for advised methods.
+                     * @param name    The name of the advice class.
+                     */
+                    protected ForUnifiedAdvice(LatentMatcher<? super MethodDescription> matcher, String name) {
+                        super(matcher);
+                        this.name = name;
+                    }
+
+                    @Override
+                    protected Advice resolve(Advice.WithCustomMapping advice, TypePool typePool, ClassFileLocator classFileLocator) {
+                        return advice.to(typePool.describe(name).resolve(), classFileLocator);
+                    }
+                }
+
+                /**
+                 * An entry for an advice class where both entry and exit advice methods are declared by the different classes.
+                 */
+                @EqualsAndHashCode(callSuper = true)
+                protected static class ForSplitAdvice extends Entry {
+
+                    /**
+                     * The fully-qualified, binary name of the enter advice class.
+                     */
+                    private final String enter;
+
+                    /**
+                     * The fully-qualified, binary name of the exit advice class.
+                     */
+                    private final String exit;
+
+                    /**
+                     * Creates a new entry for an advice class with explicit entry and exit advice classes.
+                     *
+                     * @param matcher The matcher for advised methods.
+                     * @param enter   The fully-qualified, binary name of the enter advice class.
+                     * @param exit    The fully-qualified, binary name of the exit advice class.
+                     */
+                    protected ForSplitAdvice(LatentMatcher<? super MethodDescription> matcher, String enter, String exit) {
+                        super(matcher);
+                        this.enter = enter;
+                        this.exit = exit;
+                    }
+
+                    @Override
+                    protected Advice resolve(Advice.WithCustomMapping advice, TypePool typePool, ClassFileLocator classFileLocator) {
+                        return advice.to(typePool.describe(enter).resolve(), typePool.describe(exit).resolve(), classFileLocator);
+                    }
                 }
             }
         }
