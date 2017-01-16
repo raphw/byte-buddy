@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. January 2017: version 1.6.3
+
+- Improved `Resubmitter` configuration.
+- Added `AgentBuilder.Transformation.ForAdvice` to allow for simple creation of `Advice` classes from Java agents.
+
 ### 11. January 2017: version 1.6.2
 
 - Removed obsolete `toString` representations.

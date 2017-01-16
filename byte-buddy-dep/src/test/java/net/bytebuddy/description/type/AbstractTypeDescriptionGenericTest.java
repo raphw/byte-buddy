@@ -6,10 +6,12 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
+import net.bytebuddy.dynamic.scaffold.MethodGraphCompilerDefaultTest;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -1240,6 +1242,15 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @Ignore("Does not currently work correctly")
+    public void testRawType() throws Exception {
+        TypeDescription.Generic type = describeType(RawType.class.getDeclaredField(FOO)).getSuperClass().getSuperClass();
+        FieldDescription fieldDescription = type.getDeclaredFields().filter(named(BAR)).getOnly();
+        assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(fieldDescription.getType().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+    }
+
+    @Test
     public void testMixedTypeVariables() throws Exception {
         MethodDescription methodDescription = describeInterfaceType(MixedTypeVariables.Inner.class, 0).getDeclaredMethods().getOnly();
         assertThat(methodDescription.getParameters().getOnly().getType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1812,6 +1823,21 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
         @SuppressWarnings("all")
         public class Shadowed<T, S> extends Base<T, S> implements BaseInterface<T, S> {
+            /* empty */
+        }
+    }
+
+    public static class RawType<T> {
+
+        Extension foo;
+
+        T bar;
+
+        public static class Intermediate<T extends Number> extends RawType<T> {
+            /* empty */
+        }
+
+        public static class Extension extends Intermediate {
             /* empty */
         }
     }
