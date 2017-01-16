@@ -4437,9 +4437,10 @@ public interface TypePool {
 
                                 @Override
                                 public Generic get(int index) {
-                                    Map<String, List<AnnotationToken>> annotationTokens = this.annotationTokens.get(index + (boundTypeTokens.get(0).isPrimaryBound(typePool)
-                                            ? 0
-                                            : 1));
+                                    // Avoid resolution of interface bound type unless a type annotation can be possibly resolved.
+                                    Map<String, List<AnnotationToken>> annotationTokens = !this.annotationTokens.containsKey(index) && !this.annotationTokens.containsKey(index + 1)
+                                            ? Collections.<String, List<AnnotationToken>>emptyMap()
+                                            : this.annotationTokens.get(index + (boundTypeTokens.get(0).isPrimaryBound(typePool) ? 0 : 1));
                                     return boundTypeTokens.get(index).toGenericType(typePool,
                                             typeVariableSource,
                                             EMPTY_TYPE_PATH,
