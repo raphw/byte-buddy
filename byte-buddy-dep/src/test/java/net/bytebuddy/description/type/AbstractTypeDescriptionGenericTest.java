@@ -75,7 +75,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(NonGeneric.class.getDeclaredField(FOO)).getTypeArguments();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testNonGenericTypeNoBindLocation() throws Exception {
         describeType(NonGeneric.class.getDeclaredField(FOO)).findBindingOf(mock(TypeDescription.Generic.class));
     }
@@ -233,7 +233,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeArguments();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardTypeNoBindLocation() throws Exception {
         describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().findBindingOf(mock(TypeDescription.Generic.class));
     }
@@ -323,7 +323,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeArguments();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardTypeNoBindLocation() throws Exception {
         describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().findBindingOf(mock(TypeDescription.Generic.class));
     }
@@ -412,7 +412,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeArguments();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardTypeNoBindLocation() throws Exception {
         describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().findBindingOf(mock(TypeDescription.Generic.class));
     }
@@ -504,7 +504,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeArguments();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardTypeNoBindLocation() throws Exception {
         describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().findBindingOf(mock(TypeDescription.Generic.class));
     }
@@ -581,7 +581,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).getTypeArguments();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoBindLocation() throws Exception {
         describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).findBindingOf(mock(TypeDescription.Generic.class));
     }
@@ -712,7 +712,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(SimpleTypeVariableType.class.getDeclaredField(FOO)).getTypeArguments();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testTypeVariableNoBindLocation() throws Exception {
         describeType(SimpleTypeVariableType.class.getDeclaredField(FOO)).findBindingOf(mock(TypeDescription.Generic.class));
     }
