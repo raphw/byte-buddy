@@ -33,6 +33,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public abstract class AbstractTypeDescriptionGenericTest {
 
@@ -72,6 +73,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test(expected = IllegalStateException.class)
     public void testNonGenericTypeNoTypeArguments() throws Exception {
         describeType(NonGeneric.class.getDeclaredField(FOO)).getTypeArguments();
+    }
+
+    @Test
+    public void testNonGenericTypeNoBindLocation() throws Exception {
+        describeType(NonGeneric.class.getDeclaredField(FOO)).findBindingOf(mock(TypeDescription.Generic.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -218,8 +224,18 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testUpperBoundsWildcardParameterizedTypeNoIterator() throws Exception {
+    public void testUpperBoundWildcardParameterizedTypeNoIterator() throws Exception {
         describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUpperBoundWildcardTypeNoTypeArguments() throws Exception {
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeArguments();
+    }
+
+    @Test
+    public void testUpperBoundWildcardTypeNoBindLocation() throws Exception {
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().findBindingOf(mock(TypeDescription.Generic.class));
     }
 
     @Test
@@ -302,6 +318,16 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testLowerBoundWildcardTypeNoTypeArguments() throws Exception {
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeArguments();
+    }
+
+    @Test
+    public void testLowerBoundWildcardTypeNoBindLocation() throws Exception {
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().findBindingOf(mock(TypeDescription.Generic.class));
+    }
+
     @Test
     public void testUnboundWildcardParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO));
@@ -379,6 +405,16 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test(expected = IllegalStateException.class)
     public void testUnboundBoundWildcardParameterizedTypeNoIterator() throws Exception {
         describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUnboundWildcardTypeNoTypeArguments() throws Exception {
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeArguments();
+    }
+
+    @Test
+    public void testUnboundWildcardTypeNoBindLocation() throws Exception {
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().findBindingOf(mock(TypeDescription.Generic.class));
     }
 
     @Test
@@ -463,6 +499,16 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testExplicitlyUnboundWildcardTypeNoTypeArguments() throws Exception {
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getTypeArguments();
+    }
+
+    @Test
+    public void testExplicitlyUnboundWildcardTypeNoBindLocation() throws Exception {
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().findBindingOf(mock(TypeDescription.Generic.class));
+    }
+
     @Test
     public void testNestedParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(NestedParameterizedType.class.getDeclaredField(FOO));
@@ -533,6 +579,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoTypeArguments() throws Exception {
         describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).getTypeArguments();
+    }
+
+    @Test
+    public void testGenericArrayTypeNoBindLocation() throws Exception {
+        describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).findBindingOf(mock(TypeDescription.Generic.class));
     }
 
     @Test
@@ -654,6 +705,16 @@ public abstract class AbstractTypeDescriptionGenericTest {
     @Test(expected = IllegalStateException.class)
     public void testTypeVariableTypeNoIterator() throws Exception {
         describeType(SimpleTypeVariableType.class.getDeclaredField(FOO)).iterator();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeVariableNoTypeArguments() throws Exception {
+        describeType(SimpleTypeVariableType.class.getDeclaredField(FOO)).getTypeArguments();
+    }
+
+    @Test
+    public void testTypeVariableNoBindLocation() throws Exception {
+        describeType(SimpleTypeVariableType.class.getDeclaredField(FOO)).findBindingOf(mock(TypeDescription.Generic.class));
     }
 
     @Test
@@ -874,6 +935,17 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(methodParameterType.getTypeArguments().size(), is(2));
         assertThat(methodParameterType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodParameterType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+    }
+
+    @Test
+    public void testParameterizedTypeFindBoundValue() throws Exception {
+        TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(FOO));
+        assertThat(typeDescription.findBindingOf(typeDescription.asErasure().getTypeVariables().getOnly()),
+                is(typeDescription.getTypeArguments().getOnly()));
+        assertThat(typeDescription.findBindingOf(typeDescription.getOwnerType().asErasure().getTypeVariables().getOnly()),
+                is(typeDescription.getOwnerType().getTypeArguments().getOnly()));
+        assertThat(typeDescription.findBindingOf(mock(TypeDescription.Generic.class)),
+                nullValue(TypeDescription.Generic.class));
     }
 
     @Test
