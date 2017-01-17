@@ -924,6 +924,53 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         }
 
         /**
+         * Represents a list of {@link TypeDescription.Generic.LazyProjection.OfRawType}s.
+         */
+        class OfRawTypes extends AbstractBase {
+
+            /**
+             * The type declaring these super types.
+             */
+            private final TypeDescription declaringType;
+
+            /**
+             * The represented super types.
+             */
+            private final List<? extends TypeDescription.Generic> superTypes;
+
+            /**
+             * Creates a list of super types declared by a non-generic type.
+             *
+             * @param declaringType The type declaring these super types.
+             * @param superTypes    The represented super types.
+             */
+            protected OfRawTypes(TypeDescription declaringType, List<? extends TypeDescription.Generic> superTypes) {
+                this.declaringType = declaringType;
+                this.superTypes = superTypes;
+            }
+
+            /**
+             * Creates a list of the supplied type's interfaces which might be raw types.
+             *
+             * @param typeDescription The type declaring the interface types.
+             * @return Returns a list of the type's declared interfaces which might be raw types.
+             */
+            public static TypeList.Generic ofInterfaces(TypeDescription typeDescription) {
+                return new OfRawTypes(typeDescription, typeDescription.getInterfaces());
+            }
+
+            @Override
+            public TypeDescription.Generic get(int index) {
+                return new TypeDescription.Generic.LazyProjection.OfRawType(declaringType, superTypes.get(index));
+            }
+
+            @Override
+            public int size() {
+                return superTypes.size();
+            }
+        }
+
+        /**
          * An empty list of generic types.
          */
         class Empty extends FilterableList.Empty<TypeDescription.Generic, Generic> implements Generic {

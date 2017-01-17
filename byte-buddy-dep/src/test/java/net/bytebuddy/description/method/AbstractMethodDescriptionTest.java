@@ -709,9 +709,9 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
-    public void testIsGenericDeclaration() throws Exception {
-        assertThat(describe(genericMethodWithTypeVariable).isGenericDeclaration(), is(true));
-        assertThat(describe(firstMethod).isGenericDeclaration(), is(false));
+    public void testIsGenerified() throws Exception {
+        assertThat(describe(genericMethodWithTypeVariable).isGenerified(), is(true));
+        assertThat(describe(firstMethod).isGenerified(), is(false));
     }
 
     @Test

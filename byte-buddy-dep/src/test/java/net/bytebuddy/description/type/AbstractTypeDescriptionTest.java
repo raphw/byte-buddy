@@ -598,12 +598,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testIsGenericDeclaration() throws Exception {
-        assertThat(describe(GenericSample.class).isGenericDeclaration(), is(true));
-        assertThat(describe(GenericSample.Inner.class).isGenericDeclaration(), is(true));
-        assertThat(describe(GenericSample.Nested.class).isGenericDeclaration(), is(false));
-        assertThat(describe(GenericSample.NestedInterface.class).isGenericDeclaration(), is(false));
-        assertThat(describe(Object.class).isGenericDeclaration(), is(false));
+    public void testIsGenerified() throws Exception {
+        assertThat(describe(GenericSample.class).isGenerified(), is(true));
+        assertThat(describe(GenericSample.Inner.class).isGenerified(), is(true));
+        assertThat(describe(GenericSample.Nested.class).isGenerified(), is(false));
+        assertThat(describe(GenericSample.NestedInterface.class).isGenerified(), is(false));
+        assertThat(describe(Object.class).isGenerified(), is(false));
     }
 
     @Test

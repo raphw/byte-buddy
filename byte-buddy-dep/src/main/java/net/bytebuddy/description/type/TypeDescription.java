@@ -1882,6 +1882,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                     /**
                      * Creates a new visitor for binding a parameterized type's type arguments to its type variables.
+                     *
                      * @param parameterizedType The parameterized type for which type variables are bound.
                      */
                     protected ForTypeVariableBinding(Generic parameterizedType) {
@@ -3395,15 +3396,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public Generic getSuperClass() {
-                Generic superClass = asErasure().getSuperClass();
-                return superClass == null
-                        ? Generic.UNDEFINED
-                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Visitor.TypeVariableErasing.INSTANCE);
+                return LazyProjection.OfRawType.ofSuperClass(asErasure());
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Visitor.TypeVariableErasing.INSTANCE);
+                return TypeList.Generic.OfRawTypes.ofInterfaces(asErasure());
             }
 
             @Override
@@ -4667,7 +4665,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @return An appropriate generic type description of the supplied type erasure.
                  */
                 public static Generic of(TypeDescription typeDescription) {
-                    return typeDescription.isGenericDeclaration()
+                    return typeDescription.isGenerified()
                             ? new ForGenerifiedErasure(typeDescription)
                             : new OfNonGenericType.OfErasure(typeDescription);
                 }
@@ -5764,6 +5762,64 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return AnnotationReader.DISPATCHER.resolveParameterType(method, index);
                 }
             }
+
+            /**
+             * A lazy projection of a non-generic type's super type which might be a raw type. A type is considered to
+             * be a raw type if its declaring sub type is generified without defining values for its type variables.
+             */
+            public static class OfRawType extends LazyProjection.WithLazyNavigation {
+
+                /**
+                 * The type declaring this super type.
+                 */
+                private final TypeDescription declaringType;
+
+                /**
+                 * The represented super type.
+                 */
+                private final Generic superType;
+
+                /**
+                 * Creates a new raw type.
+                 *
+                 * @param declaringType The type declaring this super type.
+                 * @param superType     The represented super type.
+                 */
+                protected OfRawType(TypeDescription declaringType, Generic superType) {
+                    this.declaringType = declaringType;
+                    this.superType = superType;
+                }
+
+                /**
+                 * Creates a super type presentation of a non-generic type which might be a raw type.
+                 *
+                 * @param typeDescription The type declaring the super class.
+                 * @return The super class which might be a raw type or {@code null} if the supplied type does not declare a super class.
+                 */
+                public static Generic ofSuperClass(TypeDescription typeDescription) {
+                    Generic superClass = typeDescription.getSuperClass();
+                    return superClass == null
+                            ? Generic.UNDEFINED
+                            : new OfRawType(typeDescription, superClass);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return superType.getDeclaredAnnotations();
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    return superType.asErasure();
+                }
+
+                @Override
+                protected Generic resolve() {
+                    return declaringType.isGenerified()
+                            ? new Generic.OfNonGenericType.Latent(superType.asErasure(), superType.getDeclaredAnnotations())
+                            : superType;
+                }
+            }
         }
 
         /**
@@ -5971,7 +6027,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 if (ownerType == null && declaringType != null && rawType.isStatic()) {
                     ownerType = declaringType.asGenericType();
                 }
-                if (!rawType.isGenericDeclaration()) {
+                if (!rawType.isGenerified()) {
                     throw new IllegalArgumentException(rawType + " is not a parameterized type");
                 } else if (ownerType == null && declaringType != null && !rawType.isStatic()) {
                     throw new IllegalArgumentException(rawType + " requires an owner type");
@@ -6748,14 +6804,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         }
 
         @Override
-        public boolean isGenericDeclaration() {
+        public boolean isGenerified() {
             if (!getTypeVariables().isEmpty()) {
                 return true;
             } else if (isStatic()) {
                 return false;
             }
             TypeDescription declaringType = getDeclaringType();
-            return declaringType != null && declaringType.isGenericDeclaration();
+            return declaringType != null && declaringType.isGenerified();
         }
 
         @Override

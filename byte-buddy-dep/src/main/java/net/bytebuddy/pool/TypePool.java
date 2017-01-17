@@ -6508,16 +6508,16 @@ public interface TypePool {
                     } else if (isConstructor()) {
                         TypeDescription declaringType = getDeclaringType(), enclosingDeclaringType = declaringType.getEnclosingType();
                         if (enclosingDeclaringType == null) {
-                            return declaringType.isGenericDeclaration()
+                            return declaringType.isGenerified()
                                     ? new LazyParameterizedReceiverType(declaringType)
                                     : new LazyNonGenericReceiverType(declaringType);
                         } else {
-                            return !declaringType.isStatic() && declaringType.isGenericDeclaration()
+                            return !declaringType.isStatic() && declaringType.isGenerified()
                                     ? new LazyParameterizedReceiverType(enclosingDeclaringType)
                                     : new LazyNonGenericReceiverType(enclosingDeclaringType);
                         }
                     } else {
-                        return LazyTypeDescription.this.isGenericDeclaration()
+                        return LazyTypeDescription.this.isGenerified()
                                 ? new LazyParameterizedReceiverType()
                                 : new LazyNonGenericReceiverType();
                     }
@@ -6660,7 +6660,7 @@ public interface TypePool {
                         if (declaringType == null) {
                             return Generic.UNDEFINED;
                         } else {
-                            return !typeDescription.isStatic() && declaringType.isGenericDeclaration()
+                            return !typeDescription.isStatic() && declaringType.isGenerified()
                                     ? new LazyParameterizedReceiverType(declaringType)
                                     : new LazyNonGenericReceiverType(declaringType);
                         }

@@ -679,7 +679,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public boolean isGenericDeclaration() {
+        public boolean isGenerified() {
             return !getTypeVariables().isEmpty();
         }
 

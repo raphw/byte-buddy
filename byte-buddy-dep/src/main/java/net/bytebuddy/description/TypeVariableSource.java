@@ -56,7 +56,7 @@ public interface TypeVariableSource extends ModifierReviewable.OfAbstraction {
      *
      * @return {@code true} if this type code element has a generic declaration.
      */
-    boolean isGenericDeclaration();
+    boolean isGenerified();
 
     /**
      * A visitor that can be applied to a type variable source.
