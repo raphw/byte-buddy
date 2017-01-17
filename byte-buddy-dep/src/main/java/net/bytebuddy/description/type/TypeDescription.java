@@ -399,6 +399,21 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
         Generic getOwnerType();
 
         /**
+         * <p>
+         * Returns the parameter binding of the supplied type variable.
+         * </p>
+         * <p>
+         * This method must only be called for parameterized types ({@link Sort#PARAMETERIZED}). For all other types,
+         * this method throws an {@link IllegalStateException}.
+         * </p>
+         *
+         * @param typeVariable The type variable for which a value should be located.
+         * @return The value that is bound to the supplied type variable or {@code null} if the type variable
+         * is not bound by this parameterized type.
+         */
+        Generic findBindingOf(Generic typeVariable);
+
+        /**
          * Returns the source of this type variable. A type variable source is only well-defined for an attached type variable
          * ({@link Sort#VARIABLE}. For other types, this method
          * throws an {@link IllegalStateException}.
@@ -1861,40 +1876,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public static class ForTypeVariableBinding extends WithoutTypeSubstitution {
 
                     /**
-                     * Bindings of type variables to their substitution values.
+                     * The parameterized type for which type variables are bound.
                      */
-                    private final Map<Generic, Generic> bindings;
+                    private final Generic parameterizedType;
 
                     /**
-                     * Creates a new visitor for a type variable bindings.
-                     *
-                     * @param bindings Bindings of type variables to their substitution values.
+                     * Creates a new visitor for binding a parameterized type's type arguments to its type variables.
+                     * @param parameterizedType The parameterized type for which type variables are bound.
                      */
-                    protected ForTypeVariableBinding(Map<Generic, Generic> bindings) {
-                        this.bindings = bindings;
-                    }
-
-                    /**
-                     * Creates a visitor that binds the variables of the given generic type by the generic type's values. If the provided type
-                     * represents a raw generic type or if the generic type is incomplete, the returned visitor erases all found type variables
-                     * instead.
-                     *
-                     * @param typeDescription The type description to be bound.
-                     * @return A visitor that binds any type variables
-                     */
-                    public static Visitor<Generic> bind(Generic typeDescription) {
-                        Map<Generic, Generic> bindings = new HashMap<Generic, Generic>();
-                        do {
-                            TypeList.Generic typeArguments = typeDescription.getTypeArguments(), typeVariables = typeDescription.asErasure().getTypeVariables();
-                            if (typeArguments.size() != typeVariables.size()) {
-                                return TypeVariableErasing.INSTANCE;
-                            }
-                            for (int index = 0; index < typeVariables.size(); index++) {
-                                bindings.put(typeVariables.get(index), typeArguments.get(index));
-                            }
-                            typeDescription = typeDescription.getOwnerType();
-                        } while (typeDescription != null && typeDescription.getSort().isParameterized());
-                        return new ForTypeVariableBinding(bindings);
+                    protected ForTypeVariableBinding(Generic parameterizedType) {
+                        this.parameterizedType = parameterizedType;
                     }
 
                     @Override
@@ -1925,10 +1916,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                         @Override
                         public Generic onType(TypeDescription typeDescription) {
                             // A type variable might be undeclared due to breaking inner class semantics or due to incorrect scoping by a compiler.
-                            Generic substitution = bindings.get(typeVariable);
-                            return substitution == null
+                            Generic typeArgument = parameterizedType.findBindingOf(typeVariable);
+                            return typeArgument == null
                                     ? typeVariable.asRawType()
-                                    : substitution;
+                                    : typeArgument;
                         }
 
                         @Override
@@ -3427,7 +3418,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public TypeList.Generic getTypeArguments() {
-                throw new IllegalStateException("A non-generic type does not imply an parameter types: " + this);
+                throw new IllegalStateException("A non-generic type does not imply type arguments: " + this);
+            }
+
+            @Override
+            public Generic findBindingOf(Generic typeVariable) {
+                throw new IllegalStateException("A non-generic type does not imply type arguments: " + this);
             }
 
             @Override
@@ -3753,7 +3749,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public TypeList.Generic getTypeArguments() {
-                throw new IllegalStateException("A generic array type does not imply type parameters: " + this);
+                throw new IllegalStateException("A generic array type does not imply type arguments: " + this);
+            }
+
+            @Override
+            public Generic findBindingOf(Generic typeVariable) {
+                throw new IllegalStateException("A generic array type does not imply type arguments: " + this);
             }
 
             @Override
@@ -3968,7 +3969,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public TypeList.Generic getTypeArguments() {
-                throw new IllegalStateException("A wildcard does not imply type parameters: " + this);
+                throw new IllegalStateException("A wildcard does not imply type arguments: " + this);
+            }
+
+            @Override
+            public Generic findBindingOf(Generic typeVariable) {
+                throw new IllegalStateException("A wildcard does not imply type arguments: " + this);
             }
 
             @Override
@@ -4280,22 +4286,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : new LazyProjection.WithLazyNavigation.Detached(superClass, Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                        : new LazyProjection.WithLazyNavigation.Detached(superClass, new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
             @Override
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
-                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), new Visitor.Substitutor.ForTypeVariableBinding(this));
+            }
+
+            @Override
+            public Generic findBindingOf(Generic typeVariable) {
+                Generic typeDescription = this;
+                do {
+                    TypeList.Generic typeArguments = typeDescription.getTypeArguments(), typeVariables = typeDescription.asErasure().getTypeVariables();
+                    for (int index = 0; index < Math.min(typeArguments.size(), typeVariables.size()); index++) {
+                        if (typeVariable.equals(typeVariables.get(index))) {
+                            return typeArguments.get(index);
+                        }
+                    }
+                    typeDescription = typeDescription.getOwnerType();
+                } while (typeDescription != null && typeDescription.getSort().isParameterized());
+                return Generic.UNDEFINED;
             }
 
             @Override
@@ -4751,7 +4772,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public TypeList.Generic getTypeArguments() {
-                throw new IllegalStateException("A type variable does not imply type parameters: " + this);
+                throw new IllegalStateException("A type variable does not imply type arguments: " + this);
+            }
+
+            @Override
+            public Generic findBindingOf(Generic typeVariable) {
+                throw new IllegalStateException("A type variable does not imply type arguments: " + this);
             }
 
             @Override
@@ -4906,7 +4932,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeList.Generic getTypeArguments() {
-                    throw new IllegalStateException("A symbolic type variable does not imply type parameters: " + this);
+                    throw new IllegalStateException("A symbolic type variable does not imply type arguments: " + this);
+                }
+
+                @Override
+                public Generic findBindingOf(Generic typeVariable) {
+                    throw new IllegalStateException("A symbolic type variable does not imply type arguments: " + this);
                 }
 
                 @Override
@@ -5177,6 +5208,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public TypeList.Generic getTypeArguments() {
                 return resolve().getTypeArguments();
+            }
+
+            @Override
+            public Generic findBindingOf(Generic typeVariable) {
+                return resolve().findBindingOf(typeVariable);
             }
 
             @Override
