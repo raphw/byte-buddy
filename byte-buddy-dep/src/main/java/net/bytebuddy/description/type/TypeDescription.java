@@ -4727,7 +4727,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeList.Generic getTypeArguments() {
-                    return new NonAnnotatedTypeVariableList(typeDescription.getTypeVariables());
+                    return new TypeList.Generic.ForDetachedTypes(typeDescription.getTypeVariables(), Visitor.TypeErasing.INSTANCE);
                 }
 
                 @Override
@@ -4739,43 +4739,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty();
-                }
-
-                @Override
                 public TypeDescription asErasure() {
                     return typeDescription;
                 }
 
-                /**
-                 * A type list of type variables that represents type variables as generic type arguments without type annotations.
-                 */
-                protected static class NonAnnotatedTypeVariableList extends TypeList.Generic.AbstractBase {
-
-                    /**
-                     * The type variables that this list represents.
-                     */
-                    private final List<? extends Generic> typeVariables;
-
-                    /**
-                     * Creates a new list of type variables as non-annotated type arguments.
-                     *
-                     * @param typeVariables The type variables that this list represents.
-                     */
-                    protected NonAnnotatedTypeVariableList(List<? extends Generic> typeVariables) {
-                        this.typeVariables = typeVariables;
-                    }
-
-                    @Override
-                    public Generic get(int index) {
-                        return typeVariables.get(index).accept(Visitor.TypeVariableErasing.INSTANCE);
-                    }
-
-                    @Override
-                    public int size() {
-                        return typeVariables.size();
-                    }
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
                 }
             }
         }
