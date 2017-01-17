@@ -1116,6 +1116,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @Ignore("Is not longer true with proper raw type handling")
     public void testMethodTypeVariableErasedBound() throws Exception {
         TypeDescription.Generic typeDescription = describeType(MemberVariable.class.getDeclaredField(BAR)).getSuperClass();
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
@@ -1126,6 +1127,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    @Ignore("Is not longer true with proper raw type handling")
     public void testMethodTypeVariableWithExtensionErasedBound() throws Exception {
         TypeDescription.Generic typeDescription = describeType(MemberVariable.class.getDeclaredField(BAR)).getSuperClass();
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));

@@ -24,6 +24,7 @@ import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -341,6 +342,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
+    @Ignore("Is not longer true with proper raw type handling")
     public void testGenericTypeRawExtension() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(GenericType.Inner.class)

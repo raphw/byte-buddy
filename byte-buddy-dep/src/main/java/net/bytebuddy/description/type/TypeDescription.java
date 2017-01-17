@@ -2026,6 +2026,58 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
+             * A visitor that transforms any type into a raw type if declaring type is generified. If the declaring type is
+             * not generified, the original type description is returned.
+             */
+            class ForRawType implements Visitor<Generic> {
+
+                /**
+                 * The type description that is potentially a raw type.
+                 */
+                private final TypeDescription declaringType;
+
+                /**
+                 * Creates a visitor for representing declared types of a potentially raw type.
+                 *
+                 * @param declaringType The type description that is potentially a raw type.
+                 */
+                public ForRawType(TypeDescription declaringType) {
+                    this.declaringType = declaringType;
+                }
+
+                @Override
+                public Generic onGenericArray(Generic genericArray) {
+                    return declaringType.isGenerified()
+                            ? new Generic.OfNonGenericType.Latent(genericArray.asErasure(), genericArray.getDeclaredAnnotations())
+                            : genericArray;
+                }
+
+                @Override
+                public Generic onWildcard(Generic wildcard) {
+                    throw new IllegalStateException("Did not expect wildcard on top-level: " + wildcard);
+                }
+
+                @Override
+                public Generic onParameterizedType(Generic parameterizedType) {
+                    return declaringType.isGenerified()
+                            ? new Generic.OfNonGenericType.Latent(parameterizedType.asErasure(), parameterizedType.getDeclaredAnnotations())
+                            : parameterizedType;
+                }
+
+                @Override
+                public Generic onTypeVariable(Generic typeVariable) {
+                    return declaringType.isGenerified()
+                            ? new Generic.OfNonGenericType.Latent(typeVariable.asErasure(), typeVariable.getDeclaredAnnotations())
+                            : typeVariable;
+                }
+
+                @Override
+                public Generic onNonGenericType(Generic typeDescription) {
+                    return typeDescription;
+                }
+            }
+
+            /**
              * A visitor that reduces a detached generic type to its erasure.
              */
             @EqualsAndHashCode
@@ -3396,22 +3448,29 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public Generic getSuperClass() {
-                return LazyProjection.OfRawType.ofSuperClass(asErasure());
+                TypeDescription erasure = asErasure();
+                Generic superClass = erasure.getSuperClass();
+                return superClass == null
+                        ? Generic.UNDEFINED
+                        : new Generic.LazyProjection.WithLazyNavigation.Detached(superClass, new Visitor.ForRawType(erasure));
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return TypeList.Generic.OfRawTypes.ofInterfaces(asErasure());
+                TypeDescription erasure = asErasure();
+                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(erasure.getInterfaces(), new Visitor.ForRawType(erasure));
             }
 
             @Override
             public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
-                return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Visitor.TypeVariableErasing.INSTANCE);
+                TypeDescription erasure = asErasure();
+                return new FieldList.TypeSubstituting(this, erasure.getDeclaredFields(), new Visitor.ForRawType(erasure));
             }
 
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
+                TypeDescription erasure = asErasure();
+                return new MethodList.TypeSubstituting(this, erasure.getDeclaredMethods(), new Visitor.ForRawType(erasure));
             }
 
             @Override
@@ -5760,64 +5819,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 protected AnnotationReader getAnnotationReader() {
                     return AnnotationReader.DISPATCHER.resolveParameterType(method, index);
-                }
-            }
-
-            /**
-             * A lazy projection of a non-generic type's super type which might be a raw type. A type is considered to
-             * be a raw type if its declaring sub type is generified without defining values for its type variables.
-             */
-            public static class OfRawType extends LazyProjection.WithLazyNavigation {
-
-                /**
-                 * The type declaring this super type.
-                 */
-                private final TypeDescription declaringType;
-
-                /**
-                 * The represented super type.
-                 */
-                private final Generic superType;
-
-                /**
-                 * Creates a new raw type.
-                 *
-                 * @param declaringType The type declaring this super type.
-                 * @param superType     The represented super type.
-                 */
-                protected OfRawType(TypeDescription declaringType, Generic superType) {
-                    this.declaringType = declaringType;
-                    this.superType = superType;
-                }
-
-                /**
-                 * Creates a super type presentation of a non-generic type which might be a raw type.
-                 *
-                 * @param typeDescription The type declaring the super class.
-                 * @return The super class which might be a raw type or {@code null} if the supplied type does not declare a super class.
-                 */
-                public static Generic ofSuperClass(TypeDescription typeDescription) {
-                    Generic superClass = typeDescription.getSuperClass();
-                    return superClass == null
-                            ? Generic.UNDEFINED
-                            : new OfRawType(typeDescription, superClass);
-                }
-
-                @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return superType.getDeclaredAnnotations();
-                }
-
-                @Override
-                public TypeDescription asErasure() {
-                    return superType.asErasure();
-                }
-
-                @Override
-                protected Generic resolve() {
-                    return declaringType.isGenerified()
-                            ? new Generic.OfNonGenericType.Latent(superType.asErasure(), superType.getDeclaredAnnotations())
-                            : superType;
                 }
             }
         }
