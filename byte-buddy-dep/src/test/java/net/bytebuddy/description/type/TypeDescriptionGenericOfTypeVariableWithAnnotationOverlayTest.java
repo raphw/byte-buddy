@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
@@ -10,8 +11,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -44,7 +43,7 @@ public class TypeDescriptionGenericOfTypeVariableWithAnnotationOverlayTest {
         when(original.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(upperBound));
         when(original.getLowerBounds()).thenReturn(new TypeList.Generic.Explicit(lowerBound));
         when(original.getTypeVariableSource()).thenReturn(typeVariableSource);
-        typeVariable = new TypeDescription.Generic.OfTypeVariable.WithAnnotationOverlay(original, Collections.singletonList(annotationDescription));
+        typeVariable = new TypeDescription.Generic.OfTypeVariable.WithAnnotationOverlay(original, new AnnotationSource.Explicit(annotationDescription));
     }
 
     @Test

@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
-import net.bytebuddy.description.annotation.AnnotatedCodeElement;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -25,7 +25,7 @@ public class RuntimeTypeVerifierTest extends AbstractAnnotationTest<RuntimeType>
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private AnnotatedCodeElement annotatedCodeElement;
+    private AnnotationSource annotationSource;
 
     @Mock
     private RuntimeType runtimeType;
@@ -41,18 +41,18 @@ public class RuntimeTypeVerifierTest extends AbstractAnnotationTest<RuntimeType>
 
     @Test
     public void testCheckElementValid() throws Exception {
-        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(runtimeType));
-        assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(Assigner.Typing.DYNAMIC));
-        verify(annotatedCodeElement).getDeclaredAnnotations();
-        verifyNoMoreInteractions(annotatedCodeElement);
+        when(annotationSource.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(runtimeType));
+        assertThat(RuntimeType.Verifier.check(annotationSource), is(Assigner.Typing.DYNAMIC));
+        verify(annotationSource).getDeclaredAnnotations();
+        verifyNoMoreInteractions(annotationSource);
     }
 
     @Test
     public void testCheckElementInvalid() throws Exception {
-        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations());
-        assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(Assigner.Typing.STATIC));
-        verify(annotatedCodeElement).getDeclaredAnnotations();
-        verifyNoMoreInteractions(annotatedCodeElement);
+        when(annotationSource.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations());
+        assertThat(RuntimeType.Verifier.check(annotationSource), is(Assigner.Typing.STATIC));
+        verify(annotationSource).getDeclaredAnnotations();
+        verifyNoMoreInteractions(annotationSource);
     }
 
     @Test(expected = UnsupportedOperationException.class)

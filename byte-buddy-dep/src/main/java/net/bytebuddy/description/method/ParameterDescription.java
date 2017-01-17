@@ -5,7 +5,7 @@ import lombok.EqualsAndHashCode;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.annotation.AnnotatedCodeElement;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Description of the parameter of a Java method or constructor.
  */
-public interface ParameterDescription extends AnnotatedCodeElement,
+public interface ParameterDescription extends AnnotationSource,
         NamedElement.WithRuntimeName,
         NamedElement.WithOptionalName,
         ModifierReviewable.ForParameterDescription,

@@ -1,14 +1,14 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.annotation.AnnotatedCodeElement;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.annotation.AnnotationList;
 import org.objectweb.asm.Opcodes;
 
 /**
  * A package description represents a Java package.
  */
-public interface PackageDescription extends NamedElement.WithRuntimeName, AnnotatedCodeElement {
+public interface PackageDescription extends NamedElement.WithRuntimeName, AnnotationSource {
 
     /**
      * The name of a Java class representing a package description.

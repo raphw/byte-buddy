@@ -1,14 +1,13 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
@@ -26,7 +25,7 @@ public class TypeDescriptionGenericOfTypeVariableSymbolicTest {
 
     @Before
     public void setUp() throws Exception {
-        typeVariable = new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.singletonList(annotationDescription));
+        typeVariable = new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, new AnnotationSource.Explicit(annotationDescription));
     }
 
     @Test
@@ -67,9 +66,9 @@ public class TypeDescriptionGenericOfTypeVariableSymbolicTest {
     @Test
     public void testEquals() throws Exception {
         assertThat(typeVariable, is(typeVariable));
-        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.singletonList(annotationDescription))));
-        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.<AnnotationDescription>emptyList())));
-        assertThat(typeVariable, not((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(BAR, Collections.<AnnotationDescription>emptyList())));
+        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, new AnnotationSource.Explicit(annotationDescription))));
+        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, AnnotationSource.Empty.INSTANCE)));
+        assertThat(typeVariable, not((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(BAR, AnnotationSource.Empty.INSTANCE)));
         assertThat(typeVariable, not(TypeDescription.Generic.OBJECT));
         assertThat(typeVariable, not(new Object()));
         assertThat(typeVariable, not(equalTo(null)));

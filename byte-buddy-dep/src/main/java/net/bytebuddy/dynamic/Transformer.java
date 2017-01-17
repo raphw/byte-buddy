@@ -486,7 +486,7 @@ public interface Transformer<T> {
                     if (attached == null) {
                         throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
                     } else {
-                        return new TypeDescription.Generic.OfTypeVariable.WithAnnotationOverlay(attached, typeVariable.getDeclaredAnnotations());
+                        return new TypeDescription.Generic.OfTypeVariable.WithAnnotationOverlay(attached, typeVariable);
                     }
                 }
 

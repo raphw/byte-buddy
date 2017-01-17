@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.dynamic.TargetType;
@@ -44,7 +45,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
     @Test
     public void testTargetType() throws Exception {
         TypeDescription.Generic typeDescription = new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target)
-                .onSimpleType(new TypeDescription.Generic.OfNonGenericType.Latent(TargetType.DESCRIPTION, Collections.singletonList(annotationDescription)));
+                .onSimpleType(new TypeDescription.Generic.OfNonGenericType.Latent(TargetType.DESCRIPTION, new AnnotationSource.Explicit(annotationDescription)));
         assertThat(typeDescription.asErasure(), is(target));
         assertThat(typeDescription.getDeclaredAnnotations(), is(Collections.singletonList(annotationDescription)));
     }
@@ -57,7 +58,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
     @Test
     public void testTypeVariable() throws Exception {
         TypeDescription.Generic typeDescription = new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onTypeVariable(source);
-        assertThat(typeDescription, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.singletonList(annotationDescription))));
+        assertThat(typeDescription, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, new AnnotationSource.Explicit(annotationDescription))));
         assertThat(typeDescription.getDeclaredAnnotations(), is(Collections.singletonList(annotationDescription)));
     }
 

@@ -1,10 +1,10 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.annotation.AnnotationValue;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -19,7 +19,6 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.packaging.PackagePrivateType;
 import net.bytebuddy.test.utility.MockitoRule;
-import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -172,7 +171,7 @@ public class InstrumentedTypeDefaultTest {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC,
-                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), Collections.singletonList(annotationDescription))));
+                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), new AnnotationSource.Explicit(annotationDescription))));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
@@ -242,8 +241,8 @@ public class InstrumentedTypeDefaultTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
                 Opcodes.ACC_PUBLIC,
-                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), Collections.singletonList(annotationDescription)),
-                Collections.singletonList(new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), Collections.singletonList(annotationDescription)))));
+                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), new AnnotationSource.Explicit(annotationDescription)),
+                Collections.singletonList(new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), new AnnotationSource.Explicit(annotationDescription)))));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType().asErasure().isArray(), is(true));
@@ -869,7 +868,7 @@ public class InstrumentedTypeDefaultTest {
                         ModifierContributor.EMPTY_MASK,
                         Collections.singletonList(new TypeVariableToken(FOO,
                                 Collections.singletonList(TypeDescription.Generic.Builder.rawType(Object.class).build(
-                                AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())))),
+                                        AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())))),
                         TypeDescription.Generic.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
@@ -1122,7 +1121,7 @@ public class InstrumentedTypeDefaultTest {
                         TypeDescription.Generic.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.singletonList(TypeDescription.Generic.Builder.rawType(Exception.class)
-                        .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())),
+                                .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())),
                         Collections.<AnnotationDescription>emptyList(),
                         AnnotationValue.UNDEFINED,
                         TypeDescription.Generic.UNDEFINED))

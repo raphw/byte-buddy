@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -47,7 +48,7 @@ public class TypeDescriptionGenericVisitorTypeVariableErasingTest {
         when(transformedType.getSort()).thenReturn(TypeDefinition.Sort.GENERIC_ARRAY);
         when(typeDescription.getComponentType()).thenReturn(referencedType);
         assertThat(TypeDescription.Generic.Visitor.TypeVariableErasing.INSTANCE.onGenericArray(typeDescription), is((TypeDescription.Generic)
-                new TypeDescription.Generic.OfGenericArray.Latent(transformedType, Collections.singletonList(annotationDescription))));
+                new TypeDescription.Generic.OfGenericArray.Latent(transformedType, new AnnotationSource.Explicit(annotationDescription))));
     }
 
     @Test
@@ -57,7 +58,7 @@ public class TypeDescriptionGenericVisitorTypeVariableErasingTest {
         assertThat(TypeDescription.Generic.Visitor.TypeVariableErasing.INSTANCE.onWildcard(typeDescription), is((TypeDescription.Generic)
                 new TypeDescription.Generic.OfWildcardType.Latent(Collections.singletonList(transformedType),
                         Collections.singletonList(transformedType),
-                        Collections.singletonList(annotationDescription))));
+                        new AnnotationSource.Explicit(annotationDescription))));
     }
 
     @Test
@@ -71,7 +72,7 @@ public class TypeDescriptionGenericVisitorTypeVariableErasingTest {
                 new TypeDescription.Generic.OfParameterizedType.Latent(erasure,
                         transformedType,
                         Collections.singletonList(transformedType),
-                        Collections.singletonList(annotationDescription))));
+                        new AnnotationSource.Explicit(annotationDescription))));
     }
 
     @Test
