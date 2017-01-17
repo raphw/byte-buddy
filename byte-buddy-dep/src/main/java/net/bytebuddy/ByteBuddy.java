@@ -215,16 +215,20 @@ public class ByteBuddy {
      * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Class, ConstructorStrategy)}.
      * </p>
      * <p>
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * </p>
+     * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
      * types, a external cache or {@link TypeCache} should be used.
      * </p>
      *
-     * @param superClass The super class or interface type to extend.
+     * @param superType The super class or interface type to extend.
      * @param <T>        A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
-    public <T> DynamicType.Builder<T> subclass(Class<T> superClass) {
-        return subclass(new TypeDescription.ForLoadedType(superClass));
+    @SuppressWarnings("unchecked")
+    public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
+        return (DynamicType.Builder<T>) subclass(new TypeDescription.ForLoadedType(superType));
     }
 
     /**
@@ -233,17 +237,21 @@ public class ByteBuddy {
      * this interface type is created.
      * </p>
      * <p>
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * </p>
+     * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
      * types, a external cache or {@link TypeCache} should be used.
      * </p>
      *
-     * @param superClass          The super class or interface type to extend.
+     * @param superType          The super class or interface type to extend.
      * @param constructorStrategy A constructor strategy that determines the
      * @param <T>                 A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
-    public <T> DynamicType.Builder<T> subclass(Class<T> superClass, ConstructorStrategy constructorStrategy) {
-        return subclass(new TypeDescription.ForLoadedType(superClass), constructorStrategy);
+    @SuppressWarnings("unchecked")
+    public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
+        return (DynamicType.Builder<T>) subclass(new TypeDescription.ForLoadedType(superType), constructorStrategy);
     }
 
     /**
@@ -254,7 +262,57 @@ public class ByteBuddy {
      * <p>
      * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type. Any constructor is implemented
      * to only invoke its super type constructor of equal signature. Another behavior can be specified by supplying an explicit
-     * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Class, ConstructorStrategy)}.
+     * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(TypeDescription, ConstructorStrategy)}.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
+     *
+     * @param superType The super class or interface type to extend.
+     * @return A type builder for creating a new class extending the provided class or interface.
+     */
+    public DynamicType.Builder<?> subclass(TypeDescription superType) {
+        return subclassGeneric(TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(superType));
+    }
+
+    /**
+     * <p>
+     * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
+     * this interface type is created.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
+     *
+     * @param superType          The super class or interface type to extend.
+     * @param constructorStrategy A constructor strategy that determines the
+     * @return A type builder for creating a new class extending the provided class or interface.
+     */
+    public DynamicType.Builder<?> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
+        return subclassGeneric(TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(superType), constructorStrategy);
+    }
+
+    /**
+     * <p>
+     * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
+     * this interface type is created.
+     * </p>
+     * <p>
+     * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type. Any constructor is implemented
+     * to only invoke its super type constructor of equal signature. Another behavior can be specified by supplying an explicit
+     * {@link ConstructorStrategy} by {@link ByteBuddy#subclassGeneric(Type, ConstructorStrategy)}.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link Class} values are implemented
+     * as raw types if they declare type variables.
      * </p>
      * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
@@ -264,17 +322,20 @@ public class ByteBuddy {
      * @param superType The super class or interface type to extend. The type must be a raw type or parameterized type. All type
      *                  variables that are referenced by the generic type must be declared by the generated subclass before creating
      *                  the type.
-     * @param <T>       A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
-    public <T> DynamicType.Builder<T> subclass(Type superType) {
-        return subclass(TypeDefinition.Sort.describe(superType));
+    public DynamicType.Builder<?> subclassGeneric(Type superType) {
+        return subclassGeneric(TypeDefinition.Sort.describe(superType));
     }
 
     /**
      * <p>
      * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
      * this interface type is created.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link Class} values are implemented
+     * as raw types if they declare type variables.
      * </p>
      * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
@@ -285,11 +346,10 @@ public class ByteBuddy {
      *                            type. All type variables that are referenced by the generic type must be declared by the
      *                            generated subclass before creating the type.
      * @param constructorStrategy A constructor strategy that determines the
-     * @param <T>                 A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
-    public <T> DynamicType.Builder<T> subclass(Type superType, ConstructorStrategy constructorStrategy) {
-        return subclass(TypeDefinition.Sort.describe(superType), constructorStrategy);
+    public DynamicType.Builder<?> subclassGeneric(Type superType, ConstructorStrategy constructorStrategy) {
+        return subclassGeneric(TypeDefinition.Sort.describe(superType), constructorStrategy);
     }
 
     /**
@@ -300,7 +360,11 @@ public class ByteBuddy {
      * <p>
      * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type and sets them to be {@code public}.
      * Any constructor is implemented to only invoke its super type constructor of equal signature. Another behavior can be specified by
-     * supplying an explicit {@link ConstructorStrategy} by {@link ByteBuddy#subclass(TypeDefinition, ConstructorStrategy)}.
+     * supplying an explicit {@link ConstructorStrategy} by {@link ByteBuddy#subclassGeneric(TypeDefinition, ConstructorStrategy)}.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link TypeDescription} values are implemented
+     * as raw types if they declare type variables.
      * </p>
      * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
@@ -310,17 +374,20 @@ public class ByteBuddy {
      * @param superType The super class or interface type to extend. The type must be a raw type or parameterized type. All type
      *                  variables that are referenced by the generic type must be declared by the generated subclass before creating
      *                  the type.
-     * @param <T>       A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
-    public <T> DynamicType.Builder<T> subclass(TypeDefinition superType) {
-        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING);
+    public DynamicType.Builder<?> subclassGeneric(TypeDefinition superType) {
+        return subclassGeneric(superType, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING);
     }
 
     /**
      * <p>
      * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
      * this interface type is created.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link TypeDescription} values are implemented
+     * as raw types if they declare type variables.
      * </p>
      * <p>
      * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
@@ -331,22 +398,21 @@ public class ByteBuddy {
      *                            type. All type variables that are referenced by the generic type must be declared by the
      *                            generated subclass before creating the type.
      * @param constructorStrategy A constructor strategy that determines the
-     * @param <T>                 A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
-    public <T> DynamicType.Builder<T> subclass(TypeDefinition superType, ConstructorStrategy constructorStrategy) {
+    public DynamicType.Builder<?> subclassGeneric(TypeDefinition superType, ConstructorStrategy constructorStrategy) {
         TypeDescription.Generic actualSuperType;
         TypeList.Generic interfaceTypes;
         if (superType.isPrimitive() || superType.isArray() || superType.isFinal()) {
             throw new IllegalArgumentException("Cannot subclass primitive, array or final types: " + superType);
         } else if (superType.isInterface()) {
-            interfaceTypes = new TypeList.Generic.Explicit(superType.asGenericType());
             actualSuperType = TypeDescription.Generic.OBJECT;
+            interfaceTypes = new TypeList.Generic.Explicit(superType);
         } else {
-            interfaceTypes = new TypeList.Generic.Empty();
             actualSuperType = superType.asGenericType();
+            interfaceTypes = new TypeList.Generic.Empty();
         }
-        return new SubclassDynamicTypeBuilder<T>(InstrumentedType.Default.subclass(namingStrategy.subclass(superType.asGenericType()),
+        return new SubclassDynamicTypeBuilder<Object>(InstrumentedType.Default.subclass(namingStrategy.subclass(superType.asGenericType()),
                 ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.PLAIN).resolve(superType.getModifiers()),
                 actualSuperType).withInterfaces(interfaceTypes),
                 classFileVersion,
@@ -361,7 +427,13 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a new, plain interface type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @return A type builder that creates a new interface type.
      */
@@ -370,7 +442,37 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a new interface type that extends the provided interface.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
+     *
+     * @param interfaceType The interface types to implement. The types must be raw or parameterized types. All type
+     *                      variables that are referenced by a parameterized type must be declared by the generated
+     *                      subclass before creating the type.
+     * @return A type builder that creates a new interface type.
+     */
+    public DynamicType.Builder<?> makeInterface(Class<?>... interfaceType) {
+        return makeInterface(Arrays.asList(interfaceType));
+    }
+
+    /**
+     * <p>
+     * Creates a new interface type that extends the provided interface.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param interfaceType An interface type that the generated interface implements.
      * @param <T>           A loaded type that the generated interface is guaranteed to inherit.
@@ -378,61 +480,170 @@ public class ByteBuddy {
      */
     @SuppressWarnings("unchecked")
     public <T> DynamicType.Builder<T> makeInterface(Class<T> interfaceType) {
-        return (DynamicType.Builder<T>) makeInterface(Collections.<Type>singletonList(interfaceType));
+        return (DynamicType.Builder<T>) makeInterface(Collections.<Class<?>>singletonList(interfaceType));
     }
 
     /**
+     * <p>
      * Creates a new interface type that extends the provided interface.
-     *
-     * @param interfaceType The interface types to implement. The types must be raw or parameterized types. All type
-     *                      variables that are referenced by a parameterized type must be declared by the generated
-     *                      subclass before creating the type.
-     * @return A type builder that creates a new interface type.
-     */
-    public DynamicType.Builder<?> makeInterface(Type... interfaceType) {
-        return makeInterface(new TypeList.Generic.ForLoadedTypes(interfaceType));
-    }
-
-    /**
-     * Creates a new interface type that extends the provided interface.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param interfaceTypes The interface types to implement. The types must be raw or parameterized types. All
      *                       type variables that are referenced by a parameterized type must be declared by the
      *                       generated subclass before creating the type.
      * @return A type builder that creates a new interface type.
      */
-    public DynamicType.Builder<?> makeInterface(List<? extends Type> interfaceTypes) {
-        return makeInterface(new TypeList.Generic.ForLoadedTypes(interfaceTypes));
+    public DynamicType.Builder<?> makeInterface(List<? extends Class<?>> interfaceTypes) {
+        return makeInterface(new TypeList.ForLoadedTypes(interfaceTypes));
     }
 
     /**
+     * <p>
      * Creates a new interface type that extends the provided interface.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param interfaceType The interface types to implement. The types must be raw or parameterized types. All
      *                      type variables that are referenced by a parameterized type must be declared by the
      *                      generated subclass before creating the type.
      * @return A type builder that creates a new interface type.
      */
-    public DynamicType.Builder<?> makeInterface(TypeDefinition... interfaceType) {
+    public DynamicType.Builder<?> makeInterface(TypeDescription... interfaceType) {
         return makeInterface(Arrays.asList(interfaceType));
     }
 
     /**
+     * <p>
      * Creates a new interface type that extends the provided interface.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param interfaceTypes The interface types to implement. The types must be raw or parameterized types. All
      *                       type variables that are referenced by a parameterized type must be declared by the
      *                       generated subclass before creating the type.
      * @return A type builder that creates a new interface type.
      */
-    public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDefinition> interfaceTypes) {
-        return subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS).implement(interfaceTypes).modifiers(TypeManifestation.INTERFACE, Visibility.PUBLIC);
+    public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDescription> interfaceTypes) {
+        return makeInterfaceGeneric(new TypeList.Generic.ForGenerifiedErasures(new ArrayList<TypeDescription>(interfaceTypes)));
     }
 
     /**
+     * <p>
+     * Creates a new interface type that extends the provided interface.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link Class} values are implemented
+     * as raw types if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
+     *
+     * @param interfaceType The interface types to implement. The types must be raw or parameterized types. All type
+     *                      variables that are referenced by a parameterized type must be declared by the generated
+     *                      subclass before creating the type.
+     * @return A type builder that creates a new interface type.
+     */
+    public DynamicType.Builder<?> makeInterfaceGeneric(Type... interfaceType) {
+        return makeInterfaceGeneric(Arrays.asList(interfaceType));
+    }
+
+    /**
+     * <p>
+     * Creates a new interface type that extends the provided interface.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link Class} values are implemented
+     * as raw types if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
+     *
+     * @param interfaceTypes The interface types to implement. The types must be raw or parameterized types. All
+     *                       type variables that are referenced by a parameterized type must be declared by the
+     *                       generated subclass before creating the type.
+     * @return A type builder that creates a new interface type.
+     */
+    public DynamicType.Builder<?> makeInterfaceGeneric(List<? extends Type> interfaceTypes) {
+        return makeInterfaceGeneric(new TypeList.Generic.ForLoadedTypes(interfaceTypes));
+    }
+
+    /**
+     * <p>
+     * Creates a new interface type that extends the provided interface.
+     * </p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link TypeDescription} values are implemented
+     * as raw types if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
+     *
+     * @param interfaceType The interface types to implement. The types must be raw or parameterized types. All
+     *                      type variables that are referenced by a parameterized type must be declared by the
+     *                      generated subclass before creating the type.
+     * @return A type builder that creates a new interface type.
+     */
+    public DynamicType.Builder<?> makeInterfaceGeneric(TypeDefinition... interfaceType) {
+        return makeInterfaceGeneric(Arrays.asList(interfaceType));
+    }
+
+    /**
+     * <p>
+     * Creates a new interface type that extends the provided interface.
+     *</p>
+     * <p>
+     * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link TypeDescription} values are implemented
+     * as raw types if they declare type variables or an owner type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
+     *
+     * @param interfaceTypes The interface types to implement. The types must be raw or parameterized types. All
+     *                       type variables that are referenced by a parameterized type must be declared by the
+     *                       generated subclass before creating the type.
+     * @return A type builder that creates a new interface type.
+     */
+    public DynamicType.Builder<?> makeInterfaceGeneric(Collection<? extends TypeDefinition> interfaceTypes) {
+        return subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS).implementGeneric(interfaceTypes).modifiers(TypeManifestation.INTERFACE, Visibility.PUBLIC);
+    }
+
+    /**
+     * <p>
      * Creates a new package definition. Package definitions are defined by classes named {@code package-info}
      * without any methods or fields but permit annotations. Any field or method definition will cause an
      * {@link IllegalStateException} to be thrown when the type is created.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param name The fully qualified name of the package.
      * @return A type builder that creates a {@code package-info} class file.
@@ -453,8 +664,14 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a new {@link Annotation} type. Annotation properties are implemented as non-static, public methods with the
      * property type being defined as the return type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @return A type builder that creates a new {@link Annotation} type.
      */
@@ -474,7 +691,13 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a new {@link Enum} type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param value The names of the type's enumeration constants
      * @return A type builder for creating an enumeration type.
@@ -484,7 +707,13 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Creates a new {@link Enum} type.
+     * </p>
+     * <p>
+     * <b>Note</b>: Byte Buddy does not cache previous subclasses but will attempt the generation of a new subclass. For caching
+     * types, a external cache or {@link TypeCache} should be used.
+     * </p>
      *
      * @param values The names of the type's enumeration constants
      * @return A type builder for creating an enumeration type.

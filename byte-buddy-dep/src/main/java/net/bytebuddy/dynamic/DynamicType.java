@@ -288,44 +288,132 @@ public interface DynamicType {
         Builder<T> annotateType(Collection<? extends AnnotationDescription> annotations);
 
         /**
+         * <p>
          * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
          * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
          * are explicitly ignored.
+         * </p>
+         * <p>
+         * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables
+         * or an owner type.
+         * </p>
          *
          * @param interfaceType The interface types to implement.
          * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
          */
-        MethodDefinition.ImplementationDefinition.Optional<T> implement(Type... interfaceType);
+        MethodDefinition.ImplementationDefinition.Optional<T> implement(Class<?>... interfaceType);
 
         /**
+         * <p>
          * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
          * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
          * are explicitly ignored.
+         * </p>
+         * <p>
+         * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables
+         * or an owner type.
+         * </p>
          *
          * @param interfaceTypes The interface types to implement.
          * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
          */
-        MethodDefinition.ImplementationDefinition.Optional<T> implement(List<? extends Type> interfaceTypes);
+        MethodDefinition.ImplementationDefinition.Optional<T> implement(List<? extends Class<?>> interfaceTypes);
 
         /**
+         * <p>
          * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
          * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
          * are explicitly ignored.
+         * </p>
+         * <p>
+         * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables
+         * or an owner type.
+         * </p>
          *
          * @param interfaceType The interface types to implement.
          * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
          */
-        MethodDefinition.ImplementationDefinition.Optional<T> implement(TypeDefinition... interfaceType);
+        MethodDefinition.ImplementationDefinition.Optional<T> implement(TypeDescription... interfaceType);
 
         /**
+         * <p>
          * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
          * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
          * are explicitly ignored.
+         * </p>
+         * <p>
+         * <b>Note</b>: This methods implements the supplied types in a generified state if they declare type variables
+         * or an owner type.
+         * </p>
          *
          * @param interfaceTypes The interface types to implement.
          * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
          */
-        MethodDefinition.ImplementationDefinition.Optional<T> implement(Collection<? extends TypeDefinition> interfaceTypes);
+        MethodDefinition.ImplementationDefinition.Optional<T> implement(Collection<? extends TypeDescription> interfaceTypes);
+
+        /**
+         * <p>
+         * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
+         * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
+         * are explicitly ignored.
+         * </p>
+         * <p>
+         * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link Class} values are implemented
+         * as raw types if they declare type variables or an owner type.
+         * </p>
+         *
+         * @param interfaceType The interface types to implement.
+         * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
+         */
+        MethodDefinition.ImplementationDefinition.Optional<T> implementGeneric(Type... interfaceType);
+
+        /**
+         * <p>
+         * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
+         * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
+         * are explicitly ignored.
+         * </p>
+         * <p>
+         * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link Class} values are implemented
+         * as raw types if they declare type variables or an owner type.
+         * </p>
+         *
+         * @param interfaceTypes The interface types to implement.
+         * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
+         */
+        MethodDefinition.ImplementationDefinition.Optional<T> implementGeneric(List<? extends Type> interfaceTypes);
+
+        /**
+         * <p>
+         * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
+         * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
+         * are explicitly ignored.
+         * </p>
+         * <p>
+         * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link TypeDescription} values are
+         * implemented as raw types if they declare type variables or an owner type.
+         * </p>
+         *
+         * @param interfaceType The interface types to implement.
+         * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
+         */
+        MethodDefinition.ImplementationDefinition.Optional<T> implementGeneric(TypeDefinition... interfaceType);
+
+        /**
+         * <p>
+         * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
+         * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
+         * are explicitly ignored.
+         * </p>
+         * <p>
+         * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link TypeDescription} values are
+         * implemented as raw types if they declare type variables or an owner type.
+         * </p>
+         *
+         * @param interfaceTypes The interface types to implement.
+         * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
+         */
+        MethodDefinition.ImplementationDefinition.Optional<T> implementGeneric(Collection<? extends TypeDefinition> interfaceTypes);
 
         /**
          * <p>
@@ -2359,18 +2447,38 @@ public interface DynamicType {
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition.Optional<S> implement(Type... interfaceType) {
+            public MethodDefinition.ImplementationDefinition.Optional<S> implementGeneric(Type... interfaceType) {
+                return implementGeneric(Arrays.asList(interfaceType));
+            }
+
+            @Override
+            public MethodDefinition.ImplementationDefinition.Optional<S> implementGeneric(List<? extends Type> interfaceTypes) {
+                return implementGeneric(new TypeList.Generic.ForLoadedTypes(interfaceTypes));
+            }
+
+            @Override
+            public MethodDefinition.ImplementationDefinition.Optional<S> implementGeneric(TypeDefinition... interfaceType) {
+                return implementGeneric(Arrays.asList(interfaceType));
+            }
+
+            @Override
+            public MethodDefinition.ImplementationDefinition.Optional<S> implement(Class<?>... interfaceType) {
                 return implement(Arrays.asList(interfaceType));
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition.Optional<S> implement(List<? extends Type> interfaceTypes) {
-                return implement(new TypeList.Generic.ForLoadedTypes(interfaceTypes));
+            public MethodDefinition.ImplementationDefinition.Optional<S> implement(List<? extends Class<?>> interfaceTypes) {
+                return implement(new TypeList.ForLoadedTypes(interfaceTypes));
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition.Optional<S> implement(TypeDefinition... interfaceType) {
+            public MethodDefinition.ImplementationDefinition.Optional<S> implement(TypeDescription... interfaceType) {
                 return implement(Arrays.asList(interfaceType));
+            }
+
+            @Override
+            public MethodDefinition.ImplementationDefinition.Optional<S> implement(Collection<? extends TypeDescription> interfaceTypes) {
+                return implementGeneric(new TypeList.Generic.ForGenerifiedErasures(new ArrayList<TypeDescription>(interfaceTypes)));
             }
 
             @Override
@@ -2579,8 +2687,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> interfaceTypes) {
-                    return materialize().implement(interfaceTypes);
+                public MethodDefinition.ImplementationDefinition.Optional<U> implementGeneric(Collection<? extends TypeDefinition> interfaceTypes) {
+                    return materialize().implementGeneric(interfaceTypes);
                 }
 
                 @Override
@@ -2805,7 +2913,7 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> interfaceTypes) {
+                public MethodDefinition.ImplementationDefinition.Optional<U> implementGeneric(Collection<? extends TypeDefinition> interfaceTypes) {
                     return new OptionalMethodMatchAdapter(new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(interfaceTypes)));
                 }
 

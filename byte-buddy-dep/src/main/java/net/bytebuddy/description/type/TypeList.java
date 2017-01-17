@@ -663,6 +663,36 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         }
 
         /**
+         * A list of {@link TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure}s.
+         */
+        class ForGenerifiedErasures extends AbstractBase {
+
+            /**
+             * The represented types.
+             */
+            private final List<? extends TypeDescription> typeDescriptions;
+
+            /**
+             * Creates a list of generified erasures.
+             *
+             * @param typeDescriptions The represented types.
+             */
+            public ForGenerifiedErasures(List<? extends TypeDescription> typeDescriptions) {
+                this.typeDescriptions = typeDescriptions;
+            }
+
+            @Override
+            public TypeDescription.Generic get(int index) {
+                return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(typeDescriptions.get(index));
+            }
+
+            @Override
+            public int size() {
+                return typeDescriptions.size();
+            }
+        }
+
+        /**
          * A lazy projection of a type's generic interface types.
          */
         class OfLoadedInterfaceTypes extends AbstractBase {

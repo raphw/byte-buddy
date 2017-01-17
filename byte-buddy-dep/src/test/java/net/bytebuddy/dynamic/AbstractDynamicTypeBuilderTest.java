@@ -611,7 +611,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = createPlain()
                 .merge(TypeManifestation.ABSTRACT)
-                .implement(TypeDescription.Generic.Builder.rawType(Runnable.class)
+                .implementGeneric(TypeDescription.Generic.Builder.rawType(Runnable.class)
                         .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build()))
                 .make()
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)

@@ -342,7 +342,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
-    @Ignore("Is not longer true with proper raw type handling")
+    @Ignore("TODO: Fixme")
     public void testGenericTypeRawExtension() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(GenericType.Inner.class)
@@ -492,7 +492,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = new ByteBuddy()
-                .subclass(TypeDescription.Generic.Builder.rawType(Object.class)
+                .subclassGeneric(TypeDescription.Generic.Builder.rawType(Object.class)
                         .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, BAZ).build()))
                 .make()
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
