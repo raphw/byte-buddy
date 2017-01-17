@@ -1026,7 +1026,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
-    @Ignore("Test does not reflect the expected new behavior")
     public void testParameterizedTypePartiallyRawSuperClassResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(QUX));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1035,17 +1034,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(superClass.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superClass.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Intermediate.class)));
         TypeDescription.Generic superSuperClass = superClass.getSuperClass();
-        assertThat(superSuperClass.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(superSuperClass.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superSuperClass.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
-        assertThat(superSuperClass.getTypeArguments().size(), is(2));
-        assertThat(superSuperClass.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superSuperClass.getTypeArguments().get(0).asErasure().represents(List.class), is(true));
-        assertThat(superSuperClass.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superSuperClass.getTypeArguments().get(1).asErasure().represents(List.class), is(true));
     }
 
     @Test
-    @Ignore("Test does not reflect the expected new behavior")
     public void testParameterizedTypePartiallyRawInterfaceTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(QUX));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1054,17 +1047,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(superClass.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superClass.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Intermediate.class)));
         TypeDescription.Generic superInterfaceType = superClass.getInterfaces().getOnly();
-        assertThat(superInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(superInterfaceType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superInterfaceType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
-        assertThat(superInterfaceType.getTypeArguments().size(), is(2));
-        assertThat(superInterfaceType.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superInterfaceType.getTypeArguments().get(0).asErasure().represents(List.class), is(true));
-        assertThat(superInterfaceType.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superInterfaceType.getTypeArguments().get(1).asErasure().represents(List.class), is(true));
     }
 
     @Test
-    @Ignore("Test does not reflect the expected new behavior")
     public void testParameterizedTypeNestedPartiallyRawSuperClassResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAZ));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1073,23 +1060,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(superClass.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superClass.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.NestedIntermediate.class)));
         TypeDescription.Generic superSuperClass = superClass.getSuperClass();
-        assertThat(superSuperClass.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(superSuperClass.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superSuperClass.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
-        assertThat(superSuperClass.getTypeArguments().size(), is(2));
-        assertThat(superSuperClass.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(superSuperClass.getTypeArguments().get(0).asErasure().represents(List.class), is(true));
-        assertThat(superSuperClass.getTypeArguments().get(0).getTypeArguments().size(), is(1));
-        assertThat(superSuperClass.getTypeArguments().get(0).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superSuperClass.getTypeArguments().get(0).getTypeArguments().getOnly().asErasure().represents(List.class), is(true));
-        assertThat(superSuperClass.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(superSuperClass.getTypeArguments().get(1).asErasure().represents(List.class), is(true));
-        assertThat(superSuperClass.getTypeArguments().get(1).getTypeArguments().size(), is(1));
-        assertThat(superSuperClass.getTypeArguments().get(1).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superSuperClass.getTypeArguments().get(1).getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
     }
 
     @Test
-    @Ignore("Test does not reflect the expected new behavior")
     public void testParameterizedTypeNestedPartiallyRawInterfaceTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAZ));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -1098,19 +1073,8 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(superClass.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superClass.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.NestedIntermediate.class)));
         TypeDescription.Generic superInterfaceType = superClass.getInterfaces().getOnly();
-        assertThat(superInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(superInterfaceType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superInterfaceType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
-        assertThat(superInterfaceType.getTypeArguments().size(), is(2));
-        assertThat(superInterfaceType.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(superInterfaceType.getTypeArguments().get(0).asErasure().represents(List.class), is(true));
-        assertThat(superInterfaceType.getTypeArguments().get(0).getTypeArguments().size(), is(1));
-        assertThat(superInterfaceType.getTypeArguments().get(0).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superInterfaceType.getTypeArguments().get(0).getTypeArguments().getOnly().asErasure().represents(List.class), is(true));
-        assertThat(superInterfaceType.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(superInterfaceType.getTypeArguments().get(1).asErasure().represents(List.class), is(true));
-        assertThat(superInterfaceType.getTypeArguments().get(1).getTypeArguments().size(), is(1));
-        assertThat(superInterfaceType.getTypeArguments().get(1).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superInterfaceType.getTypeArguments().get(1).getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
     }
 
     @Test
@@ -1188,27 +1152,21 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
-    @Ignore("Is not longer true with proper raw type handling")
     public void testMethodTypeVariableErasedBound() throws Exception {
         TypeDescription.Generic typeDescription = describeType(MemberVariable.class.getDeclaredField(BAR)).getSuperClass();
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly();
-        assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
-        assertThat(methodDescription.getReturnType().getTypeVariableSource(), is((TypeVariableSource) methodDescription));
+        assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(methodDescription.getReturnType().asErasure(), is(TypeDescription.OBJECT));
     }
 
     @Test
-    @Ignore("Is not longer true with proper raw type handling")
     public void testMethodTypeVariableWithExtensionErasedBound() throws Exception {
         TypeDescription.Generic typeDescription = describeType(MemberVariable.class.getDeclaredField(BAR)).getSuperClass();
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(QUX)).getOnly();
-        assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
-        assertThat(methodDescription.getReturnType().getTypeVariableSource(), is((TypeVariableSource) methodDescription));
-        assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().asErasure().represents(Object.class), is(true));
+        assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(methodDescription.getReturnType().asErasure(), is(TypeDescription.OBJECT));
     }
 
     @Test
@@ -1320,12 +1278,19 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
-    @Ignore("Does not currently work correctly")
     public void testRawType() throws Exception {
         TypeDescription.Generic type = describeType(RawType.class.getDeclaredField(FOO)).getSuperClass().getSuperClass();
         FieldDescription fieldDescription = type.getDeclaredFields().filter(named(BAR)).getOnly();
         assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(fieldDescription.getType().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Number.class)));
+        assertThat(fieldDescription.getType().asErasure(), is(TypeDescription.OBJECT));
+    }
+
+    @Test
+    public void testIntermediateRawType() throws Exception {
+        TypeDescription.Generic type = describeType(IntermediateRaw.class.getDeclaredField(FOO)).getSuperClass().getSuperClass().getSuperClass();
+        FieldDescription fieldDescription = type.getDeclaredFields().filter(named(BAR)).getOnly();
+        assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(fieldDescription.getType().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Integer.class)));
     }
 
     @Test
@@ -1916,6 +1881,25 @@ public abstract class AbstractTypeDescriptionGenericTest {
         }
 
         public static class Extension extends Intermediate {
+            /* empty */
+        }
+    }
+
+    public static class IntermediateRaw<T> {
+
+        Extension foo;
+
+        T bar;
+
+        public static class NonGenericIntermediate extends IntermediateRaw<Integer> {
+            /* empty */
+        }
+
+        public static class GenericIntermediate<T> extends NonGenericIntermediate {
+            /* empty */
+        }
+
+        public static class Extension extends GenericIntermediate {
             /* empty */
         }
     }
