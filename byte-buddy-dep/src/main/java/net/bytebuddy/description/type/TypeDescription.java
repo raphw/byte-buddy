@@ -653,177 +653,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * A visitor for erasing type variables on the most fine-grained level. In practice, this means:
-             * <ul>
-             * <li>Parameterized types are reduced to their erasure if one of its parameters represents a type variable or a wildcard with a bound
-             * that is a type variable.</li>
-             * <li>Wildcards have their bound erased, if required.</li>
-             * <li>Type variables are erased.</li>
-             * <li>Generic arrays have their component type erased, if required.</li>
-             * <li>Non-generic types are transformed into raw-type representations of the same type.</li>
-             * </ul>
-             */
-            enum TypeVariableErasing implements Visitor<Generic> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public Generic onGenericArray(Generic genericArray) {
-                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray);
-                }
-
-                @Override
-                public Generic onParameterizedType(Generic parameterizedType) {
-                    TypeList.Generic typeArguments = parameterizedType.getTypeArguments();
-                    List<Generic> transformedTypeArguments = new ArrayList<Generic>(typeArguments.size());
-                    for (Generic typeArgument : typeArguments) {
-                        if (typeArgument.accept(TypeVariableErasing.PartialErasureReviser.INSTANCE)) {
-                            return parameterizedType.asRawType();
-                        }
-                        transformedTypeArguments.add(typeArgument.accept(this));
-                    }
-                    Generic ownerType = parameterizedType.getOwnerType();
-                    return new OfParameterizedType.Latent(parameterizedType.asErasure(),
-                            ownerType == null
-                                    ? UNDEFINED
-                                    : ownerType.accept(this),
-                            transformedTypeArguments,
-                            parameterizedType);
-                }
-
-                @Override
-                public Generic onWildcard(Generic wildcard) {
-                    // Wildcards which are used within parameterized types are taken care of by the calling method.
-                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard);
-                }
-
-                @Override
-                public Generic onTypeVariable(Generic typeVariable) {
-                    return typeVariable.getTypeVariableSource().accept(new TypeVariableReviser(typeVariable));
-                }
-
-                @Override
-                public Generic onNonGenericType(Generic typeDescription) {
-                    return typeDescription;
-                }
-
-                /**
-                 * A visitor for checking if a type can be erased partially when defined as a parameter of a parameterized type.
-                 * If this condition is true, a parameterized type must be erased instead of erasing the parameterized type's
-                 * parameters.
-                 */
-                protected enum PartialErasureReviser implements Visitor<Boolean> {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public Boolean onGenericArray(Generic genericArray) {
-                        return genericArray.getComponentType().accept(this);
-                    }
-
-                    @Override
-                    public Boolean onWildcard(Generic wildcard) {
-                        TypeList.Generic lowerBounds = wildcard.getLowerBounds();
-                        return lowerBounds.isEmpty()
-                                ? wildcard.getUpperBounds().getOnly().accept(this)
-                                : lowerBounds.getOnly().accept(this);
-                    }
-
-                    @Override
-                    public Boolean onParameterizedType(Generic parameterizedType) {
-                        return false;
-                    }
-
-                    @Override
-                    public Boolean onTypeVariable(Generic typeVariable) {
-                        return true;
-                    }
-
-                    @Override
-                    public Boolean onNonGenericType(Generic typeDescription) {
-                        return false;
-                    }
-                }
-
-                /**
-                 * A type variable reviser erases a type variable if it is not defined by a method.
-                 */
-                @EqualsAndHashCode
-                protected static class TypeVariableReviser implements TypeVariableSource.Visitor<Generic> {
-
-                    /**
-                     * The discovered type variable.
-                     */
-                    private final Generic typeVariable;
-
-                    /**
-                     * Creates a new type variable reviser.
-                     *
-                     * @param typeVariable The discovered type variable.
-                     */
-                    protected TypeVariableReviser(Generic typeVariable) {
-                        this.typeVariable = typeVariable;
-                    }
-
-                    @Override
-                    public Generic onType(TypeDescription typeDescription) {
-                        return new OfNonGenericType.Latent(typeVariable.asErasure(), typeVariable);
-                    }
-
-                    @Override
-                    public Generic onMethod(MethodDescription.InDefinedShape methodDescription) {
-                        return new RetainedTypeVariable(typeVariable);
-                    }
-                }
-
-                /**
-                 * A retained type variable that is not erased.
-                 */
-                protected static class RetainedTypeVariable extends OfTypeVariable {
-
-                    /**
-                     * The retained type variable.
-                     */
-                    private final Generic typeVariable;
-
-                    /**
-                     * Creates a new retained type variable.
-                     *
-                     * @param typeVariable The retained type variable.
-                     */
-                    protected RetainedTypeVariable(Generic typeVariable) {
-                        this.typeVariable = typeVariable;
-                    }
-
-                    @Override
-                    public TypeList.Generic getUpperBounds() {
-                        return typeVariable.getUpperBounds().accept(TypeVariableErasing.INSTANCE);
-                    }
-
-                    @Override
-                    public TypeVariableSource getTypeVariableSource() {
-                        return typeVariable.getTypeVariableSource();
-                    }
-
-                    @Override
-                    public String getSymbol() {
-                        return typeVariable.getSymbol();
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return typeVariable.getDeclaredAnnotations();
-                    }
-                }
-            }
-
-            /**
              * A visitor that determines the direct assignability of a type to another generic type. This visitor only checks
              * for strict assignability and does not perform any form of boxing or primitive type widening that are allowed
              * in the Java language.
@@ -3481,13 +3310,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = erasure.getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : new Generic.LazyProjection.Detached.WithLazyResolution(superClass, new Visitor.ForRawType(erasure), Empty.INSTANCE);
+                        : new Generic.LazyProjection.WithResolvedErasure(superClass, new Visitor.ForRawType(erasure), Empty.INSTANCE);
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
                 TypeDescription erasure = asErasure();
-                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(erasure.getInterfaces(), new Visitor.ForRawType(erasure));
+                return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(erasure.getInterfaces(), new Visitor.ForRawType(erasure));
             }
 
             @Override
@@ -4372,12 +4201,12 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : new LazyProjection.Detached.WithLazyResolution(superClass, new Visitor.Substitutor.ForTypeVariableBinding(this));
+                        : new LazyProjection.WithResolvedErasure(superClass, new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
             @Override
             public TypeList.Generic getInterfaces() {
-                return new TypeList.Generic.ForDetachedTypes.WithLazyResolution(asErasure().getInterfaces(), new Visitor.Substitutor.ForTypeVariableBinding(this));
+                return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(asErasure().getInterfaces(), new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
             @Override
@@ -5826,64 +5655,37 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            public static class Detached extends LazyProjection.WithEagerNavigation {
+            public static class WithResolvedErasure extends LazyProjection.WithEagerNavigation {
 
                 private final Generic delegate;
 
                 private final Visitor<? extends Generic> visitor;
 
-                public Detached(Generic delegate, Visitor<? extends Generic> visitor) {
+                private final AnnotationSource annotationSource;
+
+                public WithResolvedErasure(Generic delegate, Visitor<? extends Generic> visitor) {
+                    this(delegate, visitor, delegate);
+                }
+
+                public WithResolvedErasure(Generic delegate, Visitor<? extends Generic> visitor, AnnotationSource annotationSource) {
                     this.delegate = delegate;
                     this.visitor = visitor;
+                    this.annotationSource = annotationSource;
                 }
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    return resolve().getDeclaredAnnotations();
+                    return annotationSource.getDeclaredAnnotations();
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return resolve().asErasure();
+                    return delegate.asErasure();
                 }
 
                 @Override
                 protected Generic resolve() {
                     return delegate.accept(visitor);
-                }
-
-                public static class WithLazyResolution extends LazyProjection.WithLazyNavigation {
-
-                    private final Generic delegate;
-
-                    private final Visitor<? extends Generic> visitor;
-
-                    private final AnnotationSource annotationSource;
-
-                    public WithLazyResolution(Generic delegate, Visitor<? extends Generic> visitor) {
-                        this(delegate, visitor, delegate);
-                    }
-
-                    public WithLazyResolution(Generic delegate, Visitor<? extends Generic> visitor, AnnotationSource annotationSource) {
-                        this.delegate = delegate;
-                        this.visitor = visitor;
-                        this.annotationSource = annotationSource;
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return annotationSource.getDeclaredAnnotations();
-                    }
-
-                    @Override
-                    public TypeDescription asErasure() {
-                        return delegate.asErasure();
-                    }
-
-                    @Override
-                    protected Generic resolve() {
-                        return delegate.accept(visitor);
-                    }
                 }
             }
         }

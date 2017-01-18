@@ -671,12 +671,12 @@ public interface InstrumentedType extends TypeDescription {
         public Generic getSuperClass() {
             return superClass == null
                     ? Generic.UNDEFINED
-                    : new Generic.LazyProjection.WithLazyNavigation.Detached(superClass, Generic.Visitor.Substitutor.ForAttachment.of(this));
+                    : new Generic.LazyProjection.WithResolvedErasure(superClass, Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
         public TypeList.Generic getInterfaces() {
-            return TypeList.Generic.ForDetachedTypes.attachLazy(this, interfaceTypes);
+            return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(interfaceTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override

@@ -444,18 +444,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
 
             /**
-             * Creates a list of types that are attached to the provided type. The types are resolved lazily, i.e. type variables
-             * are not resolved prior to computing an erasure.
-             *
-             * @param typeDescription The type to which the detached variables are attached to.
-             * @param detachedTypes   The detached types.
-             * @return A type list representing the detached types being attached to the provided type description.
-             */
-            public static Generic attachLazy(TypeDescription typeDescription, List<? extends TypeDescription.Generic> detachedTypes) {
-                return new WithLazyResolution(detachedTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription));
-            }
-
-            /**
              * Creates a list of type variables that are attached to the provided type.
              *
              * @param typeDescription       The type to which the type variables are to be attached to.
@@ -512,7 +500,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
             @Override
             public TypeDescription.Generic get(int index) {
-                return new TypeDescription.Generic.LazyProjection.Detached(detachedTypes.get(index), visitor);
+                return detachedTypes.get(index).accept(visitor);
             }
 
             @Override
@@ -523,7 +511,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A list of detached types that are attached on reception but not when computing an erasure.
              */
-            public static class WithLazyResolution extends Generic.AbstractBase {
+            public static class WithResolvedErasure extends Generic.AbstractBase {
 
                 /**
                  * The detached types this list represents.
@@ -542,7 +530,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                  * @param detachedTypes The detached types this list represents.
                  * @param visitor       The visitor to use for attaching the detached types.
                  */
-                public WithLazyResolution(List<? extends TypeDescription.Generic> detachedTypes,
+                public WithResolvedErasure(List<? extends TypeDescription.Generic> detachedTypes,
                                           TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                     this.detachedTypes = detachedTypes;
                     this.visitor = visitor;
@@ -550,7 +538,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 public TypeDescription.Generic get(int index) {
-                    return new TypeDescription.Generic.LazyProjection.Detached.WithLazyResolution(detachedTypes.get(index), visitor);
+                    return new TypeDescription.Generic.LazyProjection.WithResolvedErasure(detachedTypes.get(index), visitor);
                 }
 
                 @Override
