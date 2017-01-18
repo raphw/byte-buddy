@@ -497,12 +497,12 @@ public interface MethodGraph {
                 List<TypeDescription.Generic> interfaceTypes = typeDefinition.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>();
                 for (TypeDescription.Generic interfaceType : interfaceTypes) {
-                    interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType.accept(visitor)).asGraph(merger));
+                    interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType).asGraph(merger));
                 }
                 return new Linked.Delegation(rootStore.asGraph(merger),
                         superClass == null
                                 ? Empty.INSTANCE
-                                : snapshots.get(superClass.accept(visitor)).asGraph(merger),
+                                : snapshots.get(superClass).asGraph(merger),
                         interfaceGraphs);
             }
 
@@ -515,12 +515,13 @@ public interface MethodGraph {
              * @return A key store describing the provided type.
              */
             protected Key.Store<T> analyze(TypeDefinition typeDefinition,
+                                           TypeDefinition key,
                                            Map<TypeDefinition, Key.Store<T>> snapshots,
                                            ElementMatcher<? super MethodDescription> relevanceMatcher) {
-                Key.Store<T> store = snapshots.get(typeDefinition);
+                Key.Store<T> store = snapshots.get(key);
                 if (store == null) {
                     store = doAnalyze(typeDefinition, snapshots, relevanceMatcher);
-                    snapshots.put(typeDefinition, store);
+                    snapshots.put(key, store);
                 }
                 return store;
             }
@@ -538,7 +539,7 @@ public interface MethodGraph {
                                                    ElementMatcher<? super MethodDescription> relevanceMatcher) {
                 return typeDescription == null
                         ? new Key.Store<T>()
-                        : analyze(typeDescription.accept(visitor), snapshots, relevanceMatcher);
+                        : analyze(typeDescription.accept(visitor), typeDescription, snapshots, relevanceMatcher);
             }
 
             /**
@@ -554,8 +555,8 @@ public interface MethodGraph {
                                              ElementMatcher<? super MethodDescription> relevanceMatcher) {
                 Key.Store<T> store = analyzeNullable(typeDefinition.getSuperClass(), snapshots, relevanceMatcher);
                 Key.Store<T> interfaceStore = new Key.Store<T>();
-                for (TypeDescription.Generic interfaceType : typeDefinition.getInterfaces().accept(visitor)) {
-                    interfaceStore = interfaceStore.combineWith(analyze(interfaceType, snapshots, relevanceMatcher));
+                for (TypeDescription.Generic interfaceType : typeDefinition.getInterfaces()) {
+                    interfaceStore = interfaceStore.combineWith(analyze(interfaceType.accept(visitor), interfaceType, snapshots, relevanceMatcher));
                 }
                 store = store.inject(interfaceStore);
                 for (MethodDescription methodDescription : typeDefinition.getDeclaredMethods().filter(relevanceMatcher)) {
