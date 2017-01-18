@@ -427,15 +427,22 @@ public interface MethodGraph {
              */
             private final Merger merger;
 
+            private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
+
             /**
              * Creates a new default method graph compiler.
              *
              * @param harmonizer The harmonizer to be used.
              * @param merger     The merger to be used.
              */
-            protected Default(Harmonizer<T> harmonizer, Merger merger) {
+            protected Default(Harmonizer<T> harmonizer, Merger merger, TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                 this.harmonizer = harmonizer;
                 this.merger = merger;
+                this.visitor = visitor;
+            }
+
+            public static <S> Compiler of(Harmonizer<S> harmonizer, Merger merger) {
+                return new Default<S>(harmonizer, merger, TypeDescription.Generic.Visitor.Reifying.INSTANCE);
             }
 
             /**
@@ -446,8 +453,8 @@ public interface MethodGraph {
              * @param <S>        The type of the harmonizer token.
              * @return A default compiler for the given harmonizer and merger.
              */
-            public static <S> Compiler of(Harmonizer<S> harmonizer, Merger merger) {
-                return new Default<S>(harmonizer, merger);
+            public static <S> Compiler of(Harmonizer<S> harmonizer, Merger merger, TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                return new Default<S>(harmonizer, merger, visitor);
             }
 
             /**
@@ -490,12 +497,12 @@ public interface MethodGraph {
                 List<TypeDescription.Generic> interfaceTypes = typeDefinition.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>();
                 for (TypeDescription.Generic interfaceType : interfaceTypes) {
-                    interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType).asGraph(merger));
+                    interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType.accept(visitor)).asGraph(merger));
                 }
                 return new Linked.Delegation(rootStore.asGraph(merger),
                         superClass == null
                                 ? Empty.INSTANCE
-                                : snapshots.get(superClass).asGraph(merger),
+                                : snapshots.get(superClass.accept(visitor)).asGraph(merger),
                         interfaceGraphs);
             }
 
@@ -526,12 +533,12 @@ public interface MethodGraph {
              * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
-            protected Key.Store<T> analyzeNullable(TypeDefinition typeDefinition,
+            protected Key.Store<T> analyzeNullable(TypeDescription.Generic typeDescription,
                                                    Map<TypeDefinition, Key.Store<T>> snapshots,
                                                    ElementMatcher<? super MethodDescription> relevanceMatcher) {
-                return typeDefinition == null
+                return typeDescription == null
                         ? new Key.Store<T>()
-                        : analyze(typeDefinition, snapshots, relevanceMatcher);
+                        : analyze(typeDescription.accept(visitor), snapshots, relevanceMatcher);
             }
 
             /**
@@ -547,7 +554,7 @@ public interface MethodGraph {
                                              ElementMatcher<? super MethodDescription> relevanceMatcher) {
                 Key.Store<T> store = analyzeNullable(typeDefinition.getSuperClass(), snapshots, relevanceMatcher);
                 Key.Store<T> interfaceStore = new Key.Store<T>();
-                for (TypeDescription.Generic interfaceType : typeDefinition.getInterfaces()) {
+                for (TypeDescription.Generic interfaceType : typeDefinition.getInterfaces().accept(visitor)) {
                     interfaceStore = interfaceStore.combineWith(analyze(interfaceType, snapshots, relevanceMatcher));
                 }
                 store = store.inject(interfaceStore);

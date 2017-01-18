@@ -1529,6 +1529,39 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            enum Reifying implements Visitor<Generic> {
+
+                INSTANCE;
+
+                @Override
+                public Generic onGenericArray(Generic genericArray) {
+                    throw new IllegalArgumentException("Cannot reify a generic array: " + genericArray);
+                }
+
+                @Override
+                public Generic onWildcard(Generic wildcard) {
+                    throw new IllegalArgumentException("Cannot reify a wildcard: " + wildcard);
+                }
+
+                @Override
+                public Generic onParameterizedType(Generic parameterizedType) {
+                    return parameterizedType;
+                }
+
+                @Override
+                public Generic onTypeVariable(Generic typeVariable) {
+                    throw new IllegalArgumentException("Cannot reify a type variable: " + typeVariable);
+                }
+
+                @Override
+                public Generic onNonGenericType(Generic typeDescription) {
+                    TypeDescription erasure = typeDescription.asErasure();
+                    return erasure.isGenerified()
+                            ? OfParameterizedType.ForReifiedErasure.of(erasure)
+                            : typeDescription;
+                }
+            }
+
             /**
              * Visits a generic type and appends the discovered type to the supplied signature visitor.
              */
@@ -4692,10 +4725,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             }
 
             /**
-             * Represents a type erasure as a parameterized type where any type variable is used as a type argument
-             * of the parameterized type and where the declaring type is defined as the type's owner type.
+             * Represents a type erasure as a parameterized type where any type variable's erasure is used as a type
+             * argument of the parameterized type and where the declaring type is defined as the type's owner type. Any
+             * type annotations are removed by this representation.
              */
-            public static class ForGenerifiedErasure extends OfParameterizedType {
+            public static class ForReifiedErasure extends OfParameterizedType {
 
                 /**
                  * The represented type erasure.
@@ -4703,11 +4737,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 private final TypeDescription typeDescription;
 
                 /**
-                 * Creates a new parameterized type for a generified erasure.
+                 * Creates a new parameterized type for a reified erasure.
                  *
                  * @param typeDescription The represented type erasure.
                  */
-                protected ForGenerifiedErasure(TypeDescription typeDescription) {
+                protected ForReifiedErasure(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
                 }
 
@@ -4721,7 +4755,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 public static Generic of(TypeDescription typeDescription) {
                     return typeDescription.isGenerified()
-                            ? new ForGenerifiedErasure(typeDescription)
+                            ? new ForReifiedErasure(typeDescription)
                             : new OfNonGenericType.OfErasure(typeDescription);
                 }
 

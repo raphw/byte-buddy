@@ -276,7 +276,7 @@ public class ByteBuddy {
      * @return A type builder for creating a new class extending the provided class or interface.
      */
     public DynamicType.Builder<?> subclass(TypeDescription superType) {
-        return subclassGeneric(TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(superType));
+        return subclassGeneric(TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(superType));
     }
 
     /**
@@ -297,7 +297,7 @@ public class ByteBuddy {
      * @return A type builder for creating a new class extending the provided class or interface.
      */
     public DynamicType.Builder<?> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
-        return subclassGeneric(TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(superType), constructorStrategy);
+        return subclassGeneric(TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(superType), constructorStrategy);
     }
 
     /**

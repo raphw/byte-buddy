@@ -683,7 +683,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
             @Override
             public TypeDescription.Generic get(int index) {
-                return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(typeDescriptions.get(index));
+                return TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(typeDescriptions.get(index));
             }
 
             @Override

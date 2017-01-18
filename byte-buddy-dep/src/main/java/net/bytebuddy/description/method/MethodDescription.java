@@ -314,14 +314,14 @@ public interface MethodDescription extends TypeVariableSource,
                 } else if (isConstructor()) {
                     TypeDescription declaringType = getDeclaringType(), enclosingDeclaringType = getDeclaringType().getEnclosingType();
                     if (enclosingDeclaringType == null) {
-                        return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(declaringType);
+                        return TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(declaringType); // TODO: Fix
                     } else {
                         return declaringType.isStatic()
                                 ? enclosingDeclaringType.asGenericType()
-                                : TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(enclosingDeclaringType);
+                                : TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(enclosingDeclaringType); // TODO: Fix
                     }
                 } else {
-                    return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(getDeclaringType());
+                    return TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(getDeclaringType()); // TODO: Fix
                 }
             }
         }
