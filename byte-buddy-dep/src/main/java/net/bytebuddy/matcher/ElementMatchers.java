@@ -3,9 +3,9 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.annotation.AnnotationSource;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -115,16 +115,23 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given field as a {@link FieldDescription}.
+     * Exactly matches a given field as a {@link FieldDescription} in its defined shape.
      *
      * @param field The field to match by its description
      * @param <T>   The type of the matched object.
-     * @return An element matcher that exactly matches the given field.
+     * @return An element matcher that exactly matches the given field in its defined shape.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> is(Field field) {
         return is(new FieldDescription.ForLoadedField(field));
     }
 
+    /**
+     * Exactly matches a given field as a {@link FieldDescription} in its defined shape.
+     *
+     * @param field The field to match by its description
+     * @param <T>   The type of the matched object.
+     * @return An element matcher that exactly matches the given field in its defined shape.
+     */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription.InDefinedShape field) {
         return definedField(new EqualityMatcher<FieldDescription.InDefinedShape>(field));
     }
@@ -141,27 +148,34 @@ public final class ElementMatchers {
     }
 
     /**
-     * Exactly matches a given method as a {@link MethodDescription}.
+     * Exactly matches a given method as a {@link MethodDescription} in its defined shape.
      *
      * @param method The method to match by its description
      * @param <T>    The type of the matched object.
-     * @return An element matcher that exactly matches the given method.
+     * @return An element matcher that exactly matches the given method in its defined shape.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Method method) {
         return is(new MethodDescription.ForLoadedMethod(method));
     }
 
     /**
-     * Exactly matches a given constructor as a {@link MethodDescription}.
+     * Exactly matches a given constructor as a {@link MethodDescription} in its defined shape.
      *
      * @param constructor The constructor to match by its description
      * @param <T>         The type of the matched object.
-     * @return An element matcher that exactly matches the given constructor.
+     * @return An element matcher that exactly matches the given constructor in its defined shape.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Constructor<?> constructor) {
         return is(new MethodDescription.ForLoadedConstructor(constructor));
     }
 
+    /**
+     * Exactly matches a given method or constructor as a {@link MethodDescription} in its defined shape.
+     *
+     * @param method The method to match by its description
+     * @param <T>    The type of the matched object.
+     * @return An element matcher that exactly matches the given method or constructor in its defined shape.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription.InDefinedShape method) {
         return definedMethod(new EqualityMatcher<MethodDescription.InDefinedShape>(method));
     }
@@ -177,6 +191,13 @@ public final class ElementMatchers {
         return new DefinedShapeMatcher<T, MethodDescription.InDefinedShape>(matcher);
     }
 
+    /**
+     * Exactly matches a given parameter as a {@link ParameterDescription} in its defined shape.
+     *
+     * @param parameter The parameter to match by its description
+     * @param <T>       The type of the matched object.
+     * @return An element matcher that exactly matches the given parameter in its defined shape.
+     */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> is(ParameterDescription.InDefinedShape parameter) {
         return definedParameter(new EqualityMatcher<ParameterDescription.InDefinedShape>(parameter));
     }
