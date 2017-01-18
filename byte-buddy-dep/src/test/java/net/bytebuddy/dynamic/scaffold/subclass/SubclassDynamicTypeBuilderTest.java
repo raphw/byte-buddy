@@ -38,6 +38,7 @@ import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static junit.framework.TestCase.assertEquals;
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
@@ -354,16 +355,10 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(dynamicType.getGenericSuperclass(), is((Type) GenericType.Inner.class));
         assertThat(dynamicType.getGenericInterfaces().length, is(0));
         Method foo = dynamicType.getDeclaredMethod(FOO, String.class);
-        assertThat(foo.getTypeParameters().length, is(2));
-        assertThat(foo.getTypeParameters()[0].getName(), is("V"));
-        assertThat(foo.getTypeParameters()[0].getBounds().length, is(1));
-        assertThat(foo.getTypeParameters()[0].getBounds()[0], is((Type) String.class));
-        assertThat(foo.getTypeParameters()[1].getName(), is("W"));
-        assertThat(foo.getTypeParameters()[1].getBounds().length, is(1));
-        assertThat(foo.getTypeParameters()[1].getBounds()[0], is((Type) Exception.class));
+        assertThat(foo.getTypeParameters().length, is(0));
         assertThat(foo.getGenericReturnType(), is((Object) List.class));
         Method call = dynamicType.getDeclaredMethod("call");
-        assertThat(call.getGenericReturnType(), is(((ParameterizedType) GenericType.Inner.class.getGenericInterfaces()[0]).getActualTypeArguments()[0]));
+        assertThat(call.getGenericReturnType(), is((Object) Map.class));
     }
 
     @Test

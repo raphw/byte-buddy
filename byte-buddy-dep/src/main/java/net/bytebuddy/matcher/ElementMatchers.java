@@ -125,8 +125,8 @@ public final class ElementMatchers {
         return is(new FieldDescription.ForLoadedField(field));
     }
 
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription.InDefinedShape fieldDescription) {
-        return definedField(new EqualityMatcher<FieldDescription.InDefinedShape>(fieldDescription));
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription.InDefinedShape field) {
+        return definedField(new EqualityMatcher<FieldDescription.InDefinedShape>(field));
     }
 
     /**
@@ -162,8 +162,8 @@ public final class ElementMatchers {
         return is(new MethodDescription.ForLoadedConstructor(constructor));
     }
 
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription.InDefinedShape methodDescription) {
-        return definedMethod(new EqualityMatcher<MethodDescription.InDefinedShape>(methodDescription));
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription.InDefinedShape method) {
+        return definedMethod(new EqualityMatcher<MethodDescription.InDefinedShape>(method));
     }
 
     /**
@@ -175,6 +175,10 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> definedMethod(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
         return new DefinedShapeMatcher<T, MethodDescription.InDefinedShape>(matcher);
+    }
+
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> is(ParameterDescription.InDefinedShape parameter) {
+        return definedParameter(new EqualityMatcher<ParameterDescription.InDefinedShape>(parameter));
     }
 
     /**

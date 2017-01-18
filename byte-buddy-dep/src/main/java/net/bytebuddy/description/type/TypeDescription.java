@@ -3499,7 +3499,9 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 TypeDescription erasure = asErasure();
-                return new MethodList.TypeSubstituting(this, erasure.getDeclaredMethods(), new Visitor.ForRawType(erasure));
+                return erasure.isGenerified()
+                        ? new MethodList.TypeSubstituting.WithRetainedVariables(this, erasure.getDeclaredMethods(), new Visitor.ForRawType(erasure))
+                        : new MethodList.TypeSubstituting.WithoutRetainedVariables(this, erasure.getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
@@ -4387,7 +4389,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
-                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), new Visitor.Substitutor.ForTypeVariableBinding(this));
+                return new MethodList.TypeSubstituting.WithRetainedVariables(this, asErasure().getDeclaredMethods(), new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
             @Override
@@ -4757,6 +4759,16 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return typeDescription.isGenerified()
                             ? new ForReifiedErasure(typeDescription)
                             : new OfNonGenericType.OfErasure(typeDescription);
+                }
+
+                @Override
+                public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
+                    return new FieldList.TypeSubstituting(this, super.getDeclaredFields(), Visitor.TypeErasing.INSTANCE);
+                }
+
+                @Override
+                public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
+                    return new MethodList.TypeSubstituting.WithoutRetainedVariables(this, super.getDeclaredMethods(), Visitor.TypeErasing.INSTANCE);
                 }
 
                 @Override

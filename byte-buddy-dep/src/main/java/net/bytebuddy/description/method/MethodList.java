@@ -219,22 +219,22 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     /**
      * A list of method descriptions that yields {@link net.bytebuddy.description.method.MethodDescription.TypeSubstituting}.
      */
-    class TypeSubstituting extends AbstractBase<MethodDescription.InGenericShape> {
+    abstract class TypeSubstituting extends AbstractBase<MethodDescription.InGenericShape> {
 
         /**
          * The methods' declaring type.
          */
-        private final TypeDescription.Generic declaringType;
+        protected final TypeDescription.Generic declaringType;
 
         /**
          * The list of method descriptions to represent.
          */
-        private final List<? extends MethodDescription> methodDescriptions;
+        protected final List<? extends MethodDescription> methodDescriptions;
 
         /**
          * The visitor to apply to each method description before returning it.
          */
-        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
+        protected final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
         /**
          * Creates a new type substituting method list.
@@ -252,13 +252,36 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodDescription.InGenericShape get(int index) {
-            return new MethodDescription.TypeSubstituting(declaringType, methodDescriptions.get(index), visitor);
-        }
-
-        @Override
         public int size() {
             return methodDescriptions.size();
+        }
+
+        public static class WithRetainedVariables extends TypeSubstituting {
+
+            public WithRetainedVariables(TypeDescription.Generic declaringType,
+                                         List<? extends MethodDescription> methodDescriptions,
+                                         TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                super(declaringType, methodDescriptions, visitor);
+            }
+
+            @Override
+            public MethodDescription.InGenericShape get(int index) {
+                return new MethodDescription.TypeSubstituting.WithRetainedVariables(declaringType, methodDescriptions.get(index), visitor);
+            }
+        }
+
+        public static class WithoutRetainedVariables extends TypeSubstituting {
+
+            public WithoutRetainedVariables(TypeDescription.Generic declaringType,
+                                            List<? extends MethodDescription> methodDescriptions,
+                                            TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                super(declaringType, methodDescriptions, visitor);
+            }
+
+            @Override
+            public MethodDescription.InGenericShape get(int index) {
+                return new MethodDescription.TypeSubstituting.WithoutRetainedVariables(declaringType, methodDescriptions.get(index), visitor);
+            }
         }
     }
 

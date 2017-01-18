@@ -1284,7 +1284,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * A method description that represents a given method but with substituted method types.
      */
-    class TypeSubstituting extends AbstractBase implements InGenericShape {
+    abstract class TypeSubstituting extends AbstractBase implements InGenericShape {
 
         /**
          * The type that declares this type-substituted method.
@@ -1294,12 +1294,12 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * The represented method description.
          */
-        private final MethodDescription methodDescription;
+        protected final MethodDescription methodDescription;
 
         /**
          * A visitor that is applied to the method type.
          */
-        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
+        protected final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
         /**
          * Creates a method description with substituted method types.
@@ -1314,11 +1314,6 @@ public interface MethodDescription extends TypeVariableSource,
             this.declaringType = declaringType;
             this.methodDescription = methodDescription;
             this.visitor = visitor;
-        }
-
-        @Override
-        public TypeList.Generic getTypeVariables() {
-            return methodDescription.getTypeVariables().accept(visitor).filter(ElementMatchers.ofSort(TypeDefinition.Sort.VARIABLE));
         }
 
         @Override
@@ -1372,6 +1367,34 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public InDefinedShape asDefined() {
             return methodDescription.asDefined();
+        }
+
+        public static class WithRetainedVariables extends TypeSubstituting {
+
+            public WithRetainedVariables(TypeDescription.Generic declaringType,
+                                         MethodDescription methodDescription,
+                                         TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                super(declaringType, methodDescription, visitor);
+            }
+
+            @Override
+            public TypeList.Generic getTypeVariables() {
+                return new TypeList.Generic.ForDetachedTypes(methodDescription.getTypeVariables(), visitor);
+            }
+        }
+
+        public static class WithoutRetainedVariables extends TypeSubstituting {
+
+            public WithoutRetainedVariables(TypeDescription.Generic declaringType,
+                                         MethodDescription methodDescription,
+                                         TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                super(declaringType, methodDescription, visitor);
+            }
+
+            @Override
+            public TypeList.Generic getTypeVariables() {
+                return new TypeList.Generic.Empty();
+            }
         }
     }
 
