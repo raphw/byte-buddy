@@ -3499,9 +3499,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
                 TypeDescription erasure = asErasure();
-                return erasure.isGenerified()
-                        ? new MethodList.TypeSubstituting.WithRetainedVariables(this, erasure.getDeclaredMethods(), new Visitor.ForRawType(erasure))
-                        : new MethodList.TypeSubstituting.WithoutRetainedVariables(this, erasure.getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
+                return new MethodList.TypeSubstituting(this, erasure.getDeclaredMethods(), new Visitor.ForRawType(erasure));
             }
 
             @Override
@@ -4389,7 +4387,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
             @Override
             public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
-                return new MethodList.TypeSubstituting.WithRetainedVariables(this, asErasure().getDeclaredMethods(), new Visitor.Substitutor.ForTypeVariableBinding(this));
+                return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
             @Override
@@ -4768,7 +4766,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
-                    return new MethodList.TypeSubstituting.WithoutRetainedVariables(this, super.getDeclaredMethods(), Visitor.TypeErasing.INSTANCE);
+                    return new MethodList.TypeSubstituting(this, super.getDeclaredMethods(), Visitor.TypeErasing.INSTANCE);
                 }
 
                 @Override
