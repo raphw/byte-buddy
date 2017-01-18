@@ -122,7 +122,11 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given field.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> is(Field field) {
-        return definedField(is(new FieldDescription.ForLoadedField(field)));
+        return is(new FieldDescription.ForLoadedField(field));
+    }
+
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> is(FieldDescription.InDefinedShape fieldDescription) {
+        return definedField(new EqualityMatcher<FieldDescription.InDefinedShape>(fieldDescription));
     }
 
     /**
@@ -144,7 +148,7 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Method method) {
-        return definedMethod(is(new MethodDescription.ForLoadedMethod(method)));
+        return is(new MethodDescription.ForLoadedMethod(method));
     }
 
     /**
@@ -155,7 +159,11 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given constructor.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Constructor<?> constructor) {
-        return definedMethod(is(new MethodDescription.ForLoadedConstructor(constructor)));
+        return is(new MethodDescription.ForLoadedConstructor(constructor));
+    }
+
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> is(MethodDescription.InDefinedShape methodDescription) {
+        return definedMethod(new EqualityMatcher<MethodDescription.InDefinedShape>(methodDescription));
     }
 
     /**

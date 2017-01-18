@@ -477,7 +477,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = create(Class.forName(SIMPLE_TYPE_ANNOTATED))
                 .merge(TypeManifestation.ABSTRACT)
-                .implementGeneric(TypeDescription.Generic.Builder.rawType(Callable.class)
+                .implement(TypeDescription.Generic.Builder.rawType(Callable.class)
                         .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, QUX * 3).build()))
                 .make()
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)

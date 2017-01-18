@@ -488,7 +488,7 @@ public @interface FieldProxy {
                                                     FieldDescription fieldDescription,
                                                     Assigner assigner,
                                                     MethodAccessorFactory methodAccessorFactory) {
-                    return builder.method(is(getterMethod)).intercept(new FieldGetter(fieldDescription, assigner, methodAccessorFactory));
+                    return builder.method(definedMethod(is(getterMethod))).intercept(new FieldGetter(fieldDescription, assigner, methodAccessorFactory));
                 }
             }
 
