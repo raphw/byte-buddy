@@ -427,6 +427,9 @@ public interface MethodGraph {
              */
             private final Merger merger;
 
+            /**
+             * A visitor to apply to all type descriptions before analyzing their methods or resolving super types.
+             */
             private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
             /**
@@ -434,6 +437,7 @@ public interface MethodGraph {
              *
              * @param harmonizer The harmonizer to be used.
              * @param merger     The merger to be used.
+             * @param visitor    A visitor to apply to all type descriptions before analyzing their methods or resolving super types.
              */
             protected Default(Harmonizer<T> harmonizer, Merger merger, TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                 this.harmonizer = harmonizer;
@@ -441,6 +445,14 @@ public interface MethodGraph {
                 this.visitor = visitor;
             }
 
+            /**
+             * Creates a default compiler using the given harmonizer and merger. All raw types are reified before analyzing their properties.
+             *
+             * @param harmonizer The harmonizer to be used for creating tokens that uniquely identify a method hierarchy.
+             * @param merger     The merger to be used for identifying a method to represent an ambiguous method resolution.
+             * @param <S>        The type of the harmonizer token.
+             * @return A default compiler for the given harmonizer and merger.
+             */
             public static <S> Compiler of(Harmonizer<S> harmonizer, Merger merger) {
                 return new Default<S>(harmonizer, merger, TypeDescription.Generic.Visitor.Reifying.INSTANCE);
             }
@@ -450,6 +462,7 @@ public interface MethodGraph {
              *
              * @param harmonizer The harmonizer to be used for creating tokens that uniquely identify a method hierarchy.
              * @param merger     The merger to be used for identifying a method to represent an ambiguous method resolution.
+             * @param visitor    A visitor to apply to all type descriptions before analyzing their methods or resolving super types.
              * @param <S>        The type of the harmonizer token.
              * @return A default compiler for the given harmonizer and merger.
              */
@@ -510,6 +523,7 @@ public interface MethodGraph {
              * Analyzes the given type description without checking if the end of the type hierarchy was reached.
              *
              * @param typeDefinition   The type to analyze.
+             * @param key              The type in its original form before applying the visitor.
              * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
              * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
@@ -529,7 +543,7 @@ public interface MethodGraph {
             /**
              * Analyzes the given type description.
              *
-             * @param typeDefinition   The type to analyze.
+             * @param typeDescription  The type to analyze.
              * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
              * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.

@@ -1358,8 +1358,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            /**
+             * A type visitor that reifies raw types.
+             */
             enum Reifying implements Visitor<Generic> {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -4622,14 +4628,31 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            /**
+             * Represents an erasure as a generic type where all type variables are representing their own arguments.
+             */
             public static class ForGenerifiedErasure extends OfParameterizedType {
 
+                /**
+                 * The represented erasure.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * Creates a new generified erasure.
+                 *
+                 * @param typeDescription The represented erasure.
+                 */
                 protected ForGenerifiedErasure(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
                 }
 
+                /**
+                 * Represents the supplied type description as a generified erasure if it is generified or as a non-generic type if not so.
+                 *
+                 * @param typeDescription The represented erasure.
+                 * @return An appropriate generic type.
+                 */
                 public static Generic of(TypeDescription typeDescription) {
                     return typeDescription.isGenerified()
                             ? new ForGenerifiedErasure(typeDescription)
@@ -5655,18 +5678,43 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            /**
+             * A lazy projection that applies a visitor only when resolving the generic type but not when reading the erasure.
+             */
             public static class WithResolvedErasure extends LazyProjection.WithEagerNavigation {
 
+                /**
+                 * The unresolved generic type.
+                 */
                 private final Generic delegate;
 
+                /**
+                 * The visitor to apply for resolving the generic type.
+                 */
                 private final Visitor<? extends Generic> visitor;
 
+                /**
+                 * The annotation source to apply.
+                 */
                 private final AnnotationSource annotationSource;
 
+                /**
+                 * Creates a lazy projection with a resolved erasure that retains the delegates type annotations.
+                 *
+                 * @param delegate The unresolved generic type.
+                 * @param visitor  The visitor to apply for resolving the generic type.
+                 */
                 public WithResolvedErasure(Generic delegate, Visitor<? extends Generic> visitor) {
                     this(delegate, visitor, delegate);
                 }
 
+                /**
+                 * Creates a lazy projection with a resolved erasure.
+                 *
+                 * @param delegate         The unresolved generic type.
+                 * @param visitor          The visitor to apply for resolving the generic type.
+                 * @param annotationSource The annotation source representing this type's type annotations.
+                 */
                 public WithResolvedErasure(Generic delegate, Visitor<? extends Generic> visitor, AnnotationSource annotationSource) {
                     this.delegate = delegate;
                     this.visitor = visitor;

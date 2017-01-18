@@ -13,7 +13,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.CoreMatchers.is;
 
 public class ByteBuddyPluginTest {
 
