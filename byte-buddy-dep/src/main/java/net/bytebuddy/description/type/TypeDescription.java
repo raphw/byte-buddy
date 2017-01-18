@@ -3481,7 +3481,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = erasure.getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : new Generic.LazyProjection.WithLazyNavigation.Detached(superClass, new Visitor.ForRawType(erasure));
+                        : new Generic.LazyProjection.Detached.WithLazyResolution(superClass, new Visitor.ForRawType(erasure), Empty.INSTANCE);
             }
 
             @Override
@@ -4372,7 +4372,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 Generic superClass = asErasure().getSuperClass();
                 return superClass == null
                         ? Generic.UNDEFINED
-                        : new LazyProjection.WithLazyNavigation.Detached(superClass, new Visitor.Substitutor.ForTypeVariableBinding(this));
+                        : new LazyProjection.Detached.WithLazyResolution(superClass, new Visitor.Substitutor.ForTypeVariableBinding(this));
             }
 
             @Override
@@ -4775,6 +4775,44 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 public TypeDescription asErasure() {
                     return typeDescription;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+            }
+
+            public static class ForGenerifiedErasure extends OfParameterizedType {
+
+                private final TypeDescription typeDescription;
+
+                protected ForGenerifiedErasure(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                public static Generic of(TypeDescription typeDescription) {
+                    return typeDescription.isGenerified()
+                            ? new ForGenerifiedErasure(typeDescription)
+                            : new OfNonGenericType.OfErasure(typeDescription);
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    return typeDescription;
+                }
+
+                @Override
+                public TypeList.Generic getTypeArguments() {
+                    return new TypeList.Generic.ForDetachedTypes(typeDescription.getTypeVariables(), Visitor.AnnotationStripper.INSTANCE);
+                }
+
+                @Override
+                public Generic getOwnerType() {
+                    TypeDescription declaringType = typeDescription.getDeclaringType();
+                    return declaringType == null
+                            ? Generic.UNDEFINED
+                            : of(declaringType);
                 }
 
                 @Override
@@ -5361,50 +5399,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 /**
-                 * A type description of a generic type that requires attachment unless when reading the erasure of the type description.
-                 * This is only applicable when the represented type is a super type of another type where it is impossible that the
-                 * represented type is a type variable.
-                 */
-                public static class Detached extends WithLazyNavigation {
-
-                    /**
-                     * The underlying type description.
-                     */
-                    private final Generic delegate;
-
-                    /**
-                     * The visitor to apply before resolution.
-                     */
-                    private final Visitor<? extends Generic> visitor;
-
-                    /**
-                     * Creates a new detached generic type description with lazy navigation.
-                     *
-                     * @param delegate The underlying type description.
-                     * @param visitor  The visitor to apply before resolution.
-                     */
-                    public Detached(Generic delegate, Visitor<? extends Generic> visitor) {
-                        this.delegate = delegate;
-                        this.visitor = visitor;
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return delegate.getDeclaredAnnotations();
-                    }
-
-                    @Override
-                    public TypeDescription asErasure() {
-                        return delegate.asErasure();
-                    }
-
-                    @Override
-                    protected Generic resolve() {
-                        return delegate.accept(visitor);
-                    }
-                }
-
-                /**
                  * A lazy super class description for a lazy projection.
                  */
                 protected static class LazySuperClass extends WithLazyNavigation {
@@ -5819,6 +5813,67 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 @Override
                 protected AnnotationReader getAnnotationReader() {
                     return AnnotationReader.DISPATCHER.resolveParameterType(method, index);
+                }
+            }
+
+            public static class Detached extends LazyProjection.WithEagerNavigation {
+
+                private final Generic delegate;
+
+                private final Visitor<? extends Generic> visitor;
+
+                public Detached(Generic delegate, Visitor<? extends Generic> visitor) {
+                    this.delegate = delegate;
+                    this.visitor = visitor;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return resolve().getDeclaredAnnotations();
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    return resolve().asErasure();
+                }
+
+                @Override
+                protected Generic resolve() {
+                    return delegate.accept(visitor);
+                }
+
+                public static class WithLazyResolution extends LazyProjection.WithLazyNavigation {
+
+                    private final Generic delegate;
+
+                    private final Visitor<? extends Generic> visitor;
+
+                    private final AnnotationSource annotationSource;
+
+                    public WithLazyResolution(Generic delegate, Visitor<? extends Generic> visitor) {
+                        this(delegate, visitor, delegate);
+                    }
+
+                    public WithLazyResolution(Generic delegate, Visitor<? extends Generic> visitor, AnnotationSource annotationSource) {
+                        this.delegate = delegate;
+                        this.visitor = visitor;
+                        this.annotationSource = annotationSource;
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return annotationSource.getDeclaredAnnotations();
+                    }
+
+                    @Override
+                    public TypeDescription asErasure() {
+                        return delegate.asErasure();
+                    }
+
+                    @Override
+                    protected Generic resolve() {
+                        return delegate.accept(visitor);
+                    }
                 }
             }
         }

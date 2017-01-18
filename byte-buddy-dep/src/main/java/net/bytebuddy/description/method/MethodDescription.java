@@ -15,6 +15,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaConstant;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
@@ -314,14 +315,14 @@ public interface MethodDescription extends TypeVariableSource,
                 } else if (isConstructor()) {
                     TypeDescription declaringType = getDeclaringType(), enclosingDeclaringType = getDeclaringType().getEnclosingType();
                     if (enclosingDeclaringType == null) {
-                        return TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(declaringType); // TODO: Fix
+                        return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(declaringType);
                     } else {
                         return declaringType.isStatic()
                                 ? enclosingDeclaringType.asGenericType()
-                                : TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(enclosingDeclaringType); // TODO: Fix
+                                : TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(enclosingDeclaringType);
                     }
                 } else {
-                    return TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(getDeclaringType()); // TODO: Fix
+                    return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(getDeclaringType());
                 }
             }
         }
@@ -1317,7 +1318,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return new TypeList.Generic.ForDetachedTypes(methodDescription.getTypeVariables(), visitor);
+            return methodDescription.getTypeVariables().accept(visitor).filter(ElementMatchers.ofSort(TypeDefinition.Sort.VARIABLE));
         }
 
         @Override

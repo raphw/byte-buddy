@@ -512,7 +512,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
             @Override
             public TypeDescription.Generic get(int index) {
-                return detachedTypes.get(index).accept(visitor);
+                return new TypeDescription.Generic.LazyProjection.Detached(detachedTypes.get(index), visitor);
             }
 
             @Override
@@ -550,7 +550,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 public TypeDescription.Generic get(int index) {
-                    return new TypeDescription.Generic.LazyProjection.WithLazyNavigation.Detached(detachedTypes.get(index), visitor);
+                    return new TypeDescription.Generic.LazyProjection.Detached.WithLazyResolution(detachedTypes.get(index), visitor);
                 }
 
                 @Override
@@ -659,36 +659,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                         return typeVariableToken.getAnnotations();
                     }
                 }
-            }
-        }
-
-        /**
-         * A list of {@link TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure}s.
-         */
-        class ForGenerifiedErasures extends AbstractBase {
-
-            /**
-             * The represented types.
-             */
-            private final List<? extends TypeDescription> typeDescriptions;
-
-            /**
-             * Creates a list of generified erasures.
-             *
-             * @param typeDescriptions The represented types.
-             */
-            public ForGenerifiedErasures(List<? extends TypeDescription> typeDescriptions) {
-                this.typeDescriptions = typeDescriptions;
-            }
-
-            @Override
-            public TypeDescription.Generic get(int index) {
-                return TypeDescription.Generic.OfParameterizedType.ForReifiedErasure.of(typeDescriptions.get(index));
-            }
-
-            @Override
-            public int size() {
-                return typeDescriptions.size();
             }
         }
 
