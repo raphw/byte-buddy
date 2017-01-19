@@ -1391,7 +1391,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    return OfNonGenericType.ForReifiedErasure.of(typeDescription.asErasure());
+                    TypeDescription erasure = typeDescription.asErasure();
+                    return erasure.isGenerified()
+                            ? new OfNonGenericType.ForReifiedErasure(erasure)
+                            : typeDescription;
                 }
             }
 
@@ -3536,7 +3539,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param declaringType    The non-generic type's declaring type.
                  * @param annotationSource The annotation source to query for the declared annotations.
                  */
-                public Latent(TypeDescription typeDescription, Generic declaringType, AnnotationSource annotationSource) {
+                protected Latent(TypeDescription typeDescription, Generic declaringType, AnnotationSource annotationSource) {
                     this.typeDescription = typeDescription;
                     this.declaringType = declaringType;
                     this.annotationSource = annotationSource;
