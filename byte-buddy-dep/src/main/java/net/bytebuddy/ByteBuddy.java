@@ -262,7 +262,7 @@ public class ByteBuddy {
      * <p>
      * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type. Any constructor is implemented
      * to only invoke its super type constructor of equal signature. Another behavior can be specified by supplying an explicit
-     * {@link ConstructorStrategy} by {@link ByteBuddy#subclassGeneric(Type, ConstructorStrategy)}.
+     * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Type, ConstructorStrategy)}.
      * </p>
      * <p>
      * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link Class} values are implemented
@@ -314,7 +314,7 @@ public class ByteBuddy {
      * <p>
      * When extending a class, Byte Buddy imitates all visible constructors of the subclassed type and sets them to be {@code public}.
      * Any constructor is implemented to only invoke its super type constructor of equal signature. Another behavior can be specified by
-     * supplying an explicit {@link ConstructorStrategy} by {@link ByteBuddy#subclassGeneric(TypeDefinition, ConstructorStrategy)}.
+     * supplying an explicit {@link ConstructorStrategy} by {@link ByteBuddy#subclass(TypeDefinition, ConstructorStrategy)}.
      * </p>
      * <p>
      * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link TypeDescription} values are implemented
