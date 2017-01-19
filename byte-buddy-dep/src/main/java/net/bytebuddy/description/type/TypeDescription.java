@@ -3498,10 +3498,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            /**
+             * A type description for a type erasure. Compared to a {@link Latent} representation, this
+             * representation does not allow for the specification of any complex properties but does
+             * not require any form of navigation on the type.
+             */
             public static class ForErasure extends OfNonGenericType {
 
+                /**
+                 * The represented type erasure.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * Creates a new description of a non-generic type as an erasure.
+                 *
+                 * @param typeDescription The represented type erasure.
+                 */
                 public ForErasure(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
                 }
