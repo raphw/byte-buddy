@@ -10,7 +10,7 @@ public class TypeDescriptionGenericOfParameterizedTypeForReifiedTypeTest {
     @Test
     public void testGenerifiedType() throws Exception {
         TypeDescription.Generic typeDescription = new TypeDescription.Generic.OfParameterizedType.ForReifiedType(new TypeDescription.ForLoadedType(Qux.class).getSuperClass());
-        assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(typeDescription.getSuperClass().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getSuperClass().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
