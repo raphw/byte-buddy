@@ -48,7 +48,7 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
     @Before
     public void setUp() throws Exception {
         classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(Foo.class, Bar.class),
+                ClassFileExtraction.of(Foo.class, Bar.class, AgentBuilderDefaultApplicationSuperTypeLoadingTest.class),
                 ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
