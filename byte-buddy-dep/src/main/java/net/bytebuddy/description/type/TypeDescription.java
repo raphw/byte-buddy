@@ -608,7 +608,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription.isArray()
                             ? new OfGenericArray.Latent(onNonGenericType(typeDescription.getComponentType()), Empty.INSTANCE)
-                            : new OfNonGenericType.OfErasure(typeDescription.asErasure());
+                            : new OfNonGenericType.Latent(typeDescription.asErasure(), Empty.INSTANCE);
                 }
 
                 /**
@@ -1358,9 +1358,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            /**
-             * A type visitor that reifies raw types.
-             */
             enum Reifying implements Visitor<Generic> {
 
                 INITIATING {
@@ -3507,10 +3504,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 private final AnnotationSource annotationSource;
 
-                public Latent(TypeDescription typeDescription) { // TODO: Check other latent types.
-                    this(typeDescription, Empty.INSTANCE);
-                }
-
                 /**
                  * Creates a non-generic type with an implicit owner type.
                  *
@@ -3543,7 +3536,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  * @param declaringType    The non-generic type's declaring type.
                  * @param annotationSource The annotation source to query for the declared annotations.
                  */
-                protected Latent(TypeDescription typeDescription, Generic declaringType, AnnotationSource annotationSource) {
+                public Latent(TypeDescription typeDescription, Generic declaringType, AnnotationSource annotationSource) {
                     this.typeDescription = typeDescription;
                     this.declaringType = declaringType;
                     this.annotationSource = annotationSource;
@@ -3573,52 +3566,6 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            /**
-             * Represents a non-generic type for an erasure as a {@link TypeDescription}.
-             */
-            public static class OfErasure extends OfNonGenericType { // TODO: Use Latent
-
-                /**
-                 * The represented non-generic type.
-                 */
-                private final TypeDescription typeDescription;
-
-                /**
-                 * Creates a new raw type representation.
-                 *
-                 * @param typeDescription The represented non-generic type.
-                 */
-                public OfErasure(TypeDescription typeDescription) {
-                    this.typeDescription = typeDescription;
-                }
-
-                @Override
-                public TypeDescription asErasure() {
-                    return typeDescription;
-                }
-
-                @Override
-                public Generic getOwnerType() {
-                    TypeDescription declaringType = typeDescription.getDeclaringType();
-                    return declaringType == null
-                            ? Generic.UNDEFINED
-                            : declaringType.asGenericType();
-                }
-
-                @Override
-                public Generic getComponentType() {
-                    TypeDescription componentType = typeDescription.getComponentType();
-                    return componentType == null
-                            ? Generic.UNDEFINED
-                            : componentType.asGenericType();
-                }
-
-                @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty();
-                }
-            }
-
             public static class ForReifiedErasure extends OfNonGenericType {
 
                 private final TypeDescription typeDescription;
@@ -3630,7 +3577,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public static Generic of(TypeDescription typeDescription) {
                     return typeDescription.isGenerified()
                             ? new ForReifiedErasure(typeDescription)
-                            : new Latent(typeDescription);
+                            : new Latent(typeDescription, Empty.INSTANCE);
                 }
 
                 @Override
@@ -4711,7 +4658,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public static Generic of(TypeDescription typeDescription) {
                     return typeDescription.isGenerified()
                             ? new ForGenerifiedErasure(typeDescription)
-                            : new OfNonGenericType.OfErasure(typeDescription);
+                            : new OfNonGenericType.Latent(typeDescription, Empty.INSTANCE);
                 }
 
                 @Override
@@ -6534,7 +6481,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public Generic asGenericType() {
-            return new Generic.OfNonGenericType.OfErasure(this);
+            return new Generic.OfNonGenericType.Latent(this, Empty.INSTANCE);
         }
 
         @Override
