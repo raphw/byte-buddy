@@ -5,18 +5,11 @@ import org.junit.Test;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
-public class TypeDescriptionGenericOfParameterizedTypeForReifiedErasureTest {
-
-    @Test
-    public void testNonGenerifiedType() throws Exception {
-        TypeDescription.Generic typeDescription = TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.of(TypeDescription.OBJECT);
-        assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getSort(), not(instanceOf(TypeDescription.Generic.OfNonGenericType.ForReifiedErasure.class)));
-    }
+public class TypeDescriptionGenericOfParameterizedTypeForReifiedTypeTest {
 
     @Test
     public void testGenerifiedType() throws Exception {
-        TypeDescription.Generic typeDescription = new TypeDescription.Generic.OfNonGenericType.ForReifiedErasure(new TypeDescription.ForLoadedType(Bar.class));
+        TypeDescription.Generic typeDescription = new TypeDescription.Generic.OfParameterizedType.ForReifiedType(new TypeDescription.ForLoadedType(Qux.class).getSuperClass());
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(typeDescription.getSuperClass().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -34,4 +27,10 @@ public class TypeDescriptionGenericOfParameterizedTypeForReifiedErasureTest {
     public static class Bar<S extends Number> extends Foo<S> {
         /* empty */
     }
+
+    public static class Qux extends Bar<Number> {
+        /* empty */
+    }
+
+    // TODO: Add tests
 }

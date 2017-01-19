@@ -1358,8 +1358,15 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            /**
+             * A visitor that reifies type descriptions if they represent raw types.
+             */
             enum Reifying implements Visitor<Generic> {
 
+                /**
+                 * A visitor that reifies non-generic types if they represent raw types. This visitor should be applied when
+                 * visiting a potential raw type.
+                 */
                 INITIATING {
                     @Override
                     public Generic onParameterizedType(Generic parameterizedType) {
@@ -1367,6 +1374,10 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     }
                 },
 
+                /**
+                 * A visitor that reifies non-generic types if they represent raw types or are parameterized types. This visitor
+                 * should only be applied when a type was inherited from a reified type.
+                 */
                 INHERITING {
                     @Override
                     public Generic onParameterizedType(Generic parameterizedType) {
@@ -3569,15 +3580,33 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            /**
+             * A representation of a raw type that preserves its generic super types' generic information with a minimum
+             * but erases all of their members' types.
+             */
             public static class ForReifiedErasure extends OfNonGenericType {
 
+                /**
+                 * The represented type erasure.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * Creates a new reified non-generic type.
+                 *
+                 * @param typeDescription The represented type erasure.
+                 */
                 protected ForReifiedErasure(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
                 }
 
-                public static Generic of(TypeDescription typeDescription) {
+                /**
+                 * Creates a new generic type representation for an erasure where any generified type is reified.
+                 *
+                 * @param typeDescription The erasure to represent.
+                 * @return An appropriate generic type representation where any generified type is reified.
+                 */
+                protected static Generic of(TypeDescription typeDescription) {
                     return typeDescription.isGenerified()
                             ? new ForReifiedErasure(typeDescription)
                             : new Latent(typeDescription, Empty.INSTANCE);
@@ -4578,10 +4607,23 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            /**
+             * A representation of a parameterized type that is a super type of a raw type but preserves the minimal type information
+             * that is required for allowing creating correct erasures for overridden methods. All members' types are erased and all
+             * type arguments are reduced to their erasure.
+             */
             public static class ForReifiedType extends OfParameterizedType {
 
+                /**
+                 * The represented parameterized type.
+                 */
                 private final Generic parameterizedType;
 
+                /**
+                 * Creates a new reified parameterized type.
+                 *
+                 * @param parameterizedType The represented parameterized type.
+                 */
                 protected ForReifiedType(Generic parameterizedType) {
                     this.parameterizedType = parameterizedType;
                 }
