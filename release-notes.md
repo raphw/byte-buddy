@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. January 2017: version 1.6.4
+
+- Refactored super type visitors to always be lazy until generic properties are required to be resolved.
+- Apply proper raw type resolution. Made default method graph compiler reify generic types to compute correct bridges.
+
 ### 13. January 2017: version 1.6.3
 
 - Improved `Resubmitter` configuration.
