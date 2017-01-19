@@ -454,7 +454,7 @@ public interface MethodGraph {
              * @return A default compiler for the given harmonizer and merger.
              */
             public static <S> Compiler of(Harmonizer<S> harmonizer, Merger merger) {
-                return new Default<S>(harmonizer, merger, TypeDescription.Generic.Visitor.Reifying.INSTANCE);
+                return new Default<S>(harmonizer, merger, TypeDescription.Generic.Visitor.Reifying.INITIATING);
             }
 
             /**

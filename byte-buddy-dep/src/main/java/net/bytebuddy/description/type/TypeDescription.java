@@ -1363,10 +1363,19 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
              */
             enum Reifying implements Visitor<Generic> {
 
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
+                INITIATING {
+                    @Override
+                    public Generic onParameterizedType(Generic parameterizedType) {
+                        return parameterizedType;
+                    }
+                },
+
+                INHERITING {
+                    @Override
+                    public Generic onParameterizedType(Generic parameterizedType) {
+                        return new OfParameterizedType.ForReifiedType(parameterizedType);
+                    }
+                };
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
@@ -1379,21 +1388,13 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
 
                 @Override
-                public Generic onParameterizedType(Generic parameterizedType) {
-                    return parameterizedType;
-                }
-
-                @Override
                 public Generic onTypeVariable(Generic typeVariable) {
                     throw new IllegalArgumentException("Cannot reify a type variable: " + typeVariable);
                 }
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    TypeDescription erasure = typeDescription.asErasure();
-                    return erasure.isGenerified()
-                            ? OfParameterizedType.ForReifiedErasure.of(erasure)
-                            : typeDescription;
+                    return OfNonGenericType.ForReifiedErasure.of(typeDescription.asErasure());
                 }
             }
 
@@ -3506,13 +3507,17 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                  */
                 private final AnnotationSource annotationSource;
 
+                public Latent(TypeDescription typeDescription) { // TODO: Check other latent types.
+                    this(typeDescription, Empty.INSTANCE);
+                }
+
                 /**
                  * Creates a non-generic type with an implicit owner type.
                  *
                  * @param typeDescription  The non-generic type's raw type.
                  * @param annotationSource The annotation source to query for the declared annotations.
                  */
-                protected Latent(TypeDescription typeDescription, AnnotationSource annotationSource) {
+                public Latent(TypeDescription typeDescription, AnnotationSource annotationSource) {
                     this(typeDescription, typeDescription.getDeclaringType(), annotationSource);
                 }
 
@@ -3571,7 +3576,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
             /**
              * Represents a non-generic type for an erasure as a {@link TypeDescription}.
              */
-            public static class OfErasure extends OfNonGenericType {
+            public static class OfErasure extends OfNonGenericType { // TODO: Use Latent
 
                 /**
                  * The represented non-generic type.
@@ -3606,6 +3611,70 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                     return componentType == null
                             ? Generic.UNDEFINED
                             : componentType.asGenericType();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+            }
+
+            public static class ForReifiedErasure extends OfNonGenericType {
+
+                private final TypeDescription typeDescription;
+
+                protected ForReifiedErasure(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                public static Generic of(TypeDescription typeDescription) {
+                    return typeDescription.isGenerified()
+                            ? new ForReifiedErasure(typeDescription)
+                            : new Latent(typeDescription);
+                }
+
+                @Override
+                public Generic getSuperClass() {
+                    Generic superClass = typeDescription.getSuperClass();
+                    return superClass == null
+                            ? Generic.UNDEFINED
+                            : new LazyProjection.WithResolvedErasure(superClass, Visitor.Reifying.INHERITING);
+                }
+
+                @Override
+                public TypeList.Generic getInterfaces() {
+                    return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(typeDescription.getInterfaces(), Visitor.Reifying.INHERITING);
+                }
+
+                @Override
+                public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
+                    return new FieldList.TypeSubstituting(this, typeDescription.getDeclaredFields(), Visitor.TypeErasing.INSTANCE);
+                }
+
+                @Override
+                public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
+                    return new MethodList.TypeSubstituting(this, typeDescription.getDeclaredMethods(), Visitor.TypeErasing.INSTANCE);
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    return typeDescription;
+                }
+
+                @Override
+                public Generic getOwnerType() {
+                    TypeDescription declaringType = typeDescription.getDeclaringType();
+                    return declaringType == null
+                            ? Generic.UNDEFINED
+                            : of(declaringType);
+                }
+
+                @Override
+                public Generic getComponentType() {
+                    TypeDescription componentType = typeDescription.getComponentType();
+                    return componentType == null
+                            ? Generic.UNDEFINED
+                            : of(componentType);
                 }
 
                 @Override
@@ -4559,39 +4628,25 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
-            /**
-             * Represents a type erasure as a parameterized type where any type variable's erasure is used as a type
-             * argument of the parameterized type and where the declaring type is defined as the type's owner type. Any
-             * type annotations are removed by this representation.
-             */
-            public static class ForReifiedErasure extends OfParameterizedType {
+            public static class ForReifiedType extends OfParameterizedType {
 
-                /**
-                 * The represented type erasure.
-                 */
-                private final TypeDescription typeDescription;
+                private final Generic parameterizedType;
 
-                /**
-                 * Creates a new parameterized type for a reified erasure.
-                 *
-                 * @param typeDescription The represented type erasure.
-                 */
-                protected ForReifiedErasure(TypeDescription typeDescription) {
-                    this.typeDescription = typeDescription;
+                protected ForReifiedType(Generic parameterizedType) {
+                    this.parameterizedType = parameterizedType;
                 }
 
-                /**
-                 * Resolves a type description to be represented as a generic type where any type with generic properties is
-                 * represented as a parameterized type and any type without such properties is represented as a non-generic
-                 * type.
-                 *
-                 * @param typeDescription The type erasure to represent.
-                 * @return An appropriate generic type description of the supplied type erasure.
-                 */
-                public static Generic of(TypeDescription typeDescription) {
-                    return typeDescription.isGenerified()
-                            ? new ForReifiedErasure(typeDescription)
-                            : new OfNonGenericType.OfErasure(typeDescription);
+                @Override
+                public Generic getSuperClass() {
+                    Generic superClass = super.getSuperClass();
+                    return superClass == null
+                            ? Generic.UNDEFINED
+                            : new LazyProjection.WithResolvedErasure(superClass, Visitor.Reifying.INHERITING);
+                }
+
+                @Override
+                public TypeList.Generic getInterfaces() {
+                    return new TypeList.Generic.ForDetachedTypes.WithResolvedErasure(super.getInterfaces(), Visitor.Reifying.INHERITING);
                 }
 
                 @Override
@@ -4606,20 +4661,20 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public TypeList.Generic getTypeArguments() {
-                    return new TypeList.Generic.ForDetachedTypes(typeDescription.getTypeVariables(), Visitor.TypeErasing.INSTANCE);
+                    return new TypeList.Generic.ForDetachedTypes(parameterizedType.getTypeArguments(), Visitor.TypeErasing.INSTANCE);
                 }
 
                 @Override
                 public Generic getOwnerType() {
-                    TypeDescription declaringType = typeDescription.getDeclaringType();
-                    return declaringType == null
+                    Generic ownerType = parameterizedType.getOwnerType();
+                    return ownerType == null
                             ? Generic.UNDEFINED
-                            : of(declaringType);
+                            : ownerType.accept(Visitor.Reifying.INHERITING);
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return typeDescription;
+                    return parameterizedType.asErasure();
                 }
 
                 @Override
