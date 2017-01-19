@@ -1,8 +1,10 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.AbstractTypeDescriptionTest;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
@@ -18,14 +20,13 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
 
     @Override
     protected TypeDescription describe(Class<?> type) {
-        TypePool typePool = new TypePool.Default.WithLazyResolution(TypePool.CacheProvider.NoOp.INSTANCE,
-                ClassFileLocator.ForClassLoader.of(type.getClassLoader()),
-                TypePool.Default.ReaderMode.EXTENDED);
-        try {
-            return typePool.describe(type.getName()).resolve();
-        } finally {
-            typePool.clear();
-        }
+        return describe(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()), TypePool.CacheProvider.NoOp.INSTANCE);
+    }
+
+    private static TypeDescription describe(Class<?> type, ClassFileLocator classFileLocator, TypePool.CacheProvider cacheProvider) {
+        return new TypePool.Default.WithLazyResolution(cacheProvider,
+                classFileLocator,
+                TypePool.Default.ReaderMode.EXTENDED).describe(type.getName()).resolve();
     }
 
     @Override
@@ -107,7 +108,55 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
+    public void testNonGenericResolution() throws Exception {
+        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
+        new ByteBuddy()
+                .with(MethodGraph.Empty.INSTANCE)
+                .redefine(describe(NonGenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()), classFileLocator)
+                .make();
+        verify(classFileLocator, times(2)).locate(NonGenericType.class.getName());
+        verifyNoMoreInteractions(classFileLocator);
+    }
+
+    @Test
+    public void testGenericResolution() throws Exception {
+        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
+        new ByteBuddy()
+                .with(MethodGraph.Empty.INSTANCE)
+                .redefine(describe(GenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()), classFileLocator)
+                .make();
+        verify(classFileLocator, times(2)).locate(GenericType.class.getName());
+        verifyNoMoreInteractions(classFileLocator);
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.Default.WithLazyResolution.LazyResolution.class).apply();
+    }
+
+    private static class SampleClass<T> {
+        /* empty */
+    }
+
+    private interface SampleInterface<T> {
+        /* empty */
+    }
+
+    private static class NonGenericType {
+
+        Object foo;
+
+        Object foo(Object argument) throws Exception {
+            return argument;
+        }
+    }
+
+    private static class GenericType<T extends Exception> extends SampleClass<T> implements SampleInterface<T> {
+
+        T foo;
+
+        T foo(T argument) throws T {
+            return argument;
+        }
     }
 }

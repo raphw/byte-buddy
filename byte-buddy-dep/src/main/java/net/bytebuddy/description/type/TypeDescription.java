@@ -3498,6 +3498,41 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 }
             }
 
+            public static class ForErasure extends OfNonGenericType {
+
+                private final TypeDescription typeDescription;
+
+                public ForErasure(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    return typeDescription;
+                }
+
+                @Override
+                public Generic getOwnerType() {
+                    TypeDescription declaringType = typeDescription.getDeclaringType();
+                    return declaringType == null
+                            ? Generic.UNDEFINED
+                            : declaringType.asGenericType();
+                }
+
+                @Override
+                public Generic getComponentType() {
+                    TypeDescription componentType = typeDescription.getComponentType();
+                    return componentType == null
+                            ? Generic.UNDEFINED
+                            : componentType.asGenericType();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+            }
+
             /**
              * A latent description of a non-generic type.
              */
@@ -3609,7 +3644,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 protected static Generic of(TypeDescription typeDescription) {
                     return typeDescription.isGenerified()
                             ? new ForReifiedErasure(typeDescription)
-                            : new Latent(typeDescription, Empty.INSTANCE);
+                            : new ForErasure(typeDescription);
                 }
 
                 @Override
@@ -4703,7 +4738,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public static Generic of(TypeDescription typeDescription) {
                     return typeDescription.isGenerified()
                             ? new ForGenerifiedErasure(typeDescription)
-                            : new OfNonGenericType.Latent(typeDescription, Empty.INSTANCE);
+                            : new OfNonGenericType.ForErasure(typeDescription);
                 }
 
                 @Override
@@ -6526,7 +6561,7 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
         @Override
         public Generic asGenericType() {
-            return new Generic.OfNonGenericType.Latent(this, Empty.INSTANCE);
+            return new Generic.OfNonGenericType.ForErasure(this);
         }
 
         @Override
