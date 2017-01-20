@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An element matcher that matches a collection of types by their raw types.
+ * An element matcher that matches a collection of types by their erasures.
  *
  * @param <T> The type of the matched entity.
  */
