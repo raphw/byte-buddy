@@ -1,6 +1,5 @@
 package net.bytebuddy.agent.builder;
 
-import com.sun.org.apache.regexp.internal.RE;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
@@ -36,7 +35,6 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.lang.reflect.Constructor;
-import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -2043,7 +2041,7 @@ public class AgentBuilderDefaultTest {
         assertThat(new AgentBuilder.Default().disableClassFormatChanges(), is(new AgentBuilder.Default(new ByteBuddy()
                 .with(Implementation.Context.Disabled.Factory.INSTANCE))
                 .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .with(AgentBuilder.TypeStrategy.Default.REDEFINE_DECLARED_ONLY)));
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE_FROZEN)));
     }
 
     @Test

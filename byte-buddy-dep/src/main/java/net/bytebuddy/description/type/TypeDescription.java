@@ -7045,6 +7045,11 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
                 public int getModifiers() {
                     return delegate().getModifiers();
                 }
+
+                @Override
+                public String getGenericSignature() {
+                    return delegate().getGenericSignature(); // Embrace use of cached generic signature.
+                }
             }
         }
     }

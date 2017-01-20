@@ -547,22 +547,22 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testTypeIllegalSubType() throws Exception {
-        InstrumentedType.Default.subclass(FOO, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(Serializable.class)).validated();
+        InstrumentedType.Factory.Default.MODIFIABLE.subclass(FOO, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(Serializable.class)).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testTypeInvisibleSubType() throws Exception {
-        InstrumentedType.Default.subclass(FOO, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(PackagePrivateType.TYPE)).validated();
+        InstrumentedType.Factory.Default.MODIFIABLE.subclass(FOO, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(PackagePrivateType.TYPE)).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testTypeIllegalModifiers() throws Exception {
-        InstrumentedType.Default.subclass(FOO, ILLEGAL_MODIFIERS, TypeDefinition.Sort.describe(Object.class)).validated();
+        InstrumentedType.Factory.Default.MODIFIABLE.subclass(FOO, ILLEGAL_MODIFIERS, TypeDefinition.Sort.describe(Object.class)).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testPackageTypeIllegalModifiers() throws Exception {
-        InstrumentedType.Default.subclass(FOO + "." + PackageDescription.PACKAGE_CLASS_NAME, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(Object.class))
+        InstrumentedType.Factory.Default.MODIFIABLE.subclass(FOO + "." + PackageDescription.PACKAGE_CLASS_NAME, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(Object.class))
                 .validated();
     }
 
@@ -586,7 +586,7 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testTypeThrowableWithGenerics() throws Exception {
-        InstrumentedType.Default.of(new TypeDescription.ForLoadedType(Exception.class))
+        InstrumentedType.Factory.Default.MODIFIABLE.represent(new TypeDescription.ForLoadedType(Exception.class))
                 .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)))
                 .validated();
     }
@@ -668,7 +668,7 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testAnnotationTypeIncompatibleSuperClassTypeAnnotation() throws Exception {
-        InstrumentedType.Default.subclass(FOO, ModifierReviewable.EMPTY_MASK, TypeDescription.Generic.Builder.rawType(Object.class)
+        InstrumentedType.Factory.Default.MODIFIABLE.subclass(FOO, ModifierReviewable.EMPTY_MASK, TypeDescription.Generic.Builder.rawType(Object.class)
                 .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))
                 .validated();
     }
@@ -1235,7 +1235,7 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testInconsistentReceiverConstructorInnerClass() throws Exception {
-        InstrumentedType.Default.of(new TypeDescription.ForLoadedType(Foo.class))
+        InstrumentedType.Factory.Default.MODIFIABLE.represent(new TypeDescription.ForLoadedType(Foo.class))
                 .withMethod(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),

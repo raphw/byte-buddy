@@ -129,6 +129,8 @@ public class ByteBuddy {
      */
     protected final MethodGraph.Compiler methodGraphCompiler;
 
+    protected final InstrumentedType.Factory instrumentedTypeFactory;
+
     /**
      * A matcher for identifying methods that should be excluded from instrumentation.
      */
@@ -167,6 +169,7 @@ public class ByteBuddy {
                 AnnotationRetention.ENABLED,
                 Implementation.Context.Default.Factory.INSTANCE,
                 MethodGraph.Compiler.DEFAULT,
+                InstrumentedType.Factory.Default.MODIFIABLE,
                 TypeValidation.ENABLED,
                 new LatentMatcher.Resolved<MethodDescription>(isSynthetic().or(isDefaultFinalizer())));
     }
@@ -191,6 +194,7 @@ public class ByteBuddy {
                         AnnotationRetention annotationRetention,
                         Implementation.Context.Factory implementationContextFactory,
                         MethodGraph.Compiler methodGraphCompiler,
+                        InstrumentedType.Factory instrumentedTypeFactory,
                         TypeValidation typeValidation,
                         LatentMatcher<? super MethodDescription> ignoredMethods) {
         this.classFileVersion = classFileVersion;
@@ -199,9 +203,10 @@ public class ByteBuddy {
         this.annotationValueFilterFactory = annotationValueFilterFactory;
         this.annotationRetention = annotationRetention;
         this.implementationContextFactory = implementationContextFactory;
+        this.methodGraphCompiler = methodGraphCompiler;
+        this.instrumentedTypeFactory = instrumentedTypeFactory;
         this.ignoredMethods = ignoredMethods;
         this.typeValidation = typeValidation;
-        this.methodGraphCompiler = methodGraphCompiler;
     }
 
     /**
@@ -366,7 +371,7 @@ public class ByteBuddy {
             actualSuperType = superType.asGenericType();
             interfaceTypes = new TypeList.Generic.Empty();
         }
-        return new SubclassDynamicTypeBuilder<Object>(InstrumentedType.Default.subclass(namingStrategy.subclass(superType.asGenericType()),
+        return new SubclassDynamicTypeBuilder<Object>(instrumentedTypeFactory.subclass(namingStrategy.subclass(superType.asGenericType()),
                 ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.PLAIN).resolve(superType.getModifiers()),
                 actualSuperType).withInterfaces(interfaceTypes),
                 classFileVersion,
@@ -519,7 +524,7 @@ public class ByteBuddy {
      * @return A type builder that creates a {@code package-info} class file.
      */
     public DynamicType.Builder<?> makePackage(String name) {
-        return new SubclassDynamicTypeBuilder<Object>(InstrumentedType.Default.subclass(name + "." + PackageDescription.PACKAGE_CLASS_NAME,
+        return new SubclassDynamicTypeBuilder<Object>(instrumentedTypeFactory.subclass(name + "." + PackageDescription.PACKAGE_CLASS_NAME,
                 PackageDescription.PACKAGE_MODIFIERS,
                 TypeDescription.Generic.OBJECT),
                 classFileVersion,
@@ -546,7 +551,7 @@ public class ByteBuddy {
      * @return A type builder that creates a new {@link Annotation} type.
      */
     public DynamicType.Builder<? extends Annotation> makeAnnotation() {
-        return new SubclassDynamicTypeBuilder<Annotation>(InstrumentedType.Default.subclass(namingStrategy.subclass(TypeDescription.Generic.ANNOTATION),
+        return new SubclassDynamicTypeBuilder<Annotation>(instrumentedTypeFactory.subclass(namingStrategy.subclass(TypeDescription.Generic.ANNOTATION),
                 ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.ANNOTATION).resolve(),
                 TypeDescription.Generic.OBJECT).withInterfaces(new TypeList.Generic.Explicit(TypeDescription.Generic.ANNOTATION)),
                 classFileVersion,
@@ -593,7 +598,7 @@ public class ByteBuddy {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
         TypeDescription.Generic enumType = TypeDescription.Generic.Builder.parameterizedType(Enum.class, TargetType.class).build();
-        return new SubclassDynamicTypeBuilder<Enum<?>>(InstrumentedType.Default.subclass(namingStrategy.subclass(enumType),
+        return new SubclassDynamicTypeBuilder<Enum<?>>(instrumentedTypeFactory.subclass(namingStrategy.subclass(enumType),
                 ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.FINAL, EnumerationState.ENUMERATION).resolve(),
                 enumType),
                 classFileVersion,
@@ -686,7 +691,7 @@ public class ByteBuddy {
      * @return A type builder for redefining the provided type.
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription type, ClassFileLocator classFileLocator) {
-        return new RedefinitionDynamicTypeBuilder<T>(InstrumentedType.Default.of(type),
+        return new RedefinitionDynamicTypeBuilder<T>(instrumentedTypeFactory.represent(type),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 annotationValueFilterFactory,
@@ -787,7 +792,7 @@ public class ByteBuddy {
      * @return A type builder for rebasing the provided type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription type, ClassFileLocator classFileLocator, MethodNameTransformer methodNameTransformer) {
-        return new RebaseDynamicTypeBuilder<T>(InstrumentedType.Default.of(type),
+        return new RebaseDynamicTypeBuilder<T>(instrumentedTypeFactory.represent(type),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 annotationValueFilterFactory,
@@ -844,6 +849,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                instrumentedTypeFactory,
                 typeValidation,
                 ignoredMethods);
     }
@@ -865,6 +871,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                instrumentedTypeFactory,
                 typeValidation,
                 ignoredMethods);
     }
@@ -885,6 +892,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                instrumentedTypeFactory,
                 typeValidation,
                 ignoredMethods);
     }
@@ -906,6 +914,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                instrumentedTypeFactory,
                 typeValidation,
                 ignoredMethods);
     }
@@ -934,6 +943,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                instrumentedTypeFactory,
                 typeValidation,
                 ignoredMethods);
     }
@@ -957,6 +967,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                instrumentedTypeFactory,
                 typeValidation,
                 ignoredMethods);
     }
@@ -980,6 +991,20 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                instrumentedTypeFactory,
+                typeValidation,
+                ignoredMethods);
+    }
+
+    public ByteBuddy with(InstrumentedType.Factory instrumentedTypeFactory) {
+        return new ByteBuddy(classFileVersion,
+                namingStrategy,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                instrumentedTypeFactory,
                 typeValidation,
                 ignoredMethods);
     }
@@ -1001,6 +1026,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                instrumentedTypeFactory,
                 typeValidation,
                 ignoredMethods);
     }
@@ -1036,6 +1062,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                instrumentedTypeFactory,
                 typeValidation,
                 ignoredMethods);
     }

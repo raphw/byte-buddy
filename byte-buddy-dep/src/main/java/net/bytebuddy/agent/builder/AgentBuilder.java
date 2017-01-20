@@ -272,7 +272,7 @@ public interface AgentBuilder {
      * it is no longer possible to implicitly apply loaded type initializers for explicitly initializing the generated type.
      * </p>
      * <p>
-     * This is equivalent to setting {@link InitializationStrategy.NoOp} and {@link TypeStrategy.Default#REDEFINE_DECLARED_ONLY}
+     * This is equivalent to setting {@link InitializationStrategy.NoOp} and {@link TypeStrategy.Default#REDEFINE_FROZEN}
      * as well as configuring the underlying {@link ByteBuddy} instance to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled}.
      * </p>
      *
@@ -1846,26 +1846,28 @@ public interface AgentBuilder {
                 }
             },
 
-            /**
-             * <p>
-             * A definition handler that performs a redefinition for all types and ignores all methods that were not declared by the instrumented type.
-             * </p>
-             * <p>
-             * Note that the default agent builder is configured to apply a self initialization where a static class initializer
-             * is added to the redefined class. This can be disabled by for example using a {@link InitializationStrategy.Minimal} or
-             * {@link InitializationStrategy.NoOp}. Also, consider the constraints implied by {@link ByteBuddy#redefine(TypeDescription, ClassFileLocator)}.
-             * </p>
-             * <p>
-             * For prohibiting any changes on a class file, use {@link AgentBuilder#disableClassFormatChanges()}
-             * </p>
-             */
-            REDEFINE_DECLARED_ONLY {
+//            /** TODO: Fixme
+//             * <p>
+//             * A definition handler that performs a redefinition for all types and ignores all methods that were not declared by the instrumented type.
+//             * </p>
+//             * <p>
+//             * Note that the default agent builder is configured to apply a self initialization where a static class initializer
+//             * is added to the redefined class. This can be disabled by for example using a {@link InitializationStrategy.Minimal} or
+//             * {@link InitializationStrategy.NoOp}. Also, consider the constraints implied by {@link ByteBuddy#redefine(TypeDescription, ClassFileLocator)}.
+//             * </p>
+//             * <p>
+//             * For prohibiting any changes on a class file, use {@link AgentBuilder#disableClassFormatChanges()}
+//             * </p>
+//             */
+            REDEFINE_FROZEN {
                 @Override
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
                                                       MethodNameTransformer methodNameTransformer) {
-                    return byteBuddy.redefine(typeDescription, classFileLocator).ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);
+                    return byteBuddy.with(InstrumentedType.Factory.Default.FROZEN)
+                            .redefine(typeDescription, classFileLocator)
+                            .ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);
                 }
             };
         }
@@ -7019,7 +7021,7 @@ public interface AgentBuilder {
                     listener,
                     circularityLock,
                     poolStrategy,
-                    TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
+                    TypeStrategy.Default.REDEFINE_FROZEN,
                     locationStrategy,
                     NativeMethodStrategy.Disabled.INSTANCE,
                     InitializationStrategy.NoOp.INSTANCE,

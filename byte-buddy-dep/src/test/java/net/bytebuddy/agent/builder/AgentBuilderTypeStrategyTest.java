@@ -64,7 +64,7 @@ public class AgentBuilderTypeStrategyTest {
     public void testRedefineDeclaredOnly() throws Exception {
         when(byteBuddy.redefine(typeDescription, classFileLocator)).thenReturn((DynamicType.Builder) dynamicTypeBuilder);
         when(dynamicTypeBuilder.ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED)).thenReturn((DynamicType.Builder) dynamicTypeBuilder);
-        assertThat(AgentBuilder.TypeStrategy.Default.REDEFINE_DECLARED_ONLY.builder(typeDescription, byteBuddy, classFileLocator, methodNameTransformer),
+        assertThat(AgentBuilder.TypeStrategy.Default.REDEFINE_FROZEN.builder(typeDescription, byteBuddy, classFileLocator, methodNameTransformer),
                 is((DynamicType.Builder) dynamicTypeBuilder));
         verify(byteBuddy).redefine(typeDescription, classFileLocator);
         verifyNoMoreInteractions(byteBuddy);

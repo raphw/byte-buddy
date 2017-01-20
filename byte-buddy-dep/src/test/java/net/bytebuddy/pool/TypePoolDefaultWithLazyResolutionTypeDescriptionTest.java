@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.AbstractTypeDescriptionTest;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -110,11 +111,12 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
-    public void testNonGenericResolutionIsLazyForSimpleCreation() throws Exception {
+    public void testNonGenericResolutionIsLazyForSimpleCreationNonFrozen() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
         new ByteBuddy()
                 .with(TypeValidation.DISABLED)
                 .with(MethodGraph.Empty.INSTANCE)
+                .with(InstrumentedType.Factory.Default.MODIFIABLE)
                 .redefine(describe(NonGenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()), classFileLocator)
                 .make();
         verify(classFileLocator, times(2)).locate(NonGenericType.class.getName());
@@ -122,12 +124,25 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
-    @Ignore("Lazy-chain is currently broken for generic types")
+    public void testNonGenericResolutionIsLazyForSimpleCreation() throws Exception {
+        ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
+        new ByteBuddy()
+                .with(TypeValidation.DISABLED)
+                .with(MethodGraph.Empty.INSTANCE)
+                .with(InstrumentedType.Factory.Default.FROZEN)
+                .redefine(describe(NonGenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()), classFileLocator)
+                .make();
+        verify(classFileLocator, times(2)).locate(NonGenericType.class.getName());
+        verifyNoMoreInteractions(classFileLocator);
+    }
+
+    @Test
     public void testGenericResolutionIsLazyForSimpleCreation() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
         new ByteBuddy()
                 .with(TypeValidation.DISABLED)
                 .with(MethodGraph.Empty.INSTANCE)
+                .with(InstrumentedType.Factory.Default.FROZEN)
                 .redefine(describe(GenericType.class, classFileLocator, new TypePool.CacheProvider.Simple()), classFileLocator)
                 .make();
         verify(classFileLocator, times(2)).locate(GenericType.class.getName());
