@@ -12,6 +12,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -23,7 +24,7 @@ public class InstrumentedTypeFrozenTest {
     @Test
     public void testDelegation() throws Exception {
         for (Method method : TypeDescription.class.getDeclaredMethods()) {
-            if (method.getParameterTypes().length == 0) {
+            if (method.getParameterTypes().length == 0 && Modifier.isPublic(method.getModifiers()) && !method.isSynthetic()) {
                 assertThat(method.invoke(new InstrumentedType.Frozen(TypeDescription.STRING, LoadedTypeInitializer.NoOp.INSTANCE)),
                         is(method.invoke(TypeDescription.STRING)));
             }
