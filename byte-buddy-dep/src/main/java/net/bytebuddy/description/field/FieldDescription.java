@@ -576,5 +576,10 @@ public interface FieldDescription extends ByteCodeElement,
             result = 31 * result + type.hashCode();
             return result;
         }
+
+        @Override
+        public String toString() {
+            return type + " " + name;
+        }
     }
 }

@@ -9,10 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.hasSignature;
 import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 
 /**
@@ -20,11 +17,6 @@ import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
  */
 @EqualsAndHashCode(callSuper = true)
 public class SubclassImplementationTarget extends Implementation.Target.AbstractBase {
-
-    /**
-     * The constructor of the super type, mapped by the constructor's method token.
-     */
-    protected final Map<MethodDescription.SignatureToken, MethodDescription> superConstructors;
 
     /**
      * The origin type identifier to use.
@@ -44,14 +36,6 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
                                            DefaultMethodInvocation defaultMethodInvocation,
                                            OriginTypeResolver originTypeResolver) {
         super(instrumentedType, methodGraph, defaultMethodInvocation);
-        TypeDescription.Generic superClass = instrumentedType.getSuperClass();
-        MethodList<?> superConstructors = superClass == null
-                ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                : superClass.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
-        this.superConstructors = new HashMap<MethodDescription.SignatureToken, MethodDescription>();
-        for (MethodDescription superConstructor : superConstructors) {
-            this.superConstructors.put(superConstructor.asSignatureToken(), superConstructor);
-        }
         this.originTypeResolver = originTypeResolver;
     }
 
@@ -69,10 +53,13 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      * @return A special method invocation for a constructor representing the given method token, if available.
      */
     private Implementation.SpecialMethodInvocation invokeConstructor(MethodDescription.SignatureToken token) {
-        MethodDescription methodDescription = superConstructors.get(token);
-        return methodDescription == null
-                ? Implementation.SpecialMethodInvocation.Illegal.INSTANCE
-                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperClass().asErasure());
+        TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+        MethodList<?> candidates = superClass == null
+                ? new MethodList.Empty<MethodDescription.InGenericShape>()
+                : superClass.getDeclaredMethods().filter(hasSignature(token).and(isVisibleTo(instrumentedType)));
+        return candidates.size() == 1
+                ? Implementation.SpecialMethodInvocation.Simple.of(candidates.getOnly(), instrumentedType.getSuperClass().asErasure())
+                : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
     /**

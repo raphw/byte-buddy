@@ -1792,6 +1792,17 @@ public final class ElementMatchers {
     }
 
     /**
+     * Only matches method descriptions that yield the provided signature token.
+     *
+     * @param token The signature token to match against.
+     * @param <T>   The type of the matched object.
+     * @return A matcher for a method with the provided signature token.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> hasSignature(MethodDescription.SignatureToken token) {
+        return new SignatureTokenMatcher<T>(is(token));
+    }
+
+    /**
      * Matches any type description that is a subtype of the given type.
      *
      * @param type The type to be checked for being a subtype of the matched type.

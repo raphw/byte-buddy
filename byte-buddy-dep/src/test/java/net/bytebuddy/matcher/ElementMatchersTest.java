@@ -1096,6 +1096,15 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testHasSignature() throws Exception {
+        MethodDescription.SignatureToken signatureToken = new MethodDescription.SignatureToken("toString", TypeDescription.STRING, Collections.<TypeDescription>emptyList());
+        assertThat(ElementMatchers.hasSignature(signatureToken)
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"))), is(true));
+        assertThat(ElementMatchers.hasSignature(signatureToken)
+                .matches(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"))), is(false));
+    }
+
+    @Test
     public void testIsSubOrSuperType() throws Exception {
         assertThat(ElementMatchers.isSubTypeOf(String.class).matches(TypeDescription.OBJECT), is(false));
         assertThat(ElementMatchers.isSubTypeOf(Object.class).matches(TypeDescription.STRING), is(true));

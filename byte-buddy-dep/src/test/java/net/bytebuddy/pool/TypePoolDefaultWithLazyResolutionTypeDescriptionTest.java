@@ -110,7 +110,6 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
-    @Ignore("Lazy-chain is currently broken")
     public void testNonGenericResolutionIsLazyForSimpleCreation() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
         new ByteBuddy()
@@ -123,7 +122,7 @@ public class TypePoolDefaultWithLazyResolutionTypeDescriptionTest extends Abstra
     }
 
     @Test
-    @Ignore("Lazy-chain is currently broken")
+    @Ignore("Lazy-chain is currently broken for generic types")
     public void testGenericResolutionIsLazyForSimpleCreation() throws Exception {
         ClassFileLocator classFileLocator = spy(ClassFileLocator.ForClassLoader.ofClassPath());
         new ByteBuddy()

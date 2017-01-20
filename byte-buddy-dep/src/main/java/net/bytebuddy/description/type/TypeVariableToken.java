@@ -113,4 +113,9 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
         result = 31 * result + annotations.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return symbol;
+    }
 }

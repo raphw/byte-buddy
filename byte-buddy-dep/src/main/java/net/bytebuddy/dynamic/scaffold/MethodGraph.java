@@ -638,6 +638,11 @@ public interface MethodGraph {
                         public int hashCode() {
                             return typeToken.getParameterTypes().hashCode();
                         }
+
+                        @Override
+                        public String toString() {
+                            return typeToken.getParameterTypes().toString();
+                        }
                     }
                 }
 
@@ -685,6 +690,11 @@ public interface MethodGraph {
                         @Override
                         public int hashCode() {
                             return typeToken.getReturnType().hashCode() + 31 * typeToken.getParameterTypes().hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return typeToken.toString();
                         }
                     }
                 }

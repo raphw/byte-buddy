@@ -1025,6 +1025,16 @@ public interface ParameterDescription extends AnnotationSource,
             return result;
         }
 
+        @Override
+        public String toString() {
+            return "ParameterDescription.Token{" +
+                    "type=" + type +
+                    ", annotations=" + annotations +
+                    ", name='" + name + '\'' +
+                    ", modifiers=" + modifiers +
+                    '}';
+        }
+
         /**
          * A list of types represented as a list of parameter tokens.
          */

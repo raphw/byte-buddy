@@ -1640,6 +1640,21 @@ public interface MethodDescription extends TypeVariableSource,
             result = 31 * result + (receiverType != null ? receiverType.hashCode() : 0);
             return result;
         }
+
+        @Override
+        public String toString() {
+            return "MethodDescription.Token{" +
+                    "name='" + name + '\'' +
+                    ", modifiers=" + modifiers +
+                    ", typeVariableTokens=" + typeVariableTokens +
+                    ", returnType=" + returnType +
+                    ", parameterTokens=" + parameterTokens +
+                    ", exceptionTypes=" + exceptionTypes +
+                    ", annotations=" + annotations +
+                    ", defaultValue=" + defaultValue +
+                    ", receiverType=" + receiverType +
+                    '}';
+        }
     }
 
     /**
@@ -1727,6 +1742,21 @@ public interface MethodDescription extends TypeVariableSource,
             result = 31 * result + returnType.hashCode();
             result = 31 * result + parameterTypes.hashCode();
             return result;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder stringBuilder = new StringBuilder().append(returnType).append(' ').append(name).append('(');
+            boolean first = true;
+            for (TypeDescription parameterType : parameterTypes) {
+                if (first) {
+                    first = false;
+                } else {
+                    stringBuilder.append(",");
+                }
+                stringBuilder.append(parameterType);
+            }
+            return stringBuilder.append(')').toString();
         }
     }
 
