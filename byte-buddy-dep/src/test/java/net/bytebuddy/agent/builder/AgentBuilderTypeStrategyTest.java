@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -61,11 +62,13 @@ public class AgentBuilderTypeStrategyTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testRedefineDeclaredOnly() throws Exception {
+    public void testRedefineFrozen() throws Exception {
+        when(byteBuddy.with(InstrumentedType.Factory.Default.FROZEN)).thenReturn(byteBuddy);
         when(byteBuddy.redefine(typeDescription, classFileLocator)).thenReturn((DynamicType.Builder) dynamicTypeBuilder);
         when(dynamicTypeBuilder.ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED)).thenReturn((DynamicType.Builder) dynamicTypeBuilder);
         assertThat(AgentBuilder.TypeStrategy.Default.REDEFINE_FROZEN.builder(typeDescription, byteBuddy, classFileLocator, methodNameTransformer),
                 is((DynamicType.Builder) dynamicTypeBuilder));
+        verify(byteBuddy).with(InstrumentedType.Factory.Default.FROZEN);
         verify(byteBuddy).redefine(typeDescription, classFileLocator);
         verifyNoMoreInteractions(byteBuddy);
         verify(dynamicTypeBuilder).ignoreAlso(LatentMatcher.ForSelfDeclaredMethod.NOT_DECLARED);

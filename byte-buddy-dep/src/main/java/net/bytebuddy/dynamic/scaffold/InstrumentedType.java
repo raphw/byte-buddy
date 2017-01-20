@@ -180,37 +180,63 @@ public interface InstrumentedType extends TypeDescription {
         InstrumentedType prepare(InstrumentedType instrumentedType);
     }
 
+    /**
+     * A factory for creating an {@link InstrumentedType}.
+     */
     interface Factory {
 
+        /**
+         * Creates an instrumented type that represents the provided type.
+         *
+         * @param typeDescription The type to represent.
+         * @return An appropriate instrumented type.
+         */
         InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription);
 
+        /**
+         * Creates a new instrumented type as a subclass.
+         *
+         * @param name       The type's name.
+         * @param modifiers  The type's modifiers.
+         * @param superClass The type's super class.
+         * @return A new instrumented type representing a subclass of the given parameters.
+         */
         InstrumentedType.WithFlexibleName subclass(String name, int modifiers, TypeDescription.Generic superClass);
 
+        /**
+         * Default implementations of instrumented type factories.
+         */
         enum Default implements Factory {
 
+            /**
+             * A factory for an instrumented type that allows to modify represented types.
+             */
             MODIFIABLE {
                 @Override
                 public InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription) {
                     return new InstrumentedType.Default(typeDescription.getName(),
-                        typeDescription.getModifiers(),
-                        typeDescription.getSuperClass(),
-                        typeDescription.getTypeVariables().asTokenList(is(typeDescription)),
-                        typeDescription.getInterfaces().accept(Generic.Visitor.Substitutor.ForDetachment.of(typeDescription)),
-                        typeDescription.getDeclaredFields().asTokenList(is(typeDescription)),
-                        typeDescription.getDeclaredMethods().asTokenList(is(typeDescription)),
-                        typeDescription.getDeclaredAnnotations(),
-                        TypeInitializer.None.INSTANCE,
-                        LoadedTypeInitializer.NoOp.INSTANCE,
-                        typeDescription.getDeclaringType(),
-                        typeDescription.getEnclosingMethod(),
-                        typeDescription.getEnclosingType(),
-                        typeDescription.getDeclaredTypes(),
-                        typeDescription.isMemberClass(),
-                        typeDescription.isAnonymousClass(),
-                        typeDescription.isLocalClass());
+                            typeDescription.getModifiers(),
+                            typeDescription.getSuperClass(),
+                            typeDescription.getTypeVariables().asTokenList(is(typeDescription)),
+                            typeDescription.getInterfaces().accept(Generic.Visitor.Substitutor.ForDetachment.of(typeDescription)),
+                            typeDescription.getDeclaredFields().asTokenList(is(typeDescription)),
+                            typeDescription.getDeclaredMethods().asTokenList(is(typeDescription)),
+                            typeDescription.getDeclaredAnnotations(),
+                            TypeInitializer.None.INSTANCE,
+                            LoadedTypeInitializer.NoOp.INSTANCE,
+                            typeDescription.getDeclaringType(),
+                            typeDescription.getEnclosingMethod(),
+                            typeDescription.getEnclosingType(),
+                            typeDescription.getDeclaredTypes(),
+                            typeDescription.isMemberClass(),
+                            typeDescription.isAnonymousClass(),
+                            typeDescription.isLocalClass());
                 }
             },
 
+            /**
+             * A factory for an instrumented type that does not allow to modify represented types.
+             */
             FROZEN {
                 @Override
                 public InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription) {
@@ -976,12 +1002,27 @@ public interface InstrumentedType extends TypeDescription {
         }
     }
 
+    /**
+     * A frozen representation of an instrumented type of which the structure must not be modified.
+     */
     class Frozen extends AbstractBase.OfSimpleType implements InstrumentedType.WithFlexibleName {
 
+        /**
+         * The represented type description.
+         */
         private final TypeDescription typeDescription;
 
+        /**
+         * The type's loaded type initializer.
+         */
         private final LoadedTypeInitializer loadedTypeInitializer;
 
+        /**
+         * Creates a new frozen representation of an instrumented type.
+         *
+         * @param typeDescription       The represented type description.
+         * @param loadedTypeInitializer The type's loaded type initializer.
+         */
         protected Frozen(TypeDescription typeDescription, LoadedTypeInitializer loadedTypeInitializer) {
             this.typeDescription = typeDescription;
             this.loadedTypeInitializer = loadedTypeInitializer;
@@ -1069,6 +1110,7 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public String getGenericSignature() {
+            // Embrace use of cached generic signature by direct delegation.
             return typeDescription.getGenericSignature();
         }
 

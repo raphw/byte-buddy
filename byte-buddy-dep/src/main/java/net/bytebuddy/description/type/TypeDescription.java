@@ -7048,7 +7048,8 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public String getGenericSignature() {
-                    return delegate().getGenericSignature(); // Embrace use of cached generic signature.
+                    // Embrace use of cached generic signature by direct delegation.
+                    return delegate().getGenericSignature();
                 }
             }
         }

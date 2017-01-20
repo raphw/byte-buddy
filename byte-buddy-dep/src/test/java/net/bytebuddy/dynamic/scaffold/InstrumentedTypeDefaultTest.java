@@ -1272,7 +1272,6 @@ public class InstrumentedTypeDefaultTest {
                 false);
         MethodDescription methodDescription = typeDescription.getSuperClass().getSuperClass().getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType(), is(TypeDescription.Generic.OBJECT));
-
     }
 
     public @interface SampleAnnotation {

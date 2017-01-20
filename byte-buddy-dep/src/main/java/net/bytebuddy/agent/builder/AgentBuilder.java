@@ -274,6 +274,7 @@ public interface AgentBuilder {
      * <p>
      * This is equivalent to setting {@link InitializationStrategy.NoOp} and {@link TypeStrategy.Default#REDEFINE_FROZEN}
      * as well as configuring the underlying {@link ByteBuddy} instance to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled}.
+     * Using this strategy also configures Byte Buddy to create frozen instrumented types and discards any explicit configuration.
      * </p>
      *
      * @return A new instance of this agent builder that does not apply any implicit changes to the received class file.
@@ -1846,19 +1847,20 @@ public interface AgentBuilder {
                 }
             },
 
-//            /** TODO: Fixme
-//             * <p>
-//             * A definition handler that performs a redefinition for all types and ignores all methods that were not declared by the instrumented type.
-//             * </p>
-//             * <p>
-//             * Note that the default agent builder is configured to apply a self initialization where a static class initializer
-//             * is added to the redefined class. This can be disabled by for example using a {@link InitializationStrategy.Minimal} or
-//             * {@link InitializationStrategy.NoOp}. Also, consider the constraints implied by {@link ByteBuddy#redefine(TypeDescription, ClassFileLocator)}.
-//             * </p>
-//             * <p>
-//             * For prohibiting any changes on a class file, use {@link AgentBuilder#disableClassFormatChanges()}
-//             * </p>
-//             */
+            /**
+             * <p>
+             * A definition handler that performs a redefinition for all types and ignores all methods that were not declared by the instrumented type.
+             * </p>
+             * <p>
+             * Note that the default agent builder is configured to apply a self initialization where a static class initializer
+             * is added to the redefined class. This can be disabled by for example using a {@link InitializationStrategy.Minimal} or
+             * {@link InitializationStrategy.NoOp}. Also, consider the constraints implied by {@link ByteBuddy#redefine(TypeDescription, ClassFileLocator)}.
+             * Using this strategy also configures Byte Buddy to create frozen instrumented types and discards any explicit configuration.
+             * </p>
+             * <p>
+             * For prohibiting any changes on a class file, use {@link AgentBuilder#disableClassFormatChanges()}
+             * </p>
+             */
             REDEFINE_FROZEN {
                 @Override
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,

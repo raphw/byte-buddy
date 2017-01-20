@@ -129,6 +129,9 @@ public class ByteBuddy {
      */
     protected final MethodGraph.Compiler methodGraphCompiler;
 
+    /**
+     * The instrumented type factory to use.
+     */
     protected final InstrumentedType.Factory instrumentedTypeFactory;
 
     /**
@@ -184,6 +187,7 @@ public class ByteBuddy {
      * @param annotationRetention          The annotation retention strategy to use.
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
+     * @param instrumentedTypeFactory      The instrumented type factory to use.
      * @param typeValidation               Determines if a type should be explicitly validated.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      */
@@ -228,7 +232,7 @@ public class ByteBuddy {
      * </p>
      *
      * @param superType The super class or interface type to extend.
-     * @param <T>        A loaded type that the generated class is guaranteed to inherit.
+     * @param <T>       A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
     @SuppressWarnings("unchecked")
@@ -249,7 +253,7 @@ public class ByteBuddy {
      * types, a external cache or {@link TypeCache} should be used.
      * </p>
      *
-     * @param superType          The super class or interface type to extend.
+     * @param superType           The super class or interface type to extend.
      * @param constructorStrategy A constructor strategy that determines the
      * @param <T>                 A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
@@ -490,7 +494,7 @@ public class ByteBuddy {
     /**
      * <p>
      * Creates a new interface type that extends the provided interface.
-     *</p>
+     * </p>
      * <p>
      * <b>Note</b>: This methods implements the supplied types <i>as is</i>, i.e. any {@link TypeDescription} values are implemented
      * as raw types if they declare type variables or an owner type.
@@ -996,6 +1000,13 @@ public class ByteBuddy {
                 ignoredMethods);
     }
 
+    /**
+     * Configures Byte Buddy to use the specified factory for creating {@link InstrumentedType}s. Doing so, more efficient
+     * representations can be chosen when only certain operations are required. By default, all operations are supported.
+     *
+     * @param instrumentedTypeFactory The factory to use when creating instrumented types.
+     * @return A new Byte Buddy instance that uses the supplied factory for creating instrumented types.
+     */
     public ByteBuddy with(InstrumentedType.Factory instrumentedTypeFactory) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
