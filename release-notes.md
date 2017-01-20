@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 20. January 2017: version 1.6.5
+
+- Improved lazy resolution of super types in matchers.
+- Added frozen instrumented type and factory for such types when no class file format changes are desired.
+- Improved lazy resolution for generic type signatures.
+
 ### 19. January 2017: version 1.6.4
 
 - Refactored super type visitors to always be lazy until generic properties are required to be resolved.
