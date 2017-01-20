@@ -407,15 +407,15 @@ public class ElementMatchersTest {
 
     @Test
     public void testRawType() throws Exception {
-        assertThat(ElementMatchers.rawType(Exception.class).matches(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0])), is(true));
-        assertThat(ElementMatchers.rawType(Object.class).matches(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0])), is(false));
+        assertThat(ElementMatchers.erasure(Exception.class).matches(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0])), is(true));
+        assertThat(ElementMatchers.erasure(Object.class).matches(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0])), is(false));
     }
 
     @Test
     public void testRawTypes() throws Exception {
-        assertThat(ElementMatchers.rawTypes(Exception.class)
+        assertThat(ElementMatchers.erasures(Exception.class)
                 .matches(Collections.singletonList(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0]))), is(true));
-        assertThat(ElementMatchers.rawTypes(Object.class)
+        assertThat(ElementMatchers.erasures(Object.class)
                 .matches(Collections.singletonList(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0]))), is(false));
     }
 

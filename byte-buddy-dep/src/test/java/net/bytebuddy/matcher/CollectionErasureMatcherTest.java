@@ -13,7 +13,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class CollectionRawTypeMatcherTest extends AbstractElementMatcherTest<CollectionRawTypeMatcher<?>> {
+public class CollectionErasureMatcherTest extends AbstractElementMatcherTest<CollectionErasureMatcher<?>> {
 
     @Mock
     private ElementMatcher<? super Iterable<? extends TypeDefinition>> matcher;
@@ -25,8 +25,8 @@ public class CollectionRawTypeMatcherTest extends AbstractElementMatcherTest<Col
     private TypeDescription firstRaw, secondRaw;
 
     @SuppressWarnings("unchecked")
-    public CollectionRawTypeMatcherTest() {
-        super((Class<CollectionRawTypeMatcher<?>>) (Object) CollectionRawTypeMatcher.class, "rawTypes");
+    public CollectionErasureMatcherTest() {
+        super((Class<CollectionErasureMatcher<?>>) (Object) CollectionErasureMatcher.class, "erasures");
     }
 
     @Before
@@ -38,7 +38,7 @@ public class CollectionRawTypeMatcherTest extends AbstractElementMatcherTest<Col
     @Test
     public void testMatch() throws Exception {
         when(matcher.matches(Arrays.asList(firstRaw, secondRaw))).thenReturn(true);
-        assertThat(new CollectionRawTypeMatcher<Iterable<TypeDefinition>>(matcher).matches(Arrays.asList(first, second)), is(true));
+        assertThat(new CollectionErasureMatcher<Iterable<TypeDefinition>>(matcher).matches(Arrays.asList(first, second)), is(true));
         verify(matcher).matches(Arrays.asList(firstRaw, secondRaw));
         verifyNoMoreInteractions(matcher);
         verify(first).asErasure();
@@ -49,7 +49,7 @@ public class CollectionRawTypeMatcherTest extends AbstractElementMatcherTest<Col
 
     @Test
     public void testNoMatch() throws Exception {
-        assertThat(new CollectionRawTypeMatcher<Iterable<TypeDefinition>>(matcher).matches(Arrays.asList(first, second)), is(false));
+        assertThat(new CollectionErasureMatcher<Iterable<TypeDefinition>>(matcher).matches(Arrays.asList(first, second)), is(false));
         verify(matcher).matches(Arrays.asList(firstRaw, secondRaw));
         verifyNoMoreInteractions(matcher);
         verify(first).asErasure();

@@ -221,7 +221,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a parameter's type by the given matcher.
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasType(ElementMatcher<? super TypeDescription> matcher) {
-        return hasGenericType(rawType(matcher));
+        return hasGenericType(erasure(matcher));
     }
 
     /**
@@ -510,87 +510,93 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a generic type's raw type against the provided raw type.
+     * Matches a generic type's erasure against the provided type. As a wildcard does not define an erasure, a runtime exception is thrown when
+     * this matcher is applied to a wildcard.
      *
      * @param type The type to match a generic type's erasure against.
      * @param <T>  The type of the matched object.
      * @return A matcher that matches a generic type's raw type against the provided non-generic type.
      */
-    public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> rawType(Class<?> type) {
-        return rawType(is(type));
+    public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> erasure(Class<?> type) {
+        return erasure(is(type));
     }
 
     /**
-     * Matches a generic type's raw type against the provided raw type.
+     * Matches a generic type's erasure against the provided type. As a wildcard does not define an erasure, a runtime exception is thrown
+     * when this matcher is applied to a wildcard.
      *
      * @param type The type to match a generic type's erasure against.
      * @param <T>  The type of the matched object.
      * @return A matcher that matches a generic type's raw type against the provided non-generic type.
      */
-    public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> rawType(TypeDescription type) {
-        return rawType(is(type));
+    public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> erasure(TypeDescription type) {
+        return erasure(is(type));
     }
 
     /**
-     * Converts a matcher for a type description into a matcher for a raw type of the matched generic type against the given matcher. A wildcard
-     * type which does not define a raw type results in a negative match.
+     * Converts a matcher for a type description into a matcher for the matched type's erasure. As a wildcard does not define an erasure,
+     * a runtime exception is thrown when this matcher is applied to a wildcard.
      *
      * @param matcher The matcher to match the matched object's raw type against.
      * @param <T>     The type of the matched object.
      * @return A type matcher for a generic type that matches the matched type's raw type against the given type description matcher.
      */
-    public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> rawType(ElementMatcher<? super TypeDescription> matcher) {
-        return new RawTypeMatcher<T>(matcher);
+    public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> erasure(ElementMatcher<? super TypeDescription> matcher) {
+        return new ErasureMatcher<T>(matcher);
     }
 
     /**
-     * Matches an iteration of generic types' erasures against the provided raw types.
+     * Matches an iteration of generic types' erasures against the provided types. As a wildcard does not define an erasure, a runtime
+     * exception is thrown when this matcher is applied to a wildcard.
      *
      * @param type The types to match.
      * @param <T>  The type of the matched object.
      * @return A matcher that matches an iteration of generic types' raw types against the provided non-generic types.
      */
-    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> rawTypes(Class<?>... type) {
-        return rawTypes(new TypeList.ForLoadedTypes(type));
+    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> erasures(Class<?>... type) {
+        return erasures(new TypeList.ForLoadedTypes(type));
     }
 
     /**
-     * Matches an iteration of generic types' erasures against the provided raw types.
+     * Matches an iteration of generic types' erasures against the provided types. As a wildcard does not define an erasure, a runtime
+     * exception is thrown when this matcher is applied to a wildcard.
      *
      * @param type The types to match.
      * @param <T>  The type of the matched object.
      * @return A matcher that matches an iteration of generic types' raw types against the provided non-generic types.
      */
-    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> rawTypes(TypeDescription... type) {
-        return rawTypes(Arrays.asList(type));
+    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> erasures(TypeDescription... type) {
+        return erasures(Arrays.asList(type));
     }
 
     /**
-     * Matches an iteration of generic types' erasures against the provided raw types.
+     * Matches an iteration of generic types' erasures against the provided types. As a wildcard does not define an erasure, a runtime
+     * exception is thrown when this matcher is applied to a wildcard.
      *
      * @param types The types to match.
      * @param <T>   The type of the matched object.
      * @return A matcher that matches an iteration of generic types' raw types against the provided non-generic types.
      */
-    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> rawTypes(
+    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> erasures(
             Iterable<? extends TypeDescription> types) {
         List<ElementMatcher<? super TypeDescription>> typeMatchers = new ArrayList<ElementMatcher<? super TypeDescription>>();
         for (TypeDescription type : types) {
             typeMatchers.add(is(type));
         }
-        return rawTypes(new CollectionOneToOneMatcher<TypeDescription>(typeMatchers));
+        return erasures(new CollectionOneToOneMatcher<TypeDescription>(typeMatchers));
     }
 
     /**
-     * Applies the provided matcher to an iteration og generic types' generic types.
+     * Applies the provided matchers to an iteration og generic types' erasures. As a wildcard does not define an erasure, a runtime
+     * exception is thrown when this matcher is applied to a wildcard.
      *
      * @param matcher The matcher to apply at the erased types.
      * @param <T>     The type of the matched object.
      * @return A matcher that matches an iteration of generic types' raw types against the provided matcher.
      */
-    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> rawTypes(
+    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> erasures(
             ElementMatcher<? super Iterable<? extends TypeDescription>> matcher) {
-        return new CollectionRawTypeMatcher<T>(matcher);
+        return new CollectionErasureMatcher<T>(matcher);
     }
 
     /**
@@ -773,7 +779,7 @@ public final class ElementMatchers {
      * @return A matcher for byte code elements being declared by a type matched by the given {@code matcher}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(ElementMatcher<? super TypeDescription> matcher) {
-        return isDeclaredByGeneric(rawType(matcher));
+        return isDeclaredByGeneric(erasure(matcher));
     }
 
     /**
@@ -1082,7 +1088,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given return type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(Class<?> type) {
-        return returnsGeneric(rawType(type));
+        return returnsGeneric(erasure(type));
     }
 
     /**
@@ -1104,7 +1110,7 @@ public final class ElementMatchers {
      * @return A matcher that matches the matched method's return type's erasure.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(ElementMatcher<? super TypeDescription> matcher) {
-        return returnsGeneric(rawType(matcher));
+        return returnsGeneric(erasure(matcher));
     }
 
     /**
@@ -1212,7 +1218,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given generic return type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArgument(int index, Class<?> type) {
-        return takesGenericArgument(index, rawType(type));
+        return takesGenericArgument(index, erasure(type));
     }
 
     /**
@@ -1224,7 +1230,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given generic return type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArgument(int index, TypeDescription type) {
-        return takesGenericArgument(index, rawType(type));
+        return takesGenericArgument(index, erasure(type));
     }
 
     /**
@@ -1235,7 +1241,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's raw parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Class<?>... type) {
-        return takesGenericArguments(rawTypes(type));
+        return takesGenericArguments(erasures(type));
     }
 
     /**
@@ -1246,7 +1252,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's raw parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(TypeDescription... type) {
-        return takesGenericArguments(rawTypes(type));
+        return takesGenericArguments(erasures(type));
     }
 
     /**
@@ -1259,7 +1265,7 @@ public final class ElementMatchers {
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Iterable<? extends TypeDescription> types) {
         List<ElementMatcher<? super TypeDescription.Generic>> typeMatchers = new ArrayList<ElementMatcher<? super TypeDescription.Generic>>();
         for (TypeDescription type : types) {
-            typeMatchers.add(rawType(type));
+            typeMatchers.add(erasure(type));
         }
         return takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(typeMatchers));
     }
@@ -1311,7 +1317,7 @@ public final class ElementMatchers {
     public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(TypeDescription exceptionType) {
         return exceptionType.isAssignableTo(RuntimeException.class) || exceptionType.isAssignableTo(Error.class)
                 ? new BooleanMatcher<T>(true)
-                : ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(rawType(isSuperTypeOf(exceptionType))));
+                : ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(erasure(isSuperTypeOf(exceptionType))));
     }
 
     /**
@@ -1362,7 +1368,7 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresException(TypeDescription exceptionType) {
         return exceptionType.isAssignableTo(Throwable.class)
-                ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(rawType(exceptionType)))
+                ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(erasure(exceptionType)))
                 : new BooleanMatcher<T>(false);
     }
 
@@ -1409,7 +1415,7 @@ public final class ElementMatchers {
      * @return A matcher that checks a method's signature equality for any method declared by the declaring type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isOverriddenFrom(ElementMatcher<? super TypeDescription> matcher) {
-        return isOverriddenFromGeneric(rawType(matcher));
+        return isOverriddenFromGeneric(erasure(matcher));
     }
 
     /**
@@ -1663,7 +1669,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a setter method with an argument type that matches the supplied matcher.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(ElementMatcher<? super TypeDescription> matcher) {
-        return isGenericSetter(rawType(matcher));
+        return isGenericSetter(erasure(matcher));
     }
 
     /**
@@ -1754,7 +1760,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a getter method with a return type that matches the supplied matcher.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(ElementMatcher<? super TypeDescription> matcher) {
-        return isGenericGetter(rawType(matcher));
+        return isGenericGetter(erasure(matcher));
     }
 
     /**
@@ -1837,7 +1843,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any type description that declares a super type that matches the provided matcher.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> hasSuperType(ElementMatcher<? super TypeDescription> matcher) {
-        return hasGenericSuperType(rawType(matcher));
+        return hasGenericSuperType(erasure(matcher));
     }
 
     /**
@@ -2006,7 +2012,7 @@ public final class ElementMatchers {
      * @return A matcher matching the provided field type.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldType(ElementMatcher<? super TypeDescription> matcher) {
-        return genericFieldType(rawType(matcher));
+        return genericFieldType(erasure(matcher));
     }
 
     /**

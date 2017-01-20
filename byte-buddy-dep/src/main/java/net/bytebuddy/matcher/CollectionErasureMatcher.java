@@ -13,7 +13,7 @@ import java.util.List;
  * @param <T> The type of the matched entity.
  */
 @EqualsAndHashCode(callSuper = false)
-public class CollectionRawTypeMatcher<T extends Iterable<? extends TypeDefinition>> extends ElementMatcher.Junction.AbstractBase<T> {
+public class CollectionErasureMatcher<T extends Iterable<? extends TypeDefinition>> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The matcher to be applied to the raw types.
@@ -25,7 +25,7 @@ public class CollectionRawTypeMatcher<T extends Iterable<? extends TypeDefinitio
      *
      * @param matcher The matcher to be applied to the raw types.
      */
-    public CollectionRawTypeMatcher(ElementMatcher<? super Iterable<? extends TypeDescription>> matcher) {
+    public CollectionErasureMatcher(ElementMatcher<? super Iterable<? extends TypeDescription>> matcher) {
         this.matcher = matcher;
     }
 
@@ -40,6 +40,6 @@ public class CollectionRawTypeMatcher<T extends Iterable<? extends TypeDefinitio
 
     @Override
     public String toString() {
-        return "rawTypes(" + matcher + ')';
+        return "erasures(" + matcher + ')';
     }
 }

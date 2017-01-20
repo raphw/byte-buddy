@@ -6,12 +6,13 @@ import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that matches its argument's {@link TypeDescription.Generic} raw type against the
- * given matcher for a {@link TypeDescription}. A wildcard is not matched but returns a negative result.
+ * given matcher for a {@link TypeDescription}. As a wildcard does not define an erasure, a runtime
+ * exception is thrown when this matcher is applied to a wildcard.
  *
  * @param <T> The type of the matched entity.
  */
 @EqualsAndHashCode(callSuper = false)
-public class RawTypeMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
+public class ErasureMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The matcher to apply to the raw type of the matched element.
@@ -23,17 +24,17 @@ public class RawTypeMatcher<T extends TypeDefinition> extends ElementMatcher.Jun
      *
      * @param matcher The matcher to apply to the raw type.
      */
-    public RawTypeMatcher(ElementMatcher<? super TypeDescription> matcher) {
+    public ErasureMatcher(ElementMatcher<? super TypeDescription> matcher) {
         this.matcher = matcher;
     }
 
     @Override
     public boolean matches(T target) {
-        return !target.getSort().isWildcard() && matcher.matches(target.asErasure());
+        return matcher.matches(target.asErasure());
     }
 
     @Override
     public String toString() {
-        return "rawType(" + matcher + ")";
+        return "erasure(" + matcher + ")";
     }
 }

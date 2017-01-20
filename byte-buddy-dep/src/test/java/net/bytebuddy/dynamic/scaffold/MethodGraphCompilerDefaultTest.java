@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic.scaffold;
 
-import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -8,11 +7,9 @@ import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -182,9 +179,9 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.ClassTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(TypeDescription.OBJECT.getDeclaredMethods().filter(isVirtual()).size() + 1));
-        MethodDescription first = typeDescription.getInterfaces().filter(rawType(InterfaceBase.class)).getOnly()
+        MethodDescription first = typeDescription.getInterfaces().filter(erasure(InterfaceBase.class)).getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly();
-        MethodDescription second = typeDescription.getInterfaces().filter(rawType(AmbiguousInterfaceBase.class)).getOnly()
+        MethodDescription second = typeDescription.getInterfaces().filter(erasure(AmbiguousInterfaceBase.class)).getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly();
         MethodGraph.Node node = methodGraph.locate(first.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
@@ -208,9 +205,9 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(AmbiguousInterfaceBase.InterfaceTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription first = typeDescription.getInterfaces().filter(rawType(InterfaceBase.class)).getOnly()
+        MethodDescription first = typeDescription.getInterfaces().filter(erasure(InterfaceBase.class)).getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly();
-        MethodDescription second = typeDescription.getInterfaces().filter(rawType(AmbiguousInterfaceBase.class)).getOnly()
+        MethodDescription second = typeDescription.getInterfaces().filter(erasure(AmbiguousInterfaceBase.class)).getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly();
         MethodGraph.Node node = methodGraph.locate(first.asSignatureToken());
         assertThat(node.getSort(), is(MethodGraph.Node.Sort.AMBIGUOUS));
@@ -970,9 +967,9 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(MethodInterfaceConvergenceTarget.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription genericMethod = typeDescription.getInterfaces().filter(rawType(MethodInterfaceConvergenceFirstBase.class)).getOnly()
+        MethodDescription genericMethod = typeDescription.getInterfaces().filter(erasure(MethodInterfaceConvergenceFirstBase.class)).getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly();
-        MethodDescription nonGenericMethod = typeDescription.getInterfaces().filter(rawType(MethodInterfaceConvergenceSecondBase.class)).getOnly()
+        MethodDescription nonGenericMethod = typeDescription.getInterfaces().filter(erasure(MethodInterfaceConvergenceSecondBase.class)).getOnly()
                 .getDeclaredMethods().filter(isMethod()).getOnly();
         assertThat(methodGraph.getSuperClassGraph().locate(genericMethod.asSignatureToken()).getSort(), is(MethodGraph.Node.Sort.UNRESOLVED));
         assertThat(methodGraph.getSuperClassGraph().locate(nonGenericMethod.asSignatureToken()).getSort(), is(MethodGraph.Node.Sort.UNRESOLVED));
