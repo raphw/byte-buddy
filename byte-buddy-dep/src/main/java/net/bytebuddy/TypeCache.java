@@ -167,7 +167,7 @@ public class TypeCache<T> extends ReferenceQueue<ClassLoader> {
      * Removes any stale class loader entries from the cache.
      */
     public void expungeStaleEntries() {
-        Object reference;
+        Reference<?> reference;
         while ((reference = poll()) != null) {
             cache.remove(reference);
         }
