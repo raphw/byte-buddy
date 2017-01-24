@@ -99,21 +99,21 @@ public interface MethodDescription extends TypeVariableSource,
      * Returns this method's actual modifiers as it is present in a class file, i.e. includes a flag if this method
      * is marked {@link Deprecated} and adjusts the modifiers for being abstract or not.
      *
-     * @param nonAbstract {@code true} if the method should be treated as non-abstract.
+     * @param manifest {@code true} if the method should be treated as non-abstract.
      * @return The method's actual modifiers.
      */
-    int getActualModifiers(boolean nonAbstract);
+    int getActualModifiers(boolean manifest);
 
     /**
      * Returns this method's actual modifiers as it is present in a class file, i.e. includes a flag if this method
      * is marked {@link Deprecated} and adjusts the modifiers for being abstract or not. Additionally, this method
      * resolves a required minimal visibility.
      *
-     * @param nonAbstract {@code true} if the method should be treated as non-abstract.
+     * @param manifest {@code true} if the method should be treated as non-abstract.
      * @param visibility  The minimal visibility to enforce for this method.
      * @return The method's actual modifiers.
      */
-    int getActualModifiers(boolean nonAbstract, Visibility visibility);
+    int getActualModifiers(boolean manifest, Visibility visibility);
 
     /**
      * Checks if this method description represents a constructor.
@@ -438,22 +438,21 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public int getActualModifiers() {
-            return getActualModifiers(!isAbstract());
-        }
-
-        @Override
-        public int getActualModifiers(boolean nonAbstract) {
-            int actualModifiers = getModifiers() | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class)
+            return getModifiers() | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class)
                     ? Opcodes.ACC_DEPRECATED
                     : EMPTY_MASK);
-            return nonAbstract
-                    ? actualModifiers & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)
-                    : actualModifiers & ~Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT;
         }
 
         @Override
-        public int getActualModifiers(boolean nonAbstract, Visibility visibility) {
-            return ModifierContributor.Resolver.of(Collections.singleton(getVisibility().expandTo(visibility))).resolve(getActualModifiers(nonAbstract));
+        public int getActualModifiers(boolean manifest) {
+            return manifest
+                    ? getActualModifiers() & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)
+                    : getActualModifiers() & ~Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT;
+        }
+
+        @Override
+        public int getActualModifiers(boolean manifest, Visibility visibility) {
+            return ModifierContributor.Resolver.of(Collections.singleton(getVisibility().expandTo(visibility))).resolve(getActualModifiers(manifest));
         }
 
         @Override

@@ -3770,9 +3770,22 @@ public interface TypeWriter<T> {
                             implementedMethod.getDescriptor(),
                             implementedMethod.getGenericSignature(),
                             implementedMethod.getExceptionTypes().asErasures().toInternalNames());
-                    return abstractOrigin
-                            ? new AttributeObtainingMethodVisitor(methodVisitor, record)
-                            : new CodePreservingMethodVisitor(methodVisitor, record, methodRebaseResolver.resolve(implementedMethod.asDefined()));
+                    if (abstractOrigin) {
+                        return new AttributeObtainingMethodVisitor(methodVisitor, record);
+                    } else if (methodDescription.isNative()) {
+                        MethodRebaseResolver.Resolution resolution = methodRebaseResolver.resolve(implementedMethod.asDefined());
+                        if (resolution.isRebased()) {
+                            MethodVisitor rebasedMethod = super.visitMethod(resolution.getResolvedMethod().getActualModifiers(),
+                                    resolution.getResolvedMethod().getInternalName(),
+                                    resolution.getResolvedMethod().getDescriptor(),
+                                    resolution.getResolvedMethod().getGenericSignature(),
+                                    resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames());
+                            rebasedMethod.visitEnd();
+                        }
+                        return new AttributeObtainingMethodVisitor(methodVisitor, record);
+                    } else {
+                        return new CodePreservingMethodVisitor(methodVisitor, record, methodRebaseResolver.resolve(implementedMethod.asDefined()));
+                    }
                 }
 
                 @Override
