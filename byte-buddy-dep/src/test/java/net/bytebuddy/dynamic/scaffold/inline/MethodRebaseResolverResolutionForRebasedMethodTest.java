@@ -59,10 +59,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     private MethodNameTransformer methodNameTransformer, otherMethodNameTransformer;
 
     @Mock
-    private StackManipulation stackManipulation;
-
-    @Mock
-    private TypeDescription typeDescription, returnType, parameterType;
+    private TypeDescription instrumentedType, typeDescription, returnType, parameterType;
 
     @Mock
     private TypeDescription.Generic genericReturnType, genericParameterType;
@@ -82,7 +79,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(typeDescription.getDescriptor()).thenReturn(BAR);
-        when(typeDescription.isInterface()).thenReturn(interfaceType);
+        when(instrumentedType.isInterface()).thenReturn(interfaceType);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
@@ -99,7 +96,9 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
 
     @Test
     public void testPreservation() throws Exception {
-        MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedMethod.of(methodDescription, methodNameTransformer);
+        MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedMethod.of(instrumentedType,
+                methodDescription,
+                methodNameTransformer);
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));

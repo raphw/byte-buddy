@@ -169,12 +169,15 @@ public interface MethodRebaseResolver {
             /**
              * Resolves a rebasement for the provided method.
              *
+             * @param instrumentedType      The instrumented type.
              * @param methodDescription     The method to be rebased.
              * @param methodNameTransformer The transformer to use for renaming the method.
              * @return A resolution for rebasing the provided method.
              */
-            public static Resolution of(MethodDescription.InDefinedShape methodDescription, MethodNameTransformer methodNameTransformer) {
-                return new ForRebasedMethod(new RebasedMethod(methodDescription, methodNameTransformer));
+            public static Resolution of(TypeDescription instrumentedType,
+                                        MethodDescription.InDefinedShape methodDescription,
+                                        MethodNameTransformer methodNameTransformer) {
+                return new ForRebasedMethod(new RebasedMethod(instrumentedType, methodDescription, methodNameTransformer));
             }
 
             @Override
@@ -198,6 +201,11 @@ public interface MethodRebaseResolver {
             protected static class RebasedMethod extends MethodDescription.InDefinedShape.AbstractBase {
 
                 /**
+                 * The instrumented type.
+                 */
+                private final TypeDescription instrumentedType;
+
+                /**
                  * The method that is being rebased.
                  */
                 private final InDefinedShape methodDescription;
@@ -210,10 +218,12 @@ public interface MethodRebaseResolver {
                 /**
                  * Creates a new rebased method.
                  *
+                 * @param instrumentedType      The instrumented type.
                  * @param methodDescription     The method that is being rebased.
                  * @param methodNameTransformer The transformer to use for renaming the method.
                  */
-                protected RebasedMethod(InDefinedShape methodDescription, MethodNameTransformer methodNameTransformer) {
+                protected RebasedMethod(TypeDescription instrumentedType, InDefinedShape methodDescription, MethodNameTransformer methodNameTransformer) {
+                    this.instrumentedType = instrumentedType;
                     this.methodDescription = methodDescription;
                     this.methodNameTransformer = methodNameTransformer;
                 }
@@ -258,7 +268,7 @@ public interface MethodRebaseResolver {
                     return Opcodes.ACC_SYNTHETIC
                             | (methodDescription.isStatic() ? Opcodes.ACC_STATIC : EMPTY_MASK)
                             | (methodDescription.isNative() ? Opcodes.ACC_NATIVE : EMPTY_MASK)
-                            | (methodDescription.getDeclaringType().isInterface() ? Opcodes.ACC_PUBLIC : Opcodes.ACC_PRIVATE);
+                            | (instrumentedType.isInterface() ? Opcodes.ACC_PUBLIC : Opcodes.ACC_PRIVATE);
                 }
 
                 @Override
@@ -443,7 +453,7 @@ public interface MethodRebaseResolver {
                         }
                         resolution = Resolution.ForRebasedConstructor.of(instrumentedMethod, placeholderType.getTypeDescription());
                     } else {
-                        resolution = Resolution.ForRebasedMethod.of(instrumentedMethod, methodNameTransformer);
+                        resolution = Resolution.ForRebasedMethod.of(instrumentedType, instrumentedMethod, methodNameTransformer);
                     }
                     resolutions.put(instrumentedMethod, resolution);
                 }
