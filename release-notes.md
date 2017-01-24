@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 24. January 2017: version 1.6.6
+
+- Fixed computation of modifiers for rebased method in native state.
+
 ### 20. January 2017: version 1.6.5
 
 - Improved lazy resolution of super types in matchers.
