@@ -1040,6 +1040,8 @@ public interface AgentBuilder {
      */
     interface Listener {
 
+        boolean LOADED = true;
+
         /**
          * Invoked right before a successful transformation is applied.
          *
@@ -1331,323 +1333,6 @@ public interface AgentBuilder {
                             target.addReads(instrumentation, module);
                         }
                     }
-                }
-            }
-        }
-
-        /**
-         * A resubmitting instrumentation listener which attempts to load types after their instrumentation and submits them
-         * for retransformation or redefinition.
-         */
-        class Resubmitting extends Listener.Adapter implements Runnable {
-
-            /**
-             * The instrumentation instance to use.
-             */
-            private final Instrumentation instrumentation;
-
-            /**
-             * The listener to notify when a location strategy fails for a type.
-             */
-            private final Listener listener;
-
-            /**
-             * The location strategy to use.
-             */
-            private final LocationStrategy locationStrategy;
-
-            /**
-             * The redefinition strategy to use.
-             */
-            private final RedefinitionStrategy redefinitionStrategy;
-
-            /**
-             * The redefinition batch allocator.
-             */
-            private final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
-
-            /**
-             * The redefinition listener.
-             */
-            private final RedefinitionStrategy.Listener redefinitionListener;
-
-            /**
-             * The matcher to apply onto occured exceptions.
-             */
-            private final ElementMatcher.Junction<? super Throwable> matcher;
-
-            /**
-             * A mapping of class loader references to a set of names that failed to load on the origin class loader.
-             */
-            private final ConcurrentMap<StorageKey, Set<String>> types;
-
-            /**
-             * Creates a new resubmission listener that is using a {@link RedefinitionStrategy#RETRANSFORMATION}. During
-             * the retransformation, all types are submitted in a single batch and no listener is notified.
-             *
-             * @param instrumentation The instrumentation instance to use.
-             */
-            public Resubmitting(Instrumentation instrumentation) {
-                this(instrumentation, RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE);
-            }
-
-            /**
-             * Creates a new resubmission listener that is using a {@link RedefinitionStrategy#RETRANSFORMATION}.
-             *
-             * @param instrumentation            The instrumentation instance to use.
-             * @param redefinitionBatchAllocator The redefinition batch allocator.
-             */
-            public Resubmitting(Instrumentation instrumentation, RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
-                this(instrumentation,
-                        NoOp.INSTANCE,
-                        LocationStrategy.NoOp.INSTANCE,
-                        RedefinitionStrategy.RETRANSFORMATION,
-                        redefinitionBatchAllocator,
-                        RedefinitionStrategy.Listener.NoOp.INSTANCE,
-                        any());
-            }
-
-            /**
-             * Creates a new resubmission listener that is using a {@link RedefinitionStrategy#REDEFINITION}.
-             *
-             * @param instrumentation            The instrumentation instance to use.
-             * @param listener                   The listener to notify when a location strategy fails for a type.
-             * @param locationStrategy           The location strategy to use.
-             * @param redefinitionBatchAllocator The redefinition batch allocator.
-             */
-            public Resubmitting(Instrumentation instrumentation,
-                                Listener listener,
-                                LocationStrategy locationStrategy,
-                                RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
-                this(instrumentation,
-                        listener,
-                        locationStrategy,
-                        RedefinitionStrategy.REDEFINITION,
-                        redefinitionBatchAllocator,
-                        RedefinitionStrategy.Listener.NoOp.INSTANCE,
-                        any());
-            }
-
-            /**
-             * Creates a new resubmission listener.
-             *
-             * @param instrumentation            The instrumentation instance to use.
-             * @param listener                   The listener to notify when a location strategy fails for a type.
-             * @param locationStrategy           The location strategy to use.
-             * @param redefinitionStrategy       The redefinition strategy to use.
-             * @param redefinitionBatchAllocator The redefinition batch allocator.
-             * @param redefinitionListener       The redefinition listener.
-             * @param matcher                    The matcher to apply onto occured exceptions.
-             */
-            protected Resubmitting(Instrumentation instrumentation,
-                                   Listener listener,
-                                   LocationStrategy locationStrategy,
-                                   RedefinitionStrategy redefinitionStrategy,
-                                   RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                   RedefinitionStrategy.Listener redefinitionListener,
-                                   ElementMatcher.Junction<? super Throwable> matcher) {
-                this.instrumentation = instrumentation;
-                this.listener = listener;
-                this.locationStrategy = locationStrategy;
-                this.redefinitionStrategy = redefinitionStrategy;
-                this.redefinitionBatchAllocator = redefinitionBatchAllocator;
-                this.redefinitionListener = redefinitionListener;
-                this.matcher = matcher;
-                types = new ConcurrentHashMap<StorageKey, Set<String>>();
-            }
-
-            @Override
-            @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Cross-comparison is intended")
-            public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
-                if (!loaded && matcher.matches(throwable)) {
-                    Set<String> types = this.types.get(new LookupKey(classLoader));
-                    if (types == null) {
-                        types = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-                        Set<String> previous = this.types.putIfAbsent(new StorageKey(classLoader), types);
-                        if (previous != null) {
-                            types = previous;
-                        }
-                    }
-                    types.add(typeName);
-                }
-            }
-
-            /**
-             * Applies the supplied redefinition listener additionally to any previously registered listeners.
-             *
-             * @param redefinitionListener The redefinition listener to apply.
-             * @return A new resubmitting listener that notifies the specified listener upon a redefinition.
-             */
-            public Resubmitting with(RedefinitionStrategy.Listener redefinitionListener) {
-                return new Resubmitting(instrumentation,
-                        listener,
-                        locationStrategy,
-                        redefinitionStrategy,
-                        redefinitionBatchAllocator,
-                        new RedefinitionStrategy.Listener.Compound(this.redefinitionListener, redefinitionListener),
-                        matcher);
-            }
-
-            /**
-             * Narrows this type matcher to only be applied onto certain exceptions caused by the instrumentation process.
-             *
-             * @param matcher The matcher that filters any throwables of the instrumentation process.
-             * @return A new resubmitting listener that ignores unmatched throwables.
-             */
-            public Resubmitting filter(ElementMatcher<? super Throwable> matcher) {
-                return new Resubmitting(instrumentation,
-                        listener,
-                        locationStrategy,
-                        redefinitionStrategy,
-                        redefinitionBatchAllocator,
-                        redefinitionListener,
-                        this.matcher.<Throwable>and(matcher));
-            }
-
-            @Override
-            public void run() {
-                Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
-                List<Class<?>> types = new ArrayList<Class<?>>();
-                while (entries.hasNext()) {
-                    Map.Entry<StorageKey, Set<String>> entry = entries.next();
-                    ClassLoader classLoader = entry.getKey().get();
-                    if (classLoader != null || entry.getKey().isBootstrapLoader()) {
-                        Iterator<String> iterator = entry.getValue().iterator();
-                        while (iterator.hasNext()) {
-                            try {
-                                Class<?> type = Class.forName(iterator.next(), false, classLoader);
-                                if (instrumentation.isModifiableClass(type)) {
-                                    types.add(type);
-                                }
-                            } catch (Throwable ignored) {
-                                /* do nothing */
-                            } finally {
-                                iterator.remove();
-                            }
-                        }
-                    } else {
-                        entries.remove();
-                    }
-                }
-                RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
-                collector.include(types);
-                collector.apply(instrumentation,
-                        CircularityLock.Inactive.INSTANCE,
-                        locationStrategy,
-                        listener,
-                        redefinitionBatchAllocator,
-                        redefinitionListener);
-            }
-
-            /**
-             * Schedules this resubmitter at the specified rate.
-             *
-             * @param executorService The executor service to which the task is scheduled.
-             * @param time            The time between two resubmissions.
-             * @param timeUnit        The time unit of the specified time.
-             * @return This listener to be registered with an agent builder.
-             */
-            public Listener scheduled(ScheduledExecutorService executorService, long time, TimeUnit timeUnit) {
-                executorService.scheduleWithFixedDelay(this, time, time, timeUnit);
-                return this;
-            }
-
-            /* does not implement hashCode and equals in order to align with identity treatment of the JVM */
-
-            /**
-             * A key for a class loader that can only be used for looking up a preexisting value but avoids reference management.
-             */
-            protected static class LookupKey {
-
-                /**
-                 * The represented class loader.
-                 */
-                private final ClassLoader classLoader;
-
-                /**
-                 * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
-                 */
-                private final int hashCode;
-
-                /**
-                 * Creates a new lookup key.
-                 *
-                 * @param classLoader The represented class loader.
-                 */
-                protected LookupKey(ClassLoader classLoader) {
-                    this.classLoader = classLoader;
-                    hashCode = System.identityHashCode(classLoader);
-                }
-
-                @Override
-                @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-                public boolean equals(Object object) {
-                    if (this == object) {
-                        return true;
-                    } else if (object instanceof LookupKey) {
-                        return classLoader == ((LookupKey) object).classLoader;
-                    } else if (object instanceof StorageKey) {
-                        StorageKey storageKey = (StorageKey) object;
-                        return hashCode == storageKey.hashCode && classLoader == storageKey.get();
-                    } else {
-                        return false;
-                    }
-                }
-
-                @Override
-                public int hashCode() {
-                    return hashCode;
-                }
-            }
-
-            /**
-             * A key for a class loader that only weakly references the class loader.
-             */
-            protected static class StorageKey extends WeakReference<ClassLoader> {
-
-                /**
-                 * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
-                 */
-                private final int hashCode;
-
-                /**
-                 * Creates a new storage key.
-                 *
-                 * @param classLoader The represented class loader or {@code null} for the bootstrap class loader.
-                 */
-                protected StorageKey(ClassLoader classLoader) {
-                    super(classLoader);
-                    hashCode = System.identityHashCode(classLoader);
-                }
-
-                /**
-                 * Checks if this reference represents the bootstrap class loader.
-                 *
-                 * @return {@code true} if this entry represents the bootstrap class loader.
-                 */
-                protected boolean isBootstrapLoader() {
-                    return hashCode == 0;
-                }
-
-                @Override
-                @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-                public boolean equals(Object object) {
-                    if (this == object) {
-                        return true;
-                    } else if (object instanceof LookupKey) {
-                        LookupKey lookupKey = (LookupKey) object;
-                        return hashCode == lookupKey.hashCode && get() == lookupKey.classLoader;
-                    } else if (object instanceof StorageKey) {
-                        StorageKey storageKey = (StorageKey) object;
-                        return hashCode == storageKey.hashCode && get() == storageKey.get();
-                    } else {
-                        return false;
-                    }
-                }
-
-                @Override
-                public int hashCode() {
-                    return hashCode;
                 }
             }
         }
@@ -3548,6 +3233,383 @@ public interface AgentBuilder {
         }
     }
 
+    interface InstallationListener {
+
+        Listener onInstall(Instrumentation instrumentation,
+                           LocationStrategy locationStrategy,
+                           Listener listener,
+                           RawMatcher matcher,
+                           RedefinitionStrategy redefinitionStrategy,
+                           RedefinitionStrategy.BatchAllocator batchAllocator,
+                           RedefinitionStrategy.Listener batchListener);
+
+        enum NoOp implements InstallationListener {
+
+            INSTANCE;
+
+            @Override
+            public Listener onInstall(Instrumentation instrumentation,
+                                      LocationStrategy locationStrategy,
+                                      Listener listener,
+                                      RawMatcher matcher,
+                                      RedefinitionStrategy redefinitionStrategy,
+                                      RedefinitionStrategy.BatchAllocator batchAllocator,
+                                      RedefinitionStrategy.Listener batchListener) {
+                return Listener.NoOp.INSTANCE;
+            }
+        }
+
+        @EqualsAndHashCode
+        class ForResubmission implements InstallationListener {
+
+            private final JobHandler jobHandler;
+
+            private final ElementMatcher.Junction<? super Throwable> matcher;
+
+            protected ForResubmission(JobHandler jobHandler) {
+                this(jobHandler, any());
+            }
+
+            protected ForResubmission(JobHandler jobHandler, ElementMatcher.Junction<? super Throwable> matcher) {
+                this.jobHandler = jobHandler;
+                this.matcher = matcher;
+            }
+
+            public static ForResubmission atFixedRate(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
+                return new ForResubmission(new JobHandler.AtFixedRate(scheduledExecutorService, time, timeUnit));
+            }
+
+            public static ForResubmission withFixedDelay(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
+                return new ForResubmission(new JobHandler.WithFixedDelay(scheduledExecutorService, time, timeUnit));
+            }
+
+            public ForResubmission filter(ElementMatcher<? super Throwable> matcher) {
+                return new ForResubmission(jobHandler, this.matcher.and(matcher));
+            }
+
+            @Override
+            public Listener onInstall(Instrumentation instrumentation,
+                                      LocationStrategy locationStrategy,
+                                      Listener listener,
+                                      RawMatcher matcher,
+                                      RedefinitionStrategy redefinitionStrategy,
+                                      RedefinitionStrategy.BatchAllocator batchAllocator,
+                                      RedefinitionStrategy.Listener batchListener) {
+                if (redefinitionStrategy.isEnabled()) {
+                    ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
+                    jobHandler.handle(new ResubmissionJob(instrumentation,
+                            locationStrategy,
+                            listener,
+                            matcher,
+                            redefinitionStrategy,
+                            batchAllocator,
+                            batchListener,
+                            types));
+                    return new ResubmissionListener(this.matcher, types);
+                } else {
+                    return Listener.NoOp.INSTANCE;
+                }
+            }
+
+            public interface JobHandler {
+
+                void handle(Runnable job);
+
+                @EqualsAndHashCode
+                class AtFixedRate implements JobHandler {
+
+                    private final ScheduledExecutorService scheduledExecutorService;
+
+                    private final long time;
+
+                    private final TimeUnit timeUnit;
+
+                    public AtFixedRate(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
+                        this.scheduledExecutorService = scheduledExecutorService;
+                        this.time = time;
+                        this.timeUnit = timeUnit;
+                    }
+
+                    @Override
+                    public void handle(Runnable job) {
+                        scheduledExecutorService.scheduleAtFixedRate(job, time, time, timeUnit);
+                    }
+                }
+
+                @EqualsAndHashCode
+                class WithFixedDelay implements JobHandler {
+
+                    private final ScheduledExecutorService scheduledExecutorService;
+
+                    private final long time;
+
+                    private final TimeUnit timeUnit;
+
+                    public WithFixedDelay(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
+                        this.scheduledExecutorService = scheduledExecutorService;
+                        this.time = time;
+                        this.timeUnit = timeUnit;
+                    }
+
+                    @Override
+                    public void handle(Runnable job) {
+                        scheduledExecutorService.scheduleWithFixedDelay(job, time, time, timeUnit);
+                    }
+                }
+            }
+
+            protected static class ResubmissionListener extends Listener.Adapter {
+
+                private final ElementMatcher<? super Throwable> matcher;
+
+                private final ConcurrentMap<StorageKey, Set<String>> types;
+
+                protected ResubmissionListener(ElementMatcher<? super Throwable> matcher, ConcurrentMap<StorageKey, Set<String>> types) {
+                    this.matcher = matcher;
+                    this.types = types;
+                }
+
+                @Override
+                public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
+                    if (!loaded && matcher.matches(throwable)) {
+                        Set<String> types = this.types.get(new LookupKey(classLoader));
+                        if (types == null) {
+                            types = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+                            Set<String> previous = this.types.putIfAbsent(new StorageKey(classLoader), types);
+                            if (previous != null) {
+                                types = previous;
+                            }
+                        }
+                        types.add(typeName);
+                    }
+                }
+            }
+
+            protected static class ResubmissionJob implements Runnable {
+
+                private final Instrumentation instrumentation;
+
+                private final LocationStrategy locationStrategy;
+
+                private final Listener listener;
+
+                private final RawMatcher matcher;
+
+                private final RedefinitionStrategy redefinitionStrategy;
+
+                private final RedefinitionStrategy.BatchAllocator batchAllocator;
+
+                private final RedefinitionStrategy.Listener batchListener;
+
+                private final ConcurrentMap<StorageKey, Set<String>> types;
+
+                protected ResubmissionJob(Instrumentation instrumentation,
+                                          LocationStrategy locationStrategy,
+                                          Listener listener,
+                                          RawMatcher matcher,
+                                          RedefinitionStrategy redefinitionStrategy,
+                                          RedefinitionStrategy.BatchAllocator batchAllocator,
+                                          RedefinitionStrategy.Listener batchListener,
+                                          ConcurrentMap<StorageKey, Set<String>> types) {
+                    this.instrumentation = instrumentation;
+                    this.locationStrategy = locationStrategy;
+                    this.listener = listener;
+                    this.matcher = matcher;
+                    this.redefinitionStrategy = redefinitionStrategy;
+                    this.batchAllocator = batchAllocator;
+                    this.batchListener = batchListener;
+                    this.types = types;
+                }
+
+                @Override
+                public void run() {
+                    Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
+                    List<Class<?>> types = new ArrayList<Class<?>>();
+                    while (entries.hasNext()) {
+                        Map.Entry<StorageKey, Set<String>> entry = entries.next();
+                        ClassLoader classLoader = entry.getKey().get();
+                        if (classLoader != null || entry.getKey().isBootstrapLoader()) {
+                            Iterator<String> iterator = entry.getValue().iterator();
+                            while (iterator.hasNext()) {
+                                try {
+                                    Class<?> type = Class.forName(iterator.next(), false, classLoader);
+                                    try {
+                                        if (instrumentation.isModifiableClass(type) && matcher.matches(new TypeDescription.ForLoadedType(type),
+                                                type.getClassLoader(),
+                                                JavaModule.ofType(type),
+                                                type,
+                                                type.getProtectionDomain())) {
+                                            types.add(type);
+                                        }
+                                    } catch (Throwable throwable) {
+                                        try {
+                                            listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), JavaModule.ofType(type), Listener.LOADED, throwable);
+                                        } finally {
+                                            listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), JavaModule.ofType(type), Listener.LOADED);
+                                        }
+                                    }
+                                } catch (Throwable ignored) {
+                                    /* do nothing */
+                                } finally {
+                                    iterator.remove();
+                                }
+                            }
+                        } else {
+                            entries.remove();
+                        }
+                    }
+                    RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
+                    collector.include(types);
+                    collector.apply(instrumentation,
+                            CircularityLock.Inactive.INSTANCE,
+                            locationStrategy,
+                            listener,
+                            batchAllocator,
+                            batchListener);
+                }
+            }
+
+            /**
+             * A key for a class loader that can only be used for looking up a preexisting value but avoids reference management.
+             */
+            protected static class LookupKey {
+
+                /**
+                 * The represented class loader.
+                 */
+                private final ClassLoader classLoader;
+
+                /**
+                 * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
+                 */
+                private final int hashCode;
+
+                /**
+                 * Creates a new lookup key.
+                 *
+                 * @param classLoader The represented class loader.
+                 */
+                protected LookupKey(ClassLoader classLoader) {
+                    this.classLoader = classLoader;
+                    hashCode = System.identityHashCode(classLoader);
+                }
+
+                @Override
+                @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
+                public boolean equals(Object object) {
+                    if (this == object) {
+                        return true;
+                    } else if (object instanceof LookupKey) {
+                        return classLoader == ((LookupKey) object).classLoader;
+                    } else if (object instanceof StorageKey) {
+                        StorageKey storageKey = (StorageKey) object;
+                        return hashCode == storageKey.hashCode && classLoader == storageKey.get();
+                    } else {
+                        return false;
+                    }
+                }
+
+                @Override
+                public int hashCode() {
+                    return hashCode;
+                }
+            }
+
+            /**
+             * A key for a class loader that only weakly references the class loader.
+             */
+            protected static class StorageKey extends WeakReference<ClassLoader> {
+
+                /**
+                 * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
+                 */
+                private final int hashCode;
+
+                /**
+                 * Creates a new storage key.
+                 *
+                 * @param classLoader The represented class loader or {@code null} for the bootstrap class loader.
+                 */
+                protected StorageKey(ClassLoader classLoader) {
+                    super(classLoader);
+                    hashCode = System.identityHashCode(classLoader);
+                }
+
+                /**
+                 * Checks if this reference represents the bootstrap class loader.
+                 *
+                 * @return {@code true} if this entry represents the bootstrap class loader.
+                 */
+                protected boolean isBootstrapLoader() {
+                    return hashCode == 0;
+                }
+
+                @Override
+                @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
+                public boolean equals(Object object) {
+                    if (this == object) {
+                        return true;
+                    } else if (object instanceof LookupKey) {
+                        LookupKey lookupKey = (LookupKey) object;
+                        return hashCode == lookupKey.hashCode && get() == lookupKey.classLoader;
+                    } else if (object instanceof StorageKey) {
+                        StorageKey storageKey = (StorageKey) object;
+                        return hashCode == storageKey.hashCode && get() == storageKey.get();
+                    } else {
+                        return false;
+                    }
+                }
+
+                @Override
+                public int hashCode() {
+                    return hashCode;
+                }
+            }
+        }
+
+        @EqualsAndHashCode
+        class Compound implements InstallationListener {
+
+            private final List<InstallationListener> installationListeners;
+
+            public Compound(InstallationListener... installationListener) {
+                this(Arrays.asList(installationListener));
+            }
+
+            public Compound(List<? extends InstallationListener> installationListeners) {
+                this.installationListeners = new ArrayList<InstallationListener>();
+                for (InstallationListener installationListener : installationListeners) {
+                    if (installationListener instanceof Compound) {
+                        this.installationListeners.addAll(((Compound) installationListener).installationListeners);
+                    } else if (!(installationListener instanceof NoOp)) {
+                        this.installationListeners.add(installationListener);
+                    }
+                }
+            }
+
+            @Override
+            public Listener onInstall(Instrumentation instrumentation,
+                                      LocationStrategy locationStrategy,
+                                      Listener listener,
+                                      RawMatcher matcher,
+                                      RedefinitionStrategy redefinitionStrategy,
+                                      RedefinitionStrategy.BatchAllocator batchAllocator,
+                                      RedefinitionStrategy.Listener batchListener) {
+                Listener compound = Listener.NoOp.INSTANCE;
+                for (InstallationListener installationListener : installationListeners) {
+                    compound = new Listener.Compound(compound, installationListener.onInstall(instrumentation,
+                            locationStrategy,
+                            listener,
+                            matcher,
+                            redefinitionStrategy,
+                            batchAllocator,
+                            batchListener));
+                }
+                return compound;
+            }
+        }
+    }
+
     /**
      * A strategy for creating a {@link ClassFileLocator} when instrumenting a type.
      */
@@ -4035,9 +4097,9 @@ public interface AgentBuilder {
                 } catch (Throwable throwable) {
                     try {
                         try {
-                            listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, true, throwable);
+                            listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
                         } finally {
-                            listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, true);
+                            listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
                         }
                     } catch (Throwable ignored) {
                         // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
@@ -5136,9 +5198,9 @@ public interface AgentBuilder {
                             } catch (Throwable throwable) {
                                 JavaModule module = JavaModule.ofType(type);
                                 try {
-                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, true, throwable);
+                                    listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED, throwable);
                                 } finally {
-                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, true);
+                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), module, AgentBuilder.Listener.LOADED);
                                 }
                             }
                         } catch (Throwable ignored) {

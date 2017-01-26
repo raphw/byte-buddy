@@ -1233,6 +1233,10 @@ public final class ElementMatchers {
         return takesGenericArgument(index, erasure(type));
     }
 
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArgument(int index, ElementMatcher<? super TypeDescription> matcher) {
+        return takesGenericArgument(index, erasure(matcher));
+    }
+
     /**
      * Matches a method description that takes the provided raw arguments.
      *
