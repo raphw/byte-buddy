@@ -777,8 +777,23 @@ public interface AgentBuilder {
          */
         RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener);
 
+        /**
+         * Enables resubmission of failed transformations by applying a retransformation of the loaded type. This can be meaningful if
+         * class files cannot be located from the class loader as a resource where the loaded type becomes available.
+         *
+         * @param resubmissionScheduler A scheduler which is responsible for scheduling the resubmission job.
+         * @return A new instance of this agent builder that applies resubmission.
+         */
         AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler);
 
+        /**
+         * Enables resubmission of failed transformations by applying a retransformation of the loaded type. This can be meaningful if
+         * class files cannot be located from the class loader as a resource where the loaded type becomes available.
+         *
+         * @param resubmissionScheduler A scheduler which is responsible for scheduling the resubmission job.
+         * @param matcher               A matcher that filters throwable instances where non-matched throwables are not triggering a resubmission.
+         * @return A new instance of this agent builder that applies resubmission.
+         */
         AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher);
 
         /**
@@ -988,11 +1003,23 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * A raw matcher that inverts a raw matcher's result.
+         */
+        @EqualsAndHashCode
         class Inversion implements RawMatcher {
 
+            /**
+             * The matcher to invert.
+             */
             private final RawMatcher matcher;
 
-            public Inversion(RawMatcher matcher) {
+            /**
+             * Creates a raw matcher that inverts its result.
+             *
+             * @param matcher The matcher to invert.
+             */
+            protected Inversion(RawMatcher matcher) {
                 this.matcher = matcher;
             }
 
@@ -1062,6 +1089,9 @@ public interface AgentBuilder {
      */
     interface Listener {
 
+        /**
+         * Indicates that a transformed type is loaded.
+         */
         boolean LOADED = true;
 
         /**
@@ -4627,19 +4657,46 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * A resubmission scheduler is responsible for scheduling a job that is resubmitting unloaded types that failed during retransformation.
+         */
         public interface ResubmissionScheduler {
 
+            /**
+             * Schedules a resubmission job for regular application.
+             *
+             * @param job The job to schedule.
+             */
             void schedule(Runnable job);
 
+            /**
+             * A resubmission scheduler that schedules jobs at a fixed rate.
+             */
             @EqualsAndHashCode
             class AtFixedRate implements ResubmissionScheduler {
 
+                /**
+                 * The executor service to schedule to.
+                 */
                 private final ScheduledExecutorService scheduledExecutorService;
 
+                /**
+                 * The time interval between schedulings.
+                 */
                 private final long time;
 
+                /**
+                 * The time's time unit.
+                 */
                 private final TimeUnit timeUnit;
 
+                /**
+                 * Creates a new resubmission scheduler which schedules executions at a fixed rate.
+                 *
+                 * @param scheduledExecutorService The executor service to schedule to.
+                 * @param time                     The time interval between schedulings.
+                 * @param timeUnit                 The time's time unit.
+                 */
                 public AtFixedRate(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
                     this.scheduledExecutorService = scheduledExecutorService;
                     this.time = time;
@@ -4652,15 +4709,34 @@ public interface AgentBuilder {
                 }
             }
 
+            /**
+             * A resubmission scheduler that schedules jobs with a fixed delay.
+             */
             @EqualsAndHashCode
             class WithFixedDelay implements ResubmissionScheduler {
 
+                /**
+                 * The executor service to schedule to.
+                 */
                 private final ScheduledExecutorService scheduledExecutorService;
 
+                /**
+                 * The time interval to pause between completed jobs.
+                 */
                 private final long time;
 
+                /**
+                 * The time's time unit.
+                 */
                 private final TimeUnit timeUnit;
 
+                /**
+                 * Creates a new resubmission scheduler with a fixed delay between job executions.
+                 *
+                 * @param scheduledExecutorService The executor service to schedule to.
+                 * @param time                     The time interval to pause between completed jobs.
+                 * @param timeUnit                 The time's time unit.
+                 */
                 public WithFixedDelay(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
                     this.scheduledExecutorService = scheduledExecutorService;
                     this.time = time;
@@ -4674,19 +4750,41 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * A resubmission strategy is responsible for enabling resubmission of types that failed to resubmit.
+         */
         protected interface ResubmissionStrategy {
 
+            /**
+             * Invoked upon installation.
+             *
+             * @param instrumentation            The instrumentation instance to use.
+             * @param locationStrategy           The location strategy to use.
+             * @param listener                   The listener to use.
+             * @param circularityLock            The circularity lock to use.
+             * @param matcher                    The matcher to apply for analyzing if a type is to be resubmitted.
+             * @param redefinitionStrategy       The redefinition strategy to use.
+             * @param redefinitionBatchAllocator The batch allocator to use.
+             * @param redefinitionBatchListener  The batch listener to notify.
+             * @return A potentially modified listener to apply.
+             */
             AgentBuilder.Listener onInstall(Instrumentation instrumentation,
-                                                   LocationStrategy locationStrategy,
-                                                   AgentBuilder.Listener listener,
-                                                   CircularityLock circularityLock,
-                                                   RawMatcher matcher,
-                                                   RedefinitionStrategy redefinitionStrategy,
-                                                   RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                                   RedefinitionStrategy.Listener redefinitionBatchListener);
+                                            LocationStrategy locationStrategy,
+                                            AgentBuilder.Listener listener,
+                                            CircularityLock circularityLock,
+                                            RawMatcher matcher,
+                                            RedefinitionStrategy redefinitionStrategy,
+                                            RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                            RedefinitionStrategy.Listener redefinitionBatchListener);
 
+            /**
+             * A disabled resubmission strategy.
+             */
             enum Disabled implements ResubmissionStrategy {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -4702,13 +4800,28 @@ public interface AgentBuilder {
                 }
             }
 
+            /**
+             * An enabled resubmission strategy.
+             */
             @EqualsAndHashCode
             class Enabled implements ResubmissionStrategy {
 
+                /**
+                 * A scheduler that is responsible for resubmission of types.
+                 */
                 private final ResubmissionScheduler resubmissionScheduler;
 
+                /**
+                 * The matcher for filtering error causes.
+                 */
                 private final ElementMatcher<? super Throwable> matcher;
 
+                /**
+                 * Creates a new enabled resubmission strategy.
+                 *
+                 * @param resubmissionScheduler A scheduler that is responsible for resubmission of types.
+                 * @param matcher               The matcher for filtering error causes.
+                 */
                 protected Enabled(ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher) {
                     this.resubmissionScheduler = resubmissionScheduler;
                     this.matcher = matcher;
@@ -4740,12 +4853,25 @@ public interface AgentBuilder {
                     }
                 }
 
+                /**
+                 * A listener that registers types for resubmission that failed during transformations.
+                 */
                 protected static class ResubmissionListener extends AgentBuilder.Listener.Adapter {
 
+                    /**
+                     * The matcher for filtering error causes.
+                     */
                     private final ElementMatcher<? super Throwable> matcher;
 
+                    /**
+                     * A map of class loaders to their types to resubmit.
+                     */
                     private final ConcurrentMap<StorageKey, Set<String>> types;
 
+                    /**
+                     * @param matcher The matcher for filtering error causes.
+                     * @param types   A map of class loaders to their types to resubmit.
+                     */
                     protected ResubmissionListener(ElementMatcher<? super Throwable> matcher, ConcurrentMap<StorageKey, Set<String>> types) {
                         this.matcher = matcher;
                         this.types = types;
@@ -4767,34 +4893,77 @@ public interface AgentBuilder {
                     }
                 }
 
+                /**
+                 * A job that resubmits any matched type that previously failed during transformation.
+                 */
                 protected static class ResubmissionJob implements Runnable {
 
+                    /**
+                     * The instrumentation instance to use.
+                     */
                     private final Instrumentation instrumentation;
 
+                    /**
+                     * The location strategy to use.
+                     */
                     private final LocationStrategy locationStrategy;
 
+                    /**
+                     * The listener to use.
+                     */
                     private final AgentBuilder.Listener listener;
 
+                    /**
+                     * The circularity lock to use.
+                     */
                     private final CircularityLock circularityLock;
 
+                    /**
+                     * The matcher to apply for analyzing if a type is to be resubmitted.
+                     */
                     private final RawMatcher matcher;
 
+                    /**
+                     * The redefinition strategy to use.
+                     */
                     private final RedefinitionStrategy redefinitionStrategy;
 
-                    private final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
+                    /**
+                     * The batch allocator to use.
+                     */
+                    private final BatchAllocator redefinitionBatchAllocator;
 
-                    private final RedefinitionStrategy.Listener redefinitionBatchListener;
+                    /**
+                     * The batch listener to notify.
+                     */
+                    private final Listener redefinitionBatchListener;
 
+                    /**
+                     * A map of class loaders to their types to resubmit.
+                     */
                     private final ConcurrentMap<StorageKey, Set<String>> types;
 
+                    /**
+                     * Creates a new resubmission job.
+                     *
+                     * @param instrumentation            The instrumentation instance to use.
+                     * @param locationStrategy           The location strategy to use.
+                     * @param listener                   The listener to use.
+                     * @param circularityLock            The circularity lock to use.
+                     * @param matcher                    The matcher to apply for analyzing if a type is to be resubmitted.
+                     * @param redefinitionStrategy       The redefinition strategy to use.
+                     * @param redefinitionBatchAllocator The batch allocator to use.
+                     * @param redefinitionBatchListener  The batch listener to notify.
+                     * @param types                      A map of class loaders to their types to resubmit.
+                     */
                     protected ResubmissionJob(Instrumentation instrumentation,
                                               LocationStrategy locationStrategy,
                                               AgentBuilder.Listener listener,
                                               CircularityLock circularityLock,
                                               RawMatcher matcher,
                                               RedefinitionStrategy redefinitionStrategy,
-                                              RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                              RedefinitionStrategy.Listener redefinitionBatchListener,
+                                              BatchAllocator redefinitionBatchAllocator,
+                                              Listener redefinitionBatchListener,
                                               ConcurrentMap<StorageKey, Set<String>> types) {
                         this.instrumentation = instrumentation;
                         this.locationStrategy = locationStrategy;
@@ -4856,7 +5025,7 @@ public interface AgentBuilder {
                             RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
                             collector.include(types);
                             collector.apply(instrumentation,
-                                    CircularityLock.Inactive.INSTANCE,
+                                    circularityLock,
                                     locationStrategy,
                                     listener,
                                     redefinitionBatchAllocator,
@@ -6512,6 +6681,9 @@ public interface AgentBuilder {
          */
         protected final RedefinitionStrategy.Listener redefinitionListener;
 
+        /**
+         * The resubmission strategy to apply.
+         */
         protected final RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy;
 
         /**
@@ -6591,25 +6763,26 @@ public interface AgentBuilder {
         /**
          * Creates a new default agent builder.
          *
-         * @param byteBuddy                     The Byte Buddy instance to be used.
-         * @param listener                      The listener to notify on transformations.
-         * @param circularityLock               The circularity lock to use.
-         * @param poolStrategy                  The type locator to use.
-         * @param typeStrategy                  The definition handler to use.
-         * @param locationStrategy              The location strategy to use.
-         * @param nativeMethodStrategy          The native method strategy to apply.
-         * @param initializationStrategy        The initialization strategy to use for transformed types.
-         * @param redefinitionStrategy          The redefinition strategy to apply.
-         * @param redefinitionBatchAllocator    The batch allocator for the redefinition strategy to apply.
-         * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
-         * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
-         * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
-         *                                      instrumentation of classes that represent lambda expressions.
-         * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
-         * @param installationStrategy          The installation strategy to use.
-         * @param fallbackStrategy              The fallback strategy to apply.
-         * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
-         * @param transformation                The transformation object for handling type transformations.
+         * @param byteBuddy                        The Byte Buddy instance to be used.
+         * @param listener                         The listener to notify on transformations.
+         * @param circularityLock                  The circularity lock to use.
+         * @param poolStrategy                     The type locator to use.
+         * @param typeStrategy                     The definition handler to use.
+         * @param locationStrategy                 The location strategy to use.
+         * @param nativeMethodStrategy             The native method strategy to apply.
+         * @param initializationStrategy           The initialization strategy to use for transformed types.
+         * @param redefinitionStrategy             The redefinition strategy to apply.
+         * @param redefinitionBatchAllocator       The batch allocator for the redefinition strategy to apply.
+         * @param redefinitionListener             The redefinition listener for the redefinition strategy to apply.
+         * @param redefinitionResubmissionStrategy The resubmission strategy to apply.
+         * @param bootstrapInjectionStrategy       The injection strategy for injecting classes into the bootstrap class loader.
+         * @param lambdaInstrumentationStrategy    A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
+         *                                         instrumentation of classes that represent lambda expressions.
+         * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
+         * @param installationStrategy             The installation strategy to use.
+         * @param fallbackStrategy                 The fallback strategy to apply.
+         * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
+         * @param transformation                   The transformation object for handling type transformations.
          */
         protected Default(ByteBuddy byteBuddy,
                           Listener listener,
@@ -7194,6 +7367,12 @@ public interface AgentBuilder {
             return makeRaw(listener);
         }
 
+        /**
+         * Creates a new class file transformer with a given listener.
+         *
+         * @param listener The listener to supply.
+         * @return The resettable class file transformer to use.
+         */
         private ResettableClassFileTransformer makeRaw(Listener listener) {
             return ExecutingTransformer.FACTORY.make(byteBuddy,
                     listener,
@@ -8229,7 +8408,7 @@ public interface AgentBuilder {
                         return doTransform(module, classLoader, typeName, classBeingRedefined, classBeingRedefined != null, protectionDomain, typePool, classFileLocator);
                     } catch (Throwable throwable) {
                         if (classBeingRedefined != null && descriptionStrategy.isLoadedFirst() && fallbackStrategy.isFallback(classBeingRedefined, throwable)) {
-                            return doTransform(module, classLoader, typeName, NO_LOADED_TYPE, true, protectionDomain, typePool, classFileLocator);
+                            return doTransform(module, classLoader, typeName, NO_LOADED_TYPE, Listener.LOADED, protectionDomain, typePool, classFileLocator);
                         } else {
                             throw throwable;
                         }
@@ -9000,25 +9179,26 @@ public interface AgentBuilder {
             /**
              * Creates a new default agent builder that allows for refinement of the redefinition strategy.
              *
-             * @param byteBuddy                     The Byte Buddy instance to be used.
-             * @param listener                      The listener to notify on transformations.
-             * @param circularityLock               The circularity lock to use.
-             * @param poolStrategy                  The type locator to use.
-             * @param typeStrategy                  The definition handler to use.
-             * @param locationStrategy              The location strategy to use.
-             * @param nativeMethodStrategy          The native method strategy to apply.
-             * @param initializationStrategy        The initialization strategy to use for transformed types.
-             * @param redefinitionStrategy          The redefinition strategy to apply.
-             * @param redefinitionBatchAllocator    The batch allocator for the redefinition strategy to apply.
-             * @param redefinitionListener          The redefinition listener for the redefinition strategy to apply.
-             * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
-             * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
-             *                                      instrumentation of classes that represent lambda expressions.
-             * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
-             * @param installationStrategy          The installation strategy to use.
-             * @param fallbackStrategy              The fallback strategy to apply.
-             * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
-             * @param transformation                The transformation object for handling type transformations.
+             * @param byteBuddy                        The Byte Buddy instance to be used.
+             * @param listener                         The listener to notify on transformations.
+             * @param circularityLock                  The circularity lock to use.
+             * @param poolStrategy                     The type locator to use.
+             * @param typeStrategy                     The definition handler to use.
+             * @param locationStrategy                 The location strategy to use.
+             * @param nativeMethodStrategy             The native method strategy to apply.
+             * @param initializationStrategy           The initialization strategy to use for transformed types.
+             * @param redefinitionStrategy             The redefinition strategy to apply.
+             * @param redefinitionBatchAllocator       The batch allocator for the redefinition strategy to apply.
+             * @param redefinitionListener             The redefinition listener for the redefinition strategy to apply.
+             * @param redefinitionResubmissionStrategy The resubmission strategy to apply.
+             * @param bootstrapInjectionStrategy       The injection strategy for injecting classes into the bootstrap class loader.
+             * @param lambdaInstrumentationStrategy    A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
+             *                                         instrumentation of classes that represent lambda expressions.
+             * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
+             * @param installationStrategy             The installation strategy to use.
+             * @param fallbackStrategy                 The fallback strategy to apply.
+             * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
+             * @param transformation                   The transformation object for handling type transformations.
              */
             protected Redefining(ByteBuddy byteBuddy,
                                  Listener listener,
