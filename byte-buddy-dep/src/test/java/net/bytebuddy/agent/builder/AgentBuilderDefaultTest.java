@@ -2065,6 +2065,27 @@ public class AgentBuilderDefaultTest {
                 .transform(new AgentBuilder.Transformer.ForBuildPlugin(plugin))));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testRetransformationDisabledNotEnabledAllocator() throws Exception {
+        new AgentBuilder.Default()
+                .with(AgentBuilder.RedefinitionStrategy.DISABLED)
+                .with(mock(AgentBuilder.RedefinitionStrategy.BatchAllocator.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetransformationDisabledNotEnabledListener() throws Exception {
+        new AgentBuilder.Default()
+                .with(AgentBuilder.RedefinitionStrategy.DISABLED)
+                .with(mock(AgentBuilder.RedefinitionStrategy.Listener.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetransformationDisabledNotEnabledResubmission() throws Exception {
+        new AgentBuilder.Default()
+                .with(AgentBuilder.RedefinitionStrategy.DISABLED)
+                .withResubmission(mock(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.class));
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.class).apply();

@@ -83,6 +83,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(true);
         when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -93,8 +94,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verify(instrumentation).retransformClasses(Foo.class);
         verifyNoMoreInteractions(instrumentation);
@@ -128,9 +131,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(true);
         when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
         when(locationStrategy.classFileLocator(Foo.class.getClassLoader(), JavaModule.ofType(Foo.class))).thenReturn(classFileLocator);
-        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1,2,3}));
+        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1, 2, 3}));
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -141,14 +145,16 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verify(instrumentation).redefineClasses(Mockito.argThat(new BaseMatcher<ClassDefinition[]>() {
             @Override
             public boolean matches(Object o) {
                 return ((ClassDefinition) o).getDefinitionClass() == Foo.class
-                        && Arrays.equals(((ClassDefinition) o).getDefinitionClassFile(), new byte[]{1,2,3});
+                        && Arrays.equals(((ClassDefinition) o).getDefinitionClassFile(), new byte[]{1, 2, 3});
             }
 
             @Override
@@ -186,6 +192,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(true);
         when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -196,8 +203,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(rawMatcher);
@@ -225,9 +234,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(true);
         when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
         when(locationStrategy.classFileLocator(Foo.class.getClassLoader(), JavaModule.ofType(Foo.class))).thenReturn(classFileLocator);
-        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1,2,3}));
+        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1, 2, 3}));
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -238,8 +248,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(rawMatcher);
@@ -249,6 +261,116 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         verifyNoMoreInteractions(listener);
         verify(matcher).matches(error);
         verifyNoMoreInteractions(matcher);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testNoRetransformation() throws Exception {
+        when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
+        when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+            }
+        });
+        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+                Foo.class.getClassLoader(),
+                JavaModule.ofType(Foo.class),
+                Foo.class,
+                Foo.class.getProtectionDomain())).thenReturn(false);
+        when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(false);
+        AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
+        resubmissionStrategy.onInstall(instrumentation,
+                locationStrategy,
+                this.listener,
+                circularityLock,
+                rawMatcher,
+                AgentBuilder.RedefinitionStrategy.DISABLED,
+                redefinitionBatchAllocator,
+                redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
+        verifyZeroInteractions(resubmissionScheduler);
+        verifyZeroInteractions(instrumentation);
+        verifyZeroInteractions(rawMatcher);
+        verifyZeroInteractions(redefinitionBatchAllocator);
+        verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
+        verifyNoMoreInteractions(listener);
+        verifyZeroInteractions(matcher);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testRetransformationNonAlive() throws Exception {
+        when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
+        when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+            }
+        });
+        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+                Foo.class.getClassLoader(),
+                JavaModule.ofType(Foo.class),
+                Foo.class,
+                Foo.class.getProtectionDomain())).thenReturn(false);
+        when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(false);
+        AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
+        resubmissionStrategy.onInstall(instrumentation,
+                locationStrategy,
+                this.listener,
+                circularityLock,
+                rawMatcher,
+                AgentBuilder.RedefinitionStrategy.RETRANSFORMATION,
+                redefinitionBatchAllocator,
+                redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
+        verify(resubmissionScheduler).isAlive();
+        verifyNoMoreInteractions(resubmissionScheduler);
+        verifyZeroInteractions(instrumentation);
+        verifyZeroInteractions(rawMatcher);
+        verifyZeroInteractions(redefinitionBatchAllocator);
+        verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
+        verifyNoMoreInteractions(listener);
+        verifyZeroInteractions(matcher);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testRedefinitionNonAlive() throws Exception {
+        when(instrumentation.isModifiableClass(Foo.class)).thenReturn(true);
+        when(redefinitionBatchAllocator.batch(Mockito.any(List.class))).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return Collections.singleton(invocationOnMock.getArgumentAt(0, List.class));
+            }
+        });
+        when(rawMatcher.matches(new TypeDescription.ForLoadedType(Foo.class),
+                Foo.class.getClassLoader(),
+                JavaModule.ofType(Foo.class),
+                Foo.class,
+                Foo.class.getProtectionDomain())).thenReturn(false);
+        when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(false);
+        ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
+        when(locationStrategy.classFileLocator(Foo.class.getClassLoader(), JavaModule.ofType(Foo.class))).thenReturn(classFileLocator);
+        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1, 2, 3}));
+        AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
+        resubmissionStrategy.onInstall(instrumentation,
+                locationStrategy,
+                this.listener,
+                circularityLock,
+                rawMatcher,
+                AgentBuilder.RedefinitionStrategy.REDEFINITION,
+                redefinitionBatchAllocator,
+                redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
+        verify(resubmissionScheduler).isAlive();
+        verifyNoMoreInteractions(resubmissionScheduler);
+        verifyZeroInteractions(instrumentation);
+        verifyZeroInteractions(rawMatcher);
+        verifyZeroInteractions(redefinitionBatchAllocator);
+        verify(listener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
+        verifyNoMoreInteractions(listener);
+        verifyZeroInteractions(matcher);
     }
 
     @Test
@@ -267,6 +389,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(false);
         when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -277,8 +400,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
         verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -311,9 +436,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(false);
         when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
         when(locationStrategy.classFileLocator(Foo.class.getClassLoader(), JavaModule.ofType(Foo.class))).thenReturn(classFileLocator);
-        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1,2,3}));
+        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1, 2, 3}));
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -324,8 +450,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
         verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -358,6 +486,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(true);
         when(matcher.matches(error)).thenReturn(false);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -368,8 +497,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verifyZeroInteractions(instrumentation);
         verifyZeroInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
@@ -395,9 +526,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(true);
         when(matcher.matches(error)).thenReturn(false);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
         when(locationStrategy.classFileLocator(Foo.class.getClassLoader(), JavaModule.ofType(Foo.class))).thenReturn(classFileLocator);
-        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1,2,3}));
+        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1, 2, 3}));
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -408,8 +540,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), true, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verifyZeroInteractions(instrumentation);
         verifyZeroInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
@@ -435,6 +569,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(true);
         when(matcher.matches(error)).thenReturn(false);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -445,8 +580,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verifyZeroInteractions(instrumentation);
         verifyZeroInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
@@ -473,9 +610,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenReturn(true);
         when(matcher.matches(error)).thenReturn(false);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
         when(locationStrategy.classFileLocator(Foo.class.getClassLoader(), JavaModule.ofType(Foo.class))).thenReturn(classFileLocator);
-        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1,2,3}));
+        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1, 2, 3}));
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -486,8 +624,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verifyZeroInteractions(instrumentation);
         verifyZeroInteractions(rawMatcher);
         verify(redefinitionBatchAllocator).batch(Collections.<Class<?>>emptyList());
@@ -515,6 +655,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenThrow(runtimeException);
         when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -525,8 +666,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
         verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -562,9 +705,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 Foo.class,
                 Foo.class.getProtectionDomain())).thenThrow(runtimeException);
         when(matcher.matches(error)).thenReturn(true);
+        when(resubmissionScheduler.isAlive()).thenReturn(true);
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
         when(locationStrategy.classFileLocator(Foo.class.getClassLoader(), JavaModule.ofType(Foo.class))).thenReturn(classFileLocator);
-        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1,2,3}));
+        when(classFileLocator.locate(Foo.class.getName())).thenReturn(new ClassFileLocator.Resolution.Explicit(new byte[]{1, 2, 3}));
         AgentBuilder.RedefinitionStrategy.ResubmissionStrategy resubmissionStrategy = new AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher);
         resubmissionStrategy.onInstall(instrumentation,
                 locationStrategy,
@@ -575,8 +719,10 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
                 redefinitionBatchAllocator,
                 redefinitionListener).onError(Foo.class.getName(), Foo.class.getClassLoader(), JavaModule.ofType(Foo.class), false, error);
         ArgumentCaptor<Runnable> argumentCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(resubmissionScheduler).isAlive();
         verify(resubmissionScheduler).schedule(argumentCaptor.capture());
         argumentCaptor.getValue().run();
+        verifyNoMoreInteractions(resubmissionScheduler);
         verify(instrumentation).isModifiableClass(Foo.class);
         verifyNoMoreInteractions(instrumentation);
         verify(rawMatcher).matches(new TypeDescription.ForLoadedType(Foo.class),
@@ -673,6 +819,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
         Runnable runnable = mock(Runnable.class);
         AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.NoOp.INSTANCE.schedule(runnable);
         verifyZeroInteractions(runnable);
+        assertThat(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.NoOp.INSTANCE.isAlive(), is(false));
     }
 
     @Test
@@ -684,11 +831,17 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     }
 
     @Test
+    public void testSchedulerAtFixedRateIsAlive() throws Exception {
+        ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
+        assertThat(new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.AtFixedRate(scheduledExecutorService, 42L, TimeUnit.SECONDS).isAlive(), is(true));
+        verify(scheduledExecutorService).isShutdown();
+    }
+
+    @Test
     public void testSchedulerWithFixedDelay() throws Exception {
         ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
-        Runnable runnable = mock(Runnable.class);
-        new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.WithFixedDelay(scheduledExecutorService, 42L, TimeUnit.SECONDS).schedule(runnable);
-        verify(scheduledExecutorService).scheduleWithFixedDelay(runnable, 42L, 42L, TimeUnit.SECONDS);
+        assertThat(new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.WithFixedDelay(scheduledExecutorService, 42L, TimeUnit.SECONDS).isAlive(), is(true));
+        verify(scheduledExecutorService).isShutdown();
     }
 
     @Test
@@ -701,10 +854,6 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     }
 
     private static class Foo {
-        /* empty */
-    }
-
-    private static class Bar {
         /* empty */
     }
 }

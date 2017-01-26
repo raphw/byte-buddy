@@ -71,6 +71,11 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                     .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                     .withResubmission(new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler() {
                         @Override
+                        public boolean isAlive() {
+                            return true;
+                        }
+
+                        @Override
                         public void schedule(final Runnable job) {
                             scheduledExecutorService.scheduleWithFixedDelay(job, TIMEOUT, TIMEOUT, TimeUnit.SECONDS);
                         }

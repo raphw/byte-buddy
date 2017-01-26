@@ -4663,6 +4663,13 @@ public interface AgentBuilder {
         public interface ResubmissionScheduler {
 
             /**
+             * Checks if this scheduler is currently available.
+             *
+             * @return {@code true} if this scheduler is alive.
+             */
+            boolean isAlive();
+
+            /**
              * Schedules a resubmission job for regular application.
              *
              * @param job The job to schedule.
@@ -4675,9 +4682,14 @@ public interface AgentBuilder {
             enum NoOp implements ResubmissionScheduler {
 
                 /**
-                 * The singelton instance.
+                 * The singleton instance.
                  */
                 INSTANCE;
+
+                @Override
+                public boolean isAlive() {
+                    return false;
+                }
 
                 @Override
                 public void schedule(Runnable job) {
@@ -4720,6 +4732,11 @@ public interface AgentBuilder {
                 }
 
                 @Override
+                public boolean isAlive() {
+                    return !scheduledExecutorService.isShutdown();
+                }
+
+                @Override
                 public void schedule(Runnable job) {
                     scheduledExecutorService.scheduleAtFixedRate(job, time, time, timeUnit);
                 }
@@ -4757,6 +4774,11 @@ public interface AgentBuilder {
                     this.scheduledExecutorService = scheduledExecutorService;
                     this.time = time;
                     this.timeUnit = timeUnit;
+                }
+
+                @Override
+                public boolean isAlive() {
+                    return !scheduledExecutorService.isShutdown();
                 }
 
                 @Override
@@ -4852,7 +4874,7 @@ public interface AgentBuilder {
                                                        RedefinitionStrategy redefinitionStrategy,
                                                        RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                                                        RedefinitionStrategy.Listener redefinitionBatchListener) {
-                    if (redefinitionStrategy.isEnabled()) {
+                    if (redefinitionStrategy.isEnabled() && resubmissionScheduler.isAlive()) {
                         ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
                         resubmissionScheduler.schedule(new ResubmissionJob(instrumentation,
                                 locationStrategy,
