@@ -157,8 +157,6 @@ public interface AgentBuilder {
      */
     AgentBuilder with(InitializationStrategy initializationStrategy);
 
-    AgentBuilder with(InstallationListener installationListener);
-
     /**
      * <p>
      * Specifies a strategy for modifying types that were already loaded prior to the installation of this transformer.
@@ -778,6 +776,10 @@ public interface AgentBuilder {
          * @return A new instance of this agent builder which notifies the specified listener upon type redefinitions.
          */
         RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener);
+
+        AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler);
+
+        AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher);
 
         /**
          * An agent builder configuration that allows the configuration of a batching strategy.
@@ -3253,408 +3255,6 @@ public interface AgentBuilder {
         }
     }
 
-    interface InstallationListener {
-
-        Listener onInstall(Instrumentation instrumentation,
-                           LocationStrategy locationStrategy,
-                           Listener listener,
-                           CircularityLock circularityLock,
-                           RawMatcher matcher,
-                           RedefinitionStrategy redefinitionStrategy,
-                           RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                           RedefinitionStrategy.Listener redefinitionBatchListener);
-
-        enum NoOp implements InstallationListener {
-
-            INSTANCE;
-
-            @Override
-            public Listener onInstall(Instrumentation instrumentation,
-                                      LocationStrategy locationStrategy,
-                                      Listener listener,
-                                      CircularityLock circularityLock,
-                                      RawMatcher matcher,
-                                      RedefinitionStrategy redefinitionStrategy,
-                                      RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                      RedefinitionStrategy.Listener redefinitionBatchListener) {
-                return Listener.NoOp.INSTANCE;
-            }
-        }
-
-        @EqualsAndHashCode
-        class Resubmitting implements InstallationListener {
-
-            private final JobHandler jobHandler;
-
-            private final ElementMatcher.Junction<? super Throwable> matcher;
-
-            public Resubmitting(JobHandler jobHandler) {
-                this(jobHandler, any());
-            }
-
-            protected Resubmitting(JobHandler jobHandler, ElementMatcher.Junction<? super Throwable> matcher) {
-                this.jobHandler = jobHandler;
-                this.matcher = matcher;
-            }
-
-            public static Resubmitting atFixedRate(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
-                return new Resubmitting(new JobHandler.AtFixedRate(scheduledExecutorService, time, timeUnit));
-            }
-
-            public static Resubmitting withFixedDelay(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
-                return new Resubmitting(new JobHandler.WithFixedDelay(scheduledExecutorService, time, timeUnit));
-            }
-
-            public Resubmitting filter(ElementMatcher<? super Throwable> matcher) {
-                return new Resubmitting(jobHandler, this.matcher.and(matcher));
-            }
-
-            @Override
-            public Listener onInstall(Instrumentation instrumentation,
-                                      LocationStrategy locationStrategy,
-                                      Listener listener,
-                                      CircularityLock circularityLock,
-                                      RawMatcher matcher,
-                                      RedefinitionStrategy redefinitionStrategy,
-                                      RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                      RedefinitionStrategy.Listener redefinitionBatchListener) {
-                if (redefinitionStrategy.isEnabled()) {
-                    ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
-                    jobHandler.handle(new ResubmissionJob(instrumentation,
-                            locationStrategy,
-                            listener,
-                            circularityLock,
-                            matcher,
-                            redefinitionStrategy,
-                            redefinitionBatchAllocator,
-                            redefinitionBatchListener,
-                            types));
-                    return new ResubmissionListener(this.matcher, types);
-                } else {
-                    return Listener.NoOp.INSTANCE;
-                }
-            }
-
-            public interface JobHandler {
-
-                void handle(Runnable job);
-
-                @EqualsAndHashCode
-                class AtFixedRate implements JobHandler {
-
-                    private final ScheduledExecutorService scheduledExecutorService;
-
-                    private final long time;
-
-                    private final TimeUnit timeUnit;
-
-                    public AtFixedRate(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
-                        this.scheduledExecutorService = scheduledExecutorService;
-                        this.time = time;
-                        this.timeUnit = timeUnit;
-                    }
-
-                    @Override
-                    public void handle(Runnable job) {
-                        scheduledExecutorService.scheduleAtFixedRate(job, time, time, timeUnit);
-                    }
-                }
-
-                @EqualsAndHashCode
-                class WithFixedDelay implements JobHandler {
-
-                    private final ScheduledExecutorService scheduledExecutorService;
-
-                    private final long time;
-
-                    private final TimeUnit timeUnit;
-
-                    public WithFixedDelay(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
-                        this.scheduledExecutorService = scheduledExecutorService;
-                        this.time = time;
-                        this.timeUnit = timeUnit;
-                    }
-
-                    @Override
-                    public void handle(Runnable job) {
-                        scheduledExecutorService.scheduleWithFixedDelay(job, time, time, timeUnit);
-                    }
-                }
-            }
-
-            protected static class ResubmissionListener extends Listener.Adapter {
-
-                private final ElementMatcher<? super Throwable> matcher;
-
-                private final ConcurrentMap<StorageKey, Set<String>> types;
-
-                protected ResubmissionListener(ElementMatcher<? super Throwable> matcher, ConcurrentMap<StorageKey, Set<String>> types) {
-                    this.matcher = matcher;
-                    this.types = types;
-                }
-
-                @Override
-                public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
-                    if (!loaded && matcher.matches(throwable)) {
-                        Set<String> types = this.types.get(new LookupKey(classLoader));
-                        if (types == null) {
-                            types = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-                            Set<String> previous = this.types.putIfAbsent(new StorageKey(classLoader), types);
-                            if (previous != null) {
-                                types = previous;
-                            }
-                        }
-                        types.add(typeName);
-                    }
-                }
-            }
-
-            protected static class ResubmissionJob implements Runnable {
-
-                private final Instrumentation instrumentation;
-
-                private final LocationStrategy locationStrategy;
-
-                private final Listener listener;
-
-                private final CircularityLock circularityLock;
-
-                private final RawMatcher matcher;
-
-                private final RedefinitionStrategy redefinitionStrategy;
-
-                private final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
-
-                private final RedefinitionStrategy.Listener redefinitionBatchListener;
-
-                private final ConcurrentMap<StorageKey, Set<String>> types;
-
-                protected ResubmissionJob(Instrumentation instrumentation,
-                                          LocationStrategy locationStrategy,
-                                          Listener listener,
-                                          CircularityLock circularityLock,
-                                          RawMatcher matcher,
-                                          RedefinitionStrategy redefinitionStrategy,
-                                          RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                          RedefinitionStrategy.Listener redefinitionBatchListener,
-                                          ConcurrentMap<StorageKey, Set<String>> types) {
-                    this.instrumentation = instrumentation;
-                    this.locationStrategy = locationStrategy;
-                    this.listener = listener;
-                    this.circularityLock = circularityLock;
-                    this.matcher = matcher;
-                    this.redefinitionStrategy = redefinitionStrategy;
-                    this.redefinitionBatchAllocator = redefinitionBatchAllocator;
-                    this.redefinitionBatchListener = redefinitionBatchListener;
-                    this.types = types;
-                }
-
-                @Override
-                public void run() {
-                    boolean release = circularityLock.acquire();
-                    try {
-                        Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
-                        List<Class<?>> types = new ArrayList<Class<?>>();
-                        while (entries.hasNext()) {
-                            Map.Entry<StorageKey, Set<String>> entry = entries.next();
-                            ClassLoader classLoader = entry.getKey().get();
-                            if (classLoader != null || entry.getKey().isBootstrapLoader()) {
-                                Iterator<String> iterator = entry.getValue().iterator();
-                                while (iterator.hasNext()) {
-                                    try {
-                                        Class<?> type = Class.forName(iterator.next(), false, classLoader);
-                                        try {
-                                            if (instrumentation.isModifiableClass(type) && matcher.matches(new TypeDescription.ForLoadedType(type),
-                                                    type.getClassLoader(),
-                                                    JavaModule.ofType(type),
-                                                    type,
-                                                    type.getProtectionDomain())) {
-                                                types.add(type);
-                                            }
-                                        } catch (Throwable throwable) {
-                                            try {
-                                                listener.onError(TypeDescription.ForLoadedType.getName(type),
-                                                        type.getClassLoader(),
-                                                        JavaModule.ofType(type),
-                                                        Listener.LOADED,
-                                                        throwable);
-                                            } finally {
-                                                listener.onComplete(TypeDescription.ForLoadedType.getName(type),
-                                                        type.getClassLoader(),
-                                                        JavaModule.ofType(type),
-                                                        Listener.LOADED);
-                                            }
-                                        }
-                                    } catch (Throwable ignored) {
-                                        /* do nothing */
-                                    } finally {
-                                        iterator.remove();
-                                    }
-                                }
-                            } else {
-                                entries.remove();
-                            }
-                        }
-                        RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
-                        collector.include(types);
-                        collector.apply(instrumentation,
-                                CircularityLock.Inactive.INSTANCE,
-                                locationStrategy,
-                                listener,
-                                redefinitionBatchAllocator,
-                                redefinitionBatchListener);
-
-                    } finally {
-                        if (release) {
-                            circularityLock.release();
-                        }
-                    }
-                }
-            }
-
-            /**
-             * A key for a class loader that can only be used for looking up a preexisting value but avoids reference management.
-             */
-            protected static class LookupKey {
-
-                /**
-                 * The represented class loader.
-                 */
-                private final ClassLoader classLoader;
-
-                /**
-                 * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
-                 */
-                private final int hashCode;
-
-                /**
-                 * Creates a new lookup key.
-                 *
-                 * @param classLoader The represented class loader.
-                 */
-                protected LookupKey(ClassLoader classLoader) {
-                    this.classLoader = classLoader;
-                    hashCode = System.identityHashCode(classLoader);
-                }
-
-                @Override
-                @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-                public boolean equals(Object object) {
-                    if (this == object) {
-                        return true;
-                    } else if (object instanceof LookupKey) {
-                        return classLoader == ((LookupKey) object).classLoader;
-                    } else if (object instanceof StorageKey) {
-                        StorageKey storageKey = (StorageKey) object;
-                        return hashCode == storageKey.hashCode && classLoader == storageKey.get();
-                    } else {
-                        return false;
-                    }
-                }
-
-                @Override
-                public int hashCode() {
-                    return hashCode;
-                }
-            }
-
-            /**
-             * A key for a class loader that only weakly references the class loader.
-             */
-            protected static class StorageKey extends WeakReference<ClassLoader> {
-
-                /**
-                 * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
-                 */
-                private final int hashCode;
-
-                /**
-                 * Creates a new storage key.
-                 *
-                 * @param classLoader The represented class loader or {@code null} for the bootstrap class loader.
-                 */
-                protected StorageKey(ClassLoader classLoader) {
-                    super(classLoader);
-                    hashCode = System.identityHashCode(classLoader);
-                }
-
-                /**
-                 * Checks if this reference represents the bootstrap class loader.
-                 *
-                 * @return {@code true} if this entry represents the bootstrap class loader.
-                 */
-                protected boolean isBootstrapLoader() {
-                    return hashCode == 0;
-                }
-
-                @Override
-                @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
-                public boolean equals(Object object) {
-                    if (this == object) {
-                        return true;
-                    } else if (object instanceof LookupKey) {
-                        LookupKey lookupKey = (LookupKey) object;
-                        return hashCode == lookupKey.hashCode && get() == lookupKey.classLoader;
-                    } else if (object instanceof StorageKey) {
-                        StorageKey storageKey = (StorageKey) object;
-                        return hashCode == storageKey.hashCode && get() == storageKey.get();
-                    } else {
-                        return false;
-                    }
-                }
-
-                @Override
-                public int hashCode() {
-                    return hashCode;
-                }
-            }
-        }
-
-        @EqualsAndHashCode
-        class Compound implements InstallationListener {
-
-            private final List<InstallationListener> installationListeners;
-
-            public Compound(InstallationListener... installationListener) {
-                this(Arrays.asList(installationListener));
-            }
-
-            public Compound(List<? extends InstallationListener> installationListeners) {
-                this.installationListeners = new ArrayList<InstallationListener>();
-                for (InstallationListener installationListener : installationListeners) {
-                    if (installationListener instanceof Compound) {
-                        this.installationListeners.addAll(((Compound) installationListener).installationListeners);
-                    } else if (!(installationListener instanceof NoOp)) {
-                        this.installationListeners.add(installationListener);
-                    }
-                }
-            }
-
-            @Override
-            public Listener onInstall(Instrumentation instrumentation,
-                                      LocationStrategy locationStrategy,
-                                      Listener listener,
-                                      CircularityLock circularityLock,
-                                      RawMatcher matcher,
-                                      RedefinitionStrategy redefinitionStrategy,
-                                      RedefinitionStrategy.BatchAllocator batchAllocator,
-                                      RedefinitionStrategy.Listener batchListener) {
-                Listener compound = Listener.NoOp.INSTANCE;
-                for (InstallationListener installationListener : installationListeners) {
-                    compound = new Listener.Compound(compound, installationListener.onInstall(instrumentation,
-                            locationStrategy,
-                            listener,
-                            circularityLock,
-                            matcher,
-                            redefinitionStrategy,
-                            batchAllocator,
-                            batchListener));
-                }
-                return compound;
-            }
-        }
-    }
-
     /**
      * A strategy for creating a {@link ClassFileLocator} when instrumenting a type.
      */
@@ -5022,6 +4622,348 @@ public interface AgentBuilder {
                         public void remove() {
                             throw new UnsupportedOperationException("remove");
                         }
+                    }
+                }
+            }
+        }
+
+        public interface ResubmissionScheduler {
+
+            void schedule(Runnable job);
+
+            @EqualsAndHashCode
+            class AtFixedRate implements ResubmissionScheduler {
+
+                private final ScheduledExecutorService scheduledExecutorService;
+
+                private final long time;
+
+                private final TimeUnit timeUnit;
+
+                public AtFixedRate(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
+                    this.scheduledExecutorService = scheduledExecutorService;
+                    this.time = time;
+                    this.timeUnit = timeUnit;
+                }
+
+                @Override
+                public void schedule(Runnable job) {
+                    scheduledExecutorService.scheduleAtFixedRate(job, time, time, timeUnit);
+                }
+            }
+
+            @EqualsAndHashCode
+            class WithFixedDelay implements ResubmissionScheduler {
+
+                private final ScheduledExecutorService scheduledExecutorService;
+
+                private final long time;
+
+                private final TimeUnit timeUnit;
+
+                public WithFixedDelay(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
+                    this.scheduledExecutorService = scheduledExecutorService;
+                    this.time = time;
+                    this.timeUnit = timeUnit;
+                }
+
+                @Override
+                public void schedule(Runnable job) {
+                    scheduledExecutorService.scheduleWithFixedDelay(job, time, time, timeUnit);
+                }
+            }
+        }
+
+        protected interface ResubmissionStrategy {
+
+            AgentBuilder.Listener onInstall(Instrumentation instrumentation,
+                                                   LocationStrategy locationStrategy,
+                                                   AgentBuilder.Listener listener,
+                                                   CircularityLock circularityLock,
+                                                   RawMatcher matcher,
+                                                   RedefinitionStrategy redefinitionStrategy,
+                                                   RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                                   RedefinitionStrategy.Listener redefinitionBatchListener);
+
+            enum Disabled implements ResubmissionStrategy {
+
+                INSTANCE;
+
+                @Override
+                public AgentBuilder.Listener onInstall(Instrumentation instrumentation,
+                                                       LocationStrategy locationStrategy,
+                                                       AgentBuilder.Listener listener,
+                                                       CircularityLock circularityLock,
+                                                       RawMatcher matcher,
+                                                       RedefinitionStrategy redefinitionStrategy,
+                                                       BatchAllocator redefinitionBatchAllocator,
+                                                       Listener redefinitionBatchListener) {
+                    return listener;
+                }
+            }
+
+            @EqualsAndHashCode
+            class Enabled implements ResubmissionStrategy {
+
+                private final ResubmissionScheduler resubmissionScheduler;
+
+                private final ElementMatcher<? super Throwable> matcher;
+
+                protected Enabled(ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher) {
+                    this.resubmissionScheduler = resubmissionScheduler;
+                    this.matcher = matcher;
+                }
+
+                @Override
+                public AgentBuilder.Listener onInstall(Instrumentation instrumentation,
+                                                       LocationStrategy locationStrategy,
+                                                       AgentBuilder.Listener listener,
+                                                       CircularityLock circularityLock,
+                                                       RawMatcher matcher,
+                                                       RedefinitionStrategy redefinitionStrategy,
+                                                       RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                                       RedefinitionStrategy.Listener redefinitionBatchListener) {
+                    if (redefinitionStrategy.isEnabled()) {
+                        ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
+                        resubmissionScheduler.schedule(new ResubmissionJob(instrumentation,
+                                locationStrategy,
+                                listener,
+                                circularityLock,
+                                matcher,
+                                redefinitionStrategy,
+                                redefinitionBatchAllocator,
+                                redefinitionBatchListener,
+                                types));
+                        return new AgentBuilder.Listener.Compound(new ResubmissionListener(this.matcher, types), listener);
+                    } else {
+                        return listener;
+                    }
+                }
+
+                protected static class ResubmissionListener extends AgentBuilder.Listener.Adapter {
+
+                    private final ElementMatcher<? super Throwable> matcher;
+
+                    private final ConcurrentMap<StorageKey, Set<String>> types;
+
+                    protected ResubmissionListener(ElementMatcher<? super Throwable> matcher, ConcurrentMap<StorageKey, Set<String>> types) {
+                        this.matcher = matcher;
+                        this.types = types;
+                    }
+
+                    @Override
+                    public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
+                        if (!loaded && matcher.matches(throwable)) {
+                            Set<String> types = this.types.get(new LookupKey(classLoader));
+                            if (types == null) {
+                                types = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+                                Set<String> previous = this.types.putIfAbsent(new StorageKey(classLoader), types);
+                                if (previous != null) {
+                                    types = previous;
+                                }
+                            }
+                            types.add(typeName);
+                        }
+                    }
+                }
+
+                protected static class ResubmissionJob implements Runnable {
+
+                    private final Instrumentation instrumentation;
+
+                    private final LocationStrategy locationStrategy;
+
+                    private final AgentBuilder.Listener listener;
+
+                    private final CircularityLock circularityLock;
+
+                    private final RawMatcher matcher;
+
+                    private final RedefinitionStrategy redefinitionStrategy;
+
+                    private final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
+
+                    private final RedefinitionStrategy.Listener redefinitionBatchListener;
+
+                    private final ConcurrentMap<StorageKey, Set<String>> types;
+
+                    protected ResubmissionJob(Instrumentation instrumentation,
+                                              LocationStrategy locationStrategy,
+                                              AgentBuilder.Listener listener,
+                                              CircularityLock circularityLock,
+                                              RawMatcher matcher,
+                                              RedefinitionStrategy redefinitionStrategy,
+                                              RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                              RedefinitionStrategy.Listener redefinitionBatchListener,
+                                              ConcurrentMap<StorageKey, Set<String>> types) {
+                        this.instrumentation = instrumentation;
+                        this.locationStrategy = locationStrategy;
+                        this.listener = listener;
+                        this.circularityLock = circularityLock;
+                        this.matcher = matcher;
+                        this.redefinitionStrategy = redefinitionStrategy;
+                        this.redefinitionBatchAllocator = redefinitionBatchAllocator;
+                        this.redefinitionBatchListener = redefinitionBatchListener;
+                        this.types = types;
+                    }
+
+                    @Override
+                    public void run() {
+                        boolean release = circularityLock.acquire();
+                        try {
+                            Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
+                            List<Class<?>> types = new ArrayList<Class<?>>();
+                            while (entries.hasNext()) {
+                                Map.Entry<StorageKey, Set<String>> entry = entries.next();
+                                ClassLoader classLoader = entry.getKey().get();
+                                if (classLoader != null || entry.getKey().isBootstrapLoader()) {
+                                    Iterator<String> iterator = entry.getValue().iterator();
+                                    while (iterator.hasNext()) {
+                                        try {
+                                            Class<?> type = Class.forName(iterator.next(), false, classLoader);
+                                            try {
+                                                if (instrumentation.isModifiableClass(type) && matcher.matches(new TypeDescription.ForLoadedType(type),
+                                                        type.getClassLoader(),
+                                                        JavaModule.ofType(type),
+                                                        type,
+                                                        type.getProtectionDomain())) {
+                                                    types.add(type);
+                                                }
+                                            } catch (Throwable throwable) {
+                                                try {
+                                                    listener.onError(TypeDescription.ForLoadedType.getName(type),
+                                                            type.getClassLoader(),
+                                                            JavaModule.ofType(type),
+                                                            AgentBuilder.Listener.LOADED,
+                                                            throwable);
+                                                } finally {
+                                                    listener.onComplete(TypeDescription.ForLoadedType.getName(type),
+                                                            type.getClassLoader(),
+                                                            JavaModule.ofType(type),
+                                                            AgentBuilder.Listener.LOADED);
+                                                }
+                                            }
+                                        } catch (Throwable ignored) {
+                                        /* do nothing */
+                                        } finally {
+                                            iterator.remove();
+                                        }
+                                    }
+                                } else {
+                                    entries.remove();
+                                }
+                            }
+                            RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
+                            collector.include(types);
+                            collector.apply(instrumentation,
+                                    CircularityLock.Inactive.INSTANCE,
+                                    locationStrategy,
+                                    listener,
+                                    redefinitionBatchAllocator,
+                                    redefinitionBatchListener);
+
+                        } finally {
+                            if (release) {
+                                circularityLock.release();
+                            }
+                        }
+                    }
+                }
+
+                /**
+                 * A key for a class loader that can only be used for looking up a preexisting value but avoids reference management.
+                 */
+                protected static class LookupKey {
+
+                    /**
+                     * The represented class loader.
+                     */
+                    private final ClassLoader classLoader;
+
+                    /**
+                     * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
+                     */
+                    private final int hashCode;
+
+                    /**
+                     * Creates a new lookup key.
+                     *
+                     * @param classLoader The represented class loader.
+                     */
+                    protected LookupKey(ClassLoader classLoader) {
+                        this.classLoader = classLoader;
+                        hashCode = System.identityHashCode(classLoader);
+                    }
+
+                    @Override
+                    @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
+                    public boolean equals(Object object) {
+                        if (this == object) {
+                            return true;
+                        } else if (object instanceof LookupKey) {
+                            return classLoader == ((LookupKey) object).classLoader;
+                        } else if (object instanceof StorageKey) {
+                            StorageKey storageKey = (StorageKey) object;
+                            return hashCode == storageKey.hashCode && classLoader == storageKey.get();
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return hashCode;
+                    }
+                }
+
+                /**
+                 * A key for a class loader that only weakly references the class loader.
+                 */
+                protected static class StorageKey extends WeakReference<ClassLoader> {
+
+                    /**
+                     * The represented class loader's hash code or {@code 0} if this entry represents the bootstrap class loader.
+                     */
+                    private final int hashCode;
+
+                    /**
+                     * Creates a new storage key.
+                     *
+                     * @param classLoader The represented class loader or {@code null} for the bootstrap class loader.
+                     */
+                    protected StorageKey(ClassLoader classLoader) {
+                        super(classLoader);
+                        hashCode = System.identityHashCode(classLoader);
+                    }
+
+                    /**
+                     * Checks if this reference represents the bootstrap class loader.
+                     *
+                     * @return {@code true} if this entry represents the bootstrap class loader.
+                     */
+                    protected boolean isBootstrapLoader() {
+                        return hashCode == 0;
+                    }
+
+                    @Override
+                    @SuppressFBWarnings(value = "EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS", justification = "Cross-comparison is intended")
+                    public boolean equals(Object object) {
+                        if (this == object) {
+                            return true;
+                        } else if (object instanceof LookupKey) {
+                            LookupKey lookupKey = (LookupKey) object;
+                            return hashCode == lookupKey.hashCode && get() == lookupKey.classLoader;
+                        } else if (object instanceof StorageKey) {
+                            StorageKey storageKey = (StorageKey) object;
+                            return hashCode == storageKey.hashCode && get() == storageKey.get();
+                        } else {
+                            return false;
+                        }
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return hashCode;
                     }
                 }
             }
@@ -6570,6 +6512,8 @@ public interface AgentBuilder {
          */
         protected final RedefinitionStrategy.Listener redefinitionListener;
 
+        protected final RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy;
+
         /**
          * The injection strategy for injecting classes into the bootstrap class loader.
          */
@@ -6590,8 +6534,6 @@ public interface AgentBuilder {
          * The installation strategy to use.
          */
         protected final InstallationStrategy installationStrategy;
-
-        protected final InstallationListener installationListener;
 
         /**
          * The fallback strategy to apply.
@@ -6635,11 +6577,11 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
                     RedefinitionStrategy.Listener.NoOp.INSTANCE,
+                    RedefinitionStrategy.ResubmissionStrategy.Disabled.INSTANCE,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
                     DescriptionStrategy.Default.HYBRID,
                     InstallationStrategy.Default.ESCALATING,
-                    InstallationListener.NoOp.INSTANCE,
                     FallbackStrategy.ByThrowableType.ofOptionalTypes(),
                     new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()),
                             new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()), any(), any())),
@@ -6680,11 +6622,11 @@ public interface AgentBuilder {
                           RedefinitionStrategy redefinitionStrategy,
                           RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                           RedefinitionStrategy.Listener redefinitionListener,
+                          RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           DescriptionStrategy descriptionStrategy,
                           InstallationStrategy installationStrategy,
-                          InstallationListener installationListener,
                           FallbackStrategy fallbackStrategy,
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
@@ -6696,10 +6638,10 @@ public interface AgentBuilder {
             this.locationStrategy = locationStrategy;
             this.nativeMethodStrategy = nativeMethodStrategy;
             this.initializationStrategy = initializationStrategy;
-            this.installationListener = installationListener;
             this.redefinitionStrategy = redefinitionStrategy;
             this.redefinitionBatchAllocator = redefinitionBatchAllocator;
             this.redefinitionListener = redefinitionListener;
+            this.redefinitionResubmissionStrategy = redefinitionResubmissionStrategy;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.descriptionStrategy = descriptionStrategy;
@@ -6768,11 +6710,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6791,11 +6733,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6814,11 +6756,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6837,11 +6779,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6860,11 +6802,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6883,11 +6825,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6906,11 +6848,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6929,11 +6871,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6950,13 +6892,13 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     initializationStrategy,
                     redefinitionStrategy,
-                    redefinitionBatchAllocator,
-                    redefinitionListener,
+                    RedefinitionStrategy.BatchAllocator.ForTotal.INSTANCE,
+                    RedefinitionStrategy.Listener.NoOp.INSTANCE,
+                    RedefinitionStrategy.ResubmissionStrategy.Disabled.INSTANCE,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6975,11 +6917,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6998,11 +6940,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7021,11 +6963,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7044,34 +6986,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
-                    fallbackStrategy,
-                    ignoredTypeMatcher,
-                    transformation);
-        }
-
-        @Override
-        public AgentBuilder with(InstallationListener installationListener) {
-            return new Default(byteBuddy,
-                    listener,
-                    circularityLock,
-                    poolStrategy,
-                    typeStrategy,
-                    locationStrategy,
-                    nativeMethodStrategy,
-                    initializationStrategy,
-                    redefinitionStrategy,
-                    redefinitionBatchAllocator,
-                    redefinitionListener,
-                    bootstrapInjectionStrategy,
-                    lambdaInstrumentationStrategy,
-                    descriptionStrategy,
-                    installationStrategy,
-                    new InstallationListener.Compound(this.installationListener, installationListener),
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7090,11 +7009,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7113,11 +7032,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7136,11 +7055,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     BootstrapInjectionStrategy.Unsafe.INSTANCE,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7159,11 +7078,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7182,11 +7101,11 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     redefinitionBatchAllocator,
                     redefinitionListener,
+                    redefinitionResubmissionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
-                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7298,14 +7217,14 @@ public interface AgentBuilder {
                 throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
             }
             try {
-                Listener listener = new Listener.Compound(this.listener, installationListener.onInstall(instrumentation,
+                Listener listener = redefinitionResubmissionStrategy.onInstall(instrumentation,
                         locationStrategy,
                         this.listener,
                         circularityLock,
                         new RawMatcher.Conjunction(new RawMatcher.Inversion(ignoredTypeMatcher), transformation),
                         redefinitionStrategy,
                         redefinitionBatchAllocator,
-                        redefinitionListener));
+                        redefinitionListener);
                 ResettableClassFileTransformer classFileTransformer = makeRaw(listener);
                 instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming());
                 try {
@@ -8872,11 +8791,6 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder with(InstallationListener installationListener) {
-                return materialize().with(installationListener);
-            }
-
-            @Override
             public AgentBuilder with(FallbackStrategy fallbackStrategy) {
                 return materialize().with(fallbackStrategy);
             }
@@ -9034,11 +8948,11 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
+                        redefinitionResubmissionStrategy,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
-                        installationListener,
                         fallbackStrategy,
                         rawMatcher,
                         transformation);
@@ -9117,11 +9031,11 @@ public interface AgentBuilder {
                                  RedefinitionStrategy redefinitionStrategy,
                                  RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
                                  RedefinitionStrategy.Listener redefinitionListener,
+                                 RedefinitionStrategy.ResubmissionStrategy redefinitionResubmissionStrategy,
                                  BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                  LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                  DescriptionStrategy descriptionStrategy,
                                  InstallationStrategy installationStrategy,
-                                 InstallationListener installationListener,
                                  FallbackStrategy fallbackStrategy,
                                  RawMatcher ignoredTypeMatcher,
                                  Transformation transformation) {
@@ -9136,11 +9050,11 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
+                        redefinitionResubmissionStrategy,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
-                        installationListener,
                         fallbackStrategy,
                         ignoredTypeMatcher,
                         transformation);
@@ -9148,6 +9062,9 @@ public interface AgentBuilder {
 
             @Override
             public RedefinitionListenable with(RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator) {
+                if (!redefinitionStrategy.isEnabled()) {
+                    throw new IllegalStateException("Cannot set redefinition batch allocator when redefinition is disabled");
+                }
                 return new Redefining(byteBuddy,
                         listener,
                         circularityLock,
@@ -9159,11 +9076,11 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
+                        redefinitionResubmissionStrategy,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
-                        installationListener,
                         fallbackStrategy,
                         ignoredTypeMatcher,
                         transformation);
@@ -9171,6 +9088,9 @@ public interface AgentBuilder {
 
             @Override
             public RedefinitionListenable with(RedefinitionStrategy.Listener redefinitionListener) {
+                if (!redefinitionStrategy.isEnabled()) {
+                    throw new IllegalStateException("Cannot set redefinition listener when redefinition is disabled");
+                }
                 return new Redefining(byteBuddy,
                         listener,
                         circularityLock,
@@ -9182,11 +9102,42 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         redefinitionBatchAllocator,
                         new RedefinitionStrategy.Listener.Compound(this.redefinitionListener, redefinitionListener),
+                        redefinitionResubmissionStrategy,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
-                        installationListener,
+                        fallbackStrategy,
+                        ignoredTypeMatcher,
+                        transformation);
+            }
+
+            @Override
+            public AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler) {
+                return withResubmission(resubmissionScheduler, any());
+            }
+
+            @Override
+            public AgentBuilder withResubmission(RedefinitionStrategy.ResubmissionScheduler resubmissionScheduler, ElementMatcher<? super Throwable> matcher) {
+                if (!redefinitionStrategy.isEnabled()) {
+                    throw new IllegalStateException("Cannot enable redefinition resubmission when redefinition is disabled");
+                }
+                return new Redefining(byteBuddy,
+                        listener,
+                        circularityLock,
+                        poolStrategy,
+                        typeStrategy,
+                        locationStrategy,
+                        nativeMethodStrategy,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener,
+                        new RedefinitionStrategy.ResubmissionStrategy.Enabled(resubmissionScheduler, matcher),
+                        bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        descriptionStrategy,
+                        installationStrategy,
                         fallbackStrategy,
                         ignoredTypeMatcher,
                         transformation);
@@ -9241,11 +9192,11 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         redefinitionBatchAllocator,
                         redefinitionListener,
+                        redefinitionResubmissionStrategy,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
-                        installationListener,
                         fallbackStrategy,
                         ignoredTypeMatcher,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
