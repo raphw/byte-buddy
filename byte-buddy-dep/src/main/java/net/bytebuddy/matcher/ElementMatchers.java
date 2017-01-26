@@ -1233,7 +1233,7 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches {@link MethodDescription}s that define a type erasure as a parameter at the given index that matches the supplied matcher
+     * Matches {@link MethodDescription}s that define a type erasure as a parameter at the given index that matches the supplied matcher.
      *
      * @param index   The index of the parameter.
      * @param matcher A matcher to apply to the argument at the specified index.
