@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 26. January 2017: version 1.6.7
+
+- Refactored `Resubmitter` to a DSL-step within the redefinition configuration.
+- Added additional element matchers.
+
 ### 24. January 2017: version 1.6.6
 
 - Fixed computation of modifiers for rebased method in native state.
