@@ -4670,6 +4670,22 @@ public interface AgentBuilder {
             void schedule(Runnable job);
 
             /**
+             * A resubmission scheduler that does not apply any scheduling.
+             */
+            enum NoOp implements ResubmissionScheduler {
+
+                /**
+                 * The singelton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public void schedule(Runnable job) {
+                    /* do nothing */
+                }
+            }
+
+            /**
              * A resubmission scheduler that schedules jobs at a fixed rate.
              */
             @EqualsAndHashCode

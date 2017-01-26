@@ -669,7 +669,14 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     }
 
     @Test
-    public void testJobHandlerAtFixedRate() throws Exception {
+    public void testSchedulerNoOp() throws Exception {
+        Runnable runnable = mock(Runnable.class);
+        AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.NoOp.INSTANCE.schedule(runnable);
+        verifyZeroInteractions(runnable);
+    }
+
+    @Test
+    public void testSchedulerAtFixedRate() throws Exception {
         ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
         Runnable runnable = mock(Runnable.class);
         new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.AtFixedRate(scheduledExecutorService, 42L, TimeUnit.SECONDS).schedule(runnable);
@@ -677,7 +684,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     }
 
     @Test
-    public void testJobHandlerWithFixedDelay() throws Exception {
+    public void testSchedulerWithFixedDelay() throws Exception {
         ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
         Runnable runnable = mock(Runnable.class);
         new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.WithFixedDelay(scheduledExecutorService, 42L, TimeUnit.SECONDS).schedule(runnable);
@@ -688,6 +695,7 @@ public class AgentBuilderRedefinitionStrategyResubmissionStrategyTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Enabled.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionStrategy.Disabled.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.AtFixedRate.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.WithFixedDelay.class).apply();
     }
