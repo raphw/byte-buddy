@@ -4916,6 +4916,7 @@ public interface AgentBuilder {
                     }
 
                     @Override
+                    @SuppressFBWarnings(value = "GC_UNRELATED_TYPES", justification = "Use of unrelated key is inteded for avoiding unnecessary weak reference")
                     public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
                         if (!loaded && matcher.matches(throwable)) {
                             Set<String> types = this.types.get(new LookupKey(classLoader));
