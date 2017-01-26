@@ -3282,31 +3282,31 @@ public interface AgentBuilder {
         }
 
         @EqualsAndHashCode
-        class ForResubmission implements InstallationListener {
+        class Resubmitting implements InstallationListener {
 
             private final JobHandler jobHandler;
 
             private final ElementMatcher.Junction<? super Throwable> matcher;
 
-            protected ForResubmission(JobHandler jobHandler) {
+            public Resubmitting(JobHandler jobHandler) {
                 this(jobHandler, any());
             }
 
-            protected ForResubmission(JobHandler jobHandler, ElementMatcher.Junction<? super Throwable> matcher) {
+            protected Resubmitting(JobHandler jobHandler, ElementMatcher.Junction<? super Throwable> matcher) {
                 this.jobHandler = jobHandler;
                 this.matcher = matcher;
             }
 
-            public static ForResubmission atFixedRate(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
-                return new ForResubmission(new JobHandler.AtFixedRate(scheduledExecutorService, time, timeUnit));
+            public static Resubmitting atFixedRate(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
+                return new Resubmitting(new JobHandler.AtFixedRate(scheduledExecutorService, time, timeUnit));
             }
 
-            public static ForResubmission withFixedDelay(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
-                return new ForResubmission(new JobHandler.WithFixedDelay(scheduledExecutorService, time, timeUnit));
+            public static Resubmitting withFixedDelay(ScheduledExecutorService scheduledExecutorService, long time, TimeUnit timeUnit) {
+                return new Resubmitting(new JobHandler.WithFixedDelay(scheduledExecutorService, time, timeUnit));
             }
 
-            public ForResubmission filter(ElementMatcher<? super Throwable> matcher) {
-                return new ForResubmission(jobHandler, this.matcher.and(matcher));
+            public Resubmitting filter(ElementMatcher<? super Throwable> matcher) {
+                return new Resubmitting(jobHandler, this.matcher.and(matcher));
             }
 
             @Override
