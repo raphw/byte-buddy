@@ -1198,12 +1198,11 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link MethodDescription} by applying an iterable collection of element matcher on any parameter's {@link TypeDescription}.
+     * Matches a {@link MethodDescription} by applying an iterable collection of element matcher on any parameter's {@link TypeDescription.Generic}.
      *
      * @param matchers The matcher that are applied onto the parameter types of the matched method description.
      * @param <T>      The type of the matched object.
-     * @return A matcher that matches a method description by applying another element matcher onto each
-     * parameter's type.
+     * @return A matcher that matches a method description by applying another element matcher onto each parameter's type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(ElementMatcher<? super Iterable<? extends TypeDescription.Generic>> matchers) {
         return new MethodParametersMatcher<T>(new MethodParameterTypesMatcher<ParameterList<?>>(matchers));
@@ -1215,24 +1214,32 @@ public final class ElementMatchers {
      * @param index The index of the parameter.
      * @param type  The erasure of the type the matched method is expected to define as a parameter type.
      * @param <T>   The type of the matched object.
-     * @return An element matcher that matches a given generic return type for a method description.
+     * @return An element matcher that matches a given argument type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArgument(int index, Class<?> type) {
-        return takesGenericArgument(index, erasure(type));
+        return takesArgument(index, new TypeDescription.ForLoadedType(type));
     }
 
     /**
-     * Matches {@link MethodDescription}s that define a given generic type as a parameter at the given index.
+     * Matches {@link MethodDescription}s that define a given type erasure as a parameter at the given index.
      *
      * @param index The index of the parameter.
      * @param type  The erasure of the type the matched method is expected to define as a parameter type.
      * @param <T>   The type of the matched object.
-     * @return An element matcher that matches a given generic return type for a method description.
+     * @return An element matcher that matches a given argument type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArgument(int index, TypeDescription type) {
-        return takesGenericArgument(index, erasure(type));
+        return takesArgument(index, is(type));
     }
 
+    /**
+     * Matches {@link MethodDescription}s that define a type erasure as a parameter at the given index that matches the supplied matcher
+     *
+     * @param index   The index of the parameter.
+     * @param matcher A matcher to apply to the argument at the specified index.
+     * @param <T>     The type of the matched object.
+     * @return An element matcher that matches a given argument type for a method description.
+     */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArgument(int index, ElementMatcher<? super TypeDescription> matcher) {
         return takesGenericArgument(index, erasure(matcher));
     }
@@ -1272,6 +1279,17 @@ public final class ElementMatchers {
             typeMatchers.add(erasure(type));
         }
         return takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(typeMatchers));
+    }
+
+    /**
+     * Matches a {@link MethodDescription} by applying an iterable collection of element matcher on any parameter's {@link TypeDescription}.
+     *
+     * @param matchers The matcher that are applied onto the parameter types of the matched method description.
+     * @param <T>      The type of the matched object.
+     * @return A matcher that matches a method description by applying another element matcher onto each parameter's type.
+     */
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(ElementMatcher<? super Iterable<? extends TypeDescription>> matchers) {
+        return new MethodParametersMatcher<T>(new MethodParameterTypesMatcher<ParameterList<?>>(erasures(matchers)));
     }
 
     /**
