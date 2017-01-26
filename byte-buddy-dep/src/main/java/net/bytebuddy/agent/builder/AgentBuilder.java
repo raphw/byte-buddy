@@ -157,6 +157,8 @@ public interface AgentBuilder {
      */
     AgentBuilder with(InitializationStrategy initializationStrategy);
 
+    AgentBuilder with(InstallationListener installationListener);
+
     /**
      * <p>
      * Specifies a strategy for modifying types that were already loaded prior to the installation of this transformer.
@@ -981,6 +983,24 @@ public interface AgentBuilder {
                                    ProtectionDomain protectionDomain) {
                 return left.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain)
                         || right.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
+            }
+        }
+
+        class Inversion implements RawMatcher {
+
+            private final RawMatcher matcher;
+
+            public Inversion(RawMatcher matcher) {
+                this.matcher = matcher;
+            }
+
+            @Override
+            public boolean matches(TypeDescription typeDescription,
+                                   ClassLoader classLoader,
+                                   JavaModule module,
+                                   Class<?> classBeingRedefined,
+                                   ProtectionDomain protectionDomain) {
+                return !matcher.matches(typeDescription, classLoader, module, classBeingRedefined, protectionDomain);
             }
         }
 
@@ -3238,10 +3258,11 @@ public interface AgentBuilder {
         Listener onInstall(Instrumentation instrumentation,
                            LocationStrategy locationStrategy,
                            Listener listener,
+                           CircularityLock circularityLock,
                            RawMatcher matcher,
                            RedefinitionStrategy redefinitionStrategy,
-                           RedefinitionStrategy.BatchAllocator batchAllocator,
-                           RedefinitionStrategy.Listener batchListener);
+                           RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                           RedefinitionStrategy.Listener redefinitionBatchListener);
 
         enum NoOp implements InstallationListener {
 
@@ -3251,10 +3272,11 @@ public interface AgentBuilder {
             public Listener onInstall(Instrumentation instrumentation,
                                       LocationStrategy locationStrategy,
                                       Listener listener,
+                                      CircularityLock circularityLock,
                                       RawMatcher matcher,
                                       RedefinitionStrategy redefinitionStrategy,
-                                      RedefinitionStrategy.BatchAllocator batchAllocator,
-                                      RedefinitionStrategy.Listener batchListener) {
+                                      RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                      RedefinitionStrategy.Listener redefinitionBatchListener) {
                 return Listener.NoOp.INSTANCE;
             }
         }
@@ -3291,19 +3313,21 @@ public interface AgentBuilder {
             public Listener onInstall(Instrumentation instrumentation,
                                       LocationStrategy locationStrategy,
                                       Listener listener,
+                                      CircularityLock circularityLock,
                                       RawMatcher matcher,
                                       RedefinitionStrategy redefinitionStrategy,
-                                      RedefinitionStrategy.BatchAllocator batchAllocator,
-                                      RedefinitionStrategy.Listener batchListener) {
+                                      RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                      RedefinitionStrategy.Listener redefinitionBatchListener) {
                 if (redefinitionStrategy.isEnabled()) {
                     ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
                     jobHandler.handle(new ResubmissionJob(instrumentation,
                             locationStrategy,
                             listener,
+                            circularityLock,
                             matcher,
                             redefinitionStrategy,
-                            batchAllocator,
-                            batchListener,
+                            redefinitionBatchAllocator,
+                            redefinitionBatchListener,
                             types));
                     return new ResubmissionListener(this.matcher, types);
                 } else {
@@ -3393,79 +3417,98 @@ public interface AgentBuilder {
 
                 private final Listener listener;
 
+                private final CircularityLock circularityLock;
+
                 private final RawMatcher matcher;
 
                 private final RedefinitionStrategy redefinitionStrategy;
 
-                private final RedefinitionStrategy.BatchAllocator batchAllocator;
+                private final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
 
-                private final RedefinitionStrategy.Listener batchListener;
+                private final RedefinitionStrategy.Listener redefinitionBatchListener;
 
                 private final ConcurrentMap<StorageKey, Set<String>> types;
 
                 protected ResubmissionJob(Instrumentation instrumentation,
                                           LocationStrategy locationStrategy,
                                           Listener listener,
+                                          CircularityLock circularityLock,
                                           RawMatcher matcher,
                                           RedefinitionStrategy redefinitionStrategy,
-                                          RedefinitionStrategy.BatchAllocator batchAllocator,
-                                          RedefinitionStrategy.Listener batchListener,
+                                          RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                          RedefinitionStrategy.Listener redefinitionBatchListener,
                                           ConcurrentMap<StorageKey, Set<String>> types) {
                     this.instrumentation = instrumentation;
                     this.locationStrategy = locationStrategy;
                     this.listener = listener;
+                    this.circularityLock = circularityLock;
                     this.matcher = matcher;
                     this.redefinitionStrategy = redefinitionStrategy;
-                    this.batchAllocator = batchAllocator;
-                    this.batchListener = batchListener;
+                    this.redefinitionBatchAllocator = redefinitionBatchAllocator;
+                    this.redefinitionBatchListener = redefinitionBatchListener;
                     this.types = types;
                 }
 
                 @Override
                 public void run() {
-                    Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
-                    List<Class<?>> types = new ArrayList<Class<?>>();
-                    while (entries.hasNext()) {
-                        Map.Entry<StorageKey, Set<String>> entry = entries.next();
-                        ClassLoader classLoader = entry.getKey().get();
-                        if (classLoader != null || entry.getKey().isBootstrapLoader()) {
-                            Iterator<String> iterator = entry.getValue().iterator();
-                            while (iterator.hasNext()) {
-                                try {
-                                    Class<?> type = Class.forName(iterator.next(), false, classLoader);
+                    boolean release = circularityLock.acquire();
+                    try {
+                        Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
+                        List<Class<?>> types = new ArrayList<Class<?>>();
+                        while (entries.hasNext()) {
+                            Map.Entry<StorageKey, Set<String>> entry = entries.next();
+                            ClassLoader classLoader = entry.getKey().get();
+                            if (classLoader != null || entry.getKey().isBootstrapLoader()) {
+                                Iterator<String> iterator = entry.getValue().iterator();
+                                while (iterator.hasNext()) {
                                     try {
-                                        if (instrumentation.isModifiableClass(type) && matcher.matches(new TypeDescription.ForLoadedType(type),
-                                                type.getClassLoader(),
-                                                JavaModule.ofType(type),
-                                                type,
-                                                type.getProtectionDomain())) {
-                                            types.add(type);
-                                        }
-                                    } catch (Throwable throwable) {
+                                        Class<?> type = Class.forName(iterator.next(), false, classLoader);
                                         try {
-                                            listener.onError(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), JavaModule.ofType(type), Listener.LOADED, throwable);
-                                        } finally {
-                                            listener.onComplete(TypeDescription.ForLoadedType.getName(type), type.getClassLoader(), JavaModule.ofType(type), Listener.LOADED);
+                                            if (instrumentation.isModifiableClass(type) && matcher.matches(new TypeDescription.ForLoadedType(type),
+                                                    type.getClassLoader(),
+                                                    JavaModule.ofType(type),
+                                                    type,
+                                                    type.getProtectionDomain())) {
+                                                types.add(type);
+                                            }
+                                        } catch (Throwable throwable) {
+                                            try {
+                                                listener.onError(TypeDescription.ForLoadedType.getName(type),
+                                                        type.getClassLoader(),
+                                                        JavaModule.ofType(type),
+                                                        Listener.LOADED,
+                                                        throwable);
+                                            } finally {
+                                                listener.onComplete(TypeDescription.ForLoadedType.getName(type),
+                                                        type.getClassLoader(),
+                                                        JavaModule.ofType(type),
+                                                        Listener.LOADED);
+                                            }
                                         }
+                                    } catch (Throwable ignored) {
+                                        /* do nothing */
+                                    } finally {
+                                        iterator.remove();
                                     }
-                                } catch (Throwable ignored) {
-                                    /* do nothing */
-                                } finally {
-                                    iterator.remove();
                                 }
+                            } else {
+                                entries.remove();
                             }
-                        } else {
-                            entries.remove();
+                        }
+                        RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
+                        collector.include(types);
+                        collector.apply(instrumentation,
+                                CircularityLock.Inactive.INSTANCE,
+                                locationStrategy,
+                                listener,
+                                redefinitionBatchAllocator,
+                                redefinitionBatchListener);
+
+                    } finally {
+                        if (release) {
+                            circularityLock.release();
                         }
                     }
-                    RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
-                    collector.include(types);
-                    collector.apply(instrumentation,
-                            CircularityLock.Inactive.INSTANCE,
-                            locationStrategy,
-                            listener,
-                            batchAllocator,
-                            batchListener);
                 }
             }
 
@@ -3591,6 +3634,7 @@ public interface AgentBuilder {
             public Listener onInstall(Instrumentation instrumentation,
                                       LocationStrategy locationStrategy,
                                       Listener listener,
+                                      CircularityLock circularityLock,
                                       RawMatcher matcher,
                                       RedefinitionStrategy redefinitionStrategy,
                                       RedefinitionStrategy.BatchAllocator batchAllocator,
@@ -3600,6 +3644,7 @@ public interface AgentBuilder {
                     compound = new Listener.Compound(compound, installationListener.onInstall(instrumentation,
                             locationStrategy,
                             listener,
+                            circularityLock,
                             matcher,
                             redefinitionStrategy,
                             batchAllocator,
@@ -6546,6 +6591,8 @@ public interface AgentBuilder {
          */
         protected final InstallationStrategy installationStrategy;
 
+        protected final InstallationListener installationListener;
+
         /**
          * The fallback strategy to apply.
          */
@@ -6592,6 +6639,7 @@ public interface AgentBuilder {
                     LambdaInstrumentationStrategy.DISABLED,
                     DescriptionStrategy.Default.HYBRID,
                     InstallationStrategy.Default.ESCALATING,
+                    InstallationListener.NoOp.INSTANCE,
                     FallbackStrategy.ByThrowableType.ofOptionalTypes(),
                     new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()),
                             new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()), any(), any())),
@@ -6636,6 +6684,7 @@ public interface AgentBuilder {
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           DescriptionStrategy descriptionStrategy,
                           InstallationStrategy installationStrategy,
+                          InstallationListener installationListener,
                           FallbackStrategy fallbackStrategy,
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
@@ -6647,6 +6696,7 @@ public interface AgentBuilder {
             this.locationStrategy = locationStrategy;
             this.nativeMethodStrategy = nativeMethodStrategy;
             this.initializationStrategy = initializationStrategy;
+            this.installationListener = installationListener;
             this.redefinitionStrategy = redefinitionStrategy;
             this.redefinitionBatchAllocator = redefinitionBatchAllocator;
             this.redefinitionListener = redefinitionListener;
@@ -6722,6 +6772,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6744,6 +6795,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6766,6 +6818,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6788,6 +6841,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6810,6 +6864,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6832,6 +6887,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6854,6 +6910,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6876,6 +6933,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6898,6 +6956,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6920,6 +6979,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6942,6 +7002,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6964,6 +7025,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -6986,6 +7048,30 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
+                    fallbackStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder with(InstallationListener installationListener) {
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    installationStrategy,
+                    new InstallationListener.Compound(this.installationListener, installationListener),
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7008,6 +7094,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7030,6 +7117,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7052,6 +7140,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7074,6 +7163,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7096,6 +7186,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     installationStrategy,
+                    installationListener,
                     fallbackStrategy,
                     ignoredTypeMatcher,
                     transformation);
@@ -7181,6 +7272,10 @@ public interface AgentBuilder {
 
         @Override
         public ResettableClassFileTransformer makeRaw() {
+            return makeRaw(listener);
+        }
+
+        private ResettableClassFileTransformer makeRaw(Listener listener) {
             return ExecutingTransformer.FACTORY.make(byteBuddy,
                     listener,
                     poolStrategy,
@@ -7203,7 +7298,15 @@ public interface AgentBuilder {
                 throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
             }
             try {
-                ResettableClassFileTransformer classFileTransformer = makeRaw();
+                Listener listener = new Listener.Compound(this.listener, installationListener.onInstall(instrumentation,
+                        locationStrategy,
+                        this.listener,
+                        circularityLock,
+                        new RawMatcher.Conjunction(new RawMatcher.Inversion(ignoredTypeMatcher), transformation),
+                        redefinitionStrategy,
+                        redefinitionBatchAllocator,
+                        redefinitionListener));
+                ResettableClassFileTransformer classFileTransformer = makeRaw(listener);
                 instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming());
                 try {
                     if (nativeMethodStrategy.isEnabled(instrumentation)) {
@@ -8769,6 +8872,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder with(InstallationListener installationListener) {
+                return materialize().with(installationListener);
+            }
+
+            @Override
             public AgentBuilder with(FallbackStrategy fallbackStrategy) {
                 return materialize().with(fallbackStrategy);
             }
@@ -8930,6 +9038,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
+                        installationListener,
                         fallbackStrategy,
                         rawMatcher,
                         transformation);
@@ -9012,6 +9121,7 @@ public interface AgentBuilder {
                                  LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                  DescriptionStrategy descriptionStrategy,
                                  InstallationStrategy installationStrategy,
+                                 InstallationListener installationListener,
                                  FallbackStrategy fallbackStrategy,
                                  RawMatcher ignoredTypeMatcher,
                                  Transformation transformation) {
@@ -9030,6 +9140,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
+                        installationListener,
                         fallbackStrategy,
                         ignoredTypeMatcher,
                         transformation);
@@ -9052,6 +9163,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
+                        installationListener,
                         fallbackStrategy,
                         ignoredTypeMatcher,
                         transformation);
@@ -9074,6 +9186,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
+                        installationListener,
                         fallbackStrategy,
                         ignoredTypeMatcher,
                         transformation);
@@ -9132,6 +9245,7 @@ public interface AgentBuilder {
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
                         installationStrategy,
+                        installationListener,
                         fallbackStrategy,
                         ignoredTypeMatcher,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
