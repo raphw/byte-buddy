@@ -5061,14 +5061,16 @@ public interface AgentBuilder {
                                     entries.remove();
                                 }
                             }
-                            RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
-                            collector.include(types);
-                            collector.apply(instrumentation,
-                                    circularityLock,
-                                    locationStrategy,
-                                    listener,
-                                    redefinitionBatchAllocator,
-                                    redefinitionBatchListener);
+                            if (!types.isEmpty()) {
+                                RedefinitionStrategy.Collector collector = redefinitionStrategy.make();
+                                collector.include(types);
+                                collector.apply(instrumentation,
+                                        circularityLock,
+                                        locationStrategy,
+                                        listener,
+                                        redefinitionBatchAllocator,
+                                        redefinitionBatchListener);
+                            }
 
                         } finally {
                             if (release) {
