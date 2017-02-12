@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 12. February 2017: version 1.6.8
+
+- Avoid logging on empty resubmission.
+- Retain actual modifiers on frozen instrumented type.
+
 ### 26. January 2017: version 1.6.7
 
 - Refactored `Resubmitter` to a DSL-step within the redefinition configuration.
