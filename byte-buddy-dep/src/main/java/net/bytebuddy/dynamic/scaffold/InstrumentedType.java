@@ -18,7 +18,6 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
-import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.ElementType;
 import java.util.*;
