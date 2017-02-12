@@ -18,6 +18,7 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.ElementType;
 import java.util.*;
@@ -1110,8 +1111,14 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public String getGenericSignature() {
-            // Embrace use of cached generic signature by direct delegation.
+            // Embrace use of native generic signature by direct delegation.
             return typeDescription.getGenericSignature();
+        }
+
+        @Override
+        public int getActualModifiers(boolean superFlag) {
+            // Embrace use of native actual modifiers by direct delegation.
+            return typeDescription.getActualModifiers(superFlag);
         }
 
         @Override

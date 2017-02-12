@@ -7048,8 +7048,14 @@ public interface TypeDescription extends TypeDefinition, ByteCodeElement, TypeVa
 
                 @Override
                 public String getGenericSignature() {
-                    // Embrace use of cached generic signature by direct delegation.
+                    // Embrace use of native generic signature by direct delegation.
                     return delegate().getGenericSignature();
+                }
+
+                @Override
+                public int getActualModifiers(boolean superFlag) {
+                    // Embrace use of native actual modifiers by direct delegation.
+                    return delegate().getActualModifiers(superFlag);
                 }
             }
         }

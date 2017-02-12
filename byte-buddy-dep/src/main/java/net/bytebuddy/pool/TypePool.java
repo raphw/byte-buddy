@@ -2658,6 +2658,11 @@ public interface TypePool {
             private final TypePool typePool;
 
             /**
+             * The actual modifiers of this type.
+             */
+            private final int actualModifiers;
+
+            /**
              * The modifiers of this type.
              */
             private final int modifiers;
@@ -2741,6 +2746,7 @@ public interface TypePool {
              * Creates a new lazy type description.
              *
              * @param typePool                           The type pool to be used for looking up linked types.
+             * @param actualModifiers                    The actual modifiers of this type.
              * @param modifiers                          The modifiers of this type.
              * @param name                               The binary name of this type.
              * @param superClassInternalName             The internal name of this type's super type or {@code null} if no such super type is defined.
@@ -2759,6 +2765,7 @@ public interface TypePool {
              * @param methodTokens                       A list of method tokens describing the method's of this type.
              */
             protected LazyTypeDescription(TypePool typePool,
+                                          int actualModifiers,
                                           int modifiers,
                                           String name,
                                           String superClassInternalName,
@@ -2775,6 +2782,7 @@ public interface TypePool {
                                           List<FieldToken> fieldTokens,
                                           List<MethodToken> methodTokens) {
                 this.typePool = typePool;
+                this.actualModifiers = actualModifiers & ~Opcodes.ACC_SUPER;
                 this.modifiers = modifiers & ~(Opcodes.ACC_SUPER | Opcodes.ACC_DEPRECATED);
                 this.name = Type.getObjectType(name).getClassName();
                 this.superClassDescriptor = superClassInternalName == null
@@ -2880,6 +2888,11 @@ public interface TypePool {
             @Override
             public int getModifiers() {
                 return modifiers;
+            }
+
+            @Override
+            public int getActualModifiers(boolean superFlag) {
+                return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
             }
 
             @Override
@@ -6866,6 +6879,11 @@ public interface TypePool {
             private final List<LazyTypeDescription.MethodToken> methodTokens;
 
             /**
+             * The actual modifiers found for this type.
+             */
+            private int actualModifiers;
+
+            /**
              * The modifiers found for this type.
              */
             private int modifiers;
@@ -6936,6 +6954,7 @@ public interface TypePool {
                               String superClassName,
                               String[] interfaceName) {
                 this.modifiers = modifiers & REAL_MODIFIER_MASK;
+                actualModifiers = modifiers;
                 this.internalName = internalName;
                 this.genericSignature = genericSignature;
                 this.superClassName = superClassName;
@@ -7024,6 +7043,7 @@ public interface TypePool {
              */
             protected TypeDescription toTypeDescription() {
                 return new LazyTypeDescription(Default.this,
+                        actualModifiers,
                         modifiers,
                         internalName,
                         superClassName,
