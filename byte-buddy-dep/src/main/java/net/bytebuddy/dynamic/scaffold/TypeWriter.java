@@ -838,9 +838,7 @@ public interface TypeWriter<T> {
                     public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
                         return new OfVisibilityBridge(new VisibilityBridge(instrumentedType, bridgeTarget),
                                 bridgeTarget,
-                                (bridgeTarget.isDefaultMethod()
-                                        ? bridgeTarget.getDeclaringType()
-                                        : instrumentedType.getSuperClass()).asErasure(),
+                                instrumentedType.getSuperClass().asErasure(),
                                 attributeAppender);
                     }
 
