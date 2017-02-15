@@ -800,7 +800,7 @@ public interface TypeWriter<T> {
                     private final MethodDescription bridgeTarget;
 
                     /**
-                     * The super type of the instrumented type.
+                     * The super type on which the bridge method is invoked.
                      */
                     private final TypeDescription superClass;
 
@@ -814,16 +814,16 @@ public interface TypeWriter<T> {
                      *
                      * @param visibilityBridge  The visibility bridge.
                      * @param bridgeTarget      The method the visibility bridge invokes.
-                     * @param superClass        The super type of the instrumented type.
+                     * @param superType        The super type of the instrumented type.
                      * @param attributeAppender The attribute appender to apply to the visibility bridge.
                      */
                     protected OfVisibilityBridge(MethodDescription visibilityBridge,
                                                  MethodDescription bridgeTarget,
-                                                 TypeDescription superClass,
+                                                 TypeDescription superType,
                                                  MethodAttributeAppender attributeAppender) {
                         this.visibilityBridge = visibilityBridge;
                         this.bridgeTarget = bridgeTarget;
-                        this.superClass = superClass;
+                        this.superClass = superType;
                         this.attributeAppender = attributeAppender;
                     }
 
@@ -838,7 +838,9 @@ public interface TypeWriter<T> {
                     public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
                         return new OfVisibilityBridge(new VisibilityBridge(instrumentedType, bridgeTarget),
                                 bridgeTarget,
-                                instrumentedType.getSuperClass().asErasure(),
+                                (bridgeTarget.isDefaultMethod()
+                                        ? bridgeTarget.getDeclaringType()
+                                        : instrumentedType.getSuperClass()).asErasure(),
                                 attributeAppender);
                     }
 
