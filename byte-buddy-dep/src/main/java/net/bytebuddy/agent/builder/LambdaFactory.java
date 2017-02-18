@@ -8,7 +8,11 @@ import net.bytebuddy.dynamic.loading.ClassInjector;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class serves as a dispatcher for creating lambda expression objects when Byte Buddy is configured to instrument the
@@ -29,7 +33,7 @@ public class LambdaFactory {
      * This field <b>must not</b> be accessed directly but only by reading this class from the system class loader.
      */
     @SuppressFBWarnings(value = "MS_MUTABLE_COLLECTION_PKGPROTECT", justification = "The field must be accessible by different class loader instances")
-    public static final Map<ClassFileTransformer, LambdaFactory> CLASS_FILE_TRANSFORMERS = new LinkedHashMap<ClassFileTransformer, LambdaFactory>();
+    public static final Map<ClassFileTransformer, LambdaFactory> CLASS_FILE_TRANSFORMERS = new ConcurrentHashMap<ClassFileTransformer, LambdaFactory>();
 
     /**
      * The target instance that is a factory for creating lambdas.
