@@ -15,6 +15,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -52,6 +53,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
+import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
 
 /**
  * A type writer is a utility for writing an actual class file using the ASM library.
@@ -837,21 +839,23 @@ public interface TypeWriter<T> {
                      */
                     public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
                         // Default method bridges must be dispatched on an implemented interface type, not considering the declaring type.
-                        TypeDescription bridgeType = null;
+                        TypeDefinition bridgeType = null;
                         if (bridgeTarget.isDefaultMethod()) {
                             TypeDescription declaringType = bridgeTarget.getDeclaringType().asErasure();
-                            for (TypeDescription interfaceType : instrumentedType.getInterfaces().asErasures()) {
-                                if (interfaceType.isAssignableTo(declaringType) && (bridgeType == null || declaringType.isAssignableTo(bridgeType))) {
+                            for (TypeDescription interfaceType : instrumentedType.getInterfaces().asErasures().filter(isSubTypeOf(declaringType))) {
+                                if (bridgeType == null || declaringType.isAssignableTo(bridgeType.asErasure())) {
                                     bridgeType = interfaceType;
                                 }
                             }
-                        } else {
-                            bridgeType = instrumentedType.getSuperClass().asErasure();
                         }
-                        MethodDescription bridgeMethod = new VisibilityBridge(instrumentedType, bridgeTarget);
-                        return bridgeType == null // Bridge methods might not be legal.
-                                ? new Record.ForNonImplementedMethod(bridgeMethod)
-                                : new OfVisibilityBridge(bridgeMethod, bridgeTarget, bridgeType, attributeAppender);
+                        // Non-default method or default method that is inherited by a super class.
+                        if (bridgeType == null) {
+                            bridgeType = instrumentedType.getSuperClass();
+                        }
+                        return new OfVisibilityBridge(new VisibilityBridge(instrumentedType, bridgeTarget),
+                                bridgeTarget,
+                                bridgeType.asErasure(),
+                                attributeAppender);
                     }
 
                     @Override
