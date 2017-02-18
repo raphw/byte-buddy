@@ -64,7 +64,6 @@ public class LambdaFactory {
      *                             type, the target method's handle, the specialized method type of the lambda expression, a boolean to indicate
      *                             serializability, a list of marker interfaces, a list of additional bridges and a collection of class file transformers to
      *                             apply.
-     * @param injector             A callable injector that returns the {@link LambdaFactory} loaded by the system class loader.
      * @return {@code true} if this is the first registered transformer. This indicates that the {@code LambdaMetafactory} must be instrumented to delegate
      * to this alternative factory.
      */
