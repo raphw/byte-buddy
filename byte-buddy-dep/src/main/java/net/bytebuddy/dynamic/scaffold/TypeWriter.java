@@ -800,9 +800,9 @@ public interface TypeWriter<T> {
                     private final MethodDescription bridgeTarget;
 
                     /**
-                     * The super type on which the bridge method is invoked.
+                     * The type on which the bridge method is invoked.
                      */
-                    private final TypeDescription superClass;
+                    private final TypeDescription bridgeType;
 
                     /**
                      * The attribute appender to apply to the visibility bridge.
@@ -814,16 +814,16 @@ public interface TypeWriter<T> {
                      *
                      * @param visibilityBridge  The visibility bridge.
                      * @param bridgeTarget      The method the visibility bridge invokes.
-                     * @param superType        The super type of the instrumented type.
+                     * @param bridgeType        The type of the instrumented type.
                      * @param attributeAppender The attribute appender to apply to the visibility bridge.
                      */
                     protected OfVisibilityBridge(MethodDescription visibilityBridge,
                                                  MethodDescription bridgeTarget,
-                                                 TypeDescription superType,
+                                                 TypeDescription bridgeType,
                                                  MethodAttributeAppender attributeAppender) {
                         this.visibilityBridge = visibilityBridge;
                         this.bridgeTarget = bridgeTarget;
-                        this.superClass = superType;
+                        this.bridgeType = bridgeType;
                         this.attributeAppender = attributeAppender;
                     }
 
@@ -836,10 +836,22 @@ public interface TypeWriter<T> {
                      * @return A record describing the visibility bridge.
                      */
                     public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
-                        return new OfVisibilityBridge(new VisibilityBridge(instrumentedType, bridgeTarget),
-                                bridgeTarget,
-                                instrumentedType.getSuperClass().asErasure(),
-                                attributeAppender);
+                        // Default method bridges must be dispatched on an implemented interface type, not considering the declaring type.
+                        TypeDescription bridgeType = null;
+                        if (bridgeTarget.isDefaultMethod()) {
+                            TypeDescription declaringType = bridgeTarget.getDeclaringType().asErasure();
+                            for (TypeDescription interfaceType : instrumentedType.getInterfaces().asErasures()) {
+                                if (interfaceType.isAssignableTo(declaringType) && (bridgeType == null || declaringType.isAssignableTo(bridgeType))) {
+                                    bridgeType = interfaceType;
+                                }
+                            }
+                        } else {
+                            bridgeType = instrumentedType.getSuperClass().asErasure();
+                        }
+                        MethodDescription bridgeMethod = new VisibilityBridge(instrumentedType, bridgeTarget);
+                        return bridgeType == null // Bridge methods might not be legal.
+                                ? new Record.ForNonImplementedMethod(bridgeMethod)
+                                : new OfVisibilityBridge(bridgeMethod, bridgeTarget, bridgeType, attributeAppender);
                     }
 
                     @Override
@@ -892,7 +904,7 @@ public interface TypeWriter<T> {
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new ByteCodeAppender.Simple(
                                 MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
-                                MethodInvocation.invoke(bridgeTarget).special(superClass),
+                                MethodInvocation.invoke(bridgeTarget).special(bridgeType),
                                 MethodReturn.of(instrumentedMethod.getReturnType())
                         ).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
