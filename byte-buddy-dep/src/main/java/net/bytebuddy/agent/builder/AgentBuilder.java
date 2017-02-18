@@ -5461,7 +5461,7 @@ public interface AgentBuilder {
             protected void apply(ByteBuddy byteBuddy,
                                  Instrumentation instrumentation,
                                  ClassFileTransformer classFileTransformer) {
-                if (LambdaFactory.register(classFileTransformer, new LambdaInstanceFactory(byteBuddy), LambdaInjector.INSTANCE)) {
+                if (LambdaFactory.register(classFileTransformer, new LambdaInstanceFactory(byteBuddy))) {
                     Class<?> lambdaMetaFactory;
                     try {
                         lambdaMetaFactory = Class.forName("java.lang.invoke.LambdaMetafactory");
@@ -5568,25 +5568,6 @@ public interface AgentBuilder {
          * @return {@code true} if the supplied type should be instrumented according to this strategy.
          */
         protected abstract boolean isInstrumented(Class<?> type);
-
-        /**
-         * An injector for injecting the lambda class dispatcher to the system class path.
-         */
-        protected enum LambdaInjector implements Callable<Class<?>> {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public Class<?> call() throws Exception {
-                TypeDescription lambdaFactory = new TypeDescription.ForLoadedType(LambdaFactory.class);
-                return ClassInjector.UsingReflection.ofSystemClassLoader()
-                        .inject(Collections.singletonMap(lambdaFactory, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
-                        .get(lambdaFactory);
-            }
-        }
 
         /**
          * A factory that creates instances that represent lambda expressions.
@@ -6178,7 +6159,6 @@ public interface AgentBuilder {
              * The singleton instance.
              */
             INSTANCE;
-
 
             @Override
             public MethodVisitor wrap(TypeDescription instrumentedType,

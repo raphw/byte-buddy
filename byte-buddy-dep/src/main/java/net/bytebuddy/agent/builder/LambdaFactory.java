@@ -2,14 +2,13 @@ package net.bytebuddy.agent.builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.EqualsAndHashCode;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.loading.ClassInjector;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.*;
 
 /**
  * This class serves as a dispatcher for creating lambda expression objects when Byte Buddy is configured to instrument the
@@ -19,6 +18,11 @@ import java.util.concurrent.Callable;
  */
 @EqualsAndHashCode
 public class LambdaFactory {
+
+    /**
+     * The name of the field to access.
+     */
+    private static final String FIELD_NAME = "CLASS_FILE_TRANSFORMERS";
 
     /**
      * A mapping of all registered class file transformers and their lambda factories, linked in their application order.
@@ -43,7 +47,7 @@ public class LambdaFactory {
      * @param target     The target instance that is a factory for creating lambdas.
      * @param dispatcher The dispatcher method to invoke for creating a new lambda instance.
      */
-    private LambdaFactory(Object target, Method dispatcher) {
+    public LambdaFactory(Object target, Method dispatcher) {
         this.target = target;
         this.dispatcher = dispatcher;
     }
@@ -65,27 +69,33 @@ public class LambdaFactory {
      * to this alternative factory.
      */
     @SuppressWarnings("all")
-    public static boolean register(ClassFileTransformer classFileTransformer, Object classFileFactory, Callable<Class<?>> injector) {
+    public static boolean register(ClassFileTransformer classFileTransformer, Object classFileFactory) {
         try {
+            TypeDescription typeDescription = new TypeDescription.ForLoadedType(LambdaFactory.class);
+            Class<?> lambdaFactory = ClassInjector.UsingReflection.ofSystemClassLoader()
+                    .inject(Collections.singletonMap(typeDescription, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
+                    .get(typeDescription);
             @SuppressWarnings("unchecked")
-            Map<ClassFileTransformer, Object> classFileTransformers = (Map<ClassFileTransformer, Object>) injector.call()
-                    .getDeclaredField("CLASS_FILE_TRANSFORMERS")
+            Map<ClassFileTransformer, Object> classFileTransformers = (Map<ClassFileTransformer, Object>) lambdaFactory
+                    .getField(FIELD_NAME)
                     .get(null);
             synchronized (classFileTransformers) {
                 try {
                     return classFileTransformers.isEmpty();
                 } finally {
-                    classFileTransformers.put(classFileTransformer, new LambdaFactory(classFileFactory, classFileFactory.getClass().getMethod("make",
-                            Object.class,
-                            String.class,
-                            Object.class,
-                            Object.class,
-                            Object.class,
-                            Object.class,
-                            boolean.class,
-                            List.class,
-                            List.class,
-                            Collection.class)));
+                    classFileTransformers.put(classFileTransformer, lambdaFactory
+                            .getConstructor(Object.class, Method.class)
+                            .newInstance(classFileFactory, classFileFactory.getClass().getMethod("make",
+                                    Object.class,
+                                    String.class,
+                                    Object.class,
+                                    Object.class,
+                                    Object.class,
+                                    Object.class,
+                                    boolean.class,
+                                    List.class,
+                                    List.class,
+                                    Collection.class)));
                 }
             }
         } catch (RuntimeException exception) {
@@ -108,7 +118,7 @@ public class LambdaFactory {
             @SuppressWarnings("unchecked")
             Map<ClassFileTransformer, ?> classFileTransformers = (Map<ClassFileTransformer, ?>) ClassLoader.getSystemClassLoader()
                     .loadClass(LambdaFactory.class.getName())
-                    .getDeclaredField("CLASS_FILE_TRANSFORMERS")
+                    .getField(FIELD_NAME)
                     .get(null);
             synchronized (classFileTransformers) {
                 return classFileTransformers.remove(classFileTransformer) != null && classFileTransformers.isEmpty();

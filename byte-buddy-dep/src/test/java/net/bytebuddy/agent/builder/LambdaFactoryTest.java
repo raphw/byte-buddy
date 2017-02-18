@@ -36,11 +36,10 @@ public class LambdaFactoryTest {
     @Test
     public void testValidFactory() throws Exception {
         PseudoFactory pseudoFactory = new PseudoFactory();
-        assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE), is(true));
+        assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory), is(true));
         try {
-            assertThat(AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE
-                    .call()
-                    .getDeclaredMethod("make", Object.class, String.class, Object.class, Object.class, Object.class, Object.class, boolean.class, List.class, List.class)
+            assertThat(LambdaFactory.class
+                    .getMethod("make", Object.class, String.class, Object.class, Object.class, Object.class, Object.class, boolean.class, List.class, List.class)
                     .invoke(null, a1, FOO, a3, a4, a5, a6, true, a8, a9), is((Object) BAR));
             assertThat(pseudoFactory.args[0], is(a1));
             assertThat(pseudoFactory.args[1], is((Object) FOO));
@@ -66,8 +65,8 @@ public class LambdaFactoryTest {
     public void testPreviousTransformer() throws Exception {
         PseudoFactory pseudoFactory = new PseudoFactory();
         try {
-            assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE), is(true));
-            assertThat(LambdaFactory.register(otherTransformer, pseudoFactory, AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE), is(false));
+            assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory), is(true));
+            assertThat(LambdaFactory.register(otherTransformer, pseudoFactory), is(false));
         } finally {
             assertThat(LambdaFactory.release(classFileTransformer), is(false));
             assertThat(LambdaFactory.release(otherTransformer), is(true));
@@ -76,7 +75,7 @@ public class LambdaFactoryTest {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalTransformer() throws Exception {
-        LambdaFactory.register(classFileTransformer, new Object(), AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE);
+        LambdaFactory.register(classFileTransformer, new Object());
     }
 
     @Test

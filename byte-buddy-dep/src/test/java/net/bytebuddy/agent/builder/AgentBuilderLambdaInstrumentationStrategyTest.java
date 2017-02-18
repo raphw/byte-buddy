@@ -24,8 +24,7 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     public void testEnabledStrategyNeverThrowsException() throws Exception {
         ClassFileTransformer initialClassFileTransformer = mock(ClassFileTransformer.class);
         assertThat(LambdaFactory.register(initialClassFileTransformer,
-                mock(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class),
-                AgentBuilder.LambdaInstrumentationStrategy.LambdaInjector.INSTANCE), is(true));
+                mock(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class)), is(true));
         try {
             ByteBuddy byteBuddy = mock(ByteBuddy.class);
             Instrumentation instrumentation = mock(Instrumentation.class);
@@ -66,7 +65,6 @@ public class AgentBuilderLambdaInstrumentationStrategyTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInjector.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.MetaFactoryRedirection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.AlternativeMetaFactoryRedirection.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class).apply();
