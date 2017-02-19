@@ -208,6 +208,56 @@ public class ByteBuddyAgent {
     }
 
     /**
+     * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
+     * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
+     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown. The agent is not provided an argument.
+     *
+     * @param agentJar        The agent jar file.
+     * @param processProvider A provider of the target process id.
+     */
+    public static void attach(File agentJar, ProcessProvider processProvider) {
+        attach(agentJar, processProvider, WITHOUT_ARGUMENT);
+    }
+
+    /**
+     * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
+     * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
+     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     *
+     * @param agentJar        The agent jar file.
+     * @param processProvider A provider of the target process id.
+     * @param argument        The argument to provide to the agent.
+     */
+    public static void attach(File agentJar, ProcessProvider processProvider, String argument) {
+        attach(agentJar, processProvider, argument, AttachmentProvider.DEFAULT);
+    }
+
+    /**
+     * Attaches the given agent Jar on the target process which must be a virtual machine process. This operation blocks until the
+     * attachment is complete. The agent is not provided an argument.
+     *
+     * @param agentJar           The agent jar file.
+     * @param processProvider    A provider of the target process id.
+     * @param attachmentProvider The attachment provider to use.
+     */
+    public static void attach(File agentJar, ProcessProvider processProvider, AttachmentProvider attachmentProvider) {
+        attach(agentJar, processProvider, WITHOUT_ARGUMENT, attachmentProvider);
+    }
+
+    /**
+     * Attaches the given agent Jar on the target process which must be a virtual machine process. This operation blocks until the
+     * attachment is complete.
+     *
+     * @param agentJar           The agent jar file.
+     * @param processProvider    A provider of the target process id.
+     * @param argument           The argument to provide to the agent.
+     * @param attachmentProvider The attachment provider to use.
+     */
+    public static void attach(File agentJar, ProcessProvider processProvider, String argument, AttachmentProvider attachmentProvider) {
+        install(attachmentProvider, processProvider.resolve(), argument, new AgentProvider.ForExistingAgent(agentJar));
+    }
+
+    /**
      * <p>
      * Installs an agent on the currently running Java virtual machine. Unfortunately, this does
      * not always work. The runtime installation of a Java agent is supported for:
