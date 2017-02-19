@@ -928,6 +928,35 @@ public interface AgentBuilder {
         }
 
         /**
+         * Only matches loaded types that can be fully resolved. Types with missing dependencies might not be
+         * resolvable and can therefore trigger errors during redefinition.
+         */
+        enum ForResolvableTypes implements RawMatcher {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean matches(TypeDescription typeDescription,
+                                   ClassLoader classLoader,
+                                   JavaModule module,
+                                   Class<?> classBeingRedefined,
+                                   ProtectionDomain protectionDomain) {
+                if (classBeingRedefined != null) {
+                    try {
+                        return Class.forName(classBeingRedefined.getName(), true, classLoader) == classBeingRedefined;
+                    } catch (Throwable ignored) {
+                        return false;
+                    }
+                } else {
+                    return true;
+                }
+            }
+        }
+
+        /**
          * A conjunction of two raw matchers.
          */
         @EqualsAndHashCode
@@ -1056,10 +1085,34 @@ public interface AgentBuilder {
              */
             private final ElementMatcher<? super JavaModule> moduleMatcher;
 
+
+            /**
+             * Creates a new {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} that only matches the
+             * supplied {@link TypeDescription} against a supplied matcher.
+             *
+             * @param typeMatcher The type matcher to apply to a {@link TypeDescription}.
+             */
+            public ForElementMatchers(ElementMatcher<? super TypeDescription> typeMatcher) {
+                this(typeMatcher, any());
+            }
+
             /**
              * Creates a new {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} that only matches the
              * supplied {@link TypeDescription} and its {@link java.lang.ClassLoader} against two matcher in order
              * to decided if an instrumentation should be conducted.
+             *
+             * @param typeMatcher        The type matcher to apply to a {@link TypeDescription}.
+             * @param classLoaderMatcher The class loader matcher to apply to a {@link java.lang.ClassLoader}.
+             */
+            public ForElementMatchers(ElementMatcher<? super TypeDescription> typeMatcher,
+                                      ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                this(typeMatcher, classLoaderMatcher, any());
+            }
+
+            /**
+             * Creates a new {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} that only matches the
+             * supplied {@link TypeDescription}, its {@link java.lang.ClassLoader} and module against element
+             * suitable matchers.
              *
              * @param typeMatcher        The type matcher to apply to a {@link TypeDescription}.
              * @param classLoaderMatcher The class loader matcher to apply to a {@link java.lang.ClassLoader}.
@@ -6776,8 +6829,9 @@ public interface AgentBuilder {
                     DescriptionStrategy.Default.HYBRID,
                     InstallationStrategy.Default.ESCALATING,
                     FallbackStrategy.ByThrowableType.ofOptionalTypes(),
-                    new RawMatcher.Disjunction(new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader(), any()),
-                            new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()), any(), any())),
+                    new RawMatcher.Disjunction(
+                            new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader()),
+                            new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()))),
                     Transformation.Ignored.INSTANCE);
         }
 
