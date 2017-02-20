@@ -1048,7 +1048,7 @@ public interface AgentBuilder {
              *
              * @param matcher The matcher to invert.
              */
-            protected Inversion(RawMatcher matcher) {
+            public Inversion(RawMatcher matcher) {
                 this.matcher = matcher;
             }
 
