@@ -317,7 +317,7 @@ public abstract class ByteBuddyMojo extends AbstractMojo {
                                   ClassFileLocator classFileLocator,
                                   TypePool typePool,
                                   List<Plugin> plugins) throws MojoExecutionException, MojoFailureException {
-        String typeName = file.replace(File.separatorChar, '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
+        String typeName = file.replace('/', '.').substring(0, file.length() - CLASS_FILE_EXTENSION.length());
         getLog().debug("Processing class file: " + typeName);
         TypeDescription typeDescription = typePool.describe(typeName).resolve();
         DynamicType.Builder<?> builder;
