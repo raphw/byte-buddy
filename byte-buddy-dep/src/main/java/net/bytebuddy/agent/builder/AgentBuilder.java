@@ -954,6 +954,15 @@ public interface AgentBuilder {
                     return true;
                 }
             }
+
+            /**
+             * Returns an inverted version of this matcher,
+             *
+             * @return An inverted version of this matcher,
+             */
+            public RawMatcher inverted() {
+                return new Inversion(this);
+            }
         }
 
         /**
