@@ -24,7 +24,6 @@ import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -33,7 +32,10 @@ import org.objectweb.asm.Opcodes;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -422,7 +424,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     public void testVisibilityBridge() throws Exception {
         Class<?> type = new ByteBuddy()
                 .subclass(VisibilityBridge.class)
-                .modifiers(Opcodes.ACC_PUBLIC)
+                .modifiers(Visibility.PUBLIC)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded();
@@ -441,6 +443,30 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(bar.getGenericReturnType(), instanceOf(Class.class));
         assertThat(bar.getGenericParameterTypes()[0], instanceOf(Class.class));
         assertThat(bar.getGenericExceptionTypes()[0], instanceOf(Class.class));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testVisibilityBridgeForDefaultMethod() throws Exception {
+        Class<?> defaultInterface = new ByteBuddy()
+                .makeInterface()
+                .merge(Visibility.PACKAGE_PRIVATE)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC)
+                .intercept(FixedValue.value(BAR))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER)
+                .getLoaded();
+        Class<?> type = new ByteBuddy()
+                .subclass(defaultInterface)
+                .modifiers(Visibility.PUBLIC)
+                .make()
+                .load(defaultInterface.getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredConstructors().length, is(1));
+        assertThat(type.getDeclaredMethods().length, is(1));
+        Method foo = type.getDeclaredMethod(FOO);
+        assertThat(foo.isBridge(), is(true));
+        assertThat(foo.invoke(type.getDeclaredConstructor().newInstance()), is((Object) (BAR)));
     }
 
     @Test
