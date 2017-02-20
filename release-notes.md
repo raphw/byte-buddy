@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 20. February 2017: version 1.6.9
+
+- Properly add visibility bridges for default methods.
+- Added matcher for unresolvable types.
+- Improved `ByteBuddyAgent` API.
+- Fixed Gradle and Maven plugin path resolution.
+
 ### 12. February 2017: version 1.6.8
 
 - Avoid logging on empty resubmission.
