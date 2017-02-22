@@ -17,10 +17,7 @@ public class AnnotationDescriptionForLoadedAnnotationDifferentClassLoaderTest ex
     public void setUp() throws Exception {
         super.setUp();
         classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(Sample.class, SampleDefault.class, Other.class, SampleEnumeration.class, ExplicitTarget.class),
-                null,
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.Trivial.INSTANCE);
+                ClassFileExtraction.of(Sample.class, SampleDefault.class, Other.class, SampleEnumeration.class, ExplicitTarget.class));
     }
 
     @Override

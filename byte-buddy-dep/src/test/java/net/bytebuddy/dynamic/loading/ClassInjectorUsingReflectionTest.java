@@ -139,11 +139,8 @@ public class ClassInjectorUsingReflectionTest {
 
     @Test
     public void testInjectionOrderNoPrematureAuxiliaryInjection() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(null,
-                ClassFileExtraction.of(Bar.class, Interceptor.class),
-                null,
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                ClassFileExtraction.of(Bar.class, Interceptor.class));
         Class<?> type = new ByteBuddy().rebase(Bar.class)
                 .method(named(BAR))
                 .intercept(MethodDelegation.to(Interceptor.class)).make()

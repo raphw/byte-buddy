@@ -5,6 +5,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.MethodGraphCompilerDefaultTest;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -1966,11 +1967,9 @@ public abstract class AbstractTypeDescriptionGenericTest {
             ClassReader classReader = new ClassReader(InconsistentGenerics.class.getName());
             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
             classReader.accept(new GenericDisintegrator(classWriter), 0);
-            return new ByteArrayClassLoader(null,
-                    Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.toByteArray()),
-                    null,
-                    ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                    PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(InconsistentGenerics.class.getName()).getDeclaredField(FOO);
+            return new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                    Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.toByteArray()))
+                    .loadClass(InconsistentGenerics.class.getName()).getDeclaredField(FOO);
         }
 
         public GenericDisintegrator(ClassVisitor classVisitor) {

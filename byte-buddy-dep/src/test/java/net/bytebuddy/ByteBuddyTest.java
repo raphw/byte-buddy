@@ -101,11 +101,7 @@ public class ByteBuddyTest {
 
     @Test
     public void testImplicitStrategyInjectable() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                Collections.<String, byte[]>emptyMap(),
-                null,
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, Collections.<String, byte[]>emptyMap());
         Class<?> type = new ByteBuddy()
                 .subclass(Object.class)
                 .make()

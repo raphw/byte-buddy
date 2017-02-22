@@ -49,9 +49,7 @@ public class AgentBuilderDefaultApplicationSuperTypeLoadingTest {
     public void setUp() throws Exception {
         classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(Foo.class, Bar.class, AgentBuilderDefaultApplicationSuperTypeLoadingTest.class),
-                ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
         executorService = Executors.newCachedThreadPool();
     }
 

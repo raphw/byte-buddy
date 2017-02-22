@@ -14,7 +14,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.*;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
@@ -48,7 +47,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.ProtectionDomain;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -62,8 +60,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public abstract class AbstractDynamicTypeBuilderTest {
-
-    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", TO_STRING = "toString";
 
@@ -214,11 +210,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testTypeInitializer() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(null,
-                ClassFileExtraction.of(Bar.class),
-                DEFAULT_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(Bar.class));
         Class<?> type = createPlain()
                 .invokable(isTypeInitializer()).intercept(MethodCall.invoke(Bar.class.getDeclaredMethod("invoke")))
                 .make()
@@ -292,11 +284,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testPreparedField() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(null,
-                ClassFileExtraction.of(SampleAnnotation.class),
-                DEFAULT_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(SampleAnnotation.class));
         Class<?> type = createPlain()
                 .defineMethod(BAR, String.class, Visibility.PUBLIC)
                 .intercept(new PreparedField())
@@ -316,11 +304,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testPreparedMethod() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(null,
-                ClassFileExtraction.of(SampleAnnotation.class),
-                DEFAULT_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(SampleAnnotation.class));
         Class<?> type = createPlain()
                 .defineMethod(BAR, String.class, Visibility.PUBLIC)
                 .intercept(new PreparedMethod())

@@ -76,14 +76,10 @@ public class AgentBuilderDefaultApplicationRedefineTest {
     public void setUp() throws Exception {
         simpleTypeLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(SimpleType.class),
-                ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
         optionalTypeLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(SimpleOptionalType.class),
-                ClassLoadingStrategy.NO_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
     }
 
     @Test

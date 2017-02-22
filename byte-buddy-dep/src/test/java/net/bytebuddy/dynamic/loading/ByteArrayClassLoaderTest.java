@@ -29,8 +29,6 @@ import static org.mockito.Mockito.when;
 @RunWith(Parameterized.class)
 public class ByteArrayClassLoaderTest {
 
-    private static final ClassLoader BOOTSTRAP_CLASS_LOADER = null;
-
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", CLASS_FILE = ".class";
@@ -67,7 +65,7 @@ public class ByteArrayClassLoaderTest {
 
     @Before
     public void setUp() throws Exception {
-        classLoader = new ByteArrayClassLoader(BOOTSTRAP_CLASS_LOADER,
+        classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(Foo.class),
                 DEFAULT_PROTECTION_DOMAIN,
                 persistenceHandler,

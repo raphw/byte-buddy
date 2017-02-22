@@ -31,8 +31,6 @@ import static org.mockito.Mockito.*;
 
 public class AnnotationAppenderDefaultTest {
 
-    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
-
     private static final String BAR = "net.bytebuddy.test.Bar";
 
     private static final String FOOBAR = "foobar";
@@ -177,11 +175,7 @@ public class AnnotationAppenderDefaultTest {
         AnnotationDescription annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
         annotationAppender.append(annotationDescription, valueFilter);
         classWriter.visitEnd();
-        Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(),
-                Collections.singletonMap(BAR, classWriter.toByteArray()),
-                DEFAULT_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(BAR);
+        Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(), Collections.singletonMap(BAR, classWriter.toByteArray())).loadClass(BAR);
         assertThat(bar.getName(), is(BAR));
         assertThat(bar.getSuperclass(), CoreMatchers.<Class<?>>is(Object.class));
         return bar;
@@ -204,11 +198,7 @@ public class AnnotationAppenderDefaultTest {
         AnnotationDescription annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
         annotationAppender.append(annotationDescription, valueFilter);
         classWriter.visitEnd();
-        Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(),
-                Collections.singletonMap(BAR, classWriter.toByteArray()),
-                DEFAULT_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(BAR);
+        Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(), Collections.singletonMap(BAR, classWriter.toByteArray())).loadClass(BAR);
         assertThat(bar.getName(), is(BAR));
         assertThat(bar.getSuperclass(), CoreMatchers.<Class<?>>is(Object.class));
         return bar;

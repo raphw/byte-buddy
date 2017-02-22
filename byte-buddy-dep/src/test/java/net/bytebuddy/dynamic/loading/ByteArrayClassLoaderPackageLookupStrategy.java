@@ -15,11 +15,7 @@ public class ByteArrayClassLoaderPackageLookupStrategy {
 
     @Test
     public void testGetPackage() throws Exception {
-        ByteArrayClassLoader byteArrayClassLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                ClassFileExtraction.of(Foo.class),
-                null,
-                ByteArrayClassLoader.PersistenceHandler.LATENT,
-                PackageDefinitionStrategy.Trivial.INSTANCE);
+        ByteArrayClassLoader byteArrayClassLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(Foo.class));
         byteArrayClassLoader.loadClass(Foo.class.getName());
         assertThat(ByteArrayClassLoader.PackageLookupStrategy.ForLegacyVm.INSTANCE.apply(byteArrayClassLoader, Foo.class.getPackage().getName()).getName(),
                 is(Foo.class.getPackage().getName()));

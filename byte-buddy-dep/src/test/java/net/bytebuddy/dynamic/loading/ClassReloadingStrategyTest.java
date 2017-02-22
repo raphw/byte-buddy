@@ -204,11 +204,9 @@ public class ClassReloadingStrategyTest {
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testAnonymousType() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(null,
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(Class.forName(LAMBDA_SAMPLE_FACTORY)),
-                null,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
         Instrumentation instrumentation = ByteBuddyAgent.install();
         Class<?> factory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
         @SuppressWarnings("unchecked")

@@ -5,6 +5,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.packaging.SimpleType;
@@ -418,11 +419,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testIsAssignableClassLoader() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(null,
-                ClassFileExtraction.of(SimpleType.class),
-                null,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(SimpleType.class));
         Class<?> otherSimpleType = classLoader.loadClass(SimpleType.class.getName());
         assertThat(describe(SimpleType.class).isAssignableFrom(describe(otherSimpleType)), is(true));
         assertThat(describe(SimpleType.class).isAssignableTo(describe(otherSimpleType)), is(true));
@@ -556,11 +553,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testNonAvailableAnnotations() throws Exception {
-        TypeDescription typeDescription = describe(new ByteArrayClassLoader(null,
+        TypeDescription typeDescription = describe(new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(MissingAnnotations.class),
-                null,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(MissingAnnotations.class.getName()));
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST).loadClass(MissingAnnotations.class.getName()));
         assertThat(typeDescription.getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
         assertThat(typeDescription.getDeclaredFields().getOnly().getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
         assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
@@ -682,11 +677,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
             ClassReader classReader = new ClassReader(type.getName());
             ClassWriter classWriter = new ClassWriter(classReader, 0);
             classReader.accept(new SignatureMalformer(classWriter), 0);
-            ClassLoader classLoader = new ByteArrayClassLoader(null,
+            ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                     Collections.singletonMap(type.getName(), classWriter.toByteArray()),
-                    null,
-                    ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                    PackageDefinitionStrategy.NoOp.INSTANCE);
+                    ByteArrayClassLoader.PersistenceHandler.MANIFEST);
             return classLoader.loadClass(type.getName());
         }
 

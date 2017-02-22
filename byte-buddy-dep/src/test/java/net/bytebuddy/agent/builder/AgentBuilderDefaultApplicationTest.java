@@ -3,9 +3,11 @@ package net.bytebuddy.agent.builder;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodDelegation;
@@ -50,8 +52,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
 public class AgentBuilderDefaultApplicationTest {
-
-    private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
@@ -104,17 +104,13 @@ public class AgentBuilderDefaultApplicationTest {
                         Baz.class,
                         QuxBaz.class,
                         SimpleType.class),
-                DEFAULT_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
     }
 
     private ClassLoader lambdaSamples() throws Exception {
-        return new ByteArrayClassLoader(null,
+        return new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
                 ClassFileExtraction.of(Class.forName(LAMBDA_SAMPLE_FACTORY)),
-                DEFAULT_PROTECTION_DOMAIN,
-                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
-                PackageDefinitionStrategy.NoOp.INSTANCE);
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
     }
 
     @Test

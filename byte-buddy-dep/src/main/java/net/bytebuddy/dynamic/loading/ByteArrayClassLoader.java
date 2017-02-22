@@ -103,6 +103,27 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
      *
      * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
      * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+     */
+    public ByteArrayClassLoader(ClassLoader parent, Map<String, byte[]> typeDefinitions) {
+        this(parent, typeDefinitions, PersistenceHandler.LATENT);
+    }
+
+    /**
+     * Creates a new class loader for a given definition of classes.
+     *
+     * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
+     * @param persistenceHandler The persistence handler of this class loader.
+     */
+    public ByteArrayClassLoader(ClassLoader parent, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
+        this(parent, typeDefinitions, ClassLoadingStrategy.NO_PROTECTION_DOMAIN, persistenceHandler, PackageDefinitionStrategy.Trivial.INSTANCE);
+    }
+
+    /**
+     * Creates a new class loader for a given definition of classes.
+     *
+     * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
      * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
      * @param packageDefinitionStrategy The package definer to be queried for package definitions.
      * @param persistenceHandler        The persistence handler of this class loader.
@@ -776,6 +797,27 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         /**
          * Creates a new child-first byte array class loader.
          *
+         * @param parent          The {@link java.lang.ClassLoader} that is the parent of this class loader.
+         * @param typeDefinitions A map of fully qualified class names pointing to their binary representations.
+         */
+        public ChildFirst(ClassLoader parent, Map<String, byte[]> typeDefinitions) {
+            super(parent, typeDefinitions);
+        }
+
+        /**
+         * Creates a new child-first byte array class loader.
+         *
+         * @param parent             The {@link java.lang.ClassLoader} that is the parent of this class loader.
+         * @param typeDefinitions    A map of fully qualified class names pointing to their binary representations.
+         * @param persistenceHandler The persistence handler of this class loader.
+         */
+        public ChildFirst(ClassLoader parent, Map<String, byte[]> typeDefinitions, PersistenceHandler persistenceHandler) {
+            super(parent, typeDefinitions, persistenceHandler);
+        }
+
+        /**
+         * Creates a new child-first byte array class loader.
+         *
          * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
          * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
          * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
@@ -788,6 +830,25 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                           PersistenceHandler persistenceHandler,
                           PackageDefinitionStrategy packageDefinitionStrategy) {
             super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy);
+        }
+
+        /**
+         * Creates a new child-first byte array class loader.
+         *
+         * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+         * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+         * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+         * @param persistenceHandler        The persistence handler of this class loader.
+         * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+         * @param classFileTransformer      The class file transformer to apply on loaded classes.
+         */
+        public ChildFirst(ClassLoader parent,
+                          Map<String, byte[]> typeDefinitions,
+                          ProtectionDomain protectionDomain,
+                          PersistenceHandler persistenceHandler,
+                          PackageDefinitionStrategy packageDefinitionStrategy,
+                          ClassFileTransformer classFileTransformer) {
+            super(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, classFileTransformer);
         }
 
         @Override
