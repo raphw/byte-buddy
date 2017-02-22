@@ -13,8 +13,12 @@ import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.InputStream;
+import java.lang.instrument.ClassFileTransformer;
 import java.net.URL;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
@@ -24,6 +28,8 @@ import java.util.Enumeration;
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(Parameterized.class)
@@ -31,7 +37,7 @@ public class ByteArrayClassLoaderTest {
 
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", CLASS_FILE = ".class";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", CLASS_FILE = ".class";
 
     private final ByteArrayClassLoader.PersistenceHandler persistenceHandler;
 
@@ -49,6 +55,9 @@ public class ByteArrayClassLoaderTest {
 
     @Mock
     private PackageDefinitionStrategy packageDefinitionStrategy;
+
+    @Mock
+    private ClassFileTransformer classFileTransformer;
 
     public ByteArrayClassLoaderTest(ByteArrayClassLoader.PersistenceHandler persistenceHandler, boolean expectedResourceLookup) {
         this.persistenceHandler = persistenceHandler;
@@ -69,12 +78,23 @@ public class ByteArrayClassLoaderTest {
                 ClassFileExtraction.of(Foo.class),
                 DEFAULT_PROTECTION_DOMAIN,
                 persistenceHandler,
-                packageDefinitionStrategy);
+                packageDefinitionStrategy,
+                classFileTransformer);
         sealBase = new URL("file://foo");
         when(packageDefinitionStrategy.define(classLoader, Foo.class.getPackage().getName(), Foo.class.getName()))
                 .thenReturn(new PackageDefinitionStrategy.Definition.Simple(FOO, BAR, QUX, QUX, FOO, BAR, sealBase));
         when(packageDefinitionStrategy.define(classLoader, Bar.class.getPackage().getName(), Bar.class.getName()))
                 .thenReturn(PackageDefinitionStrategy.Definition.Trivial.INSTANCE);
+        when(classFileTransformer.transform(eq(classLoader),
+                anyString(),
+                Mockito.any(Class.class),
+                Mockito.any(ProtectionDomain.class),
+                Mockito.any(byte[].class))).thenAnswer(new Answer<byte[]>() {
+            @Override
+            public byte[] answer(InvocationOnMock invocation) throws Throwable {
+                return (byte[]) invocation.getArguments()[4];
+            }
+        });
     }
 
     @Test
