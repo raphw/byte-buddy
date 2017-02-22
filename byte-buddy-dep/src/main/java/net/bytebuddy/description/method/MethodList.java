@@ -49,8 +49,8 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         @Override
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<MethodDescription.Token> tokens = new ArrayList<MethodDescription.Token>(size());
-            for (MethodDescription fieldDescription : this) {
-                tokens.add(fieldDescription.asToken(matcher));
+            for (MethodDescription methodDescription : this) {
+                tokens.add(methodDescription.asToken(matcher));
             }
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(tokens);
         }

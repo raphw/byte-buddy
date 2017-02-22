@@ -19,6 +19,7 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.visibility.PackageAnnotation;
@@ -136,6 +137,20 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
         assertThat(packageType.getDeclaredAnnotations().length, CoreMatchers.is(2));
         assertThat(packageType.getAnnotation(PackageAnnotation.class), notNullValue(PackageAnnotation.class));
         assertThat(packageType.getAnnotation(Baz.class), notNullValue(Baz.class));
+    }
+
+    @Test
+    public void testRebaseOfRenamedType() throws Exception {
+        Class<?> rebased = new ByteBuddy()
+                .rebase(Sample.class)
+                .name(Sample.class.getName() + FOO)
+                .constructor(ElementMatchers.any())
+                .intercept(SuperMethodCall.INSTANCE)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(rebased.getName(), is(Sample.class.getName() + FOO));
+        assertThat(rebased.getDeclaredConstructors().length, is(2));
     }
 
     @Test(expected = IllegalStateException.class)

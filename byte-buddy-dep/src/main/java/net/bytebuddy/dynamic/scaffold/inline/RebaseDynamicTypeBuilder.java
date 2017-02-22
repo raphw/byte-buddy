@@ -179,8 +179,8 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
                 InliningImplementationMatcher.of(ignoredMethods, originalType));
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(methodRegistry.getInstrumentedType(),
                 new HashSet<MethodDescription.Token>(originalType.getDeclaredMethods()
-                        .filter(RebaseableMatcher.of(methodRegistry.getInstrumentedType(), methodRegistry.getInstrumentedMethods()))
-                        .asTokenList(is(originalType))),
+                        .asTokenList(is(originalType))
+                        .filter(RebaseableMatcher.of(methodRegistry.getInstrumentedType(), methodRegistry.getInstrumentedMethods()))),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
@@ -204,27 +204,20 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
      * A matcher that filters any method that should not be rebased, i.e. that is not already defined by the original type.
      */
     @EqualsAndHashCode
-    protected static class RebaseableMatcher implements ElementMatcher<MethodDescription> {
-
-        /**
-         * The instrumented type.
-         */
-        private final TypeDescription instrumentedType;
+    protected static class RebaseableMatcher implements ElementMatcher<MethodDescription.Token> {
 
         /**
          * A set of method tokens representing all instrumented methods.
          */
-        private final Set<MethodDescription.Token> instrumentedMethodTokens;
+        private final Set<MethodDescription.Token> tokens;
 
         /**
          * Creates a new matcher for identifying rebasable methods.
          *
-         * @param instrumentedType    The instrumented type.
-         * @param instrumentedMethods A set of method tokens representing all instrumented methods.
+         * @param tokens A set of method tokens representing all instrumented methods.
          */
-        protected RebaseableMatcher(TypeDescription instrumentedType, Set<MethodDescription.Token> instrumentedMethods) {
-            this.instrumentedType = instrumentedType;
-            this.instrumentedMethodTokens = instrumentedMethods;
+        protected RebaseableMatcher(Set<MethodDescription.Token> tokens) {
+            this.tokens = tokens;
         }
 
         /**
@@ -234,13 +227,13 @@ public class RebaseDynamicTypeBuilder<T> extends AbstractInliningDynamicTypeBuil
          * @param instrumentedMethods All instrumented methods.
          * @return A suitable matcher that filters all methods that should not be rebased.
          */
-        protected static ElementMatcher<MethodDescription> of(TypeDescription instrumentedType, MethodList<?> instrumentedMethods) {
-            return new RebaseableMatcher(instrumentedType, new HashSet<MethodDescription.Token>(instrumentedMethods.asTokenList(is(instrumentedType))));
+        protected static ElementMatcher<MethodDescription.Token> of(TypeDescription instrumentedType, MethodList<?> instrumentedMethods) {
+            return new RebaseableMatcher(new HashSet<MethodDescription.Token>(instrumentedMethods.asTokenList(is(instrumentedType))));
         }
 
         @Override
-        public boolean matches(MethodDescription target) {
-            return instrumentedMethodTokens.contains(target.asToken(is(instrumentedType)));
+        public boolean matches(MethodDescription.Token target) {
+            return tokens.contains(target);
         }
     }
 }
