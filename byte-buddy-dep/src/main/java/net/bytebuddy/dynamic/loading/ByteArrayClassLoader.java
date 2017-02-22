@@ -8,6 +8,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
@@ -47,6 +49,11 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     private static final int FROM_BEGINNING = 0;
 
     /**
+     * Indicates a type that is not loaded.
+     */
+    private static final Class<?> UNLOADED_TYPE = null;
+
+    /**
      * Indicates that a URL does not exist to improve code readability.
      */
     private static final URL NO_URL = null;
@@ -82,6 +89,11 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
     protected final PackageDefinitionStrategy packageDefinitionStrategy;
 
     /**
+     * The class file transformer to apply on loaded classes.
+     */
+    protected final ClassFileTransformer classFileTransformer;
+
+    /**
      * The access control context to use for loading classes.
      */
     protected final AccessControlContext accessControlContext;
@@ -100,11 +112,31 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
                                 ProtectionDomain protectionDomain,
                                 PersistenceHandler persistenceHandler,
                                 PackageDefinitionStrategy packageDefinitionStrategy) {
+        this(parent, typeDefinitions, protectionDomain, persistenceHandler, packageDefinitionStrategy, NoOpClassFileTransformer.INSTANCE);
+    }
+
+    /**
+     * Creates a new class loader for a given definition of classes.
+     *
+     * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
+     * @param typeDefinitions           A map of fully qualified class names pointing to their binary representations.
+     * @param protectionDomain          The protection domain to apply where {@code null} references an implicit protection domain.
+     * @param packageDefinitionStrategy The package definer to be queried for package definitions.
+     * @param persistenceHandler        The persistence handler of this class loader.
+     * @param classFileTransformer      The class file transformer to apply on loaded classes.
+     */
+    public ByteArrayClassLoader(ClassLoader parent,
+                                Map<String, byte[]> typeDefinitions,
+                                ProtectionDomain protectionDomain,
+                                PersistenceHandler persistenceHandler,
+                                PackageDefinitionStrategy packageDefinitionStrategy,
+                                ClassFileTransformer classFileTransformer) {
         super(parent);
         this.typeDefinitions = new ConcurrentHashMap<String, byte[]>(typeDefinitions);
         this.protectionDomain = protectionDomain;
         this.persistenceHandler = persistenceHandler;
         this.packageDefinitionStrategy = packageDefinitionStrategy;
+        this.classFileTransformer = classFileTransformer;
         accessControlContext = AccessController.getContext();
     }
 
@@ -201,7 +233,15 @@ public class ByteArrayClassLoader extends InjectionClassLoader {
         if (binaryRepresentation == null) {
             throw new ClassNotFoundException(name);
         } else {
-            return AccessController.doPrivileged(new ClassDefinitionAction(name, binaryRepresentation), accessControlContext);
+            try {
+                byte[] transformed = classFileTransformer.transform(this, name, UNLOADED_TYPE, protectionDomain, binaryRepresentation);
+                if (transformed != null) {
+                    binaryRepresentation = transformed;
+                }
+                return AccessController.doPrivileged(new ClassDefinitionAction(name, binaryRepresentation), accessControlContext);
+            } catch (IllegalClassFormatException exception) {
+                throw new IllegalStateException("The class file for " + name + " is not legal", exception);
+            }
         }
     }
 
