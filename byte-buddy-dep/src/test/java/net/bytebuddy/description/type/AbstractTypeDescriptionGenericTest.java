@@ -6,13 +6,10 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
-import net.bytebuddy.dynamic.scaffold.MethodGraphCompilerDefaultTest;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -1968,7 +1965,8 @@ public abstract class AbstractTypeDescriptionGenericTest {
             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
             classReader.accept(new GenericDisintegrator(classWriter), 0);
             return new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
-                    Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.toByteArray()))
+                    Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.toByteArray()),
+                    ByteArrayClassLoader.PersistenceHandler.MANIFEST)
                     .loadClass(InconsistentGenerics.class.getName()).getDeclaredField(FOO);
         }
 

@@ -419,7 +419,9 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testIsAssignableClassLoader() throws Exception {
-        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassFileExtraction.of(SimpleType.class));
+        ClassLoader classLoader = new ByteArrayClassLoader(ClassLoadingStrategy.BOOTSTRAP_LOADER,
+                ClassFileExtraction.of(SimpleType.class),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST);
         Class<?> otherSimpleType = classLoader.loadClass(SimpleType.class.getName());
         assertThat(describe(SimpleType.class).isAssignableFrom(describe(otherSimpleType)), is(true));
         assertThat(describe(SimpleType.class).isAssignableTo(describe(otherSimpleType)), is(true));
