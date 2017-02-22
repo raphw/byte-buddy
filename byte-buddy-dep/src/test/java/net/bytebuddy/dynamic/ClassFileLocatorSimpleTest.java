@@ -1,10 +1,15 @@
 package net.bytebuddy.dynamic;
 
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ClassFileLocatorSimpleTest {
 
@@ -28,6 +33,18 @@ public class ClassFileLocatorSimpleTest {
     @Test
     public void testClose() throws Exception {
         ClassFileLocator.Simple.of(FOO, QUX).close();
+    }
+
+    @Test
+    public void testDynamicType() throws Exception {
+        DynamicType dynamicType = mock(DynamicType.class);
+        TypeDescription typeDescription = mock(TypeDescription.class);
+        when(typeDescription.getName()).thenReturn(FOO);
+        when(dynamicType.getAllTypes()).thenReturn(Collections.singletonMap(typeDescription, QUX));
+        ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(dynamicType);
+        assertThat(classFileLocator.locate(FOO).isResolved(), is(true));
+        assertThat(classFileLocator.locate(FOO).resolve(), is(QUX));
+        assertThat(classFileLocator.locate(BAR).isResolved(), is(false));
     }
 
     @Test

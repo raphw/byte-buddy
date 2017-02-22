@@ -193,6 +193,20 @@ public interface ClassFileLocator extends Closeable {
             return new Compound(new Simple(Collections.singletonMap(typeName, binaryRepresentation)), fallback);
         }
 
+        /**
+         * Creates a class file locator that represents all types of a dynamic type.
+         *
+         * @param dynamicType The dynamic type to represent.
+         * @return A class file locator representing the dynamic type's types.
+         */
+        public static ClassFileLocator of(DynamicType dynamicType) {
+            Map<String, byte[]> classFiles = new HashMap<String, byte[]>();
+            for (Map.Entry<TypeDescription, byte[]> entry : dynamicType.getAllTypes().entrySet()) {
+                classFiles.put(entry.getKey().getName(), entry.getValue());
+            }
+            return new Simple(classFiles);
+        }
+
         @Override
         public Resolution locate(String typeName) {
             byte[] binaryRepresentation = classFiles.get(typeName);
