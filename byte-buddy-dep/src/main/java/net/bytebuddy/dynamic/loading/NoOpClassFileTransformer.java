@@ -1,5 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
 
@@ -19,6 +21,7 @@ public enum NoOpClassFileTransformer implements ClassFileTransformer {
     private static final byte[] NO_TRANSFORMATION = null;
 
     @Override
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Array is guaranteed to be null")
     public byte[] transform(ClassLoader loader,
                             String className,
                             Class<?> classBeingRedefined,
