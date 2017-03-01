@@ -38,7 +38,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 /**
  * Using this annotation it is possible to access fields by getter and setter types. Before this annotation can be
  * used, it needs to be installed with two types. The getter type must be defined in a single-method interface
- * with a single method that returns an {@link java.lang.Object} type and takes no arguments. The getter interface
+ * with a single method that returns an {@link java.lang.Object} type and takes no arguments. The setter interface
  * must similarly return {@code void} and take a single {@link java.lang.Object} argument. After installing these
  * interfaces with the {@link FieldProxy.Binder}, this
  * binder needs to be registered with a {@link net.bytebuddy.implementation.MethodDelegation} before it can be used.
