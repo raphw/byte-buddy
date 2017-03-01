@@ -524,6 +524,17 @@ public class TypeWriterMethodPoolRecordTest {
     }
 
     @Test
+    public void testAccessorBridgePrependingTakesDelegateVisibility() throws Exception {
+        Visibility visibility = Visibility.PUBLIC;
+        when(delegate.getVisibility()).thenReturn(visibility);
+        assertThat(new TypeWriter.MethodPool.Record.AccessBridgeWrapper(delegate,
+                instrumentedType,
+                bridgeTarget,
+                Collections.singleton(typeToken),
+                methodAttributeAppender).getVisibility(), is(visibility));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override

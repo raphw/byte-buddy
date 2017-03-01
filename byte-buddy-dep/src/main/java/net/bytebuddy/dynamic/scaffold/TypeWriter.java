@@ -1079,7 +1079,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Visibility getVisibility() {
-                    return bridgeTarget.getVisibility();
+                    return delegate.getVisibility();
                 }
 
                 @Override
