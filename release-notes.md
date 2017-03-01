@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. March 2017: version 1.6.10
+
+- Allow installation of `ClassFileTransformer` in byte array class loader.
+- Adjust visibility for bridge methods.
+
 ### 20. February 2017: version 1.6.9
 
 - Properly add visibility bridges for default methods.
