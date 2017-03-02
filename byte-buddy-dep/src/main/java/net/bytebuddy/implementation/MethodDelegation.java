@@ -872,7 +872,6 @@ public class MethodDelegation implements Implementation.Composable {
                 }
             }
 
-
             /**
              * An implementation target for a field that is declared by the instrumented type or a super type.
              */
@@ -1104,7 +1103,8 @@ public class MethodDelegation implements Implementation.Composable {
          * @return A new delegation configuration which also applies the supplied ambiguity resolvers.
          */
         public WithCustomProperties withResolvers(List<? extends MethodDelegationBinder.AmbiguityResolver> ambiguityResolvers) {
-            return new WithCustomProperties(new MethodDelegationBinder.AmbiguityResolver.Compound(CompoundList.of(this.ambiguityResolver, ambiguityResolvers)), parameterBinders, matcher);
+            return new WithCustomProperties(new MethodDelegationBinder.AmbiguityResolver.Compound(CompoundList.of(this.ambiguityResolver,
+                    ambiguityResolvers)), parameterBinders, matcher);
         }
 
         /**
@@ -1136,7 +1136,9 @@ public class MethodDelegation implements Implementation.Composable {
          * @return A new delegation configuration which only considers methods for delegation if they match the supplied matcher.
          */
         public WithCustomProperties filter(ElementMatcher<? super MethodDescription> matcher) {
-            return new WithCustomProperties(ambiguityResolver, parameterBinders, new ElementMatcher.Junction.Conjunction<MethodDescription>(this.matcher, matcher));
+            return new WithCustomProperties(ambiguityResolver,
+                    parameterBinders,
+                    new ElementMatcher.Junction.Conjunction<MethodDescription>(this.matcher, matcher));
         }
 
         /**
@@ -1169,9 +1171,8 @@ public class MethodDelegation implements Implementation.Composable {
             } else if (typeDescription.isPrimitive()) {
                 throw new IllegalArgumentException("Cannot delegate to primitive " + typeDescription);
             }
-            return new MethodDelegation(ImplementationDelegate.ForStaticMethod.of(typeDescription.getDeclaredMethods().filter(isStatic().and(matcher)), TargetMethodAnnotationDrivenBinder.of(parameterBinders)),
-                    TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                    MethodDelegationBinder.AmbiguityResolver.DEFAULT);
+            return new MethodDelegation(ImplementationDelegate.ForStaticMethod.of(typeDescription.getDeclaredMethods().filter(isStatic().and(matcher)),
+                    TargetMethodAnnotationDrivenBinder.of(parameterBinders)), parameterBinders, ambiguityResolver);
         }
 
         /**
@@ -1302,9 +1303,12 @@ public class MethodDelegation implements Implementation.Composable {
             if (!typeDescription.asErasure().isInstance(target)) {
                 throw new IllegalArgumentException(target + " is not an instance of " + type);
             }
-            return new MethodDelegation(new ImplementationDelegate.ForField.WithInstance(fieldName, methodGraphCompiler, parameterBinders, matcher, target, typeDescription),
-                    TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                    MethodDelegationBinder.AmbiguityResolver.DEFAULT);
+            return new MethodDelegation(new ImplementationDelegate.ForField.WithInstance(fieldName,
+                    methodGraphCompiler,
+                    parameterBinders,
+                    matcher,
+                    target,
+                    typeDescription), parameterBinders, ambiguityResolver);
         }
 
         /**
@@ -1332,9 +1336,9 @@ public class MethodDelegation implements Implementation.Composable {
          * @return A delegation that redirects method calls to a constructor of the supplied type.
          */
         public MethodDelegation toConstructor(TypeDescription typeDescription) {
-            return new MethodDelegation(ImplementationDelegate.ForConstruction.of(typeDescription, typeDescription.getDeclaredMethods().filter(isConstructor().and(matcher)), TargetMethodAnnotationDrivenBinder.of(parameterBinders)),
-                    TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                    MethodDelegationBinder.AmbiguityResolver.DEFAULT);
+            return new MethodDelegation(ImplementationDelegate.ForConstruction.of(typeDescription,
+                    typeDescription.getDeclaredMethods().filter(isConstructor().and(matcher)),
+                    TargetMethodAnnotationDrivenBinder.of(parameterBinders)), parameterBinders, ambiguityResolver);
         }
 
         /**
@@ -1394,9 +1398,11 @@ public class MethodDelegation implements Implementation.Composable {
          * @return A delegation that redirects invocations to a method of the specified field's instance.
          */
         public MethodDelegation toField(String name, FieldLocator.Factory fieldLocatorFactory, MethodGraph.Compiler methodGraphCompiler) {
-            return new MethodDelegation(new ImplementationDelegate.ForField.WithLookup(name, methodGraphCompiler, parameterBinders, matcher, fieldLocatorFactory),
-                    TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
-                    MethodDelegationBinder.AmbiguityResolver.DEFAULT);
+            return new MethodDelegation(new ImplementationDelegate.ForField.WithLookup(name,
+                    methodGraphCompiler,
+                    parameterBinders,
+                    matcher,
+                    fieldLocatorFactory), parameterBinders, ambiguityResolver);
         }
     }
 }
