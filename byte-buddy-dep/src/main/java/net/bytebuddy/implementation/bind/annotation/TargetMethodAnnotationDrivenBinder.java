@@ -123,6 +123,11 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             }
             return methodDelegationBindingBuilder.build(methodTermination);
         }
+
+        @Override
+        public String toString() {
+            return candidate.toString();
+        }
     }
 
     /**
