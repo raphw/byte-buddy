@@ -13,19 +13,16 @@ branches:
   only:
     - master
 
-jdk:
-  - oraclejdk8
-  - oraclejdk7
-  - openjdk6
-
 matrix:
   include:
-    - jdk: oraclejdk8
-      env: TARGET=-Pjava8
+    - jdk: openjdk6
     - jdk: oraclejdk7
       env: TARGET=-Pjava7
+    - jdk: oraclejdk8
+      env: TARGET=-Pjava8
 
-script: mvn jacoco:prepare-agent verify jacoco:report $TARGET -Pintegration -Dnet.bytebuddy.test.travis=true
+install: ./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+script: ./mvnw jacoco:prepare-agent verify jacoco:report $TARGET -Pintegration -Dnet.bytebuddy.test.travis=true -B -V
 
 after_success:
-  - mvn coveralls:report
+  - ./mvnw coveralls:report
