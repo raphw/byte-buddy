@@ -10,7 +10,9 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
+import org.objectweb.asm.Opcodes;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -835,6 +837,279 @@ public interface ClassInjector {
                                              String implementationVendor,
                                              URL sealBase) {
                     throw new UnsupportedOperationException("Cannot define package using injection", exception);
+                }
+            }
+        }
+    }
+
+    /**
+     * <p>
+     * A class injector that uses a {@code java.lang.invoke.MethodHandles$Lookup} object for defining a class.
+     * </p>
+     * <p>
+     * <b>Important</b>: This functionality is only available starting from Java 9.
+     * </p>
+     */
+    @EqualsAndHashCode
+    class UsingLookup implements ClassInjector {
+
+        /**
+         * The dispatcher to interacting with method handles.
+         */
+        private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.Creator.INSTANCE);
+
+        /**
+         * Indicates a lookup instance's package lookup mode.
+         */
+        private static final int PACKAGE_LOOKUP = 0x8;
+
+        /**
+         * The {@code java.lang.invoke.MethodHandles$Lookup} to use.
+         */
+        private final Object lookup;
+
+        /**
+         * Creates a new class injector using a lookup instance.
+         *
+         * @param lookup The {@code java.lang.invoke.MethodHandles$Lookup} instance to use.
+         */
+        protected UsingLookup(Object lookup) {
+            this.lookup = lookup;
+        }
+
+        /**
+         * Creates class injector that defines a class using a method handle lookup.
+         *
+         * @param lookup The {@code java.lang.invoke.MethodHandles$Lookup} instance to use.
+         * @return An appropriate class injector.
+         */
+        public static UsingLookup of(Object lookup) {
+            if (!DISPATCHER.isAlive()) {
+                throw new IllegalStateException("The current VM does not support class definition via method handle lookups");
+            } else if (!JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isInstance(lookup)) {
+                throw new IllegalArgumentException("Not a method handle lookup: " + lookup);
+            } else if ((DISPATCHER.lookupModes(lookup) & PACKAGE_LOOKUP) == 0) {
+                throw new IllegalArgumentException("Lookup does not imply package-access: " + lookup);
+            }
+            return new UsingLookup(DISPATCHER.dropLookupMode(lookup, Opcodes.ACC_PRIVATE));
+        }
+
+        /**
+         * Returns the lookup type this injector is based upon.
+         *
+         * @return The lookup type.
+         */
+        public Class<?> lookupType() {
+            return DISPATCHER.lookupType(lookup);
+        }
+
+        @Override
+        public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
+            Map<TypeDescription, Class<?>> loaded = new HashMap<TypeDescription, Class<?>>();
+            for (Map.Entry<? extends TypeDescription, byte[]> entry : types.entrySet()) {
+                if (!entry.getKey().isSamePackage(new TypeDescription.ForLoadedType(lookupType()))) {
+                    throw new IllegalArgumentException(entry.getKey() + " cannot be defined in its package using " + lookup);
+                }
+                loaded.put(entry.getKey(), DISPATCHER.defineClass(lookup, entry.getValue()));
+            }
+            return loaded;
+        }
+
+        /**
+         * A dispatcher for interacting with a method handle lookup.
+         */
+        protected interface Dispatcher {
+
+            /**
+             * Indicates if this dispatcher is available on the current VM.
+             *
+             * @return {@code true} if this dispatcher is alive.
+             */
+            boolean isAlive();
+
+            /**
+             * Returns the lookup type for a given method handle lookup.
+             *
+             * @param lookup The lookup instance.
+             * @return The lookup type.
+             */
+            Class<?> lookupType(Object lookup);
+
+            /**
+             * Returns a lookup objects lookup types.
+             *
+             * @param lookup The lookup instance.
+             * @return The modifiers indicating the instance's lookup modes.
+             */
+            int lookupModes(Object lookup);
+
+            /**
+             * Drops a given lookup mode from a lookup instance.
+             *
+             * @param lookup The lookup instance.
+             * @param mode   The modes to drop.
+             * @return A new lookup instance where the modes were dropped.
+             */
+            Object dropLookupMode(Object lookup, int mode);
+
+            /**
+             * Defines a class.
+             *
+             * @param lookup               The {@code java.lang.invoke.MethodHandles$Lookup} instance to use.
+             * @param binaryRepresentation The defined class's binary representation.
+             * @return The defined class.
+             */
+            Class<?> defineClass(Object lookup, byte[] binaryRepresentation);
+
+            /**
+             * An action for defining a dispatcher.
+             */
+            enum Creator implements PrivilegedAction<Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
+                public Dispatcher run() {
+                    try {
+                        Class<?> lookup = JavaType.METHOD_HANDLES_LOOKUP.load();
+                        return new Dispatcher.ForJava9CapableVm(lookup.getMethod("lookupClass"),
+                                lookup.getMethod("lookupModes"),
+                                lookup.getMethod("dropLookupMode", int.class),
+                                lookup.getMethod("defineClass", byte[].class));
+                    } catch (Exception ignored) {
+                        return Dispatcher.ForLegacyVm.INSTANCE;
+                    }
+                }
+            }
+
+            /**
+             * A dispatcher for a legacy VM that does not support class definition via method handles.
+             */
+            enum ForLegacyVm implements Dispatcher {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public boolean isAlive() {
+                    return false;
+                }
+
+                @Override
+                public Class<?> lookupType(Object lookup) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
+                }
+
+                @Override
+                public int lookupModes(Object lookup) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
+                }
+
+                @Override
+                public Object dropLookupMode(Object lookup, int mode) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
+                }
+
+                @Override
+                public Class<?> defineClass(Object lookup, byte[] binaryRepresentation) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.invoke.MethodHandles$Lookup");
+                }
+            }
+
+            /**
+             * A dispatcher for a Java 9 capable VM that supports class definition via method handles.
+             */
+            @EqualsAndHashCode
+            class ForJava9CapableVm implements Dispatcher {
+
+                /**
+                 * The {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
+                 */
+                private final Method lookupClass;
+
+                /**
+                 * The {@code java.lang.invoke.MethodHandles$Lookup#lookupModes} method.
+                 */
+                private final Method lookupModes;
+
+                /**
+                 * The {@code java.lang.invoke.MethodHandles$Lookup#dropLookupMode} method.
+                 */
+                private final Method dropLookupMode;
+
+                /**
+                 * The {@code java.lang.invoke.MethodHandles$Lookup#defineClass} method.
+                 */
+                private final Method defineClass;
+
+                /**
+                 * Creates a new dispatcher for a Java 9 capable VM.
+                 *
+                 * @param lookupClass    The {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
+                 * @param lookupModes    The {@code java.lang.invoke.MethodHandles$Lookup#lookupModes} method.
+                 * @param dropLookupMode The {@code java.lang.invoke.MethodHandles$Lookup#dropLookupMode} method.
+                 * @param defineClass    The {@code java.lang.invoke.MethodHandles$Lookup#defineClass} method.
+                 */
+                protected ForJava9CapableVm(Method lookupClass, Method lookupModes, Method dropLookupMode, Method defineClass) {
+                    this.lookupClass = lookupClass;
+                    this.lookupModes = lookupModes;
+                    this.defineClass = defineClass;
+                    this.dropLookupMode = dropLookupMode;
+                }
+
+                @Override
+                public boolean isAlive() {
+                    return true;
+                }
+
+                @Override
+                public Class<?> lookupType(Object lookup) {
+                    try {
+                        return (Class<?>) lookupClass.invoke(lookup);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandles$Lookup#lookupClass", exception.getCause());
+                    }
+                }
+
+                @Override
+                public int lookupModes(Object lookup) {
+                    try {
+                        return (Integer) lookupModes.invoke(lookup);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupModes", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandles$Lookup#lookupModes", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Object dropLookupMode(Object lookup, int mode) {
+                    try {
+                        return dropLookupMode.invoke(lookup, mode);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#lookupModes", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandles$Lookup#lookupModes", exception.getCause());
+                    }
+                }
+
+                @Override
+                public Class<?> defineClass(Object lookup, byte[] binaryRepresentation) {
+                    try {
+                        return (Class<?>) defineClass.invoke(lookup, (Object) binaryRepresentation);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.invoke.MethodHandles$Lookup#defineClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.invoke.MethodHandles$Lookup#defineClass", exception.getCause());
+                    }
                 }
             }
         }

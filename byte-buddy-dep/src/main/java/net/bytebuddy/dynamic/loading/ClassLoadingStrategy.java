@@ -341,6 +341,55 @@ public interface ClassLoadingStrategy<T extends ClassLoader> {
     }
 
     /**
+     * A class loading strategy that uses a {@code java.lang.invoke.MethodHandles$Lookup} instance for defining types.
+     * A lookup instance can define types only in the same class loader and in the same package as the type within which
+     * it was created. The supplied lookup must have package privileges, i.e. it must not be a public lookup.
+     */
+    @EqualsAndHashCode
+    class UsingLookup implements ClassLoadingStrategy<ClassLoader> {
+
+        /**
+         * The class injector to use.
+         */
+        private final ClassInjector classInjector;
+
+        /**
+         * The class loader in the supplied class injector defines classes.
+         */
+        private final ClassLoader classLoader;
+
+        /**
+         * Creaes a new class loading strategy that uses a lookup type.
+         *
+         * @param classInjector The class injector to use.
+         * @param classLoader   The class loader in the supplied class injector defines classes.
+         */
+        protected UsingLookup(ClassInjector classInjector, ClassLoader classLoader) {
+            this.classInjector = classInjector;
+            this.classLoader = classLoader;
+        }
+
+        /**
+         * Creates a new class loading strategy that uses a {@code java.lang.invoke.MethodHandles$Lookup} instance.
+         *
+         * @param lookup The lookup instance to use for defining new types.
+         * @return A suitable class loading strategy.
+         */
+        public static ClassLoadingStrategy<ClassLoader> of(Object lookup) {
+            ClassInjector.UsingLookup classInjector = ClassInjector.UsingLookup.of(lookup);
+            return new UsingLookup(classInjector, classInjector.lookupType().getClassLoader());
+        }
+
+        @Override
+        public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+            if (classLoader != this.classLoader) {
+                throw new IllegalStateException("Cannot define a type in " + classLoader + " with lookup based on " + this.classLoader);
+            }
+            return classInjector.inject(types);
+        }
+    }
+
+    /**
      * A class loading strategy which allows class injection into the bootstrap class loader if
      * appropriate.
      */
