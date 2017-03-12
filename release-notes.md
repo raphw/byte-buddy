@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 12. March 2017: version 1.6.11
+
+- Fix modifier adjustment for visibility bridges (did not work last time)
+- Added class injector for Java 9 handle class definition.
+
 ### 1. March 2017: version 1.6.10
 
 - Allow installation of `ClassFileTransformer` in byte array class loader.
