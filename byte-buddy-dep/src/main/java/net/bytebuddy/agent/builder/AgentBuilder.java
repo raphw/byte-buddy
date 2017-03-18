@@ -4011,7 +4011,7 @@ public interface AgentBuilder {
             check(instrumentation);
             RedefinitionStrategy.Collector collector = make();
             for (Class<?> type : instrumentation.getAllLoadedClasses()) {
-                if (!lambdaInstrumentationStrategy.isInstrumented(type)) {
+                if (type.isArray() || !lambdaInstrumentationStrategy.isInstrumented(type)) {
                     continue;
                 }
                 JavaModule module = JavaModule.ofType(type);

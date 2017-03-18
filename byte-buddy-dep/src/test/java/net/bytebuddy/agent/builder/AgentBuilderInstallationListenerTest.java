@@ -125,6 +125,14 @@ public class AgentBuilderInstallationListenerTest {
     }
 
     @Test
+    public void testStreamWritingToSystem() throws Exception {
+        assertThat(AgentBuilder.InstallationListener.StreamWriting.toSystemOut(),
+                is((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.out)));
+        assertThat(AgentBuilder.InstallationListener.StreamWriting.toSystemErr(),
+                is((AgentBuilder.InstallationListener) new AgentBuilder.InstallationListener.StreamWriting(System.err)));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.InstallationListener.StreamWriting.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InstallationListener.Compound.class)
