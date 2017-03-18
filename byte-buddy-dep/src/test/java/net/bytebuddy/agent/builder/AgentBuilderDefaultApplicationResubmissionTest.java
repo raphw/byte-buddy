@@ -72,8 +72,8 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
                         }
 
                         @Override
-                        public void schedule(final Runnable job) {
-                            scheduledExecutorService.scheduleWithFixedDelay(job, TIMEOUT, TIMEOUT, TimeUnit.SECONDS);
+                        public Cancelable schedule(final Runnable job) {
+                            return new Cancelable.ForFuture(scheduledExecutorService.scheduleWithFixedDelay(job, TIMEOUT, TIMEOUT, TimeUnit.SECONDS));
                         }
                     })
                     .type(ElementMatchers.is(Foo.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
