@@ -5106,15 +5106,15 @@ public interface AgentBuilder {
              * @param redefinitionBatchListener  The batch listener to notify.
              * @return A potentially modified listener to apply.
              */
-            Installation onInstall(Instrumentation instrumentation,
-                                   LocationStrategy locationStrategy,
-                                   AgentBuilder.Listener listener,
-                                   InstallationListener installationListener,
-                                   CircularityLock circularityLock,
-                                   RawMatcher matcher,
-                                   RedefinitionStrategy redefinitionStrategy,
-                                   RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                   RedefinitionStrategy.Listener redefinitionBatchListener);
+            Installation install(Instrumentation instrumentation,
+                                 LocationStrategy locationStrategy,
+                                 AgentBuilder.Listener listener,
+                                 InstallationListener installationListener,
+                                 CircularityLock circularityLock,
+                                 RawMatcher matcher,
+                                 RedefinitionStrategy redefinitionStrategy,
+                                 RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                 RedefinitionStrategy.Listener redefinitionBatchListener);
 
             /**
              * A disabled resubmission strategy.
@@ -5127,15 +5127,15 @@ public interface AgentBuilder {
                 INSTANCE;
 
                 @Override
-                public Installation onInstall(Instrumentation instrumentation,
-                                              LocationStrategy locationStrategy,
-                                              AgentBuilder.Listener listener,
-                                              InstallationListener installationListener,
-                                              CircularityLock circularityLock,
-                                              RawMatcher matcher,
-                                              RedefinitionStrategy redefinitionStrategy,
-                                              BatchAllocator redefinitionBatchAllocator,
-                                              Listener redefinitionBatchListener) {
+                public Installation install(Instrumentation instrumentation,
+                                            LocationStrategy locationStrategy,
+                                            AgentBuilder.Listener listener,
+                                            InstallationListener installationListener,
+                                            CircularityLock circularityLock,
+                                            RawMatcher matcher,
+                                            RedefinitionStrategy redefinitionStrategy,
+                                            BatchAllocator redefinitionBatchAllocator,
+                                            Listener redefinitionBatchListener) {
                     return new Installation(listener, installationListener);
                 }
             }
@@ -5168,15 +5168,15 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public Installation onInstall(Instrumentation instrumentation,
-                                              LocationStrategy locationStrategy,
-                                              AgentBuilder.Listener listener,
-                                              InstallationListener installationListener,
-                                              CircularityLock circularityLock,
-                                              RawMatcher matcher,
-                                              RedefinitionStrategy redefinitionStrategy,
-                                              RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                              RedefinitionStrategy.Listener redefinitionBatchListener) {
+                public Installation install(Instrumentation instrumentation,
+                                            LocationStrategy locationStrategy,
+                                            AgentBuilder.Listener listener,
+                                            InstallationListener installationListener,
+                                            CircularityLock circularityLock,
+                                            RawMatcher matcher,
+                                            RedefinitionStrategy redefinitionStrategy,
+                                            RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                            RedefinitionStrategy.Listener redefinitionBatchListener) {
                     if (redefinitionStrategy.isEnabled() && resubmissionScheduler.isAlive()) {
                         ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
                         return new Installation(new AgentBuilder.Listener.Compound(new ResubmissionListener(this.matcher, types), listener),
@@ -7797,7 +7797,7 @@ public interface AgentBuilder {
                 throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
             }
             try {
-                RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.onInstall(instrumentation,
+                RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.install(instrumentation,
                         locationStrategy,
                         listener,
                         installationListener,
@@ -7815,7 +7815,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
                     if (redefinitionStrategy.isEnabled()) {
                         redefinitionStrategy.apply(instrumentation,
-                                listener,
+                                installation.getListener(),
                                 circularityLock,
                                 poolStrategy,
                                 locationStrategy,
@@ -7828,13 +7828,13 @@ public interface AgentBuilder {
                                 ignoredTypeMatcher);
                     }
                 } catch (Throwable throwable) {
-                    throwable = installationListener.onError(instrumentation, classFileTransformer, throwable);
+                    throwable = installation.getInstallationListener().onError(instrumentation, classFileTransformer, throwable);
                     if (throwable != null) {
                         instrumentation.removeTransformer(classFileTransformer);
                         throw new IllegalStateException("Could not install class file transformer", throwable);
                     }
                 }
-                installationListener.onInstall(instrumentation, classFileTransformer);
+                installation.getInstallationListener().onInstall(instrumentation, classFileTransformer);
                 return classFileTransformer;
             } finally {
                 circularityLock.release();
