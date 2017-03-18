@@ -4998,19 +4998,18 @@ public interface AgentBuilder {
                                               RedefinitionStrategy.Listener redefinitionBatchListener) {
                     if (redefinitionStrategy.isEnabled() && resubmissionScheduler.isAlive()) {
                         ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
-                        resubmissionScheduler.schedule(new ResubmissionJob(instrumentation,
-                                locationStrategy,
-                                listener,
-                                circularityLock,
-                                matcher,
-                                redefinitionStrategy,
-                                redefinitionBatchAllocator,
-                                redefinitionBatchListener,
-                                types));
-                        return new Installation(
-                                new AgentBuilder.Listener.Compound(new ResubmissionListener(this.matcher, types), listener),
-                                new InstallationListener.Compound(installationListener, null)
-                        );
+                        return new Installation(new AgentBuilder.Listener.Compound(new ResubmissionListener(this.matcher, types), listener),
+                                new InstallationListener.Compound(installationListener, new ResubmissionInstallationListener(resubmissionScheduler,
+                                        instrumentation,
+                                        locationStrategy,
+                                        listener,
+                                        installationListener,
+                                        circularityLock,
+                                        matcher,
+                                        redefinitionStrategy,
+                                        redefinitionBatchAllocator,
+                                        redefinitionBatchListener,
+                                        types)));
                     } else {
                         return new Installation(listener, installationListener);
                     }
@@ -5053,6 +5052,78 @@ public interface AgentBuilder {
                                 }
                             }
                             types.add(typeName);
+                        }
+                    }
+                }
+
+                protected static class ResubmissionInstallationListener extends AgentBuilder.InstallationListener.Adapter {
+
+                    private final ResubmissionScheduler resubmissionScheduler;
+
+                    private final Instrumentation instrumentation;
+
+                    private final LocationStrategy locationStrategy;
+
+                    private final AgentBuilder.Listener listener;
+
+                    private final InstallationListener installationListener;
+
+                    private final CircularityLock circularityLock;
+
+                    private final RawMatcher matcher;
+
+                    private final RedefinitionStrategy redefinitionStrategy;
+
+                    private final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
+
+                    private final RedefinitionStrategy.Listener redefinitionBatchListener;
+
+                    private final ConcurrentMap<StorageKey, Set<String>> types;
+
+                    private volatile ResubmissionScheduler.Cancelable cancelable;
+
+                    protected ResubmissionInstallationListener(ResubmissionScheduler resubmissionScheduler,
+                                                               Instrumentation instrumentation,
+                                                               LocationStrategy locationStrategy,
+                                                               AgentBuilder.Listener listener,
+                                                               InstallationListener installationListener,
+                                                               CircularityLock circularityLock,
+                                                               RawMatcher matcher,
+                                                               RedefinitionStrategy redefinitionStrategy,
+                                                               BatchAllocator redefinitionBatchAllocator,
+                                                               Listener redefinitionBatchListener,
+                                                               ConcurrentMap<StorageKey, Set<String>> types) {
+                        this.resubmissionScheduler = resubmissionScheduler;
+                        this.instrumentation = instrumentation;
+                        this.locationStrategy = locationStrategy;
+                        this.listener = listener;
+                        this.installationListener = installationListener;
+                        this.circularityLock = circularityLock;
+                        this.matcher = matcher;
+                        this.redefinitionStrategy = redefinitionStrategy;
+                        this.redefinitionBatchAllocator = redefinitionBatchAllocator;
+                        this.redefinitionBatchListener = redefinitionBatchListener;
+                        this.types = types;
+                    }
+
+                    @Override
+                    public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                        cancelable = resubmissionScheduler.schedule(new ResubmissionJob(instrumentation,
+                                locationStrategy,
+                                listener,
+                                circularityLock,
+                                matcher,
+                                redefinitionStrategy,
+                                redefinitionBatchAllocator,
+                                redefinitionBatchListener,
+                                types));
+                    }
+
+                    @Override
+                    public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                        ResubmissionScheduler.Cancelable cancelable = this.cancelable;
+                        if (cancelable != null) {
+                            cancelable.cancel();
                         }
                     }
                 }
