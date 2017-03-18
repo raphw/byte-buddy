@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 18. March 2017: version 1.6.12
+
+- Add `InstallationListener` in favor of `InstallationStrategy` and allow resubmission strategy to hook into it in order to cancel submitted jobs.
+
 ### 12. March 2017: version 1.6.11
 
 - Fix modifier adjustment for visibility bridges (did not work last time)
