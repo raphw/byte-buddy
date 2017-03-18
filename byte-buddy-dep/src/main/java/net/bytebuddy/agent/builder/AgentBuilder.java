@@ -216,6 +216,14 @@ public interface AgentBuilder {
      */
     AgentBuilder with(FallbackStrategy fallbackStrategy);
 
+    /**
+     * Adds an installation listener that is notified during installation events. Installation listeners are only invoked if
+     * a class file transformer is installed using this agent builder's installation methods and uninstalled via the created
+     * {@link ResettableClassFileTransformer}'s {@code reset} methods.
+     *
+     * @param installationListener The installation listener to register.
+     * @return A new agent builder that applies the supplied installation listener.
+     */
     AgentBuilder with(InstallationListener installationListener);
 
     /**
@@ -3571,18 +3579,50 @@ public interface AgentBuilder {
         }
     }
 
+    /**
+     * A listener that is notified during the installation and the resetting of a class file transformer.
+     */
     interface InstallationListener {
 
+        /**
+         * Indicates that an exception is handled.
+         */
         Throwable SUPPRESS_ERROR = null;
 
+        /**
+         * Invoked upon the installation of a class file transformer.
+         *
+         * @param instrumentation      The instrumentation on which the class file transformer is installed.
+         * @param classFileTransformer The class file transformer that is being installed.
+         */
         void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
 
+        /**
+         * Invoked if an installation causes an error. The listener has an opportunity to handle the error.
+         *
+         * @param instrumentation      The instrumentation on which the class file transformer is installed.
+         * @param classFileTransformer The class file transformer that is being installed.
+         * @param throwable            The throwable that causes the error.
+         * @return The error to propagate or {@code null} if the error is handled. Any subsequent listeners are not called if the exception is handled.
+         */
         Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable);
 
+        /**
+         * Invoked if an installation is reset.
+         *
+         * @param instrumentation      The instrumentation on which the class file transformer is installed.
+         * @param classFileTransformer The class file transformer that is being installed.
+         */
         void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
 
+        /**
+         * A non-operational listener that does not do anything.
+         */
         enum NoOp implements InstallationListener {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -3601,8 +3641,14 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * A listener that suppresses any installation error.
+         */
         enum ErrorSuppressing implements InstallationListener {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override
@@ -3621,6 +3667,9 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * An adapter implementation for an installation listener that serves as a convenience.
+         */
         abstract class Adapter implements InstallationListener {
 
             @Override
@@ -3639,20 +3688,45 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * This installation listener prints the status of any installation to a {@link PrintStream}.
+         */
+        @EqualsAndHashCode
         class StreamWriting implements InstallationListener {
 
+            /**
+             * The prefix prepended to any message written.
+             */
             protected static final String PREFIX = "[Byte Buddy]";
 
+            /**
+             * The print stream to write to.
+             */
             private final PrintStream printStream;
 
+            /**
+             * Creates a new stream writing installation listener.
+             *
+             * @param printStream The print stream to write to.
+             */
             public StreamWriting(PrintStream printStream) {
                 this.printStream = printStream;
             }
 
+            /**
+             * Creates a stream writing installation listener that prints to {@link System#out}.
+             *
+             * @return An installation listener that prints to {@link System#out}.
+             */
             public static InstallationListener toSystemOut() {
                 return new StreamWriting(System.out);
             }
 
+            /**
+             * Creates a stream writing installation listener that prints to {@link System#err}.
+             *
+             * @return An installation listener that prints to {@link System#err}.
+             */
             public static InstallationListener toSystemErr() {
                 return new StreamWriting(System.err);
             }
@@ -3677,14 +3751,31 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * A compound installation listener.
+         */
+        @EqualsAndHashCode
         class Compound implements InstallationListener {
 
+            /**
+             * The installation listeners to notify.
+             */
             private final List<InstallationListener> installationListeners;
 
+            /**
+             * Creates a new compound listener.
+             *
+             * @param installationListener The installation listeners to notify.
+             */
             public Compound(InstallationListener... installationListener) {
                 this(Arrays.asList(installationListener));
             }
 
+            /**
+             * Creates a new compound listener.
+             *
+             * @param installationListeners The installation listeners to notify.
+             */
             public Compound(List<? extends InstallationListener> installationListeners) {
                 this.installationListeners = new ArrayList<InstallationListener>();
                 for (InstallationListener installationListener : installationListeners) {
@@ -3707,7 +3798,7 @@ public interface AgentBuilder {
             public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 for (InstallationListener installationListener : installationListeners) {
                     if (throwable == SUPPRESS_ERROR) {
-                        break;
+                        return SUPPRESS_ERROR;
                     }
                     throwable = installationListener.onError(instrumentation, classFileTransformer, throwable);
                 }
@@ -4827,15 +4918,28 @@ public interface AgentBuilder {
              * Schedules a resubmission job for regular application.
              *
              * @param job The job to schedule.
+             * @return A cancelable that is canceled upon resetting the corresponding class file transformer.
              */
             Cancelable schedule(Runnable job);
 
+            /**
+             * A cancelable allows to discontinue a resubmission job.
+             */
             interface Cancelable {
 
+                /**
+                 * Cancels this resubmission job.
+                 */
                 void cancel();
 
+                /**
+                 * A non-operational cancelable.
+                 */
                 enum NoOp implements Cancelable {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
                     @Override
@@ -4844,10 +4948,22 @@ public interface AgentBuilder {
                     }
                 }
 
+                /**
+                 * A cancelable for a {@link Future}.
+                 */
+                @EqualsAndHashCode
                 class ForFuture implements Cancelable {
 
+                    /**
+                     * The future to cancel upon cancelation of this instance.
+                     */
                     private final Future<?> future;
 
+                    /**
+                     * Creates a cancelable for a future.
+                     *
+                     * @param future The future to cancel upon cancelation of this instance.
+                     */
                     public ForFuture(Future<?> future) {
                         this.future = future;
                     }
@@ -4982,6 +5098,7 @@ public interface AgentBuilder {
              * @param instrumentation            The instrumentation instance to use.
              * @param locationStrategy           The location strategy to use.
              * @param listener                   The listener to use.
+             * @param installationListener       The installation listener to use.
              * @param circularityLock            The circularity lock to use.
              * @param matcher                    The matcher to apply for analyzing if a type is to be resubmitted.
              * @param redefinitionStrategy       The redefinition strategy to use.
@@ -5063,17 +5180,16 @@ public interface AgentBuilder {
                     if (redefinitionStrategy.isEnabled() && resubmissionScheduler.isAlive()) {
                         ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
                         return new Installation(new AgentBuilder.Listener.Compound(new ResubmissionListener(this.matcher, types), listener),
-                                new InstallationListener.Compound(installationListener, new ResubmissionInstallationListener(resubmissionScheduler,
+                                new InstallationListener.Compound(new ResubmissionInstallationListener(resubmissionScheduler,
                                         instrumentation,
                                         locationStrategy,
                                         listener,
-                                        installationListener,
                                         circularityLock,
                                         matcher,
                                         redefinitionStrategy,
                                         redefinitionBatchAllocator,
                                         redefinitionBatchListener,
-                                        types)));
+                                        types), installationListener));
                     } else {
                         return new Installation(listener, installationListener);
                     }
@@ -5120,82 +5236,15 @@ public interface AgentBuilder {
                     }
                 }
 
-                protected static class ResubmissionInstallationListener extends AgentBuilder.InstallationListener.Adapter {
-
-                    private final ResubmissionScheduler resubmissionScheduler;
-
-                    private final Instrumentation instrumentation;
-
-                    private final LocationStrategy locationStrategy;
-
-                    private final AgentBuilder.Listener listener;
-
-                    private final InstallationListener installationListener;
-
-                    private final CircularityLock circularityLock;
-
-                    private final RawMatcher matcher;
-
-                    private final RedefinitionStrategy redefinitionStrategy;
-
-                    private final RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator;
-
-                    private final RedefinitionStrategy.Listener redefinitionBatchListener;
-
-                    private final ConcurrentMap<StorageKey, Set<String>> types;
-
-                    private volatile ResubmissionScheduler.Cancelable cancelable;
-
-                    protected ResubmissionInstallationListener(ResubmissionScheduler resubmissionScheduler,
-                                                               Instrumentation instrumentation,
-                                                               LocationStrategy locationStrategy,
-                                                               AgentBuilder.Listener listener,
-                                                               InstallationListener installationListener,
-                                                               CircularityLock circularityLock,
-                                                               RawMatcher matcher,
-                                                               RedefinitionStrategy redefinitionStrategy,
-                                                               BatchAllocator redefinitionBatchAllocator,
-                                                               Listener redefinitionBatchListener,
-                                                               ConcurrentMap<StorageKey, Set<String>> types) {
-                        this.resubmissionScheduler = resubmissionScheduler;
-                        this.instrumentation = instrumentation;
-                        this.locationStrategy = locationStrategy;
-                        this.listener = listener;
-                        this.installationListener = installationListener;
-                        this.circularityLock = circularityLock;
-                        this.matcher = matcher;
-                        this.redefinitionStrategy = redefinitionStrategy;
-                        this.redefinitionBatchAllocator = redefinitionBatchAllocator;
-                        this.redefinitionBatchListener = redefinitionBatchListener;
-                        this.types = types;
-                    }
-
-                    @Override
-                    public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
-                        cancelable = resubmissionScheduler.schedule(new ResubmissionJob(instrumentation,
-                                locationStrategy,
-                                listener,
-                                circularityLock,
-                                matcher,
-                                redefinitionStrategy,
-                                redefinitionBatchAllocator,
-                                redefinitionBatchListener,
-                                types));
-                    }
-
-                    @Override
-                    public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
-                        ResubmissionScheduler.Cancelable cancelable = this.cancelable;
-                        if (cancelable != null) {
-                            cancelable.cancel();
-                        }
-                    }
-                }
-
                 /**
                  * A job that resubmits any matched type that previously failed during transformation.
                  */
-                protected static class ResubmissionJob implements Runnable {
+                protected static class ResubmissionInstallationListener extends AgentBuilder.InstallationListener.Adapter implements Runnable {
+
+                    /**
+                     * The resubmission scheduler to use.
+                     */
+                    private final ResubmissionScheduler resubmissionScheduler;
 
                     /**
                      * The instrumentation instance to use.
@@ -5243,8 +5292,14 @@ public interface AgentBuilder {
                     private final ConcurrentMap<StorageKey, Set<String>> types;
 
                     /**
+                     * This scheduler's cancelable or {@code null} if no cancelable was registered.
+                     */
+                    private volatile ResubmissionScheduler.Cancelable cancelable;
+
+                    /**
                      * Creates a new resubmission job.
                      *
+                     * @param resubmissionScheduler      The resubmission scheduler to use.
                      * @param instrumentation            The instrumentation instance to use.
                      * @param locationStrategy           The location strategy to use.
                      * @param listener                   The listener to use.
@@ -5255,15 +5310,17 @@ public interface AgentBuilder {
                      * @param redefinitionBatchListener  The batch listener to notify.
                      * @param types                      A map of class loaders to their types to resubmit.
                      */
-                    protected ResubmissionJob(Instrumentation instrumentation,
-                                              LocationStrategy locationStrategy,
-                                              AgentBuilder.Listener listener,
-                                              CircularityLock circularityLock,
-                                              RawMatcher matcher,
-                                              RedefinitionStrategy redefinitionStrategy,
-                                              BatchAllocator redefinitionBatchAllocator,
-                                              Listener redefinitionBatchListener,
-                                              ConcurrentMap<StorageKey, Set<String>> types) {
+                    protected ResubmissionInstallationListener(ResubmissionScheduler resubmissionScheduler,
+                                                               Instrumentation instrumentation,
+                                                               LocationStrategy locationStrategy,
+                                                               AgentBuilder.Listener listener,
+                                                               CircularityLock circularityLock,
+                                                               RawMatcher matcher,
+                                                               RedefinitionStrategy redefinitionStrategy,
+                                                               BatchAllocator redefinitionBatchAllocator,
+                                                               Listener redefinitionBatchListener,
+                                                               ConcurrentMap<StorageKey, Set<String>> types) {
+                        this.resubmissionScheduler = resubmissionScheduler;
                         this.instrumentation = instrumentation;
                         this.locationStrategy = locationStrategy;
                         this.listener = listener;
@@ -5275,13 +5332,27 @@ public interface AgentBuilder {
                         this.types = types;
                     }
 
+
+                    @Override
+                    public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                        cancelable = resubmissionScheduler.schedule(this);
+                    }
+
+                    @Override
+                    public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                        ResubmissionScheduler.Cancelable cancelable = this.cancelable;
+                        if (cancelable != null) {
+                            cancelable.cancel();
+                        }
+                    }
+
                     @Override
                     public void run() {
                         boolean release = circularityLock.acquire();
                         try {
                             Iterator<Map.Entry<StorageKey, Set<String>>> entries = types.entrySet().iterator();
                             List<Class<?>> types = new ArrayList<Class<?>>();
-                            while (entries.hasNext()) {
+                            while (!Thread.interrupted() && entries.hasNext()) {
                                 Map.Entry<StorageKey, Set<String>> entry = entries.next();
                                 ClassLoader classLoader = entry.getKey().get();
                                 if (classLoader != null || entry.getKey().isBootstrapLoader()) {
@@ -5438,22 +5509,48 @@ public interface AgentBuilder {
                 }
             }
 
+            /**
+             * Represents an installation of a resubmission strategy.
+             */
+            @EqualsAndHashCode
             class Installation {
 
+                /**
+                 * The listener to apply.
+                 */
                 private final AgentBuilder.Listener listener;
 
+                /**
+                 * The installation listener to apply.
+                 */
                 private final InstallationListener installationListener;
 
-                public Installation(AgentBuilder.Listener listener, InstallationListener installationListener) {
+                /**
+                 * Creates a new installation.
+                 *
+                 * @param listener             The listener to apply.
+                 * @param installationListener The installation listener to apply.
+                 */
+                protected Installation(AgentBuilder.Listener listener, InstallationListener installationListener) {
                     this.listener = listener;
                     this.installationListener = installationListener;
                 }
 
-                public AgentBuilder.Listener getListener() {
+                /**
+                 * Returns the listener to apply.
+                 *
+                 * @return The listener to apply.
+                 */
+                protected AgentBuilder.Listener getListener() {
                     return listener;
                 }
 
-                public InstallationListener getInstallationListener() {
+                /**
+                 * Returns the installation listener to apply.
+                 *
+                 * @return The installation listener to apply.
+                 */
+                protected InstallationListener getInstallationListener() {
                     return installationListener;
                 }
             }
@@ -7008,6 +7105,9 @@ public interface AgentBuilder {
          */
         protected final FallbackStrategy fallbackStrategy;
 
+        /**
+         * The installation listener to notify.
+         */
         protected final InstallationListener installationListener;
 
         /**
@@ -7079,6 +7179,7 @@ public interface AgentBuilder {
          *                                         instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
          * @param fallbackStrategy                 The fallback strategy to apply.
+         * @param installationListener             The installation listener to notify.
          * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
          * @param transformation                   The transformation object for handling type transformations.
          */
@@ -7668,7 +7769,8 @@ public interface AgentBuilder {
         /**
          * Creates a new class file transformer with a given listener.
          *
-         * @param listener The listener to supply.
+         * @param listener             The listener to supply.
+         * @param installationListener The installation listener to notify.
          * @return The resettable class file transformer to use.
          */
         private ResettableClassFileTransformer makeRaw(Listener listener, InstallationListener installationListener) {
@@ -8559,6 +8661,9 @@ public interface AgentBuilder {
              */
             private final FallbackStrategy fallbackStrategy;
 
+            /**
+             * The installation listener to notify.
+             */
             private final InstallationListener installationListener;
 
             /**
@@ -8595,6 +8700,7 @@ public interface AgentBuilder {
              * @param lambdaInstrumentationStrategy The lambda instrumentation strategy to use.
              * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
              * @param fallbackStrategy              The fallback strategy to use.
+             * @param installationListener          The installation listener to notify.
              * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
              * @param transformation                The transformation object for handling type transformations.
              * @param circularityLock               The circularity lock to use.
@@ -8833,6 +8939,7 @@ public interface AgentBuilder {
                  * @param lambdaInstrumentationStrategy The lambda instrumentation strategy to use.
                  * @param descriptionStrategy           The description strategy for resolving type descriptions for types.
                  * @param fallbackStrategy              The fallback strategy to use.
+                 * @param installationListener          The installation listener to notify.
                  * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
                  * @param transformation                The transformation object for handling type transformations.
                  * @param circularityLock               The circularity lock to use.
@@ -9512,6 +9619,7 @@ public interface AgentBuilder {
              *                                         instrumentation of classes that represent lambda expressions.
              * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
              * @param fallbackStrategy                 The fallback strategy to apply.
+             * @param installationListener             The installation listener to notify.
              * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
              * @param transformation                   The transformation object for handling type transformations.
              */
