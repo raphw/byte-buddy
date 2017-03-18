@@ -314,7 +314,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(installationListener);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testResetDisabled() throws Exception {
         ResettableClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
@@ -327,14 +327,11 @@ public class AgentBuilderDefaultTest {
                 .type(typeMatcher).transform(transformer)
                 .installOn(instrumentation);
         when(instrumentation.removeTransformer(classFileTransformer)).thenReturn(true);
-        try {
-            classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED);
-        } finally {
-            verifyZeroInteractions(listener);
-            verify(instrumentation).addTransformer(classFileTransformer, false);
-            verify(instrumentation).removeTransformer(classFileTransformer);
-            verifyNoMoreInteractions(instrumentation);
-        }
+        classFileTransformer.reset(instrumentation, AgentBuilder.RedefinitionStrategy.DISABLED);
+        verifyZeroInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).removeTransformer(classFileTransformer);
+        verifyNoMoreInteractions(instrumentation);
     }
 
     @Test

@@ -11,7 +11,13 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
     /**
      * <p>
      * Deregisters this class file transformer and redefines any transformed class to its state without this
-     * class file transformer applied, if the supplied redefinition strategy is enabled.
+     * class file transformer applied, if the supplied redefinition strategy is enabled. If it is not enabled,
+     * only the {@link net.bytebuddy.agent.builder.AgentBuilder.InstallationListener} is informed about the
+     * resetting without undoing any code changes.
+     * </p>
+     * <p>
+     * <b>Note</b>: A reset class file transformer should not be reinstalled. Instead, the {@link AgentBuilder}
+     * which built the transformer should be asked to install a new transformer.
      * </p>
      * <p>
      * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already
@@ -28,7 +34,13 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
     /**
      * <p>
      * Deregisters this class file transformer and redefines any transformed class to its state without this
-     * class file transformer applied, if the supplied redefinition strategy is enabled.
+     * class file transformer applied, if the supplied redefinition strategy is enabled. If it is not enabled,
+     * only the {@link net.bytebuddy.agent.builder.AgentBuilder.InstallationListener} is informed about the
+     * resetting without undoing any code changes.
+     * </p>
+     * <p>
+     * <b>Note</b>: A reset class file transformer should not be reinstalled. Instead, the {@link AgentBuilder}
+     * which built the transformer should be asked to install a new transformer.
      * </p>
      * <p>
      * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already
@@ -48,7 +60,13 @@ public interface ResettableClassFileTransformer extends ClassFileTransformer {
     /**
      * <p>
      * Deregisters this class file transformer and redefines any transformed class to its state without this
-     * class file transformer applied, if the supplied redefinition strategy is enabled.
+     * class file transformer applied, if the supplied redefinition strategy is enabled. If it is not enabled,
+     * only the {@link net.bytebuddy.agent.builder.AgentBuilder.InstallationListener} is informed about the
+     * resetting without undoing any code changes.
+     * </p>
+     * <p>
+     * <b>Note</b>: A reset class file transformer should not be reinstalled. Instead, the {@link AgentBuilder}
+     * which built the transformer should be asked to install a new transformer.
      * </p>
      * <p>
      * <b>Important</b>: Most JVMs do not support changes of a class's structure after a class was already

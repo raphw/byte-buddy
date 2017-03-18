@@ -594,17 +594,22 @@ public interface AgentBuilder {
 
     /**
      * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
-     * agent builder.
+     * agent builder. When using a raw class file transformer, the {@link InstallationListener} callbacks are
+     * not invoked and the set {@link RedefinitionStrategy} is not applied onto currently loaded classes.
      *
      * @return A class file transformer that implements the configuration of this agent builder.
      */
-    ResettableClassFileTransformer makeRaw();
+    ClassFileTransformer makeRaw();
 
     /**
      * <p>
      * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
      * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
      * the installation also causes all loaded types to be retransformed.
+     * </p>
+     * <p>
+     * In order to assure the correct handling of the {@link InstallationListener}, an uninstallation should be applied
+     * via the {@link ResettableClassFileTransformer}'s {@code reset} methods.
      * </p>
      *
      * @param instrumentation The instrumentation on which this agent builder's configuration is to be installed.
@@ -3831,6 +3836,22 @@ public interface AgentBuilder {
          */
         DISABLED(false, false) {
             @Override
+            public void apply(Instrumentation instrumentation,
+                              AgentBuilder.Listener listener,
+                              CircularityLock circularityLock,
+                              PoolStrategy poolStrategy,
+                              LocationStrategy locationStrategy,
+                              BatchAllocator redefinitionBatchAllocator,
+                              Listener redefinitionListener,
+                              LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                              DescriptionStrategy descriptionStrategy,
+                              FallbackStrategy fallbackStrategy,
+                              RawMatcher typeMatcher,
+                              RawMatcher ignoredTypeMatcher) {
+                /* do nothing */
+            }
+
+            @Override
             protected void check(Instrumentation instrumentation) {
                 throw new IllegalStateException("Cannot apply redefinition on disabled strategy");
             }
@@ -3956,7 +3977,8 @@ public interface AgentBuilder {
         protected abstract Collector make();
 
         /**
-         * Applies this redefinition strategy by submitting all loaded types to redefiniton.
+         * Applies this redefinition strategy by submitting all loaded types to redefiniton. If this redefinition strategy is disabled,
+         * this method is non-operational.
          *
          * @param instrumentation               The instrumentation instance to use.
          * @param listener                      The listener to notify on transformations.
@@ -9503,7 +9525,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            public ResettableClassFileTransformer makeRaw() {
+            public ClassFileTransformer makeRaw() {
                 return materialize().makeRaw();
             }
 
