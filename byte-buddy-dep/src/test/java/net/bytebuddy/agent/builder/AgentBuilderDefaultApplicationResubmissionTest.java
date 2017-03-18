@@ -10,10 +10,7 @@ import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.test.utility.AgentAttachmentRule;
-import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.IntegrationRule;
-import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.*;
 import net.bytebuddy.utility.JavaModule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,6 +20,7 @@ import org.junit.rules.MethodRule;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +29,9 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 public class AgentBuilderDefaultApplicationResubmissionTest {
 
@@ -88,6 +89,25 @@ public class AgentBuilderDefaultApplicationResubmissionTest {
         } finally {
             scheduledExecutorService.shutdown();
         }
+    }
+
+    @Test
+    public void testResubmissionCancelationNonOperational() throws Exception {
+        AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.Cancelable.NoOp.INSTANCE.cancel();
+    }
+
+    @Test
+    public void testResubmissionCancelationForFuture() throws Exception {
+        Future<?> future = mock(Future.class);
+        new AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.Cancelable.ForFuture(future).cancel();
+        verify(future).cancel(true);
+        verifyNoMoreInteractions(future);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.Cancelable.NoOp.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.RedefinitionStrategy.ResubmissionScheduler.Cancelable.ForFuture.class).apply();
     }
 
     public static class Foo {
