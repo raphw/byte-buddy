@@ -3595,7 +3595,8 @@ public interface AgentBuilder {
         Throwable SUPPRESS_ERROR = null;
 
         /**
-         * Invoked upon the installation of a class file transformer.
+         * Invoked upon the installation of a class file transformer. This method is only invoked if no error occured during the
+         * installation or if such an error was handled by {@link InstallationListener#onError(Instrumentation, ResettableClassFileTransformer, Throwable)}.
          *
          * @param instrumentation      The instrumentation on which the class file transformer is installed.
          * @param classFileTransformer The class file transformer that is being installed.
@@ -3603,7 +3604,8 @@ public interface AgentBuilder {
         void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
 
         /**
-         * Invoked if an installation causes an error. The listener has an opportunity to handle the error.
+         * Invoked if an installation causes an error. The listener has an opportunity to handle the error. This method is invoked prior to
+         * {@link InstallationListener#onInstall(Instrumentation, ResettableClassFileTransformer)}.
          *
          * @param instrumentation      The instrumentation on which the class file transformer is installed.
          * @param classFileTransformer The class file transformer that is being installed.
