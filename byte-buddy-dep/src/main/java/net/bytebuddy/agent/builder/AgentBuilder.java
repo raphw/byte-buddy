@@ -3573,9 +3573,11 @@ public interface AgentBuilder {
 
     interface InstallationListener {
 
+        Throwable SUPPRESS_ERROR = null;
+
         void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
 
-        void onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable);
+        Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable);
 
         void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
 
@@ -3589,8 +3591,28 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+            public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                return throwable;
+            }
+
+            @Override
+            public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
+            }
+        }
+
+        enum ErrorSuppressing implements InstallationListener {
+
+            INSTANCE;
+
+            @Override
+            public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+
+            @Override
+            public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                return SUPPRESS_ERROR;
             }
 
             @Override
@@ -3607,13 +3629,51 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
-                /* do nothing */
+            public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                return throwable;
             }
 
             @Override
             public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
+            }
+        }
+
+        class StreamWriting implements InstallationListener {
+
+            protected static final String PREFIX = "[Byte Buddy]";
+
+            private final PrintStream printStream;
+
+            public StreamWriting(PrintStream printStream) {
+                this.printStream = printStream;
+            }
+
+            public static InstallationListener toSystemOut() {
+                return new StreamWriting(System.out);
+            }
+
+            public static InstallationListener toSystemErr() {
+                return new StreamWriting(System.err);
+            }
+
+            @Override
+            public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                printStream.printf(PREFIX + " INSTALL %s on %s%n", classFileTransformer, instrumentation);
+            }
+
+            @Override
+            public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                synchronized (printStream) {
+                    printStream.printf(PREFIX + " ERROR %s on %s%n", classFileTransformer, instrumentation);
+                    throwable.printStackTrace(printStream);
+                }
+                return throwable;
+            }
+
+            @Override
+            public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                printStream.printf(PREFIX + " RESET %s on %s%n", classFileTransformer, instrumentation);
             }
         }
 
@@ -3644,10 +3704,14 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+            public Throwable onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
                 for (InstallationListener installationListener : installationListeners) {
-                    installationListener.onError(instrumentation, classFileTransformer, throwable);
+                    if (throwable == SUPPRESS_ERROR) {
+                        break;
+                    }
+                    throwable = installationListener.onError(instrumentation, classFileTransformer, throwable);
                 }
+                return throwable;
             }
 
             @Override
@@ -7662,7 +7726,11 @@ public interface AgentBuilder {
                                 ignoredTypeMatcher);
                     }
                 } catch (Throwable throwable) {
-                    installationListener.onError(instrumentation, classFileTransformer, throwable);
+                    throwable = installationListener.onError(instrumentation, classFileTransformer, throwable);
+                    if (throwable != null) {
+                        instrumentation.removeTransformer(classFileTransformer);
+                        throw new IllegalStateException("Could not install class file transformer", throwable);
+                    }
                 }
                 installationListener.onInstall(instrumentation, classFileTransformer);
                 return classFileTransformer;
