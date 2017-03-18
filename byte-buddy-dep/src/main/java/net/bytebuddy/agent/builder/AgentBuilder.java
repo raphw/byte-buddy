@@ -209,20 +209,14 @@ public interface AgentBuilder {
     AgentBuilder with(DescriptionStrategy descriptionStrategy);
 
     /**
-     * Specifies an installation strategy that this agent builder applies upon installing an agent.
-     *
-     * @param installationStrategy The installation strategy to be used.
-     * @return A new agent builder that applies the supplied installation strategy.
-     */
-    AgentBuilder with(InstallationStrategy installationStrategy);
-
-    /**
      * Specifies a fallback strategy to that this agent builder applies upon installing an agent and during class file transformation.
      *
      * @param fallbackStrategy The fallback strategy to be used.
      * @return A new agent builder that applies the supplied fallback strategy.
      */
     AgentBuilder with(FallbackStrategy fallbackStrategy);
+
+    AgentBuilder with(InstallationListener installationListener);
 
     /**
      * Enables class injection of auxiliary classes into the bootstrap class loader.
@@ -603,10 +597,6 @@ public interface AgentBuilder {
      * Creates and installs a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of
      * this agent builder with a given {@link java.lang.instrument.Instrumentation}. If retransformation is enabled,
      * the installation also causes all loaded types to be retransformed.
-     * </p>
-     * <p>
-     * If installing the created class file transformer causes an exception to be thrown, the consequences of this
-     * exception are determined by the {@link InstallationStrategy} of this builder.
      * </p>
      *
      * @param instrumentation The instrumentation on which this agent builder's configuration is to be installed.
@@ -3298,56 +3288,6 @@ public interface AgentBuilder {
     }
 
     /**
-     * An installation strategy determines the reaction to a raised exception after the registration of a {@link ClassFileTransformer}.
-     */
-    interface InstallationStrategy {
-
-        /**
-         * Handles an error that occured after registering a class file transformer during installation.
-         *
-         * @param instrumentation      The instrumentation onto which the class file transformer was registered.
-         * @param classFileTransformer The class file transformer that was registered.
-         * @param throwable            The error that occurred.
-         * @return The class file transformer to return when an error occurred.
-         */
-        ResettableClassFileTransformer onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable);
-
-        /**
-         * Default implementations of installation strategies.
-         */
-        enum Default implements InstallationStrategy {
-
-            /**
-             * <p>
-             * An installation strategy that unregisters the transformer and propagates the exception. Using this strategy does not guarantee
-             * that the registered transformer was not applied to any class, nor does it attempt to revert previous transformations. It only
-             * guarantees that the class file transformer is unregistered and does no longer apply after this method returns.
-             * </p>
-             * <p>
-             * <b>Note</b>: This installation strategy does not undo any applied class redefinitions, if such were applied.
-             * </p>
-             */
-            ESCALATING {
-                @Override
-                public ResettableClassFileTransformer onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
-                    instrumentation.removeTransformer(classFileTransformer);
-                    throw new IllegalStateException("Could not install class file transformer", throwable);
-                }
-            },
-
-            /**
-             * An installation strategy that retains the class file transformer and suppresses the error.
-             */
-            SUPPRESSING {
-                @Override
-                public ResettableClassFileTransformer onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
-                    return classFileTransformer;
-                }
-            };
-        }
-    }
-
-    /**
      * A strategy for creating a {@link ClassFileLocator} when instrumenting a type.
      */
     interface LocationStrategy {
@@ -3627,6 +3567,76 @@ public interface AgentBuilder {
                     }
                 }
                 return false;
+            }
+        }
+    }
+
+    interface InstallationListener {
+
+        void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
+
+        void onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable);
+
+        void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
+
+        enum NoOp implements InstallationListener {
+
+            INSTANCE;
+
+            @Override
+            public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+        }
+
+        class Compound implements InstallationListener {
+
+            private final List<InstallationListener> installationListeners;
+
+            public Compound(InstallationListener... installationListener) {
+                this(Arrays.asList(installationListener));
+            }
+
+            public Compound(List<? extends InstallationListener> installationListeners) {
+                this.installationListeners = new ArrayList<InstallationListener>();
+                for (InstallationListener installationListener : installationListeners) {
+                    if (installationListener instanceof Compound) {
+                        this.installationListeners.addAll(((Compound) installationListener).installationListeners);
+                    } else if (!(installationListener instanceof NoOp)) {
+                        this.installationListeners.add(installationListener);
+                    }
+                }
+            }
+
+            @Override
+            public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                for (InstallationListener installationListener : installationListeners) {
+                    installationListener.onInstall(instrumentation, classFileTransformer);
+                }
+            }
+
+            @Override
+            public void onError(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer, Throwable throwable) {
+                for (InstallationListener installationListener : installationListeners) {
+                    installationListener.onError(instrumentation, classFileTransformer, throwable);
+                }
+            }
+
+            @Override
+            public void onReset(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                for (InstallationListener installationListener : installationListeners) {
+                    installationListener.onReset(instrumentation, classFileTransformer);
+                }
             }
         }
     }
@@ -6786,14 +6796,11 @@ public interface AgentBuilder {
         protected final DescriptionStrategy descriptionStrategy;
 
         /**
-         * The installation strategy to use.
-         */
-        protected final InstallationStrategy installationStrategy;
-
-        /**
          * The fallback strategy to apply.
          */
         protected final FallbackStrategy fallbackStrategy;
+
+        protected final InstallationListener installationListener;
 
         /**
          * Identifies types that should not be instrumented.
@@ -6836,8 +6843,8 @@ public interface AgentBuilder {
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
                     DescriptionStrategy.Default.HYBRID,
-                    InstallationStrategy.Default.ESCALATING,
                     FallbackStrategy.ByThrowableType.ofOptionalTypes(),
+                    InstallationListener.NoOp.INSTANCE,
                     new RawMatcher.Disjunction(
                             new RawMatcher.ForElementMatchers(any(), isBootstrapClassLoader()),
                             new RawMatcher.ForElementMatchers(nameStartsWith("net.bytebuddy.").or(nameStartsWith("sun.reflect.")).<TypeDescription>or(isSynthetic()))),
@@ -6863,7 +6870,6 @@ public interface AgentBuilder {
          * @param lambdaInstrumentationStrategy    A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
          *                                         instrumentation of classes that represent lambda expressions.
          * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
-         * @param installationStrategy             The installation strategy to use.
          * @param fallbackStrategy                 The fallback strategy to apply.
          * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
          * @param transformation                   The transformation object for handling type transformations.
@@ -6883,8 +6889,8 @@ public interface AgentBuilder {
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           DescriptionStrategy descriptionStrategy,
-                          InstallationStrategy installationStrategy,
                           FallbackStrategy fallbackStrategy,
+                          InstallationListener installationListener,
                           RawMatcher ignoredTypeMatcher,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
@@ -6902,8 +6908,8 @@ public interface AgentBuilder {
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.descriptionStrategy = descriptionStrategy;
-            this.installationStrategy = installationStrategy;
             this.fallbackStrategy = fallbackStrategy;
+            this.installationListener = installationListener;
             this.ignoredTypeMatcher = ignoredTypeMatcher;
             this.transformation = transformation;
         }
@@ -6971,8 +6977,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -6994,8 +7000,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7017,8 +7023,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7040,8 +7046,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7063,8 +7069,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7086,8 +7092,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7109,8 +7115,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7132,8 +7138,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7155,8 +7161,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7178,8 +7184,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7201,8 +7207,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7224,31 +7230,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
-                    ignoredTypeMatcher,
-                    transformation);
-        }
-
-        @Override
-        public AgentBuilder with(InstallationStrategy installationStrategy) {
-            return new Default(byteBuddy,
-                    listener,
-                    circularityLock,
-                    poolStrategy,
-                    typeStrategy,
-                    locationStrategy,
-                    nativeMethodStrategy,
-                    initializationStrategy,
-                    redefinitionStrategy,
-                    redefinitionBatchAllocator,
-                    redefinitionListener,
-                    redefinitionResubmissionStrategy,
-                    bootstrapInjectionStrategy,
-                    lambdaInstrumentationStrategy,
-                    descriptionStrategy,
-                    installationStrategy,
-                    fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7270,8 +7253,31 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder with(InstallationListener installationListener) {
+            return new Default(byteBuddy,
+                    listener,
+                    circularityLock,
+                    poolStrategy,
+                    typeStrategy,
+                    locationStrategy,
+                    nativeMethodStrategy,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    redefinitionBatchAllocator,
+                    redefinitionListener,
+                    redefinitionResubmissionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    descriptionStrategy,
+                    fallbackStrategy,
+                    new InstallationListener.Compound(this.installationListener, installationListener),
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7293,8 +7299,8 @@ public interface AgentBuilder {
                     new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7316,8 +7322,8 @@ public interface AgentBuilder {
                     BootstrapInjectionStrategy.Unsafe.INSTANCE,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7339,8 +7345,8 @@ public interface AgentBuilder {
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7362,8 +7368,8 @@ public interface AgentBuilder {
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
-                    installationStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation);
         }
@@ -7469,6 +7475,7 @@ public interface AgentBuilder {
                     lambdaInstrumentationStrategy,
                     descriptionStrategy,
                     fallbackStrategy,
+                    installationListener,
                     ignoredTypeMatcher,
                     transformation,
                     circularityLock);
@@ -7509,10 +7516,10 @@ public interface AgentBuilder {
                                 transformation,
                                 ignoredTypeMatcher);
                     }
-                    return classFileTransformer;
                 } catch (Throwable throwable) {
-                    return installationStrategy.onError(instrumentation, classFileTransformer, throwable);
+                    // TOOD: Installation
                 }
+                return classFileTransformer;
             } finally {
                 circularityLock.release();
             }
@@ -8338,6 +8345,8 @@ public interface AgentBuilder {
              */
             private final FallbackStrategy fallbackStrategy;
 
+            private final InstallationListener installationListener;
+
             /**
              * Identifies types that should not be instrumented.
              */
@@ -8387,6 +8396,7 @@ public interface AgentBuilder {
                                         LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                         DescriptionStrategy descriptionStrategy,
                                         FallbackStrategy fallbackStrategy,
+                                        InstallationListener installationListener,
                                         RawMatcher ignoredTypeMatcher,
                                         Transformation transformation,
                                         CircularityLock circularityLock) {
@@ -8401,6 +8411,7 @@ public interface AgentBuilder {
                 this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
                 this.descriptionStrategy = descriptionStrategy;
                 this.fallbackStrategy = fallbackStrategy;
+                this.installationListener = installationListener;
                 this.ignoredTypeMatcher = ignoredTypeMatcher;
                 this.transformation = transformation;
                 this.circularityLock = circularityLock;
@@ -8580,6 +8591,7 @@ public interface AgentBuilder {
                             fallbackStrategy,
                             transformation,
                             ignoredTypeMatcher);
+                    installationListener.onReset(instrumentation, this);
                     return true;
                 } else {
                     return false;
@@ -8623,6 +8635,7 @@ public interface AgentBuilder {
                                                     LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                     DescriptionStrategy descriptionStrategy,
                                                     FallbackStrategy fallbackStrategy,
+                                                    InstallationListener installationListener,
                                                     RawMatcher ignoredTypeMatcher,
                                                     Transformation transformation,
                                                     CircularityLock circularityLock);
@@ -8667,6 +8680,7 @@ public interface AgentBuilder {
                                             LambdaInstrumentationStrategy.class,
                                             DescriptionStrategy.class,
                                             FallbackStrategy.class,
+                                            InstallationListener.class,
                                             RawMatcher.class,
                                             Transformation.class,
                                             CircularityLock.class));
@@ -8711,6 +8725,7 @@ public interface AgentBuilder {
                                                                LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
+                                                               InstallationListener installationListener,
                                                                RawMatcher ignoredTypeMatcher,
                                                                Transformation transformation,
                                                                CircularityLock circularityLock) {
@@ -8726,6 +8741,7 @@ public interface AgentBuilder {
                                     lambdaInstrumentationStrategy,
                                     descriptionStrategy,
                                     fallbackStrategy,
+                                    installationListener,
                                     ignoredTypeMatcher,
                                     transformation,
                                     circularityLock);
@@ -8761,6 +8777,7 @@ public interface AgentBuilder {
                                                                LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                                                DescriptionStrategy descriptionStrategy,
                                                                FallbackStrategy fallbackStrategy,
+                                                               InstallationListener installationListener,
                                                                RawMatcher ignoredTypeMatcher,
                                                                Transformation transformation,
                                                                CircularityLock circularityLock) {
@@ -8775,6 +8792,7 @@ public interface AgentBuilder {
                                 lambdaInstrumentationStrategy,
                                 descriptionStrategy,
                                 fallbackStrategy,
+                                installationListener,
                                 ignoredTypeMatcher,
                                 transformation,
                                 circularityLock);
@@ -9049,13 +9067,13 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder with(InstallationStrategy installationStrategy) {
-                return materialize().with(installationStrategy);
+            public AgentBuilder with(FallbackStrategy fallbackStrategy) {
+                return materialize().with(fallbackStrategy);
             }
 
             @Override
-            public AgentBuilder with(FallbackStrategy fallbackStrategy) {
-                return materialize().with(fallbackStrategy);
+            public AgentBuilder with(InstallationListener installationListener) {
+                return materialize().with(installationListener);
             }
 
             @Override
@@ -9215,8 +9233,8 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
-                        installationStrategy,
                         fallbackStrategy,
+                        installationListener,
                         rawMatcher,
                         transformation);
             }
@@ -9279,7 +9297,6 @@ public interface AgentBuilder {
              * @param lambdaInstrumentationStrategy    A strategy to determine of the {@code LambdaMetafactory} should be instrumented to allow for the
              *                                         instrumentation of classes that represent lambda expressions.
              * @param descriptionStrategy              The description strategy for resolving type descriptions for types.
-             * @param installationStrategy             The installation strategy to use.
              * @param fallbackStrategy                 The fallback strategy to apply.
              * @param ignoredTypeMatcher               Identifies types that should not be instrumented.
              * @param transformation                   The transformation object for handling type transformations.
@@ -9299,8 +9316,8 @@ public interface AgentBuilder {
                                  BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                  LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                                  DescriptionStrategy descriptionStrategy,
-                                 InstallationStrategy installationStrategy,
                                  FallbackStrategy fallbackStrategy,
+                                 InstallationListener installationListener,
                                  RawMatcher ignoredTypeMatcher,
                                  Transformation transformation) {
                 super(byteBuddy,
@@ -9318,8 +9335,8 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
-                        installationStrategy,
                         fallbackStrategy,
+                        installationListener,
                         ignoredTypeMatcher,
                         transformation);
             }
@@ -9344,8 +9361,8 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
-                        installationStrategy,
                         fallbackStrategy,
+                        installationListener,
                         ignoredTypeMatcher,
                         transformation);
             }
@@ -9370,8 +9387,8 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
-                        installationStrategy,
                         fallbackStrategy,
+                        installationListener,
                         ignoredTypeMatcher,
                         transformation);
             }
@@ -9401,8 +9418,8 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
-                        installationStrategy,
                         fallbackStrategy,
+                        installationListener,
                         ignoredTypeMatcher,
                         transformation);
             }
@@ -9460,8 +9477,8 @@ public interface AgentBuilder {
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
                         descriptionStrategy,
-                        installationStrategy,
                         fallbackStrategy,
+                        installationListener,
                         ignoredTypeMatcher,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer, decorator), transformation));
             }

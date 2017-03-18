@@ -104,7 +104,7 @@ public class AgentBuilderDefaultTest {
     private AgentBuilder.Listener listener;
 
     @Mock
-    private AgentBuilder.InstallationStrategy installationStrategy;
+    private AgentBuilder.InstallationListener installationListener;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -126,12 +126,6 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.getAllLoadedClasses()).thenReturn(new Class<?>[]{REDEFINED});
         when(initializationStrategy.dispatcher()).thenReturn(dispatcher);
         when(dispatcher.apply(builder)).thenReturn((DynamicType.Builder) builder);
-        when(installationStrategy.onError(eq(instrumentation), any(ResettableClassFileTransformer.class), any(Throwable.class))).then(new Answer<ClassFileTransformer>() {
-            @Override
-            public ClassFileTransformer answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return (ClassFileTransformer) invocationOnMock.getArguments()[1];
-            }
-        });
     }
 
     @Test
@@ -144,7 +138,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -170,7 +164,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(typeMatcher);
         verify(transformer).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
         verifyNoMoreInteractions(transformer);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -183,7 +177,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -205,7 +199,7 @@ public class AgentBuilderDefaultTest {
                         REDEFINED.getClassLoader(),
                         REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -218,7 +212,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -240,7 +234,7 @@ public class AgentBuilderDefaultTest {
                         REDEFINED.getClassLoader(),
                         REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -252,7 +246,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -274,7 +268,7 @@ public class AgentBuilderDefaultTest {
                         REDEFINED.getClassLoader(),
                         REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -289,7 +283,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .with(AgentBuilder.FallbackStrategy.Simple.ENABLED)
                 .disableNativeMethodPrefix()
@@ -312,7 +306,7 @@ public class AgentBuilderDefaultTest {
                         REDEFINED.getClassLoader(),
                         REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -321,7 +315,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -344,7 +338,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -364,7 +358,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -380,7 +374,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -396,7 +390,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -427,7 +421,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -458,7 +452,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(AgentBuilder.FallbackStrategy.Simple.ENABLED)
                 .with(listener)
                 .disableNativeMethodPrefix()
@@ -494,7 +488,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(AgentBuilder.FallbackStrategy.Simple.ENABLED)
                 .with(listener)
                 .disableNativeMethodPrefix()
@@ -534,7 +528,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -550,7 +544,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -567,7 +561,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(AgentBuilder.FallbackStrategy.Simple.ENABLED)
                 .with(listener)
                 .disableNativeMethodPrefix()
@@ -585,7 +579,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -598,7 +592,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -617,7 +611,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -634,7 +628,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(AgentBuilder.FallbackStrategy.Simple.ENABLED)
                 .with(listener)
                 .disableNativeMethodPrefix()
@@ -655,7 +649,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -671,7 +665,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
@@ -686,7 +680,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -702,7 +696,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -719,7 +713,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -736,7 +730,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -753,7 +747,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -770,7 +764,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -787,7 +781,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -810,7 +804,7 @@ public class AgentBuilderDefaultTest {
                 .with(redefinitionListener)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -829,7 +823,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
         verify(redefinitionBatchAllocator).batch(Arrays.asList(REDEFINED, OTHER));
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(redefinitionListener).onBatch(0, Collections.<Class<?>>singletonList(REDEFINED), Arrays.asList(REDEFINED, OTHER));
@@ -861,7 +855,7 @@ public class AgentBuilderDefaultTest {
                 .with(redefinitionListener)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -880,7 +874,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
         verify(redefinitionBatchAllocator).batch(Arrays.asList(REDEFINED, OTHER));
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(redefinitionListener).onBatch(0, Collections.<Class<?>>singletonList(REDEFINED), Arrays.asList(REDEFINED, OTHER));
@@ -916,7 +910,7 @@ public class AgentBuilderDefaultTest {
                 .with(redefinitionListener)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -935,7 +929,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
         verify(redefinitionBatchAllocator).batch(Arrays.asList(REDEFINED, OTHER));
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(redefinitionListener).onBatch(0, Collections.<Class<?>>singletonList(REDEFINED), Arrays.asList(REDEFINED, OTHER));
@@ -965,7 +959,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_FAST)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -983,8 +977,8 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verify(installationStrategy).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable)));
-        verifyNoMoreInteractions(installationStrategy);
+        verify(installationListener).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable)));
+        verifyNoMoreInteractions(installationListener);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -994,7 +988,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(AgentBuilder.InstallationStrategy.Default.ESCALATING)
+//                .with(AgentBuilder.InstallationListener.Default.ESCALATING) TODO: Fix
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
@@ -1012,7 +1006,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1028,7 +1022,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(dispatcher);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1045,7 +1039,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(AgentBuilder.FallbackStrategy.Simple.ENABLED)
                 .with(listener)
                 .disableNativeMethodPrefix()
@@ -1063,7 +1057,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1077,7 +1071,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1096,7 +1090,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(dispatcher);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1113,7 +1107,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(AgentBuilder.FallbackStrategy.Simple.ENABLED)
                 .with(listener)
                 .disableNativeMethodPrefix()
@@ -1134,7 +1128,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher, times(2)).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), null, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1150,7 +1144,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1166,7 +1160,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1182,7 +1176,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1199,7 +1193,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1216,7 +1210,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(ignoredTypes)
@@ -1234,7 +1228,7 @@ public class AgentBuilderDefaultTest {
         verifyZeroInteractions(initializationStrategy);
         verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1254,7 +1248,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(ignoredTypes, ignoredClassLoaders)
@@ -1274,7 +1268,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(ignoredClassLoaders);
         verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1291,7 +1285,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(ElementMatchers.any()).and(ignoredTypes)
@@ -1309,7 +1303,7 @@ public class AgentBuilderDefaultTest {
         verifyZeroInteractions(initializationStrategy);
         verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1326,7 +1320,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none()).or(ignoredTypes)
@@ -1344,7 +1338,7 @@ public class AgentBuilderDefaultTest {
         verifyZeroInteractions(initializationStrategy);
         verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1361,7 +1355,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1378,7 +1372,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1395,7 +1389,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1412,7 +1406,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1435,7 +1429,7 @@ public class AgentBuilderDefaultTest {
                 .with(redefinitionListener)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1453,7 +1447,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
         verify(redefinitionBatchAllocator).batch(Arrays.asList(REDEFINED, OTHER));
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(redefinitionListener).onBatch(0, Collections.<Class<?>>singletonList(REDEFINED), Arrays.asList(REDEFINED, OTHER));
@@ -1485,7 +1479,7 @@ public class AgentBuilderDefaultTest {
                 .with(redefinitionListener)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1504,7 +1498,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
         verify(redefinitionBatchAllocator).batch(Arrays.asList(REDEFINED, OTHER));
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(redefinitionListener).onBatch(0, Collections.<Class<?>>singletonList(REDEFINED), Arrays.asList(REDEFINED, OTHER));
@@ -1540,7 +1534,7 @@ public class AgentBuilderDefaultTest {
                 .with(redefinitionListener)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1559,7 +1553,7 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
         verify(redefinitionBatchAllocator).batch(Arrays.asList(REDEFINED, OTHER));
         verifyNoMoreInteractions(redefinitionBatchAllocator);
         verify(redefinitionListener).onBatch(0, Collections.<Class<?>>singletonList(REDEFINED), Arrays.asList(REDEFINED, OTHER));
@@ -1589,7 +1583,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_FAST)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1607,8 +1601,8 @@ public class AgentBuilderDefaultTest {
         verify(typeMatcher).matches(new TypeDescription.ForLoadedType(OTHER), OTHER.getClassLoader(), JavaModule.ofType(OTHER), OTHER, OTHER.getProtectionDomain());
         verifyNoMoreInteractions(typeMatcher);
         verifyZeroInteractions(initializationStrategy);
-        verify(installationStrategy).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable)));
-        verifyNoMoreInteractions(installationStrategy);
+        verify(installationListener).onError(eq(instrumentation), eq(classFileTransformer), argThat(new CauseMatcher(throwable)));
+        verifyNoMoreInteractions(installationListener);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -1618,7 +1612,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(AgentBuilder.InstallationStrategy.Default.ESCALATING)
+//                .with(AgentBuilder.InstallationListener.Default.ESCALATING) TODO: Fixme
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
@@ -1636,7 +1630,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
@@ -1649,7 +1643,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1662,7 +1656,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .type(typeMatcher).transform(transformer)
@@ -1675,7 +1669,7 @@ public class AgentBuilderDefaultTest {
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(initializationStrategy);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1699,7 +1693,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1721,7 +1715,7 @@ public class AgentBuilderDefaultTest {
                         REDEFINED.getClassLoader(),
                         REDEFINED.getProtectionDomain()));
         verifyNoMoreInteractions(dispatcher);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1737,7 +1731,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1747,7 +1741,7 @@ public class AgentBuilderDefaultTest {
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1763,7 +1757,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1773,7 +1767,7 @@ public class AgentBuilderDefaultTest {
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1790,7 +1784,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1800,7 +1794,7 @@ public class AgentBuilderDefaultTest {
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1817,7 +1811,7 @@ public class AgentBuilderDefaultTest {
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1827,7 +1821,7 @@ public class AgentBuilderDefaultTest {
         verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true, exception);
         verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED), true);
         verifyNoMoreInteractions(listener);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1840,7 +1834,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(none())
@@ -1867,7 +1861,7 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(typeMatcher);
         verify(transformer, times(2)).transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), JavaModule.ofType(REDEFINED));
         verifyNoMoreInteractions(transformer);
-        verifyZeroInteractions(installationStrategy);
+        verifyZeroInteractions(installationListener);
     }
 
     @Test
@@ -1919,6 +1913,7 @@ public class AgentBuilderDefaultTest {
                 AgentBuilder.LambdaInstrumentationStrategy.DISABLED,
                 AgentBuilder.DescriptionStrategy.Default.HYBRID,
                 mock(AgentBuilder.FallbackStrategy.class),
+                mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
                 mock(AgentBuilder.Default.Transformation.class),
                 new AgentBuilder.CircularityLock.Default())
@@ -1950,6 +1945,7 @@ public class AgentBuilderDefaultTest {
                 AgentBuilder.LambdaInstrumentationStrategy.DISABLED,
                 AgentBuilder.DescriptionStrategy.Default.HYBRID,
                 mock(AgentBuilder.FallbackStrategy.class),
+                mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
                 mock(AgentBuilder.Default.Transformation.class),
                 new AgentBuilder.Default.CircularityLock.Default());
@@ -1988,6 +1984,7 @@ public class AgentBuilderDefaultTest {
                 AgentBuilder.LambdaInstrumentationStrategy.DISABLED,
                 AgentBuilder.DescriptionStrategy.Default.HYBRID,
                 mock(AgentBuilder.FallbackStrategy.class),
+                mock(AgentBuilder.InstallationListener.class),
                 mock(AgentBuilder.RawMatcher.class),
                 mock(AgentBuilder.Default.Transformation.class),
                 new AgentBuilder.CircularityLock.Default());
@@ -2021,7 +2018,7 @@ public class AgentBuilderDefaultTest {
                 .with(initializationStrategy)
                 .with(poolStrategy)
                 .with(typeStrategy)
-                .with(installationStrategy)
+                .with(installationListener)
                 .with(listener)
                 .disableNativeMethodPrefix()
                 .ignore(ignored)
