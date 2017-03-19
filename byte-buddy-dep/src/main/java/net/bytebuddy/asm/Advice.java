@@ -2438,8 +2438,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (instrumentedMethod.isStatic() || !context.isInitialized()) {
                         if (optional) {
                             return readOnly
-                                    ? new Target.ForDefaultValue.ReadOnly(instrumentedType.getDeclaringType())
-                                    : new Target.ForDefaultValue.ReadWrite(instrumentedType.getDeclaringType());
+                                    ? new Target.ForDefaultValue.ReadOnly(instrumentedType)
+                                    : new Target.ForDefaultValue.ReadWrite(instrumentedType);
                         } else {
                             throw new IllegalStateException("Cannot map this reference for static method or constructor start: " + instrumentedMethod);
                         }

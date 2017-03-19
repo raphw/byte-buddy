@@ -8924,7 +8924,7 @@ public interface AgentBuilder {
                                               RedefinitionStrategy.Listener redefinitionListener) {
                 if (instrumentation.removeTransformer(this)) {
                     redefinitionStrategy.apply(instrumentation,
-                            Listener.NoOp.INSTANCE,
+                            listener,
                             CircularityLock.Inactive.INSTANCE,
                             poolStrategy,
                             locationStrategy,
