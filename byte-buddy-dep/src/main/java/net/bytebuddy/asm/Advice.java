@@ -1189,18 +1189,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 + instrumentedMethod.getParameters().size()
                                 + (instrumentedMethod.isStatic() ? 0 : 1)
                                 + additionalTypes.size()];
-                        int index = translationMode.copy(instrumentedType, instrumentedMethod, methodDescription, localVariable, translated);
-                        for (TypeDescription typeDescription : additionalTypes) {
-                            translated[index++] = toFrame(typeDescription);
+                        try {
+                            int index = translationMode.copy(instrumentedType, instrumentedMethod, methodDescription, localVariable, translated);
+                            for (TypeDescription typeDescription : additionalTypes) {
+                                translated[index++] = toFrame(typeDescription);
+                            }
+                            System.arraycopy(localVariable,
+                                    methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
+                                    translated,
+                                    index,
+                                    translated.length - index);
+                            localVariableLength = translated.length;
+                            localVariable = translated;
+                            currentFrameDivergence = translated.length - index;
+                        } catch (IndexOutOfBoundsException exception) {
+                            throw new IllegalStateException("Stack map frame in " + methodDescription + " seems to be inconsistent with signature", exception);
                         }
-                        System.arraycopy(localVariable,
-                                methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
-                                translated,
-                                index,
-                                translated.length - index);
-                        localVariableLength = translated.length;
-                        localVariable = translated;
-                        currentFrameDivergence = translated.length - index;
                         break;
                     default:
                         throw new IllegalArgumentException("Unexpected frame type: " + type);
