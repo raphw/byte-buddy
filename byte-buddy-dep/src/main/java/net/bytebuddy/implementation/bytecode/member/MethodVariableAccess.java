@@ -56,9 +56,9 @@ public enum MethodVariableAccess {
     private final int storeOpcode;
 
     /**
-     * The size impact of this stack manipulation.
+     * The size of the local variable on the JVM stack.
      */
-    private final StackManipulation.Size size;
+    private final StackSize size;
 
     /**
      * Creates a new method variable access for a given JVM type.
@@ -69,7 +69,7 @@ public enum MethodVariableAccess {
      */
     MethodVariableAccess(int loadOpcode, int storeOpcode, StackSize stackSize) {
         this.loadOpcode = loadOpcode;
-        this.size = stackSize.toIncreasingSize();
+        this.size = stackSize;
         this.storeOpcode = storeOpcode;
     }
 
@@ -336,7 +336,7 @@ public enum MethodVariableAccess {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitVarInsn(loadOpcode, offset);
-            return size;
+            return size.toIncreasingSize();
         }
 
         /**
@@ -388,7 +388,7 @@ public enum MethodVariableAccess {
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
             methodVisitor.visitVarInsn(storeOpcode, offset);
-            return size;
+            return size.toDecreasingSize();
         }
 
         /**
