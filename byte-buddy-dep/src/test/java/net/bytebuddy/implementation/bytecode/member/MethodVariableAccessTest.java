@@ -85,8 +85,8 @@ public class MethodVariableAccessTest {
         StackManipulation stackManipulation = MethodVariableAccess.of(typeDefinition).storeAt(4);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
-        assertThat(size.getSizeImpact(), is(this.size));
-        assertThat(size.getMaximalSize(), is(this.size));
+        assertThat(size.getSizeImpact(), is(-this.size));
+        assertThat(size.getMaximalSize(), is(0));
         verify(methodVisitor).visitVarInsn(writeCode, 4);
         verifyNoMoreInteractions(methodVisitor);
     }
