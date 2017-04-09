@@ -1190,9 +1190,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (methodDescription.isStatic()) {
                             offset = 0;
                         } else {
-                            if (localVariable[0] != Opcodes.UNINITIALIZED_THIS
-                                    && !toFrame(methodDescription.getDeclaringType().asErasure()).equals(localVariable[0])) {
-                                throw new IllegalStateException(methodDescription + " is inconsistent at this reference: " + localVariable[0]);
+                            if (!translationMode.isPossibleThisFrameValue(instrumentedType, instrumentedMethod, localVariable[0])) {
+                                throw new IllegalStateException(methodDescription + " is inconsistent for 'this' reference: " + localVariable[0]);
                             }
                             offset = 1;
                         }
@@ -1319,6 +1318,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         System.arraycopy(localVariable, 0, translated, 0, length);
                         return length;
                     }
+
+                    @Override
+                    protected boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame) {
+                        if (instrumentedMethod.isConstructor()) {
+                            return Opcodes.UNINITIALIZED_THIS.equals(frame);
+                        }
+                        return toFrame(instrumentedType).equals(frame);
+                    }
                 },
 
                 /**
@@ -1341,7 +1348,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             translated[index++] = toFrame(typeDescription);
                         }
                         return index;
+                    }
 
+                    @Override
+                    protected boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame) {
+                        return instrumentedMethod.isConstructor()
+                                ? Opcodes.UNINITIALIZED_THIS.equals(frame)
+                                : toFrame(instrumentedType).equals(frame);
                     }
                 },
 
@@ -1364,6 +1377,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                         return index;
                     }
+
+                    @Override
+                    protected boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame) {
+                        return toFrame(instrumentedType).equals(frame);
+                    }
                 };
 
                 /**
@@ -1381,6 +1399,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodDescription methodDescription,
                                             Object[] localVariable,
                                             Object[] translated);
+
+                /**
+                 * Checks if a variable value in a stack map frame is a legal value for describing a {@code this} reference.
+                 *
+                 * @param instrumentedType   The instrumented type.
+                 * @param instrumentedMethod The instrumented method.
+                 * @param frame              The frame value representing the {@code this} reference.
+                 * @return {@code true} if the value is a legal representation of the {@code this} reference.
+                 */
+                protected abstract boolean isPossibleThisFrameValue(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Object frame);
             }
 
             /**
