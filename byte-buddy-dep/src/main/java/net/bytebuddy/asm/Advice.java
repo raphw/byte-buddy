@@ -1184,7 +1184,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     case Opcodes.F_FULL:
                     case Opcodes.F_NEW:
                         if (methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1) > localVariableLength) {
-                            throw new IllegalStateException("Inconsistent frame length for " + methodDescription);
+                            throw new IllegalStateException("Inconsistent frame length for " + methodDescription + ": " + localVariableLength);
                         }
                         int offset;
                         if (methodDescription.isStatic()) {
@@ -1192,13 +1192,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else {
                             if (localVariable[0] != Opcodes.UNINITIALIZED_THIS
                                     && !toFrame(methodDescription.getDeclaringType().asErasure()).equals(localVariable[0])) {
-                                throw new IllegalStateException("Inconsistent frame type for this reference found for " + methodDescription);
+                                throw new IllegalStateException(methodDescription + " is inconsistent at this reference: " + localVariable[0]);
                             }
                             offset = 1;
                         }
                         for (int index = 0; index < methodDescription.getParameters().size(); index++) {
                             if (!toFrame(methodDescription.getParameters().get(index).getType().asErasure()).equals(localVariable[index + offset])) {
-                                throw new IllegalStateException("Inconsistent frame at parameter index " + index + " found for " + methodDescription);
+                                throw new IllegalStateException(methodDescription + " is inconsistent at " + index + ": " + localVariable[index + offset]);
                             }
                         }
                         Object[] translated = new Object[localVariableLength
