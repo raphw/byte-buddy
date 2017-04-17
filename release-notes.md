@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 17. April 2017: version 1.6.13
+
+- Explicit consistency check for stack map frame information in `Advice`.
+- Extended `InstallationListener` API.
+- Fixed stack size information on variable storage.
+
 ### 18. March 2017: version 1.6.12
 
 - Add `InstallationListener` in favor of `InstallationStrategy` and allow resubmission strategy to hook into it in order to cancel submitted jobs.
