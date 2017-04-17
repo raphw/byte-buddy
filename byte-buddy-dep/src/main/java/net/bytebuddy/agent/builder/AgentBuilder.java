@@ -3595,7 +3595,15 @@ public interface AgentBuilder {
         Throwable SUPPRESS_ERROR = null;
 
         /**
-         * Invoked upon the installation of a class file transformer. This method is only invoked if no error occured during the
+         * Invoked prior to the installation of a class file transformer.
+         *
+         * @param instrumentation      The instrumentation on which the class file transformer is installed.
+         * @param classFileTransformer The class file transformer that is being installed.
+         */
+        void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer);
+
+        /**
+         * Invoked upon the successful installation of a class file transformer. This method is only invoked if no error occurred during the
          * installation or if such an error was handled by {@link InstallationListener#onError(Instrumentation, ResettableClassFileTransformer, Throwable)}.
          *
          * @param instrumentation      The instrumentation on which the class file transformer is installed.
@@ -3633,6 +3641,11 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
+            public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+
+            @Override
             public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
@@ -3659,6 +3672,11 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
+            public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
+
+            @Override
             public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 /* do nothing */
             }
@@ -3678,6 +3696,11 @@ public interface AgentBuilder {
          * An adapter implementation for an installation listener that serves as a convenience.
          */
         abstract class Adapter implements InstallationListener {
+
+            @Override
+            public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                /* do nothing */
+            }
 
             @Override
             public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
@@ -3739,6 +3762,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                printStream.printf(PREFIX + " BEFORE_INSTALL %s on %s%n", classFileTransformer, instrumentation);
+            }
+
+            @Override
             public void onInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                 printStream.printf(PREFIX + " INSTALL %s on %s%n", classFileTransformer, instrumentation);
             }
@@ -3791,6 +3819,13 @@ public interface AgentBuilder {
                     } else if (!(installationListener instanceof NoOp)) {
                         this.installationListeners.add(installationListener);
                     }
+                }
+            }
+
+            @Override
+            public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                for (InstallationListener installationListener : installationListeners) {
+                    installationListener.onBeforeInstall(instrumentation, classFileTransformer);
                 }
             }
 
@@ -5117,7 +5152,7 @@ public interface AgentBuilder {
         protected interface ResubmissionStrategy {
 
             /**
-             * Invoked upon installation.
+             * Invoked upon installation of an agent builder.
              *
              * @param instrumentation            The instrumentation instance to use.
              * @param locationStrategy           The location strategy to use.
@@ -5130,15 +5165,15 @@ public interface AgentBuilder {
              * @param redefinitionBatchListener  The batch listener to notify.
              * @return A potentially modified listener to apply.
              */
-            Installation install(Instrumentation instrumentation,
-                                 LocationStrategy locationStrategy,
-                                 AgentBuilder.Listener listener,
-                                 InstallationListener installationListener,
-                                 CircularityLock circularityLock,
-                                 RawMatcher matcher,
-                                 RedefinitionStrategy redefinitionStrategy,
-                                 RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                 RedefinitionStrategy.Listener redefinitionBatchListener);
+            Installation apply(Instrumentation instrumentation,
+                               LocationStrategy locationStrategy,
+                               AgentBuilder.Listener listener,
+                               InstallationListener installationListener,
+                               CircularityLock circularityLock,
+                               RawMatcher matcher,
+                               RedefinitionStrategy redefinitionStrategy,
+                               RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                               RedefinitionStrategy.Listener redefinitionBatchListener);
 
             /**
              * A disabled resubmission strategy.
@@ -5151,15 +5186,15 @@ public interface AgentBuilder {
                 INSTANCE;
 
                 @Override
-                public Installation install(Instrumentation instrumentation,
-                                            LocationStrategy locationStrategy,
-                                            AgentBuilder.Listener listener,
-                                            InstallationListener installationListener,
-                                            CircularityLock circularityLock,
-                                            RawMatcher matcher,
-                                            RedefinitionStrategy redefinitionStrategy,
-                                            BatchAllocator redefinitionBatchAllocator,
-                                            Listener redefinitionBatchListener) {
+                public Installation apply(Instrumentation instrumentation,
+                                          LocationStrategy locationStrategy,
+                                          AgentBuilder.Listener listener,
+                                          InstallationListener installationListener,
+                                          CircularityLock circularityLock,
+                                          RawMatcher matcher,
+                                          RedefinitionStrategy redefinitionStrategy,
+                                          BatchAllocator redefinitionBatchAllocator,
+                                          Listener redefinitionBatchListener) {
                     return new Installation(listener, installationListener);
                 }
             }
@@ -5192,15 +5227,15 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public Installation install(Instrumentation instrumentation,
-                                            LocationStrategy locationStrategy,
-                                            AgentBuilder.Listener listener,
-                                            InstallationListener installationListener,
-                                            CircularityLock circularityLock,
-                                            RawMatcher matcher,
-                                            RedefinitionStrategy redefinitionStrategy,
-                                            RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
-                                            RedefinitionStrategy.Listener redefinitionBatchListener) {
+                public Installation apply(Instrumentation instrumentation,
+                                          LocationStrategy locationStrategy,
+                                          AgentBuilder.Listener listener,
+                                          InstallationListener installationListener,
+                                          CircularityLock circularityLock,
+                                          RawMatcher matcher,
+                                          RedefinitionStrategy redefinitionStrategy,
+                                          RedefinitionStrategy.BatchAllocator redefinitionBatchAllocator,
+                                          RedefinitionStrategy.Listener redefinitionBatchListener) {
                     if (redefinitionStrategy.isEnabled() && resubmissionScheduler.isAlive()) {
                         ConcurrentMap<StorageKey, Set<String>> types = new ConcurrentHashMap<StorageKey, Set<String>>();
                         return new Installation(new AgentBuilder.Listener.Compound(new ResubmissionListener(this.matcher, types), listener),
@@ -7821,7 +7856,7 @@ public interface AgentBuilder {
                 throw new IllegalStateException("Could not acquire the circularity lock upon installation.");
             }
             try {
-                RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.install(instrumentation,
+                RedefinitionStrategy.ResubmissionStrategy.Installation installation = redefinitionResubmissionStrategy.apply(instrumentation,
                         locationStrategy,
                         listener,
                         installationListener,
@@ -7831,8 +7866,9 @@ public interface AgentBuilder {
                         redefinitionBatchAllocator,
                         redefinitionListener);
                 ResettableClassFileTransformer classFileTransformer = makeRaw(installation.getListener(), installation.getInstallationListener());
-                instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming());
+                installation.getInstallationListener().onBeforeInstall(instrumentation, classFileTransformer);
                 try {
+                    instrumentation.addTransformer(classFileTransformer, redefinitionStrategy.isRetransforming());
                     if (nativeMethodStrategy.isEnabled(instrumentation)) {
                         instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
                     }

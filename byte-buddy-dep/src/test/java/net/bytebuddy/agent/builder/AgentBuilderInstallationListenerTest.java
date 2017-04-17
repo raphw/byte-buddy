@@ -33,6 +33,7 @@ public class AgentBuilderInstallationListenerTest {
 
     @Test
     public void testNoOpListener() throws Exception {
+        AgentBuilder.InstallationListener.NoOp.INSTANCE.onBeforeInstall(instrumentation, classFileTransformer);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onInstall(instrumentation, classFileTransformer);
         assertThat(AgentBuilder.InstallationListener.NoOp.INSTANCE.onError(instrumentation, classFileTransformer, throwable), is(throwable));
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onReset(instrumentation, classFileTransformer);
@@ -41,6 +42,7 @@ public class AgentBuilderInstallationListenerTest {
 
     @Test
     public void testErrorSuppressing() throws Exception {
+        AgentBuilder.InstallationListener.ErrorSuppressing.INSTANCE.onBeforeInstall(instrumentation, classFileTransformer);
         AgentBuilder.InstallationListener.ErrorSuppressing.INSTANCE.onInstall(instrumentation, classFileTransformer);
         AgentBuilder.InstallationListener.NoOp.INSTANCE.onReset(instrumentation, classFileTransformer);
         verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
@@ -53,7 +55,16 @@ public class AgentBuilderInstallationListenerTest {
     }
 
     @Test
-    public void testPrintWritingListenerInstall() throws Exception {
+    public void testStreamWritingListenerBeforeInstall() throws Exception {
+        PrintStream printStream = mock(PrintStream.class);
+        AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.StreamWriting(printStream);
+        installationListener.onBeforeInstall(instrumentation, classFileTransformer);
+        verify(printStream).printf("[Byte Buddy] BEFORE_INSTALL %s on %s%n", classFileTransformer, instrumentation);
+        verifyNoMoreInteractions(printStream);
+    }
+
+    @Test
+    public void testStreamWritingListenerInstall() throws Exception {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.StreamWriting(printStream);
         installationListener.onInstall(instrumentation, classFileTransformer);
@@ -62,7 +73,7 @@ public class AgentBuilderInstallationListenerTest {
     }
 
     @Test
-    public void testPrintWritingListenerError() throws Exception {
+    public void testStreamWritingListenerError() throws Exception {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.StreamWriting(printStream);
         assertThat(installationListener.onError(instrumentation, classFileTransformer, throwable), is(throwable));
@@ -73,12 +84,22 @@ public class AgentBuilderInstallationListenerTest {
     }
 
     @Test
-    public void testPrintWritingListenerReset() throws Exception {
+    public void testStreamWritingListenerReset() throws Exception {
         PrintStream printStream = mock(PrintStream.class);
         AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.StreamWriting(printStream);
         installationListener.onReset(instrumentation, classFileTransformer);
         verify(printStream).printf("[Byte Buddy] RESET %s on %s%n", classFileTransformer, instrumentation);
         verifyNoMoreInteractions(printStream);
+    }
+
+    @Test
+    public void testCompoundListenerBeforeInstall() throws Exception {
+        AgentBuilder.InstallationListener first = mock(AgentBuilder.InstallationListener.class), second = mock(AgentBuilder.InstallationListener.class);
+        AgentBuilder.InstallationListener installationListener = new AgentBuilder.InstallationListener.Compound(first, second);
+        installationListener.onBeforeInstall(instrumentation, classFileTransformer);
+        verify(first).onBeforeInstall(instrumentation, classFileTransformer);
+        verify(second).onBeforeInstall(instrumentation, classFileTransformer);
+        verifyNoMoreInteractions(first, second);
     }
 
     @Test
