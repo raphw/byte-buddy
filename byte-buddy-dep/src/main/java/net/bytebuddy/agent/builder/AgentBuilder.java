@@ -892,6 +892,45 @@ public interface AgentBuilder {
                         ProtectionDomain protectionDomain);
 
         /**
+         * A matcher that always or never matches a type.
+         */
+        enum Trivial implements RawMatcher {
+
+            /**
+             * Always matches a type.
+             */
+            MATCHING(true),
+
+            /**
+             * Never matches a type.
+             */
+            NON_MATCHING(false);
+
+            /**
+             * {@code true} if this matcher always matches a type.
+             */
+            private final boolean matches;
+
+            /**
+             * Creates a new trivial raw matcher.
+             *
+             * @param matches {@code true} if this matcher always matches a type.
+             */
+            Trivial(boolean matches) {
+                this.matches = matches;
+            }
+
+            @Override
+            public boolean matches(TypeDescription typeDescription,
+                                   ClassLoader classLoader,
+                                   JavaModule module,
+                                   Class<?> classBeingRedefined,
+                                   ProtectionDomain protectionDomain) {
+                return matches;
+            }
+        }
+
+        /**
          * A raw matcher indicating the state of a type's class loading.
          */
         enum ForLoadState implements RawMatcher {
