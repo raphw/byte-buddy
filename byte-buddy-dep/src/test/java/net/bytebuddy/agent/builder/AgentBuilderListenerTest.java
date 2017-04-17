@@ -56,6 +56,7 @@ public class AgentBuilderListenerTest {
 
     @Test
     public void testNoOp() throws Exception {
+        AgentBuilder.Listener.NoOp.INSTANCE.onDiscovery(FOO, classLoader, module, LOADED);
         AgentBuilder.Listener.NoOp.INSTANCE.onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
         verifyZeroInteractions(dynamicType);
         AgentBuilder.Listener.NoOp.INSTANCE.onError(FOO, classLoader, module, LOADED, throwable);
@@ -67,12 +68,22 @@ public class AgentBuilderListenerTest {
     @Test
     public void testPseudoAdapter() throws Exception {
         AgentBuilder.Listener listener = new PseudoAdapter();
+        listener.onDiscovery(FOO, classLoader, module, LOADED);
         listener.onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
         verifyZeroInteractions(dynamicType);
         listener.onError(FOO, classLoader, module, LOADED, throwable);
         verifyZeroInteractions(throwable);
         listener.onIgnored(typeDescription, classLoader, module, LOADED);
         listener.onComplete(FOO, classLoader, module, LOADED);
+    }
+
+    @Test
+    public void testCompoundOnDiscovery() throws Exception {
+        new AgentBuilder.Listener.Compound(first, second).onDiscovery(FOO, classLoader, module, LOADED);
+        verify(first).onDiscovery(FOO, classLoader, module, LOADED);
+        verifyNoMoreInteractions(first);
+        verify(second).onDiscovery(FOO, classLoader, module, LOADED);
+        verifyNoMoreInteractions(second);
     }
 
     @Test
@@ -109,6 +120,15 @@ public class AgentBuilderListenerTest {
         verifyNoMoreInteractions(first);
         verify(second).onComplete(FOO, classLoader, module, LOADED);
         verifyNoMoreInteractions(second);
+    }
+
+    @Test
+    public void testStreamWritingOnDiscovery() throws Exception {
+        PrintStream printStream = mock(PrintStream.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
+        listener.onDiscovery(FOO, classLoader, module, LOADED);
+        verify(printStream).printf("[Byte Buddy] DISCOVERY %s [%s, %s, loaded=%b]%n", FOO, classLoader, module, LOADED);
+        verifyNoMoreInteractions(printStream);
     }
 
     @Test
@@ -163,6 +183,7 @@ public class AgentBuilderListenerTest {
     public void testFilteringDoesNotMatch() throws Exception {
         AgentBuilder.Listener delegate = mock(AgentBuilder.Listener.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.Filtering(none(), delegate);
+        listener.onDiscovery(FOO, classLoader, module, LOADED);
         listener.onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
         listener.onError(FOO, classLoader, module, LOADED, throwable);
         listener.onIgnored(typeDescription, classLoader, module, LOADED);
@@ -174,10 +195,12 @@ public class AgentBuilderListenerTest {
     public void testFilteringMatch() throws Exception {
         AgentBuilder.Listener delegate = mock(AgentBuilder.Listener.class);
         AgentBuilder.Listener listener = new AgentBuilder.Listener.Filtering(ElementMatchers.any(), delegate);
+        listener.onDiscovery(FOO, classLoader, module, LOADED);
         listener.onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
         listener.onError(FOO, classLoader, module, LOADED, throwable);
         listener.onIgnored(typeDescription, classLoader, module, LOADED);
         listener.onComplete(FOO, classLoader, module, LOADED);
+        verify(delegate).onDiscovery(FOO, classLoader, module, LOADED);
         verify(delegate).onTransformation(typeDescription, classLoader, module, LOADED, dynamicType);
         verify(delegate).onError(FOO, classLoader, module, LOADED, throwable);
         verify(delegate).onIgnored(typeDescription, classLoader, module, LOADED);

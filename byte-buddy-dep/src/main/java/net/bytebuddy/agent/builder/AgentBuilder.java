@@ -1160,7 +1160,17 @@ public interface AgentBuilder {
         boolean LOADED = true;
 
         /**
-         * Invoked right before a successful transformation is applied.
+         * Invoked upon a type being supplied to a transformer.
+         *
+         * @param typeName    The binary name of the instrumented type.
+         * @param classLoader The class loader which is loading this type.
+         * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
+         * @param loaded      {@code true} if the type is already loaded.
+         */
+        void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded);
+
+        /**
+         * Invoked prior to a successful transformation being applied.
          *
          * @param typeDescription The type that is being transformed.
          * @param classLoader     The class loader which is loading this type.
@@ -1183,7 +1193,7 @@ public interface AgentBuilder {
         /**
          * Invoked when an error has occurred during transformation.
          *
-         * @param typeName    The type name of the instrumented type.
+         * @param typeName    The binary name of the instrumented type.
          * @param classLoader The class loader which is loading this type.
          * @param module      The instrumented type's module or {@code null} if the current VM does not support modules.
          * @param loaded      {@code true} if the type is already loaded.
@@ -1212,6 +1222,11 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
+            public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
+                /* do nothing */
+            }
+
+            @Override
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
                 /* do nothing */
             }
@@ -1236,6 +1251,11 @@ public interface AgentBuilder {
          * An adapter for a listener wher all methods are implemented as non-operational.
          */
         abstract class Adapter implements Listener {
+
+            @Override
+            public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
+                /* do nothing */
+            }
 
             @Override
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
@@ -1303,6 +1323,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
+                printStream.printf(PREFIX + " DISCOVERY %s [%s, %s, loaded=%b]%n", typeName, classLoader, module, loaded);
+            }
+
+            @Override
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
                 printStream.printf(PREFIX + " TRANSFORM %s [%s, %s, loaded=%b]%n", typeDescription.getName(), classLoader, module, loaded);
             }
@@ -1351,6 +1376,13 @@ public interface AgentBuilder {
             public Filtering(ElementMatcher<? super String> matcher, Listener delegate) {
                 this.matcher = matcher;
                 this.delegate = delegate;
+            }
+
+            @Override
+            public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
+                if (matcher.matches(typeName)) {
+                    delegate.onDiscovery(typeName, classLoader, module, loaded);
+                }
             }
 
             @Override
@@ -1487,6 +1519,13 @@ public interface AgentBuilder {
                     } else if (!(listener instanceof NoOp)) {
                         this.listeners.add(listener);
                     }
+                }
+            }
+
+            @Override
+            public void onDiscovery(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded) {
+                for (Listener listener : listeners) {
+                    listener.onDiscovery(typeName, classLoader, module, loaded);
                 }
             }
 
@@ -8875,6 +8914,7 @@ public interface AgentBuilder {
                 }
                 String typeName = internalTypeName.replace('/', '.');
                 try {
+                    listener.onDiscovery(typeName, classLoader, module, classBeingRedefined != null);
                     ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(typeName,
                             binaryRepresentation,
                             locationStrategy.classFileLocator(classLoader, module));

@@ -41,6 +41,16 @@ public class AgentBuilderInstallationListenerTest {
     }
 
     @Test
+    public void testPseudoAdapter() throws Exception {
+        AgentBuilder.InstallationListener pseudoAdapter = new PseudoAdapter();
+        pseudoAdapter.onBeforeInstall(instrumentation, classFileTransformer);
+        pseudoAdapter.onInstall(instrumentation, classFileTransformer);
+        assertThat(pseudoAdapter.onError(instrumentation, classFileTransformer, throwable), is(throwable));
+        pseudoAdapter.onReset(instrumentation, classFileTransformer);
+        verifyZeroInteractions(instrumentation, classFileTransformer, throwable);
+    }
+
+    @Test
     public void testErrorSuppressing() throws Exception {
         AgentBuilder.InstallationListener.ErrorSuppressing.INSTANCE.onBeforeInstall(instrumentation, classFileTransformer);
         AgentBuilder.InstallationListener.ErrorSuppressing.INSTANCE.onInstall(instrumentation, classFileTransformer);
@@ -165,5 +175,9 @@ public class AgentBuilderInstallationListenerTest {
         }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InstallationListener.ErrorSuppressing.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InstallationListener.NoOp.class).apply();
+    }
+
+    private static class PseudoAdapter extends AgentBuilder.InstallationListener.Adapter {
+        /* empty */
     }
 }
