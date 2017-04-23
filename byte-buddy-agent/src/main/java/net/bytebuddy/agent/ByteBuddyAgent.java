@@ -347,18 +347,11 @@ public class ByteBuddyAgent {
             throw new IllegalStateException("No compatible attachment provider is not available");
         }
         try {
-            Class<?> virtualMachineType = attachmentAccessor.getVirtualMachineType();
-            Object virtualMachineInstance = virtualMachineType
-                    .getMethod(ATTACH_METHOD_NAME, String.class)
-                    .invoke(STATIC_MEMBER, processId);
-            try {
-                virtualMachineType
-                        .getMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
-                        .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), argument);
-            } finally {
-                virtualMachineType
-                        .getMethod(DETACH_METHOD_NAME)
-                        .invoke(virtualMachineInstance);
+            boolean canSelfAttach = true;
+            if (canSelfAttach) {
+                Attacher.install(attachmentAccessor.getVirtualMachineType(), processId, agentProvider.resolve(), argument);
+            } else {
+                Attacher.installExternal(attachmentAccessor.getVirtualMachineType().getName(), attachmentAccessor.getClassPath(), processId, agentProvider.resolve(), argument);
             }
         } catch (RuntimeException exception) {
             throw exception;
