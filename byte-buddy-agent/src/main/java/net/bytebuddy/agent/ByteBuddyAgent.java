@@ -1115,6 +1115,7 @@ public class ByteBuddyAgent {
             private static final String JDK_ALLOW_SELF_ATTACH = "jdk.attach.allowAttachSelf";
 
             @Override
+            @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public AttachmentTypeEvaluator run() {
                 try {
                     if (Boolean.getBoolean(JDK_ALLOW_SELF_ATTACH)) {
