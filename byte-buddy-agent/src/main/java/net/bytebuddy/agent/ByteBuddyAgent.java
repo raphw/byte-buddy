@@ -417,9 +417,9 @@ public class ByteBuddyAgent {
             } finally {
                 inputStream.close();
             }
-            StringBuilder classPath = new StringBuilder(attachmentJar.getAbsolutePath());
+            StringBuilder classPath = new StringBuilder().append('"').append(attachmentJar.getAbsolutePath()).append('"');
             for (File jar : externalAttachment.getClassPath()) {
-                classPath.append(File.pathSeparatorChar).append(jar.getAbsolutePath());
+                classPath.append(File.pathSeparatorChar).append('"').append(jar.getAbsolutePath()).append('"');
             }
             if (new ProcessBuilder(System.getProperty(JAVA_HOME)
                     + File.separatorChar + "bin"
