@@ -1,7 +1,9 @@
 package net.bytebuddy.agent;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
@@ -13,12 +15,20 @@ public class AttacherTest {
 
     @Test
     public void testPseudoAttachment() throws Exception {
-        Attacher.main(new String[]{PseudoAttacher.class.getName(), FOO, "/" + BAR, "=" + QUX, BAZ});
+        PseudoAttacher.ERROR.set(null);
+        Attacher.main(new String[]{PseudoAttacher.class.getName(), FOO, BAR, "=" + QUX, BAZ});
+        if (PseudoAttacher.ERROR.get() != null) {
+            throw new AssertionError(PseudoAttacher.ERROR.get());
+        }
     }
 
     @Test
     public void testPseudoAttachmentNoArgument() throws Exception {
-        Attacher.main(new String[]{PseudoAttacherNoArgument.class.getName(), FOO, "/" + BAR, ""});
+        PseudoAttacherNoArgument.ERROR.set(null);
+        Attacher.main(new String[]{PseudoAttacherNoArgument.class.getName(), FOO, BAR, ""});
+        if (PseudoAttacherNoArgument.ERROR.get() != null) {
+            throw new AssertionError(PseudoAttacherNoArgument.ERROR.get());
+        }
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -36,16 +46,20 @@ public class AttacherTest {
     @SuppressWarnings("unused")
     public static class PseudoAttacher {
 
+        static final ThreadLocal<String> ERROR = new ThreadLocal<String>();
+
         public static PseudoAttacher attach(String processId) {
             if (!processId.equals(FOO)) {
-                throw new AssertionError();
+                ERROR.set("Unexpected process id: " + processId);
             }
             return new PseudoAttacher();
         }
 
         public void loadAgent(String path, String argument) {
-            if (!path.equals("/" + BAR) || !argument.equals(QUX + " " + BAZ)) {
-                throw new AssertionError();
+            if (!path.equals(new File(BAR).getAbsolutePath())) {
+                ERROR.set("Unexpected file: " + path);
+            } else if (!argument.equals(QUX + " " + BAZ)) {
+                ERROR.set("Unexpected argument: " + argument);
             }
         }
 
@@ -56,16 +70,20 @@ public class AttacherTest {
     @SuppressWarnings("unused")
     public static class PseudoAttacherNoArgument {
 
+        static final ThreadLocal<String> ERROR = new ThreadLocal<String>();
+
         public static PseudoAttacherNoArgument attach(String processId) {
             if (!processId.equals(FOO)) {
-                throw new AssertionError();
+                ERROR.set("Unexpected process id: " + processId);
             }
             return new PseudoAttacherNoArgument();
         }
 
         public void loadAgent(String path, String argument) {
-            if (!path.equals("/" + BAR) || argument != null) {
-                throw new AssertionError();
+            if (!path.equals(new File(BAR).getAbsolutePath())) {
+                ERROR.set("Unexpected file: " + path);
+            } else if (argument != null) {
+                ERROR.set("Unexpected argument: " + argument);
             }
         }
 
