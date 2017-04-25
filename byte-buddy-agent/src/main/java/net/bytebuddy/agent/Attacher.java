@@ -1,25 +1,12 @@
 package net.bytebuddy.agent;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
+/**
+ * A Java program that attaches a Java agent to an external process.
+ */
 public class Attacher {
-
-    /**
-     * The size of the buffer for copying the agent installer file into another jar.
-     */
-    private static final int BUFFER_SIZE = 1024;
-
-    /**
-     * Convenience indices for reading and writing to the buffer to make the code more readable.
-     */
-    private static final int START_INDEX = 0, END_OF_FILE = -1;
 
     /**
      * Base for access to a reflective member to make the code more readable.
@@ -41,63 +28,44 @@ public class Attacher {
      */
     private static final String DETACH_METHOD_NAME = "detach";
 
-    private static final String ATTACHER_FILE_NAME = "byteBuddyAttacher";
-
-    private static final String CLASS_FILE_EXTENSION = ".class";
-
-    private static final String JAR_FILE_EXTENSION = ".jar";
-
+    /**
+     * Runs the attacher as a Java application.
+     *
+     * @param args A list containing the fully qualified name of the virtual machine type,
+     *             the process id, the fully qualified name of the Java agent jar followed by
+     *             an empty string if the argument to the agent is {@code null} or any number
+     *             of strings where the first argument is proceeded by any single character
+     *             which is stripped off.
+     */
     public static void main(String[] args) {
         try {
-            install(Class.forName(args[0]), args[1], new File(args[2]), args[3]);
+            String argument;
+            if (args[3].isEmpty()) {
+                argument = null;
+            } else {
+                StringBuilder stringBuilder = new StringBuilder(args[3].substring(1));
+                for (int index = 4; index < args.length; index++) {
+                    stringBuilder.append(" ").append(args[index]);
+                }
+                argument = stringBuilder.toString();
+            }
+            install(Class.forName(args[0]), args[1], new File(args[2]), argument);
         } catch (Exception ignored) {
             System.exit(1);
         }
     }
 
-    protected static void installExternal(String virtualMachineType,
-                                          List<File> jars,
-                                          String processId,
-                                          File agent,
-                                          String argument)
-            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException, InterruptedException {
-        InputStream inputStream = Attacher.class.getResourceAsStream('/' + Attacher.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
-        if (inputStream == null) {
-            throw new IllegalStateException("Cannot locate class file for Byte Buddy installation process");
-        }
-        File attachmentJar;
-        try {
-            attachmentJar = File.createTempFile(ATTACHER_FILE_NAME, JAR_FILE_EXTENSION);
-            JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(attachmentJar));
-            try {
-                jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
-                byte[] buffer = new byte[BUFFER_SIZE];
-                int index;
-                while ((index = inputStream.read(buffer)) != END_OF_FILE) {
-                    jarOutputStream.write(buffer, START_INDEX, index);
-                }
-                jarOutputStream.closeEntry();
-            } finally {
-                jarOutputStream.close();
-            }
-        } finally {
-            inputStream.close();
-        }
-        StringBuilder classPath = new StringBuilder(attachmentJar.getAbsolutePath());
-        for (File jar : jars) {
-            classPath.append(File.pathSeparatorChar).append(jar.getAbsolutePath());
-        }
-        if (new ProcessBuilder()
-                .command(System.getProperty("java.home")
-                        + " -cp " + classPath.toString()
-                        + " " + Attacher.class.getName()
-                        + " " + virtualMachineType + " " + processId + " " + agent.getAbsolutePath() + " " + argument.replace(" ", "\\ "))
-                .start()
-                .waitFor() != 0) {
-            throw new IllegalStateException("Could not self-attach to current VM using external process");
-        }
-    }
-
+    /**
+     * Installs a Java agent on a target VM.
+     *
+     * @param virtualMachineType The virtual machine type to use for the external attachment.
+     * @param processId          The id of the process being target of the external attachment.
+     * @param agent              The Java agent to attach.
+     * @param argument           The argument to provide or {@code null} if no argument is provided.
+     * @throws NoSuchMethodException     If the virtual machine type does not define an expected method.
+     * @throws InvocationTargetException If the virtual machine type raises an error.
+     * @throws IllegalAccessException    If a method of the virtual machine type cannot be accessed.
+     */
     protected static void install(Class<?> virtualMachineType,
                                   String processId,
                                   File agent,
@@ -108,7 +76,7 @@ public class Attacher {
         try {
             virtualMachineType
                     .getMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
-                    .invoke(virtualMachineInstance, agent.getAbsoluteFile(), argument);
+                    .invoke(virtualMachineInstance, agent.getAbsolutePath(), argument);
         } finally {
             virtualMachineType
                     .getMethod(DETACH_METHOD_NAME)
@@ -116,6 +84,9 @@ public class Attacher {
         }
     }
 
+    /**
+     * The attacher provides only {@code static} utility methods and should not be instantiated.
+     */
     private Attacher() {
         throw new UnsupportedOperationException();
     }

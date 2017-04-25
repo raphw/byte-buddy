@@ -599,7 +599,9 @@ public interface MethodDelegationBinder {
                         return AMBIGUOUS;
                     case LEFT:
                     case RIGHT:
-                        return other == this ? this : AMBIGUOUS;
+                        return other == UNKNOWN || other == this
+                                ? this
+                                : AMBIGUOUS;
                     default:
                         throw new AssertionError();
                 }

@@ -104,13 +104,11 @@ public enum ArgumentTypeResolver implements MethodDelegationBinder.AmbiguityReso
             Integer leftParameterIndex = left.getTargetParameterIndex(parameterIndexToken);
             Integer rightParameterIndex = right.getTargetParameterIndex(parameterIndexToken);
             if (leftParameterIndex != null && rightParameterIndex != null) {
-                resolution = resolution.merge(
-                        resolveRivalBinding(sourceParameters.get(sourceParameterIndex).getType().asErasure(),
-                                leftParameterIndex,
-                                left,
-                                rightParameterIndex,
-                                right)
-                );
+                resolution = resolution.merge(resolveRivalBinding(sourceParameters.get(sourceParameterIndex).getType().asErasure(),
+                        leftParameterIndex,
+                        left,
+                        rightParameterIndex,
+                        right));
             } else if (leftParameterIndex != null /* && rightParameterIndex == null */) {
                 leftExtra++;
             } else if (/*leftParameterIndex == null && */ rightParameterIndex != null) {

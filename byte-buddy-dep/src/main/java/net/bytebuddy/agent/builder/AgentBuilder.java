@@ -1132,7 +1132,7 @@ public interface AgentBuilder {
             private final ElementMatcher<? super ClassLoader> classLoaderMatcher;
 
             /**
-             * A module matcher to apply to a {@code java.lang.reflect.Module}.
+             * A module matcher to apply to a {@code java.lang.Module}.
              */
             private final ElementMatcher<? super JavaModule> moduleMatcher;
 
@@ -1167,7 +1167,7 @@ public interface AgentBuilder {
              *
              * @param typeMatcher        The type matcher to apply to a {@link TypeDescription}.
              * @param classLoaderMatcher The class loader matcher to apply to a {@link java.lang.ClassLoader}.
-             * @param moduleMatcher      A module matcher to apply to a {@code java.lang.reflect.Module}.
+             * @param moduleMatcher      A module matcher to apply to a {@code java.lang.Module}.
              */
             public ForElementMatchers(ElementMatcher<? super TypeDescription> typeMatcher,
                                       ElementMatcher<? super ClassLoader> classLoaderMatcher,
@@ -8901,7 +8901,7 @@ public interface AgentBuilder {
              * Applies a transformation for a class that was captured by this {@link ClassFileTransformer}. Invoking this method
              * allows to process module information which is available since Java 9.
              *
-             * @param rawModule            The instrumented class's Java {@code java.lang.reflect.Module}.
+             * @param rawModule            The instrumented class's Java {@code java.lang.Module}.
              * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
              * @param internalTypeName     The internal name of the instrumented class.
              * @param classBeingRedefined  The loaded {@link Class} being redefined or {@code null} if no such class exists.
@@ -9151,7 +9151,7 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * A factory for a class file transformer on a JVM that supports the {@code java.lang.reflect.Module} API to override
+                 * A factory for a class file transformer on a JVM that supports the {@code java.lang.Module} API to override
                  * the newly added method of the {@link ClassFileTransformer} to capture an instrumented class's module.
                  */
                 @EqualsAndHashCode
@@ -9159,7 +9159,7 @@ public interface AgentBuilder {
 
                     /**
                      * A constructor for creating a {@link ClassFileTransformer} that overrides the newly added method for extracting
-                     * the {@code java.lang.reflect.Module} of an instrumented class.
+                     * the {@code java.lang.Module} of an instrumented class.
                      */
                     private final Constructor<? extends ResettableClassFileTransformer> executingTransformer;
 
@@ -9167,7 +9167,7 @@ public interface AgentBuilder {
                      * Creates a class file transformer factory for a Java 9 capable VM.
                      *
                      * @param executingTransformer A constructor for creating a {@link ClassFileTransformer} that overrides the newly added
-                     *                             method for extracting the {@code java.lang.reflect.Module} of an instrumented class.
+                     *                             method for extracting the {@code java.lang.Module} of an instrumented class.
                      */
                     protected ForJava9CapableVm(Constructor<? extends ResettableClassFileTransformer> executingTransformer) {
                         this.executingTransformer = executingTransformer;
@@ -9216,7 +9216,7 @@ public interface AgentBuilder {
                 }
 
                 /**
-                 * A factory for a {@link ClassFileTransformer} on a VM that does not support the {@code java.lang.reflect.Module} API.
+                 * A factory for a {@link ClassFileTransformer} on a VM that does not support the {@code java.lang.Module} API.
                  */
                 enum ForLegacyVm implements Factory {
 
@@ -9361,7 +9361,7 @@ public interface AgentBuilder {
             protected class Java9CapableVmDispatcher implements PrivilegedAction<byte[]> {
 
                 /**
-                 * The type's {@code java.lang.reflect.Module}.
+                 * The type's {@code java.lang.Module}.
                  */
                 private final Object rawModule;
 
@@ -9394,7 +9394,7 @@ public interface AgentBuilder {
                 /**
                  * Creates a new legacy dispatcher.
                  *
-                 * @param rawModule            The type's {@code java.lang.reflect.Module}.
+                 * @param rawModule            The type's {@code java.lang.Module}.
                  * @param classLoader          The type's class loader or {@code null} if the type is loaded by the bootstrap loader.
                  * @param internalTypeName     The type's internal name or {@code null} if no such name exists.
                  * @param classBeingRedefined  The class being redefined or {@code null} if no such class exists.

@@ -14,13 +14,14 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.logging.Logger;
 
 /**
  * <p>
@@ -84,6 +85,11 @@ public class ByteBuddyAgent {
     private static final int START_INDEX = 0, END_OF_FILE = -1;
 
     /**
+     * The status code expected as a result of a successful attachment.
+     */
+    private static final int SUCCESSFUL_ATTACH = 0;
+
+    /**
      * Base for access to a reflective member to make the code more readable.
      */
     private static final Object STATIC_MEMBER = null;
@@ -99,24 +105,34 @@ public class ByteBuddyAgent {
     private static final String WITHOUT_ARGUMENT = null;
 
     /**
-     * The class file extension.
+     * The naming prefix of all artifacts for an attacher jar.
+     */
+    private static final String ATTACHER_FILE_NAME = "byteBuddyAttacher";
+
+    /**
+     * The file extension for a class file.
      */
     private static final String CLASS_FILE_EXTENSION = ".class";
 
     /**
-     * The name of the {@code attach} method of the  {@code VirtualMachine} class.
+     * The file extension for a jar file.
      */
-    private static final String ATTACH_METHOD_NAME = "attach";
+    private static final String JAR_FILE_EXTENSION = ".jar";
 
     /**
-     * The name of the {@code loadAgent} method of the  {@code VirtualMachine} class.
+     * The class path argument to specify the class path elements.
      */
-    private static final String LOAD_AGENT_METHOD_NAME = "loadAgent";
+    private static final String CLASS_PATH_ARGUMENT = "-cp";
 
     /**
-     * The name of the {@code detach} method of the  {@code VirtualMachine} class.
+     * The Java property denoting the Java home directory.
      */
-    private static final String DETACH_METHOD_NAME = "detach";
+    private static final String JAVA_HOME = "java.home";
+
+    /**
+     * The Java property denoting the operating system name.
+     */
+    private static final String OS_NAME = "os.name";
 
     /**
      * The name of the method for reading the installer's instrumentation.
@@ -127,6 +143,11 @@ public class ByteBuddyAgent {
      * An indicator variable to express that no instrumentation is available.
      */
     private static final Instrumentation UNAVAILABLE = null;
+
+    /**
+     * The attachment type evaluator to be used for determining if an attachment requires an external process.
+     */
+    private static final AttachmentTypeEvaluator ATTACHMENT_TYPE_EVALUATOR = AccessController.doPrivileged(AttachmentTypeEvaluator.InstallationAction.INSTANCE);
 
     /**
      * The agent provides only {@code static} utility methods and should not be instantiated.
@@ -347,16 +368,75 @@ public class ByteBuddyAgent {
             throw new IllegalStateException("No compatible attachment provider is not available");
         }
         try {
-            boolean canSelfAttach = true;
-            if (canSelfAttach) {
-                Attacher.install(attachmentAccessor.getVirtualMachineType(), processId, agentProvider.resolve(), argument);
+            if (ATTACHMENT_TYPE_EVALUATOR.requiresExternalAttachment(processId)) {
+                installExternal(attachmentAccessor.getExternalAttachment(), processId, agentProvider.resolve(), argument);
             } else {
-                Attacher.installExternal(attachmentAccessor.getVirtualMachineType().getName(), attachmentAccessor.getClassPath(), processId, agentProvider.resolve(), argument);
+                Attacher.install(attachmentAccessor.getVirtualMachineType(), processId, agentProvider.resolve(), argument);
             }
         } catch (RuntimeException exception) {
             throw exception;
         } catch (Exception exception) {
             throw new IllegalStateException("Error during attachment using: " + attachmentProvider, exception);
+        }
+    }
+
+    /**
+     * Installs a Java agent to the current VM via an external process. This is typically required starting with OpenJDK 9
+     * when the {@code jdk.attach.allowAttachSelf} property is set to {@code false} what is the default setting.
+     *
+     * @param externalAttachment A description of the external attachment.
+     * @param processId          The process id of the current process.
+     * @param agent              The Java agent to install.
+     * @param argument           The argument to provide to the agent or {@code null} if no argument should be supplied.
+     * @throws Exception If an exception occurs during the attachment or the external process fails the attachment.
+     */
+    private static void installExternal(AttachmentProvider.Accessor.ExternalAttachment externalAttachment,
+                                        String processId,
+                                        File agent,
+                                        String argument) throws Exception {
+        InputStream inputStream = Attacher.class.getResourceAsStream('/' + Attacher.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
+        if (inputStream == null) {
+            throw new IllegalStateException("Cannot locate class file for Byte Buddy installation process");
+        }
+        File attachmentJar = null;
+        try {
+            try {
+                attachmentJar = File.createTempFile(ATTACHER_FILE_NAME, JAR_FILE_EXTENSION);
+                JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(attachmentJar));
+                try {
+                    jarOutputStream.putNextEntry(new JarEntry(Attacher.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int index;
+                    while ((index = inputStream.read(buffer)) != END_OF_FILE) {
+                        jarOutputStream.write(buffer, START_INDEX, index);
+                    }
+                    jarOutputStream.closeEntry();
+                } finally {
+                    jarOutputStream.close();
+                }
+            } finally {
+                inputStream.close();
+            }
+            StringBuilder classPath = new StringBuilder(attachmentJar.getAbsolutePath());
+            for (File jar : externalAttachment.getClassPath()) {
+                classPath.append(File.pathSeparatorChar).append(jar.getAbsolutePath());
+            }
+            if (new ProcessBuilder(System.getProperty(JAVA_HOME)
+                    + File.separatorChar + "bin"
+                    + File.separatorChar + (System.getProperty(OS_NAME, "").toLowerCase(Locale.US).contains("windows") ? "java.exe" : "java"),
+                    CLASS_PATH_ARGUMENT,
+                    classPath.toString(),
+                    Attacher.class.getName(),
+                    externalAttachment.getVirtualMachineType(),
+                    processId,
+                    "\"" + agent.getAbsolutePath() + "\"",
+                    argument == null ? "" : ("=" + argument)).start().waitFor() != SUCCESSFUL_ATTACH) {
+                throw new IllegalStateException("Could not self-attach to current VM using external process");
+            }
+        } finally {
+            if (attachmentJar != null && !attachmentJar.delete()) {
+                Logger.getAnonymousLogger().warning("Could not delete attachment jar: " + attachmentJar);
+            }
         }
     }
 
@@ -424,12 +504,18 @@ public class ByteBuddyAgent {
             boolean isAvailable();
 
             /**
-             * Returns the {@code com.sun.tools.attach.VirtualMachine} class. This method must only be called
-             * for available accessors.
+             * Returns a {@code VirtualMachine} class. This method must only be called for available accessors.
              *
              * @return The virtual machine type.
              */
             Class<?> getVirtualMachineType();
+
+            /**
+             * Returns a description of a virtual machine class for an external attachment.
+             *
+             * @return A description of the external attachment.
+             */
+            ExternalAttachment getExternalAttachment();
 
             /**
              * A canonical implementation of an unavailable accessor.
@@ -450,23 +536,74 @@ public class ByteBuddyAgent {
                 public Class<?> getVirtualMachineType() {
                     throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
                 }
+
+                @Override
+                public ExternalAttachment getExternalAttachment() {
+                    throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
+                }
+            }
+
+            /**
+             * Describes an external attachment to a Java virtual machine.
+             */
+            @EqualsAndHashCode
+            class ExternalAttachment {
+
+                /**
+                 * The fully-qualified binary name of the virtual machine type.
+                 */
+                private final String virtualMachineType;
+
+                /**
+                 * The class path elements required for loading the supplied virtual machine type.
+                 */
+                private final List<File> classPath;
+
+                /**
+                 * Creates an external attachment.
+                 *
+                 * @param virtualMachineType The fully-qualified binary name of the virtual machine type.
+                 * @param classPath          The class path elements required for loading the supplied virtual machine type.
+                 */
+                public ExternalAttachment(String virtualMachineType, List<File> classPath) {
+                    this.virtualMachineType = virtualMachineType;
+                    this.classPath = classPath;
+                }
+
+                /**
+                 * Returns the fully-qualified binary name of the virtual machine type.
+                 *
+                 * @return The fully-qualified binary name of the virtual machine type.
+                 */
+                public String getVirtualMachineType() {
+                    return virtualMachineType;
+                }
+
+                /**
+                 * Returns the class path elements required for loading the supplied virtual machine type.
+                 *
+                 * @return The class path elements required for loading the supplied virtual machine type.
+                 */
+                public List<File> getClassPath() {
+                    return classPath;
+                }
             }
 
             /**
              * A simple implementation of an accessible accessor.
              */
             @EqualsAndHashCode
-            class Simple implements Accessor {
+            abstract class Simple implements Accessor {
 
                 /**
-                 * The {@code com.sun.tools.attach.VirtualMachine} class.
+                 * A {@code VirtualMachine} class.
                  */
-                private final Class<?> virtualMachineType;
+                protected final Class<?> virtualMachineType;
 
                 /**
                  * Creates a new simple accessor.
                  *
-                 * @param virtualMachineType The {@code com.sun.tools.attach.VirtualMachine} class.
+                 * @param virtualMachineType A {@code VirtualMachine} class.
                  */
                 protected Simple(Class<?> virtualMachineType) {
                     this.virtualMachineType = virtualMachineType;
@@ -482,11 +619,13 @@ public class ByteBuddyAgent {
                  * </p>
                  *
                  * @param classLoader A class loader that is capable of loading the virtual machine type.
+                 * @param classPath   The class path required to load the virtual machine class.
                  * @return An appropriate accessor.
                  */
-                public static Accessor of(ClassLoader classLoader) {
+                public static Accessor of(ClassLoader classLoader, File... classPath) {
                     try {
-                        return new Simple(classLoader.loadClass(VIRTUAL_MACHINE_TYPE_NAME));
+                        return new Simple.WithExternalAttachment(classLoader.loadClass(VIRTUAL_MACHINE_TYPE_NAME),
+                                Arrays.asList(classPath));
                     } catch (ClassNotFoundException ignored) {
                         return Unavailable.INSTANCE;
                     }
@@ -505,7 +644,8 @@ public class ByteBuddyAgent {
                  */
                 public static Accessor ofJ9() {
                     try {
-                        return new Simple(ClassLoader.getSystemClassLoader().loadClass(VIRTUAL_MACHINE_TYPE_NAME_J9));
+                        return new Simple.WithExternalAttachment(ClassLoader.getSystemClassLoader().loadClass(VIRTUAL_MACHINE_TYPE_NAME_J9),
+                                Collections.<File>emptyList());
                     } catch (ClassNotFoundException ignored) {
                         return Unavailable.INSTANCE;
                     }
@@ -519,6 +659,55 @@ public class ByteBuddyAgent {
                 @Override
                 public Class<?> getVirtualMachineType() {
                     return virtualMachineType;
+                }
+
+                /**
+                 * A simple implementation of an accessible accessor that allows for external attachment.
+                 */
+                @EqualsAndHashCode(callSuper = true)
+                protected static class WithExternalAttachment extends Simple {
+
+                    /**
+                     * The class path required for loading the virtual machine type.
+                     */
+                    private final List<File> classPath;
+
+                    /**
+                     * Creates a new simple accessor that allows for external attachment.
+                     *
+                     * @param virtualMachineType The {@code com.sun.tools.attach.VirtualMachine} class.
+                     * @param classPath          The class path required for loading the virtual machine type.
+                     */
+                    public WithExternalAttachment(Class<?> virtualMachineType, List<File> classPath) {
+                        super(virtualMachineType);
+                        this.classPath = classPath;
+                    }
+
+                    @Override
+                    public ExternalAttachment getExternalAttachment() {
+                        return new ExternalAttachment(virtualMachineType.getName(), classPath);
+                    }
+                }
+
+                /**
+                 * A simple implementation of an accessible accessor that does not allow for external attachment.
+                 */
+                @EqualsAndHashCode(callSuper = true)
+                protected static class WithoutExternalAttachment extends Simple {
+
+                    /**
+                     * Creates a new simple accessor that does not allow for external attachment.
+                     *
+                     * @param virtualMachineType A {@code VirtualMachine} class.
+                     */
+                    public WithoutExternalAttachment(Class<?> virtualMachineType) {
+                        super(virtualMachineType);
+                    }
+
+                    @Override
+                    public ExternalAttachment getExternalAttachment() {
+                        throw new IllegalStateException("Cannot read the virtual machine type for an unavailable accessor");
+                    }
                 }
             }
         }
@@ -605,7 +794,7 @@ public class ByteBuddyAgent {
                 File toolsJar = new File(System.getProperty(JAVA_HOME_PROPERTY), toolsJarPath);
                 try {
                     return toolsJar.isFile() && toolsJar.canRead()
-                            ? Accessor.Simple.of(new URLClassLoader(new URL[]{toolsJar.toURI().toURL()}, BOOTSTRAP_CLASS_LOADER))
+                            ? Accessor.Simple.of(new URLClassLoader(new URL[]{toolsJar.toURI().toURL()}, BOOTSTRAP_CLASS_LOADER), toolsJar)
                             : Accessor.Unavailable.INSTANCE;
                 } catch (MalformedURLException exception) {
                     throw new IllegalStateException("Could not represent " + toolsJar + " as URL");
@@ -626,7 +815,7 @@ public class ByteBuddyAgent {
             @Override
             public Accessor attempt() {
                 try {
-                    return new Accessor.Simple(VirtualMachine.ForHotSpot.OnUnix.assertAvailability());
+                    return new Accessor.Simple.WithoutExternalAttachment(VirtualMachine.ForHotSpot.OnUnix.assertAvailability());
                 } catch (Throwable ignored) {
                     return Accessor.Unavailable.INSTANCE;
                 }
@@ -893,6 +1082,105 @@ public class ByteBuddyAgent {
             @Override
             public File resolve() {
                 return agent;
+            }
+        }
+    }
+
+    /**
+     * An attachment evaluator is responsible for deciding if an agent can be attached from the current process.
+     */
+    protected interface AttachmentTypeEvaluator {
+
+        /**
+         * Checks if the current VM requires external attachment for the supplied process id.
+         *
+         * @param processId The process id of the process to which to attach.
+         * @return {@code true} if the current VM requires external attachment for the supplied process.
+         */
+        boolean requiresExternalAttachment(String processId);
+
+        /**
+         * An installation action for creating an attachment type evaluator.
+         */
+        enum InstallationAction implements PrivilegedAction<AttachmentTypeEvaluator> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * The OpenJDK's property for specifying the legality of self-attachment.
+             */
+            private static final String JDK_ALLOW_SELF_ATTACH = "jdk.attach.allowAttachSelf";
+
+            @Override
+            public AttachmentTypeEvaluator run() {
+                try {
+                    if (Boolean.getBoolean(JDK_ALLOW_SELF_ATTACH)) {
+                        return Disabled.INSTANCE;
+                    } else {
+                        return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getMethod("current"),
+                                Class.forName("java.lang.ProcessHandle").getMethod("getPid"));
+                    }
+                } catch (Exception ignored) {
+                    return Disabled.INSTANCE;
+                }
+            }
+        }
+
+        /**
+         * An attachment type evaluator that never requires external attachment.
+         */
+        enum Disabled implements AttachmentTypeEvaluator {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public boolean requiresExternalAttachment(String processId) {
+                return false;
+            }
+        }
+
+        /**
+         * An attachment type evaluator that checks a process id against the current process id.
+         */
+        @EqualsAndHashCode
+        class ForJava9CapableVm implements AttachmentTypeEvaluator {
+
+            /**
+             * The {@code java.lang.ProcessHandle#current()} method.
+             */
+            private final Method current;
+
+            /**
+             * The {@code java.lang.ProcessHandle#getPid()} method.
+             */
+            private final Method getPid;
+
+            /**
+             * Creates a new attachment type evaluator.
+             *
+             * @param current The {@code java.lang.ProcessHandle#current()} method.
+             * @param getPid  The {@code java.lang.ProcessHandle#getPid()} method.
+             */
+            protected ForJava9CapableVm(Method current, Method getPid) {
+                this.current = current;
+                this.getPid = getPid;
+            }
+
+            @Override
+            public boolean requiresExternalAttachment(String processId) {
+                try {
+                    return getPid.invoke(current.invoke(STATIC_MEMBER)).equals(processId);
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access Java 9 process API", exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Error when accessing Java 9 process API", exception.getCause());
+                }
             }
         }
     }

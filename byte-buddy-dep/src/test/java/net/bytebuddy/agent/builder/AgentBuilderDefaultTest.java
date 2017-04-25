@@ -1,6 +1,5 @@
 package net.bytebuddy.agent.builder;
 
-import com.sun.org.apache.regexp.internal.RE;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.build.EntryPoint;
 import net.bytebuddy.build.Plugin;
@@ -2240,7 +2239,7 @@ public class AgentBuilderDefaultTest {
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) throws Exception {
         try {
-            return (byte[]) ClassFileTransformer.class.getDeclaredMethod("transform", Class.forName("java.lang.reflect.Module"), ClassLoader.class, String.class, Class.class, ProtectionDomain.class, byte[].class)
+            return (byte[]) ClassFileTransformer.class.getDeclaredMethod("transform", Class.forName("java.lang.Module"), ClassLoader.class, String.class, Class.class, ProtectionDomain.class, byte[].class)
                     .invoke(classFileTransformer, javaModule.unwrap(), classLoader, typeName, type, protectionDomain, binaryRepresentation);
         } catch (Exception ignored) {
             return classFileTransformer.transform(classLoader, typeName, type, protectionDomain, binaryRepresentation);

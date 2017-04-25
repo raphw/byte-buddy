@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Type-safe representation of a {@code java.lang.reflect.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
+ * Type-safe representation of a {@code java.lang.Module}. On platforms that do not support the module API, modules are represented by {@code null}.
  */
 public class JavaModule implements NamedElement.WithOptionalName {
 
@@ -30,21 +30,21 @@ public class JavaModule implements NamedElement.WithOptionalName {
     private static final Dispatcher DISPATCHER = AccessController.doPrivileged(Dispatcher.CreationAction.INSTANCE);
 
     /**
-     * The {@code java.lang.reflect.Module} instance this wrapper represents.
+     * The {@code java.lang.Module} instance this wrapper represents.
      */
     private final Object module;
 
     /**
      * Creates a new Java module representation.
      *
-     * @param module The {@code java.lang.reflect.Module} instance this wrapper represents.
+     * @param module The {@code java.lang.Module} instance this wrapper represents.
      */
     protected JavaModule(Object module) {
         this.module = module;
     }
 
     /**
-     * Returns a representation of the supplied type's {@code java.lang.reflect.Module} or {@code null} if the current VM does not support modules.
+     * Returns a representation of the supplied type's {@code java.lang.Module} or {@code null} if the current VM does not support modules.
      *
      * @param type The type for which to describe the module.
      * @return A representation of the type's module or {@code null} if the current VM does not support modules.
@@ -54,7 +54,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     /**
-     * Represents the supplied {@code java.lang.reflect.Module} as an instance of this class and validates that the
+     * Represents the supplied {@code java.lang.Module} as an instance of this class and validates that the
      * supplied instance really represents a Java {@code Module}.
      *
      * @param module The module to represent.
@@ -68,7 +68,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     /**
-     * Checks if the current VM supports the {@code java.lang.reflect.Module} API.
+     * Checks if the current VM supports the {@code java.lang.Module} API.
      *
      * @return {@code true} if the current VM supports modules.
      */
@@ -106,9 +106,9 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     /**
-     * Unwraps this instance to a {@code java.lang.reflect.Module}.
+     * Unwraps this instance to a {@code java.lang.Module}.
      *
-     * @return The represented {@code java.lang.reflect.Module}.
+     * @return The represented {@code java.lang.Module}.
      */
     public Object unwrap() {
         return module;
@@ -153,7 +153,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
     }
 
     /**
-     * A dispatcher for accessing the {@code java.lang.reflect.Module} API if it is available on the current VM.
+     * A dispatcher for accessing the {@code java.lang.Module} API if it is available on the current VM.
      */
     protected interface Dispatcher {
 
@@ -175,7 +175,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         /**
          * Returns {@code true} if the supplied module is named.
          *
-         * @param module The {@code java.lang.reflect.Module} to check for the existence of a name.
+         * @param module The {@code java.lang.Module} to check for the existence of a name.
          * @return {@code true} if the supplied module is named.
          */
         boolean isNamed(Object module);
@@ -183,7 +183,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         /**
          * Returns the module's name.
          *
-         * @param module The {@code java.lang.reflect.Module} to check for its name.
+         * @param module The {@code java.lang.Module} to check for its name.
          * @return The module's (implicit or explicit) name.
          */
         String getName(Object module);
@@ -191,7 +191,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         /**
          * Returns a resource stream for this module for a resource of the given name or {@code null} if such a resource does not exist.
          *
-         * @param module The {@code java.lang.reflect.Module} instance to apply this method upon.
+         * @param module The {@code java.lang.Module} instance to apply this method upon.
          * @param name   The name of the resource.
          * @return An input stream for the resource or {@code null} if it does not exist.
          */
@@ -200,7 +200,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         /**
          * Returns the module's class loader.
          *
-         * @param module The {@code java.lang.reflect.Module}
+         * @param module The {@code java.lang.Module}
          * @return The module's class loader.
          */
         ClassLoader getClassLoader(Object module);
@@ -237,7 +237,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
             @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception should not be rethrown but trigger a fallback")
             public Dispatcher run() {
                 try {
-                    Class<?> module = Class.forName("java.lang.reflect.Module");
+                    Class<?> module = Class.forName("java.lang.Module");
                     return new Dispatcher.Enabled(Class.class.getMethod("getModule"),
                             module.getMethod("getClassLoader"),
                             module.getMethod("isNamed"),
@@ -252,7 +252,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         }
 
         /**
-         * A dispatcher for a VM that does support the {@code java.lang.reflect.Module} API.
+         * A dispatcher for a VM that does support the {@code java.lang.Module} API.
          */
         @EqualsAndHashCode
         class Enabled implements Dispatcher {
@@ -263,27 +263,27 @@ public class JavaModule implements NamedElement.WithOptionalName {
             private final Method getModule;
 
             /**
-             * The {@code java.lang.reflect.Module#getClassLoader()} method.
+             * The {@code java.lang.Module#getClassLoader()} method.
              */
             private final Method getClassLoader;
 
             /**
-             * The {@code java.lang.reflect.Module#isNamed()} method.
+             * The {@code java.lang.Module#isNamed()} method.
              */
             private final Method isNamed;
 
             /**
-             * The {@code java.lang.reflect.Module#getName()} method.
+             * The {@code java.lang.Module#getName()} method.
              */
             private final Method getName;
 
             /**
-             * The {@code java.lang.reflect.Module#getResourceAsStream(String)} method.
+             * The {@code java.lang.Module#getResourceAsStream(String)} method.
              */
             private final Method getResourceAsStream;
 
             /**
-             * The {@code java.lang.reflect.Module#canRead(Module)} method.
+             * The {@code java.lang.Module#canRead(Module)} method.
              */
             private final Method canRead;
 
@@ -296,11 +296,11 @@ public class JavaModule implements NamedElement.WithOptionalName {
              * Creates an enabled dispatcher.
              *
              * @param getModule           The {@code java.lang.Class#getModule()} method.
-             * @param getClassLoader      The {@code java.lang.reflect.Module#getClassLoader()} method.
-             * @param isNamed             The {@code java.lang.reflect.Module#isNamed()} method.
-             * @param getName             The {@code java.lang.reflect.Module#getName()} method.
-             * @param getResourceAsStream The {@code java.lang.reflect.Module#getResourceAsStream(String)} method.
-             * @param canRead             The {@code java.lang.reflect.Module#canRead(Module)} method.
+             * @param getClassLoader      The {@code java.lang.Module#getClassLoader()} method.
+             * @param isNamed             The {@code java.lang.Module#isNamed()} method.
+             * @param getName             The {@code java.lang.Module#getName()} method.
+             * @param getResourceAsStream The {@code java.lang.Module#getResourceAsStream(String)} method.
+             * @param canRead             The {@code java.lang.Module#canRead(Module)} method.
              * @param redefineModule      The {@code java.lang.instrument.Instrumentation#redefineModule} method.
              */
             protected Enabled(Method getModule,
@@ -408,7 +408,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
         }
 
         /**
-         * A disabled dispatcher for a VM that does not support the {@code java.lang.reflect.Module} API.
+         * A disabled dispatcher for a VM that does not support the {@code java.lang.Module} API.
          */
         enum Disabled implements Dispatcher {
 
