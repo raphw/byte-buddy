@@ -244,6 +244,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
                             module.getMethod("getName"),
                             module.getMethod("getResourceAsStream", String.class),
                             module.getMethod("canRead", module),
+                            module.getMethod("isModifiableModule", module),
                             Instrumentation.class.getMethod("redefineModule", module, Set.class, Map.class, Map.class, Set.class, Map.class));
                 } catch (Exception ignored) {
                     return Dispatcher.Disabled.INSTANCE;
@@ -288,6 +289,11 @@ public class JavaModule implements NamedElement.WithOptionalName {
             private final Method canRead;
 
             /**
+             * The {@code java.lang.instrument.Instrumentation#isModifiableModule} method.
+             */
+            private final Method isModifiableModule;
+
+            /**
              * The {@code java.lang.instrument.Instrumentation#redefineModule} method.
              */
             private final Method redefineModule;
@@ -301,6 +307,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
              * @param getName             The {@code java.lang.Module#getName()} method.
              * @param getResourceAsStream The {@code java.lang.Module#getResourceAsStream(String)} method.
              * @param canRead             The {@code java.lang.Module#canRead(Module)} method.
+             * @param isModifiableModule  The {@code java.lang.instrument.Instrumentation#isModifiableModule} method.
              * @param redefineModule      The {@code java.lang.instrument.Instrumentation#redefineModule} method.
              */
             protected Enabled(Method getModule,
@@ -309,6 +316,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
                               Method getName,
                               Method getResourceAsStream,
                               Method canRead,
+                              Method isModifiableModule,
                               Method redefineModule) {
                 this.getModule = getModule;
                 this.getClassLoader = getClassLoader;
@@ -316,6 +324,7 @@ public class JavaModule implements NamedElement.WithOptionalName {
                 this.getName = getName;
                 this.getResourceAsStream = getResourceAsStream;
                 this.canRead = canRead;
+                this.isModifiableModule = isModifiableModule;
                 this.redefineModule = redefineModule;
             }
 
@@ -392,6 +401,15 @@ public class JavaModule implements NamedElement.WithOptionalName {
 
             @Override
             public void addReads(Instrumentation instrumentation, Object source, Object target) {
+                try {
+                    if (!(Boolean) isModifiableModule.invoke(instrumentation, source)) {
+                        throw new IllegalStateException(source + " is not modifable");
+                    }
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Cannot access " + redefineModule, exception);
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Cannot invoke " + redefineModule, exception.getCause());
+                }
                 try {
                     redefineModule.invoke(instrumentation, source,
                             Collections.singleton(target),

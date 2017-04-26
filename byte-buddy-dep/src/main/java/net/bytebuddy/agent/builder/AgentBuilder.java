@@ -1512,7 +1512,7 @@ public interface AgentBuilder {
 
             @Override
             public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
-                if (module != null && module.isNamed()) {
+                if (module != JavaModule.UNSUPPORTED && module.isNamed()) {
                     for (JavaModule target : modules) {
                         if (!module.canRead(target)) {
                             module.addReads(instrumentation, target);
