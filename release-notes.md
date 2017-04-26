@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 26. April 2017: version 1.6.14
+
+- Extended `AgentBuilder` listener API.
+- Added trivial `RawMatcher`.
+- Check modules for modifiability.
+- Adapt new Java 9 namespaces for modules.
+- Start external process for self-attachment if self-attachment is not allowed.
+
 ### 17. April 2017: version 1.6.13
 
 - Explicit consistency check for stack map frame information in `Advice`.
