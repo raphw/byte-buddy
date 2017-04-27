@@ -277,7 +277,7 @@ public interface AsmVisitorWrapper {
             public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
                 FieldVisitor fieldVisitor = super.visitField(modifiers, internalName, descriptor, signature, defaultValue);
                 FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
-                if (fieldDescription != null) {
+                if (fieldVisitor != null && fieldDescription != null) {
                     for (Entry entry : entries) {
                         if (entry.matches(fieldDescription)) {
                             fieldVisitor = entry.wrap(instrumentedType, fieldDescription, fieldVisitor);
@@ -556,7 +556,7 @@ public interface AsmVisitorWrapper {
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exceptions) {
                 MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, signature, exceptions);
                 MethodDescription methodDescription = methods.get(internalName + descriptor);
-                if (methodDescription != null) {
+                if (methodVisitor != null && methodDescription != null) {
                     for (Entry entry : entries) {
                         if (entry.matches(methodDescription)) {
                             methodVisitor = entry.wrap(instrumentedType,

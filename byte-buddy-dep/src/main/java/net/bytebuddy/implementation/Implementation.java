@@ -27,6 +27,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -803,12 +804,15 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 fieldCacheCanAppendEntries = false;
                 TypeInitializer typeInitializer = this.typeInitializer;
                 for (Map.Entry<FieldCacheEntry, FieldDescription.InDefinedShape> entry : registeredFieldCacheEntries.entrySet()) {
-                    classVisitor.visitField(entry.getValue().getModifiers(),
+                    FieldVisitor fieldVisitor = classVisitor.visitField(entry.getValue().getModifiers(),
                             entry.getValue().getInternalName(),
                             entry.getValue().getDescriptor(),
                             entry.getValue().getGenericSignature(),
-                            FieldDescription.NO_DEFAULT_VALUE).visitEnd();
-                    typeInitializer = typeInitializer.expandWith(entry.getKey().storeIn(entry.getValue()));
+                            FieldDescription.NO_DEFAULT_VALUE);
+                    if (fieldVisitor != null) {
+                        fieldVisitor.visitEnd();
+                        typeInitializer = typeInitializer.expandWith(entry.getKey().storeIn(entry.getValue()));
+                    }
                 }
                 drain.apply(classVisitor, typeInitializer, this);
                 for (TypeWriter.MethodPool.Record record : registeredAccessorMethods.values()) {

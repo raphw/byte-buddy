@@ -80,9 +80,10 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
 
         @Override
         public MethodVisitor visitMethod(int modifiers, String name, String descriptor, String signature, String[] exception) {
-            return supportsTypeConstants
-                    ? super.visitMethod(modifiers, name, descriptor, signature, exception)
-                    : new TypeConstantDissolvingMethodVisitor(super.visitMethod(modifiers, name, descriptor, signature, exception));
+            MethodVisitor methodVisitor = super.visitMethod(modifiers, name, descriptor, signature, exception);
+            return supportsTypeConstants || methodVisitor == null
+                    ? methodVisitor
+                    : new TypeConstantDissolvingMethodVisitor(methodVisitor);
         }
 
         /**

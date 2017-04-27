@@ -191,10 +191,12 @@ public interface TypeWriter<T> {
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
                             FieldDescription.NO_DEFAULT_VALUE);
-                    FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor,
-                            fieldDescription,
-                            annotationValueFilterFactory.on(fieldDescription));
-                    fieldVisitor.visitEnd();
+                    if (fieldVisitor != null) {
+                        FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor,
+                                fieldDescription,
+                                annotationValueFilterFactory.on(fieldDescription));
+                        fieldVisitor.visitEnd();
+                    }
                 }
 
                 @Override
@@ -266,8 +268,10 @@ public interface TypeWriter<T> {
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
                             resolveDefault(FieldDescription.NO_DEFAULT_VALUE));
-                    attributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilterFactory.on(fieldDescription));
-                    fieldVisitor.visitEnd();
+                    if (fieldVisitor != null) {
+                        attributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilterFactory.on(fieldDescription));
+                        fieldVisitor.visitEnd();
+                    }
                 }
 
                 @Override
@@ -513,15 +517,17 @@ public interface TypeWriter<T> {
                             getMethod().getDescriptor(),
                             getMethod().getGenericSignature(),
                             getMethod().getExceptionTypes().asErasures().toInternalNames());
-                    ParameterList<?> parameterList = getMethod().getParameters();
-                    if (parameterList.hasExplicitMetaData()) {
-                        for (ParameterDescription parameterDescription : parameterList) {
-                            methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
+                    if (methodVisitor != null) {
+                        ParameterList<?> parameterList = getMethod().getParameters();
+                        if (parameterList.hasExplicitMetaData()) {
+                            for (ParameterDescription parameterDescription : parameterList) {
+                                methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
+                            }
                         }
+                        applyHead(methodVisitor);
+                        applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
+                        methodVisitor.visitEnd();
                     }
-                    applyHead(methodVisitor);
-                    applyBody(methodVisitor, implementationContext, annotationValueFilterFactory);
-                    methodVisitor.visitEnd();
                 }
 
                 /**
@@ -1100,18 +1106,20 @@ public interface TypeWriter<T> {
                                 bridgeMethod.getDescriptor(),
                                 MethodDescription.NON_GENERIC_SIGNATURE,
                                 bridgeMethod.getExceptionTypes().asErasures().toInternalNames());
-                        attributeAppender.apply(methodVisitor, bridgeMethod, annotationValueFilterFactory.on(instrumentedType));
-                        methodVisitor.visitCode();
-                        ByteCodeAppender.Size size = new ByteCodeAppender.Simple(
-                                MethodVariableAccess.allArgumentsOf(bridgeMethod).asBridgeOf(bridgeTarget).prependThisReference(),
-                                MethodInvocation.invoke(bridgeTarget).virtual(instrumentedType),
-                                bridgeTarget.getReturnType().asErasure().isAssignableTo(bridgeMethod.getReturnType().asErasure())
-                                        ? StackManipulation.Trivial.INSTANCE
-                                        : TypeCasting.to(bridgeMethod.getReturnType().asErasure()),
-                                MethodReturn.of(bridgeMethod.getReturnType())
-                        ).apply(methodVisitor, implementationContext, bridgeMethod);
-                        methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
-                        methodVisitor.visitEnd();
+                        if (methodVisitor != null) {
+                            attributeAppender.apply(methodVisitor, bridgeMethod, annotationValueFilterFactory.on(instrumentedType));
+                            methodVisitor.visitCode();
+                            ByteCodeAppender.Size size = new ByteCodeAppender.Simple(
+                                    MethodVariableAccess.allArgumentsOf(bridgeMethod).asBridgeOf(bridgeTarget).prependThisReference(),
+                                    MethodInvocation.invoke(bridgeTarget).virtual(instrumentedType),
+                                    bridgeTarget.getReturnType().asErasure().isAssignableTo(bridgeMethod.getReturnType().asErasure())
+                                            ? StackManipulation.Trivial.INSTANCE
+                                            : TypeCasting.to(bridgeMethod.getReturnType().asErasure()),
+                                    MethodReturn.of(bridgeMethod.getReturnType())
+                            ).apply(methodVisitor, implementationContext, bridgeMethod);
+                            methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
+                            methodVisitor.visitEnd();
+                        }
                     }
                 }
 
@@ -1743,6 +1751,16 @@ public interface TypeWriter<T> {
             private static final String STRING_DESCRIPTOR = "Ljava/lang/String;";
 
             /**
+             * Indicates that a field is ignored.
+             */
+            private static final FieldVisitor IGNORE_FIELD = null;
+
+            /**
+             * Indicates that a method is ignored.
+             */
+            private static final MethodVisitor IGNORE_METHOD = null;
+
+            /**
              * The constraint to assert the members against. The constraint is first defined when the general class information is visited.
              */
             private Constraint constraint;
@@ -1868,7 +1886,10 @@ public interface TypeWriter<T> {
                     }
                 }
                 constraint.assertField(name, (modifiers & Opcodes.ACC_PUBLIC) != 0, (modifiers & Opcodes.ACC_STATIC) != 0, signature != null);
-                return new ValidatingFieldVisitor(super.visitField(modifiers, name, descriptor, signature, defaultValue));
+                FieldVisitor fieldVisitor = super.visitField(modifiers, name, descriptor, signature, defaultValue);
+                return fieldVisitor == null
+                        ? IGNORE_FIELD
+                        : new ValidatingFieldVisitor(fieldVisitor);
             }
 
             @Override
@@ -1884,7 +1905,10 @@ public interface TypeWriter<T> {
                         name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME),
                         !descriptor.startsWith(NO_PARAMETERS) || descriptor.endsWith(RETURNS_VOID),
                         signature != null);
-                return new ValidatingMethodVisitor(super.visitMethod(modifiers, name, descriptor, signature, exceptions), name);
+                MethodVisitor methodVisitor = super.visitMethod(modifiers, name, descriptor, signature, exceptions);
+                return methodVisitor == null
+                        ? IGNORE_METHOD
+                        : new ValidatingMethodVisitor(methodVisitor, name);
             }
 
             /**
@@ -2791,6 +2815,11 @@ public interface TypeWriter<T> {
              * Indicates that a type does not define a super type in its class file, i.e. the {@link Object} type.
              */
             private static final String NO_SUPER_TYPE = null;
+
+            /**
+             * Indicates that a field should be ignored.
+             */
+            private static final FieldVisitor IGNORE_FIELD = null;
 
             /**
              * Indicates that a method should be ignored.
@@ -3732,11 +3761,14 @@ public interface TypeWriter<T> {
                  */
                 protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue) {
                     FieldDescription instrumentedField = record.getField();
-                    return new AttributeObtainingFieldVisitor(super.visitField(instrumentedField.getActualModifiers(),
+                    FieldVisitor fieldVisitor = super.visitField(instrumentedField.getActualModifiers(),
                             instrumentedField.getInternalName(),
                             instrumentedField.getDescriptor(),
                             instrumentedField.getGenericSignature(),
-                            record.resolveDefault(defaultValue)), record);
+                            record.resolveDefault(defaultValue));
+                    return fieldVisitor == null
+                            ? IGNORE_FIELD
+                            : new AttributeObtainingFieldVisitor(fieldVisitor, record);
                 }
 
                 @Override
@@ -3746,8 +3778,11 @@ public interface TypeWriter<T> {
                                                  String genericSignature,
                                                  String[] exceptionName) {
                     if (internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)) {
-                        return (MethodVisitor) (initializationHandler = InitializationHandler.Appending.of(implementationContext.isEnabled(),
-                                super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName),
+                        MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionName);
+                        return methodVisitor == null
+                                ? IGNORE_METHOD
+                                : (MethodVisitor) (initializationHandler = InitializationHandler.Appending.of(implementationContext.isEnabled(),
+                                methodVisitor,
                                 instrumentedType,
                                 methodPool,
                                 annotationValueFilterFactory,
@@ -3786,17 +3821,21 @@ public interface TypeWriter<T> {
                             implementedMethod.getDescriptor(),
                             implementedMethod.getGenericSignature(),
                             implementedMethod.getExceptionTypes().asErasures().toInternalNames());
-                    if (abstractOrigin) {
+                    if (methodVisitor == null) {
+                        return IGNORE_METHOD;
+                    } else if (abstractOrigin) {
                         return new AttributeObtainingMethodVisitor(methodVisitor, record);
                     } else if (methodDescription.isNative()) {
                         MethodRebaseResolver.Resolution resolution = methodRebaseResolver.resolve(implementedMethod.asDefined());
                         if (resolution.isRebased()) {
-                            MethodVisitor rebasedMethod = super.visitMethod(resolution.getResolvedMethod().getActualModifiers(),
+                            MethodVisitor rebasedMethodVisitor = super.visitMethod(resolution.getResolvedMethod().getActualModifiers(),
                                     resolution.getResolvedMethod().getInternalName(),
                                     resolution.getResolvedMethod().getDescriptor(),
                                     resolution.getResolvedMethod().getGenericSignature(),
                                     resolution.getResolvedMethod().getExceptionTypes().asErasures().toInternalNames());
-                            rebasedMethod.visitEnd();
+                            if (rebasedMethodVisitor != null) {
+                                rebasedMethodVisitor.visitEnd();
+                            }
                         }
                         return new AttributeObtainingMethodVisitor(methodVisitor, record);
                     } else {
