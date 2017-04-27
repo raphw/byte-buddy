@@ -85,7 +85,7 @@ public class TransformerForFieldTest {
 
     @Test
     public void testModifierTransformation() throws Exception {
-        FieldDescription.Token transformed = new Transformer.ForField.FieldModifierTransformer(Collections.singletonList(modifierContributor))
+        FieldDescription.Token transformed = new Transformer.ForField.FieldModifierTransformer(ModifierContributor.Resolver.of(modifierContributor))
                 .transform(instrumentedType, fieldToken);
         assertThat(transformed.getName(), is(FOO));
         assertThat(transformed.getModifiers(), is((MODIFIERS & ~RANGE) | MASK));

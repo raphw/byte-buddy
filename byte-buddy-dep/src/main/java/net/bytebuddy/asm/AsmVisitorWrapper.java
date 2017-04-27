@@ -181,7 +181,11 @@ public interface AsmVisitorWrapper {
                                  MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
-            return new DispatchingVisitor(classVisitor, instrumentedType, fields);
+            Map<String, FieldDescription.InDefinedShape> mapped = new HashMap<String, FieldDescription.InDefinedShape>();
+            for (FieldDescription.InDefinedShape fieldDescription : fields) {
+                mapped.put(fieldDescription.getInternalName() + fieldDescription.getDescriptor(), fieldDescription);
+            }
+            return new DispatchingVisitor(classVisitor, instrumentedType, mapped);
         }
 
         /**
@@ -254,7 +258,7 @@ public interface AsmVisitorWrapper {
             /**
              * A mapping of fields by their name and descriptor key-combination.
              */
-            private final Map<String, FieldDescription.InDefinedShape> knownFields;
+            private final Map<String, FieldDescription.InDefinedShape> fields;
 
             /**
              * Creates a new dispatching visitor.
@@ -263,22 +267,21 @@ public interface AsmVisitorWrapper {
              * @param instrumentedType The instrumented type.
              * @param fields           The instrumented type's declared fields.
              */
-            protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType, FieldList<FieldDescription.InDefinedShape> fields) {
+            protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType, Map<String, FieldDescription.InDefinedShape> fields) {
                 super(Opcodes.ASM5, classVisitor);
                 this.instrumentedType = instrumentedType;
-                knownFields = new HashMap<String, FieldDescription.InDefinedShape>();
-                for (FieldDescription.InDefinedShape fieldDescription : fields) {
-                    knownFields.put(fieldDescription.getInternalName() + fieldDescription.getDescriptor(), fieldDescription);
-                }
+                this.fields = fields;
             }
 
             @Override
             public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String signature, Object defaultValue) {
                 FieldVisitor fieldVisitor = super.visitField(modifiers, internalName, descriptor, signature, defaultValue);
-                FieldDescription.InDefinedShape fieldDescription = knownFields.get(internalName + descriptor);
-                for (Entry entry : entries) {
-                    if (entry.matches(fieldDescription)) {
-                        fieldVisitor = entry.wrap(instrumentedType, fieldDescription, fieldVisitor);
+                FieldDescription.InDefinedShape fieldDescription = fields.get(internalName + descriptor);
+                if (fieldDescription != null) {
+                    for (Entry entry : entries) {
+                        if (entry.matches(fieldDescription)) {
+                            fieldVisitor = entry.wrap(instrumentedType, fieldDescription, fieldVisitor);
+                        }
                     }
                 }
                 return fieldVisitor;
@@ -395,11 +398,15 @@ public interface AsmVisitorWrapper {
                                  MethodList<?> methods,
                                  int writerFlags,
                                  int readerFlags) {
+            Map<String, MethodDescription> mapped = new HashMap<String, MethodDescription>();
+            for (MethodDescription methodDescription : CompoundList.<MethodDescription>of(methods, new MethodDescription.Latent.TypeInitializer(instrumentedType))) {
+                mapped.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
+            }
             return new DispatchingVisitor(classVisitor,
                     instrumentedType,
                     implementationContext,
                     typePool,
-                    methods,
+                    mapped,
                     writerFlags,
                     readerFlags);
         }
@@ -516,7 +523,7 @@ public interface AsmVisitorWrapper {
             /**
              * A mapping of fields by their name.
              */
-            private final Map<String, MethodDescription> knownMethods;
+            private final Map<String, MethodDescription> methods;
 
             /**
              * Creates a new dispatching visitor.
@@ -533,34 +540,33 @@ public interface AsmVisitorWrapper {
                                          TypeDescription instrumentedType,
                                          Implementation.Context implementationContext,
                                          TypePool typePool,
-                                         MethodList<?> methods,
+                                         Map<String, MethodDescription> methods,
                                          int writerFlags,
                                          int readerFlags) {
                 super(Opcodes.ASM5, classVisitor);
                 this.instrumentedType = instrumentedType;
                 this.implementationContext = implementationContext;
                 this.typePool = typePool;
+                this.methods = methods;
                 this.writerFlags = writerFlags;
                 this.readerFlags = readerFlags;
-                knownMethods = new HashMap<String, MethodDescription>();
-                for (MethodDescription methodDescription : methods) {
-                    knownMethods.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
-                }
             }
 
             @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exceptions) {
                 MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, signature, exceptions);
-                MethodDescription methodDescription = knownMethods.get(internalName + descriptor);
-                for (Entry entry : entries) {
-                    if (entry.matches(methodDescription)) {
-                        methodVisitor = entry.wrap(instrumentedType,
-                                methodDescription,
-                                methodVisitor,
-                                implementationContext,
-                                typePool,
-                                writerFlags,
-                                readerFlags);
+                MethodDescription methodDescription = methods.get(internalName + descriptor);
+                if (methodDescription != null) {
+                    for (Entry entry : entries) {
+                        if (entry.matches(methodDescription)) {
+                            methodVisitor = entry.wrap(instrumentedType,
+                                    methodDescription,
+                                    methodVisitor,
+                                    implementationContext,
+                                    typePool,
+                                    writerFlags,
+                                    readerFlags);
+                        }
                     }
                 }
                 return methodVisitor;

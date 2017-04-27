@@ -130,7 +130,7 @@ public class TransformerForMethodTest {
 
     @Test
     public void testModifierTransformation() throws Exception {
-        MethodDescription.Token transformed = new Transformer.ForMethod.MethodModifierTransformer(Collections.singletonList(modifierContributor))
+        MethodDescription.Token transformed = new Transformer.ForMethod.MethodModifierTransformer(ModifierContributor.Resolver.of(modifierContributor))
                 .transform(instrumentedType, methodToken);
         assertThat(transformed.getName(), is(FOO));
         assertThat(transformed.getModifiers(), is((MODIFIERS & ~RANGE) | MASK));

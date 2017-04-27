@@ -89,7 +89,17 @@ public interface Transformer<T> {
          * @return A suitable field transformer.
          */
         public static Transformer<FieldDescription> withModifiers(ModifierContributor.ForField... modifierContributor) {
-            return new ForField(new FieldModifierTransformer(Arrays.asList(modifierContributor)));
+            return withModifiers(Arrays.asList(modifierContributor));
+        }
+
+        /**
+         * Creates a field transformer that patches the transformed field by the givien modifier contributors.
+         *
+         * @param modifierContributors The modifier contributors to apply.
+         * @return A suitable field transformer.
+         */
+        public static Transformer<FieldDescription> withModifiers(List<? extends ModifierContributor.ForField> modifierContributors) {
+            return new ForField(new FieldModifierTransformer(ModifierContributor.Resolver.of(modifierContributors)));
         }
 
         @Override
@@ -107,23 +117,23 @@ public interface Transformer<T> {
         protected static class FieldModifierTransformer implements Transformer<FieldDescription.Token> {
 
             /**
-             * The list of modifier contributors to apply onto the transformed field token.
+             * The resolver to apply for transforming the modifiers of a field.
              */
-            private final List<? extends ModifierContributor.ForField> modifierContributors;
+            private final ModifierContributor.Resolver<ModifierContributor.ForField> resolver;
 
             /**
              * Creates a new field token modifier for transforming a field's modifiers.
              *
-             * @param modifierContributors The list of modifier contributors to apply onto the transformed field token.
+             * @param resolver The resolver to apply for transforming the modifiers of a field.
              */
-            public FieldModifierTransformer(List<? extends ModifierContributor.ForField> modifierContributors) {
-                this.modifierContributors = modifierContributors;
+            protected FieldModifierTransformer(ModifierContributor.Resolver<ModifierContributor.ForField> resolver) {
+                this.resolver = resolver;
             }
 
             @Override
             public FieldDescription.Token transform(TypeDescription instrumentedType, FieldDescription.Token target) {
                 return new FieldDescription.Token(target.getName(),
-                        ModifierContributor.Resolver.of(modifierContributors).resolve(target.getModifiers()),
+                        resolver.resolve(target.getModifiers()),
                         target.getType(),
                         target.getAnnotations());
             }
@@ -228,11 +238,22 @@ public interface Transformer<T> {
          * Creates a transformer that enforces the supplied modifier contributors. All ranges of each contributor is first cleared and then overridden
          * by the specified modifiers in the order they are supplied.
          *
-         * @param modifierTransformer The modifier transformers in their application order.
+         * @param modifierContributor The modifier transformers in their application order.
          * @return A method transformer where each method's modifiers are adapted to the given modifiers.
          */
-        public static Transformer<MethodDescription> withModifiers(ModifierContributor.ForMethod... modifierTransformer) {
-            return new ForMethod(new MethodModifierTransformer(Arrays.asList(modifierTransformer)));
+        public static Transformer<MethodDescription> withModifiers(ModifierContributor.ForMethod... modifierContributor) {
+            return withModifiers(Arrays.asList(modifierContributor));
+        }
+
+        /**
+         * Creates a transformer that enforces the supplied modifier contributors. All ranges of each contributor is first cleared and then overridden
+         * by the specified modifiers in the order they are supplied.
+         *
+         * @param modifierContributors The modifier contributors in their application order.
+         * @return A method transformer where each method's modifiers are adapted to the given modifiers.
+         */
+        public static Transformer<MethodDescription> withModifiers(List<? extends ModifierContributor.ForMethod> modifierContributors) {
+            return new ForMethod(new MethodModifierTransformer(ModifierContributor.Resolver.of(modifierContributors)));
         }
 
         @Override
@@ -250,23 +271,23 @@ public interface Transformer<T> {
         protected static class MethodModifierTransformer implements Transformer<MethodDescription.Token> {
 
             /**
-             * The modifier contributors to apply on each transformation.
+             * The resolver to apply onto the method's modifiers.
              */
-            private final List<? extends ModifierContributor.ForMethod> modifierContributors;
+            private final ModifierContributor.Resolver<ModifierContributor.ForMethod> resolver;
 
             /**
              * Creates a new modifier transformation.
              *
-             * @param modifierContributors The modifier contributors to apply on each transformation in their application order.
+             * @param resolver The resolver to apply onto the method's modifiers.
              */
-            public MethodModifierTransformer(List<? extends ModifierContributor.ForMethod> modifierContributors) {
-                this.modifierContributors = modifierContributors;
+            protected MethodModifierTransformer(ModifierContributor.Resolver<ModifierContributor.ForMethod> resolver) {
+                this.resolver = resolver;
             }
 
             @Override
             public MethodDescription.Token transform(TypeDescription instrumentedType, MethodDescription.Token target) {
                 return new MethodDescription.Token(target.getName(),
-                        ModifierContributor.Resolver.of(modifierContributors).resolve(target.getModifiers()),
+                        resolver.resolve(target.getModifiers()),
                         target.getTypeVariableTokens(),
                         target.getReturnType(),
                         target.getParameterTokens(),
