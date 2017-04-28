@@ -14,6 +14,7 @@ import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.DefaultValue;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -23,10 +24,12 @@ import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -335,6 +338,16 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
          */
         protected abstract Substitution doReplaceWith(MethodDescription methodDescription);
 
+        public SubstitutionChain chain() {
+            return chain(Assigner.DEFAULT);
+        }
+
+        public SubstitutionChain chain(Assigner assigner) {
+            return new SubstitutionChain(assigner, Collections.<Substitution.Resolver.Chaining.Target>emptyList());
+        }
+
+        protected abstract Substitution doChain(Assigner assigner, List<Substitution.Resolver.Chaining.Target> chain);
+
         /**
          * Describes a member substitution that requires a specification for how to replace a byte code element.
          */
@@ -510,6 +523,57 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
             @Override
             protected Substitution doReplaceWith(MethodDescription methodDescription) {
                 return new Substitution.ForElementMatchers(none(), matcher, new Substitution.Resolver.MethodInvoking(methodDescription));
+            }
+        }
+
+        public class SubstitutionChain {
+
+            private final Assigner assigner;
+
+            private final List<Substitution.Resolver.Chaining.Target> chain;
+
+            protected SubstitutionChain(Assigner assigner, List<Substitution.Resolver.Chaining.Target> chain) {
+                this.methodGraphCompiler = methodGraphCompiler;
+                this.strict = strict;
+                this.substitution = substitution;
+                this.assigner = assigner;
+                this.chain = chain;
+            }
+
+            public SubstitutionChain access(Field field) {
+                return access(new FieldDescription.ForLoadedField(field));
+            }
+
+            public SubstitutionChain access(FieldDescription fieldDescription) {
+                return null;
+            }
+
+            public SubstitutionChain invoke(Method method) {
+                return invoke(new MethodDescription.ForLoadedMethod(method));
+            }
+
+            public SubstitutionChain invoke(Constructor<?> constructor) {
+                return invoke(new MethodDescription.ForLoadedConstructor(constructor));
+            }
+
+            public SubstitutionChain invoke(MethodDescription methodDescription) {
+                return null;
+            }
+
+            public SubstitutionChain original() {
+                return null;
+            }
+
+            public MemberSubstitution complete() {
+                return new MemberSubstitution(methodGraphCompiler,
+                        strict,
+                        new Substitution.Compound(doChain(assigner, chain), substitution));
+            }
+
+            public MemberSubstitution completeWithStub() {
+                return new MemberSubstitution(methodGraphCompiler,
+                        strict,
+                        new Substitution.Compound(doChain(assigner, chain), substitution));
             }
         }
     }
@@ -717,6 +781,27 @@ public class MemberSubstitution implements AsmVisitorWrapper.ForDeclaredMethods.
                     return methodDescription.isVirtual()
                             ? MethodInvocation.invoke(methodDescription).virtual(target.getDeclaringType().asErasure())
                             : MethodInvocation.invoke(methodDescription);
+                }
+            }
+
+            @EqualsAndHashCode
+            class Chaining implements Resolver {
+
+                @Override
+                public boolean isResolved() {
+                    return true;
+                }
+
+                @Override
+                public StackManipulation apply(TypeDescription instrumentedType,
+                                               ByteCodeElement target,
+                                               TypeList.Generic arguments,
+                                               TypeDescription.Generic result) {
+                    return null;
+                }
+
+                protected static class Target {
+
                 }
             }
         }
