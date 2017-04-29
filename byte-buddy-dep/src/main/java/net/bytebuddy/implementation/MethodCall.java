@@ -14,6 +14,7 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayAccess;
+import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -393,7 +394,17 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall withAllArguments() {
         return new MethodCall(methodLocator,
                 targetHandler,
-                CompoundList.of(this.argumentLoaders, ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.INSTANCE),
+                CompoundList.of(argumentLoaders, ArgumentLoader.ForMethodParameter.OfInstrumentedMethod.INSTANCE),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                typing);
+    }
+
+    public MethodCall withArgumentArray() { // TODO: Test
+        return new MethodCall(methodLocator,
+                targetHandler,
+                CompoundList.of(argumentLoaders, ArgumentLoader.ForMethodParameterArray.Factory.INSTANCE),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -419,7 +430,7 @@ public class MethodCall implements Implementation.Composable {
         }
         return new MethodCall(methodLocator,
                 targetHandler,
-                CompoundList.of(this.argumentLoaders, new ArgumentLoader.ForMethodParameterArray.OfInvokedMethod(index)),
+                CompoundList.of(argumentLoaders, new ArgumentLoader.ForMethodParameterArrayElement.OfInvokedMethod(index)),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -471,7 +482,7 @@ public class MethodCall implements Implementation.Composable {
         }
         List<ArgumentLoader.Factory> argumentLoaders = new ArrayList<ArgumentLoader.Factory>(size);
         for (int position = 0; position < size; position++) {
-            argumentLoaders.add(new ArgumentLoader.ForMethodParameterArray.OfParameter(index, start + position));
+            argumentLoaders.add(new ArgumentLoader.ForMethodParameterArrayElement.OfParameter(index, start + position));
         }
         return new MethodCall(methodLocator,
                 targetHandler,
@@ -1192,6 +1203,180 @@ public class MethodCall implements Implementation.Composable {
             }
         }
 
+        class ForMethodParameterArray implements ArgumentLoader {
+
+            private final ParameterList<?> parameters;
+
+            public ForMethodParameterArray(ParameterList<?> parameters) {
+                this.parameters = parameters;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                TypeDescription.Generic componentType;
+                if (target.getType().represents(Object.class)) {
+                    componentType = TypeDescription.Generic.OBJECT;
+                } else if (target.getType().isArray()) {
+                    componentType = target.getType().getComponentType();
+                } else {
+                    throw new IllegalStateException();
+                }
+                List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(parameters.size());
+                for (ParameterDescription parameter : parameters) {
+                    StackManipulation stackManipulation = new StackManipulation.Compound(
+                            MethodVariableAccess.load(parameter),
+                            assigner.assign(parameter.getType(), componentType, typing)
+                    );
+                    if (stackManipulation.isValid()) {
+                        stackManipulations.add(stackManipulation);
+                    } else {
+                        throw new IllegalStateException("Cannot assign " + parameter + " to " + componentType);
+                    }
+                }
+                return new StackManipulation.Compound(ArrayFactory.forType(componentType).withValues(stackManipulations));
+            }
+
+            public enum Factory implements ArgumentLoader.Factory {
+
+                INSTANCE;
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArray(instrumentedMethod.getParameters()));
+                }
+            }
+        }
+
+        /**
+         * An argument loader that loads an element of a parameter of an array type.
+         */
+        @EqualsAndHashCode
+        class ForMethodParameterArrayElement implements ArgumentLoader {
+
+            /**
+             * The parameter to load the array from.
+             */
+            private final ParameterDescription parameterDescription;
+
+            /**
+             * The array index to load.
+             */
+            private final int index;
+
+            /**
+             * Creates an argument loader for a parameter of the instrumented method where an array element is assigned to the invoked method.
+             *
+             * @param parameterDescription The parameter from which to load an array element.
+             * @param index                The array index to load.
+             */
+            protected ForMethodParameterArrayElement(ParameterDescription parameterDescription, int index) {
+                this.parameterDescription = parameterDescription;
+                this.index = index;
+            }
+
+            @Override
+            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
+                StackManipulation stackManipulation = new StackManipulation.Compound(
+                        MethodVariableAccess.load(parameterDescription),
+                        IntegerConstant.forValue(index),
+                        ArrayAccess.of(parameterDescription.getType().getComponentType()).load(),
+                        assigner.assign(parameterDescription.getType().getComponentType(), target.getType(), typing)
+                );
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot assign " + parameterDescription.getType().getComponentType() + " to " + target);
+                }
+                return stackManipulation;
+            }
+
+            /**
+             * Creates an argument loader for an array element that of a specific parameter.
+             */
+            @EqualsAndHashCode
+            protected static class OfParameter implements ArgumentLoader.Factory {
+
+                /**
+                 * The parameter index.
+                 */
+                private final int index;
+
+                /**
+                 * The array index to load.
+                 */
+                private final int arrayIndex;
+
+                /**
+                 * Creates a factory for an argument loader that loads a given parameter's array value.
+                 *
+                 * @param index      The index of the parameter.
+                 * @param arrayIndex The array index to load.
+                 */
+                protected OfParameter(int index, int arrayIndex) {
+                    this.index = index;
+                    this.arrayIndex = arrayIndex;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    if (instrumentedMethod.getParameters().size() <= index) {
+                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
+                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
+                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
+                    }
+                    return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArrayElement(instrumentedMethod.getParameters().get(index), arrayIndex));
+                }
+            }
+
+            /**
+             * An argument loader factory that loads an array element from a parameter for each argument of the invoked method.
+             */
+            @EqualsAndHashCode
+            protected static class OfInvokedMethod implements ArgumentLoader.Factory {
+
+                /**
+                 * The parameter index.
+                 */
+                private final int index;
+
+                /**
+                 * Creates an argument loader factory for an invoked method.
+                 *
+                 * @param index The parameter index.
+                 */
+                protected OfInvokedMethod(int index) {
+                    this.index = index;
+                }
+
+                @Override
+                public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                    return instrumentedType;
+                }
+
+                @Override
+                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
+                    if (instrumentedMethod.getParameters().size() <= index) {
+                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
+                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
+                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
+                    }
+                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
+                    for (int index = 0; index < invokedMethod.getParameters().size(); index++) {
+                        argumentLoaders.add(new ForMethodParameterArrayElement(instrumentedMethod.getParameters().get(this.index), index++));
+                    }
+                    return argumentLoaders;
+                }
+            }
+        }
+
         /**
          * Loads a value onto the operand stack that is stored in a static field.
          */
@@ -1394,131 +1579,6 @@ public class MethodCall implements Implementation.Composable {
                         throw new IllegalStateException("Could not locate field '" + name + "' on " + instrumentedType);
                     }
                     return Collections.<ArgumentLoader>singletonList(new ForField(resolution.getField(), instrumentedMethod));
-                }
-            }
-        }
-
-        /**
-         * An argument loader that loads an element of a parameter of an array type.
-         */
-        @EqualsAndHashCode
-        class ForMethodParameterArray implements ArgumentLoader {
-
-            /**
-             * The parameter to load the array from.
-             */
-            private final ParameterDescription parameterDescription;
-
-            /**
-             * The array index to load.
-             */
-            private final int index;
-
-            /**
-             * Creates an argument loader for a parameter of the instrumented method where an array element is assigned to the invoked method.
-             *
-             * @param parameterDescription The parameter from which to load an array element.
-             * @param index                The array index to load.
-             */
-            protected ForMethodParameterArray(ParameterDescription parameterDescription, int index) {
-                this.parameterDescription = parameterDescription;
-                this.index = index;
-            }
-
-            @Override
-            public StackManipulation resolve(ParameterDescription target, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.load(parameterDescription),
-                        IntegerConstant.forValue(index),
-                        ArrayAccess.of(parameterDescription.getType().getComponentType()).load(),
-                        assigner.assign(parameterDescription.getType().getComponentType(), target.getType(), typing)
-                );
-                if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot assign " + parameterDescription.getType().getComponentType() + " to " + target);
-                }
-                return stackManipulation;
-            }
-
-            /**
-             * Creates an argument loader for an array element that of a specific parameter.
-             */
-            @EqualsAndHashCode
-            protected static class OfParameter implements ArgumentLoader.Factory {
-
-                /**
-                 * The parameter index.
-                 */
-                private final int index;
-
-                /**
-                 * The array index to load.
-                 */
-                private final int arrayIndex;
-
-                /**
-                 * Creates a factory for an argument loader that loads a given parameter's array value.
-                 *
-                 * @param index      The index of the parameter.
-                 * @param arrayIndex The array index to load.
-                 */
-                protected OfParameter(int index, int arrayIndex) {
-                    this.index = index;
-                    this.arrayIndex = arrayIndex;
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    if (instrumentedMethod.getParameters().size() <= index) {
-                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
-                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
-                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
-                    }
-                    return Collections.<ArgumentLoader>singletonList(new ForMethodParameterArray(instrumentedMethod.getParameters().get(index), arrayIndex));
-                }
-            }
-
-            /**
-             * An argument loader factory that loads an array element from a parameter for each argument of the invoked method.
-             */
-            @EqualsAndHashCode
-            protected static class OfInvokedMethod implements ArgumentLoader.Factory {
-
-                /**
-                 * The parameter index.
-                 */
-                private final int index;
-
-                /**
-                 * Creates an argument loader factory for an invoked method.
-                 *
-                 * @param index The parameter index.
-                 */
-                protected OfInvokedMethod(int index) {
-                    this.index = index;
-                }
-
-                @Override
-                public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                    return instrumentedType;
-                }
-
-                @Override
-                public List<ArgumentLoader> make(TypeDescription instrumentedType, MethodDescription instrumentedMethod, MethodDescription invokedMethod) {
-                    if (instrumentedMethod.getParameters().size() <= index) {
-                        throw new IllegalStateException(instrumentedMethod + " does not declare a parameter with index " + index);
-                    } else if (!instrumentedMethod.getParameters().get(index).getType().isArray()) {
-                        throw new IllegalStateException("Cannot access an item from non-array parameter " + instrumentedMethod.getParameters().get(index));
-                    }
-                    List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(instrumentedMethod.getParameters().size());
-                    for (int index = 0; index < invokedMethod.getParameters().size(); index++) {
-                        argumentLoaders.add(new ForMethodParameterArray(instrumentedMethod.getParameters().get(this.index), index++));
-                    }
-                    return argumentLoaders;
                 }
             }
         }

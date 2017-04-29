@@ -135,7 +135,6 @@ public @interface AllArguments {
             } else {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
-            ArrayFactory arrayFactory = ArrayFactory.forType(componentType);
             boolean includeThis = !source.isStatic() && annotation.loadSilent().includeSelf();
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
             int offset = source.isStatic() || includeThis ? 0 : 1;
@@ -144,7 +143,7 @@ public @interface AllArguments {
                     : source.getParameters().asTypeList()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.of(sourceParameter).loadFrom(offset),
-                        assigner.assign(sourceParameter, arrayFactory.getComponentType(), typing)
+                        assigner.assign(sourceParameter, componentType, typing)
                 );
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);
@@ -153,7 +152,7 @@ public @interface AllArguments {
                 }
                 offset += sourceParameter.getStackSize().getSize();
             }
-            return new MethodDelegationBinder.ParameterBinding.Anonymous(arrayFactory.withValues(stackManipulations));
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(ArrayFactory.forType(componentType).withValues(stackManipulations));
         }
     }
 }
