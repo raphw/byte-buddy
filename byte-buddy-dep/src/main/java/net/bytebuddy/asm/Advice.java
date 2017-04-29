@@ -290,7 +290,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(TypeDescription advice, ClassFileLocator classFileLocator) {
-        return to(advice, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory>emptyList());
+        return to(advice, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory<?>>emptyList());
     }
 
     /**
@@ -301,7 +301,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param userFactories    A list of custom factories for user generated offset mappings.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    protected static Advice to(TypeDescription advice, ClassFileLocator classFileLocator, List<? extends Dispatcher.OffsetMapping.Factory> userFactories) {
+    protected static Advice to(TypeDescription advice, ClassFileLocator classFileLocator, List<? extends Dispatcher.OffsetMapping.Factory<?>> userFactories) {
         Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
         for (MethodDescription.InDefinedShape methodDescription : advice.getDeclaredMethods()) {
             methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription);
@@ -370,7 +370,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice, ClassFileLocator classFileLocator) {
-        return to(enterAdvice, exitAdvice, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory>emptyList());
+        return to(enterAdvice, exitAdvice, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory<?>>emptyList());
     }
 
     /**
@@ -385,7 +385,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     protected static Advice to(TypeDescription enterAdvice,
                                TypeDescription exitAdvice,
                                ClassFileLocator classFileLocator,
-                               List<? extends Dispatcher.OffsetMapping.Factory> userFactories) {
+                               List<? extends Dispatcher.OffsetMapping.Factory<?>> userFactories) {
         Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
         for (MethodDescription.InDefinedShape methodDescription : enterAdvice.getDeclaredMethods()) {
             methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription);
@@ -1559,7 +1559,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param classReader   A class reader to query for a class file which might be {@code null} if this dispatcher is not binary.
              * @return This dispatcher as a dispatcher for entering a method.
              */
-            Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories,
+            Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                   ClassReader classReader);
 
             /**
@@ -1570,7 +1570,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param dispatcher    The dispatcher for entering a method.
              * @return This dispatcher as a dispatcher for exiting a method.
              */
-            Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
+            Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                   ClassReader classReader,
                                                   Resolved.ForMethodEnter dispatcher);
         }
@@ -2280,22 +2280,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * Represents a factory for creating a {@link OffsetMapping} for a given parameter.
+             * Represents a factory for creating a {@link OffsetMapping} for a given parameter for a given annotation.
+             *
+             * @param <T> the annotation type that triggers this factory.
              */
-            interface Factory {
+            interface Factory<T extends Annotation> {
 
                 /**
-                 * Indicates that an offset mapping is undefined.
+                 * Returns the annotation type of this factory.
+                 *
+                 * @return The factory's annotation type.
                  */
-                OffsetMapping UNDEFINED = null;
+                Class<T> getAnnotationType();
 
                 /**
                  * Creates a new offset mapping for the supplied parameter if possible.
                  *
                  * @param parameterDescription The parameter description for which to resolve an offset mapping.
+                 * @param annotation           The annotation that triggered this factory.
                  * @return A resolved offset mapping or {@code null} if no mapping can be resolved for this parameter.
                  */
-                OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription);
+                OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<T> annotation);
             }
 
             /**
@@ -2383,7 +2388,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory for a mapping of a parameter of the instrumented method.
                  */
-                protected enum Factory implements OffsetMapping.Factory {
+                protected enum Factory implements OffsetMapping.Factory<Argument> {
 
                     /**
                      * A factory that does not allow writing to the mapped parameter.
@@ -2410,11 +2415,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<Argument> annotation = parameterDescription.getDeclaredAnnotations().ofType(Argument.class);
-                        if (annotation == null) {
-                            return UNDEFINED;
-                        } else if (readOnly && !annotation.loadSilent().readOnly()) {
+                    public Class<Argument> getAnnotationType() {
+                        return Argument.class;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<Argument> annotation) {
+                        if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot define writable field access for " + parameterDescription);
                         } else {
                             return new ForArgument(parameterDescription.getType(), annotation.loadSilent());
@@ -2507,7 +2514,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory for creating a {@link ForThisReference} offset mapping.
                  */
-                protected enum Factory implements OffsetMapping.Factory {
+                protected enum Factory implements OffsetMapping.Factory<This> {
 
                     /**
                      * A factory that does not allow writing to the mapped parameter.
@@ -2533,12 +2540,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.readOnly = readOnly;
                     }
 
+
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<This> annotation = parameterDescription.getDeclaredAnnotations().ofType(This.class);
-                        if (annotation == null) {
-                            return UNDEFINED;
-                        } else if (readOnly && !annotation.loadSilent().readOnly()) {
+                    public Class<This> getAnnotationType() {
+                        return This.class;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<This> annotation) {
+                        if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot write to this reference for " + parameterDescription + " in read-only context");
                         } else {
                             return new ForThisReference(parameterDescription.getType(), annotation.loadSilent());
@@ -2619,7 +2629,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory for an offset mapping that maps all arguments values of the instrumented method.
                  */
-                protected enum Factory implements OffsetMapping.Factory {
+                protected enum Factory implements OffsetMapping.Factory<AllArguments> {
 
                     /**
                      * A read-only offset mapping for an array containing all arguments.
@@ -2645,17 +2655,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.readOnly = readOnly;
                     }
 
+
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<AllArguments> annotation = parameterDescription.getDeclaredAnnotations().ofType(AllArguments.class);
-                        if (annotation == null) {
-                            return UNDEFINED;
-                        } else if (!parameterDescription.getType().isArray()) {
+                    public Class<AllArguments> getAnnotationType() {
+                        return AllArguments.class;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<AllArguments> annotation) {
+                        if (!parameterDescription.getType().represents(Object.class) && !parameterDescription.getType().isArray()) {
                             throw new IllegalStateException("Cannot use AllArguments annotation on a non-array type");
                         } else if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot define writable field access for " + parameterDescription);
                         } else {
-                            return new ForAllArguments(parameterDescription.getType().getComponentType(), annotation.loadSilent());
+                            return new ForAllArguments(parameterDescription.getType().represents(Object.class)
+                                    ? TypeDescription.Generic.OBJECT // TODO: Test
+                                    : parameterDescription.getType().getComponentType(), annotation.loadSilent());
                         }
                     }
                 }
@@ -2920,7 +2935,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory for a {@link ForField} offset mapping.
                  */
-                protected enum Factory implements OffsetMapping.Factory {
+                protected enum Factory implements OffsetMapping.Factory<FieldValue> {
 
                     /**
                      * A factory that does not allow writing to the mapped parameter.
@@ -2946,12 +2961,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.readOnly = readOnly;
                     }
 
+
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<FieldValue> annotation = parameterDescription.getDeclaredAnnotations().ofType(FieldValue.class);
-                        if (annotation == null) {
-                            return UNDEFINED;
-                        } else if (readOnly && !annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class)) {
+                    public Class<FieldValue> getAnnotationType() {
+                        return FieldValue.class;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<FieldValue> annotation) {
+                        if (readOnly && !annotation.getValue(ForField.READ_ONLY).resolve(Boolean.class)) {
                             throw new IllegalStateException("Cannot write to field for " + parameterDescription + " in read-only context");
                         } else {
                             TypeDescription declaringType = annotation.getValue(DECLARING_TYPE).resolve(TypeDescription.class);
@@ -3224,7 +3242,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory for a method origin.
                  */
-                protected enum Factory implements OffsetMapping.Factory {
+                protected enum Factory implements OffsetMapping.Factory<Origin> {
 
                     /**
                      * The singleton instance.
@@ -3232,11 +3250,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<Origin> origin = parameterDescription.getDeclaredAnnotations().ofType(Origin.class);
-                        if (origin == null) {
-                            return UNDEFINED;
-                        } else if (parameterDescription.getType().asErasure().represents(Class.class)) {
+                    public Class<Origin> getAnnotationType() {
+                        return Origin.class;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<Origin> annotation) {
+                        if (parameterDescription.getType().asErasure().represents(Class.class)) {
                             return OffsetMapping.ForInstrumentedType.INSTANCE;
                         } else if (parameterDescription.getType().asErasure().represents(Method.class)) {
                             return OffsetMapping.ForInstrumentedMethod.METHOD;
@@ -3245,7 +3265,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         } else if (JavaType.EXECUTABLE.getTypeStub().equals(parameterDescription.getType().asErasure())) {
                             return OffsetMapping.ForInstrumentedMethod.EXECUTABLE;
                         } else if (parameterDescription.getType().asErasure().isAssignableFrom(String.class)) {
-                            return ForOrigin.parse(origin.loadSilent().value());
+                            return ForOrigin.parse(annotation.loadSilent().value());
                         } else {
                             throw new IllegalStateException("Non-supported type " + parameterDescription.getType() + " for @Origin annotation");
                         }
@@ -3281,7 +3301,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory for an offset mapping for an unused value.
                  */
-                enum Factory implements OffsetMapping.Factory {
+                enum Factory implements OffsetMapping.Factory<Unused> {
 
                     /**
                      * A factory for representing an unused value.
@@ -3289,10 +3309,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Unused.class)
-                                ? new ForUnusedValue(parameterDescription.getType())
-                                : UNDEFINED;
+                    public Class<Unused> getAnnotationType() {
+                        return Unused.class;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<Unused> annotation) {
+                        return new ForUnusedValue(parameterDescription.getType());
                     }
                 }
             }
@@ -3301,7 +3324,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * An offset mapping for a parameter where assignments are fully ignored and that is assigned a boxed version of the instrumented
              * method's return valueor {@code null} if the return type is not primitive or {@code void}.
              */
-            enum ForStubValue implements OffsetMapping, Factory {
+            enum ForStubValue implements OffsetMapping, Factory<StubValue> {
 
                 /**
                  * The singleton instance.
@@ -3315,11 +3338,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             Assigner.Typing.DYNAMIC));
                 }
 
+
                 @Override
-                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                    if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(StubValue.class)) {
-                        return UNDEFINED;
-                    } else if (!parameterDescription.getType().represents(Object.class)) {
+                public Class<StubValue> getAnnotationType() {
+                    return StubValue.class;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<StubValue> annotation) {
+                    if (!parameterDescription.getType().represents(Object.class)) {
                         throw new IllegalStateException("Cannot use StubValue on non-Object parameter type " + parameterDescription);
                     } else {
                         return this;
@@ -3399,7 +3426,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A factory for creating a {@link ForEnterValue} offset mapping.
                  */
                 @EqualsAndHashCode
-                protected static class Factory implements OffsetMapping.Factory {
+                protected static class Factory implements OffsetMapping.Factory<Enter> {
 
                     /**
                      * The supplied type of the enter method.
@@ -3423,12 +3450,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<Enter> annotation = parameterDescription.getDeclaredAnnotations().ofType(Enter.class);
-                        if (annotation != null) {
-                            return new ForEnterValue(parameterDescription.getType(), enterType.asGenericType(), annotation.loadSilent());
+                    public Class<Enter> getAnnotationType() {
+                        return Enter.class;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<Enter> annotation) {
+                        if (readOnly && !annotation.loadSilent().readOnly()) {
+                            throw new IllegalStateException("Cannot use writable " + parameterDescription + " on read-only parameter");
                         } else {
-                            return UNDEFINED;
+                            return new ForEnterValue(parameterDescription.getType(), enterType.asGenericType(), annotation.loadSilent());
                         }
                     }
                 }
@@ -3502,7 +3533,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A factory for creating a {@link ForReturnValue} offset mapping.
                  */
-                protected enum Factory implements OffsetMapping.Factory {
+                protected enum Factory implements OffsetMapping.Factory<Return> {
 
                     /**
                      * A factory that does not allow writing to the mapped parameter.
@@ -3529,11 +3560,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<Return> annotation = parameterDescription.getDeclaredAnnotations().ofType(Return.class);
-                        if (annotation == null) {
-                            return UNDEFINED;
-                        } else if (readOnly && !annotation.loadSilent().readOnly()) {
+                    public Class<Return> getAnnotationType() {
+                        return Return.class;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<Return> annotation) {
+                        if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot write return value for " + parameterDescription + " in read-only context");
                         } else {
                             return new ForReturnValue(parameterDescription.getType(), annotation.loadSilent());
@@ -3607,7 +3640,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A factory for accessing an exception that was thrown by the instrumented method.
                  */
                 @EqualsAndHashCode
-                protected static class Factory implements OffsetMapping.Factory {
+                protected static class Factory implements OffsetMapping.Factory<Thrown> {
 
                     /**
                      * {@code true} if the parameter is read-only.
@@ -3631,7 +3664,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate offset mapping factory.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
-                    protected static OffsetMapping.Factory of(MethodDescription.InDefinedShape adviceMethod, boolean readOnly) {
+                    protected static OffsetMapping.Factory<?> of(MethodDescription.InDefinedShape adviceMethod, boolean readOnly) {
                         return adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
                                 .getValue(ON_THROWABLE)
@@ -3640,11 +3673,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<Thrown> annotation = parameterDescription.getDeclaredAnnotations().ofType(Thrown.class);
-                        if (annotation == null) {
-                            return UNDEFINED;
-                        } else if (readOnly && !annotation.loadSilent().readOnly()) {
+                    public Class<Thrown> getAnnotationType() {
+                        return Thrown.class;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<Thrown> annotation) {
+                        if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot use writable " + parameterDescription + " on read-only parameter");
                         } else {
                             return new ForThrowable(parameterDescription.getType(), annotation.loadSilent());
@@ -3707,12 +3742,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param <S> The mapped annotation type.
                  */
                 @EqualsAndHashCode
-                protected static class Factory<S extends Annotation> implements OffsetMapping.Factory {
+                protected static class Factory<S extends Annotation> implements OffsetMapping.Factory<S> {
 
                     /**
                      * The mapped annotation type.
                      */
-                    private final Class<S> type;
+                    private final Class<S> annotationType;
 
                     /**
                      * The dynamic value instance used for resolving a binding.
@@ -3722,11 +3757,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new factory for a user-defined dynamic value.
                      *
-                     * @param type         The mapped annotation type.
-                     * @param dynamicValue The dynamic value instance used for resolving a binding.
+                     * @param annotationType The mapped annotation type.
+                     * @param dynamicValue   The dynamic value instance used for resolving a binding.
                      */
-                    protected Factory(Class<S> type, DynamicValue<S> dynamicValue) {
-                        this.type = type;
+                    protected Factory(Class<S> annotationType, DynamicValue<S> dynamicValue) {
+                        this.annotationType = annotationType;
                         this.dynamicValue = dynamicValue;
                     }
 
@@ -3738,58 +3773,52 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate factory for such a offset mapping.
                      */
                     @SuppressWarnings("unchecked")
-                    protected static OffsetMapping.Factory of(Class<? extends Annotation> type, DynamicValue<?> dynamicValue) {
+                    protected static OffsetMapping.Factory<?> of(Class<? extends Annotation> type, DynamicValue<?> dynamicValue) {
                         return new Factory(type, dynamicValue);
                     }
 
                     @Override
-                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<S> annotation = parameterDescription.getDeclaredAnnotations().ofType(type);
-                        return annotation == null
-                                ? UNDEFINED
-                                : new ForUserValue<S>(parameterDescription, annotation, dynamicValue);
+                    public Class<S> getAnnotationType() {
+                        return annotationType;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<S> annotation) {
+                        return new ForUserValue<S>(parameterDescription, annotation, dynamicValue);
                     }
                 }
             }
 
             /**
              * Represents a factory that throws an exception for a given set of illegal parameter annotations.
+             *
+             * @param <T> The annotation type.
              */
             @EqualsAndHashCode
-            class Illegal implements Factory {
+            class Illegal<T extends Annotation> implements Factory<T> {
 
                 /**
-                 * The set of illegal annotations.
+                 * The illegal annotation type.
                  */
-                private final List<? extends Class<? extends Annotation>> annotations;
+                private final Class<T> annotationType;
 
                 /**
-                 * Creates a new factory for restricting the use of illegal annotation types.
+                 * Creates a new factory that renders an annotation use illegal.
                  *
-                 * @param annotation The set of illegal annotations.
+                 * @param annotationType The illegal annotation type.
                  */
-                @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
-                protected Illegal(Class<? extends Annotation>... annotation) {
-                    this(Arrays.asList(annotation));
-                }
-
-                /**
-                 * Creates a new factory for restricting the use of illegal annotation types.
-                 *
-                 * @param annotations The set of illegal annotations.
-                 */
-                protected Illegal(List<? extends Class<? extends Annotation>> annotations) {
-                    this.annotations = annotations;
+                protected Illegal(Class<T> annotationType) {
+                    this.annotationType = annotationType;
                 }
 
                 @Override
-                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                    for (Class<? extends Annotation> annotation : annotations) {
-                        if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(annotation)) {
-                            throw new IllegalStateException("Illegal annotation " + annotation + " for " + parameterDescription);
-                        }
-                    }
-                    return UNDEFINED;
+                public Class<T> getAnnotationType() {
+                    return annotationType;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<T> annotation) {
+                    throw new IllegalStateException("Illegal annotation " + annotation + " for " + parameterDescription);
                 }
             }
         }
@@ -4514,13 +4543,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories,
+            public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                          ClassReader classReader) {
                 return this;
             }
 
             @Override
-            public Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
+            public Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                          ClassReader classReader,
                                                          Resolved.ForMethodEnter dispatcher) {
                 return this;
@@ -4585,13 +4614,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories,
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader) {
                 return new Resolved.ForMethodEnter(adviceMethod, userFactories, classReader);
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
+            public Dispatcher.Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader,
                                                                     Dispatcher.Resolved.ForMethodEnter dispatcher) {
                 return Resolved.ForMethodExit.of(adviceMethod, userFactories, classReader, dispatcher.getEnterType());
@@ -4636,24 +4665,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param throwableType The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
-                                   List<OffsetMapping.Factory> factories,
+                                   List<OffsetMapping.Factory<?>> factories,
                                    ClassReader classReader,
                                    TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
-                    offsetMappings = new HashMap<Integer, OffsetMapping>();
+                    Map<TypeDescription, OffsetMapping.Factory<?>> offsetMappings = new HashMap<TypeDescription, OffsetMapping.Factory<?>>();
+                    for (OffsetMapping.Factory<?> factory : factories) {
+                        offsetMappings.put(new TypeDescription.ForLoadedType(factory.getAnnotationType()), factory);
+                    }
+                    this.offsetMappings = new HashMap<Integer, OffsetMapping>();
                     for (ParameterDescription.InDefinedShape parameterDescription : adviceMethod.getParameters()) {
-                        OffsetMapping offsetMapping = OffsetMapping.Factory.UNDEFINED;
-                        for (OffsetMapping.Factory factory : factories) {
-                            OffsetMapping possible = factory.make(parameterDescription);
-                            if (possible != null) {
+                        OffsetMapping offsetMapping = null;
+                        for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
+                            OffsetMapping.Factory<?> factory = offsetMappings.get(annotationDescription.getAnnotationType());
+                            if (factory != null) {
+                                @SuppressWarnings("unchecked")
+                                OffsetMapping current = factory.make(parameterDescription,
+                                        (AnnotationDescription.Loadable) annotationDescription.prepare(factory.getAnnotationType()));
                                 if (offsetMapping == null) {
-                                    offsetMapping = possible;
+                                    offsetMapping = current;
                                 } else {
-                                    throw new IllegalStateException(parameterDescription + " is bound to both " + possible + " and " + offsetMapping);
+                                    throw new IllegalStateException(parameterDescription + " is bound to both " + current + " and " + offsetMapping);
                                 }
                             }
                         }
-                        offsetMappings.put(parameterDescription.getOffset(), offsetMapping == null
+                        this.offsetMappings.put(parameterDescription.getOffset(), offsetMapping == null
                                 ? new OffsetMapping.ForArgument(parameterDescription, READ_ONLY, Assigner.Typing.STATIC)
                                 : offsetMapping);
                     }
@@ -4992,17 +5028,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
-                                             List<? extends OffsetMapping.Factory> userFactories,
+                                             List<? extends OffsetMapping.Factory<?>> userFactories,
                                              ClassReader classReader) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Factory.READ_WRITE,
+                                CompoundList.of(Arrays.<OffsetMapping.Factory<?>>asList(OffsetMapping.ForArgument.Factory.READ_WRITE,
                                         OffsetMapping.ForAllArguments.Factory.READ_WRITE,
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
-                                        new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class)), userFactories),
+                                        new OffsetMapping.Illegal(Thrown.class),
+                                        new OffsetMapping.Illegal(Enter.class),
+                                        new OffsetMapping.Illegal(Return.class)), userFactories),
                                 classReader,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
                         skipDispatcher = SkipDispatcher.ForType.of(adviceMethod);
@@ -5160,7 +5198,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *                      a description of {@code void} if no such value exists.
                      */
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
-                                            List<? extends OffsetMapping.Factory> userFactories,
+                                            List<? extends OffsetMapping.Factory<?>> userFactories,
                                             ClassReader classReader,
                                             TypeDefinition enterType) {
                         super(adviceMethod,
@@ -5191,7 +5229,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
-                                                               List<? extends OffsetMapping.Factory> userFactories,
+                                                               List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                ClassReader classReader,
                                                                TypeDefinition enterType) {
                         TypeDescription throwable = adviceMethod.getDeclaredAnnotations()
@@ -5339,7 +5377,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param throwable     The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
-                                                       List<? extends OffsetMapping.Factory> userFactories,
+                                                       List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        ClassReader classReader,
                                                        TypeDefinition enterType,
                                                        TypeDescription throwable) {
@@ -5373,7 +5411,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *                      a description of {@code void} if no such value exists.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
-                                                          List<? extends OffsetMapping.Factory> userFactories,
+                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
                                                           ClassReader classReader,
                                                           TypeDefinition enterType) {
                             super(adviceMethod, userFactories, classReader, enterType);
@@ -5818,13 +5856,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories,
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader) {
                 return new Resolved.ForMethodEnter(adviceMethod, userFactories);
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
+            public Dispatcher.Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                     ClassReader classReader,
                                                                     Dispatcher.Resolved.ForMethodEnter dispatcher) {
                 return Resolved.ForMethodExit.of(adviceMethod, userFactories, dispatcher.getEnterType());
@@ -5864,22 +5902,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param factories     A list of factories to resolve for the parameters of the advice method.
                  * @param throwableType The type to handle by a suppression handler or {@link NoExceptionHandler} to not handle any exceptions.
                  */
-                protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories, TypeDescription throwableType) {
+                protected Resolved(MethodDescription.InDefinedShape adviceMethod,
+                                   List<? extends OffsetMapping.Factory<?>> factories,
+                                   TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
-                    offsetMappings = new ArrayList<OffsetMapping>(adviceMethod.getParameters().size());
+                    Map<TypeDescription, OffsetMapping.Factory<?>> offsetMappings = new HashMap<TypeDescription, OffsetMapping.Factory<?>>();
+                    for (OffsetMapping.Factory<?> factory : factories) {
+                        offsetMappings.put(new TypeDescription.ForLoadedType(factory.getAnnotationType()), factory);
+                    }
+                    this.offsetMappings = new ArrayList<OffsetMapping>();
                     for (ParameterDescription.InDefinedShape parameterDescription : adviceMethod.getParameters()) {
-                        OffsetMapping offsetMapping = OffsetMapping.Factory.UNDEFINED;
-                        for (OffsetMapping.Factory factory : factories) {
-                            OffsetMapping possible = factory.make(parameterDescription);
-                            if (possible != null) {
+                        OffsetMapping offsetMapping = null;
+                        for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
+                            OffsetMapping.Factory<?> factory = offsetMappings.get(annotationDescription.getAnnotationType());
+                            if (factory != null) {
+                                @SuppressWarnings("unchecked")
+                                OffsetMapping current = factory.make(parameterDescription,
+                                        (AnnotationDescription.Loadable) annotationDescription.prepare(factory.getAnnotationType()));
                                 if (offsetMapping == null) {
-                                    offsetMapping = possible;
+                                    offsetMapping = current;
                                 } else {
-                                    throw new IllegalStateException(parameterDescription + " is bound to both " + possible + " and " + offsetMapping);
+                                    throw new IllegalStateException(parameterDescription + " is bound to both " + current + " and " + offsetMapping);
                                 }
                             }
                         }
-                        offsetMappings.add(offsetMapping == null
+                        this.offsetMappings.add(offsetMapping == null
                                 ? new OffsetMapping.ForArgument(parameterDescription, READ_ONLY, Assigner.Typing.STATIC)
                                 : offsetMapping);
                     }
@@ -6245,16 +6292,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param userFactories A list of user-defined factories for offset mappings.
                      */
                     @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
-                    protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory> userFactories) {
+                    protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory<?>> userFactories) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Factory.READ_ONLY,
+                                CompoundList.of(Arrays.<OffsetMapping.Factory<?>>asList(OffsetMapping.ForArgument.Factory.READ_ONLY,
                                         OffsetMapping.ForAllArguments.Factory.READ_ONLY,
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForUnusedValue.Factory.INSTANCE,
                                         OffsetMapping.ForStubValue.INSTANCE,
-                                        new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class)), userFactories),
+                                        new OffsetMapping.Illegal(Thrown.class),
+                                        new OffsetMapping.Illegal(Enter.class),
+                                        new OffsetMapping.Illegal(Return.class)), userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER).resolve(TypeDescription.class));
                         skipDispatcher = SkipDispatcher.ForType.of(adviceMethod);
                         prependLineNumber = adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(PREPEND_LINE_NUMBER).resolve(Boolean.class);
@@ -6334,10 +6383,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *                      a description of {@code void} if no such value exists.
                      */
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
-                                            List<? extends OffsetMapping.Factory> userFactories,
+                                            List<? extends OffsetMapping.Factory<?>> userFactories,
                                             TypeDefinition enterType) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForArgument.Factory.READ_ONLY,
+                                CompoundList.of(Arrays.<OffsetMapping.Factory<?>>asList(OffsetMapping.ForArgument.Factory.READ_ONLY,
                                         OffsetMapping.ForAllArguments.Factory.READ_ONLY,
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
@@ -6362,7 +6411,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
-                                                               List<? extends OffsetMapping.Factory> userFactories,
+                                                               List<? extends OffsetMapping.Factory<?>> userFactories,
                                                                TypeDefinition enterType) {
                         TypeDescription throwable = adviceMethod.getDeclaredAnnotations()
                                 .ofType(OnMethodExit.class)
@@ -6435,7 +6484,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param throwable     The type of the handled throwable type for which this advice is invoked.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
-                                                       List<? extends OffsetMapping.Factory> userFactories,
+                                                       List<? extends OffsetMapping.Factory<?>> userFactories,
                                                        TypeDefinition enterType,
                                                        TypeDescription throwable) {
                             super(adviceMethod, userFactories, enterType);
@@ -6462,7 +6511,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *                      a description of {@code void} if no such value exists.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
-                                                          List<? extends OffsetMapping.Factory> userFactories,
+                                                          List<? extends OffsetMapping.Factory<?>> userFactories,
                                                           TypeDefinition enterType) {
                             super(adviceMethod, userFactories, enterType);
                         }
@@ -8266,7 +8315,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(TypeDescription advice, ClassFileLocator classFileLocator) {
-            List<Dispatcher.OffsetMapping.Factory> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory>(dynamicValues.size());
+            List<Dispatcher.OffsetMapping.Factory<?>> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory<?>>(dynamicValues.size());
             for (Map.Entry<Class<? extends Annotation>, DynamicValue<?>> entry : dynamicValues.entrySet()) {
                 userFactories.add(Dispatcher.OffsetMapping.ForUserValue.Factory.of(entry.getKey(), entry.getValue()));
             }
@@ -8322,7 +8371,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A method visitor wrapper representing the supplied advice.
          */
         public Advice to(TypeDescription enterAdvice, TypeDescription exitAdvice, ClassFileLocator classFileLocator) {
-            List<Dispatcher.OffsetMapping.Factory> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory>(dynamicValues.size());
+            List<Dispatcher.OffsetMapping.Factory<?>> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory<?>>(dynamicValues.size());
             for (Map.Entry<Class<? extends Annotation>, DynamicValue<?>> entry : dynamicValues.entrySet()) {
                 userFactories.add(Dispatcher.OffsetMapping.ForUserValue.Factory.of(entry.getKey(), entry.getValue()));
             }
