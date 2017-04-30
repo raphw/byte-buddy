@@ -28,6 +28,18 @@ public class MethodDelegationAllArgumentsTest {
         assertThat(instance.foo(FOO, BAR), is((Object) (QUX + FOO + BAR)));
     }
 
+    @Test
+    public void testStrictBindableObjectType() throws Exception {
+        DynamicType.Loaded<Foo> loaded = new ByteBuddy()
+                .subclass(Foo.class)
+                .method(isDeclaredBy(Foo.class))
+                .intercept(MethodDelegation.to(FooBar.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+        Foo instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
+        assertThat(instance.foo(FOO, BAR), is((Object) (QUX + FOO + BAR)));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testStrictNonBindableThrowsException() throws Exception {
         new ByteBuddy()
@@ -49,12 +61,13 @@ public class MethodDelegationAllArgumentsTest {
     }
 
     @Test
-    public void testIncludeSelf() throws Exception {DynamicType.Loaded<Qux> loaded = new ByteBuddy()
-            .subclass(Qux.class)
-            .method(isDeclaredBy(Qux.class))
-            .intercept(MethodDelegation.to(IncludeSelf.class))
-            .make()
-            .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
+    public void testIncludeSelf() throws Exception {
+        DynamicType.Loaded<Qux> loaded = new ByteBuddy()
+                .subclass(Qux.class)
+                .method(isDeclaredBy(Qux.class))
+                .intercept(MethodDelegation.to(IncludeSelf.class))
+                .make()
+                .load(Foo.class.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER);
         Qux instance = loaded.getLoaded().getDeclaredConstructor().newInstance();
         assertThat(instance.foo(QUX, BAZ), is((Object) instance));
     }
@@ -70,6 +83,13 @@ public class MethodDelegationAllArgumentsTest {
 
         public static String qux(@AllArguments int[] args) {
             return QUX + args[0] + args[1];
+        }
+    }
+
+    public static class FooBar {
+
+        public static String qux(@AllArguments Object args) {
+            return QUX + ((Object[]) args)[0] + ((Object[]) args)[1];
         }
     }
 

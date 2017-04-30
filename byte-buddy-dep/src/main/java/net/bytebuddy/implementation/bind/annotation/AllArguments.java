@@ -129,7 +129,7 @@ public @interface AllArguments {
                                                                Assigner.Typing typing) {
             TypeDescription.Generic componentType;
             if (target.getType().represents(Object.class)) {
-                componentType = TypeDescription.Generic.OBJECT; // TODO: Add test for Object type
+                componentType = TypeDescription.Generic.OBJECT;
             } else if (target.getType().isArray()) {
                 componentType = target.getType().getComponentType();
             } else {
