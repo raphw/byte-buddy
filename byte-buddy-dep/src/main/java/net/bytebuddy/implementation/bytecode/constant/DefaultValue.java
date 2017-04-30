@@ -39,7 +39,7 @@ public enum DefaultValue implements StackManipulation {
     /**
      * The default value of a reference type which resembles the {@code null} reference.
      */
-    ANY_REFERENCE(NullConstant.INSTANCE);
+    REFERENCE(NullConstant.INSTANCE);
 
     /**
      * The stack manipulation that represents the loading of a given default value onto the operand stack.
@@ -76,7 +76,7 @@ public enum DefaultValue implements StackManipulation {
                 return INTEGER;
             }
         } else {
-            return ANY_REFERENCE;
+            return REFERENCE;
         }
     }
 
