@@ -946,19 +946,19 @@ public class ByteBuddyAgent {
                 private final Method current;
 
                 /**
-                 * The {@code java.lang.ProcessHandle#getPid()} method.
+                 * The {@code java.lang.ProcessHandle#pid()} method.
                  */
-                private final Method getPid;
+                private final Method pid;
 
                 /**
                  * Creates a new Java 9 capable dispatcher for reading the current process's id.
                  *
                  * @param current The {@code java.lang.ProcessHandle#current()} method.
-                 * @param getPid  The {@code java.lang.ProcessHandle#getPid()} method.
+                 * @param pid  The {@code java.lang.ProcessHandle#pid()} method.
                  */
-                protected ForJava9CapableVm(Method current, Method getPid) {
+                protected ForJava9CapableVm(Method current, Method pid) {
                     this.current = current;
-                    this.getPid = getPid;
+                    this.pid = pid;
                 }
 
                 /**
@@ -971,7 +971,7 @@ public class ByteBuddyAgent {
                 public static ProcessProvider make() {
                     try {
                         return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getMethod("current"),
-                                Class.forName("java.lang.ProcessHandle").getMethod("getPid"));
+                                Class.forName("java.lang.ProcessHandle").getMethod("pid"));
                     } catch (Exception ignored) {
                         return ForLegacyVm.INSTANCE;
                     }
@@ -980,7 +980,7 @@ public class ByteBuddyAgent {
                 @Override
                 public String resolve() {
                     try {
-                        return getPid.invoke(current.invoke(STATIC_MEMBER)).toString();
+                        return pid.invoke(current.invoke(STATIC_MEMBER)).toString();
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access Java 9 process API", exception);
                     } catch (InvocationTargetException exception) {
@@ -1122,7 +1122,7 @@ public class ByteBuddyAgent {
                         return Disabled.INSTANCE;
                     } else {
                         return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getMethod("current"),
-                                Class.forName("java.lang.ProcessHandle").getMethod("getPid"));
+                                Class.forName("java.lang.ProcessHandle").getMethod("pid"));
                     }
                 } catch (Exception ignored) {
                     return Disabled.INSTANCE;
@@ -1158,7 +1158,7 @@ public class ByteBuddyAgent {
             private final Method current;
 
             /**
-             * The {@code java.lang.ProcessHandle#getPid()} method.
+             * The {@code java.lang.ProcessHandle#pid()} method.
              */
             private final Method getPid;
 
@@ -1166,7 +1166,7 @@ public class ByteBuddyAgent {
              * Creates a new attachment type evaluator.
              *
              * @param current The {@code java.lang.ProcessHandle#current()} method.
-             * @param getPid  The {@code java.lang.ProcessHandle#getPid()} method.
+             * @param getPid  The {@code java.lang.ProcessHandle#pid()} method.
              */
             protected ForJava9CapableVm(Method current, Method getPid) {
                 this.current = current;

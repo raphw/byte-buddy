@@ -1373,6 +1373,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected abstract ParameterDescription resolve(MethodDescription instrumentedMethod);
 
+            @EqualsAndHashCode(callSuper = true)
             public static class Unresolved extends ForArgument {
 
                 /**
@@ -1428,6 +1429,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            @EqualsAndHashCode(callSuper = true)
             public static class Resolved extends ForArgument {
 
                 private final ParameterDescription parameterDescription;
@@ -1745,6 +1747,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An offset mapping for a field.
          */
+        @EqualsAndHashCode
         abstract class ForField implements OffsetMapping {
 
             /**
@@ -1830,6 +1833,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             protected abstract FieldDescription resolve(TypeDescription instrumentedType);
 
+            @EqualsAndHashCode(callSuper = true)
             public abstract static class Unresolved extends ForField {
 
                 /**
@@ -1973,6 +1977,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            @EqualsAndHashCode(callSuper = true)
             public static class Resolved extends ForField {
 
                 private final FieldDescription fieldDescription;
@@ -2012,7 +2017,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public OffsetMapping make(ParameterDescription.InDefinedShape target,
                                               AnnotationDescription.Loadable<T> annotation,
                                               boolean delegation) {
-                        return new Resolved(target.getType(), false, Assigner.Typing.STATIC, fieldDescription);
+                        return new Resolved(target.getType(), false, Assigner.Typing.DYNAMIC, fieldDescription);
                     }
                 }
             }
@@ -2693,6 +2698,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        @EqualsAndHashCode
         class ForStackManipulation implements OffsetMapping {
 
             private final StackManipulation stackManipulation;
@@ -2722,6 +2728,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 return new Target.ForStackManipulation(new StackManipulation.Compound(assigment, stackManipulation));
             }
 
+            @EqualsAndHashCode
             public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 private final Class<T> annotationType;
@@ -2736,11 +2743,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.typeDescription = typeDescription;
                 }
 
-                public static <S extends Annotation> Factory<S> of(Class<S> annotationType, Object value) {
+                public static <S extends Annotation> OffsetMapping.Factory<S> of(Class<S> annotationType, Object value) {
                     StackManipulation stackManipulation;
                     TypeDescription typeDescription;
                     if (value == null) {
-                        return null; // TODO
+                        return new OfDefaultValue<S>(annotationType);
                     } else if (value instanceof Boolean) {
                         stackManipulation = IntegerConstant.forValue((Boolean) value);
                         typeDescription = new TypeDescription.ForLoadedType(boolean.class);
@@ -2790,6 +2797,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            @EqualsAndHashCode
+            public static class OfDefaultValue<T extends Annotation> implements OffsetMapping.Factory<T> {
+
+                private final Class<T> annotationType;
+
+                public OfDefaultValue(Class<T> annotationType) {
+                    this.annotationType = annotationType;
+                }
+
+                @Override
+                public Class<T> getAnnotationType() {
+                    return annotationType;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, boolean delegation) {
+                    return new ForStackManipulation(DefaultValue.of(target.getType()), target.getType(), target.getType(), Assigner.Typing.STATIC);
+                }
+            }
+
+            @EqualsAndHashCode
             public static class OfAnnotationProperty<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 private final Class<T> annotationType;
@@ -2816,11 +2844,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape target, AnnotationDescription.Loadable<T> annotation, boolean delegation) {
-                    return Factory.of(annotationType, annotation.getValue(property)).make(target, annotation, delegation);
+                    return Factory.of(annotationType, annotation.getValue(property).resolve()).make(target, annotation, delegation);
                 }
             }
         }
 
+        @EqualsAndHashCode
         class ForSerializedValue implements OffsetMapping {
 
             private final TypeDescription.Generic target;
@@ -2844,6 +2873,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 return new Target.ForStackManipulation(new StackManipulation.Compound(deserialization, assignment));
             }
 
+            @EqualsAndHashCode
             public static class Factory<T extends Annotation> implements OffsetMapping.Factory<T> {
 
                 private final Class<T> annotationType;
@@ -2877,6 +2907,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        @EqualsAndHashCode
         class Illegal<T extends Annotation> implements Factory<T> {
 
             private final Class<T> annotationType;
@@ -7844,9 +7875,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         public <T extends Annotation> WithCustomMapping bind(Class<T> type, Object value) {
-            if (value == null) {
-                throw new IllegalArgumentException("Cannot map null as a fixed value for " + type);
-            }
             return bind(type, OffsetMapping.ForStackManipulation.Factory.of(type, value));
         }
 

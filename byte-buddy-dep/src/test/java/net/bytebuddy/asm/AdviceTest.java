@@ -1446,7 +1446,8 @@ public class AdviceTest {
     public void testNonAssignableField() throws Exception {
         new ByteBuddy()
                 .redefine(SampleExtension.class)
-                .visit(Advice.withCustomMapping().bind(Custom.class, SampleExtension.class.getDeclaredField(FOO)).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .visit(Advice.withCustomMapping().bind(Custom.class, SampleExtension.class.getDeclaredField(FOO)).to(CustomPrimitiveAdvice.class)
+                        .withAssigner(Assigner.Refusing.INSTANCE).on(named(FOO)))
                 .make();
     }
 
@@ -1890,7 +1891,19 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.OffsetMapping.Target.ForDefaultValue.ReadOnly.class).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.Target.ForDefaultValue.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.Target.ForStackManipulation.class).apply();
-        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForArgument.class).refine(new ObjectPropertyAssertion.Refinement<ParameterDescription>() {
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForArgument.Unresolved.class).refine(new ObjectPropertyAssertion.Refinement<ParameterDescription>() {
+            @Override
+            public void apply(ParameterDescription mock) {
+                when(mock.getType()).thenReturn(mock(TypeDescription.Generic.class));
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
+            @Override
+            public void apply(Advice.Argument mock) {
+                when(mock.value()).thenReturn(new Random().nextInt());
+                when(mock.typing()).thenReturn(Assigner.Typing.DYNAMIC);
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForArgument.Resolved.class).refine(new ObjectPropertyAssertion.Refinement<ParameterDescription>() {
             @Override
             public void apply(ParameterDescription mock) {
                 when(mock.getType()).thenReturn(mock(TypeDescription.Generic.class));
@@ -1921,8 +1934,9 @@ public class AdviceTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.ForEnterValue.Factory.class).apply();
-//        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.WithImplicitType.class).apply();
-//        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.WithExplicitType.class).apply();
+//        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForField.Unresolved.WithImplicitType.class).apply();
+//        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForField.Unresolved.WithExplicitType.class).apply();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForField.Resolved.class).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.ForField.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.ForInstrumentedMethod.class).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.ForInstrumentedType.class).apply();
@@ -1963,7 +1977,34 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.ForOrigin.Renderer.ForJavaSignature.class).apply();
-        final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Object.class, String.class).iterator();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForStackManipulation.class).apply();
+        final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Long.class,
+                Character.class, Float.class, Double.class, Short.class, Void.class, Byte.class, int.class, double.class).iterator();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForStackManipulation.Factory.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return types.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForStackManipulation.OfAnnotationProperty.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return types.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForStackManipulation.OfDefaultValue.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return types.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForSerializedValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.OffsetMapping.ForSerializedValue.Factory.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return types.next();
+            }
+        }).apply();
         ObjectPropertyAssertion.of(Advice.OffsetMapping.Illegal.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
@@ -1971,11 +2012,6 @@ public class AdviceTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.class).apply();
-//        ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.OfConstant.class).apply();
-//        ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.OfAnnotationProperty.class).apply();
-//        ObjectPropertyAssertion.of(Advice.DynamicValue.ForFieldValue.class).apply();
-//        ObjectPropertyAssertion.of(Advice.DynamicValue.ForParameterValue.class).apply();
-//        ObjectPropertyAssertion.of(Advice.DynamicValue.ForSerializedValue.class).apply(); TODO
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.ForType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Resolved.ForMethodEnter.SkipDispatcher.Disabled.class).apply();
