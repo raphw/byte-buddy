@@ -33,13 +33,12 @@ import net.bytebuddy.utility.visitor.ExceptionTableSensitiveMethodVisitor;
 import net.bytebuddy.utility.visitor.LineNumberPrependingMethodVisitor;
 import net.bytebuddy.utility.visitor.StackAwareMethodVisitor;
 import org.objectweb.asm.*;
+import org.objectweb.asm.Type;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.annotation.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -2725,7 +2724,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 if (!assigment.isValid()) {
                     throw new IllegalStateException();
                 }
-                return new Target.ForStackManipulation(new StackManipulation.Compound(assigment, stackManipulation));
+                return new Target.ForStackManipulation(new StackManipulation.Compound(stackManipulation, assigment));
             }
 
             @EqualsAndHashCode
@@ -7961,7 +7960,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A new builder for an advice that considers the supplied annotation type during binding.
          */
         @SuppressWarnings("unchecked")
-        public <T extends Annotation> WithCustomMapping bindSerialized(Class<? extends T> type, Serializable value) {
+        public <T extends Annotation> WithCustomMapping bindSerialized(Class<T> type, Serializable value) {
             return bindSerialized(type, value, (Class<Serializable>) value.getClass());
         }
 
@@ -7989,6 +7988,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         public <T extends Annotation> WithCustomMapping bindProperty(Class<T> type, String property) {
             return bind(type, OffsetMapping.ForStackManipulation.OfAnnotationProperty.of(type, property));
+        }
+
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, java.lang.reflect.Type targetType) {
+            return bind(type, stackManipulation, TypeDefinition.Sort.describe(targetType));
+        }
+
+        public <T extends Annotation> WithCustomMapping bind(Class<T> type, StackManipulation stackManipulation, TypeDescription.Generic targetType) {
+            return bind(type, new OffsetMapping.ForStackManipulation.Factory<T>(type, stackManipulation, targetType));
         }
 
         /**
